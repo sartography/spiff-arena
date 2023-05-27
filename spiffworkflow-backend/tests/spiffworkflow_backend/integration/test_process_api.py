@@ -5,7 +5,6 @@ import os
 import time
 from hashlib import sha256
 from typing import Any
-from typing import Dict
 
 import pytest
 from flask.app import Flask
@@ -2700,7 +2699,7 @@ class TestProcessApi(BaseTest):
         )
 
         # This is exactly the same the test above, but some reason I to a totally irrelevant type.
-        data: Dict = {
+        data: dict = {
             "correlation_properties": [],
             "expression": None,
             "external": True,

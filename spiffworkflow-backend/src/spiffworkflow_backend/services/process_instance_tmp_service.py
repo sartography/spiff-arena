@@ -1,7 +1,5 @@
 import time
 import traceback
-from typing import Optional
-from typing import Tuple
 
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -23,12 +21,12 @@ class ProcessInstanceTmpService:
         cls,
         process_instance: ProcessInstanceModel,
         event_type: str,
-        task_guid: Optional[str] = None,
-        user_id: Optional[int] = None,
-        exception: Optional[Exception] = None,
-        timestamp: Optional[float] = None,
-        add_to_db_session: Optional[bool] = True,
-    ) -> Tuple[ProcessInstanceEventModel, Optional[ProcessInstanceErrorDetailModel]]:
+        task_guid: str | None = None,
+        user_id: int | None = None,
+        exception: Exception | None = None,
+        timestamp: float | None = None,
+        add_to_db_session: bool | None = True,
+    ) -> tuple[ProcessInstanceEventModel, ProcessInstanceErrorDetailModel | None]:
         if user_id is None and hasattr(g, "user") and g.user:
             user_id = g.user.id
         if timestamp is None:

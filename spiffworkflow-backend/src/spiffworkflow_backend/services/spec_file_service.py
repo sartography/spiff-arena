@@ -2,8 +2,6 @@
 import os
 import shutil
 from datetime import datetime
-from typing import List
-from typing import Optional
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
@@ -40,9 +38,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def get_files(
         process_model_info: ProcessModelInfo,
-        file_name: Optional[str] = None,
+        file_name: str | None = None,
         extension_filter: str = "",
-    ) -> List[File]:
+    ) -> list[File]:
         """Return all files associated with a workflow specification."""
         path = os.path.join(FileSystemService.root_path(), process_model_info.id_for_file_path())
         files = SpecFileService._get_files(path, file_name)

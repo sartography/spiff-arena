@@ -4,10 +4,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
-from typing import Optional
-from typing import Set
 from typing import TypedDict
-from typing import Union
 
 import jwt
 import yaml
@@ -90,7 +87,7 @@ class UserToGroupDict(TypedDict):
 
 
 class AddedPermissionDict(TypedDict):
-    group_identifiers: Set[str]
+    group_identifiers: set[str]
     permission_assignments: list[PermissionAssignmentModel]
     user_to_group_identifiers: list[UserToGroupDict]
 
@@ -111,7 +108,7 @@ class AuthorizationService:
 
     # https://stackoverflow.com/a/71320673/6090676
     @classmethod
-    def verify_sha256_token(cls, auth_header: Optional[str]) -> None:
+    def verify_sha256_token(cls, auth_header: str | None) -> None:
         if auth_header is None:
             raise TokenNotProvidedError(
                 "unauthorized",
@@ -188,7 +185,7 @@ class AuthorizationService:
             db.session.commit()
 
     @classmethod
-    def import_permissions_from_yaml_file(cls, user_model: Optional[UserModel] = None) -> AddedPermissionDict:
+    def import_permissions_from_yaml_file(cls, user_model: UserModel | None = None) -> AddedPermissionDict:
         group_permissions = cls.parse_permissions_yaml_into_group_info()
         result = cls.add_permissions_from_group_permissions(group_permissions, user_model)
         return result
@@ -197,7 +194,7 @@ class AuthorizationService:
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
-        permission_target: Optional[PermissionTargetModel] = PermissionTargetModel.query.filter_by(
+        permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(
             uri=target_uri_normalized
         ).first()
         if permission_target is None:
@@ -213,7 +210,7 @@ class AuthorizationService:
         permission_target: PermissionTargetModel,
         permission: str,
     ) -> PermissionAssignmentModel:
-        permission_assignment: Optional[PermissionAssignmentModel] = PermissionAssignmentModel.query.filter_by(
+        permission_assignment: PermissionAssignmentModel | None = PermissionAssignmentModel.query.filter_by(
             principal_id=principal.id,
             permission_target_id=permission_target.id,
             permission=permission,
@@ -267,7 +264,7 @@ class AuthorizationService:
         return False
 
     @classmethod
-    def get_permission_from_http_method(cls, http_method: str) -> Optional[str]:
+    def get_permission_from_http_method(cls, http_method: str) -> str | None:
         request_method_mapper = {
             "POST": "create",
             "GET": "read",
@@ -318,7 +315,7 @@ class AuthorizationService:
         )
 
     @staticmethod
-    def decode_auth_token(auth_token: str) -> dict[str, Union[str, None]]:
+    def decode_auth_token(auth_token: str) -> dict[str, str | None]:
         secret_key = current_app.config.get("SECRET_KEY")
         if secret_key is None:
             raise KeyError("we need current_app.config to have a SECRET_KEY")
@@ -686,9 +683,9 @@ class AuthorizationService:
 
     @classmethod
     def add_permissions_from_group_permissions(
-        cls, group_permissions: list[GroupPermissionsDict], user_model: Optional[UserModel] = None
+        cls, group_permissions: list[GroupPermissionsDict], user_model: UserModel | None = None
     ) -> AddedPermissionDict:
-        unique_user_group_identifiers: Set[str] = set()
+        unique_user_group_identifiers: set[str] = set()
         user_to_group_identifiers: list[UserToGroupDict] = []
         permission_assignments = []
 

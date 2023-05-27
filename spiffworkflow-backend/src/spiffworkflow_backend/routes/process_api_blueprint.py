@@ -1,7 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
-from typing import Dict
 
 import flask.wrappers
 from flask import Blueprint
@@ -30,7 +29,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 process_api_blueprint = Blueprint("process_api", __name__)
 
 
-def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.Response:
+def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.Response:
     """Permissions_check."""
     if "requests_to_check" not in body:
         raise (
@@ -155,7 +154,7 @@ def process_data_file_download(
 # "full_name": "sartography/sample-process-models", "private": False .... }}
 # test with: ngrok http 7000
 # where 7000 is the port the app is running on locally
-def github_webhook_receive(body: Dict) -> Response:
+def github_webhook_receive(body: dict) -> Response:
     """Github_webhook_receive."""
     auth_header = request.headers.get("X-Hub-Signature-256")
     AuthorizationService.verify_sha256_token(auth_header)

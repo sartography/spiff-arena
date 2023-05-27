@@ -1,8 +1,6 @@
 import contextlib
 import time
-from typing import Generator
-from typing import List
-from typing import Optional
+from collections.abc import Generator
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -115,9 +113,9 @@ class ProcessInstanceQueueService:
     def entries_with_status(
         cls,
         status_value: str,
-        locked_by: Optional[str],
+        locked_by: str | None,
         run_at_in_seconds_threshold: int,
-    ) -> List[ProcessInstanceQueueModel]:
+    ) -> list[ProcessInstanceQueueModel]:
         return (
             db.session.query(ProcessInstanceQueueModel)
             .filter(
@@ -133,7 +131,7 @@ class ProcessInstanceQueueService:
         cls,
         status_value: str,
         run_at_in_seconds_threshold: int,
-    ) -> List[int]:
+    ) -> list[int]:
         queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold)
         ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status

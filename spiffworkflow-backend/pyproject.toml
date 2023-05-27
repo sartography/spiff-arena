@@ -173,13 +173,11 @@ explicit_package_bases = false
 
 [tool.ruff]
 select = [
-    # Pyflakes
-    "F",
-    # Pycodestyle
-    "E",
-    "W",
-    # isort
-    "I001"
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "UP",  # pyupgrade
+  "W",
+  "I001" # isort
 ]
 line-length = 130
 

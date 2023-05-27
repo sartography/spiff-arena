@@ -1,6 +1,5 @@
 """Test_secret_service."""
 import json
-from typing import Optional
 
 import pytest
 from flask.app import Flask
@@ -225,7 +224,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
     ) -> None:
         """Test_update_secret."""
         self.add_test_secret(with_super_admin_user)
-        secret: Optional[SecretModel] = SecretService.get_secret(self.test_key)
+        secret: SecretModel | None = SecretService.get_secret(self.test_key)
         assert secret
         assert SecretService._decrypt(secret.value) == self.test_value
         secret_model = SecretModel(

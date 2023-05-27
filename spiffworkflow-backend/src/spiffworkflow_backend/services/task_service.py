@@ -2,11 +2,7 @@ import copy
 import json
 import time
 from hashlib import sha256
-from typing import List
-from typing import Optional
-from typing import Tuple
 from typing import TypedDict
-from typing import Union
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
@@ -34,8 +30,8 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 
 
 class StartAndEndTimes(TypedDict):
-    start_in_seconds: Optional[float]
-    end_in_seconds: Optional[float]
+    start_in_seconds: float | None
+    end_in_seconds: float | None
 
 
 class TaskModelError(Exception):
@@ -48,10 +44,10 @@ class TaskModelError(Exception):
         self,
         error_msg: str,
         task_model: TaskModel,
-        exception: Optional[Exception] = None,
-        line_number: Optional[int] = None,
-        offset: Optional[int] = None,
-        error_line: Optional[str] = None,
+        exception: Exception | None = None,
+        line_number: int | None = None,
+        offset: int | None = None,
+        error_line: str | None = None,
     ):
         self.task_model = task_model
         self.line_number = line_number
@@ -179,7 +175,7 @@ class TaskService:
     def update_task_model_with_spiff_task(
         self,
         spiff_task: SpiffTask,
-        start_and_end_times: Optional[StartAndEndTimes] = None,
+        start_and_end_times: StartAndEndTimes | None = None,
     ) -> TaskModel:
         new_bpmn_process = None
         if str(spiff_task.id) in self.task_models:
@@ -283,9 +279,9 @@ class TaskService:
     def find_or_create_task_model_from_spiff_task(
         self,
         spiff_task: SpiffTask,
-    ) -> Tuple[Optional[BpmnProcessModel], TaskModel]:
+    ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model: Optional[TaskModel] = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+        task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(
@@ -309,7 +305,7 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> BpmnProcessModel:
         subprocess_guid, subprocess = self.__class__._task_subprocess(spiff_task)
-        bpmn_process: Optional[BpmnProcessModel] = None
+        bpmn_process: BpmnProcessModel | None = None
         if subprocess is None:
             bpmn_process = self.process_instance.bpmn_process
             # This is the top level workflow, which has no guid
@@ -336,8 +332,8 @@ class TaskService:
         self,
         bpmn_process_dict: dict,
         spiff_workflow: BpmnWorkflow,
-        top_level_process: Optional[BpmnProcessModel] = None,
-        bpmn_process_guid: Optional[str] = None,
+        top_level_process: BpmnProcessModel | None = None,
+        bpmn_process_guid: str | None = None,
     ) -> BpmnProcessModel:
         """This creates and adds a bpmn_process to the Db session.
 
@@ -506,10 +502,10 @@ class TaskService:
     @classmethod
     def update_task_data_on_bpmn_process(
         cls, bpmn_process: BpmnProcessModel, bpmn_process_data_dict: dict
-    ) -> Optional[JsonDataDict]:
+    ) -> JsonDataDict | None:
         bpmn_process_data_json = json.dumps(bpmn_process_data_dict, sort_keys=True)
         bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
-        json_data_dict: Optional[JsonDataDict] = None
+        json_data_dict: JsonDataDict | None = None
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
             json_data_dict = {"hash": bpmn_process_data_hash, "data": bpmn_process_data_dict}
             bpmn_process.json_data_hash = bpmn_process_data_hash
@@ -518,10 +514,10 @@ class TaskService:
     @classmethod
     def update_task_data_on_task_model_and_return_dict_if_updated(
         cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
-    ) -> Optional[JsonDataDict]:
+    ) -> JsonDataDict | None:
         task_data_json = json.dumps(task_data_dict, sort_keys=True)
         task_data_hash: str = sha256(task_data_json.encode("utf8")).hexdigest()
-        json_data_dict: Optional[JsonDataDict] = None
+        json_data_dict: JsonDataDict | None = None
         if getattr(task_model, task_model_data_column) != task_data_hash:
             json_data_dict = {"hash": task_data_hash, "data": task_data_dict}
             setattr(task_model, task_model_data_column, task_data_hash)
@@ -539,8 +535,8 @@ class TaskService:
 
     @classmethod
     def task_models_of_parent_bpmn_processes(
-        cls, task_model: TaskModel, stop_on_first_call_activity: Optional[bool] = False
-    ) -> Tuple[list[BpmnProcessModel], list[TaskModel]]:
+        cls, task_model: TaskModel, stop_on_first_call_activity: bool | None = False
+    ) -> tuple[list[BpmnProcessModel], list[TaskModel]]:
         """Returns the list of task models that are associated with the parent bpmn process.
 
         Example: TopLevelProcess has SubprocessTaskA which has CallActivityTaskA which has ScriptTaskA.
@@ -627,7 +623,7 @@ class TaskService:
 
     @classmethod
     def get_ready_signals_with_button_labels(cls, process_instance_id: int) -> list[dict]:
-        waiting_tasks: List[TaskModel] = TaskModel.query.filter_by(
+        waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(
             state="WAITING", process_instance_id=process_instance_id
         ).all()
         result = []
@@ -648,10 +644,10 @@ class TaskService:
         return result
 
     @classmethod
-    def get_spec_filename_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> Optional[str]:
+    def get_spec_filename_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> str | None:
         """Just return the filename if the bpmn process is found in spec reference cache."""
         try:
-            filename: Optional[str] = cls.get_spec_reference_from_bpmn_process(bpmn_process).file_name
+            filename: str | None = cls.get_spec_reference_from_bpmn_process(bpmn_process).file_name
             return filename
         except SpecReferenceNotFoundError:
             return None
@@ -663,7 +659,7 @@ class TaskService:
         This involves several queries so avoid calling in a tight loop.
         """
         bpmn_process_definition = bpmn_process.bpmn_process_definition
-        spec_reference: Optional[SpecReferenceCache] = SpecReferenceCache.query.filter_by(
+        spec_reference: SpecReferenceCache | None = SpecReferenceCache.query.filter_by(
             identifier=bpmn_process_definition.bpmn_identifier, type="process"
         ).first()
         if spec_reference is None:
@@ -673,11 +669,11 @@ class TaskService:
         return spec_reference
 
     @classmethod
-    def get_name_for_display(cls, entity: Union[TaskDefinitionModel, BpmnProcessDefinitionModel]) -> str:
+    def get_name_for_display(cls, entity: TaskDefinitionModel | BpmnProcessDefinitionModel) -> str:
         return entity.bpmn_name or entity.bpmn_identifier
 
     @classmethod
-    def _task_subprocess(cls, spiff_task: SpiffTask) -> Tuple[Optional[str], Optional[BpmnWorkflow]]:
+    def _task_subprocess(cls, spiff_task: SpiffTask) -> tuple[str | None, BpmnWorkflow | None]:
         top_level_workflow = spiff_task.workflow._get_outermost_workflow()
         my_wf = spiff_task.workflow  # This is the workflow the spiff_task is part of
         my_sp = None

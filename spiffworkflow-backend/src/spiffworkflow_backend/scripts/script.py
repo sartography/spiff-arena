@@ -5,8 +5,8 @@ import importlib
 import os
 import pkgutil
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import Any
-from typing import Callable
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel

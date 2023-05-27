@@ -1,7 +1,5 @@
 import threading
 from typing import Any
-from typing import List
-from typing import Optional
 
 from flask import current_app
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
@@ -41,7 +39,7 @@ class ProcessInstanceLockService:
         ctx["locks"][process_instance_id] = queue_entry
 
     @classmethod
-    def lock_many(cls, queue_entries: List[ProcessInstanceQueueModel]) -> List[int]:
+    def lock_many(cls, queue_entries: list[ProcessInstanceQueueModel]) -> list[int]:
         ctx = cls.get_thread_local_locking_context()
         new_locks = {entry.process_instance_id: entry for entry in queue_entries}
         new_lock_ids = list(new_locks.keys())
@@ -56,7 +54,7 @@ class ProcessInstanceLockService:
         return queue_model
 
     @classmethod
-    def try_unlock(cls, process_instance_id: int) -> Optional[ProcessInstanceQueueModel]:
+    def try_unlock(cls, process_instance_id: int) -> ProcessInstanceQueueModel | None:
         ctx = cls.get_thread_local_locking_context()
         return ctx["locks"].pop(process_instance_id, None)  # type: ignore
 

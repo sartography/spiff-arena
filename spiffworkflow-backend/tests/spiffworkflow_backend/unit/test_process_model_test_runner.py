@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import pytest
 from flask import Flask
@@ -107,10 +106,10 @@ class TestProcessModelTestRunner(BaseTest):
 
     def _run_model_tests(
         self,
-        bpmn_process_directory_name: Optional[str] = None,
+        bpmn_process_directory_name: str | None = None,
         parent_directory: str = "expected-to-pass",
-        test_case_file: Optional[str] = None,
-        test_case_identifier: Optional[str] = None,
+        test_case_file: str | None = None,
+        test_case_identifier: str | None = None,
     ) -> ProcessModelTestRunner:
         base_process_model_dir_path_segments = [self.root_path(), parent_directory]
         path_segments = base_process_model_dir_path_segments
