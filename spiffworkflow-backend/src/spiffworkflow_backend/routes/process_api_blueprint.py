@@ -13,14 +13,10 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
-    ProcessEntityNotFoundError,
-)
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_file_data import (
-    ProcessInstanceFileDataModel,
-)
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
@@ -28,11 +24,8 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
 
 process_api_blueprint = Blueprint("process_api", __name__)
 

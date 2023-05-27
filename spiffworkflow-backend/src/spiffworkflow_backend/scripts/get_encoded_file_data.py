@@ -2,12 +2,8 @@
 import base64
 from typing import Any
 
-from spiffworkflow_backend.models.process_instance_file_data import (
-    ProcessInstanceFileDataModel,
-)
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 
 

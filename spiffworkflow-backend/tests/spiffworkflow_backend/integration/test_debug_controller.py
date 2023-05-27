@@ -1,5 +1,6 @@
 from flask.app import Flask
 from flask.testing import FlaskClient
+
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

@@ -5,8 +5,8 @@ from typing import Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.mysql import LONGBLOB
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 

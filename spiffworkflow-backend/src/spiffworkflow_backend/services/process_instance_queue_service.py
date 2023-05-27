@@ -8,12 +8,8 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.process_instance_queue import (
-    ProcessInstanceQueueModel,
-)
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 

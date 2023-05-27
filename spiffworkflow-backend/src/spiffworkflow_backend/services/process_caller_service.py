@@ -1,9 +1,8 @@
 from typing import List
 
-from sqlalchemy import or_
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller import ProcessCallerCacheModel
+from sqlalchemy import or_
 
 
 class ProcessCallerService:

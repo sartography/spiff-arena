@@ -3,13 +3,11 @@ import json
 
 from flask import g
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.get_current_user import GetCurrentUser
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestGetCurrentUser(BaseTest):

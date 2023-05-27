@@ -8,10 +8,9 @@ import jwt
 import requests
 from flask import current_app
 from flask import redirect
-from werkzeug.wrappers import Response
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
+from werkzeug.wrappers import Response
 
 
 class MissingAccessTokenError(Exception):

@@ -8,7 +8,6 @@ from typing import Optional
 
 from flask.app import Flask
 
-
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
 # %(asctime)s— The timestamp as a string.

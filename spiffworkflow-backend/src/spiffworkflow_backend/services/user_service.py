@@ -4,7 +4,6 @@ from typing import Optional
 
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -13,9 +12,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
-from spiffworkflow_backend.models.user_group_assignment_waiting import (
-    UserGroupAssignmentWaitingModel,
-)
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 
 
 class UserService:

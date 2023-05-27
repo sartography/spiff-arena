@@ -5,10 +5,10 @@ from typing import Generator
 
 import pytest
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.services.element_units_service import BpmnSpecDict
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 #
 # we don't want to fully flex every aspect of the spiff-element-units
