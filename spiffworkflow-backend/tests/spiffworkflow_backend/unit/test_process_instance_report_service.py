@@ -2,9 +2,6 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -12,6 +9,9 @@ from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportMetadataInvalidError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.user_service import UserService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceReportService(BaseTest):

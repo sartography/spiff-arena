@@ -4,10 +4,7 @@ from typing import List
 from typing import Optional
 
 from flask import current_app
-
-from spiffworkflow_backend.models.process_instance_queue import (
-    ProcessInstanceQueueModel,
-)
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 
 
 class ExpectedLockNotFoundError(Exception):

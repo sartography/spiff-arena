@@ -1,9 +1,9 @@
 """Test_users_controller."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.user import UserModel
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUsersController(BaseTest):

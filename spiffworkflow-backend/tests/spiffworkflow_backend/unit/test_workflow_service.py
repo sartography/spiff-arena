@@ -8,12 +8,10 @@ import pytest
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
-from spiffworkflow_backend.services.workflow_service import (
-    WorkflowService,
-)
+from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartEvent
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 BPMN_WRAPPER = """
   <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"

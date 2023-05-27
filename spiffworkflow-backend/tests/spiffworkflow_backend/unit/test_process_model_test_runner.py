@@ -2,13 +2,13 @@ import os
 from typing import Optional
 
 import pytest
-from flask import current_app
 from flask import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
+from flask import current_app
 from spiffworkflow_backend.services.process_model_test_runner_service import NoTestCasesFoundError
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGiven
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessModelTestRunner(BaseTest):

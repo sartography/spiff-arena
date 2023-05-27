@@ -20,14 +20,12 @@ from werkzeug.wrappers import Response
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
-from spiffworkflow_backend.services.authentication_service import (
-    MissingAccessTokenError,
-)
+from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.group_service import GroupService

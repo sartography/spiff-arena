@@ -1,7 +1,6 @@
 """Process_instance_processor."""
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
-import _strptime  # type: ignore
 import decimal
 import json
 import logging
@@ -22,6 +21,7 @@ from typing import TypedDict
 from typing import Union
 from uuid import UUID
 
+import _strptime  # type: ignore
 import dateparser
 import pytz
 from flask import current_app
@@ -35,9 +35,7 @@ from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEng
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
-from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
-    EventBasedGatewayConverter,
-)
+from SpiffWorkflow.bpmn.serializer.task_spec import EventBasedGatewayConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -48,16 +46,12 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-from sqlalchemy import and_
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.bpmn_process_definition import (
-    BpmnProcessDefinitionModel,
-)
-from spiffworkflow_backend.models.bpmn_process_definition_relationship import (
-    BpmnProcessDefinitionRelationshipModel,
-)  # noqa: F401
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
+
+# noqa: F401
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -68,13 +62,9 @@ from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
@@ -82,9 +72,7 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
-from spiffworkflow_backend.services.element_units_service import (
-    ElementUnitsService,
-)
+from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -93,17 +81,12 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
-from spiffworkflow_backend.services.workflow_execution_service import (
-    TaskModelSavingDelegate,
-)
-from spiffworkflow_backend.services.workflow_execution_service import (
-    WorkflowExecutionService,
-)
-from spiffworkflow_backend.specs.start_event import (
-    StartEvent,
-)
+from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
+from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
+from spiffworkflow_backend.specs.start_event import StartEvent
+from sqlalchemy import and_
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
 

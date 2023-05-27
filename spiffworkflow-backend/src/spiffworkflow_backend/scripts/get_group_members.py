@@ -3,9 +3,7 @@ from typing import Any
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.group import GroupNotFoundError
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 
 

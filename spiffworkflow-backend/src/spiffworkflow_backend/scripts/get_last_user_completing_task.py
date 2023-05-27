@@ -2,9 +2,7 @@
 from typing import Any
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 

@@ -4,14 +4,10 @@ from datetime import timezone
 from typing import Optional
 
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
-from spiffworkflow_backend.models.process_instance_file_data import (
-    ProcessInstanceFileDataModel,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessInstanceService(BaseTest):

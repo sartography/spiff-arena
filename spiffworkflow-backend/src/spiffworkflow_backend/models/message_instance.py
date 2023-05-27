@@ -1,25 +1,25 @@
 """Message_instance."""
 import enum
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Optional
-from typing import TYPE_CHECKING
 
 from flask import current_app
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 
 if TYPE_CHECKING:
-    from spiffworkflow_backend.models.message_instance_correlation import (  # noqa: F401
+    from spiffworkflow_backend.models.message_instance_correlation import (  # noqa: F401,I001
         MessageInstanceCorrelationRuleModel,
     )
 

@@ -8,7 +8,6 @@ from typing import Optional
 
 import pytz
 from flask import current_app
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File

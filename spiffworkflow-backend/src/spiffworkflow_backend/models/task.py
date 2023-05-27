@@ -1,10 +1,10 @@
 """Task."""
 import enum
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import List
 from typing import Optional
-from typing import TYPE_CHECKING
 from typing import Union
 
 import marshmallow
@@ -15,15 +15,13 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 if TYPE_CHECKING:
-    from spiffworkflow_backend.models.human_task_user import (  # noqa: F401
-        HumanTaskModel,
-    )
+    from spiffworkflow_backend.models.human_task_user import HumanTaskModel  # noqa: F401
 
 
 class TaskNotFoundError(Exception):

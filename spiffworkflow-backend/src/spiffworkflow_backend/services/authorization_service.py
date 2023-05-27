@@ -2,8 +2,8 @@ import inspect
 import re
 from dataclasses import dataclass
 from hashlib import sha256
-from hmac import compare_digest
 from hmac import HMAC
+from hmac import compare_digest
 from typing import Optional
 from typing import Set
 from typing import TypedDict
@@ -15,9 +15,6 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from sqlalchemy import or_
-from sqlalchemy import text
-
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -36,6 +33,8 @@ from spiffworkflow_backend.services.authentication_service import TokenNotProvid
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import or_
+from sqlalchemy import text
 
 
 class PermissionsFileNotSetError(Exception):
