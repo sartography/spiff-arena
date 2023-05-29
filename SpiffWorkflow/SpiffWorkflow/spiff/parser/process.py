@@ -1,20 +1,49 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 import os
 
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser
-from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator, full_tag, ValidationException
+from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator, full_tag
 
-from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent
-from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent
-from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import IntermediateThrowEvent, BoundaryEvent, IntermediateCatchEvent
+from SpiffWorkflow.bpmn.specs.defaults import (
+    StartEvent,
+    EndEvent,
+    IntermediateCatchEvent,
+    IntermediateThrowEvent,
+    BoundaryEvent,
+)
 
-from SpiffWorkflow.spiff.specs.none_task import NoneTask
-from SpiffWorkflow.spiff.specs.manual_task import ManualTask
-from SpiffWorkflow.spiff.specs.user_task import UserTask
-from SpiffWorkflow.spiff.specs.script_task import ScriptTask
-from SpiffWorkflow.spiff.specs.subworkflow_task import SubWorkflowTask, TransactionSubprocess, CallActivity
-from SpiffWorkflow.spiff.specs.service_task import ServiceTask
-from SpiffWorkflow.spiff.specs.events.event_types import SendTask, ReceiveTask
-from SpiffWorkflow.spiff.specs.business_rule_task import BusinessRuleTask
+from SpiffWorkflow.spiff.specs.defaults import (
+    UserTask,
+    ManualTask,
+    NoneTask,
+    ScriptTask,
+    SendTask,
+    ReceiveTask,
+    BusinessRuleTask,
+    SubWorkflowTask,
+    CallActivity,
+    TransactionSubprocess,
+    ServiceTask
+)
+
 from SpiffWorkflow.spiff.parser.task_spec import (
     SpiffTaskParser,
     SubWorkflowParser,
@@ -23,11 +52,15 @@ from SpiffWorkflow.spiff.parser.task_spec import (
     ScriptTaskParser,
     BusinessRuleTaskParser
 )
-from SpiffWorkflow.spiff.parser.event_parsers import (SpiffStartEventParser, SpiffEndEventParser, SpiffBoundaryEventParser,
-    SpiffIntermediateCatchEventParser, SpiffIntermediateThrowEventParser, SpiffSendTaskParser, SpiffReceiveTaskParser)
-
-
-from SpiffWorkflow.spiff.parser.task_spec import BusinessRuleTaskParser
+from SpiffWorkflow.spiff.parser.event_parsers import (
+    SpiffStartEventParser,
+    SpiffEndEventParser,
+    SpiffBoundaryEventParser,
+    SpiffIntermediateCatchEventParser,
+    SpiffIntermediateThrowEventParser,
+    SpiffSendTaskParser,
+    SpiffReceiveTaskParser
+)
 
 SPIFF_XSD = os.path.join(os.path.dirname(__file__), 'schema', 'spiffworkflow.xsd')
 VALIDATOR = BpmnValidator(imports={'spiffworkflow': SPIFF_XSD})
@@ -53,9 +86,3 @@ class SpiffBpmnParser(BpmnDmnParser):
         full_tag('receiveTask'): (SpiffReceiveTaskParser, ReceiveTask),
         full_tag('businessRuleTask'): (BusinessRuleTaskParser, BusinessRuleTask)
     }
-
-    def create_parser(self, node, filename=None, lane=None):
-        parser = self.PROCESS_PARSER_CLASS(self, node, self.namespaces, self.data_stores, filename=filename, lane=lane)
-        if parser.get_id() in self.process_parsers:
-            raise ValidationException(f'Duplicate process ID: {parser.get_id()}', node=node, file_name=filename)
-        self.process_parsers[parser.get_id()] = parser

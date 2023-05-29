@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-
-import unittest
-
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
-from SpiffWorkflow.camunda.specs.events.event_definitions import MessageEventDefinition
+from SpiffWorkflow.camunda.specs.event_definitions import MessageEventDefinition
 from .BaseTestCase import BaseTestCase
 
 __author__ = 'kellym'
@@ -13,7 +10,7 @@ __author__ = 'kellym'
 class ExternalMessageBoundaryTest(BaseTestCase):
 
     def setUp(self):
-        spec, subprocesses = self.load_workflow_spec('external_message.bpmn', 'ExternalMessage')
+        spec, subprocesses = self.load_workflow_spec('external_message.bpmn', 'Process_1iggtmi')
         self.workflow = BpmnWorkflow(spec, subprocesses)
 
     def testRunThroughHappy(self):
@@ -36,10 +33,10 @@ class ExternalMessageBoundaryTest(BaseTestCase):
         # here because the thread just dies and doesn't lead to a task, we expect the data
         # to die with it.
         # item 1 should be at 'Pause'
-        self.assertEqual('Pause',ready_tasks[1].task_spec.description)
+        self.assertEqual('Pause',ready_tasks[1].task_spec.bpmn_name)
         self.assertEqual('SomethingImportant', ready_tasks[1].data['interrupt_var'])
         self.assertEqual(True, ready_tasks[1].data['caughtinterrupt'])
-        self.assertEqual('Meaningless User Task',ready_tasks[0].task_spec.description)
+        self.assertEqual('Meaningless User Task',ready_tasks[0].task_spec.bpmn_name)
         self.assertEqual(False, ready_tasks[0].data['caughtinterrupt'])
         ready_tasks[1].run()
         self.workflow.do_engine_steps()
@@ -55,8 +52,3 @@ class ExternalMessageBoundaryTest(BaseTestCase):
         event.run()
         self.assertEqual('SomethingDrastic', event.data['reset_var'])
         self.assertEqual(False, event.data['caughtinterrupt'])
-
-def suite():
-    return unittest.TestLoader().loadTestsFromTestCase(ExternalMessageBoundaryTest)
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())

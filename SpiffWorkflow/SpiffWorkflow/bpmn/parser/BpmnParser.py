@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (C) 2012 Matthew Hampton
 #
-# This library is free software; you can redistribute it and/or
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# version 3.0 of the License, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# SpiffWorkflow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -23,26 +23,36 @@ import os
 from lxml import etree
 from lxml.etree import LxmlError
 
-from SpiffWorkflow.bpmn.specs.events.event_definitions import NoneEventDefinition
+from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec
+from SpiffWorkflow.bpmn.specs.defaults import (
+    UserTask,
+    ManualTask,
+    NoneTask,
+    ScriptTask,
+    ServiceTask,
+    CallActivity,
+    SubWorkflowTask,
+    TransactionSubprocess,
+    InclusiveGateway,
+    ExclusiveGateway,
+    ParallelGateway,
+    StartEvent,
+    EndEvent,
+    IntermediateCatchEvent,
+    IntermediateThrowEvent,
+    SendTask,
+    ReceiveTask,
+    BoundaryEvent,
+    EventBasedGateway
+)
+from SpiffWorkflow.bpmn.specs.event_definitions import NoneEventDefinition, TimerEventDefinition
+from SpiffWorkflow.bpmn.specs.mixins.subworkflow_task import SubWorkflowTask as SubWorkflowTaskMixin
+from SpiffWorkflow.bpmn.specs.mixins.events.start_event import StartEvent as StartEventMixin
 
 from .ValidationException import ValidationException
-from ..specs.BpmnProcessSpec import BpmnProcessSpec
-from ..specs.data_spec import BpmnDataStoreSpecification
-from ..specs.events.EndEvent import EndEvent
-from ..specs.events.StartEvent import StartEvent
-from ..specs.events.IntermediateEvent import BoundaryEvent, IntermediateCatchEvent, IntermediateThrowEvent, EventBasedGateway
-from ..specs.events.IntermediateEvent import SendTask, ReceiveTask
-from ..specs.SubWorkflowTask import CallActivity, SubWorkflowTask, TransactionSubprocess
-from ..specs.ExclusiveGateway import ExclusiveGateway
-from ..specs.InclusiveGateway import InclusiveGateway
-from ..specs.ManualTask import ManualTask
-from ..specs.NoneTask import NoneTask
-from ..specs.ParallelGateway import ParallelGateway
-from ..specs.ScriptTask import ScriptTask
-from ..specs.ServiceTask import ServiceTask
-from ..specs.UserTask import UserTask
 from .ProcessParser import ProcessParser
 from .node_parser import DEFAULT_NSMAP
+from .spec_description import SPEC_DESCRIPTIONS
 from .util import full_tag, xpath_eval, first
 from .TaskParser import TaskParser
 from .task_parsers import (
@@ -86,7 +96,7 @@ class BpmnValidator:
         except ValidationException as ve:
             ve.file_name = filename
             ve.line_number = self.validator.error_log.last_error.line
-        except LxmlError as le:
+        except LxmlError:
             last_error = self.validator.error_log.last_error
             raise ValidationException(last_error.message, file_name=filename,
                                       line_number=last_error.line)
@@ -132,14 +142,14 @@ class BpmnParser(object):
 
     DATA_STORE_CLASSES = {}
 
-    def __init__(self, namespaces=None, validator=None):
+    def __init__(self, namespaces=None, validator=None, spec_descriptions=SPEC_DESCRIPTIONS):
         """
         Constructor.
         """
         self.namespaces = namespaces or DEFAULT_NSMAP
         self.validator = validator
+        self.spec_descriptions = spec_descriptions
         self.process_parsers = {}
-        self.process_parsers_by_name = {}
         self.collaborations = {}
         self.process_dependencies = set()
         self.messages = {}
@@ -153,15 +163,13 @@ class BpmnParser(object):
             return self.PARSER_CLASSES[tag]
         return None, None
 
-    def get_process_parser(self, process_id_or_name):
+    def get_process_parser(self, process_id):
         """
         Returns the ProcessParser for the given process ID or name. It matches
         by name first.
         """
-        if process_id_or_name in self.process_parsers_by_name:
-            return self.process_parsers_by_name[process_id_or_name]
-        elif process_id_or_name in self.process_parsers:
-            return self.process_parsers[process_id_or_name]
+        if process_id in self.process_parsers:
+            return self.process_parsers[process_id]
 
     def get_process_ids(self):
         """Returns a list of process IDs"""
@@ -186,7 +194,19 @@ class BpmnParser(object):
         """
         for filename in filenames:
             with open(filename, 'r') as f:
-                self.add_bpmn_xml(etree.parse(f), filename=filename)
+                self.add_bpmn_io(f, filename)
+
+    def add_bpmn_io(self, file_like_object, filename=None):
+        """
+        Add the given BPMN file like object to the parser's set. 
+        """
+        self.add_bpmn_xml(etree.parse(file_like_object), filename)
+
+    def add_bpmn_str(self, bpmn_str, filename=None):
+        """
+        Add the given BPMN string to the parser's set. 
+        """
+        self.add_bpmn_xml(etree.fromstring(bpmn_str), filename)
 
     def add_bpmn_xml(self, bpmn, filename=None):
         """
@@ -286,37 +306,37 @@ class BpmnParser(object):
 
     def create_parser(self, node, filename=None, lane=None):
         parser = self.PROCESS_PARSER_CLASS(self, node, self.namespaces, self.data_stores, filename=filename, lane=lane)
-        if parser.get_id() in self.process_parsers:
-            raise ValidationException(f'Duplicate process ID: {parser.get_id()}', node=node, file_name=filename)
-        if parser.get_name() in self.process_parsers_by_name:
-            raise ValidationException(f'Duplicate process name: {parser.get_name()}', node=node, file_name=filename)
-        self.process_parsers[parser.get_id()] = parser
-        self.process_parsers_by_name[parser.get_name()] = parser
+        if parser.bpmn_id in self.process_parsers:
+            raise ValidationException(f'Duplicate process ID: {parser.bpmn_id}', node=node, file_name=filename)
+        self.process_parsers[parser.bpmn_id] = parser
 
     def get_process_dependencies(self):
         return self.process_dependencies
 
-    def get_spec(self, process_id_or_name):
+    def get_spec(self, process_id, required=True):
         """
         Parses the required subset of the BPMN files, in order to provide an
         instance of BpmnProcessSpec (i.e. WorkflowSpec)
         for the given process ID or name. The Name is matched first.
         """
-        parser = self.get_process_parser(process_id_or_name)
-        if parser is None:
+        parser = self.get_process_parser(process_id)
+        if required and parser is None:
             raise ValidationException(
-                f"The process '{process_id_or_name}' was not found. "
+                f"The process '{process_id}' was not found. "
                 f"Did you mean one of the following: "
                 f"{', '.join(self.get_process_ids())}?")
-        return parser.get_spec()
+        elif parser is not None:
+            return parser.get_spec()
 
-    def get_subprocess_specs(self, name, specs=None):
+    def get_subprocess_specs(self, name, specs=None, require_call_activity_specs=True):
         used = specs or {}
         wf_spec = self.get_spec(name)
         for task_spec in wf_spec.task_specs.values():
-            if isinstance(task_spec, SubWorkflowTask) and task_spec.spec not in used:
-                used[task_spec.spec] = self.get_spec(task_spec.spec)
-                self.get_subprocess_specs(task_spec.spec, used)
+            if isinstance(task_spec, SubWorkflowTaskMixin) and task_spec.spec not in used:
+                subprocess_spec = self.get_spec(task_spec.spec, required=require_call_activity_specs)
+                used[task_spec.spec] = subprocess_spec
+                if subprocess_spec is not None:
+                    self.get_subprocess_specs(task_spec.spec, used)
         return used
 
     def find_all_specs(self):
@@ -332,16 +352,24 @@ class BpmnParser(object):
         self.find_all_specs()
         spec = BpmnProcessSpec(name)
         subprocesses = {}
-        start = StartEvent(spec, 'Start Collaboration', NoneEventDefinition())
+        participant_type = self._get_parser_class(full_tag('callActivity'))[1]
+        start_type = self._get_parser_class(full_tag('startEvent'))[1]
+        end_type = self._get_parser_class(full_tag('endEvent'))[1]
+        start = start_type(spec, 'Start Collaboration', NoneEventDefinition())
         spec.start.connect(start)
-        end = EndEvent(spec, 'End Collaboration', NoneEventDefinition())
+        end = end_type(spec, 'End Collaboration', NoneEventDefinition())
         end.connect(spec.end)
         for process in self.collaborations[name]:
             process_parser = self.get_process_parser(process)
             if process_parser and process_parser.process_executable:
-                participant = CallActivity(spec, process, process)
-                start.connect(participant)
-                participant.connect(end)
-                subprocesses[process] = self.get_spec(process)
+                sp_spec = self.get_spec(process)
+                subprocesses[process] = sp_spec
                 subprocesses.update(self.get_subprocess_specs(process))
+                if len([s for s in sp_spec.task_specs.values() if 
+                        isinstance(s, StartEventMixin) and 
+                        isinstance(s.event_definition, (NoneEventDefinition, TimerEventDefinition))
+                ]):
+                    participant = participant_type(spec, process, process)
+                    start.connect(participant)
+                    participant.connect(end)
         return spec, subprocesses

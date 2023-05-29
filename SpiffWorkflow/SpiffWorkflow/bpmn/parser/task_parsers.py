@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2012 Matthew Hampton
+# Copyright (C) 2012 Matthew Hampton, 2023 Sartography
 #
-# This library is free software; you can redistribute it and/or
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# version 3.0 of the License, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# SpiffWorkflow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -85,13 +86,6 @@ class SubprocessParser:
                 'No "calledElement" attribute for Call Activity.',
                 node=task_parser.node,
                 file_name=task_parser.filename)
-        parser = task_parser.process_parser.parser.get_process_parser(called_element)
-        if parser is None:
-            raise ValidationException(
-                f"The process '{called_element}' was not found. Did you mean one of the following: "
-                f"{', '.join(task_parser.process_parser.parser.get_process_ids())}?",
-                node=task_parser.node,
-                file_name=task_parser.filename)
         return called_element
 
 
@@ -99,10 +93,7 @@ class SubWorkflowParser(TaskParser):
 
     def create_task(self):
         subworkflow_spec = SubprocessParser.get_subprocess_spec(self)
-        return self.spec_class(
-            self.spec, self.get_task_spec_name(), subworkflow_spec,
-            lane=self.lane, position=self.position,
-            description=self.node.get('name', None))
+        return self.spec_class(self.spec, self.bpmn_id, subworkflow_spec=subworkflow_spec, **self.bpmn_attributes)
 
 
 class CallActivityParser(TaskParser):
@@ -110,23 +101,14 @@ class CallActivityParser(TaskParser):
 
     def create_task(self):
         subworkflow_spec = SubprocessParser.get_call_activity_spec(self)
-        return self.spec_class(
-            self.spec, self.get_task_spec_name(), subworkflow_spec,
-            lane=self.lane, position=self.position,
-            description=self.node.get('name', None))
+        return self.spec_class(self.spec, self.bpmn_id, subworkflow_spec=subworkflow_spec, **self.bpmn_attributes)
 
 
 class ScriptTaskParser(TaskParser):
-    """
-    Parses a script task
-    """
+    """Parses a script task"""
 
     def create_task(self):
-        script = self.get_script()
-        return self.spec_class(self.spec, self.get_task_spec_name(), script,
-                               lane=self.lane,
-                               position=self.position,
-                               description=self.node.get('name', None))
+        return self.spec_class(self.spec, self.bpmn_id, script=self.get_script(), **self.bpmn_attributes)
 
     def get_script(self):
         """
@@ -138,6 +120,6 @@ class ScriptTaskParser(TaskParser):
             return one(self.xpath('.//bpmn:script')).text
         except AssertionError as ae:
             raise ValidationException(
-                f"Invalid Script Task.  No Script Provided. " + str(ae),
+                "Invalid Script Task.  No Script Provided. " + str(ae),
                 node=self.node, file_name=self.filename)
 
