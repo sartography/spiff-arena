@@ -2,7 +2,6 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Any
 from typing import Dict
-from typing import Optional
 from typing import Tuple
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
@@ -20,6 +19,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 StartConfiguration = Tuple[int, int, int]
 
 # TODO: cylce timers and repeat counts?
+
+
 class StartEvent(DefaultStartEvent):  # type: ignore
     def __init__(self, wf_spec, bpmn_id, event_definition, **kwargs):  # type: ignore
         if isinstance(event_definition, TimerEventDefinition):
@@ -48,18 +49,18 @@ class StartEvent(DefaultStartEvent):  # type: ignore
             if isinstance(self.timer_definition, TimeDateEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_time_or_duration(evaluated_expression)
                 time_delta = parsed_duration - now_in_utc
-                start_delay_in_seconds = time_delta.seconds  # type: ignore
+                start_delay_in_seconds = time_delta.seconds
             elif isinstance(self.timer_definition, DurationTimerEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_iso_duration(evaluated_expression)
                 time_delta = TimerEventDefinition.get_timedelta_from_start(parsed_duration, now_in_utc)
-                start_delay_in_seconds = time_delta.seconds  # type: ignore
+                start_delay_in_seconds = time_delta.seconds
             elif isinstance(self.timer_definition, CycleTimerEventDefinition):
-                cycles, start, duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)  # type: ignore
+                cycles, start, cycle_duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
                 # TODO: hack to get this kicked over to the background processor since creating
                 # new instances per cycle need to happen there.
                 time_delta = start - now_in_utc + timedelta(seconds=10)
-                start_delay_in_seconds = time_delta.seconds  # type: ignore
-                duration = duration.seconds
+                start_delay_in_seconds = time_delta.seconds
+                duration = cycle_duration.seconds
 
         return (cycles, start_delay_in_seconds, duration)
 
@@ -70,6 +71,7 @@ class StartEvent(DefaultStartEvent):  # type: ignore
         if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
             evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
         return evaluated_expression
+
 
 class StartEventConverter(EventConverter):  # type: ignore
     def __init__(self, registry):  # type: ignore

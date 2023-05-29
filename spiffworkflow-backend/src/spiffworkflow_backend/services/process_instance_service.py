@@ -63,13 +63,12 @@ class ProcessInstanceService:
             start_configuration = WorkflowService.next_start_event_configuration(
                 processor.bpmn_process_instance, datetime.now(timezone.utc)
             )
-        except Exception as e:
-            raise e
+        except Exception:
             start_configuration = None
 
         if start_configuration is None:
             start_configuration = (0, 0, 0)
-            
+
         return start_configuration
 
     @classmethod
@@ -108,7 +107,7 @@ class ProcessInstanceService:
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        process_instance_model, _ =  cls.create_process_instance(process_model, user)
+        process_instance_model, _ = cls.create_process_instance(process_model, user)
         return process_instance_model
 
     @classmethod

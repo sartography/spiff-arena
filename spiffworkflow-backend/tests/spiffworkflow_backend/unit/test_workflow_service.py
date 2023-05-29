@@ -87,7 +87,7 @@ class TestWorkflowService(BaseTest):
             """,
             "no_tasks",
         )
-        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, now_in_utc)
+        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
         assert delay == 0
 
     def test_run_at_delay_is_30_for_30_second_duration_start_timer_event(self, now_in_utc: datetime) -> None:
@@ -108,7 +108,7 @@ class TestWorkflowService(BaseTest):
             """,
             "Process_aldvgey",
         )
-        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, now_in_utc)
+        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
         assert delay == 30
 
     def test_run_at_delay_is_300_if_5_mins_before_date_start_timer_event(
@@ -131,5 +131,7 @@ class TestWorkflowService(BaseTest):
             """,
             "Process_aldvgey",
         )
-        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, example_start_datetime_minus_5_mins_in_utc)
+        _, delay, _ = WorkflowService.next_start_event_configuration(
+            workflow, example_start_datetime_minus_5_mins_in_utc
+        )  # type: ignore
         assert delay == 300
