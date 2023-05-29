@@ -73,5 +73,8 @@ from spiffworkflow_backend.models.process_instance_queue import (
 from spiffworkflow_backend.models.active_user import (
     ActiveUserModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.process_model_cycle import (
+    ProcessModelCycleModel,
+)  # noqa: F401
 
 add_listeners()

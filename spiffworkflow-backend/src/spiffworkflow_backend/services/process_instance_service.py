@@ -107,8 +107,13 @@ class ProcessInstanceService:
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        process_instance_model, _ = cls.create_process_instance(process_model, user)
+        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(process_model, user)
+        cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         return process_instance_model
+
+    @classmethod
+    def register_process_model_cycles(cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int) -> None:
+        pass
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
