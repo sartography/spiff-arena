@@ -63,7 +63,6 @@ class ProcessInstanceService:
                 processor.bpmn_process_instance, datetime.now(timezone.utc)
             )
         except Exception as e:
-            raise e
             delay_in_seconds = 0
         return delay_in_seconds
 

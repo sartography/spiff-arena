@@ -1,7 +1,7 @@
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
@@ -37,12 +37,7 @@ class StartEvent(DefaultStartEvent):  # type: ignore
         parser_config[full_tag("startEvent")] = (SpiffStartEventParser, StartEvent)
 
     def start_delay_in_seconds(self, my_task: SpiffTask, now_in_utc: datetime) -> int:
-        script_engine = my_task.workflow.script_engine
-        evaluated_expression = None
-        parsed_duration = None
-
-        if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
-            evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
+        evaluated_expression = self.evaluated_timer_expression(my_task)
 
         if evaluated_expression is not None:
             if isinstance(self.timer_definition, TimeDateEventDefinition):
@@ -53,14 +48,37 @@ class StartEvent(DefaultStartEvent):  # type: ignore
                 parsed_duration = TimerEventDefinition.parse_iso_duration(evaluated_expression)
                 time_delta = TimerEventDefinition.get_timedelta_from_start(parsed_duration, now_in_utc)
                 return time_delta.seconds  # type: ignore
-            elif isinstance(self.timer_definition, CycleTimerEventDefinition):
-                _, start, _ = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
-                # TODO: hack to get this kicked over to the background processor since creating
-                # new instances per cycle need to happen there.
-                time_delta = start - now_in_utc + timedelta(seconds=10)
-                return time_delta.seconds  # type: ignore
+            else:
+                cycle_configuration = self.cycle_configuration(my_task, evaluated_expression)
+                if cycle_configuration is not None:
+                    _, start, _ = cycle_configuration
+                    # TODO: hack to get this kicked over to the background processor since creating
+                    # new instances per cycle need to happen there.
+                    time_delta = start - now_in_utc + timedelta(seconds=10)
+                    return time_delta.seconds  # type: ignore
 
         return 0
+
+    def evaluated_timer_expression(self, my_task: SpiffTask) -> Any:
+        script_engine = my_task.workflow.script_engine
+        evaluated_expression = None
+        parsed_duration = None
+
+        if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
+            evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
+        return evaluated_expression
+
+    def is_cycle_timer(self) -> bool:
+        return isinstance(self.timer_definition, CycleTimerEventDefinition)
+
+    def cycle_configuration(self, my_task: SpiffTask, evaluated_expression: Optional[Any] = None) -> Optional[Tuple[int, datetime, timedelta]]:
+        if evaluated_expression is None:
+            evaluated_expression = self.evaluated_timer_expression(my_task)
+
+        if evaluated_expression is not None:
+            if isinstance(self.timer_definition, CycleTimerEventDefinition):
+                return TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
+        return None
 
 
 class StartEventConverter(EventConverter):  # type: ignore
