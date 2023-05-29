@@ -1,13 +1,15 @@
-from flask.app import Flask
 import json
-from spiffworkflow_backend.models.secret_model import SecretModel, SecretModelSchema
-from spiffworkflow_backend.exceptions.api_error import ApiError
+
 import pytest
-from spiffworkflow_backend.models.user import UserModel
+from flask.app import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.secret_model import SecretModel
+from spiffworkflow_backend.models.secret_model import SecretModelSchema
+from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.secret_service import SecretService
 
 from tests.spiffworkflow_backend.integration.test_secret_service import SecretServiceTestHelpers
-from spiffworkflow_backend.services.secret_service import SecretService
 
 
 class TestSecretsController(SecretServiceTestHelpers):
@@ -133,5 +135,5 @@ class TestSecretsController(SecretServiceTestHelpers):
         )
         assert secret_response.status_code == 200
         first_secret_in_results = secret_response.json["results"][0]
-        assert first_secret_in_results['key'] == self.test_key
-        assert 'value' not in first_secret_in_results
+        assert first_secret_in_results["key"] == self.test_key
+        assert "value" not in first_secret_in_results
