@@ -143,18 +143,18 @@ class ProcessInstanceService:
         db.session.commit()
 
     @classmethod
-    def schedule_next_process_model_cycle(cls, process_model_identifier: str) -> None:
+    def schedule_next_process_model_cycle(cls, process_instance_model: ProcessInstanceModel) -> None:
         cycle = ProcessModelCycleModel.query.filter(
-            ProcessModelCycleModel.process_model_identifier == process_model_identifier,
+            ProcessModelCycleModel.process_model_identifier == process_instance_model.process_model_identifier
         ).first()
 
         if cycle is None or cycle.cycle_count == 0:
             return
 
         if cycle.cycle_count == -1 or cycle.current_cycle < cycle.cycle_count:
-            process_model = ProcessModelService.get_process_model(process_model_identifier)
+            process_model = ProcessModelService.get_process_model(process_instance_model.process_model_identifier)
             start_configuration = (cycle.cycle_count, cycle.duration_in_seconds, cycle.duration_in_seconds)
-            cls.create_process_instance(process_model, g.user, start_configuration)
+            cls.create_process_instance(process_model, process_instance_model.process_initiator, start_configuration)
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
@@ -222,7 +222,7 @@ class ProcessInstanceService:
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
                 if process_instance.status == "complete":
-                    cls.schedule_next_process_model_cycle(process_instance.process_model_identifier)
+                    cls.schedule_next_process_model_cycle(process_instance)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
