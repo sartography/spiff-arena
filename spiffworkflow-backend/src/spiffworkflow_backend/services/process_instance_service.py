@@ -155,6 +155,9 @@ class ProcessInstanceService:
             process_model = ProcessModelService.get_process_model(process_instance_model.process_model_identifier)
             start_configuration = (cycle.cycle_count, cycle.duration_in_seconds, cycle.duration_in_seconds)
             cls.create_process_instance(process_model, process_instance_model.process_initiator, start_configuration)
+            cycle.current_cycle += 1
+            db.session.add(cycle)
+            db.session.commit()
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
