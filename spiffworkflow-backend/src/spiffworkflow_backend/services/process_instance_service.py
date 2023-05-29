@@ -77,6 +77,7 @@ class ProcessInstanceService:
         cls,
         process_model: ProcessModelInfo,
         user: UserModel,
+            start_configuration: Optional[StartConfiguration] = None,
     ) -> Tuple[ProcessInstanceModel, StartConfiguration]:
         """Get_process_instance_from_spec."""
         db.session.commit()
@@ -95,10 +96,13 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        cycles, delay_in_seconds, duration = cls.next_start_event_configuration(process_instance_model)
+
+        if start_configuration is None:
+            start_configuration = cls.next_start_event_configuration(process_instance_model)
+        _, delay_in_seconds, _ = start_configuration
         run_at_in_seconds = round(time.time()) + delay_in_seconds
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
-        return (process_instance_model, (cycles, delay_in_seconds, duration))
+        return (process_instance_model, start_configuration)
 
     @classmethod
     def create_process_instance_from_process_model_identifier(
@@ -137,6 +141,20 @@ class ProcessInstanceService:
             db.session.add(cycle)
 
         db.session.commit()
+
+    @classmethod
+    def schedule_next_process_model_cycle(cls, process_model_identifier: str) -> None:
+        cycle = ProcessModelCycleModel.query.filter(
+            ProcessModelCycleModel.process_model_identifier == process_model_identifier,
+        ).first()
+
+        if cycle is None or cycle.cycle_count == 0:
+            return
+
+        if cycle.cycle_count == -1 or cycle.current_cycle < cycle.cycle_count:
+            process_model = ProcessModelService.get_process_model(process_model_identifier)
+            start_configuration = (cycle.cycle_count, cycle.duration_in_seconds, cycle.duration_in_seconds)
+            cls.create_process_instance(process_model, g.user, start_configuration)
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
@@ -203,6 +221,8 @@ class ProcessInstanceService:
                 cls.run_process_instance_with_processor(
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
+                if process_instance.status == "complete":
+                    cls.schedule_next_process_model_cycle(process_instance.process_model_identifier)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
