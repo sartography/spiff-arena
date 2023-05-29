@@ -29,9 +29,9 @@ from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
@@ -108,18 +108,22 @@ class ProcessInstanceService:
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(process_model, user)
+        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
+            process_model, user
+        )
         cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         return process_instance_model
 
     @classmethod
-    def register_process_model_cycles(cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int) -> None:
+    def register_process_model_cycles(
+        cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int
+    ) -> None:
         # clean up old cycle record if it exists. event if the given cycle_count is 0 the previous version
         # of the model could have included a cycle timer start event
         cycles = ProcessModelCycleModel.query.filter(
             ProcessModelCycleModel.process_model_identifier == process_model_identifier,
         ).all()
-        
+
         for cycle in cycles:
             db.session.delete(cycle)
 
@@ -128,9 +132,10 @@ class ProcessInstanceService:
                 process_model_identifier=process_model_identifier,
                 cycle_count=cycle_count,
                 duration_in_seconds=duration_in_seconds,
-                current_cycle=0)
+                current_cycle=0,
+            )
             db.session.add(cycle)
-            
+
         db.session.commit()
 
     @classmethod

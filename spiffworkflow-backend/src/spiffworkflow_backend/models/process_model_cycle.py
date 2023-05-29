@@ -1,12 +1,8 @@
 """Process_instance_queue."""
 from dataclasses import dataclass
-from typing import Union
-
-from sqlalchemy import ForeignKey
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
 @dataclass
