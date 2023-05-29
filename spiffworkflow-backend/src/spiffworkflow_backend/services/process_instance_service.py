@@ -62,7 +62,8 @@ class ProcessInstanceService:
             delay_in_seconds = WorkflowService.calculate_run_at_delay_in_seconds(
                 processor.bpmn_process_instance, datetime.now(timezone.utc)
             )
-        except Exception:
+        except Exception as e:
+            raise e
             delay_in_seconds = 0
         return delay_in_seconds
 

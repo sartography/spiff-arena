@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
 from typing import Dict
 
@@ -14,6 +15,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from flask import current_app
 
 # TODO: cylce timers and repeat counts?
 class StartEvent(DefaultStartEvent):  # type: ignore
@@ -52,7 +54,11 @@ class StartEvent(DefaultStartEvent):  # type: ignore
                 time_delta = TimerEventDefinition.get_timedelta_from_start(parsed_duration, now_in_utc)
                 return time_delta.seconds  # type: ignore
             elif isinstance(self.timer_definition, CycleTimerEventDefinition):
-                return 0
+                _, start, _ = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
+                # TODO: hack to get this kicked over to the background processor since creating
+                # new instances per cycle need to happen there.
+                time_delta = start - now_in_utc + timedelta(seconds=10)
+                return time_delta.seconds  # type: ignore
 
         return 0
 
