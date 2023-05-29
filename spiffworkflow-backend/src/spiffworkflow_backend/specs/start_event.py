@@ -1,7 +1,9 @@
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
-from typing import Dict, Optional, Tuple
+from typing import Dict
+from typing import Optional
+from typing import Tuple
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
@@ -15,7 +17,6 @@ from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
-from flask import current_app
 
 # TODO: cylce timers and repeat counts?
 class StartEvent(DefaultStartEvent):  # type: ignore
@@ -62,7 +63,6 @@ class StartEvent(DefaultStartEvent):  # type: ignore
     def evaluated_timer_expression(self, my_task: SpiffTask) -> Any:
         script_engine = my_task.workflow.script_engine
         evaluated_expression = None
-        parsed_duration = None
 
         if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
             evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
@@ -71,13 +71,15 @@ class StartEvent(DefaultStartEvent):  # type: ignore
     def is_cycle_timer(self) -> bool:
         return isinstance(self.timer_definition, CycleTimerEventDefinition)
 
-    def cycle_configuration(self, my_task: SpiffTask, evaluated_expression: Optional[Any] = None) -> Optional[Tuple[int, datetime, timedelta]]:
+    def cycle_configuration(
+        self, my_task: SpiffTask, evaluated_expression: Optional[Any] = None
+    ) -> Optional[Tuple[int, datetime, timedelta]]:
         if evaluated_expression is None:
             evaluated_expression = self.evaluated_timer_expression(my_task)
 
         if evaluated_expression is not None:
             if isinstance(self.timer_definition, CycleTimerEventDefinition):
-                return TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
+                return TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)  # type: ignore
         return None
 
 
