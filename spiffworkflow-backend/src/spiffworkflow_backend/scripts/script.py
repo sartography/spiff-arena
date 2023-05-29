@@ -5,15 +5,13 @@ import importlib
 import os
 import pkgutil
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import Any
-from typing import Callable
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceNotFoundError
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
 # Generally speaking, having some global in a flask app is TERRIBLE.

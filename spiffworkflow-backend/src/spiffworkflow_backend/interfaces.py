@@ -1,6 +1,6 @@
 """Interfaces."""
-from typing import NewType
 from typing import TYPE_CHECKING
+from typing import NewType
 from typing import TypedDict
 
 if TYPE_CHECKING:

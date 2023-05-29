@@ -1,12 +1,11 @@
 """PermissionTarget."""
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy.orm import validates
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 
 class InvalidPermissionTargetUriError(Exception):
@@ -24,7 +23,7 @@ class PermissionTargetModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     uri: str = db.Column(db.String(255), unique=True, nullable=False)
 
-    def __init__(self, uri: str, id: Optional[int] = None):
+    def __init__(self, uri: str, id: int | None = None):
         """__init__."""
         if id:
             self.id = id

@@ -1,9 +1,9 @@
 """Process Model."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.services.git_service import GitService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestGitService(BaseTest):

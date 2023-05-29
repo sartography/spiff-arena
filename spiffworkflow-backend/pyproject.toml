@@ -16,16 +16,18 @@ classifiers = [
 Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.12"
 click = "^8.0.1"
 flask = "2.2.2"
 flask-admin = "*"
 flask-bcrypt = "*"
 flask-cors = "*"
+flask-jwt-extended = "^4.4.4"
 flask-mail = "*"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
+flask-simple-crypt = "^0.3.3"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
@@ -58,6 +60,7 @@ Flask-SQLAlchemy = "^3"
 # these need to be in the normal (non dev-dependencies) section
 # because if not then poetry export won't have them and nox -s mypy --pythons 3.10
 # will fail
+types-dateparser = "^1.1.4.1"
 types-Werkzeug = "^1.0.9"
 types-PyYAML = "^6.0.12"
 types-Flask = "^1.1.6"
@@ -74,14 +77,9 @@ sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", r
 simplejson = "^3.17.6"
 pytz = "^2022.6"
 dateparser = "^1.1.2"
-types-dateparser = "^1.1.4.1"
-flask-jwt-extended = "^4.4.4"
-pylint = "^2.15.10"
-flask-simple-crypt = "^0.3.3"
 cryptography = "^39.0.2"
 prometheus-flask-exporter = "^0.22.3"
 
-safety = "^2.3.5"
 sqlalchemy = "^2.0.7"
 marshmallow-sqlalchemy = "^0.29.0"
 spiff-element-units = "^0.3.0"
@@ -89,32 +87,20 @@ spiff-element-units = "^0.3.0"
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
 coverage = {extras = ["toml"], version = "^6.1"}
-safety = "^2.3.1"
+safety = "^2.3.5"
 mypy = ">=0.961"
 typeguard = "^3"
 xdoctest = {extras = ["colors"], version = "^1.0.1"}
-# sphinx = "^5.0.2"
-# sphinx-autobuild = ">=2021.3.14"
 pre-commit = "^2.20.0"
-flake8 = "^4.0.1"
 black = ">=21.10b0"
-flake8-bandit = "^2.1.2"
+ruff = "^0.0.270"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"
 
-flake8-bugbear = "^22.10.25"
-flake8-docstrings = "^1.6.0"
-flake8-rst-docstrings = "^0.2.7"
 # flask-sqlalchemy-stubs = "^0.2"
-pep8-naming = "^0.13.2"
-darglint = "^1.8.1"
-reorder-python-imports = "^3.9.0"
 pre-commit-hooks = "^4.0.1"
-# sphinx-click = "^4.3.0"
 Pygments = "^2.10.0"
-pyupgrade = "^3.1.0"
-# furo = ">=2021.11.12"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
@@ -170,11 +156,38 @@ implicit_reexport = true
 namespace_packages = true
 explicit_package_bases = false
 
+# [tool.pyright]
+# Pyright: Import "flask" could not be resolved
+#   ultimately resolved by creating a pyrightconfig.json file with venv and venvPath
+# Pyright: "hey" is not accessed
+#   See: https://github.com/microsoft/pyright/discussions/3929#discussioncomment-5434231
+#   "Those are not warnings" and cannot be turned off like this:
+#     reportUnusedVariable = false
+#   solution was https://www.reddit.com/r/neovim/comments/11k5but/comment/jbjwwtf in vim settings
+
 [tool.ruff]
+select = [
+  "B",   # flake8-bugbear
+  "E",   # pycodestyle error
+  # "ERA",  # eradicate
+  "F",   # pyflakes
+  # "N",   # pep8-naming
+  # "PL",  # pylint
+  # "S",   # flake8-bandit
+  "UP",  # pyupgrade
+  "W",   # pycodestyle warning
+  "I001" # isort
+]
 line-length = 130
+
+# target python 3.10
+target-version = "py310"
 
 [tool.ruff.per-file-ignores]
 "migrations/versions/*.py" = ["E501"]
+
+[tool.ruff.isort]
+force-single-line = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

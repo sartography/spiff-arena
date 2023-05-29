@@ -1,27 +1,22 @@
 """Process_instance_processor."""
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
-import _strptime  # type: ignore
 import decimal
 import json
 import logging
 import os
 import re
 import time
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
 from hashlib import sha256
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
 from typing import NewType
-from typing import Optional
-from typing import Tuple
 from typing import TypedDict
-from typing import Union
 from uuid import UUID
 
+import _strptime  # type: ignore
 import dateparser
 import pytz
 from flask import current_app
@@ -35,9 +30,7 @@ from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEng
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
-from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
-    EventBasedGatewayConverter,
-)
+from SpiffWorkflow.bpmn.serializer.task_spec import EventBasedGatewayConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -48,16 +41,12 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-from sqlalchemy import and_
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.bpmn_process_definition import (
-    BpmnProcessDefinitionModel,
-)
-from spiffworkflow_backend.models.bpmn_process_definition_relationship import (
-    BpmnProcessDefinitionRelationshipModel,
-)  # noqa: F401
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
+
+# noqa: F401
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -68,13 +57,9 @@ from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
@@ -82,9 +67,7 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
-from spiffworkflow_backend.services.element_units_service import (
-    ElementUnitsService,
-)
+from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -93,17 +76,12 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
-from spiffworkflow_backend.services.workflow_execution_service import (
-    TaskModelSavingDelegate,
-)
-from spiffworkflow_backend.services.workflow_execution_service import (
-    WorkflowExecutionService,
-)
-from spiffworkflow_backend.specs.start_event import (
-    StartEvent,
-)
+from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
+from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
+from spiffworkflow_backend.specs.start_event import StartEvent
+from sqlalchemy import and_
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
 
@@ -111,7 +89,7 @@ StartEvent.register_converter(SPIFF_SPEC_CONFIG)
 # importing a bunch of types causes circular imports.
 
 
-def _import(name: str, glbls: Dict[str, Any], *args: Any) -> None:
+def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
     """_import."""
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
@@ -121,7 +99,7 @@ class PotentialOwnerIdList(TypedDict):
     """PotentialOwnerIdList."""
 
     potential_owner_ids: list[int]
-    lane_assignment_id: Optional[int]
+    lane_assignment_id: int | None
 
 
 class ProcessInstanceProcessorError(Exception):
@@ -141,25 +119,25 @@ class MissingProcessInfoError(Exception):
 
 
 class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
-    def __init__(self, environment_globals: Dict[str, Any]):
+    def __init__(self, environment_globals: dict[str, Any]):
         """BoxedTaskDataBasedScriptEngineEnvironment."""
-        self._last_result: Dict[str, Any] = {}
+        self._last_result: dict[str, Any] = {}
         super().__init__(environment_globals)
 
     def execute(
         self,
         script: str,
-        context: Dict[str, Any],
-        external_methods: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any],
+        external_methods: dict[str, Any] | None = None,
     ) -> bool:
         super().execute(script, context, external_methods)
         self._last_result = context
         return True
 
-    def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def user_defined_state(self, external_methods: dict[str, Any] | None = None) -> dict[str, Any]:
         return {}
 
-    def last_result(self) -> Dict[str, Any]:
+    def last_result(self) -> dict[str, Any]:
         return {k: v for k, v in self._last_result.items()}
 
     def clear_state(self) -> None:
@@ -181,17 +159,17 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
 class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
 
-    def __init__(self, environment_globals: Dict[str, Any]):
+    def __init__(self, environment_globals: dict[str, Any]):
         """NonTaskDataBasedScriptEngineEnvironment."""
-        self.state: Dict[str, Any] = {}
+        self.state: dict[str, Any] = {}
         self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__"])
         super().__init__(environment_globals)
 
     def evaluate(
         self,
         expression: str,
-        context: Dict[str, Any],
-        external_methods: Optional[dict[str, Any]] = None,
+        context: dict[str, Any],
+        external_methods: dict[str, Any] | None = None,
     ) -> Any:
         # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
@@ -205,8 +183,8 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     def execute(
         self,
         script: str,
-        context: Dict[str, Any],
-        external_methods: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any],
+        external_methods: dict[str, Any] | None = None,
     ) -> bool:
         # TODO: once integrated look at the tests that fail without Box
         # context is task.data
@@ -231,14 +209,14 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             # the state will be removed later once the task is completed.
             context.update(self.state)
 
-    def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def user_defined_state(self, external_methods: dict[str, Any] | None = None) -> dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
         if external_methods is not None:
             keys_to_filter |= set(external_methods.keys())
 
         return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
 
-    def last_result(self) -> Dict[str, Any]:
+    def last_result(self) -> dict[str, Any]:
         return {k: v for k, v in self.state.items()}
 
     def clear_state(self) -> None:
@@ -313,7 +291,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         environment = CustomScriptEngineEnvironment(default_globals)
         super().__init__(environment=environment)
 
-    def __get_augment_methods(self, task: Optional[SpiffTask]) -> Dict[str, Callable]:
+    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
         """__get_augment_methods."""
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         process_model_identifier = None
@@ -335,16 +313,16 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         self,
         task: SpiffTask,
         expression: str,
-        external_methods: Optional[dict[str, Any]] = None,
+        external_methods: dict[str, Any] | None = None,
     ) -> Any:
         return self._evaluate(expression, task.data, task, external_methods)
 
     def _evaluate(
         self,
         expression: str,
-        context: Dict[str, Union[Box, str]],
-        task: Optional[SpiffTask] = None,
-        external_methods: Optional[Dict[str, Any]] = None,
+        context: dict[str, Box | str],
+        task: SpiffTask | None = None,
+        external_methods: dict[str, Any] | None = None,
     ) -> Any:
         methods = self.__get_augment_methods(task)
         if external_methods:
@@ -381,8 +359,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def call_service(
         self,
         operation_name: str,
-        operation_params: Dict[str, Any],
-        task_data: Dict[str, Any],
+        operation_params: dict[str, Any],
+        task_data: dict[str, Any],
     ) -> Any:
         return ServiceTaskDelegate.call_connector(operation_name, operation_params, task_data)
 
@@ -438,7 +416,7 @@ class ProcessInstanceProcessor:
         #   [spiff_task.workflow.spec.name][spiff_task.task_spec.name]
         self.bpmn_definition_to_task_definitions_mappings: dict = {}
 
-        subprocesses: Optional[IdToBpmnProcessSpecMapping] = None
+        subprocesses: IdToBpmnProcessSpecMapping | None = None
         if process_instance_model.bpmn_process_definition_id is None:
             (
                 bpmn_process_spec,
@@ -466,14 +444,16 @@ class ProcessInstanceProcessor:
         except MissingSpecError as ke:
             raise ApiError(
                 error_code="unexpected_process_instance_structure",
-                message="Failed to deserialize process_instance '%s'  due to a mis-placed or missing task '%s'"
-                % (self.process_model_identifier, str(ke)),
+                message=(
+                    f"Failed to deserialize process_instance '{self.process_model_identifier}' due to a mis-placed or"
+                    f" missing task '{str(ke)}'"
+                ),
             ) from ke
 
     @classmethod
     def get_process_model_and_subprocesses(
         cls, process_model_identifier: str
-    ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
+    ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Get_process_model_and_subprocesses."""
         process_model_info = ProcessModelService.get_process_model(process_model_identifier)
         if process_model_info is None:
@@ -507,8 +487,8 @@ class ProcessInstanceProcessor:
         cls,
         bpmn_definition_to_task_definitions_mappings: dict,
         bpmn_process_definition_identifier: str,
-        task_definition: Optional[TaskDefinitionModel] = None,
-        bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = None,
+        task_definition: TaskDefinitionModel | None = None,
+        bpmn_process_definition: BpmnProcessDefinitionModel | None = None,
     ) -> None:
         if bpmn_process_definition_identifier not in bpmn_definition_to_task_definitions_mappings:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
@@ -617,7 +597,7 @@ class ProcessInstanceProcessor:
         cls,
         tasks: list[TaskModel],
         spiff_bpmn_process_dict: dict,
-        bpmn_subprocess_id_to_guid_mappings: Optional[dict] = None,
+        bpmn_subprocess_id_to_guid_mappings: dict | None = None,
     ) -> None:
         json_data_hashes = set()
         for task in tasks:
@@ -721,7 +701,7 @@ class ProcessInstanceProcessor:
     @staticmethod
     def get_bpmn_process_instance_from_workflow_spec(
         spec: BpmnProcessSpec,
-        subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
+        subprocesses: IdToBpmnProcessSpecMapping | None = None,
     ) -> BpmnWorkflow:
         """Get_bpmn_process_instance_from_workflow_spec."""
         bpmn_process_instance = BpmnWorkflow(
@@ -734,10 +714,10 @@ class ProcessInstanceProcessor:
     @staticmethod
     def __get_bpmn_process_instance(
         process_instance_model: ProcessInstanceModel,
-        spec: Optional[BpmnProcessSpec] = None,
+        spec: BpmnProcessSpec | None = None,
         validate_only: bool = False,
-        subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
-    ) -> Tuple[BpmnWorkflow, dict, dict]:
+        subprocesses: IdToBpmnProcessSpecMapping | None = None,
+    ) -> tuple[BpmnWorkflow, dict, dict]:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         if process_instance_model.bpmn_process_definition_id is not None:
@@ -861,14 +841,14 @@ class ProcessInstanceProcessor:
     def _store_bpmn_process_definition(
         self,
         process_bpmn_properties: dict,
-        bpmn_process_definition_parent: Optional[BpmnProcessDefinitionModel] = None,
+        bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
         store_bpmn_definition_mappings: bool = False,
-        full_bpmn_spec_dict: Optional[dict] = None,
+        full_bpmn_spec_dict: dict | None = None,
     ) -> BpmnProcessDefinitionModel:
         process_bpmn_identifier = process_bpmn_properties["name"]
         process_bpmn_name = process_bpmn_properties["description"]
 
-        bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = None
+        bpmn_process_definition: BpmnProcessDefinitionModel | None = None
         single_process_hash = sha256(json.dumps(process_bpmn_properties, sort_keys=True).encode("utf8")).hexdigest()
         full_process_model_hash = None
         if full_bpmn_spec_dict is not None:
@@ -1184,7 +1164,7 @@ class ProcessInstanceProcessor:
     @staticmethod
     def backfill_missing_spec_reference_records(
         bpmn_process_identifier: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Backfill_missing_spec_reference_records."""
         process_models = ProcessModelService.get_process_models(recursive=True)
         for process_model in process_models:
@@ -1232,7 +1212,7 @@ class ProcessInstanceProcessor:
     @staticmethod
     def update_spiff_parser_with_all_process_dependency_files(
         parser: SpiffBpmnParser,
-        processed_identifiers: Optional[set[str]] = None,
+        processed_identifiers: set[str] | None = None,
     ) -> None:
         """Update_spiff_parser_with_all_process_dependency_files."""
         if processed_identifiers is None:
@@ -1267,8 +1247,8 @@ class ProcessInstanceProcessor:
 
     @staticmethod
     def get_spec(
-        files: List[File], process_model_info: ProcessModelInfo
-    ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
+        files: list[File], process_model_info: ProcessModelInfo
+    ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided."""
         parser = ProcessInstanceProcessor.get_parser()
 
@@ -1338,7 +1318,7 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    def element_unit_specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
+    def element_unit_specs_loader(self, process_id: str, element_id: str) -> dict[str, Any] | None:
         full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
         if full_process_model_hash is None:
             return None
@@ -1386,7 +1366,7 @@ class ProcessInstanceProcessor:
         self,
         exit_at: None = None,
         save: bool = False,
-        execution_strategy_name: Optional[str] = None,
+        execution_strategy_name: str | None = None,
     ) -> None:
         with ProcessInstanceQueueService.dequeued(self.process_instance_model):
             # TODO: ideally we just lock in the execution service, but not sure
@@ -1398,7 +1378,7 @@ class ProcessInstanceProcessor:
         self,
         exit_at: None = None,
         save: bool = False,
-        execution_strategy_name: Optional[str] = None,
+        execution_strategy_name: str | None = None,
     ) -> None:
         self._add_bpmn_process_definitions()
 
@@ -1428,7 +1408,7 @@ class ProcessInstanceProcessor:
         execution_service.run_and_save(exit_at, save)
 
     @classmethod
-    def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
+    def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         return [task for task in bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK) if len(task.data) > 0]
 
     @classmethod
@@ -1543,7 +1523,7 @@ class ProcessInstanceProcessor:
             next_task_to_return = task
         return next_task_to_return
 
-    def completed_user_tasks(self) -> List[SpiffTask]:
+    def completed_user_tasks(self) -> list[SpiffTask]:
         """Completed_user_tasks."""
         user_tasks = self.bpmn_process_instance.get_tasks(TaskState.COMPLETED)
         user_tasks.reverse()
@@ -1559,7 +1539,7 @@ class ProcessInstanceProcessor:
         default_registry = DefaultRegistry()
         task_data = default_registry.convert(spiff_task.data)
         python_env = default_registry.convert(self._script_engine.environment.last_result())
-        task_json: Dict[str, Any] = {
+        task_json: dict[str, Any] = {
             "task_data": task_data,
             "python_env": python_env,
         }
@@ -1644,7 +1624,7 @@ class ProcessInstanceProcessor:
                     additional_tasks.append(child)
         return ready_tasks + additional_tasks  # type: ignore
 
-    def get_all_user_tasks(self) -> List[SpiffTask]:
+    def get_all_user_tasks(self) -> list[SpiffTask]:
         """Get_all_user_tasks."""
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
         return [t for t in all_tasks if t.task_spec.manual]
@@ -1663,13 +1643,13 @@ class ProcessInstanceProcessor:
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
         return [t for t in all_tasks if t.state in [TaskState.WAITING, TaskState.READY]]
 
-    def get_task_by_guid(self, task_guid: str) -> Optional[SpiffTask]:
+    def get_task_by_guid(self, task_guid: str) -> SpiffTask | None:
         return self.bpmn_process_instance.get_task_from_id(UUID(task_guid))
 
     @classmethod
     def get_task_by_bpmn_identifier(
         cls, bpmn_task_identifier: str, bpmn_process_instance: BpmnWorkflow
-    ) -> Optional[SpiffTask]:
+    ) -> SpiffTask | None:
         """Get_task_by_id."""
         all_tasks = bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
         for task in all_tasks:

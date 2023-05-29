@@ -2,22 +2,15 @@
 import os
 import shutil
 from datetime import datetime
-from typing import List
-from typing import Optional
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
-
-from spiffworkflow_backend.models.correlation_property_cache import (
-    CorrelationPropertyCache,
-)
+from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
@@ -45,9 +38,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def get_files(
         process_model_info: ProcessModelInfo,
-        file_name: Optional[str] = None,
+        file_name: str | None = None,
         extension_filter: str = "",
-    ) -> List[File]:
+    ) -> list[File]:
         """Return all files associated with a workflow specification."""
         path = os.path.join(FileSystemService.root_path(), process_model_info.id_for_file_path())
         files = SpecFileService._get_files(path, file_name)

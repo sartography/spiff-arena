@@ -1,6 +1,5 @@
 """Users_controller."""
 from typing import Any
-from typing import Dict
 
 import flask
 from flask import current_app
@@ -12,7 +11,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.user import UserModel
 
 
-def user_exists_by_username(body: Dict[str, Any]) -> flask.wrappers.Response:
+def user_exists_by_username(body: dict[str, Any]) -> flask.wrappers.Response:
     if "username" not in body:
         raise ApiError(
             error_code="username_not_given",

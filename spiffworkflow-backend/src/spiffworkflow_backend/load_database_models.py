@@ -10,6 +10,9 @@ avoid circular imports
 # unused imports are needed for SQLAlchemy to load the models
 # ruff: noqa: F401
 
+# we do not want to sort imports in this file, since the order matters
+# ruff: noqa: I001
+
 from spiffworkflow_backend.models.db import add_listeners
 
 # must load these before UserModel and GroupModel for relationships

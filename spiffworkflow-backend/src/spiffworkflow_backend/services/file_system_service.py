@@ -1,14 +1,11 @@
 """File_system_service."""
 import os
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Generator
-from typing import List
-from typing import Optional
 
 import pytz
 from flask import current_app
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File
@@ -143,7 +140,7 @@ class FileSystemService:
         return FileType[extension]
 
     @staticmethod
-    def _get_files(file_path: str, file_name: Optional[str] = None) -> List[File]:
+    def _get_files(file_path: str, file_name: str | None = None) -> list[File]:
         """Returns an array of File objects at the given path, can be restricted to just one file."""
         files = []
         items = os.scandir(file_path)

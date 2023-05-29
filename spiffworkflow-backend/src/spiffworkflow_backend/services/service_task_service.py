@@ -6,7 +6,6 @@ import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService

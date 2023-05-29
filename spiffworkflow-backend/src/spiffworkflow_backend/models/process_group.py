@@ -8,8 +8,8 @@ from dataclasses import field
 from typing import Any
 
 import marshmallow
-from marshmallow import post_load
 from marshmallow import Schema
+from marshmallow import post_load
 
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.process_model import ProcessModelInfo

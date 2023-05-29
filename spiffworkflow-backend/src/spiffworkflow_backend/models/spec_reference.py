@@ -5,8 +5,8 @@ from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
 from sqlalchemy import UniqueConstraint
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 
 class SpecReferenceNotFoundError(Exception):

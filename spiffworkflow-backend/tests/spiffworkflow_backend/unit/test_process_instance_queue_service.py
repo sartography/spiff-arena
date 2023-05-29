@@ -3,16 +3,12 @@ import time
 from contextlib import suppress
 
 from flask.app import Flask
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
 
 
 class TestProcessInstanceQueueService(BaseTest):

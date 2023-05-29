@@ -5,14 +5,10 @@ import shutil
 import uuid
 from glob import glob
 from typing import Any
-from typing import List
-from typing import Optional
 from typing import TypeVar
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
-    ProcessEntityNotFoundError,
-)
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -175,9 +171,9 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def get_process_models(
         cls,
-        process_group_id: Optional[str] = None,
-        recursive: Optional[bool] = False,
-    ) -> List[ProcessModelInfo]:
+        process_group_id: str | None = None,
+        recursive: bool | None = False,
+    ) -> list[ProcessModelInfo]:
         process_models = []
         root_path = FileSystemService.root_path()
         if process_group_id:
@@ -198,10 +194,10 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def get_process_models_for_api(
         cls,
-        process_group_id: Optional[str] = None,
-        recursive: Optional[bool] = False,
-        filter_runnable_by_user: Optional[bool] = False,
-    ) -> List[ProcessModelInfo]:
+        process_group_id: str | None = None,
+        recursive: bool | None = False,
+        filter_runnable_by_user: bool | None = False,
+    ) -> list[ProcessModelInfo]:
         process_models = cls.get_process_models(process_group_id, recursive)
 
         permission_to_check = "read"
@@ -261,7 +257,7 @@ class ProcessModelService(FileSystemService):
         return parent_group_lites_with_cache["process_groups"]
 
     @classmethod
-    def get_process_groups(cls, process_group_id: Optional[str] = None) -> list[ProcessGroup]:
+    def get_process_groups(cls, process_group_id: str | None = None) -> list[ProcessGroup]:
         """Returns the process_groups."""
         process_groups = cls.__scan_process_groups(process_group_id)
         process_groups.sort()
@@ -270,8 +266,8 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def get_process_groups_for_api(
         cls,
-        process_group_id: Optional[str] = None,
-    ) -> List[ProcessGroup]:
+        process_group_id: str | None = None,
+    ) -> list[ProcessGroup]:
         process_groups = cls.get_process_groups(process_group_id)
 
         permission_to_check = "read"
@@ -371,7 +367,7 @@ class ProcessModelService(FileSystemService):
         cls._cleanup_process_group_display_order()
 
     @classmethod
-    def _cleanup_process_group_display_order(cls) -> List[Any]:
+    def _cleanup_process_group_display_order(cls) -> list[Any]:
         process_groups = cls.get_process_groups()  # Returns an ordered list
         index = 0
         for process_group in process_groups:
@@ -381,7 +377,7 @@ class ProcessModelService(FileSystemService):
         return process_groups
 
     @classmethod
-    def __scan_process_groups(cls, process_group_id: Optional[str] = None) -> list[ProcessGroup]:
+    def __scan_process_groups(cls, process_group_id: str | None = None) -> list[ProcessGroup]:
         """__scan_process_groups."""
         if not os.path.exists(FileSystemService.root_path()):
             return []  # Nothing to scan yet.  There are no files.
@@ -455,7 +451,7 @@ class ProcessModelService(FileSystemService):
     def __scan_process_model(
         cls,
         path: str,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> ProcessModelInfo:
         """__scan_process_model."""
         json_file_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)

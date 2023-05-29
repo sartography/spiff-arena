@@ -1,18 +1,16 @@
 import json
 from typing import Any
-from typing import Dict
-from typing import Optional
 
 from flask import current_app
 
-BpmnSpecDict = Dict[str, Any]
+BpmnSpecDict = dict[str, Any]
 
 
 class ElementUnitsService:
     """Feature gated glue between the backend and spiff-element-units."""
 
     @classmethod
-    def _cache_dir(cls) -> Optional[str]:
+    def _cache_dir(cls) -> str | None:
         return current_app.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"]  # type: ignore
 
     @classmethod
@@ -45,7 +43,7 @@ class ElementUnitsService:
     @classmethod
     def workflow_from_cached_element_unit(
         cls, cache_key: str, process_id: str, element_id: str
-    ) -> Optional[BpmnSpecDict]:
+    ) -> BpmnSpecDict | None:
         if not cls._enabled():
             return None
 

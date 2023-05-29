@@ -5,8 +5,8 @@ from typing import Final
 
 import flask.wrappers
 from flask import Blueprint
-from flask import request
 from flask import Response
+from flask import request
 from sqlalchemy.exc import IntegrityError
 
 from spiffworkflow_backend.exceptions.api_error import ApiError

@@ -1,13 +1,11 @@
 """Process Model."""
 import pytest
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.permission_target import (
-    InvalidPermissionTargetUriError,
-)
+from spiffworkflow_backend.models.permission_target import InvalidPermissionTargetUriError
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestPermissionTarget(BaseTest):

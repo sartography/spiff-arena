@@ -1,17 +1,12 @@
 """Test_process_instance_processor."""
 from datetime import datetime
 from datetime import timezone
-from typing import Optional
 
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
-from spiffworkflow_backend.models.process_instance_file_data import (
-    ProcessInstanceFileDataModel,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessInstanceService(BaseTest):
@@ -23,8 +18,8 @@ class TestProcessInstanceService(BaseTest):
     def _check_sample_file_data_model(
         self,
         identifier: str,
-        list_index: Optional[int],
-        model: Optional[ProcessInstanceFileDataModel],
+        list_index: int | None,
+        model: ProcessInstanceFileDataModel | None,
     ) -> None:
         assert model is not None
         assert model.identifier == identifier
