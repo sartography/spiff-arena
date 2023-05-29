@@ -2,16 +2,14 @@ import base64
 import enum
 import json
 import time
-from typing import Optional
 
 import jwt
 import requests
 from flask import current_app
 from flask import redirect
-from werkzeug.wrappers import Response
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
+from werkzeug.wrappers import Response
 
 
 class MissingAccessTokenError(Exception):
@@ -93,7 +91,7 @@ class AuthenticationService:
         """Get_backend_url."""
         return str(current_app.config["SPIFFWORKFLOW_BACKEND_URL"])
 
-    def logout(self, id_token: str, redirect_url: Optional[str] = None) -> Response:
+    def logout(self, id_token: str, redirect_url: str | None = None) -> Response:
         """Logout."""
         if redirect_url is None:
             redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
@@ -217,7 +215,7 @@ class AuthenticationService:
             ) from e
 
     @staticmethod
-    def get_refresh_token(user_id: int) -> Optional[str]:
+    def get_refresh_token(user_id: int) -> str | None:
         """Get_refresh_token."""
         refresh_token_object: RefreshTokenModel = RefreshTokenModel.query.filter(
             RefreshTokenModel.user_id == user_id

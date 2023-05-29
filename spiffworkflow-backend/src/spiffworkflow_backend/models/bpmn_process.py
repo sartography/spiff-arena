@@ -6,8 +6,8 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 
 class BpmnProcessNotFoundError(Exception):

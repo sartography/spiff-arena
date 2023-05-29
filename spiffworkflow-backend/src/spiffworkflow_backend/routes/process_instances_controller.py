@@ -1,9 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Union
 
 import flask.wrappers
 from flask import current_app
@@ -17,25 +14,17 @@ from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.bpmn_process_definition import (
-    BpmnProcessDefinitionModel,
-)
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
-from spiffworkflow_backend.models.process_instance import (
-    ProcessInstanceCannotBeDeletedError,
-)
+from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
-from spiffworkflow_backend.models.process_instance_queue import (
-    ProcessInstanceQueueModel,
-)
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -43,36 +32,20 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _find_process_instance_by_id_or_raise,
-)
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _un_modify_modified_process_model_id,
-)
+from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceIsAlreadyLockedError,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceIsNotEnqueuedError,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
-from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportService,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
@@ -227,8 +200,8 @@ def process_instance_resume(
 
 
 def process_instance_list_for_me(
-    body: Dict[str, Any],
-    process_model_identifier: Optional[str] = None,
+    body: dict[str, Any],
+    process_model_identifier: str | None = None,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
@@ -244,8 +217,8 @@ def process_instance_list_for_me(
 
 
 def process_instance_list(
-    body: Dict[str, Any],
-    process_model_identifier: Optional[str] = None,
+    body: dict[str, Any],
+    process_model_identifier: str | None = None,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
@@ -264,9 +237,9 @@ def process_instance_list(
 
 
 def process_instance_report_show(
-    report_hash: Optional[str] = None,
-    report_id: Optional[int] = None,
-    report_identifier: Optional[str] = None,
+    report_hash: str | None = None,
+    report_id: int | None = None,
+    report_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     if report_hash is None and report_id is None and report_identifier is None:
         raise ApiError(
@@ -276,7 +249,7 @@ def process_instance_report_show(
                 " report_identifier."
             ),
         )
-    response_result: Optional[Union[Report, ProcessInstanceReportModel]] = None
+    response_result: Report | ProcessInstanceReportModel | None = None
     if report_hash is not None:
         json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
         if json_data is None:
@@ -297,7 +270,7 @@ def process_instance_report_show(
 
 
 def process_instance_report_column_list(
-    process_model_identifier: Optional[str] = None,
+    process_model_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     table_columns = ProcessInstanceReportService.builtin_column_options()
     system_report_column_options = ProcessInstanceReportService.system_report_column_options()
@@ -322,7 +295,7 @@ def process_instance_report_column_list(
 def process_instance_show_for_me(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    process_identifier: Optional[str] = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     """Process_instance_show_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -336,7 +309,7 @@ def process_instance_show_for_me(
 def process_instance_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    process_identifier: Optional[str] = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -375,7 +348,7 @@ def process_instance_report_list(page: int = 1, per_page: int = 100) -> flask.wr
     return make_response(jsonify(process_instance_reports), 200)
 
 
-def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Response:
+def process_instance_report_create(body: dict[str, Any]) -> flask.wrappers.Response:
     process_instance_report = ProcessInstanceReportModel.create_report(
         identifier=body["identifier"],
         user=g.user,
@@ -387,7 +360,7 @@ def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Respo
 
 def process_instance_report_update(
     report_id: int,
-    body: Dict[str, Any],
+    body: dict[str, Any],
 ) -> flask.wrappers.Response:
     """Process_instance_report_update."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
@@ -432,8 +405,8 @@ def process_instance_task_list_without_task_data_for_me(
     modified_process_model_identifier: str,
     process_instance_id: int,
     most_recent_tasks_only: bool = False,
-    bpmn_process_guid: Optional[str] = None,
-    to_task_guid: Optional[str] = None,
+    bpmn_process_guid: str | None = None,
+    to_task_guid: str | None = None,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -450,8 +423,8 @@ def process_instance_task_list_without_task_data(
     modified_process_model_identifier: str,
     process_instance_id: int,
     most_recent_tasks_only: bool = False,
-    bpmn_process_guid: Optional[str] = None,
-    to_task_guid: Optional[str] = None,
+    bpmn_process_guid: str | None = None,
+    to_task_guid: str | None = None,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -467,8 +440,8 @@ def process_instance_task_list_without_task_data(
 def process_instance_task_list(
     _modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
-    bpmn_process_guid: Optional[str] = None,
-    to_task_guid: Optional[str] = None,
+    bpmn_process_guid: str | None = None,
+    to_task_guid: str | None = None,
     most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
@@ -482,7 +455,7 @@ def process_instance_task_list(
         TaskModel.process_instance_id == process_instance.id,
     )
 
-    to_task_model: Optional[TaskModel] = None
+    to_task_model: TaskModel | None = None
     task_models_of_parent_bpmn_processes_guids: list[str] = []
     if to_task_guid is not None:
         to_task_model = TaskModel.query.filter_by(guid=to_task_guid, process_instance_id=process_instance.id).first()
@@ -645,7 +618,7 @@ def process_instance_find_by_id(
 
 def send_user_signal_event(
     process_instance_id: int,
-    body: Dict,
+    body: dict,
 ) -> Response:
     """Send a user signal event to a process instance."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -655,7 +628,7 @@ def send_user_signal_event(
 def send_bpmn_event(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    body: Dict,
+    body: dict,
 ) -> Response:
     """Send a bpmn event to a process instance."""
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
@@ -678,7 +651,7 @@ def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Resp
 def _get_process_instance(
     modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
-    process_identifier: Optional[str] = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     """_get_process_instance."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
@@ -725,7 +698,7 @@ def _find_process_instance_for_me_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
     """_find_process_instance_for_me_or_raise."""
-    process_instance: Optional[ProcessInstanceModel] = (
+    process_instance: ProcessInstanceModel | None = (
         ProcessInstanceModel.query.filter_by(id=process_instance_id)
         .outerjoin(HumanTaskModel)
         .outerjoin(

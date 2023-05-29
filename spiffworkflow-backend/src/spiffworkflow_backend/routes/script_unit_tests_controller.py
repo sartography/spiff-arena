@@ -2,8 +2,6 @@
 import json
 import random
 import string
-from typing import Dict
-from typing import Union
 
 import flask.wrappers
 from flask import current_app
@@ -15,15 +13,13 @@ from lxml.builder import ElementMaker  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _get_required_parameter_or_raise,
-)
+from spiffworkflow_backend.routes.process_api_blueprint import _get_required_parameter_or_raise
 from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTestRunner
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 def script_unit_test_create(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: dict[str, str | bool | int]
 ) -> flask.wrappers.Response:
     """Script_unit_test_create."""
     bpmn_task_identifier = _get_required_parameter_or_raise("bpmn_task_identifier", body)
@@ -97,7 +93,7 @@ def script_unit_test_create(
 
 
 def script_unit_test_run(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: dict[str, str | bool | int]
 ) -> flask.wrappers.Response:
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Any
-from typing import Dict
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
@@ -26,12 +25,12 @@ class StartEvent(DefaultStartEvent):  # type: ignore
             self.timer_definition = None
 
     @staticmethod
-    def register_converter(spec_config: Dict[str, Any]) -> None:
+    def register_converter(spec_config: dict[str, Any]) -> None:
         spec_config["task_specs"].remove(DefaultStartEventConverter)
         spec_config["task_specs"].append(StartEventConverter)
 
     @staticmethod
-    def register_parser_class(parser_config: Dict[str, Any]) -> None:
+    def register_parser_class(parser_config: dict[str, Any]) -> None:
         parser_config[full_tag("startEvent")] = (SpiffStartEventParser, StartEvent)
 
     def start_delay_in_seconds(self, my_task: SpiffTask, now_in_utc: datetime) -> int:

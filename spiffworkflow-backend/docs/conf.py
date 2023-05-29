@@ -1,7 +1,6 @@
 """Sphinx configuration."""
 from datetime import datetime
 
-
 project = "Spiffworkflow Backend"
 author = "Sartography"
 copyright = f"{datetime.now().year}, {author}"

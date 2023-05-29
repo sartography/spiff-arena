@@ -1,10 +1,8 @@
 """Example_data."""
 import glob
 import os
-from typing import Optional
 
 from flask import current_app
-
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -19,8 +17,8 @@ class ExampleDataLoader:
         display_name: str = "",
         description: str = "",
         display_order: int = 0,
-        bpmn_file_name: Optional[str] = None,
-        process_model_source_directory: Optional[str] = None,
+        bpmn_file_name: str | None = None,
+        process_model_source_directory: str | None = None,
     ) -> ProcessModelInfo:
         """Assumes that process_model_source_directory exists in static/bpmn and contains bpmn_file_name.
 

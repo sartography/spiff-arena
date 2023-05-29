@@ -1,6 +1,3 @@
-from typing import Optional
-from typing import Set
-
 import flask.wrappers
 from flask import jsonify
 from flask import make_response
@@ -14,9 +11,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _find_process_instance_by_id_or_raise,
-)
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 
 
 def log_list(
@@ -25,10 +20,10 @@ def log_list(
     page: int = 1,
     per_page: int = 100,
     events: bool = False,
-    bpmn_name: Optional[str] = None,
-    bpmn_identifier: Optional[str] = None,
-    task_type: Optional[str] = None,
-    event_type: Optional[str] = None,
+    bpmn_name: str | None = None,
+    bpmn_identifier: str | None = None,
+    task_type: str | None = None,
+    event_type: str | None = None,
 ) -> flask.wrappers.Response:
     # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -91,7 +86,7 @@ def log_list(
 def typeahead_filter_values(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    task_type: Optional[str] = None,
+    task_type: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     query = db.session.query(TaskDefinitionModel.typename).distinct()  # type: ignore
@@ -108,8 +103,8 @@ def typeahead_filter_values(
         task_definition_query = task_definition_query.filter(TaskDefinitionModel.typename == task_type)
     task_definitions = task_definition_query.all()
 
-    task_bpmn_names: Set[str] = set()
-    task_bpmn_identifiers: Set[str] = set()
+    task_bpmn_names: set[str] = set()
+    task_bpmn_identifiers: set[str] = set()
     for task_definition in task_definitions:
         # not checking for None so we also exclude empty strings
         if task_definition.bpmn_name:

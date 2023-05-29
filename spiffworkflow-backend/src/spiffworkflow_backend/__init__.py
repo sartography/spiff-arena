@@ -25,16 +25,12 @@ from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
-from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
-    openid_blueprint,
-)
+from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.routes.user import set_new_access_token_in_cookie
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.background_processing_service import (
-    BackgroundProcessingService,
-)
+from spiffworkflow_backend.services.background_processing_service import BackgroundProcessingService
 
 
 class MyJSONEncoder(DefaultJSONProvider):

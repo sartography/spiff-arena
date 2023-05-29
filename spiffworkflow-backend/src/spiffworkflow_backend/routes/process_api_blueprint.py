@@ -1,7 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
-from typing import Dict
 
 import flask.wrappers
 from flask import Blueprint
@@ -13,14 +12,10 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
-    ProcessEntityNotFoundError,
-)
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_file_data import (
-    ProcessInstanceFileDataModel,
-)
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
@@ -28,16 +23,13 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
 
-def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.Response:
+def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.Response:
     """Permissions_check."""
     if "requests_to_check" not in body:
         raise (
@@ -162,7 +154,7 @@ def process_data_file_download(
 # "full_name": "sartography/sample-process-models", "private": False .... }}
 # test with: ngrok http 7000
 # where 7000 is the port the app is running on locally
-def github_webhook_receive(body: Dict) -> Response:
+def github_webhook_receive(body: dict) -> Response:
     """Github_webhook_receive."""
     auth_header = request.headers.get("X-Hub-Signature-256")
     AuthorizationService.verify_sha256_token(auth_header)

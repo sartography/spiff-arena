@@ -1,10 +1,8 @@
 """User_service."""
 from typing import Any
-from typing import Optional
 
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -13,9 +11,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
-from spiffworkflow_backend.models.user_group_assignment_waiting import (
-    UserGroupAssignmentWaitingModel,
-)
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 
 
 class UserService:
@@ -27,13 +23,13 @@ class UserService:
         username: str,
         service: str,
         service_id: str,
-        email: Optional[str] = "",
-        display_name: Optional[str] = "",
-        tenant_specific_field_1: Optional[str] = None,
-        tenant_specific_field_2: Optional[str] = None,
-        tenant_specific_field_3: Optional[str] = None,
+        email: str | None = "",
+        display_name: str | None = "",
+        tenant_specific_field_1: str | None = None,
+        tenant_specific_field_2: str | None = None,
+        tenant_specific_field_3: str | None = None,
     ) -> UserModel:
-        user_model: Optional[UserModel] = (
+        user_model: UserModel | None = (
             UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         )
         if user_model is None:
@@ -104,7 +100,7 @@ class UserService:
     def create_principal(cls, child_id: int, id_column_name: str = "user_id") -> PrincipalModel:
         """Create_principal."""
         column = PrincipalModel.__table__.columns[id_column_name]
-        principal: Optional[PrincipalModel] = PrincipalModel.query.filter(column == child_id).first()
+        principal: PrincipalModel | None = PrincipalModel.query.filter(column == child_id).first()
         if principal is None:
             principal = PrincipalModel()
             setattr(principal, id_column_name, child_id)
@@ -164,7 +160,7 @@ class UserService:
         db.session.commit()
 
     @staticmethod
-    def get_user_by_service_and_service_id(service: str, service_id: str) -> Optional[UserModel]:
+    def get_user_by_service_and_service_id(service: str, service_id: str) -> UserModel | None:
         """Get_user_by_service_and_service_id."""
         user: UserModel = (
             UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
