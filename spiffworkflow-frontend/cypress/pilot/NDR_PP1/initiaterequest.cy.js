@@ -339,8 +339,8 @@ describe.only('Initiate a Request - Without Files', () => {
       });
     });
 
-    // Close a Software and License request 1 - Without Files
-    it('Close a Software and License request 1', () => {
+    // Save and Close a Software and License request 1 - Without Files
+    it('Save and Close a Software and License request 1', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -421,7 +421,7 @@ describe.only('Initiate a Request - Without Files', () => {
         cy.get('#root_item_1_unit_price').type('4500');
 
         cy.get('button')
-          .contains(/^Close$/)
+          .contains(/^Save and Close$/)
           .click();
 
         // cy.get('button')
@@ -433,8 +433,8 @@ describe.only('Initiate a Request - Without Files', () => {
       });
     });
 
-    // Close a Software and License request 2 - Without Files
-    it('Close a Software and License request 2', () => {
+    // Save and Close a Software and License request 2 - Without Files
+    it('Save and Close a Software and License request 2', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -515,7 +515,7 @@ describe.only('Initiate a Request - Without Files', () => {
         // cy.get('#root_item_1_unit_price').type('4500');
 
         cy.get('button')
-          .contains(/^Close$/)
+          .contains(/^Save and Close$/)
           .click();
 
         // cy.get('button')
@@ -527,8 +527,8 @@ describe.only('Initiate a Request - Without Files', () => {
       });
     });
 
-    // Close a Software and License request 3 - Without Files
-    it('Close a Software and License request 3', () => {
+    // Save and Close a Software and License request 3 - Without Files
+    it('Save and Close a Software and License request 3', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -624,7 +624,7 @@ describe.only('Initiate a Request - Without Files', () => {
           );
 
         cy.get('button')
-          .contains(/^Close$/)
+          .contains(/^Save and Close$/)
           .click();
 
         // cy.get('button')
@@ -894,9 +894,9 @@ describe('Form validation', () => {
         .type(
           'Purpose is to test all the special characters work in the request. ~!@#$%^&*()_+`-= {}[]\ and ;\',./:"<>? end. | this text goes missing', { parseSpecialCharSequences: false }
         );
-        //.type(
-        //  'Purpose is to test all the special characters work in the request. Test Special chars ~!@#$%^&*()_+`-= {}|[]\ and ;\',./:"<>? end.', { parseSpecialCharSequences: false }
-        //);
+      //.type(
+      //  'Purpose is to test all the special characters work in the request. Test Special chars ~!@#$%^&*()_+`-= {}|[]\ and ;\',./:"<>? end.', { parseSpecialCharSequences: false }
+      //);
       cy.get('#root_criticality').select('High');
       cy.get('#root_period').clear().type('25-11-2025');
       cy.get('body').click();
@@ -915,9 +915,9 @@ describe('Form validation', () => {
         .type(
           'Special char test ,./;\'[]\=-0987654321`~!@#$%^&*()_+{}:"<>? end.', { parseSpecialCharSequences: false }
         );
-        //.type(
-        //  'Special char test ,./;\'[]\=-0987654321`~!@#$%^&*()_+{}|:"<>? end.', { parseSpecialCharSequences: false }
-        // );
+      //.type(
+      //  'Special char test ,./;\'[]\=-0987654321`~!@#$%^&*()_+{}|:"<>? end.', { parseSpecialCharSequences: false }
+      // );
       cy.get('#root_item_0_qty').clear().type('2');
       cy.get('#root_item_0_currency_type').select('Crypto');
       cy.get('#root_item_0_currency').select('SNT');
@@ -932,9 +932,9 @@ describe('Form validation', () => {
         .type(
           'Special char test 2 +_=)(*&^%$#@!~`?></.,":}{\][\';/., <a> {g} [a]end.', { parseSpecialCharSequences: false }
         );
-        //.type(
-        //  'Special char test 2 +_=)(*&^%$#@!~`?></.,":}{|\][\';/., <a> {g} [a]end.', { parseSpecialCharSequences: false }
-        //);
+      //.type(
+      //  'Special char test 2 +_=)(*&^%$#@!~`?></.,":}{|\][\';/., <a> {g} [a]end.', { parseSpecialCharSequences: false }
+      //);
       cy.get('#root_item_1_qty').clear().type('1');
       cy.get('#root_item_1_currency_type').select('Fiat');
       cy.get('#root_item_1_currency').select('AED');
@@ -954,9 +954,9 @@ describe('Form validation', () => {
         .type(
           'Test Special chars afs<sfsd>sfsfs,asfdf. sfsf? sfd/sfs f:sfsf " sfsdf; SDFfsd\' sfsdf{sfsfs} sfsdf[ sfsdf] fsfsfd\ sfsd sfsdf=S dfs+ sfd- sfsdf_ sfsfd (sfsd )sfsfsd * sf&sfsfs ^ sfs % sf $ ss# s@ sf! sfd` ss~ END.', { parseSpecialCharSequences: false }
         );
-        //.type(
-        //  'Test Special chars afs<sfsd>sfsfs,asfdf. sfsf? sfd/sfs f:sfsf " sfsdf; SDFfsd\' sfsdf{sfsfs} sfsdf[ sfsdf] fsfsfd\ sfsd| sfsdf=S dfs+ sfd- sfsdf_ sfsfd (sfsd )sfsfsd * sf&sfsfs ^ sfs % sf $ ss# s@ sf! sfd` ss~ END.', { parseSpecialCharSequences: false }
-        //);
+      //.type(
+      //  'Test Special chars afs<sfsd>sfsfs,asfdf. sfsf? sfd/sfs f:sfsf " sfsdf; SDFfsd\' sfsdf{sfsfs} sfsdf[ sfsdf] fsfsfd\ sfsd| sfsdf=S dfs+ sfd- sfsdf_ sfsfd (sfsd )sfsfsd * sf&sfsfs ^ sfs % sf $ ss# s@ sf! sfd` ss~ END.', { parseSpecialCharSequences: false }
+      //);
 
       // cy.contains('Submit the Request').click();
 
@@ -1091,7 +1091,7 @@ describe('Form validation', () => {
   });
 
 });
-    
+
 // Software and License - With Files
 describe('Initiate a Request - With Files', () => {
   Cypress._.times(1, () => {
@@ -1629,8 +1629,8 @@ describe('Initiate a Request - With Files', () => {
       });
     });
 
-    // Close a Software and License request 1 - With Files
-    it('Close a Software and License request 1 - With Files', () => {
+    // Save and Close a Software and License request 1 - With Files
+    it('Save and Close a Software and License request 1 - With Files', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1757,7 +1757,7 @@ describe('Initiate a Request - With Files', () => {
         cy.wait(2000);
 
         cy.get('button')
-          .contains(/^Close$/)
+          .contains(/^Save and Close$/)
           .click();
 
         cy.wait(3000);
