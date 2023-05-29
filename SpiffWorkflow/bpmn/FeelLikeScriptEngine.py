@@ -1,20 +1,13 @@
-# -*- coding: utf-8 -*-
-
-import re
-import datetime
-import operator
-from datetime import timedelta
-from decimal import Decimal
-from .PythonScriptEngine import PythonScriptEngine
-
-# Copyright (C) 2020 Kelly McDonald
+# Copyright (C) 2020 Kelly McDonald, 2023 Sartography
 #
-# This library is free software; you can redistribute it and/or
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# version 3.0 of the License, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# SpiffWorkflow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -23,6 +16,13 @@ from .PythonScriptEngine import PythonScriptEngine
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301  USA
+
+import re
+import datetime
+import operator
+from datetime import timedelta
+from decimal import Decimal
+from .PythonScriptEngine import PythonScriptEngine
 
 
 def feelConvertTime(datestr,parsestr):
@@ -79,8 +79,8 @@ class FeelNot():
 
 def feelConcatenate(*lst):
     ilist = []
-    for l in lst:
-        ilist = ilist + l
+    for list_item in lst:
+        ilist = ilist + list_item
     return ilist
 
 def feelAppend(lst,item):
@@ -144,7 +144,7 @@ def feelFilter(var,a,b,op,column=None):
                 newvar.append({'key':key,'value':var[key]})
         var = newvar
 
-    if column!=None:
+    if column is not None:
         return [x.get(column) for x in var if opmap[op](x.get(a), b)]
     else:
         return [x for x in var if opmap[op](x.get(a), b)]
@@ -306,7 +306,7 @@ class FeelLikeScriptEngine(PythonScriptEngine):
         if external_methods is None:
             external_methods = {}
         external_methods.update(externalFuncs)
-        super(PythonScriptEngine).execute(task, script, external_methods)
+        super().execute(task, script, external_methods)
 
 
 

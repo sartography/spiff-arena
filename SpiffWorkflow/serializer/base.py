@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-
-from builtins import object
-# This library is free software; you can redistribute it and/or
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# version 3.0 of the License, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# SpiffWorkflow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -20,7 +19,6 @@ from .. import operators
 from ..specs.AcquireMutex import AcquireMutex
 from ..specs.Cancel import Cancel
 from ..specs.CancelTask import CancelTask
-from ..specs.Celery import Celery
 from ..specs.Choose import Choose
 from ..specs.ExclusiveChoice import ExclusiveChoice
 from ..specs.Execute import Execute
@@ -46,7 +44,6 @@ def spec_map():
         'acquire-mutex': AcquireMutex,
         'cancel': Cancel,
         'cancel-task': CancelTask,
-        'celery': Celery,
         'choose': Choose,
         'exclusive-choice': ExclusiveChoice,
         'execute': Execute,

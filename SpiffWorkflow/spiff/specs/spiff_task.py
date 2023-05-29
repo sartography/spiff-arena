@@ -1,16 +1,33 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 from copy import deepcopy
 
 from SpiffWorkflow.exceptions import SpiffWorkflowException
 from SpiffWorkflow.task import TaskState
-from SpiffWorkflow.bpmn.specs .BpmnSpecMixin import BpmnSpecMixin
+from SpiffWorkflow.bpmn.specs.mixins.bpmn_spec_mixin import BpmnSpecMixin
+
 
 class SpiffBpmnTask(BpmnSpecMixin):
 
     def __init__(self, wf_spec, name, prescript=None, postscript=None, **kwargs):
-
-        # WHy am I doing this instead of just calling super?
-        # Because I need to deal with multiple inheritance and the kwargs nightmare created by our parser design
-        BpmnSpecMixin.__init__(self, wf_spec, name, **kwargs)
+        super().__init__(wf_spec, name, **kwargs)
         self.prescript = prescript
         self.postscript = postscript
 
