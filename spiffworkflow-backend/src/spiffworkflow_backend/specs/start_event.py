@@ -17,6 +17,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+StartConfiguration = Tuple[int, int, int]
 
 # TODO: cylce timers and repeat counts?
 class StartEvent(DefaultStartEvent):  # type: ignore
@@ -37,28 +38,30 @@ class StartEvent(DefaultStartEvent):  # type: ignore
     def register_parser_class(parser_config: Dict[str, Any]) -> None:
         parser_config[full_tag("startEvent")] = (SpiffStartEventParser, StartEvent)
 
-    def start_delay_in_seconds(self, my_task: SpiffTask, now_in_utc: datetime) -> int:
+    def configuration(self, my_task: SpiffTask, now_in_utc: datetime) -> StartConfiguration:
         evaluated_expression = self.evaluated_timer_expression(my_task)
+        cycles = 0
+        start_delay_in_seconds = 0
+        duration = 0
 
         if evaluated_expression is not None:
             if isinstance(self.timer_definition, TimeDateEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_time_or_duration(evaluated_expression)
                 time_delta = parsed_duration - now_in_utc
-                return time_delta.seconds  # type: ignore
+                start_delay_in_seconds = time_delta.seconds  # type: ignore
             elif isinstance(self.timer_definition, DurationTimerEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_iso_duration(evaluated_expression)
                 time_delta = TimerEventDefinition.get_timedelta_from_start(parsed_duration, now_in_utc)
-                return time_delta.seconds  # type: ignore
-            else:
-                cycle_configuration = self.cycle_configuration(my_task, evaluated_expression)
-                if cycle_configuration is not None:
-                    _, start, _ = cycle_configuration
-                    # TODO: hack to get this kicked over to the background processor since creating
-                    # new instances per cycle need to happen there.
-                    time_delta = start - now_in_utc + timedelta(seconds=10)
-                    return time_delta.seconds  # type: ignore
+                start_delay_in_seconds = time_delta.seconds  # type: ignore
+            elif isinstance(self.timer_definition, CycleTimerEventDefinition):
+                cycles, start, duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)  # type: ignore
+                # TODO: hack to get this kicked over to the background processor since creating
+                # new instances per cycle need to happen there.
+                time_delta = start - now_in_utc + timedelta(seconds=10)
+                start_delay_in_seconds = time_delta.seconds  # type: ignore
+                duration = duration.seconds
 
-        return 0
+        return (cycles, start_delay_in_seconds, duration)
 
     def evaluated_timer_expression(self, my_task: SpiffTask) -> Any:
         script_engine = my_task.workflow.script_engine
@@ -67,21 +70,6 @@ class StartEvent(DefaultStartEvent):  # type: ignore
         if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
             evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
         return evaluated_expression
-
-    def is_cycle_timer(self) -> bool:
-        return isinstance(self.timer_definition, CycleTimerEventDefinition)
-
-    def cycle_configuration(
-        self, my_task: SpiffTask, evaluated_expression: Optional[Any] = None
-    ) -> Optional[Tuple[int, datetime, timedelta]]:
-        if evaluated_expression is None:
-            evaluated_expression = self.evaluated_timer_expression(my_task)
-
-        if evaluated_expression is not None:
-            if isinstance(self.timer_definition, CycleTimerEventDefinition):
-                return TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)  # type: ignore
-        return None
-
 
 class StartEventConverter(EventConverter):  # type: ignore
     def __init__(self, registry):  # type: ignore

@@ -47,6 +47,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_service import WorkflowService
+from spiffworkflow_backend.specs.start_event import StartConfiguration
 
 
 class ProcessInstanceService:
@@ -56,22 +57,27 @@ class ProcessInstanceService:
     TASK_STATE_LOCKED = "locked"
 
     @staticmethod
-    def calculate_start_delay_in_seconds(process_instance_model: ProcessInstanceModel) -> int:
+    def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
         try:
             processor = ProcessInstanceProcessor(process_instance_model)
-            delay_in_seconds = WorkflowService.calculate_run_at_delay_in_seconds(
+            start_configuration = WorkflowService.next_start_event_configuration(
                 processor.bpmn_process_instance, datetime.now(timezone.utc)
             )
-        except Exception:
-            delay_in_seconds = 0
-        return delay_in_seconds
+        except Exception as e:
+            raise e
+            start_configuration = None
+
+        if start_configuration is None:
+            start_configuration = (0, 0, 0)
+            
+        return start_configuration
 
     @classmethod
     def create_process_instance(
         cls,
         process_model: ProcessModelInfo,
         user: UserModel,
-    ) -> ProcessInstanceModel:
+    ) -> Tuple[ProcessInstanceModel, StartConfiguration]:
         """Get_process_instance_from_spec."""
         db.session.commit()
         try:
@@ -89,10 +95,10 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        delay_in_seconds = cls.calculate_start_delay_in_seconds(process_instance_model)
+        cycles, delay_in_seconds, duration = cls.next_start_event_configuration(process_instance_model)
         run_at_in_seconds = round(time.time()) + delay_in_seconds
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
-        return process_instance_model
+        return (process_instance_model, (cycles, delay_in_seconds, duration))
 
     @classmethod
     def create_process_instance_from_process_model_identifier(
@@ -102,7 +108,8 @@ class ProcessInstanceService:
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        return cls.create_process_instance(process_model, user)
+        process_instance_model, _ =  cls.create_process_instance(process_model, user)
+        return process_instance_model
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
