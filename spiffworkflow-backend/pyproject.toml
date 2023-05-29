@@ -156,16 +156,14 @@ implicit_reexport = true
 namespace_packages = true
 explicit_package_bases = false
 
-[tool.pyright]
-reportMissingModuleSource = false
-reportMissingImports = false
-reportUnusedVariable = false
-typeCheckingMode = "off"
-reportUnusedFunction = false
-reportUnusedClass = false
-# it appears that: Pyright: "hey" is not accessed
-# may relate to: https://github.com/microsoft/pyright/discussions/3929#discussioncomment-5434231
-# "Those are not warnings" and cannot be turned off in the same way.
+# [tool.pyright]
+# Pyright: Import "flask" could not be resolved
+#   ultimately resolved by creating a pyrightconfig.json file with venv and venvPath
+# Pyright: "hey" is not accessed
+#   See: https://github.com/microsoft/pyright/discussions/3929#discussioncomment-5434231
+#   "Those are not warnings" and cannot be turned off like this:
+#     reportUnusedVariable = false
+#   solution was https://www.reddit.com/r/neovim/comments/11k5but/comment/jbjwwtf in vim settings
 
 [tool.ruff]
 select = [
