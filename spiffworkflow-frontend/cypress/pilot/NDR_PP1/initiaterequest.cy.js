@@ -844,6 +844,237 @@ describe.only('Initiate a Request - Without Files', () => {
         cy.logout();
       });
     });
+
+    // Arrange items order
+    it('Arrange items order', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      // cy.wait(5000);
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.wait(2000);
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('consult_fees');
+        cy.get('#root_purpose')
+          .clear()
+          .type(
+            'Consulting ==== Management consulting includes a broad range of activities, and the many firms and their members often define these practices quite differently. One way to categorize the activities is in terms of the professional’s area of expertise.'
+          );
+        cy.get('#root_criticality').select('High');
+        cy.get('#root_period').clear().type('25-12-2025');
+        cy.get('body').click();
+        cy.get('#root_vendor').clear().type('Embassar');
+        cy.get('#root_payment_method').select('Bank Transfer');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+ 
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 }); */
+        // item 0
+        cy.get('#root_item_0_sub_category').select('ambassadors');
+        cy.get('#root_item_0_item_name')
+          .clear()
+          .type(
+            '1. An ambassador is an official envoy, especially a high-ranking diplomat who represents a.'
+          );
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('ETH');
+        cy.get('#root_item_0_unit_price').type('1.15');
+
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
+
+        // item 1
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name')
+          .clear()
+          .type(
+            '2. A consultant (from Latin: consultare "to deliberate") is a professional'
+          );
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
+
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
+
+        // item 2
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name')
+          .clear()
+          .type(
+            '3. Find & hire top freelancers, web developers & designers inexpensively. '
+          );
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
+
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
+
+        // item 3
+        cy.get('#root_item_3_sub_category').select('consultants');
+        cy.get('#root_item_3_item_name')
+          .clear()
+          .type(
+            '4. The term supercomputer does not refer to a specific technology.'
+          );
+        cy.get('#root_item_3_qty').clear().type('6');
+        cy.get('#root_item_3_currency_type').select('Crypto');
+        cy.get('#root_item_3_currency').select('DAI');
+        cy.get('#root_item_3_unit_price').type('1500.1234');
+
+        cy.get('#root_item > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up').click();
+        cy.get('#root_item > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up').click();
+
+        cy.wait(2000);
+
+        cy.get('#root_item > div.row.array-item-list > div:nth-child(1) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-down').click();
+        cy.get('#root_item > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-down').click();
+
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+      });
+    });
+
+    // Delete items
+    it('Delete items', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      // cy.wait(5000);
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.wait(2000);
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('consult_fees');
+        cy.get('#root_purpose')
+          .clear()
+          .type(
+            'Consulting ==== Management consulting includes a broad range of activities, and the many firms and their members often define these practices quite differently. One way to categorize the activities is in terms of the professional’s area of expertise.'
+          );
+        cy.get('#root_criticality').select('High');
+        cy.get('#root_period').clear().type('25-12-2025');
+        cy.get('body').click();
+        cy.get('#root_vendor').clear().type('Embassar');
+        cy.get('#root_payment_method').select('Bank Transfer');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+ 
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 }); */
+        // item 0
+        cy.get('#root_item_0_sub_category').select('ambassadors');
+        cy.get('#root_item_0_item_name')
+          .clear()
+          .type(
+            '1. An ambassador is an official envoy, especially a high-ranking diplomat who represents a.'
+          );
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('ETH');
+        cy.get('#root_item_0_unit_price').type('1.15');
+
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
+
+        // item 1
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name')
+          .clear()
+          .type(
+            '2. A consultant (from Latin: consultare "to deliberate") is a professional'
+          );
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
+
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
+
+        // item 2
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name')
+          .clear()
+          .type(
+            '3. Find & hire top freelancers, web developers & designers inexpensively. '
+          );
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
+
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
+
+        // item 3
+        cy.get('#root_item_3_sub_category').select('consultants');
+        cy.get('#root_item_3_item_name')
+          .clear()
+          .type(
+            '4. The term supercomputer does not refer to a specific technology.'
+          );
+        cy.get('#root_item_3_qty').clear().type('6');
+        cy.get('#root_item_3_currency_type').select('Crypto');
+        cy.get('#root_item_3_currency').select('DAI');
+        cy.get('#root_item_3_unit_price').type('1500.1234');
+
+        //delete first and third items
+        cy.get('#root_item > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-danger.array-item-remove').click();
+        cy.get('#root_item > div.row.array-item-list > div:nth-child(1) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-danger.array-item-remove').click();
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+      });
+    });
   });
 });
 
@@ -977,7 +1208,7 @@ describe('Form validation', () => {
   });
 
   //Check field max lengths
-  it.only('Check field max lengths', () => {
+  it('Check field max lengths', () => {
     const username = Cypress.env('requestor_username');
     const password = Cypress.env('requestor_password');
     cy.log(`=====username : ${username}`);
