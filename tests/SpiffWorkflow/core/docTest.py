@@ -3,6 +3,7 @@
 import sys
 import unittest
 import os
+
 dirname = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(dirname, '..', '..', '..'))
 doc_dir = os.path.join(dirname, '..', '..', '..', 'doc')
@@ -29,11 +30,11 @@ class TutorialTest(object):
 
 
 class Tutorial1Test(TutorialTest, unittest.TestCase):
-    tutorial_dir = os.path.join(doc_dir, 'non-bpmn', 'tutorial')
+    tutorial_dir = os.path.join(doc_dir, 'core', 'tutorial')
 
 
 class Tutorial2Test(TutorialTest, unittest.TestCase):
-    tutorial_dir = os.path.join(doc_dir, 'non-bpmn', 'custom-tasks')
+    tutorial_dir = os.path.join(doc_dir, 'core', 'custom-tasks')
 
 
 def suite():

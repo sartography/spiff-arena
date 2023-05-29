@@ -1,11 +1,9 @@
 import unittest
 
-from SpiffWorkflow.camunda.parser.task_spec import UserTaskParser
 from tests.SpiffWorkflow.camunda.BaseTestCase import BaseTestCase
 
 
 class UserTaskParserTest(BaseTestCase):
-    CORRELATE = UserTaskParser
 
     def setUp(self):
         self.spec, subprocesses = self.load_workflow_spec('random_fact.bpmn', 'random_fact')

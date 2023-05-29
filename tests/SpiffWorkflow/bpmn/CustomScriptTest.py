@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-import unittest
-
-from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import TaskDataEnvironment
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
-from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+from .BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'McDonald, danfunk'
 
@@ -36,11 +33,13 @@ class CustomInlineScriptTest(BpmnWorkflowTestCase):
         self.actual_test(save_restore=False)
 
     def actual_test(self, save_restore):
-        if save_restore: self.save_restore()
+        if save_restore:
+            self.save_restore()
         self.workflow.do_engine_steps()
         self.complete_subworkflow()
         self.complete_subworkflow()
-        if save_restore: self.save_restore()
+        if save_restore:
+            self.save_restore()
         data = self.workflow.last_task.data
         self.assertEqual(data['c1'], 'HELLO')
         self.assertEqual(data['c2'], 'GOODBYE')
@@ -54,9 +53,3 @@ class CustomInlineScriptTest(BpmnWorkflowTestCase):
         self.assertTrue('custom_function' in str(e.exception))
         task = self.workflow.get_tasks_from_spec_name('Activity_1y303ko')[0]
         self.assertEqual(task.state, TaskState.ERROR)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromTestCase(CustomInlineScriptTest)
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())
