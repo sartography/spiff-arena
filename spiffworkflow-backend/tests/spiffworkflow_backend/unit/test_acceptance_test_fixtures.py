@@ -1,4 +1,3 @@
-"""Test_acceptance_test_fixtures."""
 import os
 
 from flask.app import Flask

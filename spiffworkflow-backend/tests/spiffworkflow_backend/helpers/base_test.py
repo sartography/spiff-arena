@@ -1,4 +1,3 @@
-"""Base_test."""
 import io
 import json
 import os

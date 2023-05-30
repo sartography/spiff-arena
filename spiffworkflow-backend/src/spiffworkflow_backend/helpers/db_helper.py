@@ -1,4 +1,3 @@
-"""Db_helper."""
 import time
 
 import sqlalchemy

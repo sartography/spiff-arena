@@ -1,4 +1,3 @@
-"""Assertion_service."""
 import contextlib
 from collections.abc import Generator
 

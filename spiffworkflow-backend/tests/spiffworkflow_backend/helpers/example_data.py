@@ -1,4 +1,3 @@
-"""Example_data."""
 import glob
 import os
 

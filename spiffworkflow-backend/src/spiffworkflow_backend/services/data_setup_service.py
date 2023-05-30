@@ -1,4 +1,3 @@
-"""Data_setup_service."""
 from flask import current_app
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.services.process_model_service import ProcessModelService

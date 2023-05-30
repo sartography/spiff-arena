@@ -1,4 +1,3 @@
-"""Process_instance_service."""
 import base64
 import hashlib
 import time
@@ -22,6 +21,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -34,6 +34,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_service import WorkflowService
+from spiffworkflow_backend.specs.start_event import StartConfiguration
 
 
 class ProcessInstanceService:
@@ -43,22 +44,27 @@ class ProcessInstanceService:
     TASK_STATE_LOCKED = "locked"
 
     @staticmethod
-    def calculate_start_delay_in_seconds(process_instance_model: ProcessInstanceModel) -> int:
+    def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
         try:
             processor = ProcessInstanceProcessor(process_instance_model)
-            delay_in_seconds = WorkflowService.calculate_run_at_delay_in_seconds(
+            start_configuration = WorkflowService.next_start_event_configuration(
                 processor.bpmn_process_instance, datetime.now(timezone.utc)
             )
         except Exception:
-            delay_in_seconds = 0
-        return delay_in_seconds
+            start_configuration = None
+
+        if start_configuration is None:
+            start_configuration = (0, 0, 0)
+
+        return start_configuration
 
     @classmethod
     def create_process_instance(
         cls,
         process_model: ProcessModelInfo,
         user: UserModel,
-    ) -> ProcessInstanceModel:
+        start_configuration: StartConfiguration | None = None,
+    ) -> tuple[ProcessInstanceModel, StartConfiguration]:
         """Get_process_instance_from_spec."""
         db.session.commit()
         try:
@@ -76,10 +82,13 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        delay_in_seconds = cls.calculate_start_delay_in_seconds(process_instance_model)
+
+        if start_configuration is None:
+            start_configuration = cls.next_start_event_configuration(process_instance_model)
+        _, delay_in_seconds, _ = start_configuration
         run_at_in_seconds = round(time.time()) + delay_in_seconds
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
-        return process_instance_model
+        return (process_instance_model, start_configuration)
 
     @classmethod
     def create_process_instance_from_process_model_identifier(
@@ -89,7 +98,52 @@ class ProcessInstanceService:
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        return cls.create_process_instance(process_model, user)
+        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
+            process_model, user
+        )
+        cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
+        return process_instance_model
+
+    @classmethod
+    def register_process_model_cycles(
+        cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int
+    ) -> None:
+        # clean up old cycle record if it exists. event if the given cycle_count is 0 the previous version
+        # of the model could have included a cycle timer start event
+        cycles = ProcessModelCycleModel.query.filter(
+            ProcessModelCycleModel.process_model_identifier == process_model_identifier,
+        ).all()
+
+        for cycle in cycles:
+            db.session.delete(cycle)
+
+        if cycle_count != 0:
+            cycle = ProcessModelCycleModel(
+                process_model_identifier=process_model_identifier,
+                cycle_count=cycle_count,
+                duration_in_seconds=duration_in_seconds,
+                current_cycle=0,
+            )
+            db.session.add(cycle)
+
+        db.session.commit()
+
+    @classmethod
+    def schedule_next_process_model_cycle(cls, process_instance_model: ProcessInstanceModel) -> None:
+        cycle = ProcessModelCycleModel.query.filter(
+            ProcessModelCycleModel.process_model_identifier == process_instance_model.process_model_identifier
+        ).first()
+
+        if cycle is None or cycle.cycle_count == 0:
+            return
+
+        if cycle.cycle_count == -1 or cycle.current_cycle < cycle.cycle_count:
+            process_model = ProcessModelService.get_process_model(process_instance_model.process_model_identifier)
+            start_configuration = (cycle.cycle_count, cycle.duration_in_seconds, cycle.duration_in_seconds)
+            cls.create_process_instance(process_model, process_instance_model.process_initiator, start_configuration)
+            cycle.current_cycle += 1
+            db.session.add(cycle)
+            db.session.commit()
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
@@ -156,6 +210,8 @@ class ProcessInstanceService:
                 cls.run_process_instance_with_processor(
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
+                if process_instance.status == "complete":
+                    cls.schedule_next_process_model_cycle(process_instance)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:

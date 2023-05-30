@@ -1,4 +1,3 @@
-"""Process_instance_report_service."""
 import copy
 import re
 from collections.abc import Generator
