@@ -54,9 +54,7 @@ class StartEvent(DefaultStartEvent):  # type: ignore
                 start_delay_in_seconds = time_delta.seconds
             elif isinstance(self.timer_definition, CycleTimerEventDefinition):
                 cycles, start, cycle_duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
-                # TODO: hack to get this kicked over to the background processor since creating
-                # new instances per cycle need to happen there.
-                time_delta = start - now_in_utc + timedelta(seconds=10)
+                time_delta = start - now_in_utc + cycle_duration
                 start_delay_in_seconds = time_delta.seconds
                 duration = cycle_duration.seconds
 
