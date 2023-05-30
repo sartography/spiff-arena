@@ -1,4 +1,3 @@
-"""Markdown_file_download_link."""
 from typing import Any
 
 from flask import current_app

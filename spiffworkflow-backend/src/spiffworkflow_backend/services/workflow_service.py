@@ -1,4 +1,3 @@
-"""workflow_service."""
 from datetime import datetime
 
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore

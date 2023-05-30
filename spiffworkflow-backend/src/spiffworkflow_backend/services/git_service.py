@@ -1,4 +1,3 @@
-"""Git_service."""
 import os
 import re
 import shutil

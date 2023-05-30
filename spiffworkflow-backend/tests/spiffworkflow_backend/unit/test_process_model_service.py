@@ -1,4 +1,3 @@
-"""Test_process_model_service."""
 from flask import Flask
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 

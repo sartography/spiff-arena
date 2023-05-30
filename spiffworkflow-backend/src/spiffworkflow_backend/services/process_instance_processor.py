@@ -1,4 +1,3 @@
-"""Process_instance_processor."""
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal

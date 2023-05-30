@@ -1,4 +1,3 @@
-"""Test_workflow_service."""
 from collections.abc import Generator
 from datetime import datetime
 from datetime import timedelta

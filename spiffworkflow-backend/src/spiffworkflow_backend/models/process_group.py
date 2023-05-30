@@ -1,4 +1,3 @@
-"""Process_group."""
 from __future__ import annotations
 
 import dataclasses

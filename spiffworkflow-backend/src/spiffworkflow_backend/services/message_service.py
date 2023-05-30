@@ -1,4 +1,3 @@
-"""Message_service."""
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel

@@ -1,4 +1,3 @@
-"""Process_instance_service."""
 import base64
 import hashlib
 import time
