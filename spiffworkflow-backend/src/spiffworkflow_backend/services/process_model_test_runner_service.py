@@ -26,11 +26,11 @@ class NoTestCasesFoundError(Exception):
     pass
 
 
-class MissingInputTaskData(Exception):
+class MissingInputTaskDataError(Exception):
     pass
 
 
-class UnsupporterRunnerDelegateGiven(Exception):
+class UnsupporterRunnerDelegateGivenError(Exception):
     pass
 
 
@@ -236,7 +236,7 @@ class ProcessModelTestRunner:
         self.test_case_identifier = test_case_identifier
 
         if not issubclass(process_model_test_runner_delegate_class, ProcessModelTestRunnerDelegate):
-            raise UnsupporterRunnerDelegateGiven(
+            raise UnsupporterRunnerDelegateGivenError(
                 "Process model test runner delegate must inherit from ProcessModelTestRunnerDelegate. Given"
                 f" class '{process_model_test_runner_delegate_class}' does not"
             )
@@ -342,7 +342,7 @@ class ProcessModelTestRunner:
             task_data_length = len(test_case_task_properties["data"])
             test_case_index = self.task_data_index[test_case_task_key]
             if task_data_length <= test_case_index:
-                raise MissingInputTaskData(
+                raise MissingInputTaskDataError(
                     f"Missing input task data for task: {test_case_task_key}. "
                     f"Only {task_data_length} given in the json but task was called {test_case_index + 1} times"
                 )
