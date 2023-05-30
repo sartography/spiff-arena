@@ -79,7 +79,7 @@ class SpecFileService(FileSystemService):
     def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
         """Get_etree_from_xml_bytes."""
         etree_xml_parser = etree.XMLParser(resolve_entities=False)
-        return etree.fromstring(binary_data, parser=etree_xml_parser)
+        return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
 
     @classmethod
     def get_references_for_file_contents(
