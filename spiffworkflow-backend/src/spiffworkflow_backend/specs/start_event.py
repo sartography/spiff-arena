@@ -1,5 +1,4 @@
 from datetime import datetime
-from datetime import timedelta
 from typing import Any
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
