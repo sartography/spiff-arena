@@ -1,4 +1,3 @@
-"""Test_authentication."""
 import ast
 import base64
 

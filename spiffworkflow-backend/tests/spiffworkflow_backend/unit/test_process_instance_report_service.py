@@ -1,4 +1,3 @@
-"""Test_process_instance_report_service."""
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient

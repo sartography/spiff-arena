@@ -1,4 +1,3 @@
-"""Get_encoded_file_data."""
 import base64
 from typing import Any
 

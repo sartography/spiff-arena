@@ -1,4 +1,3 @@
-"""Process_model."""
 from __future__ import annotations
 
 import enum

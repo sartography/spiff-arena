@@ -1,4 +1,3 @@
-"""Refresh_token."""
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey

@@ -1,4 +1,3 @@
-"""User."""
 import ast
 import base64
 import json

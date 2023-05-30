@@ -1,4 +1,3 @@
-"""Test_secret_service."""
 import json
 
 import pytest

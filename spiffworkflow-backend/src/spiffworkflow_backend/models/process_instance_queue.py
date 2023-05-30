@@ -1,4 +1,3 @@
-"""Process_instance_queue."""
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey

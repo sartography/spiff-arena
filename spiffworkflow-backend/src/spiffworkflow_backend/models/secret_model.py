@@ -1,4 +1,3 @@
-"""Secret_model."""
 from dataclasses import dataclass
 
 from marshmallow import Schema

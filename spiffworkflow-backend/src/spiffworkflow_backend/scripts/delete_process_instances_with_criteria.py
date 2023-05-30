@@ -1,4 +1,3 @@
-"""Delete_process_instances_with_criteria."""
 from time import time
 from typing import Any
 

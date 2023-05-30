@@ -1,4 +1,3 @@
-"""Test_message_instance."""
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
