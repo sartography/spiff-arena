@@ -7,6 +7,7 @@ import jwt
 import requests
 from flask import current_app
 from flask import redirect
+from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from werkzeug.wrappers import Response
@@ -78,7 +79,7 @@ class AuthenticationService:
         openid_config_url = f"{cls.server_url()}/.well-known/openid-configuration"
         if name not in AuthenticationService.ENDPOINT_CACHE:
             try:
-                response = requests.get(openid_config_url)
+                response = requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 AuthenticationService.ENDPOINT_CACHE = response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
@@ -139,7 +140,7 @@ class AuthenticationService:
 
         request_url = self.open_id_endpoint_for_name("token_endpoint")
 
-        response = requests.post(request_url, data=data, headers=headers)
+        response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
         return auth_token_object
 
@@ -244,6 +245,6 @@ class AuthenticationService:
 
         request_url = cls.open_id_endpoint_for_name("token_endpoint")
 
-        response = requests.post(request_url, data=data, headers=headers)
+        response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
         return auth_token_object

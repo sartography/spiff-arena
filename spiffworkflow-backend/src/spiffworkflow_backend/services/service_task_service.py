@@ -6,6 +6,7 @@ import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
+from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -78,7 +79,7 @@ class ServiceTaskDelegate:
                 params = {k: ServiceTaskDelegate.check_prefixes(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__task_data"] = task_data
 
-                proxied_response = requests.post(call_url, json=params)
+                proxied_response = requests.post(call_url, json=params, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 response_text = proxied_response.text
                 json_parse_error = None
 
@@ -128,7 +129,7 @@ class ServiceTaskService:
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/commands")
+            response = requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []
@@ -143,7 +144,7 @@ class ServiceTaskService:
     def authentication_list() -> Any:
         """Returns a list of available authentications."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/auths")
+            response = requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []
