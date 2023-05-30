@@ -5,7 +5,7 @@ from flask import Flask
 from flask import current_app
 from spiffworkflow_backend.services.process_model_test_runner_service import NoTestCasesFoundError
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
-from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGiven
+from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGivenError
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -34,7 +34,7 @@ class TestProcessModelTestRunner(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        with pytest.raises(UnsupporterRunnerDelegateGiven):
+        with pytest.raises(UnsupporterRunnerDelegateGivenError):
             ProcessModelTestRunner(
                 os.path.join(self.root_path(), "DNE"), process_model_test_runner_delegate_class=NoTestCasesFoundError
             )
