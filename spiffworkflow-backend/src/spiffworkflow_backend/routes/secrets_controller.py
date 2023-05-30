@@ -16,7 +16,12 @@ from spiffworkflow_backend.services.user_service import UserService
 def secret_show(key: str) -> Response:
     """Secret_show."""
     secret = SecretService.get_secret(key)
-    return make_response(jsonify(secret), 200)
+
+    # normal serialization does not include the secret value, but this is the one endpoint where we want to return the goods
+    secret_as_dict = secret.serialized
+    secret_as_dict["value"] = SecretService._decrypt(secret.value)
+
+    return make_response(secret_as_dict, 200)
 
 
 def secret_list(
