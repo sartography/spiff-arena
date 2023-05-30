@@ -1,4 +1,3 @@
-"""Test_authorization."""
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

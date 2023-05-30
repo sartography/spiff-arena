@@ -1,4 +1,3 @@
-"""Test_process_instance_queue_service."""
 import time
 from contextlib import suppress
 

@@ -1,4 +1,3 @@
-"""Test_process_instance_processor."""
 from uuid import UUID
 
 import pytest

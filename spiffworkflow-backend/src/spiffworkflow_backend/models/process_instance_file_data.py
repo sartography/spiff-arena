@@ -1,4 +1,3 @@
-"""Process_instance_file_data."""
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey

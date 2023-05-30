@@ -1,4 +1,3 @@
-"""Test_various_bpmn_constructs."""
 from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor

@@ -1,4 +1,3 @@
-"""Acceptance_test_fixtures."""
 import time
 
 from flask import current_app

@@ -1,4 +1,3 @@
-"""File_system_service."""
 import os
 from collections.abc import Generator
 from contextlib import contextmanager

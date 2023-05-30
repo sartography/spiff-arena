@@ -1,4 +1,3 @@
-"""Test_nested_groups."""
 import json
 
 from flask.app import Flask

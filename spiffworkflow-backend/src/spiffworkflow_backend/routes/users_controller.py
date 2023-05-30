@@ -1,4 +1,3 @@
-"""Users_controller."""
 from typing import Any
 
 import flask
