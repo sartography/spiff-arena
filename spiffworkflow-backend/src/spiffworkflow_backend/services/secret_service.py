@@ -1,4 +1,3 @@
-
 from flask import current_app
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
