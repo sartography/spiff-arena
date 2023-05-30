@@ -20,7 +20,7 @@ class Version_1_0_Test(BaseTestCase):
             wf = self.serializer.deserialize_json(fh.read())
         # We should be able to finish the workflow from this point
         ready_tasks = wf.get_tasks(TaskState.READY)
-        self.assertEqual('Action3', ready_tasks[0].task_spec.description)
+        self.assertEqual('Action3', ready_tasks[0].task_spec.bpmn_name)
         ready_tasks[0].run()
         wf.do_engine_steps()
         wf.refresh_waiting_tasks()
@@ -66,7 +66,7 @@ class Version_1_1_Test(BaseTestCase):
     def test_check_multiinstance(self):
         fn = os.path.join(self.DATA_DIR, 'serialization', 'v1.1-multi.json')
         with self.assertRaises(VersionMigrationError) as ctx:
-            wf = self.serializer.deserialize_json(open(fn).read())
+            self.serializer.deserialize_json(open(fn).read())
             self.assertEqual(ctx.exception.message, "This workflow cannot be migrated because it contains MultiInstance Tasks")
 
     def test_remove_loop_reset(self):

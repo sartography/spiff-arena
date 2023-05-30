@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
-
-# Copyright (C) 2007 Samuel Abels
+# Copyright (C) 2007 Samuel Abels, 2023 Sartography
 #
-# This library is free software; you can redistribute it and/or
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# version 3.0 of the License, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# SpiffWorkflow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -16,6 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301  USA
+
 from abc import abstractmethod
 
 from ..util.event import Event
@@ -84,21 +85,15 @@ class TaskSpec(object):
         :param pre_assign: a list of name/value pairs
         :type  post_assign: list((str, object))
         :param post_assign: a list of name/value pairs
-        :type  position: dict((str, object))
-        :param position: a dict containing an 'x' and 'y' with coordinates
-                            that describe where the element occurred in the
-                            diagram.
         """
         assert wf_spec is not None
         assert name is not None
         self._wf_spec = wf_spec
-        self.id = None
         self.name = str(name)
-        self.description = kwargs.get('description', '')
+        self.description = kwargs.get('description', None)
         self.inputs = []
         self.outputs = []
         self.manual = kwargs.get('manual', False)
-        self.internal = False  # Only for easing debugging.
         self.data = kwargs.get('data', {})
         self.defines = kwargs.get('defines', {})
         self.pre_assign = kwargs.get('pre_assign',[])
@@ -115,7 +110,6 @@ class TaskSpec(object):
 
         self._wf_spec._add_notify(self)
         self.data.update(self.defines)
-        assert self.id is not None
 
     @property
     def spec_type(self):
@@ -409,14 +403,12 @@ class TaskSpec(object):
         class_name = module + '.' + self.__class__.__name__
 
         return {
-                  'id':self.id,
                   'class': class_name,
                   'name':self.name,
                   'description':self.description,
-                  'inputs':[x.id for x in self.inputs],
-                  'outputs':[x.id for x in self.outputs],
+                  'inputs':[x.name for x in self.inputs],
+                  'outputs':[x.name for x in self.outputs],
                   'manual':self.manual,
-                  'internal':self.internal,
                   'data':self.data,
                   'defines':self.defines,
                   'pre_assign':self.pre_assign,
@@ -447,34 +439,14 @@ class TaskSpec(object):
         :returns: The task specification instance.
         """
         out = cls(wf_spec,s_state.get('name'))
-        out.id = s_state.get('id')
         out.name = s_state.get('name')
         out.description = s_state.get('description')
         out.inputs = s_state.get('inputs')
         out.outputs = s_state.get('outputs')
         out.manual = s_state.get('manual')
-        out.internal = s_state.get('internal')
         out.data = s_state.get('data')
         out.defines = s_state.get('defines')
         out.pre_assign = s_state.get('pre_assign')
         out.post_assign = s_state.get('post_assign')
         out.lookahead = s_state.get('lookahead')
         return out
-
-    def task_should_set_children_future(self, my_task):
-        """
-        Hook to allow a task_spec to indicate if a task should
-        set_future_children.
-
-        Subclasses can override to influence this decision.
-        """
-        return my_task.state == TaskState.COMPLETED or my_task.state == TaskState.READY
-
-    def task_will_set_children_future(self, my_task):
-        """
-        Called right before a task runs the logic for set_children_future if
-        task_should_set_children_future returns True.
-
-        Subclasses can override to perform work during that stage of execution.
-        """
-        pass
