@@ -186,8 +186,7 @@ Once you have successfully signed in, navigate to the process section. This sect
 
 ![Untitled](images/Untitled_16.png)
 
-> **Step 2: Find and click on the process**
-> 
+### Step 2: Find and click on the process
 
 You can either search for a process model using the search bar or navigate through displayed processes to find the process model.
 
