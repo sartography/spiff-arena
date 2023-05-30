@@ -1,4 +1,3 @@
-"""Custom_parser."""
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from spiffworkflow_backend.specs.start_event import StartEvent

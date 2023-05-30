@@ -1,4 +1,3 @@
-"""__init__."""
 import base64
 import faulthandler
 import json

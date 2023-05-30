@@ -1,4 +1,3 @@
-"""User_service."""
 from typing import Any
 
 from flask import current_app

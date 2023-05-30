@@ -1,4 +1,3 @@
-"""Test_logging_service."""
 from uuid import UUID
 
 from flask.app import Flask

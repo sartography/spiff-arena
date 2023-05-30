@@ -1,4 +1,3 @@
-"""Process_model_service."""
 import json
 import os
 import shutil

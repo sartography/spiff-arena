@@ -1,4 +1,3 @@
-"""Spec_file_service."""
 import os
 import shutil
 from datetime import datetime

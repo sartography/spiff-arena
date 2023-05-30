@@ -1,4 +1,3 @@
-"""Logging_service."""
 import json
 import logging
 import re
