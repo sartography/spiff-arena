@@ -171,7 +171,7 @@ select = [
   "E",   # pycodestyle error
   # "ERA",  # eradicate
   "F",   # pyflakes
-  # "N",   # pep8-naming
+  "N",   # pep8-naming
   # "PL",  # pylint
   # "S",   # flake8-bandit
   "UP",  # pyupgrade
