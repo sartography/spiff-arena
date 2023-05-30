@@ -1,6 +1,24 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 from ...bpmn.serializer.helpers.spec import TaskSpecConverter
 
-from ..specs.BusinessRuleTask import BusinessRuleTask
 from ..specs.model import DecisionTable, Rule, HitPolicy
 from ..specs.model import Input, InputEntry, Output, OutputEntry
 from ..engine.DMNEngine import DMNEngine
@@ -9,7 +27,6 @@ class BaseBusinessRuleTaskConverter(TaskSpecConverter):
 
     def to_dict(self, spec):
         dct = self.get_default_attributes(spec)
-        dct.update(self.get_bpmn_attributes(spec))
         # We only ever use one decision table
         dct['decision_table'] = self.decision_table_to_dict(spec.dmnEngine.decision_table)
         return dct
@@ -95,8 +112,3 @@ class BaseBusinessRuleTaskConverter(TaskSpecConverter):
         rule.outputEntries = [self.output_entry_from_dict(entry, outputs)
                               for entry in dct['output_entries']]
         return rule
-
-
-class BusinessRuleTaskConverter(BaseBusinessRuleTaskConverter):
-    def __init__(self, registry):
-        super().__init__(BusinessRuleTask, registry)

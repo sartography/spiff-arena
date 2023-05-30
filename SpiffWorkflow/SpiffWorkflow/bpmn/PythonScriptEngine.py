@@ -1,21 +1,13 @@
-# -*- coding: utf-8 -*-
-import ast
-import sys
-import traceback
-import warnings
-
-from .PythonScriptEngineEnvironment import TaskDataEnvironment
-from ..exceptions import SpiffWorkflowException, WorkflowTaskException
-
-
-# Copyright (C) 2020 Kelly McDonald
+# Copyright (C) 2020 Kelly McDonald, 2023 Sartography
 #
-# This library is free software; you can redistribute it and/or
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# version 3.0 of the License, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# SpiffWorkflow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -24,6 +16,15 @@ from ..exceptions import SpiffWorkflowException, WorkflowTaskException
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301  USA
+
+import ast
+import sys
+import traceback
+import warnings
+
+from SpiffWorkflow.exceptions import SpiffWorkflowException
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+from .PythonScriptEngineEnvironment import TaskDataEnvironment
 
 
 class PythonScriptEngine(object):
@@ -40,8 +41,8 @@ class PythonScriptEngine(object):
     def __init__(self, default_globals=None, scripting_additions=None, environment=None):
 
         if default_globals is not None or scripting_additions is not None:
-            warnings.warn(f'default_globals and scripting_additions are deprecated.  '
-                          f'Please provide an environment such as TaskDataEnvrionment',
+            warnings.warn('default_globals and scripting_additions are deprecated.  '
+                          'Please provide an environment such as TaskDataEnvrionment',
                           DeprecationWarning, stacklevel=2)
 
         if environment is None:

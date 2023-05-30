@@ -30,29 +30,17 @@ function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
 
-function run_autoflake() {
-  # checking command -v autoflake8 is not good enough, since the asdf shim may be installed, which will make command -v succeed,
-  # but autoflake8 may not have been pip installed inside the correct version of python.
-  if ! autoflake8 --help >/dev/null ; then
-    pip install autoflake8
-    asdf reshim python
-  fi
-
-  if ! autoflake --help >/dev/null ; then
-    pip install autoflake
-    asdf reshim python
-  fi
-
-  if ! autopep8 --help >/dev/null ; then
-    pip install autopep8
+function run_autofixers() {
+  # checking command -v ruff is not good enough, since the asdf shim may be installed, which will make command -v succeed,
+  # but ruff may not have been pip installed inside the correct version of python.
+  if ! ruff --help >/dev/null 2>&1; then
+    pip install ruff
     asdf reshim python
   fi
 
   python_dirs=$(get_python_dirs)
   python_files=$(find $python_dirs -type f -name "*.py" ! -name '.null-ls*' ! -name '_null-ls*')
-  autoflake8 --in-place --remove-unused-variables --remove-duplicate-keys --expand-star-imports --exit-zero-even-if-changed $python_files
-  autoflake --in-place --remove-all-unused-imports $python_files
-  autopep8 --in-place $python_files
+  ruff --fix $python_files
 }
 
 function run_pre_commmit() {
@@ -71,7 +59,7 @@ done
 for python_project in "${python_projects[@]}" ; do
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
     pushd "$python_project"
-    run_autoflake || run_autoflake
+    run_autofixers || run_autofixers
     popd
   fi
 done

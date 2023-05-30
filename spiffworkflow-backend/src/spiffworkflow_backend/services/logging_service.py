@@ -4,10 +4,8 @@ import logging
 import re
 import sys
 from typing import Any
-from typing import Optional
 
 from flask.app import Flask
-
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -38,7 +36,7 @@ class JsonFormatter(logging.Formatter):
 
     def __init__(
         self,
-        fmt_dict: Optional[dict] = None,
+        fmt_dict: dict | None = None,
         time_format: str = "%Y-%m-%dT%H:%M:%S",
         msec_format: str = "%s.%03dZ",
     ):
@@ -48,12 +46,14 @@ class JsonFormatter(logging.Formatter):
         self.default_msec_format = msec_format
         self.datefmt = None
 
-    def usesTime(self) -> bool:
+    def usesTime(self) -> bool:  # noqa: N802, this is overriding a method from python's stdlib
         """Overwritten to look for the attribute in the format dict values instead of the fmt string."""
         return "asctime" in self.fmt_dict.values()
 
     # we are overriding a method that returns a string and returning a dict, hence the Any
-    def formatMessage(self, record: logging.LogRecord) -> Any:
+    def formatMessage(  # noqa: N802, this is overriding a method from python's stdlib
+        self, record: logging.LogRecord
+    ) -> Any:
         """Overwritten to return a dictionary of the relevant LogRecord attributes instead of a string.
 
         KeyError is raised if an unknown attribute is provided in the fmt_dict.

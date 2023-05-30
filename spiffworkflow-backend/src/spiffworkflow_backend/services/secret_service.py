@@ -1,8 +1,6 @@
 """Secret_service."""
-from typing import Optional
 
 from flask import current_app
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.secret_model import SecretModel
@@ -70,8 +68,8 @@ class SecretService:
         cls,
         key: str,
         value: str,
-        user_id: Optional[int] = None,
-        create_if_not_exists: Optional[bool] = False,
+        user_id: int | None = None,
+        create_if_not_exists: bool | None = False,
     ) -> None:
         """Does this pass pre commit?"""
         secret_model = SecretModel.query.filter(SecretModel.key == key).first()

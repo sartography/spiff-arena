@@ -1,14 +1,13 @@
 import os
-from typing import Optional
 
 import pytest
-from flask import current_app
 from flask import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
+from flask import current_app
 from spiffworkflow_backend.services.process_model_test_runner_service import NoTestCasesFoundError
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
-from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGiven
+from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGivenError
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessModelTestRunner(BaseTest):
@@ -35,7 +34,7 @@ class TestProcessModelTestRunner(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        with pytest.raises(UnsupporterRunnerDelegateGiven):
+        with pytest.raises(UnsupporterRunnerDelegateGivenError):
             ProcessModelTestRunner(
                 os.path.join(self.root_path(), "DNE"), process_model_test_runner_delegate_class=NoTestCasesFoundError
             )
@@ -107,10 +106,10 @@ class TestProcessModelTestRunner(BaseTest):
 
     def _run_model_tests(
         self,
-        bpmn_process_directory_name: Optional[str] = None,
+        bpmn_process_directory_name: str | None = None,
         parent_directory: str = "expected-to-pass",
-        test_case_file: Optional[str] = None,
-        test_case_identifier: Optional[str] = None,
+        test_case_file: str | None = None,
+        test_case_identifier: str | None = None,
     ) -> ProcessModelTestRunner:
         base_process_model_dir_path_segments = [self.root_path(), parent_directory]
         path_segments = base_process_model_dir_path_segments

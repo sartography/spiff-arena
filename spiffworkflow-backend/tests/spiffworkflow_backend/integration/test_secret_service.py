@@ -1,13 +1,9 @@
 """Test_secret_service."""
 import json
-from typing import Optional
 
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from werkzeug.test import TestResponse  # type: ignore
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.secret_model import SecretModel
@@ -15,6 +11,9 @@ from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.secret_service import SecretService
+from werkzeug.test import TestResponse  # type: ignore
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class SecretServiceTestHelpers(BaseTest):
@@ -225,7 +224,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
     ) -> None:
         """Test_update_secret."""
         self.add_test_secret(with_super_admin_user)
-        secret: Optional[SecretModel] = SecretService.get_secret(self.test_key)
+        secret: SecretModel | None = SecretService.get_secret(self.test_key)
         assert secret
         assert SecretService._decrypt(secret.value) == self.test_value
         secret_model = SecretModel(

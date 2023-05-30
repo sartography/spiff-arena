@@ -1,12 +1,12 @@
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller import ProcessCallerCacheModel
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 @pytest.fixture()

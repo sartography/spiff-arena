@@ -1,10 +1,29 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 import logging
 import re
 
+from SpiffWorkflow.exceptions import SpiffWorkflowException
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+
 from ..specs.model import HitPolicy
-from ...exceptions import SpiffWorkflowException, WorkflowTaskException
-from ...util import levenshtein
-from ...workflow import WorkflowException
 
 logger = logging.getLogger('spiff.dmn')
 
@@ -37,7 +56,7 @@ class DMNEngine:
             for rule in matched_rules:
                 rule_output = rule.output_as_dict(task)
                 for key in rule_output.keys():
-                    if not key in result:
+                    if key not in result:
                         result[key] = []
                     result[key].append(rule_output[key])
         elif len(matched_rules) > 0:
@@ -98,7 +117,7 @@ class DMNEngine:
         # NOTE:  It should only do this replacement outside of quotes.
         # for example, provided "This thing?"  in quotes, it should not
         # do the replacement.
-        match_expr = re.sub('(\?)(?=(?:[^\'"]|[\'"][^\'"]*[\'"])*$)', 'dmninputexpr', match_expr)
+        match_expr = re.sub(r'(\?)(?=(?:[^\'"]|[\'"][^\'"]*[\'"])*$)', 'dmninputexpr', match_expr)
         if 'dmninputexpr' in match_expr:
             external_methods = {
                 'dmninputexpr': script_engine.evaluate(task, input_expr)

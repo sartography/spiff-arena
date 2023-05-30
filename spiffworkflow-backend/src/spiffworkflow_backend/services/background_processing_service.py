@@ -1,14 +1,9 @@
 """Background_processing_service."""
 import flask
-
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
 class BackgroundProcessingService:

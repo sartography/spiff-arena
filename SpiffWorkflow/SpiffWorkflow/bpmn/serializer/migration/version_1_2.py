@@ -1,7 +1,26 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 from datetime import datetime, timedelta
 
 from SpiffWorkflow.task import TaskState
-from SpiffWorkflow.bpmn.specs.events.event_definitions import LOCALTZ
+from SpiffWorkflow.bpmn.specs.event_definitions import LOCALTZ
 
 from .exceptions import VersionMigrationError
 
@@ -29,7 +48,7 @@ def convert_timer_expressions(dct):
             elif isinstance(dt, timedelta):
                 spec['event_definition']['expression'] = f"'{td_to_iso(dt)}'"
                 spec['event_definition']['typename'] = 'DurationTimerEventDefinition'
-        except:
+        except Exception:
             raise VersionMigrationError(message.format(spec=spec['name']))
 
     def convert_cycle(spec, task):
@@ -47,7 +66,7 @@ def convert_timer_expressions(dct):
                         'next': datetime.combine(dt.date(), dt.time(), LOCALTZ).isoformat(),
                         'duration': duration.total_seconds(),
                     }
-        except:
+        except Exception:
             raise VersionMigrationError(message.format(spec=spec['name']))
 
         if spec['typename'] == 'StartEvent':
@@ -65,7 +84,8 @@ def convert_timer_expressions(dct):
                 task['children'].remove(remove['id'])
                 dct['tasks'].pop(remove['id'])
 
-    has_timer = lambda ts: 'event_definition' in ts and ts['event_definition']['typename'] in [ 'CycleTimerEventDefinition', 'TimerEventDefinition']
+    def has_timer(ts):
+        return "event_definition" in ts and ts["event_definition"]["typename"] in ["CycleTimerEventDefinition", "TimerEventDefinition"]
     for spec in [ ts for ts in dct['spec']['task_specs'].values() if has_timer(ts) ]:
         spec['event_definition']['name'] = spec['event_definition'].pop('label')
         if spec['event_definition']['typename'] == 'TimerEventDefinition':
@@ -113,7 +133,7 @@ def create_data_objects_and_io_specs(dct):
             item['typename'] = 'DataObject'
 
 def check_multiinstance(dct):
-    
+
     specs = [ spec for spec in dct['spec']['task_specs'].values() if 'prevtaskclass' in spec ]
     if len(specs) > 0:
         raise VersionMigrationError("This workflow cannot be migrated because it contains MultiInstance Tasks")
@@ -143,3 +163,97 @@ def update_task_states(dct):
         update(dct)
         for sp in dct['subprocesses'].values():
             update(sp)
+
+def convert_simple_tasks(dct):
+
+    def update_specs(task_specs):
+        for name, spec in task_specs.items():
+            if spec['typename'] == 'StartTask':
+                spec['typename'] = 'BpmnStartTask'
+            elif spec['typename'] == 'Simple':
+                spec['typename'] = 'SimpleBpmnTask'
+
+    update_specs(dct['spec']['task_specs'])
+    for subprocess_spec in dct['subprocess_specs'].values():
+        update_specs(subprocess_spec['task_specs'])
+
+def update_bpmn_attributes(dct):
+
+    descriptions = {
+        'StartEvent': 'Start Event',
+        'EndEvent': 'End Event',
+        'UserTask': 'User Task',
+        'Task': 'Task',
+        'SubProcess': 'Subprocess',
+        'ManualTask': 'Manual Task',
+        'ExclusiveGateway': 'Exclusive Gateway',
+        'ParallelGateway': 'Parallel Gateway',
+        'InclusiveGateway': 'Inclusive Gateway',
+        'CallActivity': 'Call Activity',
+        'TransactionSubprocess': 'Transaction',
+        'ScriptTask': 'Script Task',
+        'ServiceTask': 'Service Task',
+        'IntermediateCatchEvent': 'Intermediate Catch Event',
+        'IntermediateThrowEvent': 'Intermediate Throw Event',
+        'BoundaryEvent': 'Boundary Event',
+        'ReceiveTask': 'Receive Task',
+        'SendTask': 'Send Task',
+        'EventBasedGateway': 'Event Based Gateway',
+        'CancelEventDefinition': 'Cancel',
+        'ErrorEventDefinition': 'Error',
+        'EscalationEventDefinition': 'Escalation',
+        'TerminateEventDefinition': 'Terminate',
+        'MessageEventDefinition': 'Message',
+        'SignalEventDefinition': 'Signal',
+        'TimerEventDefinition': 'Timer',
+        'NoneEventDefinition': 'Default',
+        'MultipleEventDefinition': 'Multiple'
+    }
+
+    def update_data_spec(obj):
+        obj['bpmn_id'] = obj.pop('name')
+        obj['bpmn_name'] = obj.pop('description', None)
+
+    def update_io_spec(io_spec):
+        for obj in io_spec['data_inputs']:
+            update_data_spec(obj)
+        for obj in io_spec['data_outputs']:
+            update_data_spec(obj)
+
+    def update_task_specs(spec):
+        for spec in spec['task_specs'].values():
+            spec['bpmn_id'] = None
+            if spec['typename'] not in ['BpmnStartTask', 'SimpleBpmnTask', '_EndJoin', '_BoundaryEventParent']:
+                spec['bpmn_id'] = spec['name']
+                spec['bpmn_name'] = spec['description'] or None
+                if 'event_definition' in spec and spec['event_definition']['typename'] in descriptions:
+                    spec_desc = descriptions.get(spec['typename'])
+                    event_desc = descriptions.get(spec['event_definition']['typename'])
+                    cancelling = spec.get('cancel_activity')
+                    interrupt = 'Interrupting ' if cancelling else 'Non-Interrupting ' if not cancelling else ''
+                    desc = f'{interrupt}{event_desc} {spec_desc}'
+                elif spec['typename'] in descriptions:
+                    desc = descriptions.get(spec['typename'])
+                else:
+                    desc = None
+                spec['description'] = desc
+            else:
+                spec['bpmn_name'] = None
+                spec['description'] = None
+            if spec.get('io_specification') is not None:
+                update_io_spec(spec['io_specification'])
+            for obj in spec.get('data_input_associations', []):
+                update_data_spec(obj)
+            for obj in spec.get('data_output_associations', []):
+                update_data_spec(obj)
+
+    update_task_specs(dct['spec'])
+    for obj in dct['spec'].get('data_objects', {}).values():
+        update_data_spec(obj)
+
+    for subprocess_spec in dct['subprocess_specs'].values():
+        update_task_specs(subprocess_spec)
+        for obj in subprocess_spec.get('data_objects', {}).values():
+            update_data_spec(obj)
+        if subprocess_spec.get('io_specification') is not None:
+            update_io_spec(subprocess_spec['io_specification'])

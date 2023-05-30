@@ -2,14 +2,10 @@
 import base64
 import hashlib
 import time
+from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
 from typing import Any
-from typing import Dict
-from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Tuple
 from urllib.parse import unquote
 
 import sentry_sdk
@@ -18,16 +14,13 @@ from flask import g
 from SpiffWorkflow.bpmn.specs.control import _BoundaryEventParent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_file_data import (
-    ProcessInstanceFileDataModel,
-)
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
@@ -37,15 +30,9 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskNotFou
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceIsAlreadyLockedError,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
@@ -160,7 +147,7 @@ class ProcessInstanceService:
             db.session.commit()
 
     @classmethod
-    def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
+    def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
         #
         # over time this function can gain more knowledge of different event types,
         # for now we are just handling Duration Timer events.
@@ -176,7 +163,7 @@ class ProcessInstanceService:
         return False
 
     @classmethod
-    def all_waiting_events_can_be_skipped(cls, waiting_events: List[Dict[str, Any]]) -> bool:
+    def all_waiting_events_can_be_skipped(cls, waiting_events: list[dict[str, Any]]) -> bool:
         for waiting_event in waiting_events:
             if not cls.waiting_event_can_be_skipped(waiting_event, datetime.now(timezone.utc)):
                 return False
@@ -240,9 +227,9 @@ class ProcessInstanceService:
     def run_process_instance_with_processor(
         cls,
         process_instance: ProcessInstanceModel,
-        status_value: Optional[str] = None,
-        execution_strategy_name: Optional[str] = None,
-    ) -> Optional[ProcessInstanceProcessor]:
+        status_value: str | None = None,
+        execution_strategy_name: str | None = None,
+    ) -> ProcessInstanceProcessor | None:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor = ProcessInstanceProcessor(process_instance)
@@ -294,7 +281,7 @@ class ProcessInstanceService:
         return result
 
     @staticmethod
-    def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> List[int]:
+    def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> list[int]:
         """Get_users_assigned_to_task."""
         if processor.process_instance_model.process_initiator_id is None:
             raise ApiError.from_task(
@@ -346,7 +333,7 @@ class ProcessInstanceService:
         identifier: str,
         value: str,
         process_instance_id: int,
-    ) -> Optional[ProcessInstanceFileDataModel]:
+    ) -> ProcessInstanceFileDataModel | None:
         if value.startswith("data:"):
             try:
                 parts = value.split(";")
@@ -377,7 +364,7 @@ class ProcessInstanceService:
     def possible_file_data_values(
         cls,
         data: dict[str, Any],
-    ) -> Generator[Tuple[str, str, Optional[int]], None, None]:
+    ) -> Generator[tuple[str, str, int | None], None, None]:
         for identifier, value in data.items():
             if isinstance(value, str):
                 yield (identifier, value, None)
@@ -395,7 +382,7 @@ class ProcessInstanceService:
         cls,
         data: dict[str, Any],
         process_instance_id: int,
-    ) -> List[ProcessInstanceFileDataModel]:
+    ) -> list[ProcessInstanceFileDataModel]:
         models = []
 
         for identifier, value, list_index in cls.possible_file_data_values(data):
@@ -410,7 +397,7 @@ class ProcessInstanceService:
     def replace_file_data_with_digest_references(
         cls,
         data: dict[str, Any],
-        models: List[ProcessInstanceFileDataModel],
+        models: list[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
             digest_reference = (
@@ -526,7 +513,7 @@ class ProcessInstanceService:
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
-        calling_subprocess_task_id: Optional[str] = None,
+        calling_subprocess_task_id: str | None = None,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.description

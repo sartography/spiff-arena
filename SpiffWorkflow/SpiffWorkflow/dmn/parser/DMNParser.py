@@ -1,12 +1,38 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 import ast
 
 from SpiffWorkflow.bpmn.parser.node_parser import NodeParser, DEFAULT_NSMAP
-from ...bpmn.parser.ValidationException import ValidationException
+from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException
 
-from ...bpmn.parser.util import xpath_eval
+from SpiffWorkflow.bpmn.parser.util import xpath_eval
 
-from ...dmn.specs.model import Decision, DecisionTable, InputEntry, \
-    OutputEntry, Input, Output, Rule
+from SpiffWorkflow.dmn.specs.model import (
+    Decision,
+    DecisionTable,
+    InputEntry,
+    OutputEntry,
+    Input,
+    Output,
+    Rule,
+)
 
 def get_dmn_ns(node):
     """
@@ -55,7 +81,8 @@ class DMNParser(NodeParser):
     def parse(self):
         self.decision = self._parse_decision(self.node.findall('{*}decision'))
 
-    def get_id(self):
+    @property
+    def bpmn_id(self):
         """
         Returns the process ID
         """
@@ -172,9 +199,7 @@ class DMNParser(NodeParser):
         return rule
 
     def _parse_input_output_element(self, decision_table, element, cls, idx):
-        input_or_output = (
-            decision_table.inputs if cls == InputEntry else decision_table.outputs if cls == OutputEntry else None)[
-            idx]
+        input_or_output = (decision_table.inputs if cls == InputEntry else decision_table.outputs)[idx]
         entry = cls(element.attrib['id'], input_or_output)
         for child in element:
             if child.tag.endswith('description'):
@@ -182,7 +207,8 @@ class DMNParser(NodeParser):
             elif child.tag.endswith('text'):
                 entry.text = child.text
         if cls == InputEntry:
-            entry.lhs.append(entry.text)
+            # DMN renders 'no input specification' with '-'; assume this is intended if somebody has added '-'
+            entry.lhs.append(entry.text if entry.text != '-' else None)
         elif cls == OutputEntry:
             if entry.text and entry.text != '':
                 try:

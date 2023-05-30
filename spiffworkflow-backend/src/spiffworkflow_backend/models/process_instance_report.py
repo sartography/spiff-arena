@@ -7,15 +7,17 @@ from dataclasses import dataclass
 from typing import Any
 
 if sys.version_info < (3, 11):
-    from typing_extensions import TypedDict, NotRequired
+    from typing_extensions import NotRequired
+    from typing_extensions import TypedDict
 else:
-    from typing import TypedDict, NotRequired
+    from typing import NotRequired
+    from typing import TypedDict
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
@@ -123,7 +125,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 f"Process instance report with identifier already exists: {identifier}"
             )
 
-        report_metadata_dict = typing.cast(typing.Dict[str, Any], report_metadata)
+        report_metadata_dict = typing.cast(dict[str, Any], report_metadata)
         json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata_dict)
 
         process_instance_report = cls(

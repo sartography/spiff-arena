@@ -4,12 +4,9 @@ import re
 import shutil
 import subprocess  # noqa we need the subprocess module to safely run the git commands
 import uuid
-from typing import Optional
-from typing import Union
 
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.config import ConfigurationError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -48,7 +45,7 @@ class GitService:
         cls,
         process_model: ProcessModelInfo,
         revision: str,
-        file_name: Optional[str] = None,
+        file_name: str | None = None,
     ) -> str:
         """Get_instance_file_contents_for_revision."""
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
@@ -68,8 +65,8 @@ class GitService:
     def commit(
         cls,
         message: str,
-        repo_path: Optional[str] = None,
-        branch_name: Optional[str] = None,
+        repo_path: str | None = None,
+        branch_name: str | None = None,
     ) -> str:
         """Commit."""
         cls.check_for_basic_configs()
@@ -134,7 +131,7 @@ class GitService:
     @classmethod
     def run_shell_command(
         cls, command: list[str], return_success_state: bool = False
-    ) -> Union[subprocess.CompletedProcess[bytes], bool]:
+    ) -> subprocess.CompletedProcess[bytes] | bool:
         """Run_shell_command."""
         my_env = os.environ.copy()
         my_env["GIT_COMMITTER_NAME"] = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME") or "unknown"
@@ -179,8 +176,8 @@ class GitService:
         valid_clone_urls = [repo["clone_url"], repo["git_url"], repo["ssh_url"]]
         if config_clone_url not in valid_clone_urls:
             raise GitCloneUrlMismatchError(
-                "Configured clone url does not match the repo URLs from webhook: %s =/= %s"
-                % (config_clone_url, valid_clone_urls)
+                f"Configured clone url does not match the repo URLs from webhook: {config_clone_url} =/="
+                f" {valid_clone_urls}"
             )
 
         # Test webhook requests have a zen koan and hook info.

@@ -2,12 +2,9 @@
 import os
 
 from flask.app import Flask
-
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.services.acceptance_test_fixtures import (
-    load_acceptance_test_fixtures,
-)
+from spiffworkflow_backend.services.acceptance_test_fixtures import load_acceptance_test_fixtures
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 

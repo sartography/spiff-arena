@@ -1,11 +1,30 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 import json
 import gzip
 from copy import deepcopy
 from uuid import UUID
 
-from ..workflow import BpmnMessage, BpmnWorkflow
-from ..specs.SubWorkflowTask import SubWorkflowTask
-from ...task import Task
+from SpiffWorkflow.task import Task
+from SpiffWorkflow.bpmn.workflow import BpmnMessage, BpmnWorkflow
+from SpiffWorkflow.bpmn.specs.mixins.subworkflow_task import SubWorkflowTask
 
 from .migration.version_migration import MIGRATIONS
 from .helpers.registry import DefaultRegistry
@@ -134,7 +153,7 @@ class BpmnWorkflowSerializer:
             dct = self.__get_dict(serialization, use_gzip)
             if self.VERSION_KEY in dct:
                 return dct[self.VERSION_KEY]
-        except:  # Don't bail out trying to get a version, just return none.
+        except Exception:  # Don't bail out trying to get a version, just return none.
             return None
 
     def workflow_to_dict(self, workflow):
@@ -260,7 +279,7 @@ class BpmnWorkflowSerializer:
 
         for child_task_id in task_dict['children']:
             if child_task_id in process_dct['tasks']:
-                child = process_dct['tasks'][child_task_id]
+                process_dct['tasks'][child_task_id]
                 self.task_tree_from_dict(process_dct, child_task_id, task, process, top, top_dct)
             else:
                 raise ValueError(f"Task {task_id} ({task_spec.name}) has child {child_task_id}, but no such task exists")

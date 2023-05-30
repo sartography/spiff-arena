@@ -5,16 +5,12 @@ import re
 import traceback
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Optional
-from typing import Type
-from typing import Union
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 
 
@@ -30,11 +26,11 @@ class NoTestCasesFoundError(Exception):
     pass
 
 
-class MissingInputTaskData(Exception):
+class MissingInputTaskDataError(Exception):
     pass
 
 
-class UnsupporterRunnerDelegateGiven(Exception):
+class UnsupporterRunnerDelegateGivenError(Exception):
     pass
 
 
@@ -45,12 +41,12 @@ class BpmnFileMissingExecutableProcessError(Exception):
 @dataclass
 class TestCaseErrorDetails:
     error_messages: list[str]
-    task_error_line: Optional[str] = None
-    task_trace: Optional[list[str]] = None
-    task_bpmn_identifier: Optional[str] = None
-    task_bpmn_name: Optional[str] = None
-    task_line_number: Optional[int] = None
-    stacktrace: Optional[list[str]] = None
+    task_error_line: str | None = None
+    task_trace: list[str] | None = None
+    task_bpmn_identifier: str | None = None
+    task_bpmn_name: str | None = None
+    task_line_number: int | None = None
+    stacktrace: list[str] | None = None
 
 
 @dataclass
@@ -58,7 +54,7 @@ class TestCaseResult:
     passed: bool
     bpmn_file: str
     test_case_identifier: str
-    test_case_error_details: Optional[TestCaseErrorDetails] = None
+    test_case_error_details: TestCaseErrorDetails | None = None
 
 
 class ProcessModelTestRunnerDelegate:
@@ -78,11 +74,11 @@ class ProcessModelTestRunnerDelegate:
         raise NotImplementedError("method instantiate_executer must be implemented")
 
     @abstractmethod
-    def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: Optional[dict] = None) -> None:
+    def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
         raise NotImplementedError("method execute_task must be implemented")
 
     @abstractmethod
-    def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> Optional[SpiffTask]:
+    def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
         raise NotImplementedError("method get_next_task must be implemented")
 
 
@@ -117,7 +113,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
         bpmn_process_instance = BpmnWorkflow(bpmn_process_spec)
         return bpmn_process_instance
 
-    def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: Optional[dict] = None) -> None:
+    def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
         if task_data_for_submit is not None or spiff_task.task_spec.manual:
             if task_data_for_submit is not None:
                 spiff_task.update_data(task_data_for_submit)
@@ -125,7 +121,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
         else:
             spiff_task.run()
 
-    def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> Optional[SpiffTask]:
+    def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
         ready_tasks = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY)])
         if len(ready_tasks) > 0:
             return ready_tasks[0]
@@ -227,10 +223,10 @@ class ProcessModelTestRunner:
     def __init__(
         self,
         process_model_directory_path: str,
-        process_model_test_runner_delegate_class: Type = ProcessModelTestRunnerMostlyPureSpiffDelegate,
-        process_model_directory_for_test_discovery: Optional[str] = None,
-        test_case_file: Optional[str] = None,
-        test_case_identifier: Optional[str] = None,
+        process_model_test_runner_delegate_class: type = ProcessModelTestRunnerMostlyPureSpiffDelegate,
+        process_model_directory_for_test_discovery: str | None = None,
+        test_case_file: str | None = None,
+        test_case_identifier: str | None = None,
     ) -> None:
         self.process_model_directory_path = process_model_directory_path
         self.process_model_directory_for_test_discovery = (
@@ -240,7 +236,7 @@ class ProcessModelTestRunner:
         self.test_case_identifier = test_case_identifier
 
         if not issubclass(process_model_test_runner_delegate_class, ProcessModelTestRunnerDelegate):
-            raise UnsupporterRunnerDelegateGiven(
+            raise UnsupporterRunnerDelegateGivenError(
                 "Process model test runner delegate must inherit from ProcessModelTestRunnerDelegate. Given"
                 f" class '{process_model_test_runner_delegate_class}' does not"
             )
@@ -337,7 +333,7 @@ class ProcessModelTestRunner:
         self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
     def _execute_task(
-        self, spiff_task: SpiffTask, test_case_task_key: Optional[str], test_case_task_properties: Optional[dict]
+        self, spiff_task: SpiffTask, test_case_task_key: str | None, test_case_task_properties: dict | None
     ) -> None:
         task_data_for_submit = None
         if test_case_task_key and test_case_task_properties and "data" in test_case_task_properties:
@@ -346,7 +342,7 @@ class ProcessModelTestRunner:
             task_data_length = len(test_case_task_properties["data"])
             test_case_index = self.task_data_index[test_case_task_key]
             if task_data_length <= test_case_index:
-                raise MissingInputTaskData(
+                raise MissingInputTaskDataError(
                     f"Missing input task data for task: {test_case_task_key}. "
                     f"Only {task_data_length} given in the json but task was called {test_case_index + 1} times"
                 )
@@ -354,7 +350,7 @@ class ProcessModelTestRunner:
             self.task_data_index[test_case_task_key] += 1
         self.process_model_test_runner_delegate.execute_task(spiff_task, task_data_for_submit)
 
-    def _get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> Optional[SpiffTask]:
+    def _get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
         return self.process_model_test_runner_delegate.get_next_task(bpmn_process_instance)
 
     def _instantiate_executer(self, bpmn_file: str) -> BpmnWorkflow:
@@ -364,7 +360,7 @@ class ProcessModelTestRunner:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
     def _exception_to_test_case_error_details(
-        self, exception: Union[Exception, WorkflowTaskException]
+        self, exception: Exception | WorkflowTaskException
     ) -> TestCaseErrorDetails:
         error_messages = str(exception).split("\n")
         test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
@@ -384,8 +380,8 @@ class ProcessModelTestRunner:
         passed: bool,
         bpmn_file: str,
         test_case_identifier: str,
-        error_messages: Optional[list[str]] = None,
-        exception: Optional[Exception] = None,
+        error_messages: list[str] | None = None,
+        exception: Exception | None = None,
     ) -> None:
         test_case_error_details = None
         if exception is not None:
@@ -432,8 +428,8 @@ class ProcessModelTestRunnerService:
     def __init__(
         self,
         process_model_directory_path: str,
-        test_case_file: Optional[str] = None,
-        test_case_identifier: Optional[str] = None,
+        test_case_file: str | None = None,
+        test_case_identifier: str | None = None,
     ) -> None:
         self.process_model_test_runner = ProcessModelTestRunner(
             process_model_directory_path,

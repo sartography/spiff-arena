@@ -1,13 +1,11 @@
 """Process Model."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
-from spiffworkflow_backend.models.user_group_assignment_waiting import (
-    UserGroupAssignmentWaitingModel,
-)
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUserService(BaseTest):

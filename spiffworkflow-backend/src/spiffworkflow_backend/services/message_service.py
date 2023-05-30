@@ -1,23 +1,14 @@
 """Message_service."""
-from typing import Optional
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_processor import (
-    CustomBpmnScriptEngine,
-)
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
 class MessageServiceError(Exception):
@@ -28,7 +19,7 @@ class MessageService:
     """MessageService."""
 
     @classmethod
-    def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> Optional[MessageInstanceModel]:
+    def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
@@ -47,7 +38,7 @@ class MessageService:
             status=MessageStatuses.ready.value,
             message_type=MessageTypes.receive.value,
         ).all()
-        message_instance_receive: Optional[MessageInstanceModel] = None
+        message_instance_receive: MessageInstanceModel | None = None
         try:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
