@@ -1,11 +1,9 @@
 """workflow_service."""
 from datetime import datetime
-from typing import Optional
 
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 from spiffworkflow_backend.specs.start_event import StartEvent
 
@@ -18,9 +16,7 @@ class WorkflowService:
         return [t for t in workflow.get_tasks(TaskState.FUTURE) if isinstance(t.task_spec, StartEvent)]
 
     @classmethod
-    def next_start_event_configuration(
-        cls, workflow: BpmnWorkflow, now_in_utc: datetime
-    ) -> Optional[StartConfiguration]:
+    def next_start_event_configuration(cls, workflow: BpmnWorkflow, now_in_utc: datetime) -> StartConfiguration | None:
         start_events = cls.future_start_events(workflow)
         configurations = list(
             map(

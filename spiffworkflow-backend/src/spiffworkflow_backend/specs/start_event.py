@@ -1,8 +1,6 @@
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
-from typing import Dict
-from typing import Tuple
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
@@ -16,7 +14,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
-StartConfiguration = Tuple[int, int, int]
+StartConfiguration = tuple[int, int, int]
 
 # TODO: cylce timers and repeat counts?
 

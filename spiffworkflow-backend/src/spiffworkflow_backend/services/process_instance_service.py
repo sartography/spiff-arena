@@ -64,8 +64,8 @@ class ProcessInstanceService:
         cls,
         process_model: ProcessModelInfo,
         user: UserModel,
-        start_configuration: Optional[StartConfiguration] = None,
-    ) -> Tuple[ProcessInstanceModel, StartConfiguration]:
+        start_configuration: StartConfiguration | None = None,
+    ) -> tuple[ProcessInstanceModel, StartConfiguration]:
         """Get_process_instance_from_spec."""
         db.session.commit()
         try:
