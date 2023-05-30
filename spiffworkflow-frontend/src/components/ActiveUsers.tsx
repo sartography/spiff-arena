@@ -40,6 +40,12 @@ export default function ActiveUsers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
+  // activeUsers is supposed to be an array, but it is based on the response body
+  // from a network call, so who knows what might happen. Be safe.
+  if (!activeUsers.map) {
+    return null;
+  }
+
   const au = activeUsers.map((activeUser: User) => {
     return (
       <div

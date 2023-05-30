@@ -10,8 +10,8 @@ import { Button } from '@carbon/react';
 
 type OwnProps = {
   title: string;
-  children: React.ReactNode;
-  onClose: (..._args: any[]) => any;
+  children?: React.ReactNode;
+  onClose: Function;
   type?: string;
 };
 
