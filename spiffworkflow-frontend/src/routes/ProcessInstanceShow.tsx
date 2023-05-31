@@ -1113,6 +1113,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <ProcessInterstitial
           processInstanceId={processInstance.id}
           processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
+          redirectToHomeWhenNoTasks={false}
           allowRedirect={false}
         />
         <br />
