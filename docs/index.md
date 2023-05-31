@@ -6,9 +6,9 @@
 quick_start/quick_start.md
 documentation/documentation.md
 how_to/bpmn_unit_tests.md
-```
+wish_list/wish_list.md
 
-This is great!
+```
 
 ## Indices and tables
 
