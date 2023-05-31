@@ -84,6 +84,7 @@ export default function TaskShow() {
   }, [params]);
 
   const processSubmitResult = (result: any) => {
+    return null;
     removeError();
     if (result.ok) {
       navigate(`/tasks`);
