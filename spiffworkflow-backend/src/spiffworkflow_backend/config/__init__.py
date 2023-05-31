@@ -9,6 +9,8 @@ from werkzeug.utils import ImportStringError
 
 from spiffworkflow_backend.services.logging_service import setup_logger
 
+HTTP_REQUEST_TIMEOUT_SECONDS = 15
+
 
 class ConfigurationError(Exception):
     pass

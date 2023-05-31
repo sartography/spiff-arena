@@ -100,9 +100,11 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
+  // if a user can complete a task then the for-me page should
+  // always work for them so use that since it will work in all cases
   const navigateToInterstitial = (myTask: Task) => {
     navigate(
-      `/admin/process-instances/${modifyProcessIdentifierForPathParam(
+      `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         myTask.process_model_identifier
       )}/${myTask.process_instance_id}/interstitial`
     );

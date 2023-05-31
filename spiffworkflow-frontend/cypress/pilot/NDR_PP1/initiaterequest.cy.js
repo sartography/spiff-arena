@@ -105,11 +105,12 @@ describe.only('Initiate a Request - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
       });
@@ -192,11 +193,12 @@ describe.only('Initiate a Request - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
       });
@@ -329,11 +331,12 @@ describe.only('Initiate a Request - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
       });
@@ -723,11 +726,12 @@ describe.only('Initiate a Request - Without Files', () => {
           .contains(/^Cancel Request$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
       });
     });
@@ -836,11 +840,12 @@ describe.only('Initiate a Request - Without Files', () => {
           .contains(/^Cancel Request$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
       });
     });
@@ -1197,11 +1202,12 @@ describe('Form validation', () => {
         .contains(/^Submit$/)
         .click();
 
-      cy.get('button')
+      cy.wait(6000);
+      /*cy.get('button')
         .contains(/^Return to Home$/)
-        .click();
+        .click();*/
 
-      cy.contains('Started by me', { timeout: 60000 });
+      cy.contains('Process Instance Id:', { timeout: 60000 });
       cy.logout();
       cy.wait(2000);
     });
@@ -1311,11 +1317,12 @@ describe('Form validation', () => {
         .contains(/^Submit$/)
         .click();
 
-      cy.get('button')
+      cy.wait(6000);
+      /*cy.get('button')
         .contains(/^Return to Home$/)
-        .click();
+        .click();*/
 
-      cy.contains('Started by me', { timeout: 60000 });
+      cy.contains('Process Instance Id:', { timeout: 60000 });
       cy.logout();
       cy.wait(2000);
     });
@@ -1480,11 +1487,12 @@ describe('Initiate a Request - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
       });
@@ -1659,11 +1667,12 @@ describe('Initiate a Request - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
       });
@@ -1850,11 +1859,12 @@ describe('Initiate a Request - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
       });
@@ -1991,11 +2001,10 @@ describe('Initiate a Request - With Files', () => {
           .contains(/^Save and Close$/)
           .click();
 
-        cy.wait(3000);
-
-        // cy.get('button')
-        //     .contains(/^Return to Home$/)
-        //     .click();
+        cy.wait(6000);
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
 
         cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
@@ -2156,11 +2165,12 @@ describe('Initiate a Request - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
       });
     });

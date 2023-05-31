@@ -514,7 +514,6 @@ class ProcessInstanceService:
         add_docs_and_forms: bool = False,
         calling_subprocess_task_id: str | None = None,
     ) -> Task:
-        """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.description
 
         props = {}
