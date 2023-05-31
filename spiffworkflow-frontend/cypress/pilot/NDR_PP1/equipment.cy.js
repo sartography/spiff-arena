@@ -423,7 +423,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it.only('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1196,7 +1196,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it.only('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
