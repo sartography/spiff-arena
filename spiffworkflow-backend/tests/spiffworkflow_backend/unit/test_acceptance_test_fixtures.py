@@ -8,7 +8,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 
 def test_start_dates_are_one_hour_apart(app: Flask) -> None:
-    """Test_start_dates_are_one_hour_apart."""
     process_model_identifier = "misc/acceptance-tests-group-one/acceptance-tests-model-1"
     group_identifier = os.path.dirname(process_model_identifier)
     parent_group_identifier = os.path.dirname(group_identifier)

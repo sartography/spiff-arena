@@ -1,4 +1,3 @@
-"""Process_instance."""
 from __future__ import annotations
 
 import sys
@@ -48,20 +47,16 @@ class Report(TypedDict):
 
 
 class ProcessInstanceReportAlreadyExistsError(Exception):
-    """ProcessInstanceReportAlreadyExistsError."""
+    pass
 
 
 class ProcessInstanceReportResult(TypedDict):
-    """ProcessInstanceReportResult."""
-
     report_metadata: ReportMetadata
     results: list[dict]
 
 
 # https://stackoverflow.com/a/56842689/6090676
 class Reversor:
-    """Reversor."""
-
     def __init__(self, obj: Any):
         """__init__."""
         self.obj = obj
@@ -77,8 +72,6 @@ class Reversor:
 
 @dataclass
 class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceReportModel."""
-
     __tablename__ = "process_instance_report"
     __table_args__ = (
         db.UniqueConstraint(
@@ -105,7 +98,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def default_order_by(cls) -> list[str]:
-        """Default_order_by."""
         return ["-start_in_seconds", "-id"]
 
     @classmethod

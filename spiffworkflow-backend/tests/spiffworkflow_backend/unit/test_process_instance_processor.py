@@ -25,15 +25,12 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceProcessor(BaseTest):
-    """TestProcessInstanceProcessor."""
-
     # it's not totally obvious we want to keep this test/file
     def test_script_engine_takes_data_and_returns_expected_results(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_script_engine_takes_data_and_returns_expected_results."""
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
         script_engine = ProcessInstanceProcessor._script_engine
@@ -48,7 +45,6 @@ class TestProcessInstanceProcessor(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_script_engine_takes_data_and_returns_expected_results."""
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
         script_engine = ProcessInstanceProcessor._script_engine
@@ -63,7 +59,6 @@ class TestProcessInstanceProcessor(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_sets_permission_correctly_on_human_task."""
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user = self.find_or_create_user("testuser2")
@@ -130,7 +125,6 @@ class TestProcessInstanceProcessor(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_sets_permission_correctly_on_human_task_when_using_dict."""
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user_three = self.find_or_create_user("testuser3")
@@ -225,7 +219,6 @@ class TestProcessInstanceProcessor(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
         initiator_user = self.find_or_create_user("initiator_user")
 
         process_model = load_test_spec(
@@ -742,7 +735,6 @@ class TestProcessInstanceProcessor(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user_three = self.find_or_create_user("testuser3")
@@ -852,7 +844,6 @@ class TestProcessInstanceProcessor(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_task_data_is_set_even_if_process_instance_errors."""
         process_model = load_test_spec(
             process_model_id="group/error_with_task_data",
             bpmn_file_name="script_error_with_task_data.bpmn",

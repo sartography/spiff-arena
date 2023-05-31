@@ -23,17 +23,16 @@ T = TypeVar("T")
 
 
 class ProcessModelWithInstancesNotDeletableError(Exception):
-    """ProcessModelWithInstancesNotDeletableError."""
+    pass
 
 
 class ProcessModelService(FileSystemService):
-    """ProcessModelService."""
 
     """This is a way of persisting json files to the file system in a way that mimics the data
     as it would have been stored in the database. This is specific to Workflow Specifications, and
     Workflow Specification process_groups.
     We do this, so we can easily drop in a new configuration on the file system, and change all
-    the workflow process_models at once, or manage those file in a git repository. """
+    the workflow process_models at once, or manage those file in a git repository."""
 
     GROUP_SCHEMA = ProcessGroupSchema()
     PROCESS_MODEL_SCHEMA = ProcessModelInfoSchema()
@@ -45,7 +44,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def is_process_group(cls, path: str) -> bool:
-        """Is_group."""
         group_json_path = os.path.join(path, cls.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(group_json_path):
             return True
@@ -53,7 +51,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def is_process_group_identifier(cls, process_group_identifier: str) -> bool:
-        """Is_process_group_identifier."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = FileSystemService.full_path_from_id(process_group_identifier)
             return cls.is_process_group(process_group_path)
@@ -62,7 +59,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def is_process_model(cls, path: str) -> bool:
-        """Is_process_model."""
         model_json_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)
         if os.path.exists(model_json_path):
             return True
@@ -70,7 +66,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def is_process_model_identifier(cls, process_model_identifier: str) -> bool:
-        """Is_process_model_identifier."""
         if os.path.exists(FileSystemService.root_path()):
             process_model_path = FileSystemService.full_path_from_id(process_model_identifier)
             return cls.is_process_model(process_model_path)
@@ -95,12 +90,10 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def add_process_model(cls, process_model: ProcessModelInfo) -> None:
-        """Add_spec."""
         cls.save_process_model(process_model)
 
     @classmethod
     def update_process_model(cls, process_model: ProcessModelInfo, attributes_to_update: dict) -> None:
-        """Update_spec."""
         for atu_key, atu_value in attributes_to_update.items():
             if hasattr(process_model, atu_key):
                 setattr(process_model, atu_key, atu_value)
@@ -108,7 +101,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
-        """Save_process_model."""
         process_model_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), process_model.id_for_file_path())
         )
@@ -149,7 +141,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def get_process_model_from_relative_path(cls, relative_path: str) -> ProcessModelInfo:
-        """Get_process_model_from_relative_path."""
         path = os.path.join(FileSystemService.root_path(), relative_path)
         return cls.__scan_process_model(path)
 
@@ -231,7 +222,6 @@ class ProcessModelService(FileSystemService):
     def get_parent_group_array_and_cache_it(
         cls, process_identifier: str, process_group_cache: dict[str, ProcessGroup]
     ) -> ProcessGroupLitesWithCache:
-        """Get_parent_group_array."""
         full_group_id_path = None
         parent_group_array: list[ProcessGroupLite] = []
         for process_group_id_segment in process_identifier.split("/")[0:-1]:
@@ -251,7 +241,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def get_parent_group_array(cls, process_identifier: str) -> list[ProcessGroupLite]:
-        """Get_parent_group_array."""
         parent_group_lites_with_cache = cls.get_parent_group_array_and_cache_it(process_identifier, {})
         return parent_group_lites_with_cache["process_groups"]
 

@@ -1,4 +1,3 @@
-"""Test_get_localtime."""
 import json
 
 from flask import g

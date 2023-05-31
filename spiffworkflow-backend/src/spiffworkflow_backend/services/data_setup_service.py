@@ -5,11 +5,8 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 class DataSetupService:
-    """DataSetupService."""
-
     @classmethod
     def run_setup(cls) -> list:
-        """Run_setup."""
         return cls.save_all_process_models()
 
     @classmethod

@@ -10,8 +10,6 @@ from spiffworkflow_backend.models.spec_reference import SpecReference
 
 
 class FileType(SpiffEnum):
-    """FileType."""
-
     bpmn = "bpmn"
     csv = "csv"
     dmn = "dmn"
@@ -62,8 +60,6 @@ CONTENT_TYPES = {
 
 @dataclass(order=True)
 class File:
-    """File."""
-
     sort_index: str = field(init=False)
 
     content_type: str
@@ -89,7 +85,6 @@ class File:
         last_modified: datetime,
         file_size: int,
     ) -> File:
-        """From_file_system."""
         instance = cls(
             name=file_name,
             content_type=content_type,

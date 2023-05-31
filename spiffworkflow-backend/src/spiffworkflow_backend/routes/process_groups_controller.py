@@ -19,7 +19,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelWit
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
-    """Add_process_group."""
     process_group = ProcessGroup(**body)
 
     if ProcessModelService.is_process_model_identifier(process_group.id):
@@ -42,7 +41,6 @@ def process_group_create(body: dict) -> flask.wrappers.Response:
 
 
 def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Response:
-    """Process_group_delete."""
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
 
     try:
@@ -101,7 +99,6 @@ def process_group_list(
 def process_group_show(
     modified_process_group_id: str,
 ) -> Any:
-    """Process_group_show."""
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
     try:
         process_group = ProcessModelService.get_process_group(process_group_id)
@@ -119,7 +116,6 @@ def process_group_show(
 
 
 def process_group_move(modified_process_group_identifier: str, new_location: str) -> flask.wrappers.Response:
-    """Process_group_move."""
     original_process_group_id = _un_modify_modified_process_model_id(modified_process_group_identifier)
     new_process_group = ProcessModelService.process_group_move(original_process_group_id, new_location)
     _commit_and_push_to_git(

@@ -8,20 +8,16 @@ from spiffworkflow_backend.scripts.script import Script
 
 
 class GetLocaltime(Script):
-    """GetLocaltime."""
-
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
         return False
 
     def get_description(self) -> str:
-        """Get_description."""
         return """Converts a Datetime object into a Datetime object for a specific timezone.
         Defaults to US/Eastern."""
 
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> datetime:
-        """Run."""
         if len(args) > 0 or "datetime" in kwargs:
             if "datetime" in kwargs:
                 date_time = kwargs["datetime"]

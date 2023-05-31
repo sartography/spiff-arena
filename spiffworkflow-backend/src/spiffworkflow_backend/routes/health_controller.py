@@ -6,6 +6,5 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
 def status() -> Response:
-    """Status."""
     ProcessInstanceModel.query.filter().first()
     return make_response({"ok": True}, 200)

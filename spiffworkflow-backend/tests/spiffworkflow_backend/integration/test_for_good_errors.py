@@ -1,4 +1,3 @@
-"""Test_various_bpmn_constructs."""
 from typing import Any
 
 from flask.app import Flask
@@ -53,7 +52,6 @@ class TestForGoodErrors(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_task_data_is_set_even_if_process_instance_errors."""
         process_model = load_test_spec(
             process_model_id="group/end_user_instructions_error",
             bpmn_file_name="instructions_error.bpmn",

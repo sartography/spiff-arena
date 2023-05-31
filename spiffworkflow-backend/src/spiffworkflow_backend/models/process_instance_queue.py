@@ -9,8 +9,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 @dataclass
 class ProcessInstanceQueueModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceQueueModel."""
-
     __tablename__ = "process_instance_queue"
 
     id: int = db.Column(db.Integer, primary_key=True)

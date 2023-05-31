@@ -94,11 +94,7 @@ class UserModel(SpiffworkflowBaseDBModel):
 
 
 class UserModelSchema(Schema):
-    """UserModelSchema."""
-
     class Meta:
-        """Meta."""
-
         model = UserModel
         # load_instance = True
         # include_relationships = False

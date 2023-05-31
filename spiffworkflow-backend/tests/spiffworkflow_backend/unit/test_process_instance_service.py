@@ -1,4 +1,3 @@
-"""Test_process_instance_processor."""
 from datetime import datetime
 from datetime import timezone
 
@@ -10,8 +9,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessInstanceService(BaseTest):
-    """TestProcessInstanceService."""
-
     SAMPLE_FILE_DATA = "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo="
     SAMPLE_DIGEST_REFERENCE = f"data:some/mimetype;name=testing.txt;base64,{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"  # noqa: B950,E501
 

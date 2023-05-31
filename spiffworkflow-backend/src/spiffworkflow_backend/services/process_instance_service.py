@@ -38,8 +38,6 @@ from spiffworkflow_backend.specs.start_event import StartConfiguration
 
 
 class ProcessInstanceService:
-    """ProcessInstanceService."""
-
     FILE_DATA_DIGEST_PREFIX = "spifffiledatadigest+"
     TASK_STATE_LOCKED = "locked"
 
@@ -65,7 +63,6 @@ class ProcessInstanceService:
         user: UserModel,
         start_configuration: StartConfiguration | None = None,
     ) -> tuple[ProcessInstanceModel, StartConfiguration]:
-        """Get_process_instance_from_spec."""
         db.session.commit()
         try:
             current_git_revision = GitService.get_current_revision()
@@ -96,7 +93,6 @@ class ProcessInstanceService:
         process_model_identifier: str,
         user: UserModel,
     ) -> ProcessInstanceModel:
-        """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
             process_model, user
@@ -190,7 +186,6 @@ class ProcessInstanceService:
 
     @classmethod
     def do_waiting(cls, status_value: str) -> None:
-        """Do_waiting."""
         run_at_in_seconds_threshold = round(time.time())
         process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(
             status_value, run_at_in_seconds_threshold
@@ -275,13 +270,11 @@ class ProcessInstanceService:
         return process_instance_api
 
     def get_process_instance(self, process_instance_id: int) -> Any:
-        """Get_process_instance."""
         result = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == process_instance_id).first()
         return result
 
     @staticmethod
     def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> list[int]:
-        """Get_users_assigned_to_task."""
         if processor.process_instance_model.process_initiator_id is None:
             raise ApiError.from_task(
                 error_code="invalid_workflow",
@@ -464,7 +457,6 @@ class ProcessInstanceService:
 
     @staticmethod
     def create_dot_dict(data: dict) -> dict[str, Any]:
-        """Create_dot_dict."""
         dot_dict: dict[str, Any] = {}
         for key, value in data.items():
             ProcessInstanceService.set_dot_value(key, value, dot_dict)
@@ -472,7 +464,6 @@ class ProcessInstanceService:
 
     @staticmethod
     def get_dot_value(path: str, source: dict) -> Any:
-        """Get_dot_value."""
         # Given a path in dot notation, uas as 'fruit.type' tries to find that value in
         # the source, but looking deep in the dictionary.
         paths = path.split(".")  # [a,b,c]
@@ -491,7 +482,6 @@ class ProcessInstanceService:
 
     @staticmethod
     def set_dot_value(path: str, value: Any, target: dict) -> dict:
-        """Set_dot_value."""
         # Given a path in dot notation, such as "fruit.type", and a value "apple", will
         # set the value in the target dictionary, as target["fruit"]["type"]="apple"
         destination = target
