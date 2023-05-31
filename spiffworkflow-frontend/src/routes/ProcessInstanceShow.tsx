@@ -105,7 +105,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
     [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceActionPath]: ['DELETE'],
+    [targetUris.processInstanceActionPath]: ['DELETE', 'GET'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceSendEventPath]: ['POST'],
@@ -125,8 +125,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   let processInstanceLogListPageBaseUrl = `/admin/logs/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  const processInstanceShowPageBaseUrlAllVariant = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
-    processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
     processInstanceLogListPageBaseUrl = `/admin/logs/${params.process_model_id}/${params.process_instance_id}`;
   }
 
@@ -209,9 +210,33 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const queryParams = () => {
+    const processIdentifier = searchParams.get('process_identifier');
+    const callActivityTaskId = searchParams.get('bpmn_process_guid');
+    const queryParamArray = [];
+    if (processIdentifier) {
+      queryParamArray.push(`process_identifier=${processIdentifier}`);
+    }
+    if (callActivityTaskId) {
+      queryParamArray.push(`bpmn_process_guid=${callActivityTaskId}`);
+    }
+    let queryParamString = '';
+    if (queryParamArray.length > 0) {
+      queryParamString = `?${queryParamArray.join('&')}`;
+    }
+    return queryParamString;
+  };
+
   // to force update the diagram since it could have changed
   const refreshPage = () => {
-    window.location.reload();
+    // redirect to the all variant page if possible to avoid potential user/task association issues.
+    // such as terminating a process instance with a task that the current user is assigned to which
+    // will remove the task assigned to them and could potentially remove that users association to the process instance
+    if (ability.can('GET', targetUris.processInstanceActionPath)) {
+      window.location.href = `${processInstanceShowPageBaseUrlAllVariant}${queryParams()}`;
+    } else {
+      window.location.reload();
+    }
   };
 
   const terminateProcessInstance = () => {
@@ -250,23 +275,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   // we may need a better way to figure this out.
   const showingActiveTask = () => {
     return !taskToTimeTravelTo;
-  };
-
-  const queryParams = () => {
-    const processIdentifier = searchParams.get('process_identifier');
-    const callActivityTaskId = searchParams.get('bpmn_process_guid');
-    const queryParamArray = [];
-    if (processIdentifier) {
-      queryParamArray.push(`process_identifier=${processIdentifier}`);
-    }
-    if (callActivityTaskId) {
-      queryParamArray.push(`bpmn_process_guid=${callActivityTaskId}`);
-    }
-    let queryParamString = '';
-    if (queryParamArray.length > 0) {
-      queryParamString = `?${queryParamArray.join('&')}`;
-    }
-    return queryParamString;
   };
 
   const completionViewLink = (label: any, taskGuid: string) => {

@@ -160,7 +160,7 @@ class Script:
     def get_all_subclasses(cls) -> list[type[Script]]:
         """Get_all_subclasses."""
         # This is expensive to generate, never changes after we load up.
-        global SCRIPT_SUB_CLASSES
+        global SCRIPT_SUB_CLASSES  # noqa: PLW0603, allow global for performance
         if not SCRIPT_SUB_CLASSES:
             SCRIPT_SUB_CLASSES = Script._get_all_subclasses(Script)
         return SCRIPT_SUB_CLASSES

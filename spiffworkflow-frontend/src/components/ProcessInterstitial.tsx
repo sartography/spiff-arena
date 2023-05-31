@@ -49,7 +49,6 @@ export default function ProcessInterstitial({
         }
       },
       onclose() {
-        console.log('The state is closed.');
         setState('CLOSED');
       },
     });
@@ -161,7 +160,7 @@ export default function ProcessInterstitial({
 
   /** In the event there is no task information and the connection closed,
    * redirect to the home page. */
-  if (state === 'CLOSED' && lastTask === null) {
+  if (state === 'CLOSED' && lastTask === null && allowRedirect) {
     navigate(`/tasks`);
   }
 

@@ -490,6 +490,7 @@ export default function ProcessInstanceListTable({
         HttpService.makeCallToBackend({
           path: `/process-instances/report-metadata${queryParamString}`,
           successCallback: getProcessInstances,
+          onUnauthorized: stopRefreshing,
         });
       } else {
         getProcessInstances();
@@ -542,6 +543,7 @@ export default function ProcessInstanceListTable({
     permissionsLoaded,
     reportIdentifier,
     searchParams,
+    stopRefreshing,
   ]);
 
   const processInstanceReportSaveTag = () => {

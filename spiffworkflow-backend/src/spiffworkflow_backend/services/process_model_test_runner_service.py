@@ -132,7 +132,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
         with open(bpmn_file, "rb") as f_handle:
             data = f_handle.read()
         etree_xml_parser = etree.XMLParser(resolve_entities=False)
-        return etree.fromstring(data, parser=etree_xml_parser)
+        return etree.fromstring(data, parser=etree_xml_parser)  # noqa: S320
 
     def _find_related_bpmn_files(self, bpmn_file: str) -> list[str]:
         related_bpmn_files = []
@@ -160,7 +160,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             # if we cannot load process model then ignore it since it can cause errors unrelated
             # to the test and if it is related, it will most likely be caught further along the test
             try:
-                root = etree.fromstring(file_contents, parser=etree_xml_parser)
+                root = etree.fromstring(file_contents, parser=etree_xml_parser)  # noqa: S320
             except etree.XMLSyntaxError:
                 continue
 
