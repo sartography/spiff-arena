@@ -5,7 +5,7 @@ import {
   Edit,
   Favorite,
   TrashCan,
-  NextOutline,
+  Upload,
   View,
   // @ts-ignore
 } from '@carbon/icons-react';
@@ -664,7 +664,7 @@ export default function ProcessModelShow() {
               <Button
                 kind="ghost"
                 data-qa="publish-process-model-button"
-                renderIcon={NextOutline}
+                renderIcon={Upload}
                 iconDescription="Publish Changes"
                 hasIconOnly
                 onClick={publishProcessModel}
@@ -709,16 +709,20 @@ export default function ProcessModelShow() {
             ) : null}
             <Can
               I="POST"
+              a={targetUris.processModelTestsPath}
+              ability={ability}
+            >
+              {hasTestCaseFiles ? (
+                <ProcessModelTestRun buttonType="text" />
+              ) : null}
+            </Can>
+            <Can
+              I="POST"
               a={targetUris.processModelFileCreatePath}
               ability={ability}
             >
               {newUx2 ? addFileComponent() : null}
             </Can>
-          </Can>
-          <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
-            {hasTestCaseFiles ? (
-              <ProcessModelTestRun buttonType="text" />
-            ) : null}
           </Can>
         </Stack>
         {processModelFilesSection()}
