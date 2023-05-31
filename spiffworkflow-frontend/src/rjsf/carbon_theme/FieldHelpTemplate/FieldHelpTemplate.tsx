@@ -1,6 +1,4 @@
-import React from 'react';
 import { FieldHelpProps } from '@rjsf/utils';
-import FormHelperText from '@mui/material/FormHelperText';
 
 /** The `FieldHelpTemplate` component renders any help desired for a field
  *
