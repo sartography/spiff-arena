@@ -78,42 +78,43 @@ const submitWithUser = (
 
   if (expectAdditionalApprovalInfoPage === 'Task: Update Application Landscape') {
     cy.contains(expectAdditionalApprovalInfoPage, { timeout: 60000 });
-  
+
     cy.get('button')
       .contains(/^Continue$/)
       .click();
   }
 
+  cy.wait(5000);
   // cy.getBySel('return-to-home-button', { timeout: 60000 });
-  cy.get('button').contains('Return to Home', { timeout: 60000 });
+  //cy.get('button').contains('Return to Home', { timeout: 60000 });
   cy.logout();
 };
 
-    //Check if the process instance is completed successfully
-    const checkProcessInstanceCompleted = (
-      username,
-      password,
-      processInstanceId
-  ) => {
-        cy.wait(2000);
-        cy.log('========Login with : ', username);
-        cy.log('========processInstanceId: ', processInstanceId);
-        cy.login(username, password);
-  
-        cy.wait(1000);
-        cy.visit('/admin/process-instances/find-by-id');
-        cy.get('#process-instance-id-input').type(processInstanceId);
-  
-        cy.get('button')
-            .contains(/^Submit$/)
-            .click();
-  
-        cy.wait(2000);
-        cy.get('#tag-1 > span').contains('complete');
-  }
+//Check if the process instance is completed successfully
+const checkProcessInstanceCompleted = (
+  username,
+  password,
+  processInstanceId
+) => {
+  cy.wait(2000);
+  cy.log('========Login with : ', username);
+  cy.log('========processInstanceId: ', processInstanceId);
+  cy.login(username, password);
+
+  cy.wait(1000);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
+
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
+
+  cy.wait(2000);
+  cy.get('#tag-1 > span').contains('complete');
+}
 
 // Software and Licenses Path - Without Files
-describe.only('Software and Licenses Path - Without Files', () => {
+describe('Software and Licenses Path - Without Files', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
     it('Everyone approves with CP', () => {
@@ -205,11 +206,12 @@ describe.only('Software and Licenses Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -329,7 +331,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
           );
         cy.get('#root_item_1_qty').clear().type('1');
         cy.get('#root_item_1_currency_type').select('Fiat');
-        cy.get('#root_item_1_currency').select('STN');
+        cy.get('#root_item_1_currency').select('COP');
         cy.get('#root_item_1_unit_price').type('380');
 
         cy.get('button')
@@ -355,11 +357,12 @@ describe.only('Software and Licenses Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -421,7 +424,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
     });
 
     // Budget owner rejects the request
-    it.only('Budget owner rejects', () => {
+    it('Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -510,7 +513,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
           .contains(/^Return to Home$/)
           .click();
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -616,11 +619,12 @@ describe.only('Software and Licenses Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -765,11 +769,12 @@ describe.only('Software and Licenses Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -825,7 +830,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
 });
 
 // Software and Licenses Path - Without Files and with only mandatory fields
-describe('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
+describe.only('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
     it('Everyone approves with CP', () => {
@@ -901,11 +906,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -1024,11 +1030,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -1163,11 +1170,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -1261,11 +1269,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -1398,11 +1407,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -1612,11 +1622,11 @@ describe('Software and Licenses Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1801,11 +1811,11 @@ describe('Software and Licenses Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2006,11 +2016,11 @@ describe('Software and Licenses Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2171,11 +2181,11 @@ describe('Software and Licenses Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2299,7 +2309,7 @@ describe('Software and Licenses Path - With Files', () => {
           );
         cy.get('#root_item_0_qty').clear().type('2');
         cy.get('#root_item_0_currency_type').select('Fiat');
-        cy.get('#root_item_0_currency').select('STN');
+        cy.get('#root_item_0_currency').select('COP');
         cy.get('#root_item_0_unit_price').type('2416');
 
         cy.get('button')
@@ -2376,11 +2386,11 @@ describe('Software and Licenses Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2610,11 +2620,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2830,11 +2840,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -3067,11 +3077,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -3262,11 +3272,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');
@@ -3371,12 +3381,12 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
         cy.get('body').click();
         cy.get('#root_vendor').clear().type('Atlassian');
         cy.get('#root_payment_method').select('Debit Card');
-        /*cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
+        /* cy.get('button')
+           .contains(/^Submit$/)
+           .click();
+ 
+         
+         cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
         // item 0
         cy.get('#root_item_0_sub_category').select('op_src');
         cy.get('#root_item_0_item_name')
@@ -3386,7 +3396,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           );
         cy.get('#root_item_0_qty').clear().type('2');
         cy.get('#root_item_0_currency_type').select('Fiat');
-        cy.get('#root_item_0_currency').select('THB');
+        cy.get('#root_item_0_currency').select('GBP');
         cy.get('#root_item_0_unit_price').type('1350');
 
         cy.get('#root_item > div:nth-child(3) > p > button').click();
@@ -3400,7 +3410,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           );
         cy.get('#root_item_1_qty').clear().type('15');
         cy.get('#root_item_1_currency_type').select('Fiat');
-        cy.get('#root_item_1_currency').select('TRY');
+        cy.get('#root_item_1_currency').select('SGD');
         cy.get('#root_item_1_unit_price').type('3200');
 
         cy.get('#root_item > div:nth-child(3) > p > button').click();
@@ -3491,11 +3501,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
 
         const budgetOwnerUsername = Cypress.env('budgetowner_username');

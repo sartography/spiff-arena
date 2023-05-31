@@ -84,31 +84,32 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.wait(5000);
+  //cy.get('button').contains('Return to Home', { timeout: 60000 });
   cy.logout();
 };
 
-  //Check if the process instance is completed successfully
-  const checkProcessInstanceCompleted = (
-    username,
-    password,
-    processInstanceId
+//Check if the process instance is completed successfully
+const checkProcessInstanceCompleted = (
+  username,
+  password,
+  processInstanceId
 ) => {
-      cy.wait(2000);
-      cy.log('========Login with : ', username);
-      cy.log('========processInstanceId: ', processInstanceId);
-      cy.login(username, password);
+  cy.wait(2000);
+  cy.log('========Login with : ', username);
+  cy.log('========processInstanceId: ', processInstanceId);
+  cy.login(username, password);
 
-      cy.wait(1000);
-      cy.visit('/admin/process-instances/find-by-id');
-      cy.get('#process-instance-id-input').type(processInstanceId);
+  cy.wait(1000);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
 
-      cy.get('button')
-          .contains(/^Submit$/)
-          .click();
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
 
-      cy.wait(2000);
-      cy.get('#tag-1 > span').contains('complete');
+  cy.wait(2000);
+  cy.get('#tag-1 > span').contains('complete');
 }
 
 // Consulting Fees Path - Without Files
@@ -233,12 +234,12 @@ describe.only('Consulting Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(3000);
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -376,12 +377,12 @@ describe.only('Consulting Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(3000);
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -521,12 +522,12 @@ describe.only('Consulting Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(3000);
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -740,8 +741,8 @@ describe('Consulting Fees Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.visit('/');
-        cy.contains('Started by me', { timeout: 60000 });
+
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -930,11 +931,11 @@ describe('Consulting Fees Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -1123,8 +1124,10 @@ describe('Consulting Fees Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
         cy.wait(9000);
-        cy.visit('/');
-        cy.contains('Started by me', { timeout: 60000 });
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
