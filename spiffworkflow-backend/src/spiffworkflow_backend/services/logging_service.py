@@ -19,7 +19,7 @@ from flask.app import Flask
 
 
 class InvalidLogLevelError(Exception):
-    """InvalidLogLevelError."""
+    pass
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -87,7 +87,6 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logger(app: Flask) -> None:
-    """Setup_logger."""
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 

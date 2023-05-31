@@ -14,7 +14,6 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 def secret_show(key: str) -> Response:
-    """Secret_show."""
     secret = SecretService.get_secret(key)
 
     # normal serialization does not include the secret value, but this is the one endpoint where we want to return the goods
@@ -28,7 +27,6 @@ def secret_list(
     page: int = 1,
     per_page: int = 100,
 ) -> Response:
-    """Secret_list."""
     secrets = (
         SecretModel.query.order_by(SecretModel.key)
         .join(UserModel)

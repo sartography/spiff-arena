@@ -23,20 +23,18 @@ from spiffworkflow_backend.models.user import UserModel
 
 
 class ProcessInstanceNotFoundError(Exception):
-    """ProcessInstanceNotFoundError."""
+    pass
 
 
 class ProcessInstanceTaskDataCannotBeUpdatedError(Exception):
-    """ProcessInstanceTaskDataCannotBeUpdatedError."""
+    pass
 
 
 class ProcessInstanceCannotBeDeletedError(Exception):
-    """ProcessInstanceCannotBeDeletedError."""
+    pass
 
 
 class ProcessInstanceStatus(SpiffEnum):
-    """ProcessInstanceStatus."""
-
     not_started = "not_started"
     user_input_required = "user_input_required"
     waiting = "waiting"
@@ -47,8 +45,6 @@ class ProcessInstanceStatus(SpiffEnum):
 
 
 class ProcessInstanceModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceModel."""
-
     __tablename__ = "process_instance"
     __allow_unmapped__ = True
     id: int = db.Column(db.Integer, primary_key=True)
@@ -144,11 +140,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @validates("status")
     def validate_status(self, key: str, value: Any) -> Any:
-        """Validate_status."""
         return self.validate_enum_field(key, value, ProcessInstanceStatus)
 
     def can_submit_task(self) -> bool:
-        """Can_submit_task."""
         return not self.has_terminal_status() and self.status != "suspended"
 
     def can_receive_message(self) -> bool:
@@ -156,7 +150,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         return not self.has_terminal_status() and self.status != "suspended"
 
     def has_terminal_status(self) -> bool:
-        """Has_terminal_status."""
         return self.status in self.terminal_statuses()
 
     @classmethod
@@ -174,11 +167,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
 
 class ProcessInstanceModelSchema(Schema):
-    """ProcessInstanceModelSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessInstanceModel
         fields = [
             "id",
@@ -196,13 +185,10 @@ class ProcessInstanceModelSchema(Schema):
     status = marshmallow.fields.Method("get_status", dump_only=True)
 
     def get_status(self, obj: ProcessInstanceModel) -> str:
-        """Get_status."""
         return obj.status
 
 
 class ProcessInstanceApi:
-    """ProcessInstanceApi."""
-
     def __init__(
         self,
         id: int,
@@ -222,11 +208,7 @@ class ProcessInstanceApi:
 
 
 class ProcessInstanceApiSchema(Schema):
-    """ProcessInstanceApiSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessInstanceApi
         fields = [
             "id",
@@ -243,7 +225,6 @@ class ProcessInstanceApiSchema(Schema):
 
     @marshmallow.post_load
     def make_process_instance(self, data: dict[str, Any], **kwargs: dict) -> ProcessInstanceApi:
-        """Make_process_instance."""
         keys = [
             "id",
             "status",

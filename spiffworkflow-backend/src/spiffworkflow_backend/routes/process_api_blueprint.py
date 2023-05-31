@@ -30,7 +30,6 @@ process_api_blueprint = Blueprint("process_api", __name__)
 
 
 def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.Response:
-    """Permissions_check."""
     if "requests_to_check" not in body:
         raise (
             ApiError(
@@ -82,7 +81,6 @@ def _process_data_fetcher(
     process_data_identifier: str,
     download_file_data: bool,
 ) -> flask.wrappers.Response:
-    """Process_data_show."""
     if download_file_data:
         file_data = ProcessInstanceFileDataModel.query.filter_by(
             digest=process_data_identifier,
@@ -128,7 +126,6 @@ def process_data_show(
     process_data_identifier: str,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_data_show."""
     return _process_data_fetcher(
         process_instance_id,
         process_data_identifier,
@@ -141,7 +138,6 @@ def process_data_file_download(
     process_data_identifier: str,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_data_file_download."""
     return _process_data_fetcher(
         process_instance_id,
         process_data_identifier,
@@ -155,7 +151,6 @@ def process_data_file_download(
 # test with: ngrok http 7000
 # where 7000 is the port the app is running on locally
 def github_webhook_receive(body: dict) -> Response:
-    """Github_webhook_receive."""
     auth_header = request.headers.get("X-Hub-Signature-256")
     AuthorizationService.verify_sha256_token(auth_header)
     result = GitService.handle_web_hook(body)
@@ -163,7 +158,6 @@ def github_webhook_receive(body: dict) -> Response:
 
 
 def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
-    """Get_required_parameter_or_raise."""
     return_value = None
     if parameter in post_body:
         return_value = post_body[parameter]
@@ -181,7 +175,6 @@ def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) 
 
 
 def _commit_and_push_to_git(message: str) -> None:
-    """Commit_and_push_to_git."""
     if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE"]:
         git_output = GitService.commit(message=message)
         current_app.logger.info(f"git output: {git_output}")
@@ -190,14 +183,12 @@ def _commit_and_push_to_git(message: str) -> None:
 
 
 def _un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
-    """Un_modify_modified_process_model_id."""
     return modified_process_model_identifier.replace(":", "/")
 
 
 def _find_process_instance_by_id_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
-    """Find_process_instance_by_id_or_raise."""
     process_instance_query = ProcessInstanceModel.query.filter_by(id=process_instance_id)
 
     # we had a frustrating session trying to do joins and access columns from two tables. here's some notes for our future selves:
@@ -222,7 +213,6 @@ def _find_process_instance_by_id_or_raise(
 # process_model_id uses forward slashes on all OSes
 # this seems to return an object where process_model.id has backslashes on windows
 def _get_process_model(process_model_id: str) -> ProcessModelInfo:
-    """Get_process_model."""
     process_model = None
     try:
         process_model = ProcessModelService.get_process_model(process_model_id)
@@ -239,7 +229,6 @@ def _get_process_model(process_model_id: str) -> ProcessModelInfo:
 
 
 def _find_principal_or_raise() -> PrincipalModel:
-    """Find_principal_or_raise."""
     principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
     if principal is None:
         raise (

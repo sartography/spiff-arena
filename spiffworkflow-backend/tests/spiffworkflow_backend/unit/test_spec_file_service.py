@@ -1,4 +1,3 @@
-"""Test_message_service."""
 import os
 import sys
 
@@ -17,8 +16,6 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestSpecFileService(BaseTest):
-    """TestSpecFileService."""
-
     process_group_id = ""
     process_model_id = "test_process_group_id/call_activity_nested"
     # process_group_id = "test_process_group_id"
@@ -49,7 +46,6 @@ class TestSpecFileService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_fails_to_save_duplicate_process_id."""
         bpmn_process_identifier = "Level1"
         load_test_spec(
             process_model_id=self.process_model_id,
@@ -78,7 +74,6 @@ class TestSpecFileService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_updates_relative_file_path_when_appropriate."""
         bpmn_process_identifier = "Level1"
         process_id_lookup = SpecReferenceCache(
             identifier=bpmn_process_identifier,
@@ -194,7 +189,6 @@ class TestSpecFileService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_validate_bpmn_xml_with_invalid_xml."""
         process_model = load_test_spec(
             process_model_id="group/invalid_xml",
             bpmn_file_name="script_error_with_task_data.bpmn",
@@ -216,7 +210,6 @@ class TestSpecFileService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_does_not_evaluate_entities."""
         string_replacement = b"THIS_STRING_SHOULD_NOT_EXIST_ITS_SECRET"
         tmp_file = os.path.normpath(self.get_test_data_file_full_path("file_to_inject", "xml_with_entity"))
         file_contents = self.get_test_data_file_contents("invoice.bpmn", "xml_with_entity")

@@ -6,8 +6,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUsersController(BaseTest):
-    """TestUsersController."""
-
     def test_user_search_returns_a_user(
         self,
         app: Flask,
@@ -15,7 +13,6 @@ class TestUsersController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_user_search_returns_a_user."""
         self.find_or_create_user(username="aa")
         self.find_or_create_user(username="ab")
         self.find_or_create_user(username="abc")

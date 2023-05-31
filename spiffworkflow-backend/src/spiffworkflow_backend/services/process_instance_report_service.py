@@ -36,8 +36,6 @@ class ProcessInstanceReportMetadataInvalidError(Exception):
 
 
 class ProcessInstanceReportService:
-    """ProcessInstanceReportService."""
-
     @classmethod
     def system_metadata_map(cls, metadata_key: str) -> ReportMetadata | None:
         # TODO replace with system reports that are loaded on launch (or similar)
@@ -231,7 +229,6 @@ class ProcessInstanceReportService:
         process_instance_sqlalchemy_rows: list[sqlalchemy.engine.row.Row],  # type: ignore
         metadata_columns: list[ReportMetadataColumn],
     ) -> list[dict]:
-        """Add_metadata_columns_to_process_instance."""
         results = []
         cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
@@ -301,7 +298,6 @@ class ProcessInstanceReportService:
 
     @classmethod
     def get_column_names_for_model(cls, model: type[SpiffworkflowBaseDBModel]) -> list[str]:
-        """Get_column_names_for_model."""
         return [i.name for i in model.__table__.columns]
 
     @classmethod

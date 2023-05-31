@@ -1,4 +1,3 @@
-"""ProcessCaller_model."""
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 

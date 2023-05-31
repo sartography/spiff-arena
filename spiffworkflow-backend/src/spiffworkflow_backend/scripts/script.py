@@ -20,7 +20,7 @@ SCRIPT_SUB_CLASSES = None
 
 
 class ScriptUnauthorizedForUserError(Exception):
-    """ScriptUnauthorizedForUserError."""
+    pass
 
 
 class ProcessInstanceIdMissingError(Exception):
@@ -36,7 +36,6 @@ class Script:
 
     @abstractmethod
     def get_description(self) -> str:
-        """Get_description."""
         raise ApiError("invalid_script", "This script does not supply a description.")
 
     @abstractmethod
@@ -46,7 +45,6 @@ class Script:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """Run."""
         raise ApiError(
             "invalid_script",
             "This is an internal error. The script you are trying to execute '%s' " % self.__class__.__name__
@@ -108,7 +106,6 @@ class Script:
             instance = subclass()
 
             def check_script_permission() -> None:
-                """Check_script_permission."""
                 if subclass.requires_privileged_permissions():
                     script_function_name = get_script_function_name(subclass)
                     uri = f"/can-run-privileged-script/{script_function_name}"
@@ -132,7 +129,6 @@ class Script:
                         )
 
             def run_script_if_allowed(*ar: Any, **kw: Any) -> Any:
-                """Run_script_if_allowed."""
                 check_script_permission()
                 return subclass.run(
                     instance,
@@ -144,7 +140,6 @@ class Script:
             return run_script_if_allowed
 
         def get_script_function_name(subclass: type[Script]) -> str:
-            """Get_script_function_name."""
             return subclass.__module__.split(".")[-1]
 
         execlist = {}
@@ -158,7 +153,6 @@ class Script:
 
     @classmethod
     def get_all_subclasses(cls) -> list[type[Script]]:
-        """Get_all_subclasses."""
         # This is expensive to generate, never changes after we load up.
         global SCRIPT_SUB_CLASSES  # noqa: PLW0603, allow global for performance
         if not SCRIPT_SUB_CLASSES:

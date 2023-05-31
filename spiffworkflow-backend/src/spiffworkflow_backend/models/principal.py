@@ -11,17 +11,15 @@ from spiffworkflow_backend.models.user import UserModel
 
 
 class DataValidityError(Exception):
-    """DataValidityError."""
+    pass
 
 
 class MissingPrincipalError(DataValidityError):
-    """MissingPrincipalError."""
+    pass
 
 
 @dataclass
 class PrincipalModel(SpiffworkflowBaseDBModel):
-    """PrincipalModel."""
-
     __tablename__ = "principal"
     __table_args__ = (CheckConstraint("NOT(user_id IS NULL AND group_id IS NULL)"),)
 
