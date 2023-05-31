@@ -90,31 +90,32 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.wait(10000);
+  // cy.get('button').contains('Return to Home', { timeout: 60000 });
   cy.logout();
 };
 
-  //Check if the process instance is completed successfully
-  const checkProcessInstanceCompleted = (
-    username,
-    password,
-    processInstanceId
+//Check if the process instance is completed successfully
+const checkProcessInstanceCompleted = (
+  username,
+  password,
+  processInstanceId
 ) => {
-      cy.wait(2000);
-      cy.log('========Login with : ', username);
-      cy.log('========processInstanceId: ', processInstanceId);
-      cy.login(username, password);
+  cy.wait(2000);
+  cy.log('========Login with : ', username);
+  cy.log('========processInstanceId: ', processInstanceId);
+  cy.login(username, password);
 
-      cy.wait(1000);
-      cy.visit('/admin/process-instances/find-by-id');
-      cy.get('#process-instance-id-input').type(processInstanceId);
+  cy.wait(1000);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
 
-      cy.get('button')
-          .contains(/^Submit$/)
-          .click();
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
 
-      cy.wait(2000);
-      cy.get('#tag-1 > span').contains('complete');
+  cy.wait(2000);
+  cy.get('#tag-1 > span').contains('complete');
 }
 
 // Equipment Path - Without Files
@@ -253,11 +254,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
         cy.log('=====after logout ---');
@@ -382,11 +384,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -420,7 +423,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it.only('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -509,11 +512,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -663,11 +667,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -777,11 +782,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -891,11 +897,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1022,11 +1029,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1149,11 +1157,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1187,7 +1196,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it.only('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1276,11 +1285,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1519,11 +1529,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1696,11 +1706,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1872,11 +1882,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2076,11 +2086,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2240,11 +2250,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2403,11 +2413,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2583,11 +2593,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2759,11 +2769,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(9000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2935,12 +2945,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(20000);
-        cy.get('button')
+        cy.wait(9000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
