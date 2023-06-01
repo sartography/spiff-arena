@@ -11,6 +11,7 @@ interface typeaheadArgs {
   disabled?: boolean;
   readonly?: boolean;
   rawErrors?: any;
+  placeholder?: string;
 }
 
 export default function TypeaheadWidget({
@@ -21,6 +22,7 @@ export default function TypeaheadWidget({
   uiSchema,
   disabled,
   readonly,
+  placeholder,
   rawErrors = [],
 }: typeaheadArgs) {
   const lastSearchTerm = useRef('');
@@ -69,6 +71,11 @@ export default function TypeaheadWidget({
     return str;
   };
 
+  let placeholderText = `Start typing to search...`;
+  if (placeholder) {
+    placeholderText = placeholder;
+  }
+
   let helperText = null;
   if (uiSchema && uiSchema['ui:help']) {
     helperText = uiSchema['ui:help'];
@@ -91,7 +98,7 @@ export default function TypeaheadWidget({
       id={id}
       items={items}
       itemToString={itemToString}
-      placeholder={`Start typing to search for ${category}...`}
+      placeholder={placeholderText}
       selectedItem={selectedItem}
       helperText={helperText}
       disabled={disabled}
