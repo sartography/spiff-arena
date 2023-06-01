@@ -13,6 +13,17 @@ from marshmallow.decorators import post_load
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.file import File
 
+# we only want to save these items to the json file
+PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
+    "display_name",
+    "description",
+    "primary_file_name",
+    "primary_process_id",
+    "fault_or_suspend_on_exception",
+    "exception_notification_addresses",
+    "metadata_extraction_paths",
+]
+
 
 class NotificationType(enum.Enum):
     fault = "fault"
@@ -26,18 +37,21 @@ class ProcessModelInfo:
     id: str
     display_name: str
     description: str
-    process_group: Any | None = None
     primary_file_name: str | None = None
     primary_process_id: str | None = None
-    display_order: int | None = 0
-    files: list[File] | None = field(default_factory=list[File])
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
     metadata_extraction_paths: list[dict[str, str]] | None = None
 
+    process_group: Any | None = None
+    files: list[File] | None = field(default_factory=list[File])
+
     # just for the API
     parent_groups: list[ProcessGroupLite] | None = None
     bpmn_version_control_identifier: str | None = None
+
+    # TODO: delete these once they no no longer mentioned in current process_model.json files
+    display_order: int | None = 0
 
     def __post_init__(self) -> None:
         self.sort_index = self.id
@@ -71,7 +85,6 @@ class ProcessModelInfoSchema(Schema):
     id = marshmallow.fields.String(required=True)
     display_name = marshmallow.fields.String(required=True)
     description = marshmallow.fields.String()
-    display_order = marshmallow.fields.Integer(allow_none=True)
     primary_file_name = marshmallow.fields.String(allow_none=True)
     primary_process_id = marshmallow.fields.String(allow_none=True)
     files = marshmallow.fields.List(marshmallow.fields.Nested("File"))
