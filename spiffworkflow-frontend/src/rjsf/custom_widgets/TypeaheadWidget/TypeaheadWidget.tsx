@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ComboBox } from '@carbon/react';
 import HttpService from '../../../services/HttpService';
 
@@ -7,6 +7,11 @@ interface typeaheadArgs {
   onChange: any;
   options: any;
   value: any;
+  uiSchema?: any;
+  disabled?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  rawErrors?: any;
 }
 
 export default function TypeaheadWidget({
@@ -14,31 +19,45 @@ export default function TypeaheadWidget({
   onChange,
   options: { category, itemFormat },
   value,
-  ...args
+  uiSchema,
+  required,
+  disabled,
+  readonly,
+  rawErrors = [],
 }: typeaheadArgs) {
-  const pathForCategory = (inputText: string) => {
-    return `/connector-proxy/typeahead/${category}?prefix=${inputText}&limit=100`;
-  };
-  console.log('args', args);
-  console.log('value', value);
-  console.log('itemFormat', itemFormat);
-
-  // if (value) {
-  //
-  // }
-
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const itemFormatRegex = /[^{}]+(?=})/g;
   const itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
 
+  const typeaheadSearch = useCallback(
+    (inputText: string) => {
+      const pathForCategory = (text: string) => {
+        return `/connector-proxy/typeahead/${category}?prefix=${text}&limit=100`;
+      };
+      if (inputText) {
+        lastSearchTerm.current = inputText;
+        // TODO: check cache of prefixes -> results
+        HttpService.makeCallToBackend({
+          path: pathForCategory(inputText),
+          successCallback: (result: any) => {
+            if (lastSearchTerm.current === inputText) {
+              setItems(result);
+            }
+          },
+        });
+      }
+    },
+    [category]
+  );
+
   useEffect(() => {
     if (value) {
       setSelectedItem(JSON.parse(value));
+      typeaheadSearch(value);
     }
-    typeaheadSearch(value);
-  }, [value]);
+  }, [value, typeaheadSearch]);
 
   const itemToString = (item: any) => {
     if (!item) {
@@ -52,33 +71,23 @@ export default function TypeaheadWidget({
     return str;
   };
 
-  const handleTypeAheadResult = (result: any, inputText: string) => {
-    if (lastSearchTerm.current === inputText) {
-      setItems(result);
-    }
-  };
+  let helperText = null;
+  if (uiSchema && uiSchema['ui:help']) {
+    helperText = uiSchema['ui:help'];
+  }
 
-  const typeaheadSearch = (inputText: string) => {
-    if (inputText) {
-      lastSearchTerm.current = inputText;
-      // TODO: check cache of prefixes -> results
-      HttpService.makeCallToBackend({
-        path: pathForCategory(inputText),
-        successCallback: (result: any) =>
-          handleTypeAheadResult(result, inputText),
-      });
-    }
-  };
-
-  console.log('selectedItem', selectedItem);
+  let invalid = false;
+  let errorMessageForField = null;
+  if (rawErrors && rawErrors.length > 0) {
+    invalid = true;
+    [errorMessageForField] = rawErrors;
+  }
 
   return (
     <ComboBox
       onInputChange={typeaheadSearch}
       onChange={(event: any) => {
-        console.log('event.selectedItem', event.selectedItem);
         setSelectedItem(event.selectedItem);
-        // onChange(itemToString(event.selectedItem));
         onChange(JSON.stringify(event.selectedItem));
       }}
       id={id}
@@ -86,6 +95,12 @@ export default function TypeaheadWidget({
       itemToString={itemToString}
       placeholder={`Start typing to search for ${category}...`}
       selectedItem={selectedItem}
+      helperText={helperText}
+      required={required}
+      disabled={disabled}
+      readOnly={readonly}
+      invalid={invalid}
+      invalidText={errorMessageForField}
     />
   );
 }
