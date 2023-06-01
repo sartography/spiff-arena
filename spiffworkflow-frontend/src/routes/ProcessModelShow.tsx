@@ -105,12 +105,6 @@ export default function ProcessModelShow() {
     });
   }, [reloadModel, modifiedProcessModelId]);
 
-  // these options are just here as a sort of A/B test to see which UX is better.
-  // they will be removed once we learn which UX to go with.
-  const newUx1 = true;
-  const newUx2 = false;
-  const newUx2PublishAsIcon = false;
-
   const processInstanceRunResultTag = () => {
     if (processInstance) {
       return (
@@ -583,7 +577,7 @@ export default function ProcessModelShow() {
                 a={targetUris.processModelFileCreatePath}
                 ability={ability}
               >
-                {newUx1 && addFileComponent()}
+                {addFileComponent()}
                 <br />
               </Can>
               {processModelFileList()}
@@ -655,22 +649,21 @@ export default function ProcessModelShow() {
               confirmButtonLabel="Delete"
             />
           </Can>
-          {newUx2PublishAsIcon && (
-            <Can
-              I="POST"
-              a={targetUris.processModelPublishPath}
-              ability={ability}
-            >
-              <Button
-                kind="ghost"
-                data-qa="publish-process-model-button"
-                renderIcon={Upload}
-                iconDescription="Publish Changes"
-                hasIconOnly
-                onClick={publishProcessModel}
-              />
-            </Can>
-          )}
+          <Can
+            I="POST"
+            a={targetUris.processModelPublishPath}
+            ability={ability}
+          >
+            <Button
+              kind="ghost"
+              data-qa="publish-process-model-button"
+              renderIcon={Upload}
+              iconDescription="Publish Changes"
+              hasIconOnly
+              onClick={publishProcessModel}
+              disabled={publishDisabled}
+            />
+          </Can>
         </Stack>
         <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
@@ -693,20 +686,6 @@ export default function ProcessModelShow() {
             a={targetUris.processModelPublishPath}
             ability={ability}
           >
-            {!newUx2PublishAsIcon ? (
-              <Can
-                I="POST"
-                a={targetUris.processModelPublishPath}
-                ability={ability}
-              >
-                <Button
-                  disabled={publishDisabled}
-                  onClick={publishProcessModel}
-                >
-                  Publish Changes
-                </Button>
-              </Can>
-            ) : null}
             <Can
               I="POST"
               a={targetUris.processModelTestsPath}
@@ -715,13 +694,6 @@ export default function ProcessModelShow() {
               {hasTestCaseFiles ? (
                 <ProcessModelTestRun buttonType="text" />
               ) : null}
-            </Can>
-            <Can
-              I="POST"
-              a={targetUris.processModelFileCreatePath}
-              ability={ability}
-            >
-              {newUx2 ? addFileComponent() : null}
             </Can>
           </Can>
         </Stack>
