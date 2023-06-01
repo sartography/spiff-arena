@@ -15,12 +15,14 @@ type OwnProps = {
   processInstanceId: number;
   processInstanceShowPageUrl: string;
   allowRedirect: boolean;
+  smallSpinner?: boolean;
 };
 
 export default function ProcessInterstitial({
   processInstanceId,
   allowRedirect,
   processInstanceShowPageUrl,
+  smallSpinner = false,
 }: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
@@ -98,62 +100,82 @@ export default function ProcessInterstitial({
     shouldRedirectToProcessInstance,
   ]);
 
-  const getStatus = (): string => {
-    if (processInstance) {
-      return 'LOCKED';
-    }
-    if (!lastTask.can_complete && userTasks.includes(lastTask.type)) {
-      return 'LOCKED';
-    }
-    if (state === 'CLOSED') {
-      return lastTask.state;
-    }
-    return state;
-  };
-
   const getLoadingIcon = () => {
-    if (getStatus() === 'RUNNING') {
+    if (state === 'RUNNING') {
+      let style = { margin: '50px 0 50px 50px' };
+      if (smallSpinner) {
+        style = { margin: '2x 5px 2px 2px' };
+      }
       return (
         <Loading
           description="Active loading indicator"
           withOverlay={false}
-          style={{ margin: '50px 0 50px 50px' }}
+          small={smallSpinner}
+          style={style}
         />
       );
     }
     return null;
   };
 
+  const userMessageForProcessInstance = (
+    pi: ProcessInstance,
+    myTask: ProcessInstanceTask | null = null
+  ) => {
+    if (['terminated', 'suspended'].includes(pi.status)) {
+      return (
+        <p>
+          This process instance was {pi.status} by an administrator. Please get
+          in touch with them for more information.
+        </p>
+      );
+    }
+    if (pi.status === 'error') {
+      let errMessage = `This process instance experienced an unexpected error and can not continue. Please get in touch with an administrator for more information and next steps. `;
+      if (myTask && myTask.error_message) {
+        errMessage = errMessage.concat(myTask.error_message);
+      }
+      return <p>{errMessage}</p>;
+    }
+    // Otherwise we are not started, waiting, complete, or user_input_required
+    const defaultMsg =
+      'There are no additional instructions or information for this process.';
+    if (myTask) {
+      return (
+        <InstructionsForEndUser task={myTask} defaultMessage={defaultMsg} />
+      );
+    }
+    return <p>{defaultMsg}</p>;
+  };
+
   const userMessage = (myTask: ProcessInstanceTask) => {
-    if (!processInstance || processInstance.status === 'completed') {
-      if (!myTask.can_complete && userTasks.includes(myTask.type)) {
-        return (
-          <p>
-            This next task is assigned to a different person or team. There is
-            no action for you to take at this time.
-          </p>
-        );
-      }
-      if (shouldRedirectToTask(myTask)) {
-        return <div>Redirecting you to the next task now ...</div>;
-      }
-      if (myTask && myTask.can_complete && userTasks.includes(myTask.type)) {
-        return `The task ${myTask.title} is ready for you to complete.`;
-      }
-      if (myTask.error_message) {
-        return <div>{myTask.error_message}</div>;
-      }
+    if (processInstance) {
+      return userMessageForProcessInstance(processInstance, myTask);
     }
 
-    let message =
-      'There are no additional instructions or information for this task.';
-    if (processInstance && processInstance.status !== 'completed') {
-      message = `The tasks cannot be completed on this instance because its status is "${processInstance.status}".`;
+    if (!myTask.can_complete && userTasks.includes(myTask.type)) {
+      return (
+        <p>
+          This next task is assigned to a different person or team. There is no
+          action for you to take at this time.
+        </p>
+      );
     }
-
+    if (shouldRedirectToTask(myTask)) {
+      return <div>Redirecting you to the next task now ...</div>;
+    }
+    if (myTask && myTask.can_complete && userTasks.includes(myTask.type)) {
+      return `The task ${myTask.title} is ready for you to complete.`;
+    }
+    if (myTask.error_message) {
+      return <div>{myTask.error_message}</div>;
+    }
     return (
       <div>
-        <InstructionsForEndUser task={myTask} defaultMessage={message} />
+        <InstructionsForEndUser
+          task={myTask}
+          defaultMessage="There are no additional instructions or information for this task."
+        />
       </div>
     );
   };
@@ -171,7 +193,7 @@ export default function ProcessInterstitial({
 
   if (lastTask) {
     return (
-      <>
+      <div>
         {getLoadingIcon()}
         {displayableData.map((d, index) => (
           <div
@@ -182,8 +204,16 @@ export default function ProcessInterstitial({
             {userMessage(d)}
           </div>
         ))}
-      </>
+      </div>
     );
   }
-  return null;
+  if (processInstance) {
+    return (
+      <div>
+        {getLoadingIcon()}
+        {userMessageForProcessInstance(processInstance)}
+      </div>
+    );
+  }
+  return <div>{getLoadingIcon()}</div>;
 }

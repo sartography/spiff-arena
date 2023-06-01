@@ -1122,6 +1122,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           processInstanceId={processInstance.id}
           processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
           allowRedirect={false}
+          smallSpinner
         />
         <br />
         <br />
