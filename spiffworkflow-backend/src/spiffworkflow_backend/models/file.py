@@ -73,7 +73,6 @@ class File:
     file_contents_hash: str | None = None
 
     def __post_init__(self) -> None:
-        """__post_init__."""
         self.sort_index = f"{self.type}:{self.name}"
 
     @classmethod

@@ -161,7 +161,6 @@ class Script:
 
     @staticmethod
     def _get_all_subclasses(script_class: Any) -> list[type[Script]]:
-        """_get_all_subclasses."""
         # hackish mess to make sure we have all the modules loaded for the scripts
         pkg_dir = os.path.dirname(__file__)
         for _module_loader, name, _ispkg in pkgutil.iter_modules([pkg_dir]):

@@ -28,11 +28,9 @@ class ProcessGroup:
     parent_groups: list[ProcessGroupLite] | None = None
 
     def __post_init__(self) -> None:
-        """__post_init__."""
         self.sort_index = self.display_name
 
     def __eq__(self, other: Any) -> bool:
-        """__eq__."""
         if not isinstance(other, ProcessGroup):
             return False
         if other.id == self.id:

@@ -31,7 +31,6 @@ class TestUsersController(BaseTest):
         username_prefix: str,
         expected_count: int,
     ) -> None:
-        """_assert_search_has_count."""
         response = client.get(
             f"/v1.0/users/search?username_prefix={username_prefix}",
             headers=self.logged_in_headers(with_super_admin_user),
