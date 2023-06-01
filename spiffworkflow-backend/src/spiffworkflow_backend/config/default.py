@@ -169,6 +169,12 @@ SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB = environ.get(
 # this is only used in CI. use SPIFFWORKFLOW_BACKEND_DATABASE_URI instead for real configuration
 SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD = environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD", default=None)
 
+# we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,
+# so instead of using config, we use os.environ directly here.
+# SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE = (
+#     environ.get("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE", default="true") == "true"
+# )
+
 SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED = (
     environ.get("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default="false") == "true"
 )
