@@ -324,7 +324,10 @@ export default function ProcessModelShow() {
     if (isTestCaseFile(processModelFile)) {
       elements.push(
         <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
-          <ProcessModelTestRun processModelFile={processModelFile} />
+          <ProcessModelTestRun
+            processModelFile={processModelFile}
+            titleText="Run BPMN unit tests defined in this file"
+          />
         </Can>
       );
     }
@@ -664,6 +667,11 @@ export default function ProcessModelShow() {
               disabled={publishDisabled}
             />
           </Can>
+          <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
+            {hasTestCaseFiles ? (
+              <ProcessModelTestRun titleText="Run all BPMN unit tests for this process model" />
+            ) : null}
+          </Can>
         </Stack>
         <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
@@ -680,21 +688,6 @@ export default function ProcessModelShow() {
               <br />
               <br />
             </>
-          </Can>
-          <Can
-            I="POST"
-            a={targetUris.processModelPublishPath}
-            ability={ability}
-          >
-            <Can
-              I="POST"
-              a={targetUris.processModelTestsPath}
-              ability={ability}
-            >
-              {hasTestCaseFiles ? (
-                <ProcessModelTestRun buttonType="text" />
-              ) : null}
-            </Can>
           </Can>
         </Stack>
         {processModelFilesSection()}

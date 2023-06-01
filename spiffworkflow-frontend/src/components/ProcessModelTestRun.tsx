@@ -1,4 +1,4 @@
-import { PlayOutline, Checkmark, Close } from '@carbon/icons-react';
+import { Rule, Checkmark, Close } from '@carbon/icons-react';
 import { Button, Modal } from '@carbon/react';
 import { useState } from 'react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -11,12 +11,12 @@ import {
 
 type OwnProps = {
   processModelFile?: ProcessFile;
-  buttonType?: string;
+  titleText: string;
 };
 
 export default function ProcessModelTestRun({
   processModelFile,
-  buttonType = 'icon',
+  titleText,
 }: OwnProps) {
   const [testCaseResults, setTestCaseResults] =
     useState<TestCaseResults | null>(null);
@@ -153,29 +153,16 @@ export default function ProcessModelTestRun({
   };
 
   const buttonElement = () => {
-    if (buttonType === 'icon') {
-      return (
-        <Button
-          kind="ghost"
-          renderIcon={PlayOutline}
-          iconDescription="Run BPMN unit tests defined in this file"
-          hasIconOnly
-          size="lg"
-          onClick={() => onProcessModelTestRun()}
-        />
-      );
-    }
-    if (buttonType === 'text') {
-      return (
-        <Button
-          onClick={() => onProcessModelTestRun()}
-          title="Run all BPMN unit tests for this process model"
-        >
-          Run Unit Tests
-        </Button>
-      );
-    }
-    return null;
+    return (
+      <Button
+        kind="ghost"
+        renderIcon={Rule}
+        iconDescription={titleText}
+        hasIconOnly
+        size="lg"
+        onClick={() => onProcessModelTestRun()}
+      />
+    );
   };
 
   return (
