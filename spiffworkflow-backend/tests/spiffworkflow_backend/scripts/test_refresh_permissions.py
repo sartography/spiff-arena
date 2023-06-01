@@ -1,4 +1,3 @@
-"""Test_get_localtime."""
 import pytest
 from flask.app import Flask
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor

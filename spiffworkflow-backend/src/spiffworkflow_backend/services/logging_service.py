@@ -19,7 +19,7 @@ from flask.app import Flask
 
 
 class InvalidLogLevelError(Exception):
-    """InvalidLogLevelError."""
+    pass
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -39,7 +39,6 @@ class JsonFormatter(logging.Formatter):
         time_format: str = "%Y-%m-%dT%H:%M:%S",
         msec_format: str = "%s.%03dZ",
     ):
-        """__init__."""
         self.fmt_dict = fmt_dict if fmt_dict is not None else {"message": "message"}
         self.default_time_format = time_format
         self.default_msec_format = msec_format
@@ -87,7 +86,6 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logger(app: Flask) -> None:
-    """Setup_logger."""
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 

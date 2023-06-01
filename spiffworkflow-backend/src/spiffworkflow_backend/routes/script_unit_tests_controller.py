@@ -21,7 +21,6 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 def script_unit_test_create(
     modified_process_model_identifier: str, body: dict[str, str | bool | int]
 ) -> flask.wrappers.Response:
-    """Script_unit_test_create."""
     bpmn_task_identifier = _get_required_parameter_or_raise("bpmn_task_identifier", body)
     input_json = _get_required_parameter_or_raise("input_json", body)
     expected_output_json = _get_required_parameter_or_raise("expected_output_json", body)
@@ -95,7 +94,6 @@ def script_unit_test_create(
 def script_unit_test_run(
     modified_process_model_identifier: str, body: dict[str, str | bool | int]
 ) -> flask.wrappers.Response:
-    """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
     current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 

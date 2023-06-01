@@ -1,4 +1,3 @@
-"""Test_environment_var_script."""
 from flask import Flask
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.get_env import GetEnv

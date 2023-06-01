@@ -122,7 +122,6 @@ def token() -> dict:
 
 @openid_blueprint.route("/end_session", methods=["GET"])
 def end_session() -> Response:
-    """Logout."""
     redirect_url = request.args.get("post_logout_redirect_uri", "http://localhost")
     request.args.get("id_token_hint")
     return redirect(redirect_url)
@@ -130,7 +129,6 @@ def end_session() -> Response:
 
 @openid_blueprint.route("/refresh", methods=["POST"])
 def refresh() -> str:
-    """Refresh."""
     return ""
 
 

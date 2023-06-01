@@ -59,7 +59,6 @@ def setup_database_configs(app: Flask) -> None:
 
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
-    """Load_config_file."""
     try:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
@@ -119,7 +118,6 @@ def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
 
 
 def setup_config(app: Flask) -> None:
-    """Setup_config."""
     # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)

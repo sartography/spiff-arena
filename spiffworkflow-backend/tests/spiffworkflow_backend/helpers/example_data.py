@@ -8,8 +8,6 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 class ExampleDataLoader:
-    """ExampleDataLoader."""
-
     @staticmethod
     def create_spec(
         process_model_id: str,

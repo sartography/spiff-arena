@@ -1,4 +1,3 @@
-"""Test_authentication."""
 import base64
 
 import jwt
@@ -46,7 +45,6 @@ class TestFlaskOpenId(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_get_token."""
         code = "testadmin1:1234123412341234"
 
         """It should be possible to get a token."""

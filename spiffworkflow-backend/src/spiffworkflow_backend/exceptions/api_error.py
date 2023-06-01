@@ -216,7 +216,6 @@ class ApiError(Exception):
 
 
 def set_user_sentry_context() -> None:
-    """Set_user_sentry_context."""
     try:
         username = g.user.username
     except Exception:

@@ -15,16 +15,12 @@ from spiffworkflow_backend.models.file import File
 
 
 class NotificationType(enum.Enum):
-    """NotificationType."""
-
     fault = "fault"
     suspend = "suspend"
 
 
 @dataclass(order=True)
 class ProcessModelInfo:
-    """ProcessModelInfo."""
-
     sort_index: str = field(init=False)
 
     id: str
@@ -44,11 +40,9 @@ class ProcessModelInfo:
     bpmn_version_control_identifier: str | None = None
 
     def __post_init__(self) -> None:
-        """__post_init__."""
         self.sort_index = self.id
 
     def __eq__(self, other: Any) -> bool:
-        """__eq__."""
         if not isinstance(other, ProcessModelInfo):
             return False
         if other.id == self.id:
@@ -60,12 +54,10 @@ class ProcessModelInfo:
     # this is because we have to store ids in the database, and we want the same
     # database snapshot to work on any OS.
     def id_for_file_path(self) -> str:
-        """Id_for_file_path."""
         return self.id.replace("/", os.sep)
 
     @classmethod
     def modify_process_identifier_for_path_param(cls, identifier: str) -> str:
-        """Identifier."""
         if "\\" in identifier:
             raise Exception(f"Found backslash in identifier: {identifier}")
 
@@ -73,11 +65,7 @@ class ProcessModelInfo:
 
 
 class ProcessModelInfoSchema(Schema):
-    """ProcessModelInfoSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessModelInfo
 
     id = marshmallow.fields.String(required=True)
@@ -99,5 +87,4 @@ class ProcessModelInfoSchema(Schema):
 
     @post_load
     def make_spec(self, data: dict[str, str | bool | int | NotificationType], **_: Any) -> ProcessModelInfo:
-        """Make_spec."""
         return ProcessModelInfo(**data)  # type: ignore

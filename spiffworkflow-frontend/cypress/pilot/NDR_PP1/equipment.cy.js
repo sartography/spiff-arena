@@ -90,8 +90,8 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.wait(10000);
-  // cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.wait(5000);
+  cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 };
 

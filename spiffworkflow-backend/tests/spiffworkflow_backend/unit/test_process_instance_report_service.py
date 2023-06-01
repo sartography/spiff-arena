@@ -20,7 +20,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_completed_instances_initiated_by_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -114,7 +113,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_completed_instances_with_tasks_completed_by_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -190,7 +188,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_completed_instances_with_tasks_completed_by_my_groups."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -277,7 +274,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_with_relation_to_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(

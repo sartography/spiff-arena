@@ -1,4 +1,3 @@
-"""ServiceTask_service."""
 import json
 from typing import Any
 
@@ -13,7 +12,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 class ConnectorProxyError(Exception):
-    """ConnectorProxyError."""
+    pass
 
 
 def connector_proxy_url() -> Any:
@@ -22,11 +21,8 @@ def connector_proxy_url() -> Any:
 
 
 class ServiceTaskDelegate:
-    """ServiceTaskDelegate."""
-
     @staticmethod
     def check_prefixes(value: Any) -> Any:
-        """Check_prefixes."""
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
             if value.startswith(secret_prefix):
@@ -123,8 +119,6 @@ class ServiceTaskDelegate:
 
 
 class ServiceTaskService:
-    """ServiceTaskService."""
-
     @staticmethod
     def available_connectors() -> Any:
         """Returns a list of available connectors."""

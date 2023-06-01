@@ -77,7 +77,6 @@ class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
     def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader):
-        """__init__."""
         self.delegate = delegate
         self.subprocess_spec_loader = subprocess_spec_loader
 
@@ -375,7 +374,6 @@ class WorkflowExecutionService:
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
     ):
-        """__init__."""
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
@@ -388,7 +386,6 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
-        """Do_engine_steps."""
         with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
             if tripped:
                 raise AssertionError(
@@ -498,7 +495,6 @@ class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """A profiled version of the workflow execution service."""
 
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
-        """__do_engine_steps."""
         import cProfile
         from pstats import SortKey
 
