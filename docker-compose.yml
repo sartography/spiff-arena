@@ -14,9 +14,6 @@ services:
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
     image: ghcr.io/sartography/spiffworkflow-backend:latest
-    depends_on:
-      spiffworkflow-db:
-        condition: service_healthy
     environment:
       SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT: "/"
       SPIFFWORKFLOW_BACKEND_ENV: "local_development"
@@ -27,7 +24,8 @@ services:
 
       SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "/app/process_models"
       SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL: "http://spiffworkflow-connector:8004"
-      SPIFFWORKFLOW_BACKEND_DATABASE_URI: "mysql+mysqlconnector://root:${SPIFF_MYSQL_PASS:-my-secret-pw}@spiffworkflow-db:${SPIFF_MYSQL_PORT:-8003}/spiffworkflow_backend_development"
+      SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: "sqlite"
+      SPIFFWORKFLOW_BACKEND_DATABASE_URI: "sqlite:////app/db_volume/db.sqlite3"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
@@ -41,7 +39,7 @@ services:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
       - ./process_models:/app/process_models
-      - ./log:/app/log
+      - spiffworkflow_backend_db:/app/db_volume
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
       interval: 10s
@@ -64,26 +62,7 @@ services:
       timeout: 5s
       retries: 20
 
-  spiffworkflow-db:
-    container_name: spiffworkflow-db
-    image: mysql:8.0.29
-    platform: linux/amd64
-    cap_add:
-      - SYS_NICE
-    restart: "no"
-    environment:
-      MYSQL_DATABASE: "spiffworkflow_backend_development"
-      MYSQL_ROOT_PASSWORD: "${SPIFF_MYSQL_PASS:-my-secret-pw}"
-      MYSQL_TCP_PORT: "${SPIFF_MYSQL_PORT:-8003}"
-    ports:
-      - "${SPIFF_MYSQL_PORT:-8003}:${SPIFF_MYSQL_PORT:-8003}/tcp"
-    healthcheck:
-      test: "mysql --user=root --password=${SPIFF_MYSQL_PASS:-my-secret-pw} -e 'select 1' spiffworkflow_backend_development"
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
 
 volumes:
-  spiffworkflow_backend:
+  spiffworkflow_backend_db:
     driver: local
