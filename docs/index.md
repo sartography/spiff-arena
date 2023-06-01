@@ -6,6 +6,7 @@
 quick_start/quick_start.md
 documentation/documentation.md
 how_to/bpmn_unit_tests.md
+admin_guide/admin_guide.md
 wish_list/wish_list.md
 
 ```
