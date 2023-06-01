@@ -1,4 +1,3 @@
-"""UserGroupAssignment."""
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -24,7 +23,6 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     group = relationship("GroupModel", overlaps="groups,user_group_assignments_waiting,users")  # type: ignore
 
     def is_match_all(self) -> bool:
-        """Is_match_all."""
         if self.username == self.MATCH_ALL_USERS:
             return True
         return False

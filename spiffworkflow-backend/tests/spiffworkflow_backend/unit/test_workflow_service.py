@@ -67,8 +67,6 @@ def workflow_from_fragment(bpmn_fragment: str, process_id: str) -> BpmnWorkflow:
 
 
 class TestWorkflowService(BaseTest):
-    """TestWorkflowService."""
-
     def test_run_at_delay_is_0_for_regular_start_events(self, now_in_utc: datetime) -> None:
         workflow = workflow_from_fragment(
             """

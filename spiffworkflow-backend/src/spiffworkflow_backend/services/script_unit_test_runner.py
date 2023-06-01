@@ -1,4 +1,3 @@
-"""Process_instance_processor."""
 import json
 import sys
 import traceback
@@ -14,8 +13,6 @@ PythonScriptContext = dict[str, Any]
 
 @dataclass
 class ScriptUnitTestResult:
-    """ScriptUnitTestResult."""
-
     result: bool
     context: PythonScriptContext | None = None
     error: str | None = None
@@ -24,8 +21,6 @@ class ScriptUnitTestResult:
 
 
 class ScriptUnitTestRunner:
-    """ScriptUnitTestRunner."""
-
     _script_engine = CustomBpmnScriptEngine()
 
     @classmethod
@@ -35,7 +30,6 @@ class ScriptUnitTestRunner:
         input_context: PythonScriptContext,
         expected_output_context: PythonScriptContext,
     ) -> ScriptUnitTestResult:
-        """Run_task."""
         # make a new variable just for clarity, since we are going to update this dict in place
         # with the output variables from the script.
         context = input_context.copy()
@@ -86,7 +80,6 @@ class ScriptUnitTestRunner:
         task: SpiffTask,
         test_identifier: str,
     ) -> ScriptUnitTestResult:
-        """Run_test."""
         # this is totally made up, but hopefully resembles what spiffworkflow ultimately does
         unit_tests = task.task_spec.extensions["unitTests"]
         unit_test = [unit_test for unit_test in unit_tests if unit_test["id"] == test_identifier][0]

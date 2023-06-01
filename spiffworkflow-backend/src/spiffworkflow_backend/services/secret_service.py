@@ -5,8 +5,6 @@ from spiffworkflow_backend.models.secret_model import SecretModel
 
 
 class SecretService:
-    """SecretService."""
-
     CIPHER_ENCODING = "ascii"
 
     @classmethod
@@ -33,7 +31,6 @@ class SecretService:
         value: str,
         user_id: int,
     ) -> SecretModel:
-        """Add_secret."""
         value = cls._encrypt(value)
         secret_model = SecretModel(key=key, value=value, user_id=user_id)
         db.session.add(secret_model)
@@ -51,7 +48,6 @@ class SecretService:
 
     @staticmethod
     def get_secret(key: str) -> SecretModel:
-        """Get_secret."""
         secret = db.session.query(SecretModel).filter(SecretModel.key == key).first()
         if isinstance(secret, SecretModel):
             return secret

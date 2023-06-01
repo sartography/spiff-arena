@@ -61,15 +61,11 @@ from spiffworkflow_backend.services.task_service import TaskService
 
 
 class TaskDataSelectOption(TypedDict):
-    """TaskDataSelectOption."""
-
     value: str
     label: str
 
 
 class ReactJsonSchemaSelectOption(TypedDict):
-    """ReactJsonSchemaSelectOption."""
-
     type: str
     title: str
     enum: list[str]
@@ -78,7 +74,6 @@ class ReactJsonSchemaSelectOption(TypedDict):
 def task_list_my_tasks(
     process_instance_id: int | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Task_list_my_tasks."""
     principal = _find_principal_or_raise()
     assigned_user = aliased(UserModel)
     process_initiator_user = aliased(UserModel)
@@ -142,12 +137,10 @@ def task_list_my_tasks(
 
 
 def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_for_my_open_processes."""
     return _get_tasks(page=page, per_page=per_page)
 
 
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_for_me."""
     return _get_tasks(
         processes_started_by_user=False,
         has_lane_assignment_id=False,
@@ -159,7 +152,6 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 def task_list_for_my_groups(
     user_group_identifier: str | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Task_list_for_my_groups."""
     return _get_tasks(
         user_group_identifier=user_group_identifier,
         processes_started_by_user=False,
@@ -575,7 +567,6 @@ def task_submit(
     body: dict[str, Any],
     save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
-    """Task_submit_user_data."""
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
         return _task_submit_shared(process_instance_id, task_guid, body, save_as_draft)
 
@@ -587,7 +578,6 @@ def _get_tasks(
     per_page: int = 100,
     user_group_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    """Get_tasks."""
     user_id = g.user.id
 
     # use distinct to ensure we only get one row per human task otherwise
@@ -680,7 +670,6 @@ def _get_tasks(
 
 
 def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: ProcessModelInfo) -> dict:
-    """Prepare_form_data."""
     if task_model.data is None:
         return {}
 
@@ -707,7 +696,6 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
 
 
 def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> str:
-    """Render_jinja_template."""
     jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
     try:
         template = jinja_environment.from_string(unprocessed_template)
@@ -736,7 +724,6 @@ def _get_spiff_task_from_process_instance(
     process_instance: ProcessInstanceModel,
     processor: ProcessInstanceProcessor | None = None,
 ) -> SpiffTask:
-    """Get_spiff_task_from_process_instance."""
     if processor is None:
         processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
@@ -755,7 +742,6 @@ def _get_spiff_task_from_process_instance(
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: TaskModel) -> None:
-    """Update_nested."""
     if task_model.data is None:
         return None
 
@@ -787,7 +773,6 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                                     def map_function(
                                         task_data_select_option: TaskDataSelectOption,
                                     ) -> ReactJsonSchemaSelectOption:
-                                        """Map_function."""
                                         return {
                                             "type": "string",
                                             "enum": [task_data_select_option["value"]],
@@ -808,7 +793,6 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
-    """_get_potential_owner_usernames."""
     potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
         assigned_user.username.distinct()
     ).label("potential_owner_usernames")

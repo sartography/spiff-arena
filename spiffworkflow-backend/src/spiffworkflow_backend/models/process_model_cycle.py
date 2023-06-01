@@ -6,8 +6,6 @@ from spiffworkflow_backend.models.db import db
 
 @dataclass
 class ProcessModelCycleModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceQueueModel."""
-
     __tablename__ = "process_model_cycle"
 
     id: int = db.Column(db.Integer, primary_key=True)

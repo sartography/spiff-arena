@@ -9,10 +9,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestPermissionTarget(BaseTest):
-    """TestPermissionTarget."""
-
     def test_wildcard_must_go_at_the_end_of_uri(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_wildcard_must_go_at_the_end_of_uri."""
         permission_target = PermissionTargetModel(uri="/test_group/%")
         db.session.add(permission_target)
         db.session.commit()
@@ -26,7 +23,6 @@ class TestPermissionTarget(BaseTest):
         assert str(exception.value) == "Wildcard must appear at end: /test_group/%/model"
 
     def test_can_change_asterisk_to_percent_on_creation(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_can_change_asterisk_to_percent_on_creation."""
         permission_target = PermissionTargetModel(uri="/test_group/*")
         db.session.add(permission_target)
         db.session.commit()

@@ -25,8 +25,6 @@ class TaskNotFoundError(Exception):
 
 
 class MultiInstanceType(enum.Enum):
-    """MultiInstanceType."""
-
     none = "none"
     looping = "looping"
     parallel = "parallel"
@@ -93,8 +91,6 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
 
 class Task:
-    """Task."""
-
     HUMAN_TASK_TYPES = ["User Task", "Manual Task"]
 
     def __init__(
@@ -128,7 +124,6 @@ class Task:
         calling_subprocess_task_id: str | None = None,
         error_message: str | None = None,
     ):
-        """__init__."""
         self.id = id
         self.name = name
         self.title = title
@@ -212,38 +207,22 @@ class Task:
 
 
 class OptionSchema(Schema):
-    """OptionSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = ["id", "name", "data"]
 
 
 class ValidationSchema(Schema):
-    """ValidationSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = ["name", "config"]
 
 
 class FormFieldPropertySchema(Schema):
-    """FormFieldPropertySchema."""
-
     class Meta:
-        """Meta."""
-
         fields = ["id", "value"]
 
 
 class FormFieldSchema(Schema):
-    """FormFieldSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = [
             "id",
             "type",
@@ -269,11 +248,7 @@ class FormFieldSchema(Schema):
 
 
 class TaskSchema(Schema):
-    """TaskSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = [
             "id",
             "name",
@@ -304,5 +279,4 @@ class TaskSchema(Schema):
 
     @marshmallow.post_load
     def make_task(self, data: dict[str, Any], **kwargs: dict) -> Task:
-        """Make_task."""
         return Task(**data)

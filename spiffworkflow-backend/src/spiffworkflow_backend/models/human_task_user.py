@@ -13,8 +13,6 @@ from spiffworkflow_backend.models.user import UserModel
 
 @dataclass
 class HumanTaskUserModel(SpiffworkflowBaseDBModel):
-    """HumanTaskUserModel."""
-
     __tablename__ = "human_task_user"
 
     __table_args__ = (

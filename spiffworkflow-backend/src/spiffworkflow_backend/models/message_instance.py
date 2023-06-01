@@ -23,15 +23,11 @@ if TYPE_CHECKING:
 
 
 class MessageTypes(enum.Enum):
-    """MessageTypes."""
-
     send = "send"
     receive = "receive"
 
 
 class MessageStatuses(enum.Enum):
-    """MessageStatuses."""
-
     ready = "ready"
     running = "running"
     completed = "completed"
@@ -67,12 +63,10 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:
-        """Validate_message_type."""
         return self.validate_enum_field(key, value, MessageTypes)
 
     @validates("status")
     def validate_status(self, key: str, value: Any) -> Any:
-        """Validate_status."""
         return self.validate_enum_field(key, value, MessageStatuses)
 
     def correlates(self, other: Any, expression_engine: PythonScriptEngine) -> bool:
@@ -151,7 +145,6 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
 def ensure_failure_cause_is_set_if_message_instance_failed(
     session: Any, _flush_context: Any | None, _instances: Any | None
 ) -> None:
-    """Ensure_failure_cause_is_set_if_message_instance_failed."""
     for instance in session.new:
         if isinstance(instance, MessageInstanceModel):
             if instance.status == "failed" and instance.failure_cause is None:

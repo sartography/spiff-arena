@@ -296,7 +296,6 @@ def login_with_access_token(access_token: str) -> Response:
 
 
 def login_api() -> Response:
-    """Login_api."""
     redirect_url = "/v1.0/login_api_return"
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), redirect_url)
@@ -316,7 +315,6 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
 
 
 def logout(id_token: str, redirect_url: str | None) -> Response:
-    """Logout."""
     if redirect_url is None:
         redirect_url = ""
     tld = current_app.config["THREAD_LOCAL_DATA"]
@@ -325,13 +323,11 @@ def logout(id_token: str, redirect_url: str | None) -> Response:
 
 
 def logout_return() -> Response:
-    """Logout_return."""
     frontend_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
     return redirect(f"{frontend_url}/")
 
 
 def get_decoded_token(token: str) -> dict | None:
-    """Get_token_type."""
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
     except Exception as e:
@@ -348,7 +344,6 @@ def get_decoded_token(token: str) -> dict | None:
 
 
 def get_scope(token: str) -> str:
-    """Get_scope."""
     scope = ""
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     if "scope" in decoded_token:
@@ -357,7 +352,6 @@ def get_scope(token: str) -> str:
 
 
 def get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | None:
-    """Get_user_from_decoded_internal_token."""
     sub = decoded_token["sub"]
     parts = sub.split("::")
     service = parts[0].split(":")[1]
@@ -372,7 +366,6 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | Non
 
 
 def _clear_auth_tokens_from_thread_local_data() -> None:
-    """_clear_auth_tokens_from_thread_local_data."""
     tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token"):
         delattr(tld, "new_access_token")

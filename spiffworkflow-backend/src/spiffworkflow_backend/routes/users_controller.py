@@ -23,7 +23,6 @@ def user_exists_by_username(body: dict[str, Any]) -> flask.wrappers.Response:
 
 
 def user_search(username_prefix: str) -> flask.wrappers.Response:
-    """User_search."""
     found_users = UserModel.query.filter(UserModel.username.like(f"{username_prefix}%")).all()  # type: ignore
 
     response_json = {
@@ -34,7 +33,6 @@ def user_search(username_prefix: str) -> flask.wrappers.Response:
 
 
 def user_group_list_for_current_user() -> flask.wrappers.Response:
-    """User_group_list_for_current_user."""
     groups = g.user.groups
     # TODO: filter out the default group and have a way to know what is the default group
     group_identifiers = [

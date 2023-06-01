@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class HumanTaskModel(SpiffworkflowBaseDBModel):
-    """HumanTaskModel."""
-
     __tablename__ = "human_task"
 
     id: int = db.Column(db.Integer, primary_key=True)
@@ -65,7 +63,6 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def to_task(cls, task: HumanTaskModel) -> Task:
-        """To_task."""
         can_complete = False
         for user in task.human_task_users:
             if user.user_id == g.user.id:

@@ -12,8 +12,6 @@ from spiffworkflow_backend.models.db import db
 
 @dataclass()
 class RefreshTokenModel(SpiffworkflowBaseDBModel):
-    """RefreshTokenModel."""
-
     __tablename__ = "refresh_token"
 
     id: int = db.Column(db.Integer, primary_key=True)

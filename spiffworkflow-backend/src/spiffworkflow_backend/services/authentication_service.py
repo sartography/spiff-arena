@@ -54,8 +54,6 @@ class AuthenticationProviderTypes(enum.Enum):
 
 
 class AuthenticationService:
-    """AuthenticationService."""
-
     ENDPOINT_CACHE: dict = {}  # We only need to find the openid endpoints once, then we can cache them.
 
     @staticmethod
@@ -89,11 +87,9 @@ class AuthenticationService:
 
     @staticmethod
     def get_backend_url() -> str:
-        """Get_backend_url."""
         return str(current_app.config["SPIFFWORKFLOW_BACKEND_URL"])
 
     def logout(self, id_token: str, redirect_url: str | None = None) -> Response:
-        """Logout."""
         if redirect_url is None:
             redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
         request_url = (
@@ -106,12 +102,10 @@ class AuthenticationService:
 
     @staticmethod
     def generate_state(redirect_url: str) -> bytes:
-        """Generate_state."""
         state = base64.b64encode(bytes(str({"redirect_url": redirect_url}), "UTF-8"))
         return state
 
     def get_login_redirect_url(self, state: str, redirect_url: str = "/v1.0/login_return") -> str:
-        """Get_login_redirect_url."""
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint")
@@ -124,7 +118,6 @@ class AuthenticationService:
         return login_redirect_url
 
     def get_auth_token_object(self, code: str, redirect_url: str = "/v1.0/login_return") -> dict:
-        """Get_auth_token_object."""
         backend_basic_auth_string = f"{self.client_id()}:{self.secret_key()}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
@@ -200,7 +193,6 @@ class AuthenticationService:
 
     @staticmethod
     def store_refresh_token(user_id: int, refresh_token: str) -> None:
-        """Store_refresh_token."""
         refresh_token_model = RefreshTokenModel.query.filter(RefreshTokenModel.user_id == user_id).first()
         if refresh_token_model:
             refresh_token_model.token = refresh_token
@@ -217,7 +209,6 @@ class AuthenticationService:
 
     @staticmethod
     def get_refresh_token(user_id: int) -> str | None:
-        """Get_refresh_token."""
         refresh_token_object: RefreshTokenModel = RefreshTokenModel.query.filter(
             RefreshTokenModel.user_id == user_id
         ).first()

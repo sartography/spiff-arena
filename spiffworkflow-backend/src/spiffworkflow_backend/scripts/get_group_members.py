@@ -1,4 +1,3 @@
-"""Get_env."""
 from typing import Any
 
 from spiffworkflow_backend.models.group import GroupModel
@@ -8,15 +7,12 @@ from spiffworkflow_backend.scripts.script import Script
 
 
 class GetGroupMembers(Script):
-    """GetGroupMembers."""
-
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
         return False
 
     def get_description(self) -> str:
-        """Get_description."""
         return """Return the list of usernames of the users in the given group."""
 
     def run(
@@ -25,7 +21,6 @@ class GetGroupMembers(Script):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """Run."""
         group_identifier = args[0]
         group = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
