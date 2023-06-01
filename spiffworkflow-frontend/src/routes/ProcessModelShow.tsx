@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  Add,
   Download,
   Edit,
   Favorite,
@@ -14,8 +13,8 @@ import {
   Accordion,
   AccordionItem,
   Button,
-  ButtonSet,
   Column,
+  Dropdown,
   FileUploader,
   Grid,
   Modal,
@@ -325,7 +324,10 @@ export default function ProcessModelShow() {
     if (isTestCaseFile(processModelFile)) {
       elements.push(
         <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
-          <ProcessModelTestRun processModelFile={processModelFile} />
+          <ProcessModelTestRun
+            processModelFile={processModelFile}
+            titleText="Run BPMN unit tests defined in this file"
+          />
         </Can>
       );
     }
@@ -483,13 +485,13 @@ export default function ProcessModelShow() {
       >
         <FileUploader
           labelTitle="Upload files"
-          labelDescription="Max file size is 500mb. Only .bpmn, .dmn, and .json files are supported."
+          labelDescription="Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are supported."
           buttonLabel="Add file"
           buttonKind="primary"
           size="md"
           filenameStatus="edit"
           role="button"
-          accept={['.bpmn', '.dmn', '.json']}
+          accept={['.bpmn', '.dmn', '.json', '.md']}
           disabled={false}
           iconDescription="Delete file"
           name=""
@@ -498,6 +500,53 @@ export default function ProcessModelShow() {
           onChange={(event: any) => setFilesToUpload(event.target.files)}
         />
       </Modal>
+    );
+  };
+
+  const items = [
+    'Upload File',
+    'New BPMN File',
+    'New DMN File',
+    'New JSON File',
+    'New Markdown File',
+  ].map((item) => ({
+    text: item,
+  }));
+
+  const addFileComponent = () => {
+    return (
+      <Dropdown
+        id="inline"
+        titleText=""
+        size="lg"
+        label="Add File"
+        type="inline"
+        onChange={(a: any) => {
+          if (a.selectedItem.text === 'New BPMN File') {
+            navigate(
+              `/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`
+            );
+          } else if (a.selectedItem.text === 'Upload File') {
+            setShowFileUploadModal(true);
+          } else if (a.selectedItem.text === 'New DMN File') {
+            navigate(
+              `/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`
+            );
+          } else if (a.selectedItem.text === 'New JSON File') {
+            navigate(
+              `/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`
+            );
+          } else if (a.selectedItem.text === 'New Markdown File') {
+            navigate(
+              `/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`
+            );
+          } else {
+            console.log('a.selectedItem.text', a.selectedItem.text);
+          }
+        }}
+        items={items}
+        itemToString={(item: any) => (item ? item.text : '')}
+      />
     );
   };
 
@@ -531,46 +580,7 @@ export default function ProcessModelShow() {
                 a={targetUris.processModelFileCreatePath}
                 ability={ability}
               >
-                <ButtonSet>
-                  <Button
-                    renderIcon={Upload}
-                    data-qa="upload-file-button"
-                    onClick={() => setShowFileUploadModal(true)}
-                    size="sm"
-                    kind=""
-                    className="button-white-background"
-                  >
-                    Upload File
-                  </Button>
-                  <Button
-                    renderIcon={Add}
-                    href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
-                    size="sm"
-                  >
-                    New BPMN File
-                  </Button>
-                  <Button
-                    renderIcon={Add}
-                    href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
-                    size="sm"
-                  >
-                    New DMN File
-                  </Button>
-                  <Button
-                    renderIcon={Add}
-                    href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
-                    size="sm"
-                  >
-                    New JSON File
-                  </Button>
-                  <Button
-                    renderIcon={Add}
-                    href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
-                    size="sm"
-                  >
-                    New Markdown File
-                  </Button>
-                </ButtonSet>
+                {addFileComponent()}
                 <br />
               </Can>
               {processModelFileList()}
@@ -642,6 +652,26 @@ export default function ProcessModelShow() {
               confirmButtonLabel="Delete"
             />
           </Can>
+          <Can
+            I="POST"
+            a={targetUris.processModelPublishPath}
+            ability={ability}
+          >
+            <Button
+              kind="ghost"
+              data-qa="publish-process-model-button"
+              renderIcon={Upload}
+              iconDescription="Publish Changes"
+              hasIconOnly
+              onClick={publishProcessModel}
+              disabled={publishDisabled}
+            />
+          </Can>
+          <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
+            {hasTestCaseFiles ? (
+              <ProcessModelTestRun titleText="Run all BPMN unit tests for this process model" />
+            ) : null}
+          </Can>
         </Stack>
         <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
@@ -658,20 +688,6 @@ export default function ProcessModelShow() {
               <br />
               <br />
             </>
-          </Can>
-          <Can
-            I="POST"
-            a={targetUris.processModelPublishPath}
-            ability={ability}
-          >
-            <Button disabled={publishDisabled} onClick={publishProcessModel}>
-              Publish Changes
-            </Button>
-          </Can>
-          <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
-            {hasTestCaseFiles ? (
-              <ProcessModelTestRun buttonType="text" />
-            ) : null}
           </Can>
         </Stack>
         {processModelFilesSection()}
