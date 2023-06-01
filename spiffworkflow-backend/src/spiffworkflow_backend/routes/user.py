@@ -366,7 +366,6 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | Non
 
 
 def _clear_auth_tokens_from_thread_local_data() -> None:
-    """_clear_auth_tokens_from_thread_local_data."""
     tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token"):
         delattr(tld, "new_access_token")

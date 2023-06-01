@@ -366,7 +366,6 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def __scan_process_groups(cls, process_group_id: str | None = None) -> list[ProcessGroup]:
-        """__scan_process_groups."""
         if not os.path.exists(FileSystemService.root_path()):
             return []  # Nothing to scan yet.  There are no files.
         if process_group_id is not None:
@@ -441,7 +440,6 @@ class ProcessModelService(FileSystemService):
         path: str,
         name: str | None = None,
     ) -> ProcessModelInfo:
-        """__scan_process_model."""
         json_file_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)
 
         if os.path.exists(json_file_path):

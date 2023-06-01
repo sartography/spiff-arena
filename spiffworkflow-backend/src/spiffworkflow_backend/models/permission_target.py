@@ -21,7 +21,6 @@ class PermissionTargetModel(SpiffworkflowBaseDBModel):
     uri: str = db.Column(db.String(255), unique=True, nullable=False)
 
     def __init__(self, uri: str, id: int | None = None):
-        """__init__."""
         if id:
             self.id = id
         uri_with_percent = re.sub(r"\*", "%", uri)

@@ -9,7 +9,6 @@ class BackgroundProcessingService:
     """Used to facilitate doing work outside of an HTTP request/response."""
 
     def __init__(self, app: flask.app.Flask):
-        """__init__."""
         self.app = app
 
     def process_not_started_process_instances(self) -> None:

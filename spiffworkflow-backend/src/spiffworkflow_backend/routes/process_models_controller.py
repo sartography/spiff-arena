@@ -452,7 +452,6 @@ def _get_file_from_request() -> FileStorage:
 def _get_process_group_from_modified_identifier(
     modified_process_group_id: str,
 ) -> ProcessGroup:
-    """_get_process_group_from_modified_identifier."""
     if modified_process_group_id is None:
         raise ApiError(
             error_code="process_group_id_not_specified",
@@ -480,7 +479,6 @@ def _create_or_update_process_model_file(
     http_status_to_return: int,
     file_contents_hash: str | None = None,
 ) -> flask.wrappers.Response:
-    """_create_or_update_process_model_file."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     request_file = _get_file_from_request()

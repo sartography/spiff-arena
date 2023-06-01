@@ -124,7 +124,6 @@ class Task:
         calling_subprocess_task_id: str | None = None,
         error_message: str | None = None,
     ):
-        """__init__."""
         self.id = id
         self.name = name
         self.title = title

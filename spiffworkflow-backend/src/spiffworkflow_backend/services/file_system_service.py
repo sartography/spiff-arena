@@ -111,12 +111,10 @@ class FileSystemService:
 
     @staticmethod
     def _timestamp(file_path: str) -> float:
-        """_timestamp."""
         return os.path.getmtime(file_path)
 
     @staticmethod
     def _last_modified(file_path: str) -> datetime:
-        """_last_modified."""
         # Returns the last modified date of the given file.
         timestamp = os.path.getmtime(file_path)
         utc_dt = datetime.utcfromtimestamp(timestamp)

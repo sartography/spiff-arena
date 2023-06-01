@@ -58,15 +58,12 @@ class ProcessInstanceReportResult(TypedDict):
 # https://stackoverflow.com/a/56842689/6090676
 class Reversor:
     def __init__(self, obj: Any):
-        """__init__."""
         self.obj = obj
 
     def __eq__(self, other: Any) -> Any:
-        """__eq__."""
         return other.obj == self.obj
 
     def __lt__(self, other: Any) -> Any:
-        """__lt__."""
         return other.obj < self.obj
 
 

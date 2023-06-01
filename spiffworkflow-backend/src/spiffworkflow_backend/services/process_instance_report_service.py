@@ -283,7 +283,6 @@ class ProcessInstanceReportService:
 
     @classmethod
     def _get_potential_owner_usernames(cls, assigned_user: AliasedClass) -> Any:
-        """_get_potential_owner_usernames."""
         potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
             assigned_user.username.distinct()
         ).label("potential_owner_usernames")

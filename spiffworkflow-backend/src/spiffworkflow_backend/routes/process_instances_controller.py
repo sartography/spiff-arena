@@ -639,7 +639,6 @@ def _get_process_instance(
     process_instance: ProcessInstanceModel,
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    """_get_process_instance."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     try:
         current_version_control_revision = GitService.get_current_revision()
@@ -683,7 +682,6 @@ def _get_process_instance(
 def _find_process_instance_for_me_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
-    """_find_process_instance_for_me_or_raise."""
     process_instance: ProcessInstanceModel | None = (
         ProcessInstanceModel.query.filter_by(id=process_instance_id)
         .outerjoin(HumanTaskModel)

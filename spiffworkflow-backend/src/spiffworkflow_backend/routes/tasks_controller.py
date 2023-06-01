@@ -793,7 +793,6 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
-    """_get_potential_owner_usernames."""
     potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
         assigned_user.username.distinct()
     ).label("potential_owner_usernames")

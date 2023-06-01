@@ -198,7 +198,6 @@ class ProcessInstanceApi:
         process_model_display_name: str,
         updated_at_in_seconds: int,
     ) -> None:
-        """__init__."""
         self.id = id
         self.status = status
         self.next_task = next_task  # The next task that requires user input.

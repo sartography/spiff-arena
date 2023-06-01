@@ -89,7 +89,6 @@ StartEvent.register_converter(SPIFF_SPEC_CONFIG)
 
 
 def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
-    """_import."""
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
 
@@ -261,7 +260,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """
 
     def __init__(self) -> None:
-        """__init__."""
         default_globals = {
             "_strptime": _strptime,
             "dateparser": dateparser,
@@ -287,7 +285,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         super().__init__(environment=environment)
 
     def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
-        """__get_augment_methods."""
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         process_model_identifier = None
         process_instance_id = None

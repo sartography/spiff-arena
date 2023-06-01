@@ -40,11 +40,9 @@ class ProcessModelInfo:
     bpmn_version_control_identifier: str | None = None
 
     def __post_init__(self) -> None:
-        """__post_init__."""
         self.sort_index = self.id
 
     def __eq__(self, other: Any) -> bool:
-        """__eq__."""
         if not isinstance(other, ProcessModelInfo):
             return False
         if other.id == self.id:

@@ -63,7 +63,7 @@ remove_useless_comments() {
   # if [[ -n "$matches" ]]; then
   # fi
   sed -Ei 's/^(\s*)"""[A-Z]\w*Error\."""/\1pass/' "$file_name"
-  sed -Ei '/^\s*"""[A-Z]\w*\."""/d' "$file_name"
+  sed -Ei '/^\s*"""[A-Z_]\w*\."""/d' "$file_name"
 }
 
 # Process each Python file in the "src" and "tests" directories
