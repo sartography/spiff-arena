@@ -241,7 +241,6 @@ class SpecFileService(FileSystemService):
     def update_caches(ref: SpecReference) -> None:
         SpecFileService.update_process_cache(ref)
         SpecFileService.update_process_caller_cache(ref)
-        SpecFileService.update_message_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
         SpecFileService.update_correlation_cache(ref)
 
@@ -297,21 +296,6 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_process_caller_cache(ref: SpecReference) -> None:
         ProcessCallerService.add_caller(ref.identifier, ref.called_element_ids)
-
-    @staticmethod
-    def update_message_cache(ref: SpecReference) -> None:
-        """Assure we have a record in the database of all possible message ids and names."""
-        # for message_model_identifier in ref.messages.keys():
-        #     message_model = MessageModel.query.filter_by(
-        #         identifier=message_model_identifier
-        #     ).first()
-        #     if message_model is None:
-        #         message_model = MessageModel(
-        #             identifier=message_model_identifier,
-        #             name=ref.messages[message_model_identifier],
-        #         )
-        #         db.session.add(message_model)
-        #         db.session.commit()
 
     @staticmethod
     def update_message_trigger_cache(ref: SpecReference) -> None:

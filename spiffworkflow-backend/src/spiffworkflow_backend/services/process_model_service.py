@@ -3,16 +3,17 @@ import os
 import shutil
 import uuid
 from glob import glob
-from typing import Any
 from typing import TypeVar
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
+from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -74,7 +75,6 @@ class ProcessModelService(FileSystemService):
 
     @staticmethod
     def write_json_file(file_path: str, json_data: dict, indent: int = 4, sort_keys: bool = True) -> None:
-        """Write json file."""
         with open(file_path, "w") as h_open:
             json.dump(json_data, h_open, indent=indent, sort_keys=sort_keys)
 
@@ -106,14 +106,11 @@ class ProcessModelService(FileSystemService):
         )
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE))
-        process_model_id = process_model.id
-        # we don't save id in the json file
-        # this allows us to move models around on the filesystem
-        # the id is determined by its location on the filesystem
-        delattr(process_model, "id")
         json_data = cls.PROCESS_MODEL_SCHEMA.dump(process_model)
+        for key in list(json_data.keys()):
+            if key not in PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
+                del json_data[key]
         cls.write_json_file(json_path, json_data)
-        process_model.id = process_model_id
 
     @classmethod
     def process_model_delete(cls, process_model_id: str) -> None:
@@ -306,9 +303,9 @@ class ProcessModelService(FileSystemService):
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, cls.PROCESS_GROUP_JSON_FILE)
         serialized_process_group = process_group.serialized
-        # we don't store `id` in the json files
-        # this allows us to move groups around on the filesystem
-        del serialized_process_group["id"]
+        for key in list(serialized_process_group.keys()):
+            if key not in PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
+                del serialized_process_group[key]
         cls.write_json_file(json_path, serialized_process_group)
         return process_group
 
@@ -352,17 +349,6 @@ class ProcessModelService(FileSystemService):
                     f" {problem_models}"
                 )
             shutil.rmtree(path)
-        cls._cleanup_process_group_display_order()
-
-    @classmethod
-    def _cleanup_process_group_display_order(cls) -> list[Any]:
-        process_groups = cls.get_process_groups()  # Returns an ordered list
-        index = 0
-        for process_group in process_groups:
-            process_group.display_order = index
-            cls.update_process_group(process_group)
-            index += 1
-        return process_groups
 
     @classmethod
     def __scan_process_groups(cls, process_group_id: str | None = None) -> list[ProcessGroup]:
@@ -403,8 +389,6 @@ class ProcessModelService(FileSystemService):
             process_group = ProcessGroup(
                 id="",
                 display_name=process_group_id,
-                display_order=10000,
-                admin=False,
             )
             cls.write_json_file(cat_path, cls.GROUP_SCHEMA.dump(process_group))
             # we don't store `id` in the json files, so we add it in here
@@ -467,7 +451,6 @@ class ProcessModelService(FileSystemService):
                 id="",
                 display_name=name,
                 description="",
-                display_order=0,
             )
             cls.write_json_file(json_file_path, cls.PROCESS_MODEL_SCHEMA.dump(process_model_info))
             # we don't store `id` in the json files, so we add it in here

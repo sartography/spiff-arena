@@ -13,6 +13,12 @@ from marshmallow import post_load
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
+# we only want to save these items to the json file
+PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
+    "display_name",
+    "description",
+]
+
 
 @dataclass(order=True)
 class ProcessGroup:
@@ -21,11 +27,14 @@ class ProcessGroup:
     id: str  # A unique string name, lower case, under scores (ie, 'my_group')
     display_name: str
     description: str | None = None
-    display_order: int | None = 0
-    admin: bool | None = False
     process_models: list[ProcessModelInfo] = field(default_factory=list[ProcessModelInfo])
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
     parent_groups: list[ProcessGroupLite] | None = None
+
+    # TODO: delete these once they no no longer mentioned in current
+    # process_group.json files
+    display_order: int | None = 0
+    admin: bool | None = False
 
     def __post_init__(self) -> None:
         self.sort_index = self.display_name
@@ -53,8 +62,6 @@ class ProcessGroupSchema(Schema):
         fields = [
             "id",
             "display_name",
-            "display_order",
-            "admin",
             "process_models",
             "description",
             "process_groups",
