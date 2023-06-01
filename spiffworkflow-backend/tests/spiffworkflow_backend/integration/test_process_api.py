@@ -1785,6 +1785,20 @@ class TestProcessApi(BaseTest):
         assert json_results[0]["task"]["title"] == "Please Approve"
         assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
 
+        # Suspending the task should still report that the user can not complete the task.
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.suspend()
+        processor.save()
+
+        results = list(_dequeued_interstitial_stream(process_instance_id))
+        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        assert len(results) == 1
+        assert json_results[0]["task"]["state"] == "READY"
+        assert json_results[0]["task"]["can_complete"] is False
+        assert json_results[0]["task"]["title"] == "Please Approve"
+        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
+
         # Complete task as the finance user.
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{json_results[0]['task']['id']}",
