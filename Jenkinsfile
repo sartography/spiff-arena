@@ -83,10 +83,11 @@ pipeline {
         }
       } }
       post {
-        success { script {
+        always { script {
           if (params.DISCORD_WEBHOOK_CRED) {
+            def result  = currentBuild.result.toLowerCase() ?: 'unknown'
             discordNotify(
-              header: 'SpiffWorkflow Docker image published!',
+              header: "SpiffWorkflow Docker image build ${result}!",
               cred: params.DISCORD_WEBHOOK_CRED,
             )
           }
