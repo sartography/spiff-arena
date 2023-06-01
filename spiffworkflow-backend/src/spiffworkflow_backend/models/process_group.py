@@ -16,8 +16,6 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 @dataclass(order=True)
 class ProcessGroup:
-    """ProcessGroup."""
-
     sort_index: str = field(init=False)
 
     id: str  # A unique string name, lower case, under scores (ie, 'my_group')
@@ -43,22 +41,16 @@ class ProcessGroup:
 
     @property
     def serialized(self) -> dict:
-        """Serialized."""
         original_dict = dataclasses.asdict(self)
         return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
 
     # for use with os.path.join, so it can work on windows
     def id_for_file_path(self) -> str:
-        """Id_for_file_path."""
         return self.id.replace("/", os.sep)
 
 
 class ProcessGroupSchema(Schema):
-    """ProcessGroupSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessGroup
         fields = [
             "id",
@@ -79,5 +71,4 @@ class ProcessGroupSchema(Schema):
 
     @post_load
     def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:
-        """Make_process_group."""
         return ProcessGroup(**data)  # type: ignore

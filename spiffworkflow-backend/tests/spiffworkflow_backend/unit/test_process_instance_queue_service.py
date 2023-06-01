@@ -11,8 +11,6 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceQueueService(BaseTest):
-    """TestProcessInstanceQueueService."""
-
     def _create_process_instance(self) -> ProcessInstanceModel:
         initiator_user = self.find_or_create_user("initiator_user")
         process_model = load_test_spec(

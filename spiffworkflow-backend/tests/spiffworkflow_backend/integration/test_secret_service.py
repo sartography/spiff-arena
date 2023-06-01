@@ -12,8 +12,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class SecretServiceTestHelpers(BaseTest):
-    """SecretServiceTestHelpers."""
-
     test_key = "test_key"
     test_value = "test_value"
     test_process_group_id = "test"
@@ -23,11 +21,9 @@ class SecretServiceTestHelpers(BaseTest):
     test_process_model_description = "Om nom nom delicious cookies"
 
     def add_test_secret(self, user: UserModel) -> SecretModel:
-        """Add_test_secret."""
         return SecretService().add_secret(self.test_key, self.test_value, user.id)
 
     def add_test_process(self, client: FlaskClient, user: UserModel) -> ProcessModelInfo:
-        """Add_test_process."""
         self.create_process_group_with_api(
             client,
             user,
@@ -47,15 +43,12 @@ class SecretServiceTestHelpers(BaseTest):
 
 
 class TestSecretService(SecretServiceTestHelpers):
-    """TestSecretService."""
-
     def test_add_secret(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_add_secret."""
         test_secret = self.add_test_secret(with_super_admin_user)
 
         assert test_secret is not None
@@ -69,7 +62,6 @@ class TestSecretService(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_add_secret_duplicate_key_fails."""
         self.add_test_secret(with_super_admin_user)
         with pytest.raises(ApiError) as ae:
             self.add_test_secret(with_super_admin_user)
@@ -81,7 +73,6 @@ class TestSecretService(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_secret."""
         self.add_test_secret(with_super_admin_user)
 
         secret = SecretService().get_secret(self.test_key)
@@ -94,7 +85,6 @@ class TestSecretService(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_secret_bad_service."""
         self.add_test_secret(with_super_admin_user)
 
         with pytest.raises(ApiError):
@@ -124,7 +114,6 @@ class TestSecretService(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_update_secret_bad_secret_fails."""
         secret = self.add_test_secret(with_super_admin_user)
         with pytest.raises(ApiError) as ae:
             SecretService.update_secret(secret.key + "x", "some_new_value", with_super_admin_user.id)
@@ -154,7 +143,6 @@ class TestSecretService(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_delete_secret_bad_secret_fails."""
         self.add_test_secret(with_super_admin_user)
         with pytest.raises(ApiError) as ae:
             SecretService.delete_secret(self.test_key + "x", with_super_admin_user.id)

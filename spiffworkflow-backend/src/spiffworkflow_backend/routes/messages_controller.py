@@ -21,7 +21,6 @@ def message_instance_list(
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
-    """Message_instance_list."""
     # to make sure the process instance exists
     message_instances_query = MessageInstanceModel.query
 

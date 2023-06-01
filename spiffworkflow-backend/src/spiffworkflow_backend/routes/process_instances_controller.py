@@ -58,7 +58,6 @@ from spiffworkflow_backend.services.task_service import TaskService
 def process_instance_create(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Create_process_instance."""
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
 
     process_model = _get_process_model(process_model_identifier)
@@ -86,7 +85,6 @@ def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-    """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if process_instance.status != "not_started":
         raise ApiError(
@@ -140,7 +138,6 @@ def process_instance_terminate(
     process_instance_id: int,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
 
@@ -161,7 +158,6 @@ def process_instance_suspend(
     process_instance_id: int,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_instance_suspend."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
 
@@ -182,7 +178,6 @@ def process_instance_resume(
     process_instance_id: int,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_instance_resume."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
 
@@ -297,7 +292,6 @@ def process_instance_show_for_me(
     process_instance_id: int,
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    """Process_instance_show_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
     return _get_process_instance(
         process_instance=process_instance,
@@ -311,7 +305,6 @@ def process_instance_show(
     process_instance_id: int,
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    """Create_process_instance."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     return _get_process_instance(
         process_instance=process_instance,
@@ -323,7 +316,6 @@ def process_instance_show(
 def process_instance_delete(
     process_instance_id: int, modified_process_model_identifier: str
 ) -> flask.wrappers.Response:
-    """Create_process_instance."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     if not process_instance.has_terminal_status():
@@ -362,7 +354,6 @@ def process_instance_report_update(
     report_id: int,
     body: dict[str, Any],
 ) -> flask.wrappers.Response:
-    """Process_instance_report_update."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         id=report_id,
         created_by_id=g.user.id,
@@ -383,7 +374,6 @@ def process_instance_report_update(
 def process_instance_report_delete(
     report_id: int,
 ) -> flask.wrappers.Response:
-    """Process_instance_report_delete."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         id=report_id,
         created_by_id=g.user.id,
@@ -408,7 +398,6 @@ def process_instance_task_list_without_task_data_for_me(
     bpmn_process_guid: str | None = None,
     to_task_guid: str | None = None,
 ) -> flask.wrappers.Response:
-    """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
     return process_instance_task_list(
         _modified_process_model_identifier=modified_process_model_identifier,
@@ -426,7 +415,6 @@ def process_instance_task_list_without_task_data(
     bpmn_process_guid: str | None = None,
     to_task_guid: str | None = None,
 ) -> flask.wrappers.Response:
-    """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     return process_instance_task_list(
         _modified_process_model_identifier=modified_process_model_identifier,
@@ -444,7 +432,6 @@ def process_instance_task_list(
     to_task_guid: str | None = None,
     most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
-    """Process_instance_task_list."""
     bpmn_process_ids = []
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
@@ -592,7 +579,6 @@ def process_instance_reset(
 def process_instance_find_by_id(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-    """Process_instance_find_by_id."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(
         process_instance.process_model_identifier

@@ -1,4 +1,3 @@
-"""Get_env."""
 from collections import OrderedDict
 from typing import Any
 
@@ -11,10 +10,7 @@ from spiffworkflow_backend.scripts.script import Script
 
 
 class GetAllPermissions(Script):
-    """GetAllPermissions."""
-
     def get_description(self) -> str:
-        """Get_description."""
         return """Get all permissions currently in the system."""
 
     def run(
@@ -23,7 +19,6 @@ class GetAllPermissions(Script):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """Run."""
         permission_assignments = (
             PermissionAssignmentModel.query.join(
                 PrincipalModel,
@@ -46,14 +41,12 @@ class GetAllPermissions(Script):
             permissions.setdefault((pa.group_identifier, pa.uri), []).append(pa.permission)
 
         def replace_suffix(string: str, old: str, new: str) -> str:
-            """Replace_suffix."""
             if string.endswith(old):
                 return string[: -len(old)] + new
             return string
 
         # sort list of strings based on a specific order
         def sort_by_order(string_list: list, order: list) -> list:
-            """Sort_by_order."""
             return sorted(string_list, key=lambda x: order.index(x))
 
         return [

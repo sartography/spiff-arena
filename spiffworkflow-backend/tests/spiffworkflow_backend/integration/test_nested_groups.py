@@ -13,8 +13,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestNestedGroups(BaseTest):
-    """TestNestedGroups."""
-
     def test_delete_group_with_running_instance(
         self,
         app: Flask,
@@ -22,7 +20,6 @@ class TestNestedGroups(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_delete_group_with_running_instance."""
         process_group_id = "test_group"
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
@@ -65,7 +62,6 @@ class TestNestedGroups(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_delete_group_with_running_instance_in_nested_group."""
         process_group_a = ProcessGroup(
             id="group_a",
             display_name="Group A",
@@ -120,7 +116,6 @@ class TestNestedGroups(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_nested_groups."""
         # /process-groups/{process_group_path}/show
         target_uri = "/v1.0/process-groups/group_a,group_b"
         user = self.find_or_create_user()
@@ -134,7 +129,6 @@ class TestNestedGroups(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_add_nested_group."""
         process_group_a = ProcessGroup(
             id="group_a",
             display_name="Group A",
@@ -179,7 +173,6 @@ class TestNestedGroups(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_create."""
         process_group_a = ProcessGroup(
             id="group_a",
             display_name="Group A",
@@ -226,7 +219,6 @@ class TestNestedGroups(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_group_show."""
         # target_uri = "/process-groups/{process_group_id}"
         # user = self.find_or_create_user("testadmin1")
         # self.add_permissions_to_user(

@@ -1,4 +1,3 @@
-"""UserGroupAssignment."""
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -9,8 +8,6 @@ from spiffworkflow_backend.models.user import UserModel
 
 
 class UserGroupAssignmentModel(SpiffworkflowBaseDBModel):
-    """UserGroupAssignmentModel."""
-
     __tablename__ = "user_group_assignment"
     __table_args__ = (db.UniqueConstraint("user_id", "group_id", name="user_group_assignment_unique"),)
 

@@ -20,7 +20,6 @@ class TestSecretsController(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_add_secret."""
         secret_model = SecretModel(
             key=self.test_key,
             value=self.test_value,
@@ -66,7 +65,6 @@ class TestSecretsController(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_update_secret."""
         self.add_test_secret(with_super_admin_user)
         secret: SecretModel | None = SecretService.get_secret(self.test_key)
         assert secret

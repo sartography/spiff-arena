@@ -388,7 +388,6 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
-        """Do_engine_steps."""
         with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
             if tripped:
                 raise AssertionError(
