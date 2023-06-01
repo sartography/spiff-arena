@@ -34,11 +34,8 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class BaseTest:
-    """BaseTest."""
-
     @staticmethod
     def find_or_create_user(username: str = "test_user_1") -> UserModel:
-        """Find_or_create_user."""
         user = UserModel.query.filter_by(username=username).first()
         if isinstance(user, UserModel):
             return user
@@ -99,7 +96,6 @@ class BaseTest:
         process_group_id: str,
         display_name: str = "",
     ) -> ProcessGroup:
-        """Create_process_group."""
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         return ProcessModelService.add_process_group(process_group)
 
@@ -171,7 +167,6 @@ class BaseTest:
             raise Exception("You must include the process_model_id, which must be a path to the model")
 
     def get_test_data_file_full_path(self, file_name: str, process_model_test_data_dir: str) -> str:
-        """Get_test_data_file_contents."""
         return os.path.join(
             current_app.instance_path,
             "..",
@@ -183,7 +178,6 @@ class BaseTest:
         )
 
     def get_test_data_file_contents(self, file_name: str, process_model_test_data_dir: str) -> bytes:
-        """Get_test_data_file_contents."""
         file_full_path = self.get_test_data_file_full_path(file_name, process_model_test_data_dir)
         with open(file_full_path, "rb") as file:
             return file.read()
@@ -283,7 +277,6 @@ class BaseTest:
         status: str | None = "not_started",
         user: UserModel | None = None,
     ) -> ProcessInstanceModel:
-        """Create_process_instance_from_process_model."""
         if user is None:
             user = self.find_or_create_user()
 
@@ -342,7 +335,6 @@ class BaseTest:
         target_uri: str,
         expected_result: bool = True,
     ) -> None:
-        """Assert_user_has_permission."""
         has_permission = AuthorizationService.user_has_permission(
             user=user,
             permission=permission,
@@ -351,11 +343,9 @@ class BaseTest:
         assert has_permission is expected_result
 
     def modify_process_identifier_for_path_param(self, identifier: str) -> str:
-        """Modify_process_identifier_for_path_param."""
         return ProcessModelInfo.modify_process_identifier_for_path_param(identifier)
 
     def un_modify_modified_process_identifier_for_path_param(self, modified_identifier: str) -> str:
-        """Un_modify_modified_process_model_id."""
         return modified_identifier.replace(":", "/")
 
     def create_process_model_with_metadata(self) -> ProcessModelInfo:

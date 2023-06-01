@@ -6,8 +6,6 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelService(BaseTest):
-    """TestProcessModelService."""
-
     def test_can_update_specified_attributes(
         self,
         app: Flask,

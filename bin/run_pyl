@@ -49,7 +49,7 @@ function run_pre_commmit() {
 
 for react_project in "${react_projects[@]}" ; do
   # if pre, only do stuff when there are changes
-  if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$react_project")" ]]; then
+  if [[ -n "$(git status --porcelain "$react_project")" ]]; then
     pushd "$react_project"
     npm run lint:fix
     popd
@@ -57,6 +57,7 @@ for react_project in "${react_projects[@]}" ; do
 done
 
 for python_project in "${python_projects[@]}" ; do
+  # if pre, only do stuff when there are changes
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
     pushd "$python_project"
     run_autofixers || run_autofixers

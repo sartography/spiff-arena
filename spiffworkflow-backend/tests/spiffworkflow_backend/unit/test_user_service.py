@@ -9,15 +9,12 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUserService(BaseTest):
-    """TestUserService."""
-
     def test_assigning_a_group_to_a_user_before_the_user_is_created(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_waiting_group_assignments."""
         a_test_group = GroupService.find_or_create_group("aTestGroup")
         UserService.add_waiting_group_assignment("initiator_user", a_test_group)
         initiator_user = self.find_or_create_user("initiator_user")
@@ -29,7 +26,6 @@ class TestUserService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_waiting_group_assignments."""
         everybody_group = GroupService.find_or_create_group("everybodyGroup")
         UserService.add_waiting_group_assignment(UserGroupAssignmentWaitingModel.MATCH_ALL_USERS, everybody_group)
         initiator_user = self.find_or_create_user("initiator_user")
@@ -41,7 +37,6 @@ class TestUserService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_waiting_group_assignments."""
         initiator_user = self.find_or_create_user("initiator_user")
         everybody_group = GroupService.find_or_create_group("everybodyGroup")
         UserService.add_waiting_group_assignment(UserGroupAssignmentWaitingModel.MATCH_ALL_USERS, everybody_group)

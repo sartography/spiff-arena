@@ -85,7 +85,7 @@ const submitWithUser = (
   // }
 
   cy.wait(5000);
-  //cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 };
 

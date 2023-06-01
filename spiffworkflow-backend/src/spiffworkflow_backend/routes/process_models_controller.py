@@ -39,7 +39,6 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 def process_model_create(
     modified_process_group_id: str, body: dict[str, str | bool | int | None | list]
 ) -> flask.wrappers.Response:
-    """Process_model_create."""
     body_include_list = [
         "id",
         "display_name",
@@ -88,7 +87,6 @@ def process_model_create(
 def process_model_delete(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     try:
         ProcessModelService.process_model_delete(process_model_identifier)
@@ -107,7 +105,6 @@ def process_model_update(
     modified_process_model_identifier: str,
     body: dict[str, str | bool | int | None | list],
 ) -> Any:
-    """Process_model_update."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     body_include_list = [
         "display_name",
@@ -143,7 +140,6 @@ def process_model_update(
 
 
 def process_model_show(modified_process_model_identifier: str, include_file_references: bool = False) -> Any:
-    """Process_model_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     files = sorted(
@@ -167,7 +163,6 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 
 
 def process_model_move(modified_process_model_identifier: str, new_location: str) -> flask.wrappers.Response:
-    """Process_model_move."""
     original_process_model_id = _un_modify_modified_process_model_id(modified_process_model_identifier)
     new_process_model = ProcessModelService.process_model_move(original_process_model_id, new_location)
     _commit_and_push_to_git(
@@ -179,7 +174,6 @@ def process_model_move(modified_process_model_identifier: str, new_location: str
 def process_model_publish(
     modified_process_model_identifier: str, branch_to_update: str | None = None
 ) -> flask.wrappers.Response:
-    """Process_model_publish."""
     if branch_to_update is None:
         branch_to_update = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"]
     if branch_to_update is None:
@@ -241,7 +235,6 @@ def process_model_file_update(
 
 
 def process_model_file_delete(modified_process_model_identifier: str, file_name: str) -> flask.wrappers.Response:
-    """Process_model_file_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
 
@@ -276,7 +269,6 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
 def process_model_file_create(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Process_model_file_create."""
     message = f"User: {g.user.username} added process model file"
     return _create_or_update_process_model_file(modified_process_model_identifier, message, 201)
 
@@ -331,7 +323,6 @@ def process_model_test_run(
 def process_model_create_with_natural_language(
     modified_process_group_id: str, body: dict[str, str]
 ) -> flask.wrappers.Response:
-    """Process_model_create_with_natural_language."""
     pattern = re.compile(
         r"Create a (?P<pm_name>.*?) process model with a (?P<form_name>.*?) form that" r" collects (?P<columns>.*)"
     )
@@ -448,7 +439,6 @@ def process_model_create_with_natural_language(
 
 
 def _get_file_from_request() -> FileStorage:
-    """Get_file_from_request."""
     request_file: FileStorage | None = connexion.request.files.get("file")
     if not request_file:
         raise ApiError(

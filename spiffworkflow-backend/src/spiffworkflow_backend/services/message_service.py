@@ -10,12 +10,10 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 
 
 class MessageServiceError(Exception):
-    """MessageServiceError."""
+    pass
 
 
 class MessageService:
-    """MessageService."""
-
     @classmethod
     def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.

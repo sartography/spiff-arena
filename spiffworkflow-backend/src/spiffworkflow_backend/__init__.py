@@ -33,10 +33,7 @@ from spiffworkflow_backend.services.background_processing_service import Backgro
 
 
 class MyJSONEncoder(DefaultJSONProvider):
-    """MyJSONEncoder."""
-
     def default(self, obj: Any) -> Any:
-        """Default."""
         if hasattr(obj, "serialized"):
             return obj.serialized
         elif isinstance(obj, sqlalchemy.engine.row.Row):  # type: ignore
@@ -56,13 +53,11 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().default(obj)
 
     def dumps(self, obj: Any, **kwargs: Any) -> Any:
-        """Dumps."""
         kwargs.setdefault("default", self.default)
         return super().dumps(obj, **kwargs)
 
 
 def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler) -> None:
-    """Start_scheduler."""
     scheduler = scheduler_class()
 
     # TODO: polling intervals for messages job
@@ -120,7 +115,6 @@ class NoOpCipher:
 
 
 def create_app() -> flask.app.Flask:
-    """Create_app."""
     faulthandler.enable()
 
     # We need to create the sqlite database in a known location.
@@ -207,7 +201,6 @@ def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.app
 
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:
-    """Get_hacked_up_app_for_script."""
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     os.environ[flask_env_key] = "whatevs"
@@ -245,13 +238,11 @@ def traces_sampler(sampling_context: Any) -> Any:
 
 
 def configure_sentry(app: flask.app.Flask) -> None:
-    """Configure_sentry."""
     import sentry_sdk
     from sentry_sdk.integrations.flask import FlaskIntegration
 
     # get rid of NotFound errors
     def before_send(event: Any, hint: Any) -> Any:
-        """Before_send."""
         if "exc_info" in hint:
             _exc_type, exc_value, _tb = hint["exc_info"]
             # NotFound is mostly from web crawlers

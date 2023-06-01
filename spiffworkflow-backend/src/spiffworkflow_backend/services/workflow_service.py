@@ -8,8 +8,6 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 
 
 class WorkflowService:
-    """WorkflowService."""
-
     @classmethod
     def future_start_events(cls, workflow: BpmnWorkflow) -> list[SpiffTask]:
         return [t for t in workflow.get_tasks(TaskState.FUTURE) if isinstance(t.task_spec, StartEvent)]

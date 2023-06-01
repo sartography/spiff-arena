@@ -35,37 +35,44 @@ matches_filename_pattern() {
 remove_useless_comments() {
   local file_name="$1"
 
-  echo "grepping"
-  matches=$(ggrep --group-separator=HOTSEP -B 1 -E '^\s*"""' "$file_name" || echo '')
-  if [[ -n "$matches" ]]; then
-    matches="${matches}\nHOTSEP"
-    echo -e "$matches"
-    while read -d'HOTSEP' -r match || [ -n "$match" ]; do
-      echo "match: ${match}"
-      if [[ -n "$match" ]]; then
-        code_line_of_match=$(head -n 1 <<< "$match")
-        comment_line_of_match=$(sed -n '2 p' <<< "$match")
-        echo "code_line_of_match: ${code_line_of_match}"
-        comment_line_of_match=$(sed -n '2 p' <<< "$match")
-        echo "comment_line_of_match: ${comment_line_of_match}"
-        comment_contents=$(hot_sed -E 's/^\s*"""(.*)\.""".*$/\1/' <<< "$comment_line_of_match")
-        echo "comment_contents: ${comment_contents}"
-        if grep -Eiq "^\s*(def|class) ${comment_contents}\(" <<< "$code_line_of_match"; then
-          # Remove line from file matching comment_line
-          hot_sed -i "/${comment_line_of_match}/d" "$file_name"
-        fi
-      fi
-    done <<< $matches
-  fi
+  # echo "grepping"
+  # matches=$(grep --group-separator=HOTSEP -B 1 -E '^\s*"""' "$file_name" || echo '')
+  # if [[ -n "$matches" ]]; then
+  #   matches="${matches}\nHOTSEP"
+  #   echo -e "$matches"
+  #   while read -d'HOTSEP' -r match || [ -n "$match" ]; do
+  #     echo "match: ${match}"
+  #     if [[ -n "$match" ]]; then
+  #       code_line_of_match=$(head -n 1 <<< "$match")
+  #       echo "code_line_of_match: ${code_line_of_match}"
+  #       comment_line_of_match=$(sed -n '2 p' <<< "$match")
+  #       echo "comment_line_of_match: ${comment_line_of_match}"
+  #       comment_contents=$(hot_sed -E 's/^\s*"""(.*)\.""".*$/\1/' <<< "$comment_line_of_match")
+  #       echo "comment_contents: ${comment_contents}"
+  #       if grep -Eiq "^class.*${comment_contents}\(Exception\)" <<< "$code_line_of_match"; then
+  #         hot_sed -i "s/^(\s*)[^\s]*${comment_line_of_match}.*/\1pass/" "$file_name"
+  #       fi
+  #       # if grep -Eiq "^\s*(def|class) ${comment_contents}\(" <<< "$code_line_of_match"; then
+  #       #   # Remove line from file matching comment_line
+  #       #   hot_sed -i "/${comment_line_of_match}/d" "$file_name"
+  #       # fi
+  #     fi
+  #   done <<< $matches
+  # fi
+  # matches=$(grep -E '\s*(def|class) ' "$file_name" || echo '')
+  # if [[ -n "$matches" ]]; then
+  # fi
+  sed -Ei 's/^(\s*)"""[A-Z]\w*Error\."""/\1pass/' "$file_name"
+  sed -Ei '/^\s*"""[A-Z]\w*\."""/d' "$file_name"
 }
 
 # Process each Python file in the "src" and "tests" directories
 for file in $(find src tests -type f -name '*.py'); do
   # Read the first line of the file
-  if grep -Eq '/logging_service' <<< "$file"; then
+  # if grep -Eq '/logging_service' <<< "$file"; then
     echo "processing file that we hand picked for debugging: ${file}"
     remove_useless_comments "$file"
-  fi
+  # fi
 
   # this is already done
   # if [ -s "$file" ]; then
