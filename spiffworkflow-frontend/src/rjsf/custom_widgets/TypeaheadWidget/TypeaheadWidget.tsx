@@ -10,7 +10,6 @@ interface typeaheadArgs {
   uiSchema?: any;
   disabled?: boolean;
   readonly?: boolean;
-  required?: boolean;
   rawErrors?: any;
 }
 
@@ -20,7 +19,6 @@ export default function TypeaheadWidget({
   options: { category, itemFormat },
   value,
   uiSchema,
-  required,
   disabled,
   readonly,
   rawErrors = [],
@@ -96,7 +94,6 @@ export default function TypeaheadWidget({
       placeholder={`Start typing to search for ${category}...`}
       selectedItem={selectedItem}
       helperText={helperText}
-      required={required}
       disabled={disabled}
       readOnly={readonly}
       invalid={invalid}
