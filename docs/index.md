@@ -17,7 +17,7 @@ how_to/bpmn_unit_tests.md
 :maxdepth: 2
 :caption: DevOps
 devops_guide/configure_connector_proxy.md
-devops_guide/deploy-integrate.md
+devops_guide/deploy_aws_lambda.md
 ```
 
 ```{toctree}

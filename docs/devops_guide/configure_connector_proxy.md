@@ -1,5 +1,7 @@
 # Configure a Connector Proxy
 
+## Setting the Environment Variable
+
 Once a `Connector Proxy` has been deployed, to integrate it with SpiffArena we simply need to update an environment variable and restart the backend. If using the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) open the docker-compose.yml file, else edit the environment variable in the way appropriate for your deployment. The variable we need to change is called `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL`.
 
 Example diff using the function URL from the AWS tutorial:
@@ -41,7 +43,5 @@ Choose the `http/GetRequest` operator ID and enter the [dog fact api](https://do
 Run the process and once complete you can see the response in the workflow:
 
 ![Screenshot from 2023-04-06 16-49-53](https://user-images.githubusercontent.com/100367399/230491713-9d3f9bd0-f284-4004-b00c-cb6dc94b53df.png)
-
-## Congrats!
 
 You have successfully configured a `Connector Proxy` for use with `SpiffArena`. You made a call from a workflow to get a dog fact. Now imagine that call was to talk to an external system relevant to your business processes.

@@ -1,4 +1,4 @@
-# Deploying and Integrating With SpiffArena
+# Deploying a Connector Proxy as an AWS Lambda Function
 
 This guide shows you how to deploy the demo `Connector Proxy` as an `AWS Lambda Function` as well as how to integrate it with [SpiffArena](https://www.spiffworkflow.org/pages/spiffarena/). The [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) will be used as the basis for integration but the steps should easily map to any custom installation.
 
@@ -6,13 +6,13 @@ There is an assumption that you have access to login to the AWS Console and can 
 
 ## Building the zip
 
-One option when deploying a Lambda function is to upload a zip file containing the source code or executable. In the root of this repository run:
+One option when deploying a Lambda function is to upload a zip file containing the source code or executable. In the root of [this repository](https://github.com/sartography/connector-proxy-lambda-demo) run:
 
 ```
 make zip
 ```
 
-This will create a zip file containing the [lambda entry point function](https://github.com/jbirddog/connector-proxy-lambda-demo/blob/main/connector_proxy_lambda_demo/lambda_function.py#L5) as well as all the dependencies needed to execute the connectors. For this example the libraries [spiffworkflow-proxy](https://github.com/sartography/spiffworkflow-proxy) is used for discovering connectors and [connector-http](https://github.com/sartography/connector-http) is an example connector that provides http get and post requests.
+This will create a zip file containing the [lambda entry point function](https://github.com/sartography/connector-proxy-lambda-demo/blob/main/connector_proxy_lambda_demo/lambda_function.py#L5) as well as all the dependencies needed to execute the connectors. For this example the libraries [spiffworkflow-proxy](https://github.com/sartography/spiffworkflow-proxy) is used for discovering connectors and [connector-http](https://github.com/sartography/connector-http) is an example connector that provides http get and post requests.
 
 Once `make zip` completes `connector_proxy_lambda_demo.zip` will be available in the repository root.
 
@@ -56,4 +56,4 @@ Click your function URL again to see a hello from our deployed Connector Proxy.
 
 ## Integrating With SpiffArena
 
-Congrats, your Connector Proxy has been deployed as a Lambda function. 
+Congrats, your Connector Proxy has been deployed as a Lambda function. For information on configuring SpiffArena to use the new Connector Proxy url please see [Configure a Connector Proxy](configure_connector_proxy).
