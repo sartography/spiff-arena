@@ -1,0 +1,11 @@
+{
+  "title": "Get Name",
+  "description": "Please enter user name.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    }
+  },
+  "required": []
+}

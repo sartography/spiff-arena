@@ -1,0 +1,10 @@
+{
+  "test_case_1": {
+    "tasks": {
+      "Sub_Process:Sub_Process_User_Task": {
+        "data": [{"name" : "User Task"}]
+      }
+    },
+    "expected_output_json": {"name" : "User Task"}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "test_case_1": {
+    "tasks": {
+      "Sub_Process_with_Script_Task:Sub_Process_Script_Task": {
+        "data": [{}]
+      }
+    },
+    "expected_output_json": { "x": 5 }
+  }
+}

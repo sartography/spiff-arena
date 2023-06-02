@@ -110,7 +110,11 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
                 f"Executable process cannot be found in {bpmn_file}. Test cannot run."
             )
         bpmn_process_spec = parser.get_spec(executable_process)
-        bpmn_process_instance = BpmnWorkflow(bpmn_process_spec)
+        subprocesses = parser.get_subprocess_specs(bpmn_process_spec.name)
+        bpmn_process_instance = BpmnWorkflow(
+            bpmn_process_spec,
+            subprocess_specs=subprocesses,
+        )
         return bpmn_process_instance
 
     def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
@@ -309,6 +313,7 @@ class ProcessModelTestRunner:
                     f" {next_task.task_spec.bpmn_id} because it is of type '{task_type}'"
                 )
             self._execute_task(next_task, test_case_task_key, test_case_task_properties)
+            bpmn_process_instance.refresh_waiting_tasks()
             next_task = self._get_next_task(bpmn_process_instance)
 
         error_message = None
