@@ -23,6 +23,8 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
     selectedTabIndex = 1;
   } else if (variant === 'find-by-id') {
     selectedTabIndex = 2;
+  } else if (variant === 'aggregations') {
+    selectedTabIndex = 3;
   }
 
   return (
@@ -56,6 +58,15 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           }}
         >
           Find By Id
+        </Tab>
+        <Tab
+          title="Aggregate data based on criteria."
+          data-qa="process-instance-list-aggregations"
+          onClick={() => {
+            navigate('/admin/process-instances/aggregations');
+          }}
+        >
+          Aggregations
         </Tab>
       </TabList>
     </Tabs>

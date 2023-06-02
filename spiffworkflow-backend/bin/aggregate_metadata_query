@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+
+mysql -uroot spiffworkflow_backend_local_development -e '
+  SELECT hey.client, sum(duration) FROM (
+    SELECT p.id as pid, m_duration.value as duration, m_project.value as project, m_client.value as client
+    FROM process_instance p
+    JOIN process_instance_metadata m_duration ON m_duration.process_instance_id = p.id AND m_duration.key = "duration_in_seconds"
+    JOIN process_instance_metadata m_project ON m_project.process_instance_id = p.id AND m_project.key = "project"
+    JOIN process_instance_metadata m_client ON m_client.process_instance_id = p.id AND m_client.key = "client"
+  ) AS hey
+  GROUP BY hey.client
+  ;
+'
