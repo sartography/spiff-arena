@@ -1,0 +1,9 @@
+{
+    "admin": false,
+    "description": "",
+    "display_name": "Expected To Fail",
+    "display_order": 0,
+    "parent_groups": null,
+    "process_groups": [],
+    "process_models": []
+}
