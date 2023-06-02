@@ -25,14 +25,14 @@ export default function InProgressInstances() {
           Waiting for <strong>{userGroup}</strong>
         </h2>
       );
+      const identifierForTable = `waiting-for-${slugifyString(userGroup)}`;
       return (
         <ProcessInstanceListTable
           headerElement={headerElement}
+          tableHtmlId={identifierForTable}
           showLinkToReport
           filtersEnabled={false}
-          paginationQueryParamPrefix={`waiting_for_${slugifyString(
-            userGroup
-          ).replace('-', '_')}`}
+          paginationQueryParamPrefix={identifierForTable.replace('-', '_')}
           paginationClassName="with-large-bottom-margin"
           perPageOptions={[2, 5, 25]}
           reportIdentifier="system_report_in_progress_instances_with_tasks"
@@ -69,6 +69,7 @@ export default function InProgressInstances() {
     <>
       <ProcessInstanceListTable
         headerElement={startedByMeHeaderElement}
+        tableHtmlId="open-instances-started-by-me"
         filtersEnabled={false}
         paginationQueryParamPrefix="open_instances_started_by_me"
         perPageOptions={[2, 5, 25]}
@@ -82,6 +83,7 @@ export default function InProgressInstances() {
       />
       <ProcessInstanceListTable
         headerElement={waitingForMeHeaderElement}
+        tableHtmlId="waiting-for-me"
         showLinkToReport
         filtersEnabled={false}
         paginationQueryParamPrefix="waiting_for_me"
