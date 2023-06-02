@@ -98,6 +98,7 @@ type OwnProps = {
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
   headerElement?: React.ReactElement;
+  tableHtmlId?: string;
 };
 
 interface dateParameters {
@@ -119,6 +120,7 @@ export default function ProcessInstanceListTable({
   showActionsColumn = false,
   showLinkToReport = false,
   headerElement,
+  tableHtmlId,
 }: OwnProps) {
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -1648,8 +1650,14 @@ export default function ProcessInstanceListTable({
       );
     });
 
+    let tableProps: any = { size: 'lg' };
+    if (tableHtmlId) {
+      tableProps = { ...tableProps, id: tableHtmlId };
+    }
+
     return (
-      <Table size="lg">
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <Table {...tableProps}>
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
