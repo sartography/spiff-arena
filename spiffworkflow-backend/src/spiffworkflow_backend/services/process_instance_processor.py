@@ -267,17 +267,18 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "dateparser": dateparser,
             "datetime": datetime,
             "decimal": decimal,
+            "dict": dict,
             "enumerate": enumerate,
             "filter": filter,
             "format": format,
+            "json": json,
             "list": list,
-            "dict": dict,
             "map": map,
             "pytz": pytz,
+            "set": set,
             "sum": sum,
             "time": time,
             "timedelta": timedelta,
-            "set": set,
         }
 
         # This will overwrite the standard builtins
