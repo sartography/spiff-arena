@@ -53,7 +53,7 @@ class TestProcessModelTestRunner(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_test_runner = self._run_model_tests(parent_directory="expected-to-fail")
-        assert len(process_model_test_runner.test_case_results) == 1
+        assert len(process_model_test_runner.test_case_results) == 3
 
     def test_can_test_process_model_with_multiple_files(
         self,
