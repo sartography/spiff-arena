@@ -279,9 +279,15 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "timedelta": timedelta,
         }
 
-        # This will overwrite the standard builtins
-        default_globals.update(safe_globals)
-        default_globals["__builtins__"]["__import__"] = _import
+        use_restricted_script_engine = True
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE") == "false":
+            use_restricted_script_engine = False
+
+        if use_restricted_script_engine:
+            # This will overwrite the standard builtins
+            default_globals.update(safe_globals)
+            default_globals["__builtins__"]["__import__"] = _import
+
         environment = CustomScriptEngineEnvironment(default_globals)
         super().__init__(environment=environment)
 
