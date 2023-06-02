@@ -12,7 +12,7 @@ import {
 } from '@carbon/react';
 import validator from '@rjsf/validator-ajv8';
 import { FormField, JsonSchemaForm } from '../interfaces';
-import { Form } from '../themes/carbon';
+import { Form } from '../rjsf/carbon_theme';
 import {
   modifyProcessIdentifierForPathParam,
   slugifyString,
