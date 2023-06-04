@@ -133,7 +133,7 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
         return {}
 
     def last_result(self) -> dict[str, Any]:
-        return {k: v for k, v in self._last_result.items()}
+        return dict(self._last_result.items())
 
     def clear_state(self) -> None:
         pass
@@ -211,7 +211,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
 
     def last_result(self) -> dict[str, Any]:
-        return {k: v for k, v in self.state.items()}
+        return dict(self.state.items())
 
     def clear_state(self) -> None:
         self.state = {}
