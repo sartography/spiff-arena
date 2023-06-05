@@ -183,3 +183,49 @@ class TestWorkflowService(BaseTest):
             workflow, example_start_datetime_minus_1_day_and_5_mins_in_utc
         )  # type: ignore
         assert delay == 86700
+
+    def test_5_cycles_of_30_second_cycle_start_timer_event(self, now_in_utc: datetime) -> None:
+        workflow = workflow_from_fragment(
+            """
+            <bpmn:process id="Process_aldvgey" isExecutable="true">
+              <bpmn:startEvent id="StartEvent_1">
+                <bpmn:outgoing>Flow_1x1o335</bpmn:outgoing>
+                <bpmn:timerEventDefinition id="TimerEventDefinition_1vi6a54">
+                  <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">"R5/PT30S"</bpmn:timeCycle>
+                </bpmn:timerEventDefinition>
+              </bpmn:startEvent>
+              <bpmn:sequenceFlow id="Flow_1x1o335" sourceRef="StartEvent_1" targetRef="Event_0upbokh" />
+              <bpmn:endEvent id="Event_0upbokh">
+                <bpmn:incoming>Flow_1x1o335</bpmn:incoming>
+              </bpmn:endEvent>
+            </bpmn:process>
+            """,
+            "Process_aldvgey",
+        )
+        cycles, delay, duration = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
+        assert cycles == 5
+        assert delay == 30
+        assert duration == 30
+
+    def test_5_cycles_of_10000_second_cycle_start_timer_event(self, now_in_utc: datetime) -> None:
+        workflow = workflow_from_fragment(
+            """
+            <bpmn:process id="Process_aldvgey" isExecutable="true">
+              <bpmn:startEvent id="StartEvent_1">
+                <bpmn:outgoing>Flow_1x1o335</bpmn:outgoing>
+                <bpmn:timerEventDefinition id="TimerEventDefinition_1vi6a54">
+                  <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">"R5/PT10000S"</bpmn:timeCycle>
+                </bpmn:timerEventDefinition>
+              </bpmn:startEvent>
+              <bpmn:sequenceFlow id="Flow_1x1o335" sourceRef="StartEvent_1" targetRef="Event_0upbokh" />
+              <bpmn:endEvent id="Event_0upbokh">
+                <bpmn:incoming>Flow_1x1o335</bpmn:incoming>
+              </bpmn:endEvent>
+            </bpmn:process>
+            """,
+            "Process_aldvgey",
+        )
+        cycles, delay, duration = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
+        assert cycles == 5
+        assert delay == 10000
+        assert duration == 10000
