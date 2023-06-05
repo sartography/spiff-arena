@@ -211,11 +211,11 @@ export default function TaskShow() {
   const checkFieldComparisons = (
     formData: any,
     propertyKey: string,
-    propertyMetadata: any,
+    minimumDateCheck: string,
     formattedDateString: string,
     errors: any
   ) => {
-    const fieldIdentifierToCompareWith = propertyMetadata.minimumDate.replace(
+    const fieldIdentifierToCompareWith = minimumDateCheck.replace(
       /^field:/,
       ''
     );
@@ -249,20 +249,23 @@ export default function TaskShow() {
     const dateString = formData[propertyKey];
     if (dateString) {
       const formattedDateString = formatDateString(dateString);
-      if (propertyMetadata.minimumDate === 'today') {
-        const dateTodayString = formatDateString();
-        if (dateTodayString > formattedDateString) {
-          errors[propertyKey].addError('must be today or after');
+      const minimumDateChecks = propertyMetadata.minimumDate.split(',');
+      minimumDateChecks.forEach((mdc: string) => {
+        if (mdc === 'today') {
+          const dateTodayString = formatDateString();
+          if (dateTodayString > formattedDateString) {
+            errors[propertyKey].addError('must be today or after');
+          }
+        } else if (mdc.startsWith('field:')) {
+          checkFieldComparisons(
+            formData,
+            propertyKey,
+            mdc,
+            formattedDateString,
+            errors
+          );
         }
-      } else if (propertyMetadata.minimumDate.startsWith('field:')) {
-        checkFieldComparisons(
-          formData,
-          propertyKey,
-          propertyMetadata,
-          formattedDateString,
-          errors
-        );
-      }
+      });
     }
   };
 
