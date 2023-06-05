@@ -56,7 +56,7 @@ class StartEvent(DefaultStartEvent):  # type: ignore
                 duration = cycle_duration.seconds
 
         start_delay_in_seconds = int(time_delta.total_seconds())
-                
+
         return (cycles, start_delay_in_seconds, duration)
 
     def evaluated_timer_expression(self, my_task: SpiffTask) -> Any:

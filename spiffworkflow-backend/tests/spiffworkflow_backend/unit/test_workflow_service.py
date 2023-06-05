@@ -45,6 +45,7 @@ def example_start_datetime_minus_5_mins_in_utc(
     example_datetime = datetime.fromisoformat(example_start_datetime_in_utc_str)
     yield example_datetime - timedelta(minutes=5)
 
+
 @pytest.fixture()
 def example_start_datetime_minus_1_day_and_5_mins_in_utc(
     example_start_datetime_in_utc_str: str,
@@ -110,7 +111,7 @@ class TestWorkflowService(BaseTest):
         cycles, _, duration = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
         assert cycles == 0
         assert duration == 0
-        
+
     def test_run_at_delay_is_30_for_30_second_duration_start_timer_event(self, now_in_utc: datetime) -> None:
         workflow = workflow_from_fragment(
             """
