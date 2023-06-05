@@ -12,6 +12,7 @@ interface typeaheadArgs {
   readonly?: boolean;
   rawErrors?: any;
   placeholder?: string;
+  label?: string;
 }
 
 export default function TypeaheadWidget({
@@ -23,13 +24,31 @@ export default function TypeaheadWidget({
   disabled,
   readonly,
   placeholder,
+  label,
   rawErrors = [],
 }: typeaheadArgs) {
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const itemFormatRegex = /[^{}]+(?=})/g;
-  const itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
+
+  let itemFormatSubstitutions: string[] | null = null;
+  let invalid = false;
+  let errorMessageForField = null;
+
+  if (itemFormat) {
+    try {
+      itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
+    } catch (e) {
+      errorMessageForField = `itemFormat does not contain replacement keys in curly braces. It should be like: "{key1} ({key2} - {key3})"`;
+      invalid = true;
+    }
+  }
+
+  if (!category) {
+    errorMessageForField = `category is not set in the ui:options for this field: ${label}`;
+    invalid = true;
+  }
 
   const typeaheadSearch = useCallback(
     (inputText: string) => {
@@ -65,9 +84,13 @@ export default function TypeaheadWidget({
     }
 
     let str = itemFormat;
-    itemFormatSubstitutions.forEach((key: string) => {
-      str = str.replace(`{${key}}`, item[key]);
-    });
+    if (itemFormatSubstitutions) {
+      itemFormatSubstitutions.forEach((key: string) => {
+        str = str.replace(`{${key}}`, item[key]);
+      });
+    } else {
+      str = JSON.stringify(item);
+    }
     return str;
   };
 
@@ -81,9 +104,7 @@ export default function TypeaheadWidget({
     helperText = uiSchema['ui:help'];
   }
 
-  let invalid = false;
-  let errorMessageForField = null;
-  if (rawErrors && rawErrors.length > 0) {
+  if (!invalid && rawErrors && rawErrors.length > 0) {
     invalid = true;
     [errorMessageForField] = rawErrors;
   }

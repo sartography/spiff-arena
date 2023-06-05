@@ -90,7 +90,7 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.wait(5000);
+  cy.wait(10000);
   cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 };
@@ -119,10 +119,10 @@ const checkProcessInstanceCompleted = (
 }
 
 // Equipment Path - Without Files
-describe.only('Equipment Path - Without Files', () => {
+describe('Equipment Path - Without Files', () => {
   Cypress._.times(1, () => {
     // Out of Policy. People Ops Partner Group and Budget owner approves the request
-    it('Out of Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('1.Out of Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -294,7 +294,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('2.Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -423,7 +423,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('3.Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -578,7 +578,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves the request
-    it('Within Policy. People Ops Partner Group approves', () => {
+    it('4.Within Policy. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -693,7 +693,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group rejects the request
-    it('Within Policy. People Ops Partner Group rejects', () => {
+    it('5.Within Policy. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -808,7 +808,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group request additional info
-    it('Within Policy. People Ops Partner Group needs more info', () => {
+    it('6.Within Policy. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -940,7 +940,7 @@ describe.only('Equipment Path - Without Files', () => {
       });
     });
     // Within Policy. People Ops Partner Group and Budget owner approves the request
-    it('Within Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('7.Within Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1068,7 +1068,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('8.Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1196,7 +1196,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('9.Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1344,10 +1344,10 @@ describe.only('Equipment Path - Without Files', () => {
 });
 
 // Equipment Path - With Files
-describe('Equipment Path - With Files', () => {
+describe.only('Equipment Path - With Files', () => {
   Cypress._.times(1, () => {
     // Out of Policy. People Ops Partner Group and Budget owner approves the request
-    it('Out of Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('10.Out of Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1528,7 +1528,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1567,7 +1567,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('11.Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1705,7 +1705,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1744,7 +1744,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('12.Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1881,7 +1881,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1947,7 +1947,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves the request
-    it('Within Policy. People Ops Partner Group approves', () => {
+    it('13.Within Policy. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2085,7 +2085,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2111,7 +2111,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group rejects the request
-    it('Within Policy. People Ops Partner Group rejects', () => {
+    it('14.Within Policy. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2249,7 +2249,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2275,7 +2275,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group request additional info
-    it('Within Policy. People Ops Partner Group needs more info', () => {
+    it('15.Within Policy. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2412,7 +2412,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2455,7 +2455,7 @@ describe('Equipment Path - With Files', () => {
       });
     });
     // Within Policy. People Ops Partner Group and Budget owner approves the request
-    it('Within Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('16.Within Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2592,7 +2592,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2631,7 +2631,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('17.Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2768,7 +2768,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2807,7 +2807,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('18.Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2945,7 +2945,7 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
