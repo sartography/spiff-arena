@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
@@ -39,24 +40,23 @@ class StartEvent(DefaultStartEvent):  # type: ignore
     def configuration(self, my_task: SpiffTask, now_in_utc: datetime) -> StartConfiguration:
         evaluated_expression = self.evaluated_timer_expression(my_task)
         cycles = 0
-        start_delay_in_seconds = 0
         duration = 0
+        time_delta = timedelta(seconds=0)
 
         if evaluated_expression is not None:
             if isinstance(self.timer_definition, TimeDateEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_time_or_duration(evaluated_expression)
                 time_delta = parsed_duration - now_in_utc
-                start_delay_in_seconds = time_delta.seconds
             elif isinstance(self.timer_definition, DurationTimerEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_iso_duration(evaluated_expression)
                 time_delta = TimerEventDefinition.get_timedelta_from_start(parsed_duration, now_in_utc)
-                start_delay_in_seconds = time_delta.seconds
             elif isinstance(self.timer_definition, CycleTimerEventDefinition):
                 cycles, start, cycle_duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
                 time_delta = start - now_in_utc + cycle_duration
-                start_delay_in_seconds = time_delta.seconds
                 duration = cycle_duration.seconds
 
+        start_delay_in_seconds = int(time_delta.total_seconds())
+                
         return (cycles, start_delay_in_seconds, duration)
 
     def evaluated_timer_expression(self, my_task: SpiffTask) -> Any:

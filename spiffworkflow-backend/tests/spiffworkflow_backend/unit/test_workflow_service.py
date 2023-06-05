@@ -45,6 +45,13 @@ def example_start_datetime_minus_5_mins_in_utc(
     example_datetime = datetime.fromisoformat(example_start_datetime_in_utc_str)
     yield example_datetime - timedelta(minutes=5)
 
+@pytest.fixture()
+def example_start_datetime_minus_1_day_and_5_mins_in_utc(
+    example_start_datetime_in_utc_str: str,
+) -> Generator[datetime, None, None]:
+    example_datetime = datetime.fromisoformat(example_start_datetime_in_utc_str)
+    yield example_datetime - timedelta(days=1, minutes=5)
+
 
 class CustomBpmnDmnParser(BpmnDmnParser):  # type: ignore
     OVERRIDE_PARSER_CLASSES = {}
@@ -106,6 +113,27 @@ class TestWorkflowService(BaseTest):
         _, delay, _ = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
         assert delay == 30
 
+    def test_run_at_delay_is_10000_for_10000_second_duration_start_timer_event(self, now_in_utc: datetime) -> None:
+        workflow = workflow_from_fragment(
+            """
+            <bpmn:process id="Process_aldvgey" isExecutable="true">
+              <bpmn:startEvent id="StartEvent_1">
+                <bpmn:outgoing>Flow_1x1o335</bpmn:outgoing>
+                <bpmn:timerEventDefinition id="TimerEventDefinition_1vi6a54">
+                  <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT10000S"</bpmn:timeDuration>
+                </bpmn:timerEventDefinition>
+              </bpmn:startEvent>
+              <bpmn:sequenceFlow id="Flow_1x1o335" sourceRef="StartEvent_1" targetRef="Event_0upbokh" />
+              <bpmn:endEvent id="Event_0upbokh">
+                <bpmn:incoming>Flow_1x1o335</bpmn:incoming>
+              </bpmn:endEvent>
+            </bpmn:process>
+            """,
+            "Process_aldvgey",
+        )
+        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, now_in_utc)  # type: ignore
+        assert delay == 10000
+
     def test_run_at_delay_is_300_if_5_mins_before_date_start_timer_event(
         self, example_start_datetime_in_utc_str: str, example_start_datetime_minus_5_mins_in_utc: datetime
     ) -> None:
@@ -130,3 +158,28 @@ class TestWorkflowService(BaseTest):
             workflow, example_start_datetime_minus_5_mins_in_utc
         )  # type: ignore
         assert delay == 300
+
+    def test_run_at_delay_is_86700_if_1_day_and_5_mins_before_date_start_timer_event(
+        self, example_start_datetime_in_utc_str: str, example_start_datetime_minus_1_day_and_5_mins_in_utc: datetime
+    ) -> None:
+        workflow = workflow_from_fragment(
+            f"""
+            <bpmn:process id="Process_aldvgey" isExecutable="true">
+              <bpmn:startEvent id="StartEvent_1">
+                <bpmn:outgoing>Flow_1x1o335</bpmn:outgoing>
+                <bpmn:timerEventDefinition id="TimerEventDefinition_1vi6a54">
+                  <bpmn:timeDate xsi:type="bpmn:tFormalExpression">"{example_start_datetime_in_utc_str}"</bpmn:timeDate>
+                </bpmn:timerEventDefinition>
+              </bpmn:startEvent>
+              <bpmn:sequenceFlow id="Flow_1x1o335" sourceRef="StartEvent_1" targetRef="Event_0upbokh" />
+              <bpmn:endEvent id="Event_0upbokh">
+                <bpmn:incoming>Flow_1x1o335</bpmn:incoming>
+              </bpmn:endEvent>
+            </bpmn:process>
+            """,
+            "Process_aldvgey",
+        )
+        _, delay, _ = WorkflowService.next_start_event_configuration(
+            workflow, example_start_datetime_minus_1_day_and_5_mins_in_utc
+        )  # type: ignore
+        assert delay == 86700
