@@ -3,6 +3,7 @@
 ```{toctree}
 :maxdepth: 2
 :caption: Getting Started
+learn_basics/learn_basics.md
 quick_start/quick_start.md
 ```
 
