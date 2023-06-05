@@ -84,7 +84,7 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.wait(5000);
+  cy.wait(10000);
   cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 
@@ -114,10 +114,10 @@ const checkProcessInstanceCompleted = (
 }
 
 // Learning and Development Path - Without Files
-describe.only('Learning and Development Path - Without Files', () => {
+describe('Learning and Development Path - Without Files', () => {
   Cypress._.times(1, () => {
     // People Ops Partner Group approves the request
-    it('Books Only. People Ops Partner Group approves', () => {
+    it('1.Books Only. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -230,7 +230,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // People Ops Partner Group rejects the request
-    it('Books Only. People Ops Partner Group rejects', () => {
+    it('2.Books Only. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -345,7 +345,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // People Ops Partner Group request for additional details
-    it('Books Only. People Ops Partner Group needs more info', () => {
+    it('3.Books Only. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -478,7 +478,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // Budget owner approves and People Ops Partner Group approves the request
-    it('NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
+    it('4.NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -635,7 +635,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // Budget owner rejects the request
-    it('NOT Books Only. Budget owner rejects', () => {
+    it('5.NOT Books Only. Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -750,7 +750,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // Budget owner request for additional details
-    it('NOT Books Only. Budget owner needs more info', () => {
+    it('6.NOT Books Only. Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -899,10 +899,10 @@ describe.only('Learning and Development Path - Without Files', () => {
 });
 
 // Learning and Development Path - With Files
-describe('Learning and Development Path - With Files', () => {
+describe.only('Learning and Development Path - With Files', () => {
   Cypress._.times(1, () => {
     // People Ops Partner Group approves the request
-    it('Books Only. People Ops Partner Group approves', () => {
+    it('7.Books Only. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1041,7 +1041,7 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1067,7 +1067,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // People Ops Partner Group rejects the request
-    it('Books Only. People Ops Partner Group rejects', () => {
+    it('8.Books Only. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1206,7 +1206,7 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1232,7 +1232,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // People Ops Partner Group request for additional details
-    it('Books Only. People Ops Partner Group needs more info', () => {
+    it('9.Books Only. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1370,7 +1370,7 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1414,7 +1414,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // Budget owner approves and People Ops Partner Group approves the request
-    it('NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
+    it('10.NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1582,7 +1582,7 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1621,7 +1621,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // Budget owner rejects the request
-    it('NOT Books Only. Budget owner rejects', () => {
+    it('11.NOT Books Only. Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1760,7 +1760,7 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1786,7 +1786,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // Budget owner request for additional details
-    it('NOT Books Only. Budget owner needs more info', () => {
+    it('12.NOT Books Only. Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1925,7 +1925,7 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/

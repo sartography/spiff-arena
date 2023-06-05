@@ -84,7 +84,7 @@ const submitWithUser = (
       .click();
   }
 
-  cy.wait(5000);
+  cy.wait(10000);
   cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 };
@@ -829,10 +829,10 @@ describe('Software and Licenses Path - Without Files', () => {
 });
 
 // Software and Licenses Path - Without Files and with only mandatory fields
-describe.only('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
+describe('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
-    it('Everyone approves with CP', () => {
+    it('1.Everyone approves with CP', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -956,7 +956,7 @@ describe.only('Software and Licenses Path -  Without Files and with only mandato
     });
 
     // Everyone approves the request
-    it('Everyone approves', () => {
+    it('2.Everyone approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1096,7 +1096,7 @@ describe.only('Software and Licenses Path -  Without Files and with only mandato
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it('3.Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1195,7 +1195,7 @@ describe.only('Software and Licenses Path -  Without Files and with only mandato
     });
 
     // Budget owner request for additional details
-    it('Budget owner need more info', () => {
+    it('4.Budget owner need more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1333,7 +1333,7 @@ describe.only('Software and Licenses Path -  Without Files and with only mandato
     });
 
     // Infra reject the request
-    it('Infra rejects', () => {
+    it('5.Infra rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1467,10 +1467,10 @@ describe.only('Software and Licenses Path -  Without Files and with only mandato
 });
 
 // Software and Licenses Path - With Files
-describe('Software and Licenses Path - With Files', () => {
+describe.only('Software and Licenses Path - With Files', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
-    it('Everyone approves with CP', () => {
+    it('6.Everyone approves with CP', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1620,7 +1620,7 @@ describe('Software and Licenses Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1672,7 +1672,7 @@ describe('Software and Licenses Path - With Files', () => {
     });
 
     // Everyone approves the request
-    it('Everyone approves', () => {
+    it('7.Everyone approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1809,7 +1809,7 @@ describe('Software and Licenses Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -1877,7 +1877,7 @@ describe('Software and Licenses Path - With Files', () => {
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it('8.Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2014,7 +2014,7 @@ describe('Software and Licenses Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2041,7 +2041,7 @@ describe('Software and Licenses Path - With Files', () => {
     });
 
     // Budget owner request for additional details
-    it('Budget owner need more info', () => {
+    it('9.Budget owner need more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2179,7 +2179,7 @@ describe('Software and Licenses Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2245,7 +2245,7 @@ describe('Software and Licenses Path - With Files', () => {
     });
 
     // Infra rejects the request
-    it('Infra Rejects', () => {
+    it('10.Infra Rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2384,7 +2384,7 @@ describe('Software and Licenses Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2446,10 +2446,10 @@ describe('Software and Licenses Path - With Files', () => {
 });
 
 // Software and Licenses Path - With Files and Multiple items
-describe('Software and Licenses Path - With Files and Multiple items', () => {
+describe.only('Software and Licenses Path - With Files and Multiple items', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
-    it('Everyone approves with CP', () => {
+    it('11.Everyone approves with CP', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2618,7 +2618,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2670,7 +2670,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
     });
 
     // Everyone approves the request
-    it('Everyone approves', () => {
+    it('12.Everyone approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2838,7 +2838,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -2906,7 +2906,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it('13.Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -3075,7 +3075,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -3102,7 +3102,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
     });
 
     // Budget owner request for additional details
-    it('Budget owner need more info', () => {
+    it('14.Budget owner need more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -3270,7 +3270,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
@@ -3335,7 +3335,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
     });
 
     // Infra rejects the request
-    it('Infra Rejects', () => {
+    it('15.Infra Rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -3499,7 +3499,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
