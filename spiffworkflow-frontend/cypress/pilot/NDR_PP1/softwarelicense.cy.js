@@ -116,7 +116,7 @@ const checkProcessInstanceCompleted = (
 describe('Software and Licenses Path - Without Files', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
-    it('Everyone approves with CP', () => {
+    it('1.Everyone approves with CP', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -256,7 +256,7 @@ describe('Software and Licenses Path - Without Files', () => {
     });
 
     // Everyone approves the request
-    it('Everyone approves', () => {
+    it('2.Everyone approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -423,7 +423,7 @@ describe('Software and Licenses Path - Without Files', () => {
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it('3.Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -508,9 +508,10 @@ describe('Software and Licenses Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
         cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
@@ -533,7 +534,7 @@ describe('Software and Licenses Path - Without Files', () => {
     });
 
     // Budget owner request for additional details
-    it('Budget owner need more info', () => {
+    it('4.Budget owner need more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -683,7 +684,7 @@ describe('Software and Licenses Path - Without Files', () => {
     });
 
     // Infra reject the request
-    it('Infra rejects', () => {
+    it('5.Infra rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -828,643 +829,6 @@ describe('Software and Licenses Path - Without Files', () => {
   });
 });
 
-// Software and Licenses Path - Without Files and with only mandatory fields
-describe('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
-  Cypress._.times(1, () => {
-    // Everyone approves with CP
-    it('1.Everyone approves with CP', () => {
-      const username = Cypress.env('requestor_username');
-      const password = Cypress.env('requestor_password');
-      cy.log(`=====username : ${username}`);
-      cy.log(`=====password : ${password}`);
-
-      cy.login(username, password);
-      cy.visit('/');
-
-      cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services').click();
-
-      cy.runPrimaryBpmnFile(true);
-
-      /*            cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.get('input#root-procurement').click();
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
-      */
-
-      cy.contains('Request Goods or Services', { timeout: 60000 });
-
-      cy.url().then((currentUrl) => {
-        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
-        // extract the digits after /tasks
-        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
-        cy.log('==###############===processInstanceId : ', processInstanceId);
-        const projectId = Cypress.env('project_id');
-        cy.get('#root_project').select(projectId);
-        cy.get('#root_category').select('soft_and_lic');
-        cy.get('#root_purpose').clear().type('Need to buy a Software');
-        cy.get('#root_criticality').select('High');
-        cy.get('#root_period').clear().type('24-11-2025');
-        cy.get('body').click();
-        // cy.get('#root_vendor').clear().type('Embassar');
-        // cy.get('#root_payment_method').select('Reimbursement');
-        /* cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-        */
-        cy.get('#root_item_0_sub_category').select('op_src');
-        cy.get('#root_item_0_item_name').clear().type('Open source software');
-        cy.get('#root_item_0_qty').clear().type('2');
-        cy.get('#root_item_0_currency_type').select('Fiat');
-        cy.get('#root_item_0_currency').select('USD');
-        cy.get('#root_item_0_unit_price').type('550');
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains(
-          'Review and provide any supporting information or files for your request.',
-          { timeout: 60000 }
-        );
-
-        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
-
-        // cy.contains('Submit the Request').click();
-
-        // cy.get('input[value="Submit the Request"]').click();
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.wait(6000);
-        /*cy.get('button')
-          .contains(/^Return to Home$/)
-          .click();*/
-
-        cy.contains('Process Instance Id:', { timeout: 60000 });
-        cy.logout();
-
-        const budgetOwnerUsername = Cypress.env('budgetowner_username');
-        const budgetOwnerPassword = Cypress.env('budgetowner_password');
-        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
-        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
-
-        submitWithUser(
-          budgetOwnerUsername,
-          budgetOwnerPassword,
-          processInstanceId,
-          'Task: Reminder: Check Existing Budget',
-          'approve'
-        );
-
-        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
-        const ppgbasmePassword = Cypress.env('ppgbasme_password');
-        const securitysmeUsername = Cypress.env('securitysme_username');
-        const securitysmePassword = Cypress.env('securitysme_password');
-        const infrasmeUsername = Cypress.env('infrasme_username');
-        const infrasmePassword = Cypress.env('infrasme_password');
-        const legalsmeUsername = Cypress.env('legalsme_username');
-        const legalsmePassword = Cypress.env('legalsme_password');
-
-        submitWithUser(
-          ppgbasmeUsername,
-          ppgbasmePassword,
-          processInstanceId,
-          null,
-          'cpapproved'
-        );
-
-        submitWithUser(
-          legalsmeUsername,
-          legalsmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        checkProcessInstanceCompleted(username, password, processInstanceId);
-      });
-    });
-
-    // Everyone approves the request
-    it('2.Everyone approves', () => {
-      const username = Cypress.env('requestor_username');
-      const password = Cypress.env('requestor_password');
-      cy.log(`=====username : ${username}`);
-      cy.log(`=====password : ${password}`);
-
-      cy.login(username, password);
-      cy.visit('/');
-
-      cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services').click();
-
-      cy.runPrimaryBpmnFile(true);
-
-      /*            cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.get('input#root-procurement').click();
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
-      */
-
-      cy.contains('Request Goods or Services', { timeout: 60000 });
-
-      cy.url().then((currentUrl) => {
-        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
-        // extract the digits after /tasks
-        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
-        cy.log('==###############===processInstanceId : ', processInstanceId);
-        const projectId = Cypress.env('project_id');
-        cy.get('#root_project').select(projectId);
-        cy.get('#root_category').select('soft_and_lic');
-        cy.get('#root_purpose').clear().type('need software');
-        cy.get('#root_criticality').select('High');
-        cy.get('#root_period').clear().type('20-11-2025');
-        cy.get('body').click();
-        // cy.get('#root_vendor').clear().type('Embassar');
-        // cy.get('#root_payment_method').select('Reimbursement');
-        /* cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-        */
-        cy.get('#root_item_0_sub_category').select('op_src');
-        cy.get('#root_item_0_item_name').clear().type('open source');
-        cy.get('#root_item_0_qty').clear().type('1');
-        cy.get('#root_item_0_currency_type').select('Fiat');
-        cy.get('#root_item_0_currency').select('AED');
-        cy.get('#root_item_0_unit_price').type('1520');
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains(
-          'Review and provide any supporting information or files for your request.',
-          { timeout: 60000 }
-        );
-
-        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
-
-        // cy.contains('Submit the Request').click();
-
-        // cy.get('input[value="Submit the Request"]').click();
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.wait(6000);
-        /*cy.get('button')
-          .contains(/^Return to Home$/)
-          .click();*/
-
-        cy.contains('Process Instance Id:', { timeout: 60000 });
-        cy.logout();
-
-        const budgetOwnerUsername = Cypress.env('budgetowner_username');
-        const budgetOwnerPassword = Cypress.env('budgetowner_password');
-        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
-        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
-
-        submitWithUser(
-          budgetOwnerUsername,
-          budgetOwnerPassword,
-          processInstanceId,
-          'Task: Reminder: Check Existing Budget',
-          'approve'
-        );
-
-        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
-        const ppgbasmePassword = Cypress.env('ppgbasme_password');
-        const securitysmeUsername = Cypress.env('securitysme_username');
-        const securitysmePassword = Cypress.env('securitysme_password');
-        const infrasmeUsername = Cypress.env('infrasme_username');
-        const infrasmePassword = Cypress.env('infrasme_password');
-        const legalsmeUsername = Cypress.env('legalsme_username');
-        const legalsmePassword = Cypress.env('legalsme_password');
-
-        submitWithUser(
-          ppgbasmeUsername,
-          ppgbasmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        submitWithUser(
-          securitysmeUsername,
-          securitysmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        submitWithUser(
-          infrasmeUsername,
-          infrasmePassword,
-          processInstanceId,
-          'Task: Update Application Landscape',
-          'approve'
-        );
-
-        submitWithUser(
-          legalsmeUsername,
-          legalsmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        checkProcessInstanceCompleted(username, password, processInstanceId);
-      });
-    });
-
-    // Budget owner rejects the request
-    it('3.Budget owner rejects', () => {
-      const username = Cypress.env('requestor_username');
-      const password = Cypress.env('requestor_password');
-      cy.log(`=====username : ${username}`);
-      cy.log(`=====password : ${password}`);
-
-      cy.login(username, password);
-      cy.visit('/');
-
-      cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services').click();
-
-      cy.runPrimaryBpmnFile(true);
-
-      /*            cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.get('input#root-procurement').click();
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
-      */
-
-      cy.contains('Request Goods or Services', { timeout: 60000 });
-
-      cy.url().then((currentUrl) => {
-        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
-        // extract the digits after /tasks
-        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
-        cy.log('==###############===processInstanceId : ', processInstanceId);
-        const projectId = Cypress.env('project_id');
-        cy.get('#root_project').select(projectId);
-        cy.get('#root_category').select('soft_and_lic');
-        cy.get('#root_purpose').clear().type('Nee license');
-        cy.get('#root_criticality').select('Medium');
-        cy.get('#root_period').clear().type('20-02-2026');
-        cy.get('body').click();
-        // cy.get('#root_vendor').clear().type('Subsc LTD');
-        // cy.get('#root_payment_method').select('Bank Transfer');
-        /* cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-        */
-        cy.get('#root_item_0_sub_category').select('lic_and_sub');
-        cy.get('#root_item_0_item_name').clear().type('Software development');
-        cy.get('#root_item_0_qty').clear().type('2');
-        cy.get('#root_item_0_currency_type').select('Fiat');
-        cy.get('#root_item_0_currency').select('EUR');
-        cy.get('#root_item_0_unit_price').type('1400');
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains(
-          'Review and provide any supporting information or files for your request.',
-          { timeout: 60000 }
-        );
-
-        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
-
-        // cy.contains('Submit the Request').click();
-
-        // cy.get('input[value="Submit the Request"]').click();
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.wait(6000);
-        /*cy.get('button')
-          .contains(/^Return to Home$/)
-          .click();*/
-
-        cy.contains('Process Instance Id:', { timeout: 60000 });
-        cy.logout();
-
-        const budgetOwnerUsername = Cypress.env('budgetowner_username');
-        const budgetOwnerPassword = Cypress.env('budgetowner_password');
-        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
-        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
-
-        submitWithUser(
-          budgetOwnerUsername,
-          budgetOwnerPassword,
-          processInstanceId,
-          null,
-          'reject'
-        );
-
-        checkProcessInstanceCompleted(username, password, processInstanceId);
-      });
-    });
-
-    // Budget owner request for additional details
-    it('4.Budget owner need more info', () => {
-      const username = Cypress.env('requestor_username');
-      const password = Cypress.env('requestor_password');
-      cy.log(`=====username : ${username}`);
-      cy.log(`=====password : ${password}`);
-
-      cy.login(username, password);
-      cy.visit('/');
-
-      cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services').click();
-
-      cy.runPrimaryBpmnFile(true);
-
-      /*            cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.get('input#root-procurement').click();
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
-      */
-
-      cy.contains('Request Goods or Services', { timeout: 60000 });
-
-      cy.url().then((currentUrl) => {
-        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
-        // extract the digits after /tasks
-        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
-        cy.log('==###############===processInstanceId : ', processInstanceId);
-        const projectId = Cypress.env('project_id');
-        cy.get('#root_project').select(projectId);
-        cy.get('#root_category').select('soft_and_lic');
-        cy.get('#root_purpose').clear().type('Software needed');
-        cy.get('#root_criticality').select('Low');
-        cy.get('#root_period').clear().type('05-02-2025');
-        cy.get('body').click();
-        // cy.get('#root_vendor').clear().type('ABC Licensing Co');
-        // cy.get('#root_payment_method').select('Crypto Transfer');
-        /* cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-        */
-        cy.get('#root_item_0_sub_category').select('lic_and_sub');
-        cy.get('#root_item_0_item_name').clear().type('License');
-        cy.get('#root_item_0_qty').clear().type('4');
-        cy.get('#root_item_0_currency_type').select('Crypto');
-        cy.get('#root_item_0_currency').select('SNT');
-        cy.get('#root_item_0_unit_price').type('450');
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains(
-          'Review and provide any supporting information or files for your request.',
-          { timeout: 60000 }
-        );
-
-        // cy.get('.cds--text-area__wrapper').find('#root').type('It\’s free and easy to post a job. Simply fill in a title, description and budget and competitive bids come within minutes. No job is too big or too small. We\'ve got freelancers for jobs of any size or budget across 1800 skills. No job is too complex.');
-
-        // cy.contains('Submit the Request').click();
-
-        // cy.get('input[value="Submit the Request"]').click();
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.wait(6000);
-        /*cy.get('button')
-          .contains(/^Return to Home$/)
-          .click();*/
-
-        cy.contains('Process Instance Id:', { timeout: 60000 });
-        cy.logout();
-
-        const budgetOwnerUsername = Cypress.env('budgetowner_username');
-        const budgetOwnerPassword = Cypress.env('budgetowner_password');
-        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
-        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
-
-        submitWithUser(
-          budgetOwnerUsername,
-          budgetOwnerPassword,
-          processInstanceId,
-          null,
-          'needmoreinfo'
-        );
-
-        // requestor sending additional info
-        submitWithUser(
-          username,
-          password,
-          processInstanceId,
-          null,
-          'providemoreinfo'
-        );
-
-        // budget owner approves second time
-        submitWithUser(
-          budgetOwnerUsername,
-          budgetOwnerPassword,
-          processInstanceId,
-          'Task: Reminder: Check Existing Budget',
-          'approve'
-        );
-
-        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
-        const ppgbasmePassword = Cypress.env('ppgbasme_password');
-        const legalsmeUsername = Cypress.env('legalsme_username');
-        const legalsmePassword = Cypress.env('legalsme_password');
-
-        submitWithUser(
-          ppgbasmeUsername,
-          ppgbasmePassword,
-          processInstanceId,
-          null,
-          'cpapproved'
-        );
-
-        submitWithUser(
-          legalsmeUsername,
-          legalsmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        checkProcessInstanceCompleted(username, password, processInstanceId);
-      });
-    });
-
-    // Infra reject the request
-    it('5.Infra rejects', () => {
-      const username = Cypress.env('requestor_username');
-      const password = Cypress.env('requestor_password');
-      cy.log(`=====username : ${username}`);
-      cy.log(`=====password : ${password}`);
-
-      cy.login(username, password);
-      cy.visit('/');
-
-      cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services').click();
-
-      cy.runPrimaryBpmnFile(true);
-
-      /*            cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.get('input#root-procurement').click();
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
-      */
-
-      cy.contains('Request Goods or Services', { timeout: 60000 });
-
-      cy.url().then((currentUrl) => {
-        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
-        // extract the digits after /tasks
-        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
-        cy.log('==###############===processInstanceId : ', processInstanceId);
-        const projectId = Cypress.env('project_id');
-        cy.get('#root_project').select(projectId);
-        cy.get('#root_category').select('soft_and_lic');
-        cy.get('#root_purpose').clear().type('Software is needed');
-        cy.get('#root_criticality').select('High');
-        cy.get('#root_period').clear().type('25-11-2025');
-        cy.get('body').click();
-        // cy.get('#root_vendor').clear().type('Embassar');
-        // cy.get('#root_payment_method').select('Reimbursement');
-        /* cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-        */
-        cy.get('#root_item_0_sub_category').select('op_src');
-        cy.get('#root_item_0_item_name').clear().type('Open source');
-        cy.get('#root_item_0_qty').clear().type('2');
-        cy.get('#root_item_0_currency_type').select('Fiat');
-        cy.get('#root_item_0_currency').select('AUD');
-        cy.get('#root_item_0_unit_price').type('2416');
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.contains(
-          'Review and provide any supporting information or files for your request.',
-          { timeout: 60000 }
-        );
-
-        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
-
-        // cy.contains('Submit the Request').click();
-
-        // cy.get('input[value="Submit the Request"]').click();
-
-        cy.get('button')
-          .contains(/^Submit$/)
-          .click();
-
-        cy.wait(6000);
-        /*cy.get('button')
-          .contains(/^Return to Home$/)
-          .click();*/
-
-        cy.contains('Process Instance Id:', { timeout: 60000 });
-        cy.logout();
-
-        const budgetOwnerUsername = Cypress.env('budgetowner_username');
-        const budgetOwnerPassword = Cypress.env('budgetowner_password');
-        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
-        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
-
-        submitWithUser(
-          budgetOwnerUsername,
-          budgetOwnerPassword,
-          processInstanceId,
-          'Task: Reminder: Check Existing Budget',
-          'approve'
-        );
-
-        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
-        const ppgbasmePassword = Cypress.env('ppgbasme_password');
-        const securitysmeUsername = Cypress.env('securitysme_username');
-        const securitysmePassword = Cypress.env('securitysme_password');
-        const infrasmeUsername = Cypress.env('infrasme_username');
-        const infrasmePassword = Cypress.env('infrasme_password');
-        const legalsmeUsername = Cypress.env('legalsme_username');
-        const legalsmePassword = Cypress.env('legalsme_password');
-
-        submitWithUser(
-          ppgbasmeUsername,
-          ppgbasmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        submitWithUser(
-          securitysmeUsername,
-          securitysmePassword,
-          processInstanceId,
-          null,
-          'approve'
-        );
-
-        submitWithUser(
-          infrasmeUsername,
-          infrasmePassword,
-          processInstanceId,
-          null,
-          'reject'
-        );
-
-        checkProcessInstanceCompleted(username, password, processInstanceId);
-      });
-    });
-  });
-});
 
 // Software and Licenses Path - With Files
 describe.only('Software and Licenses Path - With Files', () => {
@@ -3500,6 +2864,644 @@ describe.only('Software and Licenses Path - With Files and Multiple items', () =
           .click();
 
         cy.wait(20000);
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
+
+        cy.contains('Process Instance Id:', { timeout: 60000 });
+        cy.logout();
+
+        const budgetOwnerUsername = Cypress.env('budgetowner_username');
+        const budgetOwnerPassword = Cypress.env('budgetowner_password');
+        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
+        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
+
+        submitWithUser(
+          budgetOwnerUsername,
+          budgetOwnerPassword,
+          processInstanceId,
+          'Task: Reminder: Check Existing Budget',
+          'approve'
+        );
+
+        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
+        const ppgbasmePassword = Cypress.env('ppgbasme_password');
+        const securitysmeUsername = Cypress.env('securitysme_username');
+        const securitysmePassword = Cypress.env('securitysme_password');
+        const infrasmeUsername = Cypress.env('infrasme_username');
+        const infrasmePassword = Cypress.env('infrasme_password');
+        const legalsmeUsername = Cypress.env('legalsme_username');
+        const legalsmePassword = Cypress.env('legalsme_password');
+
+        submitWithUser(
+          ppgbasmeUsername,
+          ppgbasmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        submitWithUser(
+          securitysmeUsername,
+          securitysmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        submitWithUser(
+          infrasmeUsername,
+          infrasmePassword,
+          processInstanceId,
+          null,
+          'reject'
+        );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
+      });
+    });
+  });
+});
+
+// Software and Licenses Path - Without Files and with only mandatory fields
+describe('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
+  Cypress._.times(1, () => {
+    // Everyone approves with CP
+    it('16.Everyone approves with CP', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      /*            cy.contains('Please select the type of request to start the process.');
+      // wait a second to ensure we can click the radio button
+
+      cy.get('input#root-procurement').click();
+
+
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+      */
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('soft_and_lic');
+        cy.get('#root_purpose').clear().type('Need to buy a Software');
+        cy.get('#root_criticality').select('High');
+        cy.get('#root_period').clear().type('24-11-2025');
+        cy.get('body').click();
+        // cy.get('#root_vendor').clear().type('Embassar');
+        // cy.get('#root_payment_method').select('Reimbursement');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        */
+        cy.get('#root_item_0_sub_category').select('op_src');
+        cy.get('#root_item_0_item_name').clear().type('Open source software');
+        cy.get('#root_item_0_qty').clear().type('2');
+        cy.get('#root_item_0_currency_type').select('Fiat');
+        cy.get('#root_item_0_currency').select('USD');
+        cy.get('#root_item_0_unit_price').type('550');
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
+
+        // cy.contains('Submit the Request').click();
+
+        // cy.get('input[value="Submit the Request"]').click();
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.wait(6000);
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
+
+        cy.contains('Process Instance Id:', { timeout: 60000 });
+        cy.logout();
+
+        const budgetOwnerUsername = Cypress.env('budgetowner_username');
+        const budgetOwnerPassword = Cypress.env('budgetowner_password');
+        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
+        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
+
+        submitWithUser(
+          budgetOwnerUsername,
+          budgetOwnerPassword,
+          processInstanceId,
+          'Task: Reminder: Check Existing Budget',
+          'approve'
+        );
+
+        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
+        const ppgbasmePassword = Cypress.env('ppgbasme_password');
+        const securitysmeUsername = Cypress.env('securitysme_username');
+        const securitysmePassword = Cypress.env('securitysme_password');
+        const infrasmeUsername = Cypress.env('infrasme_username');
+        const infrasmePassword = Cypress.env('infrasme_password');
+        const legalsmeUsername = Cypress.env('legalsme_username');
+        const legalsmePassword = Cypress.env('legalsme_password');
+
+        submitWithUser(
+          ppgbasmeUsername,
+          ppgbasmePassword,
+          processInstanceId,
+          null,
+          'cpapproved'
+        );
+
+        submitWithUser(
+          legalsmeUsername,
+          legalsmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
+      });
+    });
+
+    // Everyone approves the request
+    it('17.Everyone approves', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      /*            cy.contains('Please select the type of request to start the process.');
+      // wait a second to ensure we can click the radio button
+
+      cy.get('input#root-procurement').click();
+
+
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+      */
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('soft_and_lic');
+        cy.get('#root_purpose').clear().type('need software');
+        cy.get('#root_criticality').select('High');
+        cy.get('#root_period').clear().type('20-11-2025');
+        cy.get('body').click();
+        // cy.get('#root_vendor').clear().type('Embassar');
+        // cy.get('#root_payment_method').select('Reimbursement');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        */
+        cy.get('#root_item_0_sub_category').select('op_src');
+        cy.get('#root_item_0_item_name').clear().type('open source');
+        cy.get('#root_item_0_qty').clear().type('1');
+        cy.get('#root_item_0_currency_type').select('Fiat');
+        cy.get('#root_item_0_currency').select('AED');
+        cy.get('#root_item_0_unit_price').type('1520');
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
+
+        // cy.contains('Submit the Request').click();
+
+        // cy.get('input[value="Submit the Request"]').click();
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.wait(6000);
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
+
+        cy.contains('Process Instance Id:', { timeout: 60000 });
+        cy.logout();
+
+        const budgetOwnerUsername = Cypress.env('budgetowner_username');
+        const budgetOwnerPassword = Cypress.env('budgetowner_password');
+        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
+        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
+
+        submitWithUser(
+          budgetOwnerUsername,
+          budgetOwnerPassword,
+          processInstanceId,
+          'Task: Reminder: Check Existing Budget',
+          'approve'
+        );
+
+        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
+        const ppgbasmePassword = Cypress.env('ppgbasme_password');
+        const securitysmeUsername = Cypress.env('securitysme_username');
+        const securitysmePassword = Cypress.env('securitysme_password');
+        const infrasmeUsername = Cypress.env('infrasme_username');
+        const infrasmePassword = Cypress.env('infrasme_password');
+        const legalsmeUsername = Cypress.env('legalsme_username');
+        const legalsmePassword = Cypress.env('legalsme_password');
+
+        submitWithUser(
+          ppgbasmeUsername,
+          ppgbasmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        submitWithUser(
+          securitysmeUsername,
+          securitysmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        submitWithUser(
+          infrasmeUsername,
+          infrasmePassword,
+          processInstanceId,
+          'Task: Update Application Landscape',
+          'approve'
+        );
+
+        submitWithUser(
+          legalsmeUsername,
+          legalsmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
+      });
+    });
+
+    // Budget owner rejects the request
+    it('18.Budget owner rejects', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      /*            cy.contains('Please select the type of request to start the process.');
+      // wait a second to ensure we can click the radio button
+
+      cy.get('input#root-procurement').click();
+
+
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+      */
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('soft_and_lic');
+        cy.get('#root_purpose').clear().type('Nee license');
+        cy.get('#root_criticality').select('Medium');
+        cy.get('#root_period').clear().type('20-02-2026');
+        cy.get('body').click();
+        // cy.get('#root_vendor').clear().type('Subsc LTD');
+        // cy.get('#root_payment_method').select('Bank Transfer');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        */
+        cy.get('#root_item_0_sub_category').select('lic_and_sub');
+        cy.get('#root_item_0_item_name').clear().type('Software development');
+        cy.get('#root_item_0_qty').clear().type('2');
+        cy.get('#root_item_0_currency_type').select('Fiat');
+        cy.get('#root_item_0_currency').select('EUR');
+        cy.get('#root_item_0_unit_price').type('1400');
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
+
+        // cy.contains('Submit the Request').click();
+
+        // cy.get('input[value="Submit the Request"]').click();
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.wait(6000);
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
+
+        cy.contains('Process Instance Id:', { timeout: 60000 });
+        cy.logout();
+
+        const budgetOwnerUsername = Cypress.env('budgetowner_username');
+        const budgetOwnerPassword = Cypress.env('budgetowner_password');
+        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
+        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
+
+        submitWithUser(
+          budgetOwnerUsername,
+          budgetOwnerPassword,
+          processInstanceId,
+          null,
+          'reject'
+        );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
+      });
+    });
+
+    // Budget owner request for additional details
+    it('19.Budget owner need more info', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      /*            cy.contains('Please select the type of request to start the process.');
+      // wait a second to ensure we can click the radio button
+
+      cy.get('input#root-procurement').click();
+
+
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+      */
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('soft_and_lic');
+        cy.get('#root_purpose').clear().type('Software needed');
+        cy.get('#root_criticality').select('Low');
+        cy.get('#root_period').clear().type('05-02-2025');
+        cy.get('body').click();
+        // cy.get('#root_vendor').clear().type('ABC Licensing Co');
+        // cy.get('#root_payment_method').select('Crypto Transfer');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        */
+        cy.get('#root_item_0_sub_category').select('lic_and_sub');
+        cy.get('#root_item_0_item_name').clear().type('License');
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('SNT');
+        cy.get('#root_item_0_unit_price').type('450');
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+        // cy.get('.cds--text-area__wrapper').find('#root').type('It\’s free and easy to post a job. Simply fill in a title, description and budget and competitive bids come within minutes. No job is too big or too small. We\'ve got freelancers for jobs of any size or budget across 1800 skills. No job is too complex.');
+
+        // cy.contains('Submit the Request').click();
+
+        // cy.get('input[value="Submit the Request"]').click();
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.wait(6000);
+        /*cy.get('button')
+          .contains(/^Return to Home$/)
+          .click();*/
+
+        cy.contains('Process Instance Id:', { timeout: 60000 });
+        cy.logout();
+
+        const budgetOwnerUsername = Cypress.env('budgetowner_username');
+        const budgetOwnerPassword = Cypress.env('budgetowner_password');
+        cy.log(`=====budgetOwnerUsername : ${budgetOwnerUsername}`);
+        cy.log(`=====budgetOwnerPassword : ${budgetOwnerPassword}`);
+
+        submitWithUser(
+          budgetOwnerUsername,
+          budgetOwnerPassword,
+          processInstanceId,
+          null,
+          'needmoreinfo'
+        );
+
+        // requestor sending additional info
+        submitWithUser(
+          username,
+          password,
+          processInstanceId,
+          null,
+          'providemoreinfo'
+        );
+
+        // budget owner approves second time
+        submitWithUser(
+          budgetOwnerUsername,
+          budgetOwnerPassword,
+          processInstanceId,
+          'Task: Reminder: Check Existing Budget',
+          'approve'
+        );
+
+        const ppgbasmeUsername = Cypress.env('ppgbasme_username');
+        const ppgbasmePassword = Cypress.env('ppgbasme_password');
+        const legalsmeUsername = Cypress.env('legalsme_username');
+        const legalsmePassword = Cypress.env('legalsme_password');
+
+        submitWithUser(
+          ppgbasmeUsername,
+          ppgbasmePassword,
+          processInstanceId,
+          null,
+          'cpapproved'
+        );
+
+        submitWithUser(
+          legalsmeUsername,
+          legalsmePassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
+      });
+    });
+
+    // Infra reject the request
+    it('20.Infra rejects', () => {
+      const username = Cypress.env('requestor_username');
+      const password = Cypress.env('requestor_password');
+      cy.log(`=====username : ${username}`);
+      cy.log(`=====password : ${password}`);
+
+      cy.login(username, password);
+      cy.visit('/');
+
+      cy.contains('Start New +').click();
+      cy.contains('Request Goods or Services').click();
+
+      cy.runPrimaryBpmnFile(true);
+
+      /*            cy.contains('Please select the type of request to start the process.');
+      // wait a second to ensure we can click the radio button
+
+      cy.get('input#root-procurement').click();
+
+
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+      */
+
+      cy.contains('Request Goods or Services', { timeout: 60000 });
+
+      cy.url().then((currentUrl) => {
+        // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+        // extract the digits after /tasks
+        const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+        cy.log('==###############===processInstanceId : ', processInstanceId);
+        const projectId = Cypress.env('project_id');
+        cy.get('#root_project').select(projectId);
+        cy.get('#root_category').select('soft_and_lic');
+        cy.get('#root_purpose').clear().type('Software is needed');
+        cy.get('#root_criticality').select('High');
+        cy.get('#root_period').clear().type('25-11-2025');
+        cy.get('body').click();
+        // cy.get('#root_vendor').clear().type('Embassar');
+        // cy.get('#root_payment_method').select('Reimbursement');
+        /* cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        */
+        cy.get('#root_item_0_sub_category').select('op_src');
+        cy.get('#root_item_0_item_name').clear().type('Open source');
+        cy.get('#root_item_0_qty').clear().type('2');
+        cy.get('#root_item_0_currency_type').select('Fiat');
+        cy.get('#root_item_0_currency').select('AUD');
+        cy.get('#root_item_0_unit_price').type('2416');
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.contains(
+          'Review and provide any supporting information or files for your request.',
+          { timeout: 60000 }
+        );
+
+        // cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
+
+        // cy.contains('Submit the Request').click();
+
+        // cy.get('input[value="Submit the Request"]').click();
+
+        cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+        cy.wait(6000);
         /*cy.get('button')
           .contains(/^Return to Home$/)
           .click();*/
