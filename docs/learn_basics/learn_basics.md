@@ -6,17 +6,6 @@ Business Process Model and Notation (BPMN) is a diagramming language for specify
 
 BPMN describes details of process behaviors efficiently in a diagram. The meaning is precise enough to describe the technical details that control process execution in an automation engine. SpiffWorkflow allows you to create code to directly execute a BPMN diagram.
 
-<<<<<<< HEAD
-When using SpiffWorkflow, a client can manipulate the BPMN diagram and still have their product work without a need for you to edit the Python code, improving response and turnaround time.
-
-## BPMN Elements
-
-### Tasks
-
-### Gateways
-
-### Events
-=======
 When using SpiffWorkflow, a client can create the BPMN diagram and still have their product work without a need for you to edit the Python code, improving response and turnaround time.
 
 
@@ -47,4 +36,3 @@ Flows represent the sequence or direction of activities in a process. There are 
 Artifacts are used to provide additional information or documentation within a process. They include data objects (representing information or data needed for the process), annotations (providing explanatory or descriptive text), and groups (used to visually group related elements).
 
 [def]: images/Untitled_2.png
->>>>>>> origin/main
