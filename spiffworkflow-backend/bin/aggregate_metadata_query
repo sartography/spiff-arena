@@ -19,6 +19,14 @@ mysql -uroot spiffworkflow_backend_local_development -e '
   GROUP BY hey.client
   ;
 
+  SELECT m_client.value, sum(m_duration.value)
+    FROM process_instance p
+    JOIN process_instance_metadata m_duration ON m_duration.process_instance_id = p.id AND m_duration.key = "duration_in_seconds"
+    JOIN process_instance_metadata m_project ON m_project.process_instance_id = p.id AND m_project.key = "project"
+    JOIN process_instance_metadata m_client ON m_client.process_instance_id = p.id AND m_client.key = "client"
+    GROUP BY m_client.value
+  ;
+
   SELECT max(anon_1.client) AS max_1, sum(anon_1.duration_in_seconds) AS sum_1
   FROM (
     SELECT process_instance.id AS id,

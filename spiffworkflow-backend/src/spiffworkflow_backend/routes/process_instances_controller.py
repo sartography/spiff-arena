@@ -608,8 +608,24 @@ def process_instance_find_by_id(
 def process_instance_aggregate(
     body: dict,
 ) -> Response:
-    process_instance_query = ProcessInstanceModel.query
     instance_metadata_aliases = {}
+    final_select_fields = []
+    final_group_by_fields = []
+
+    for group_by_column in body["group_by"]:
+        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
+        instance_metadata_aliases[group_by_column] = instance_metadata_alias
+        final_select_fields.append(instance_metadata_alias.value)
+        final_group_by_fields.append(instance_metadata_alias.value)
+
+    aggregator_table_alias = aliased(ProcessInstanceMetadataModel)
+    instance_metadata_aliases[body["aggregator_field"]] = aggregator_table_alias
+    if body["aggregator_type"] == "sum":
+        final_select_fields.append(func.sum(aggregator_table_alias.value))
+
+    process_instance_query = (
+        db.session.query(*final_select_fields).select_from(ProcessInstanceModel).group_by(*final_group_by_fields)  # type: ignore
+    )
     for filter in body["filter_by"]:
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
         instance_metadata_aliases[filter["field_name"]] = instance_metadata_alias
@@ -629,37 +645,15 @@ def process_instance_aggregate(
         process_instance_query = process_instance_query.join(instance_metadata_alias, and_(*conditions))
 
     for group_by_column in body["group_by"]:
-        if group_by_column not in instance_metadata_aliases:
-            instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-            instance_metadata_aliases[group_by_column] = instance_metadata_alias
-            process_instance_query = process_instance_query.join(
-                instance_metadata_alias, ProcessInstanceModel.id == instance_metadata_alias.process_instance_id
-            ).filter(instance_metadata_alias.key == group_by_column)
-        process_instance_query = process_instance_query.add_columns(
-            instance_metadata_aliases[group_by_column].value.label(group_by_column)
-        )
-
-    if body["aggregator_field"] not in instance_metadata_aliases:
-        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        instance_metadata_aliases[body["aggregator_field"]] = instance_metadata_alias
+        instance_metadata_alias = instance_metadata_aliases[group_by_column]
         process_instance_query = process_instance_query.join(
             instance_metadata_alias, ProcessInstanceModel.id == instance_metadata_alias.process_instance_id
-        ).filter(instance_metadata_alias.key == body["aggregator_field"])
-    process_instance_query = process_instance_query.add_columns(
-        instance_metadata_aliases[body["aggregator_field"]].value.label(body["aggregator_field"])
-    )
+        ).filter(instance_metadata_alias.key == group_by_column)
 
-    final_query = process_instance_query.subquery()
-
-    final_select_fields = []
-    final_group_by_fields = []
-    for group_by_column in body["group_by"]:
-        final_select_fields.append(func.max(final_query.c.get(group_by_column)))
-        final_group_by_fields.append(final_query.c.get(group_by_column))
-    if body["aggregator_type"] == "sum":
-        final_select_fields.append(func.sum(final_query.c.get(body["aggregator_field"])))
-
-    result = db.session.query(*final_select_fields).group_by(*final_group_by_fields).all()
+    process_instance_query = process_instance_query.join(
+        aggregator_table_alias, ProcessInstanceModel.id == aggregator_table_alias.process_instance_id
+    ).filter(aggregator_table_alias.key == body["aggregator_field"])
+    result = process_instance_query.all()
 
     return make_response(jsonify(dict(result)), 200)
 
