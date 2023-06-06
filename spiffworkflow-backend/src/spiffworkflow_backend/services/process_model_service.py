@@ -3,6 +3,7 @@ import os
 import shutil
 import uuid
 from glob import glob
+from json import JSONDecodeError
 from typing import TypeVar
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -428,7 +429,13 @@ class ProcessModelService(FileSystemService):
 
         if os.path.exists(json_file_path):
             with open(json_file_path) as wf_json:
-                data = json.load(wf_json)
+                try:
+                    data = json.load(wf_json)
+                except JSONDecodeError as jde:
+                    raise ApiError(
+                        error_code="process_model_json_file_corrupted",
+                        message=f"The process_model json file {json_file_path} is corrupted.",
+                    ) from jde
                 if "process_group_id" in data:
                     data.pop("process_group_id")
                 # we don't save `id` in the json file, so we add it back in here.

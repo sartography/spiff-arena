@@ -6,7 +6,6 @@
 learn_basics/learn_basics.md
 quick_start/quick_start.md
 learn_basics/bpmn_terminology.md
-
 ```
 
 ```{toctree}
