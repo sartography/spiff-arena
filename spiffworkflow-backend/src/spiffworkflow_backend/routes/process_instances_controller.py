@@ -628,7 +628,6 @@ def process_instance_aggregate(
 
         process_instance_query = process_instance_query.join(instance_metadata_alias, and_(*conditions))
 
-    parameters = []
     for group_by_column in body["group_by"]:
         if group_by_column not in instance_metadata_aliases:
             instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
@@ -636,7 +635,6 @@ def process_instance_aggregate(
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, ProcessInstanceModel.id == instance_metadata_alias.process_instance_id
             ).filter(instance_metadata_alias.key == group_by_column)
-        parameters.append(instance_metadata_aliases[group_by_column].key)
         process_instance_query = process_instance_query.add_columns(
             instance_metadata_aliases[group_by_column].value.label(group_by_column)
         )
@@ -651,8 +649,17 @@ def process_instance_aggregate(
         instance_metadata_aliases[body["aggregator_field"]].value.label(body["aggregator_field"])
     )
 
-    pis = process_instance_query.subquery()
-    result = db.session.query(func.max(pis.c.client), func.sum(pis.c.duration_in_seconds)).group_by(pis.c.client).all()
+    final_query = process_instance_query.subquery()
+
+    final_select_fields = []
+    final_group_by_fields = []
+    for group_by_column in body["group_by"]:
+        final_select_fields.append(func.max(final_query.c.get(group_by_column)))
+        final_group_by_fields.append(final_query.c.get(group_by_column))
+    if body["aggregator_type"] == "sum":
+        final_select_fields.append(func.sum(final_query.c.get(body["aggregator_field"])))
+
+    result = db.session.query(*final_select_fields).group_by(*final_group_by_fields).all()
 
     return make_response(jsonify(dict(result)), 200)
 
