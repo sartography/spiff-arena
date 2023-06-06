@@ -2,13 +2,10 @@
 import json
 import os
 import uuid
+from collections.abc import Generator
 from sys import exc_info
 from typing import Any
-from typing import Dict
-from typing import Generator
-from typing import Optional
 from typing import TypedDict
-from typing import Union
 
 import flask.wrappers
 import jinja2
@@ -40,34 +37,22 @@ from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance import (
-    ProcessInstanceTaskDataCannotBeUpdatedError,
-)
+from spiffworkflow_backend.models.process_instance import ProcessInstanceTaskDataCannotBeUpdatedError
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _find_principal_or_raise,
-)
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _find_process_instance_by_id_or_raise,
-)
+from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_or_raise
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -76,24 +61,19 @@ from spiffworkflow_backend.services.task_service import TaskService
 
 
 class TaskDataSelectOption(TypedDict):
-    """TaskDataSelectOption."""
-
     value: str
     label: str
 
 
 class ReactJsonSchemaSelectOption(TypedDict):
-    """ReactJsonSchemaSelectOption."""
-
     type: str
     title: str
     enum: list[str]
 
 
 def task_list_my_tasks(
-    process_instance_id: Optional[int] = None, page: int = 1, per_page: int = 100
+    process_instance_id: int | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Task_list_my_tasks."""
     principal = _find_principal_or_raise()
     assigned_user = aliased(UserModel)
     process_initiator_user = aliased(UserModel)
@@ -157,12 +137,10 @@ def task_list_my_tasks(
 
 
 def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_for_my_open_processes."""
     return _get_tasks(page=page, per_page=per_page)
 
 
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_for_me."""
     return _get_tasks(
         processes_started_by_user=False,
         has_lane_assignment_id=False,
@@ -172,9 +150,8 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 
 
 def task_list_for_my_groups(
-    user_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    user_group_identifier: str | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Task_list_for_my_groups."""
     return _get_tasks(
         user_group_identifier=user_group_identifier,
         processes_started_by_user=False,
@@ -197,7 +174,7 @@ def task_data_update(
     process_instance_id: str,
     modified_process_model_identifier: str,
     task_guid: str,
-    body: Dict,
+    body: dict,
 ) -> Response:
     """Update task data."""
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
@@ -250,7 +227,7 @@ def manual_complete_task(
     modified_process_model_identifier: str,
     process_instance_id: str,
     task_guid: str,
-    body: Dict,
+    body: dict,
 ) -> Response:
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
@@ -371,7 +348,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     return make_response(jsonify(task_model), 200)
 
 
-def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optional[dict] = None) -> str:
+def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | None = None) -> str:
     """Assure any instructions for end user are processed for jinja syntax."""
     if extensions is None:
         extensions = TaskService.get_extensions_from_task_model(task_model)
@@ -387,7 +364,7 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optiona
     return ""
 
 
-def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, Optional[str], None]:
+def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
@@ -398,7 +375,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
 
-    def render_data(return_type: str, entity: Union[ApiError, Task, ProcessInstanceModel]) -> str:
+    def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
         return_hash: dict = {"type": return_type}
         return_hash[return_type] = entity
         return f"data: {current_app.json.dumps(return_hash)} \n\n"
@@ -445,31 +422,36 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             break  # No more tasks to report
 
     spiff_task = processor.next_task()
-    task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-    if task.id not in reported_ids:
-        try:
-            instructions = render_instructions(spiff_task)
-        except Exception as e:
-            api_error = ApiError(
-                error_code="engine_steps_error",
-                message=f"Failed to complete an automated task. Error was: {str(e)}",
-                status_code=400,
-            )
-            yield render_data("error", api_error)
-            raise e
-        task.properties = {"instructionsForEndUser": instructions}
-        yield render_data("task", task)
+    if spiff_task is not None:
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        if task.id not in reported_ids:
+            try:
+                instructions = render_instructions(spiff_task)
+            except Exception as e:
+                api_error = ApiError(
+                    error_code="engine_steps_error",
+                    message=f"Failed to complete an automated task. Error was: {str(e)}",
+                    status_code=400,
+                )
+                yield render_data("error", api_error)
+                raise e
+            task.properties = {"instructionsForEndUser": instructions}
+            yield render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len(list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]))
 
 
-def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[Optional[str], Optional[str], None]:
+def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | None, str | None, None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    with ProcessInstanceQueueService.dequeued(process_instance):
-        yield from _interstitial_stream(process_instance)
+    # TODO: currently this just redirects back to home if the process has not been started
+    # need something better to show?
+
+    if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            yield from _interstitial_stream(process_instance)
 
 
 def interstitial(process_instance_id: int) -> Response:
@@ -484,7 +466,7 @@ def interstitial(process_instance_id: int) -> Response:
 def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
@@ -582,10 +564,9 @@ def _task_submit_shared(
 def task_submit(
     process_instance_id: int,
     task_guid: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
-    """Task_submit_user_data."""
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
         return _task_submit_shared(process_instance_id, task_guid, body, save_as_draft)
 
@@ -595,9 +576,8 @@ def _get_tasks(
     has_lane_assignment_id: bool = True,
     page: int = 1,
     per_page: int = 100,
-    user_group_identifier: Optional[str] = None,
+    user_group_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    """Get_tasks."""
     user_id = g.user.id
 
     # use distinct to ensure we only get one row per human task otherwise
@@ -690,7 +670,6 @@ def _get_tasks(
 
 
 def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: ProcessModelInfo) -> dict:
-    """Prepare_form_data."""
     if task_model.data is None:
         return {}
 
@@ -717,7 +696,6 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
 
 
 def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> str:
-    """Render_jinja_template."""
     jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
     try:
         template = jinja_environment.from_string(unprocessed_template)
@@ -744,9 +722,8 @@ def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> 
 def _get_spiff_task_from_process_instance(
     task_guid: str,
     process_instance: ProcessInstanceModel,
-    processor: Union[ProcessInstanceProcessor, None] = None,
+    processor: ProcessInstanceProcessor | None = None,
 ) -> SpiffTask:
-    """Get_spiff_task_from_process_instance."""
     if processor is None:
         processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
@@ -765,7 +742,6 @@ def _get_spiff_task_from_process_instance(
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: TaskModel) -> None:
-    """Update_nested."""
     if task_model.data is None:
         return None
 
@@ -797,7 +773,6 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                                     def map_function(
                                         task_data_select_option: TaskDataSelectOption,
                                     ) -> ReactJsonSchemaSelectOption:
-                                        """Map_function."""
                                         return {
                                             "type": "string",
                                             "enum": [task_data_select_option["value"]],
@@ -818,7 +793,6 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
-    """_get_potential_owner_usernames."""
     potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
         assigned_user.username.distinct()
     ).label("potential_owner_usernames")
@@ -877,7 +851,7 @@ def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model: TaskMo
 
 
 def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int) -> TaskModel:
-    task_model: Optional[TaskModel] = TaskModel.query.filter_by(
+    task_model: TaskModel | None = TaskModel.query.filter_by(
         guid=task_guid, process_instance_id=process_instance_id
     ).first()
     if task_model is None:

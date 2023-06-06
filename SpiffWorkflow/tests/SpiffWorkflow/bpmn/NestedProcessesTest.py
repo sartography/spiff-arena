@@ -1,8 +1,6 @@
-import unittest
-
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
-from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase
+from .BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'neilc'
 
@@ -10,29 +8,61 @@ __author__ = 'neilc'
 class NestedProcessesTest(BpmnWorkflowTestCase):
 
     def setUp(self):
-        spec, subprocesses = self.load_workflow_spec('Test-Workflows/Nested*.bpmn20.xml', 'Nested Subprocesses')
+        spec, subprocesses = self.load_workflow_spec(
+            'Test-Workflows/Nested*.bpmn20.xml', 
+            'sid-a12cf1e5-86f4-4d69-9790-6a90342f5963')
         self.workflow = BpmnWorkflow(spec, subprocesses)
 
     def testRunThroughHappy(self):
 
-        self.do_next_named_step('Action1')
-        self.workflow.do_engine_steps()
-        self.save_restore()
+        self.complete_task('Action1', True)
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
-        self.do_next_named_step('Action2')
-        self.workflow.do_engine_steps()
-        self.save_restore()
+        self.complete_task('Action2', True)
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
-        self.do_next_named_step('Action3')
+        self.complete_task('Action3', True)
+        self.complete_workflow()
+
+    def testResetToTop(self):
+
+        self.complete_task('Action1', True)
+        self.complete_task('Action2', True)
+        self.complete_task('Action3', True)
+
+        task = [t for t in self.workflow.get_tasks() if t.task_spec.bpmn_name == 'Action1'][0]
+        self.workflow.reset_from_task_id(task.id)
+        self.assertEqual(task.state, TaskState.READY)
+        self.assertEqual(len(self.workflow.subprocesses), 0)
+        task.run()
+
+        self.complete_task('Action2')
+        self.complete_task('Action3')
+        self.complete_workflow()
+
+    def testResetToIntermediate(self):
+
+        self.complete_task('Action1', True)
+        self.complete_task('Action2', True)
+        self.complete_task('Action3', True)
+
+        task = [t for t in self.workflow.get_tasks() if t.task_spec.bpmn_name == 'Action2'][0]
+        sub = [t for t in self.workflow.get_tasks() if t.task_spec.bpmn_name == 'Nested level 1'][0]
+        self.workflow.reset_from_task_id(task.id)
+        self.assertEqual(task.state, TaskState.READY)
+        self.assertEqual(sub.state, TaskState.WAITING)
+        self.assertEqual(len(self.workflow.subprocesses), 1)
+        task.run()
+
+        self.complete_task('Action3')
+        self.complete_workflow()
+
+    def complete_task(self, name, save_restore=False):
+        self.do_next_named_step(name)
         self.workflow.do_engine_steps()
+        if save_restore:
+            self.save_restore()
+
+    def complete_workflow(self):
         self.complete_subworkflow()
         self.complete_subworkflow()
         self.complete_subworkflow()
-        self.save_restore()
         self.assertEqual(0, len(self.workflow.get_tasks(TaskState.READY | TaskState.WAITING)))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromTestCase(NestedProcessesTest)
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())

@@ -253,7 +253,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ProcessModelCategory"
+                  $ref: "#/components/schemas/ProcessGroup"
     post:
       operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_create
       summary: Add process group
@@ -263,14 +263,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessModelCategory"
+              $ref: "#/components/schemas/ProcessGroup"
       responses:
         "201":
           description: Processs Group
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProcessModelCategory"
+                $ref: "#/components/schemas/ProcessGroup"
 
   /process-groups/{modified_process_group_id}:
     parameters:
@@ -292,7 +292,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProcessModelCategory"
+                $ref: "#/components/schemas/ProcessGroup"
     delete:
       operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_delete
       summary: Deletes a single process group
@@ -310,14 +310,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessModelCategory"
+              $ref: "#/components/schemas/ProcessGroup"
       responses:
         "200":
           description: Process group updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProcessModelCategory"
+                $ref: "#/components/schemas/ProcessGroup"
 
   /process-groups/{modified_process_group_identifier}/move:
     parameters:
@@ -344,7 +344,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProcessModelCategory"
+                $ref: "#/components/schemas/ProcessGroup"
 
   /process-models:
     parameters:
@@ -450,6 +450,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
+
+  /process-model-tests/{modified_process_model_identifier}:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The process_model_id, modified to replace slashes (/)
+        schema:
+          type: string
+      - name: test_case_file
+        in: query
+        required: false
+        description: The name of the test case file to run
+        schema:
+          type: string
+      - name: test_case_identifier
+        in: query
+        required: false
+        description: The name of the test case file to run
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_test_run
+      summary: Run a test for a process model
+      tags:
+        - Process Model Tests
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Metadata about the uploaded file, but not the file content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
 
   /process-models/{modified_process_model_identifier}/files:
     parameters:
@@ -642,7 +684,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessModelCategory"
+              $ref: "#/components/schemas/ProcessGroup"
       tags:
         - git
       responses:
@@ -1828,7 +1870,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessModelCategory"
+              $ref: "#/components/schemas/ProcessGroup"
       responses:
         "200":
           description: One task
@@ -2450,15 +2492,7 @@ components:
         primary_process_id:
           type: string
           nullable: true
-        category_id:
-          type: string
-          nullable: true
-        workflow_spec_category:
-          $ref: "#/components/schemas/ProcessModelCategory"
-        is_status:
-          type: boolean
-          nullable: true
-    ProcessModelCategory:
+    ProcessGroup:
       properties:
         id:
           type: string
@@ -2466,12 +2500,6 @@ components:
           type: string
         display_name:
           type: string
-        display_order:
-          type: integer
-        workflows:
-          type: array
-          items:
-            $ref: "#/components/schemas/Workflow"
     File:
       properties:
         id:

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import { slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 
 export default function CompletedInstances() {
@@ -24,9 +25,13 @@ export default function CompletedInstances() {
           Instances with tasks completed by <strong>{userGroup}</strong>
         </h2>
       );
+      const identifierForTable = `completed-by-group-${slugifyString(
+        userGroup
+      )}`;
       return (
         <ProcessInstanceListTable
           headerElement={headerElement}
+          tableHtmlId={identifierForTable}
           showLinkToReport
           filtersEnabled={false}
           paginationQueryParamPrefix="group_completed_instances"
@@ -66,6 +71,7 @@ export default function CompletedInstances() {
     <>
       <ProcessInstanceListTable
         headerElement={startedByMeHeaderElement}
+        tableHtmlId="my-completed-instances"
         showLinkToReport
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_instances"
@@ -79,6 +85,7 @@ export default function CompletedInstances() {
       />
       <ProcessInstanceListTable
         headerElement={withTasksHeaderElement}
+        tableHtmlId="with-tasks-completed-by-me"
         showLinkToReport
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_tasks"

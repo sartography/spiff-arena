@@ -1,10 +1,8 @@
-"""Db_helper."""
 import time
 
 import sqlalchemy
-from sqlalchemy.sql import text
-
 from spiffworkflow_backend.models.db import db
+from sqlalchemy.sql import text
 
 
 def try_to_connect(start_time: float) -> None:

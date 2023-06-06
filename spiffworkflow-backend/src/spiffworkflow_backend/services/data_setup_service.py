@@ -1,17 +1,12 @@
-"""Data_setup_service."""
 from flask import current_app
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 class DataSetupService:
-    """DataSetupService."""
-
     @classmethod
     def run_setup(cls) -> list:
-        """Run_setup."""
         return cls.save_all_process_models()
 
     @classmethod

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
-import unittest
 
 from SpiffWorkflow.camunda.parser.CamundaParser import CamundaParser
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser
 
-from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase
+from .BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'danfunk'
 
@@ -28,7 +27,6 @@ class ProcessDependencyTest(BpmnWorkflowTestCase):
     def actual_test(self, parser):
         # We ought to test the parsers in the packages they belong to, not here.
         filename = 'call_activity_nested'
-        process_name = 'Level1'
         base_dir = os.path.join(os.path.dirname(__file__), 'data', filename)
         parser.add_bpmn_file(os.path.join(base_dir, 'call_activity_nested.bpmn'))
         dependencies = parser.get_dependencies()
@@ -46,10 +44,3 @@ class ProcessDependencyTest(BpmnWorkflowTestCase):
         dependencies = parser.get_dependencies()
         self.assertEqual(4, len(dependencies))
         self.assertIn('Level3', dependencies)
-
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromTestCase(ProcessDependencyTest)
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())

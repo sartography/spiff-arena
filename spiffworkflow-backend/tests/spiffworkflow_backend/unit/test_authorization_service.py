@@ -1,22 +1,17 @@
-"""Test_message_service."""
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
 from spiffworkflow_backend.services.group_service import GroupService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthorizationService(BaseTest):
@@ -60,7 +55,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_user_can_be_added_to_human_task_on_first_login."""
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         # to ensure there is a user that can be assigned to the task
@@ -157,7 +151,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_start_on_process_group."""
         expected_permissions = sorted(
             [
                 ("/event-error-details/some-process-group:some-process-model:*", "read"),
@@ -241,7 +234,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_start_on_process_model."""
         expected_permissions = sorted(
             [
                 (
@@ -346,7 +338,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_all."""
         expected_permissions = [
             ("/*", "create"),
             ("/*", "delete"),
@@ -363,7 +354,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_with_target_uri."""
         expected_permissions = [
             ("/hey/model", "create"),
             ("/hey/model", "delete"),
@@ -380,7 +370,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_granting_access_to_group_gives_access_to_group_and_subgroups."""
         user = self.find_or_create_user(username="user_one")
         user_group = GroupService.find_or_create_group("group_one")
         UserService.add_user_to_group(user, user_group)
@@ -394,7 +383,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_with_invalid_target_uri."""
         with pytest.raises(InvalidPermissionError):
             AuthorizationService.explode_permissions("all", "BAD_MACRO")
 
@@ -404,7 +392,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_with_start_to_incorrect_target."""
         with pytest.raises(InvalidPermissionError):
             AuthorizationService.explode_permissions("start", "/hey/model")
 

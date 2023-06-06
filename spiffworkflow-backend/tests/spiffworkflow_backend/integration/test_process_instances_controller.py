@@ -1,15 +1,12 @@
-"""Test_users_controller."""
 from flask.app import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models.user import UserModel
+
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.user import UserModel
-
 
 class TestProcessInstancesController(BaseTest):
-    """TestProcessInstancesController."""
-
     def test_find_by_id(
         self,
         app: Flask,
@@ -17,7 +14,6 @@ class TestProcessInstancesController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_user_search_returns_a_user."""
         user_one = self.create_user_with_permission(username="user_one", target_uri="/process-instances/find-by-id/*")
         user_two = self.create_user_with_permission(username="user_two", target_uri="/process-instances/find-by-id/*")
 

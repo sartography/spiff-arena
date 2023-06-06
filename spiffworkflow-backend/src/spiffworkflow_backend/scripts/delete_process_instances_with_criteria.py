@@ -1,22 +1,15 @@
-"""Delete_process_instances_with_criteria."""
 from time import time
 from typing import Any
 
-from sqlalchemy import or_
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
+from sqlalchemy import or_
 
 
 class DeleteProcessInstancesWithCriteria(Script):
-    """DeleteProcessInstancesWithCriteria."""
-
     def get_description(self) -> str:
-        """Get_description."""
         return "Delete process instances that match the provided criteria,"
 
     def run(
@@ -25,7 +18,6 @@ class DeleteProcessInstancesWithCriteria(Script):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """Run."""
         criteria_list = args[0]
 
         delete_criteria = []

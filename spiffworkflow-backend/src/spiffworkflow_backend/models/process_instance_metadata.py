@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 

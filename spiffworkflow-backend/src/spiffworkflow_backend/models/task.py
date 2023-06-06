@@ -1,11 +1,7 @@
-"""Task."""
 import enum
 from dataclasses import dataclass
-from typing import Any
-from typing import List
-from typing import Optional
 from typing import TYPE_CHECKING
-from typing import Union
+from typing import Any
 
 import marshmallow
 from marshmallow import Schema
@@ -15,15 +11,13 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 if TYPE_CHECKING:
-    from spiffworkflow_backend.models.human_task_user import (  # noqa: F401
-        HumanTaskModel,
-    )
+    from spiffworkflow_backend.models.human_task_user import HumanTaskModel  # noqa: F401
 
 
 class TaskNotFoundError(Exception):
@@ -31,8 +25,6 @@ class TaskNotFoundError(Exception):
 
 
 class MultiInstanceType(enum.Enum):
-    """MultiInstanceType."""
-
     none = "none"
     looping = "looping"
     parallel = "parallel"
@@ -72,21 +64,21 @@ class TaskModel(SpiffworkflowBaseDBModel):
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
     python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
-    start_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))
-    end_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))
+    start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
+    end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
 
-    data: Optional[dict] = None
+    data: dict | None = None
 
     # these are here to be compatible with task api
-    form_schema: Optional[dict] = None
-    form_ui_schema: Optional[dict] = None
-    process_model_display_name: Optional[str] = None
-    process_model_identifier: Optional[str] = None
-    typename: Optional[str] = None
-    can_complete: Optional[bool] = None
-    extensions: Optional[dict] = None
-    name_for_display: Optional[str] = None
-    signal_buttons: Optional[List[dict]] = None
+    form_schema: dict | None = None
+    form_ui_schema: dict | None = None
+    process_model_display_name: str | None = None
+    process_model_identifier: str | None = None
+    typename: str | None = None
+    can_complete: bool | None = None
+    extensions: dict | None = None
+    name_for_display: str | None = None
+    signal_buttons: list[dict] | None = None
 
     def get_data(self) -> dict:
         return {**self.python_env_data(), **self.json_data()}
@@ -99,8 +91,6 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
 
 class Task:
-    """Task."""
-
     HUMAN_TASK_TYPES = ["User Task", "Manual Task"]
 
     def __init__(
@@ -111,30 +101,29 @@ class Task:
         type: str,
         state: str,
         can_complete: bool,
-        lane: Union[str, None] = None,
+        lane: str | None = None,
         form: None = None,
         documentation: str = "",
-        data: Union[dict[str, Any], None] = None,
-        multi_instance_type: Union[MultiInstanceType, None] = None,
+        data: dict[str, Any] | None = None,
+        multi_instance_type: MultiInstanceType | None = None,
         multi_instance_count: str = "",
         multi_instance_index: str = "",
         process_identifier: str = "",
-        properties: Union[dict, None] = None,
-        process_instance_id: Union[int, None] = None,
-        process_instance_status: Union[str, None] = None,
-        process_model_display_name: Union[str, None] = None,
-        process_group_identifier: Union[str, None] = None,
-        process_model_identifier: Union[str, None] = None,
-        bpmn_process_identifier: Union[str, None] = None,
-        form_schema: Union[dict, None] = None,
-        form_ui_schema: Union[dict, None] = None,
-        parent: Optional[str] = None,
-        event_definition: Union[dict[str, Any], None] = None,
-        call_activity_process_identifier: Optional[str] = None,
-        calling_subprocess_task_id: Optional[str] = None,
-        error_message: Optional[str] = None,
+        properties: dict | None = None,
+        process_instance_id: int | None = None,
+        process_instance_status: str | None = None,
+        process_model_display_name: str | None = None,
+        process_group_identifier: str | None = None,
+        process_model_identifier: str | None = None,
+        bpmn_process_identifier: str | None = None,
+        form_schema: dict | None = None,
+        form_ui_schema: dict | None = None,
+        parent: str | None = None,
+        event_definition: dict[str, Any] | None = None,
+        call_activity_process_identifier: str | None = None,
+        calling_subprocess_task_id: str | None = None,
+        error_message: str | None = None,
     ):
-        """__init__."""
         self.id = id
         self.name = name
         self.title = title
@@ -218,38 +207,22 @@ class Task:
 
 
 class OptionSchema(Schema):
-    """OptionSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = ["id", "name", "data"]
 
 
 class ValidationSchema(Schema):
-    """ValidationSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = ["name", "config"]
 
 
 class FormFieldPropertySchema(Schema):
-    """FormFieldPropertySchema."""
-
     class Meta:
-        """Meta."""
-
         fields = ["id", "value"]
 
 
 class FormFieldSchema(Schema):
-    """FormFieldSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = [
             "id",
             "type",
@@ -275,11 +248,7 @@ class FormFieldSchema(Schema):
 
 
 class TaskSchema(Schema):
-    """TaskSchema."""
-
     class Meta:
-        """Meta."""
-
         fields = [
             "id",
             "name",
@@ -310,5 +279,4 @@ class TaskSchema(Schema):
 
     @marshmallow.post_load
     def make_task(self, data: dict[str, Any], **kwargs: dict) -> Task:
-        """Make_task."""
         return Task(**data)

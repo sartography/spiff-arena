@@ -1,12 +1,11 @@
-"""Main."""
 import json
 from typing import Any
 from typing import Final
 
 import flask.wrappers
 from flask import Blueprint
-from flask import request
 from flask import Response
+from flask import request
 from sqlalchemy.exc import IntegrityError
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -64,7 +63,6 @@ user_blueprint = Blueprint("main", __name__)
 #
 @user_blueprint.route("/user/<username>", methods=["DELETE"])
 def delete_user(username: str) -> flask.wrappers.Response:
-    """Delete_user."""
     user = UserModel.query.filter_by(username=username).first()
     if user is None:
         raise (
@@ -83,7 +81,6 @@ def delete_user(username: str) -> flask.wrappers.Response:
 
 @user_blueprint.route("/group/<group_name>", methods=["GET"])
 def create_group(group_name: str) -> flask.wrappers.Response:
-    """Create_group."""
     group = GroupModel.query.filter_by(name=group_name).first()
     if group is not None:
         raise (
@@ -106,7 +103,6 @@ def create_group(group_name: str) -> flask.wrappers.Response:
 
 @user_blueprint.route("/group/<group_name>", methods=["DELETE"])
 def delete_group(group_name: str) -> flask.wrappers.Response:
-    """Delete_group."""
     group = GroupModel.query.filter_by(name=group_name).first()
     if group is None:
         raise (
@@ -125,7 +121,6 @@ def delete_group(group_name: str) -> flask.wrappers.Response:
 
 @user_blueprint.route("/assign_user_to_group", methods=["POST"])
 def assign_user_to_group() -> flask.wrappers.Response:
-    """Assign_user_to_group."""
     user = get_user_from_request()
     group = get_group_from_request()
 
@@ -152,7 +147,6 @@ def assign_user_to_group() -> flask.wrappers.Response:
 
 @user_blueprint.route("/remove_user_from_group", methods=["POST"])
 def remove_user_from_group() -> flask.wrappers.Response:
-    """Remove_user_from_group."""
     user = get_user_from_request()
     group = get_group_from_request()
 
@@ -177,14 +171,12 @@ def remove_user_from_group() -> flask.wrappers.Response:
 
 
 def get_value_from_request_json(key: str) -> Any:
-    """Get_value_from_request_json."""
     if request.json is None:
         return None
     return request.json.get(key)
 
 
 def get_user_from_request() -> Any:
-    """Get_user_from_request."""
     user_id = get_value_from_request_json("user_id")
 
     if user_id is None:
@@ -209,7 +201,6 @@ def get_user_from_request() -> Any:
 
 
 def get_group_from_request() -> Any:
-    """Get_group_from_request."""
     group_id = get_value_from_request_json("group_id")
 
     if group_id is None:

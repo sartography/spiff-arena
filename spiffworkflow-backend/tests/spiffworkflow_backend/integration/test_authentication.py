@@ -1,19 +1,13 @@
-"""Test_authentication."""
 import ast
 import base64
 
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from spiffworkflow_backend.services.authentication_service import AuthenticationService
 
-from spiffworkflow_backend.services.authentication_service import (
-    AuthenticationService,
-)
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestAuthentication(BaseTest):
-    """TestAuthentication."""
-
     def test_get_login_state(self) -> None:
-        """Test_get_login_state."""
         redirect_url = "http://example.com/"
         state = AuthenticationService.generate_state(redirect_url)
         state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))

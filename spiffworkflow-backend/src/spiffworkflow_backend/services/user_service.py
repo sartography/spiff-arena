@@ -1,10 +1,7 @@
-"""User_service."""
 from typing import Any
-from typing import Optional
 
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -13,9 +10,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
-from spiffworkflow_backend.models.user_group_assignment_waiting import (
-    UserGroupAssignmentWaitingModel,
-)
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 
 
 class UserService:
@@ -27,14 +22,13 @@ class UserService:
         username: str,
         service: str,
         service_id: str,
-        email: Optional[str] = "",
-        display_name: Optional[str] = "",
-        tenant_specific_field_1: Optional[str] = None,
-        tenant_specific_field_2: Optional[str] = None,
-        tenant_specific_field_3: Optional[str] = None,
+        email: str | None = "",
+        display_name: str | None = "",
+        tenant_specific_field_1: str | None = None,
+        tenant_specific_field_2: str | None = None,
+        tenant_specific_field_3: str | None = None,
     ) -> UserModel:
-        """Create_user."""
-        user_model: Optional[UserModel] = (
+        user_model: UserModel | None = (
             UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         )
         if user_model is None:
@@ -80,19 +74,16 @@ class UserService:
     # Returns true if the current user is logged in.
     @staticmethod
     def has_user() -> bool:
-        """Has_user."""
         return "token" in g and bool(g.token) and "user" in g and bool(g.user)
 
     @staticmethod
     def current_user() -> Any:
-        """Current_user."""
         if not UserService.has_user():
             raise ApiError("logged_out", "You are no longer logged in.", status_code=401)
         return g.user
 
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:
-        """Get_principal_by_user_id."""
         principal = db.session.query(PrincipalModel).filter(PrincipalModel.user_id == user_id).first()
         if isinstance(principal, PrincipalModel):
             return principal
@@ -103,9 +94,8 @@ class UserService:
 
     @classmethod
     def create_principal(cls, child_id: int, id_column_name: str = "user_id") -> PrincipalModel:
-        """Create_principal."""
         column = PrincipalModel.__table__.columns[id_column_name]
-        principal: Optional[PrincipalModel] = PrincipalModel.query.filter(column == child_id).first()
+        principal: PrincipalModel | None = PrincipalModel.query.filter(column == child_id).first()
         if principal is None:
             principal = PrincipalModel()
             setattr(principal, id_column_name, child_id)
@@ -123,7 +113,6 @@ class UserService:
 
     @classmethod
     def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
-        """Add_user_to_group."""
         exists = UserGroupAssignmentModel().query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
         if not exists:
             ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
@@ -132,7 +121,6 @@ class UserService:
 
     @classmethod
     def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
-        """Add_waiting_group_assignment."""
         wugam = (
             UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
         )
@@ -146,7 +134,6 @@ class UserService:
 
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
-        """Apply_waiting_group_assignments."""
         waiting = (
             UserGroupAssignmentWaitingModel()
             .query.filter(UserGroupAssignmentWaitingModel.username == user.username)
@@ -165,8 +152,7 @@ class UserService:
         db.session.commit()
 
     @staticmethod
-    def get_user_by_service_and_service_id(service: str, service_id: str) -> Optional[UserModel]:
-        """Get_user_by_service_and_service_id."""
+    def get_user_by_service_and_service_id(service: str, service_id: str) -> UserModel | None:
         user: UserModel = (
             UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         )
@@ -176,7 +162,6 @@ class UserService:
 
     @classmethod
     def add_user_to_human_tasks_if_appropriate(cls, user: UserModel) -> None:
-        """Add_user_to_human_tasks_if_appropriate."""
         group_ids = [g.id for g in user.groups]
         human_tasks = HumanTaskModel.query.filter(
             HumanTaskModel.lane_assignment_id.in_(group_ids)  # type: ignore

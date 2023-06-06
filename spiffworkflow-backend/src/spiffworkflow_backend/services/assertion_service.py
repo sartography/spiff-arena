@@ -1,6 +1,5 @@
-"""Assertion_service."""
 import contextlib
-from typing import Generator
+from collections.abc import Generator
 
 import sentry_sdk
 from flask import current_app

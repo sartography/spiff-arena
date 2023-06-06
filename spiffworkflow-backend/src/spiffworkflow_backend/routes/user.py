@@ -1,12 +1,8 @@
-"""User."""
 import ast
 import base64
 import json
 import re
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Union
 
 import flask
 import jwt
@@ -20,13 +16,16 @@ from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
-from spiffworkflow_backend.services.authentication_service import (
-    MissingAccessTokenError,
-)
+from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
 """
@@ -36,9 +35,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 # authorization_exclusion_list = ['status']
-def verify_token(
-    token: Optional[str] = None, force_run: Optional[bool] = False
-) -> Optional[Dict[str, Optional[Union[str, int]]]]:
+def verify_token(token: str | None = None, force_run: bool | None = False) -> None:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
@@ -82,6 +79,22 @@ def verify_token(
                         current_app.logger.error(
                             f"Exception in verify_token getting user from decoded internal token. {e}"
                         )
+
+                # if the user is the anonymous user and we have auth enabled then make sure we clean up the anonymouse user
+                if (
+                    user_model
+                    and not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
+                    and user_model.username == SPIFF_NO_AUTH_ANONYMOUS_USER
+                    and user_model.service_id == "spiff_anonymous_service_id"
+                ):
+                    group_model = GroupModel.query.filter_by(identifier=SPIFF_NO_AUTH_ANONYMOUS_GROUP).first()
+                    db.session.delete(group_model)
+                    db.session.delete(user_model)
+                    db.session.commit()
+                    tld = current_app.config["THREAD_LOCAL_DATA"]
+                    tld.user_has_logged_out = True
+                    return None
+
             elif "iss" in decoded_token.keys():
                 user_info = None
                 try:
@@ -171,7 +184,7 @@ def set_new_access_token_in_cookie(
     It will also delete the cookies if the user has logged out.
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
-    domain_for_frontend_cookie: Optional[str] = re.sub(
+    domain_for_frontend_cookie: str | None = re.sub(
         r"^https?:\/\/",
         "",
         current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"],
@@ -196,29 +209,22 @@ def set_new_access_token_in_cookie(
     return response
 
 
-def encode_auth_token(sub: str, token_type: Optional[str] = None) -> str:
-    """Generates the Auth Token.
-
-    :return: string
-    """
-    payload = {"sub": sub}
-    if token_type is None:
-        token_type = "internal"  # noqa: S105
-    payload["token_type"] = token_type
-    if "SECRET_KEY" in current_app.config:
-        secret_key = current_app.config.get("SECRET_KEY")
-    else:
-        current_app.logger.error("Missing SECRET_KEY in encode_auth_token")
-        raise ApiError(error_code="encode_error", message="Missing SECRET_KEY in encode_auth_token")
-    return jwt.encode(
-        payload,
-        str(secret_key),
-        algorithm="HS256",
-    )
-
-
 def login(redirect_url: str = "/") -> Response:
-    """Login."""
+    if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
+        user = UserModel.query.filter_by(username=SPIFF_NO_AUTH_ANONYMOUS_USER).first()
+        if user is None:
+            user = UserService.create_user(
+                SPIFF_NO_AUTH_ANONYMOUS_USER, "spiff_anonymous_service", "spiff_anonymous_service_id"
+            )
+        GroupService.add_user_to_group_or_add_to_waiting(user.username, SPIFF_NO_AUTH_ANONYMOUS_GROUP)
+        AuthorizationService.add_permission_from_uri_or_macro(SPIFF_NO_AUTH_ANONYMOUS_GROUP, "all", "/*")
+        g.user = user
+        g.token = user.encode_auth_token({"authentication_disabled": True})
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.new_access_token = g.token
+        tld.new_id_token = g.token
+        return redirect(redirect_url)
+
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))
     return redirect(login_redirect_url)
@@ -236,7 +242,7 @@ def parse_id_token(token: str) -> Any:
     return json.loads(decoded)
 
 
-def login_return(code: str, state: str, session_state: str = "") -> Optional[Response]:
+def login_return(code: str, state: str, session_state: str = "") -> Response | None:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
     auth_token_object = AuthenticationService().get_auth_token_object(code)
@@ -290,7 +296,6 @@ def login_with_access_token(access_token: str) -> Response:
 
 
 def login_api() -> Response:
-    """Login_api."""
     redirect_url = "/v1.0/login_api_return"
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), redirect_url)
@@ -309,8 +314,7 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     return access_token
 
 
-def logout(id_token: str, redirect_url: Optional[str]) -> Response:
-    """Logout."""
+def logout(id_token: str, redirect_url: str | None) -> Response:
     if redirect_url is None:
         redirect_url = ""
     tld = current_app.config["THREAD_LOCAL_DATA"]
@@ -319,13 +323,11 @@ def logout(id_token: str, redirect_url: Optional[str]) -> Response:
 
 
 def logout_return() -> Response:
-    """Logout_return."""
     frontend_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
     return redirect(f"{frontend_url}/")
 
 
-def get_decoded_token(token: str) -> Optional[Dict]:
-    """Get_token_type."""
+def get_decoded_token(token: str) -> dict | None:
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
     except Exception as e:
@@ -342,7 +344,6 @@ def get_decoded_token(token: str) -> Optional[Dict]:
 
 
 def get_scope(token: str) -> str:
-    """Get_scope."""
     scope = ""
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     if "scope" in decoded_token:
@@ -350,8 +351,7 @@ def get_scope(token: str) -> str:
     return scope
 
 
-def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserModel]:
-    """Get_user_from_decoded_internal_token."""
+def get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | None:
     sub = decoded_token["sub"]
     parts = sub.split("::")
     service = parts[0].split(":")[1]
@@ -366,7 +366,6 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
 
 
 def _clear_auth_tokens_from_thread_local_data() -> None:
-    """_clear_auth_tokens_from_thread_local_data."""
     tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token"):
         delattr(tld, "new_access_token")

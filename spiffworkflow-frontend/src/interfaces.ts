@@ -23,6 +23,7 @@ export interface RecentProcessModel {
 
 export interface TaskPropertiesJson {
   parent: string;
+  last_state_change: number;
 }
 
 export interface TaskDefinitionPropertiesJson {
@@ -364,4 +365,27 @@ export interface InterstitialPageResponse {
   error?: any;
   task?: ProcessInstanceTask;
   process_instance?: ProcessInstance;
+}
+
+export interface TestCaseErrorDetails {
+  error_messages: string[];
+  stacktrace?: string[];
+  task_bpmn_identifier?: string;
+  task_bpmn_name?: string;
+  task_line_contents?: string;
+  task_line_number?: number;
+  task_trace?: string[];
+}
+
+export interface TestCaseResult {
+  bpmn_file: string;
+  passed: boolean;
+  test_case_identifier: string;
+  test_case_error_details?: TestCaseErrorDetails;
+}
+
+export interface TestCaseResults {
+  all_passed: boolean;
+  failing: TestCaseResult[];
+  passing: TestCaseResult[];
 }

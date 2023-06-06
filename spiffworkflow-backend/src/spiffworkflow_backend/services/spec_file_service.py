@@ -1,23 +1,15 @@
-"""Spec_file_service."""
 import os
 import shutil
 from datetime import datetime
-from typing import List
-from typing import Optional
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
-
-from spiffworkflow_backend.models.correlation_property_cache import (
-    CorrelationPropertyCache,
-)
+from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
@@ -27,27 +19,26 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 
 class ProcessModelFileNotFoundError(Exception):
-    """ProcessModelFileNotFoundError."""
+    pass
 
 
 class ProcessModelFileInvalidError(Exception):
-    """ProcessModelFileInvalidError."""
+    pass
 
 
 class SpecFileService(FileSystemService):
-    """SpecFileService."""
 
     """We store spec files on the file system. This allows us to take advantage of Git for
-       syncing and versioning.
-        The files are stored in a directory whose path is determined by the category and spec names.
+    syncing and versioning.
+     The files are stored in a directory whose path is determined by the category and spec names.
     """
 
     @staticmethod
     def get_files(
         process_model_info: ProcessModelInfo,
-        file_name: Optional[str] = None,
+        file_name: str | None = None,
         extension_filter: str = "",
-    ) -> List[File]:
+    ) -> list[File]:
         """Return all files associated with a workflow specification."""
         path = os.path.join(FileSystemService.root_path(), process_model_info.id_for_file_path())
         files = SpecFileService._get_files(path, file_name)
@@ -67,7 +58,6 @@ class SpecFileService(FileSystemService):
     def get_references_for_process(
         process_model_info: ProcessModelInfo,
     ) -> list[SpecReference]:
-        """Get_references_for_process."""
         files = SpecFileService.get_files(process_model_info)
         references = []
         for file in files:
@@ -76,7 +66,6 @@ class SpecFileService(FileSystemService):
 
     @classmethod
     def get_references_for_file(cls, file: File, process_model_info: ProcessModelInfo) -> list[SpecReference]:
-        """Get_references_for_file."""
         full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
         file_contents: bytes = b""
         with open(full_file_path) as f:
@@ -85,9 +74,8 @@ class SpecFileService(FileSystemService):
 
     @classmethod
     def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
-        """Get_etree_from_xml_bytes."""
         etree_xml_parser = etree.XMLParser(resolve_entities=False)
-        return etree.fromstring(binary_data, parser=etree_xml_parser)
+        return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
 
     @classmethod
     def get_references_for_file_contents(
@@ -155,13 +143,11 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def add_file(process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes) -> File:
-        """Add_file."""
         # Same as update
         return SpecFileService.update_file(process_model_info, file_name, binary_data)
 
     @classmethod
     def validate_bpmn_xml(cls, file_name: str, binary_data: bytes) -> None:
-        """Validate_bpmn_xml."""
         file_type = FileSystemService.file_type(file_name)
         if file_type.value == FileType.bpmn.value:
             BpmnValidator()
@@ -210,7 +196,6 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
-        """Get_data."""
         full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
         if not os.path.exists(full_file_path):
             raise ProcessModelFileNotFoundError(
@@ -221,37 +206,32 @@ class SpecFileService(FileSystemService):
         return spec_file_data
 
     @staticmethod
-    def full_file_path(spec: ProcessModelInfo, file_name: str) -> str:
-        """File_path."""
-        return os.path.abspath(os.path.join(SpecFileService.workflow_path(spec), file_name))
+    def full_file_path(process_model: ProcessModelInfo, file_name: str) -> str:
+        return os.path.abspath(os.path.join(SpecFileService.process_model_full_path(process_model), file_name))
 
     @staticmethod
-    def last_modified(spec: ProcessModelInfo, file_name: str) -> datetime:
-        """Last_modified."""
-        full_file_path = SpecFileService.full_file_path(spec, file_name)
+    def last_modified(process_model: ProcessModelInfo, file_name: str) -> datetime:
+        full_file_path = SpecFileService.full_file_path(process_model, file_name)
         return FileSystemService._last_modified(full_file_path)
 
     @staticmethod
-    def timestamp(spec: ProcessModelInfo, file_name: str) -> float:
-        """Timestamp."""
-        full_file_path = SpecFileService.full_file_path(spec, file_name)
+    def timestamp(process_model: ProcessModelInfo, file_name: str) -> float:
+        full_file_path = SpecFileService.full_file_path(process_model, file_name)
         return FileSystemService._timestamp(full_file_path)
 
     @staticmethod
-    def delete_file(spec: ProcessModelInfo, file_name: str) -> None:
-        """Delete_file."""
-        # Fixme: Remember to remove the lookup files when the spec file is removed.
+    def delete_file(process_model: ProcessModelInfo, file_name: str) -> None:
+        # Fixme: Remember to remove the lookup files when the process_model file is removed.
         # lookup_files = session.query(LookupFileModel).filter_by(file_model_id=file_id).all()
         # for lf in lookup_files:
         #     session.query(LookupDataModel).filter_by(lookup_file_model_id=lf.id).delete()
         #     session.query(LookupFileModel).filter_by(id=lf.id).delete()
-        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        full_file_path = SpecFileService.full_file_path(process_model, file_name)
         os.remove(full_file_path)
 
     @staticmethod
-    def delete_all_files(spec: ProcessModelInfo) -> None:
-        """Delete_all_files."""
-        dir_path = SpecFileService.workflow_path(spec)
+    def delete_all_files(process_model: ProcessModelInfo) -> None:
+        dir_path = SpecFileService.process_model_full_path(process_model)
         if os.path.exists(dir_path):
             shutil.rmtree(dir_path)
 
@@ -259,10 +239,8 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_caches(ref: SpecReference) -> None:
-        """Update_caches."""
         SpecFileService.update_process_cache(ref)
         SpecFileService.update_process_caller_cache(ref)
-        SpecFileService.update_message_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
         SpecFileService.update_correlation_cache(ref)
 
@@ -287,14 +265,12 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def clear_caches() -> None:
-        """Clear_caches."""
         db.session.query(SpecReferenceCache).delete()
         ProcessCallerService.clear_cache()
         # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
     def update_process_cache(ref: SpecReference) -> None:
-        """Update_process_cache."""
         process_id_lookup = (
             SpecReferenceCache.query.filter_by(identifier=ref.identifier).filter_by(type=ref.type).first()
         )
@@ -322,21 +298,6 @@ class SpecFileService(FileSystemService):
         ProcessCallerService.add_caller(ref.identifier, ref.called_element_ids)
 
     @staticmethod
-    def update_message_cache(ref: SpecReference) -> None:
-        """Assure we have a record in the database of all possible message ids and names."""
-        # for message_model_identifier in ref.messages.keys():
-        #     message_model = MessageModel.query.filter_by(
-        #         identifier=message_model_identifier
-        #     ).first()
-        #     if message_model is None:
-        #         message_model = MessageModel(
-        #             identifier=message_model_identifier,
-        #             name=ref.messages[message_model_identifier],
-        #         )
-        #         db.session.add(message_model)
-        #         db.session.commit()
-
-    @staticmethod
     def update_message_trigger_cache(ref: SpecReference) -> None:
         """Assure we know which messages can trigger the start of a process."""
         for message_name in ref.start_messages:
@@ -358,7 +319,6 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_correlation_cache(ref: SpecReference) -> None:
-        """Update_correlation_cache."""
         for name in ref.correlations.keys():
             correlation_property_retrieval_expressions = ref.correlations[name]["retrieval_expressions"]
 

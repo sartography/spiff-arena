@@ -1,10 +1,8 @@
-"""Test_authorization."""
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestAuthorization(BaseTest):
-    """TestAuthorization."""
-
+    pass
     # def test_get_bearer_token(self, app: Flask) -> None:
     #     """Test_get_bearer_token."""
     #     for user_id in ("user_1", "user_2", "admin_1", "admin_2"):

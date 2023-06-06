@@ -84,39 +84,40 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.wait(10000);
+  cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 
 };
 
-  //Check if the process instance is completed successfully
-  const checkProcessInstanceCompleted = (
-    username,
-    password,
-    processInstanceId
+//Check if the process instance is completed successfully
+const checkProcessInstanceCompleted = (
+  username,
+  password,
+  processInstanceId
 ) => {
-      cy.wait(2000);
-      cy.log('========Login with : ', username);
-      cy.log('========processInstanceId: ', processInstanceId);
-      cy.login(username, password);
+  cy.wait(2000);
+  cy.log('========Login with : ', username);
+  cy.log('========processInstanceId: ', processInstanceId);
+  cy.login(username, password);
 
-      cy.wait(1000);
-      cy.visit('/admin/process-instances/find-by-id');
-      cy.get('#process-instance-id-input').type(processInstanceId);
+  cy.wait(1000);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
 
-      cy.get('button')
-          .contains(/^Submit$/)
-          .click();
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
 
-      cy.wait(2000);
-      cy.get('#tag-1 > span').contains('complete');
+  cy.wait(2000);
+  cy.get('#tag-1 > span').contains('complete');
 }
 
 // Learning and Development Path - Without Files
-describe.only('Learning and Development Path - Without Files', () => {
+describe('Learning and Development Path - Without Files', () => {
   Cypress._.times(1, () => {
     // People Ops Partner Group approves the request
-    it('Books Only. People Ops Partner Group approves', () => {
+    it('1.Books Only. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -203,11 +204,12 @@ describe.only('Learning and Development Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -228,7 +230,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // People Ops Partner Group rejects the request
-    it('Books Only. People Ops Partner Group rejects', () => {
+    it('2.Books Only. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -317,11 +319,12 @@ describe.only('Learning and Development Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -342,7 +345,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // People Ops Partner Group request for additional details
-    it('Books Only. People Ops Partner Group needs more info', () => {
+    it('3.Books Only. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -431,11 +434,12 @@ describe.only('Learning and Development Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -474,7 +478,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // Budget owner approves and People Ops Partner Group approves the request
-    it('NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
+    it('4.NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -592,11 +596,12 @@ describe.only('Learning and Development Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -630,7 +635,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // Budget owner rejects the request
-    it('NOT Books Only. Budget owner rejects', () => {
+    it('5.NOT Books Only. Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -719,11 +724,12 @@ describe.only('Learning and Development Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -744,7 +750,7 @@ describe.only('Learning and Development Path - Without Files', () => {
     });
 
     // Budget owner request for additional details
-    it('NOT Books Only. Budget owner needs more info', () => {
+    it('6.NOT Books Only. Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -833,11 +839,12 @@ describe.only('Learning and Development Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -871,7 +878,7 @@ describe.only('Learning and Development Path - Without Files', () => {
           'Task: Reminder: Check Existing Budget',
           'approve'
         );
-        
+
         const peopleOpsUsername = Cypress.env('peopleopssme_username');
         const peopleOpsPassword = Cypress.env('peopleopssme_password');
         cy.log(`=====peopleOpsUsername : ${peopleOpsUsername}`);
@@ -884,6 +891,7 @@ describe.only('Learning and Development Path - Without Files', () => {
           null,
           'approve'
         );
+
         checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
@@ -891,10 +899,10 @@ describe.only('Learning and Development Path - Without Files', () => {
 });
 
 // Learning and Development Path - With Files
-describe('Learning and Development Path - With Files', () => {
+describe.only('Learning and Development Path - With Files', () => {
   Cypress._.times(1, () => {
     // People Ops Partner Group approves the request
-    it('Books Only. People Ops Partner Group approves', () => {
+    it('7.Books Only. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1033,12 +1041,12 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1059,7 +1067,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // People Ops Partner Group rejects the request
-    it('Books Only. People Ops Partner Group rejects', () => {
+    it('8.Books Only. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1198,12 +1206,12 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1224,7 +1232,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // People Ops Partner Group request for additional details
-    it('Books Only. People Ops Partner Group needs more info', () => {
+    it('9.Books Only. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1362,12 +1370,12 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1406,7 +1414,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // Budget owner approves and People Ops Partner Group approves the request
-    it('NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
+    it('10.NOT Books Only. Budget owner approves and People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1574,12 +1582,12 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1613,7 +1621,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // Budget owner rejects the request
-    it('NOT Books Only. Budget owner rejects', () => {
+    it('11.NOT Books Only. Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1752,12 +1760,12 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1778,7 +1786,7 @@ describe('Learning and Development Path - With Files', () => {
     });
 
     // Budget owner request for additional details
-    it('NOT Books Only. Budget owner needs more info', () => {
+    it('12.NOT Books Only. Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1917,12 +1925,12 @@ describe('Learning and Development Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 

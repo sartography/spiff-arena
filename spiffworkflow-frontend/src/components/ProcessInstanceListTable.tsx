@@ -98,6 +98,7 @@ type OwnProps = {
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
   headerElement?: React.ReactElement;
+  tableHtmlId?: string;
 };
 
 interface dateParameters {
@@ -119,6 +120,7 @@ export default function ProcessInstanceListTable({
   showActionsColumn = false,
   showLinkToReport = false,
   headerElement,
+  tableHtmlId,
 }: OwnProps) {
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -490,6 +492,7 @@ export default function ProcessInstanceListTable({
         HttpService.makeCallToBackend({
           path: `/process-instances/report-metadata${queryParamString}`,
           successCallback: getProcessInstances,
+          onUnauthorized: stopRefreshing,
         });
       } else {
         getProcessInstances();
@@ -542,6 +545,7 @@ export default function ProcessInstanceListTable({
     permissionsLoaded,
     reportIdentifier,
     searchParams,
+    stopRefreshing,
   ]);
 
   const processInstanceReportSaveTag = () => {
@@ -782,7 +786,7 @@ export default function ProcessInstanceListTable({
       undefined,
       paginationQueryParamPrefix
     );
-    page = 1; // Reset page back to 0
+    page = 1;
 
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
     setReportMetadata(newReportMetadata);
@@ -1590,9 +1594,7 @@ export default function ProcessInstanceListTable({
       });
       if (showActionsColumn) {
         let buttonElement = null;
-        const interstitialUrl = `/process/${modifyProcessIdentifierForPathParam(
-          processInstance.process_model_identifier
-        )}/${processInstance.id}/interstitial`;
+        const taskShowUrl = `/tasks/${processInstance.id}/${processInstance.task_id}`;
         const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
         let hasAccessToCompleteTask = false;
         if (
@@ -1601,20 +1603,18 @@ export default function ProcessInstanceListTable({
         ) {
           hasAccessToCompleteTask = true;
         }
-        let buttonText = 'View';
+        buttonElement = null;
         if (hasAccessToCompleteTask && processInstance.task_id) {
-          buttonText = 'Go';
+          buttonElement = (
+            <Button
+              kind="secondary"
+              href={taskShowUrl}
+              style={{ width: '60px' }}
+            >
+              Go
+            </Button>
+          );
         }
-
-        buttonElement = (
-          <Button
-            kind="secondary"
-            href={interstitialUrl}
-            style={{ width: '60px' }}
-          >
-            {buttonText}
-          </Button>
-        );
 
         if (
           processInstance.status === 'not_started' ||
@@ -1650,8 +1650,14 @@ export default function ProcessInstanceListTable({
       );
     });
 
+    let tableProps: any = { size: 'lg' };
+    if (tableHtmlId) {
+      tableProps = { ...tableProps, id: tableHtmlId };
+    }
+
     return (
-      <Table size="lg">
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <Table {...tableProps}>
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (

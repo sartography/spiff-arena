@@ -32,7 +32,7 @@ This will cover a lot of the basics, like bolding text, italics, paragraphs, lis
 
 ### MyST
 
-Markdown doesn't support some really useful things.
+Markdown doesn't support some really useful formatting options.
 You can't add footnotes, or create an "aside" comment or build a table.
 Because of this, there are many extensions, and these are typically referred to as Markdown "Flavors."
 The flavor we are using is MyST.
@@ -131,7 +131,7 @@ You can do that by following these steps:
 ### Step 6: Fire up the website
 
 1. Go to Terminal ->  New Terminal
-1. type:  **sphinx-autobuild . _build/html** at the prompt and hit enter.
+1. type:  **sphinx-autobuild . _build/html  -W -a -j auto -n** at the prompt and hit enter.
 1. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 

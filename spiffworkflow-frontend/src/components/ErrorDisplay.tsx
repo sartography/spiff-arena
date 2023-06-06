@@ -4,6 +4,7 @@ import {
   ErrorForDisplay,
   ProcessInstanceEventErrorDetail,
   ProcessInstanceLogEntry,
+  TestCaseErrorDetails,
 } from '../interfaces';
 
 function errorDetailDisplay(
@@ -36,6 +37,22 @@ export const errorForDisplayFromProcessInstanceErrorDetail = (
     error_line: processInstanceErrorEventDetail.task_line_contents,
     task_trace: processInstanceErrorEventDetail.task_trace,
     stacktrace: processInstanceErrorEventDetail.stacktrace,
+  };
+  return errorForDisplay;
+};
+
+export const errorForDisplayFromTestCaseErrorDetails = (
+  testCaseErrorDetails: TestCaseErrorDetails
+) => {
+  const errorForDisplay: ErrorForDisplay = {
+    message: testCaseErrorDetails.error_messages.join('\n'),
+    messageClassName: 'failure-string',
+    task_name: testCaseErrorDetails.task_bpmn_name,
+    task_id: testCaseErrorDetails.task_bpmn_identifier,
+    line_number: testCaseErrorDetails.task_line_number,
+    error_line: testCaseErrorDetails.task_line_contents,
+    task_trace: testCaseErrorDetails.task_trace,
+    stacktrace: testCaseErrorDetails.stacktrace,
   };
   return errorForDisplay;
 };

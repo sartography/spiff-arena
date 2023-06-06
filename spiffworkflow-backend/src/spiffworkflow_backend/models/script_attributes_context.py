@@ -1,15 +1,11 @@
-"""Script_attributes_context."""
 from dataclasses import dataclass
-from typing import Optional
 
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 
 @dataclass
 class ScriptAttributesContext:
-    """ScriptAttributesContext."""
-
-    task: Optional[SpiffTask]
+    task: SpiffTask | None
     environment_identifier: str
-    process_instance_id: Optional[int]
-    process_model_identifier: Optional[str]
+    process_instance_id: int | None
+    process_model_identifier: str | None

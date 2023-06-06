@@ -20,7 +20,6 @@ from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
-
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
 from spiffworkflow_backend.services.authentication_service import TokenInvalidError
@@ -28,7 +27,6 @@ from spiffworkflow_backend.services.authentication_service import TokenNotProvid
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
-
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
@@ -218,7 +216,6 @@ class ApiError(Exception):
 
 
 def set_user_sentry_context() -> None:
-    """Set_user_sentry_context."""
     try:
         username = g.user.username
     except Exception:

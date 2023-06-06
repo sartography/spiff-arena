@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# ^ for syntax highlighting
-"""Get the bpmn process json for a given process instance id and store it in /tmp."""
 import json
 import os
 import sys

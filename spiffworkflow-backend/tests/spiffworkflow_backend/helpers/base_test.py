@@ -1,17 +1,11 @@
-"""Base_test."""
 import io
 import json
 import os
 import time
 from typing import Any
-from typing import Dict
-from typing import Optional
 
 from flask import current_app
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-from werkzeug.test import TestResponse  # type: ignore
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -28,22 +22,20 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
+from werkzeug.test import TestResponse  # type: ignore
+
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 # from tests.spiffworkflow_backend.helpers.test_data import logged_in_headers
 
 
 class BaseTest:
-    """BaseTest."""
-
     @staticmethod
     def find_or_create_user(username: str = "test_user_1") -> UserModel:
-        """Find_or_create_user."""
         user = UserModel.query.filter_by(username=username).first()
         if isinstance(user, UserModel):
             return user
@@ -58,17 +50,17 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> Dict[str, str]:
+    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> dict[str, str]:
         return dict(Authorization="Bearer " + user.encode_auth_token())
 
     def create_group_and_model_with_bpmn(
         self,
         client: FlaskClient,
         user: UserModel,
-        process_group_id: Optional[str] = "test_group",
-        process_model_id: Optional[str] = "random_fact",
-        bpmn_file_name: Optional[str] = None,
-        bpmn_file_location: Optional[str] = None,
+        process_group_id: str | None = "test_group",
+        process_model_id: str | None = "random_fact",
+        bpmn_file_name: str | None = None,
+        bpmn_file_location: str | None = None,
     ) -> str:
         """Creates a process group.
 
@@ -104,7 +96,6 @@ class BaseTest:
         process_group_id: str,
         display_name: str = "",
     ) -> ProcessGroup:
-        """Create_process_group."""
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         return ProcessModelService.add_process_group(process_group)
 
@@ -130,14 +121,14 @@ class BaseTest:
     def create_process_model_with_api(
         self,
         client: FlaskClient,
-        process_model_id: Optional[str] = None,
+        process_model_id: str | None = None,
         process_model_display_name: str = "Cooooookies",
         process_model_description: str = "Om nom nom delicious cookies",
         fault_or_suspend_on_exception: str = NotificationType.suspend.value,
-        exception_notification_addresses: Optional[list] = None,
-        primary_process_id: Optional[str] = None,
-        primary_file_name: Optional[str] = None,
-        user: Optional[UserModel] = None,
+        exception_notification_addresses: list | None = None,
+        primary_process_id: str | None = None,
+        primary_file_name: str | None = None,
+        user: UserModel | None = None,
     ) -> TestResponse:
         if process_model_id is not None:
             # make sure we have a group
@@ -176,7 +167,6 @@ class BaseTest:
             raise Exception("You must include the process_model_id, which must be a path to the model")
 
     def get_test_data_file_full_path(self, file_name: str, process_model_test_data_dir: str) -> str:
-        """Get_test_data_file_contents."""
         return os.path.join(
             current_app.instance_path,
             "..",
@@ -188,7 +178,6 @@ class BaseTest:
         )
 
     def get_test_data_file_contents(self, file_name: str, process_model_test_data_dir: str) -> bytes:
-        """Get_test_data_file_contents."""
         file_full_path = self.get_test_data_file_full_path(file_name, process_model_test_data_dir)
         with open(file_full_path, "rb") as file:
             return file.read()
@@ -197,11 +186,11 @@ class BaseTest:
         self,
         client: FlaskClient,
         process_model_id: str,
-        process_model_location: Optional[str] = None,
-        process_model: Optional[ProcessModelInfo] = None,
+        process_model_location: str | None = None,
+        process_model: ProcessModelInfo | None = None,
         file_name: str = "random_fact.svg",
         file_data: bytes = b"abcdef",
-        user: Optional[UserModel] = None,
+        user: UserModel | None = None,
     ) -> Any:
         """Test_create_spec_file.
 
@@ -249,7 +238,7 @@ class BaseTest:
     def create_process_instance_from_process_model_id_with_api(
         client: FlaskClient,
         test_process_model_id: str,
-        headers: Dict[str, str],
+        headers: dict[str, str],
     ) -> TestResponse:
         """Create_process_instance.
 
@@ -285,10 +274,9 @@ class BaseTest:
     def create_process_instance_from_process_model(
         self,
         process_model: ProcessModelInfo,
-        status: Optional[str] = "not_started",
-        user: Optional[UserModel] = None,
+        status: str | None = "not_started",
+        user: UserModel | None = None,
     ) -> ProcessInstanceModel:
-        """Create_process_instance_from_process_model."""
         if user is None:
             user = self.find_or_create_user()
 
@@ -305,7 +293,8 @@ class BaseTest:
         db.session.add(process_instance)
         db.session.commit()
 
-        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance)
+        run_at_in_seconds = round(time.time())
+        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance, run_at_in_seconds)
 
         return process_instance
 
@@ -314,7 +303,7 @@ class BaseTest:
         cls,
         username: str,
         target_uri: str = PermissionTargetModel.URI_ALL,
-        permission_names: Optional[list[str]] = None,
+        permission_names: list[str] | None = None,
     ) -> UserModel:
         user = BaseTest.find_or_create_user(username=username)
         return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
@@ -324,7 +313,7 @@ class BaseTest:
         cls,
         user: UserModel,
         target_uri: str = PermissionTargetModel.URI_ALL,
-        permission_names: Optional[list[str]] = None,
+        permission_names: list[str] | None = None,
     ) -> UserModel:
         permission_target = AuthorizationService.find_or_create_permission_target(target_uri)
 
@@ -346,7 +335,6 @@ class BaseTest:
         target_uri: str,
         expected_result: bool = True,
     ) -> None:
-        """Assert_user_has_permission."""
         has_permission = AuthorizationService.user_has_permission(
             user=user,
             permission=permission,
@@ -355,11 +343,9 @@ class BaseTest:
         assert has_permission is expected_result
 
     def modify_process_identifier_for_path_param(self, identifier: str) -> str:
-        """Modify_process_identifier_for_path_param."""
         return ProcessModelInfo.modify_process_identifier_for_path_param(identifier)
 
     def un_modify_modified_process_identifier_for_path_param(self, modified_identifier: str) -> str:
-        """Un_modify_modified_process_model_id."""
         return modified_identifier.replace(":", "/")
 
     def create_process_model_with_metadata(self) -> ProcessModelInfo:
@@ -383,8 +369,8 @@ class BaseTest:
         self,
         client: FlaskClient,
         user: UserModel,
-        report_metadata: Optional[ReportMetadata] = None,
-        param_string: Optional[str] = "",
+        report_metadata: ReportMetadata | None = None,
+        param_string: str | None = "",
     ) -> TestResponse:
         report_metadata_to_use = report_metadata
         if report_metadata_to_use is None:

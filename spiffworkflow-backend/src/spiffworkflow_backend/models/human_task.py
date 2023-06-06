@@ -1,4 +1,3 @@
-"""Human_task."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,25 +7,20 @@ from flask import g
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 
-
 if TYPE_CHECKING:
-    from spiffworkflow_backend.models.human_task_user import (  # noqa: F401
-        HumanTaskUserModel,
-    )
+    from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel  # noqa: F401
 
 
 @dataclass
 class HumanTaskModel(SpiffworkflowBaseDBModel):
-    """HumanTaskModel."""
-
     __tablename__ = "human_task"
 
     id: int = db.Column(db.Integer, primary_key=True)
@@ -69,7 +63,6 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def to_task(cls, task: HumanTaskModel) -> Task:
-        """To_task."""
         can_complete = False
         for user in task.human_task_users:
             if user.user_id == g.user.id:

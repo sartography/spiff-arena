@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -8,85 +8,18 @@ import {
   Tabs,
   Grid,
   Column,
-  ComboBox,
   Button,
   ButtonSet,
 } from '@carbon/react';
 
-// eslint-disable-next-line import/no-named-as-default
-import Form from '../themes/carbon';
+import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
-
-// TODO: move this somewhere else
-function TypeaheadWidget({
-  id,
-  onChange,
-  options: { category, itemFormat },
-}: {
-  id: string;
-  onChange: any;
-  options: any;
-}) {
-  const pathForCategory = (inputText: string) => {
-    return `/connector-proxy/typeahead/${category}?prefix=${inputText}&limit=100`;
-  };
-
-  const lastSearchTerm = useRef('');
-  const [items, setItems] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const itemFormatRegex = /[^{}]+(?=})/g;
-  const itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
-
-  const itemToString = (item: any) => {
-    if (!item) {
-      return null;
-    }
-
-    let str = itemFormat;
-    itemFormatSubstitutions.forEach((key: string) => {
-      str = str.replace(`{${key}}`, item[key]);
-    });
-    return str;
-  };
-
-  const handleTypeAheadResult = (result: any, inputText: string) => {
-    if (lastSearchTerm.current === inputText) {
-      setItems(result);
-    }
-  };
-
-  const typeaheadSearch = (inputText: string) => {
-    if (inputText) {
-      lastSearchTerm.current = inputText;
-      // TODO: check cache of prefixes -> results
-      HttpService.makeCallToBackend({
-        path: pathForCategory(inputText),
-        successCallback: (result: any) =>
-          handleTypeAheadResult(result, inputText),
-      });
-    }
-  };
-
-  return (
-    <ComboBox
-      onInputChange={typeaheadSearch}
-      onChange={(event: any) => {
-        setSelectedItem(event.selectedItem);
-        onChange(itemToString(event.selectedItem));
-      }}
-      id={id}
-      items={items}
-      itemToString={itemToString}
-      placeholder={`Start typing to search for ${category}...`}
-      selectedItem={selectedItem}
-    />
-  );
-}
+import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 
 export default function TaskShow() {
   const [task, setTask] = useState<Task | null>(null);
@@ -100,9 +33,11 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
+  // if a user can complete a task then the for-me page should
+  // always work for them so use that since it will work in all cases
   const navigateToInterstitial = (myTask: Task) => {
     navigate(
-      `/process/${modifyProcessIdentifierForPathParam(
+      `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         myTask.process_model_identifier
       )}/${myTask.process_instance_id}/interstitial`
     );
@@ -265,37 +200,104 @@ export default function TaskShow() {
     return null;
   };
 
+  const formatDateString = (dateString?: string) => {
+    let dateObject = new Date();
+    if (dateString) {
+      dateObject = new Date(dateString);
+    }
+    return dateObject.toISOString().split('T')[0];
+  };
+
+  const checkFieldComparisons = (
+    formData: any,
+    propertyKey: string,
+    propertyMetadata: any,
+    formattedDateString: string,
+    errors: any
+  ) => {
+    const fieldIdentifierToCompareWith = propertyMetadata.minimumDate.replace(
+      /^field:/,
+      ''
+    );
+    if (fieldIdentifierToCompareWith in formData) {
+      const dateToCompareWith = formData[fieldIdentifierToCompareWith];
+      if (dateToCompareWith) {
+        const dateStringToCompareWith = formatDateString(dateToCompareWith);
+        if (dateStringToCompareWith > formattedDateString) {
+          errors[propertyKey].addError(
+            `must be equal to or greater than '${fieldIdentifierToCompareWith}'`
+          );
+        }
+      } else {
+        errors[propertyKey].addError(
+          `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
+        );
+      }
+    } else {
+      errors[propertyKey].addError(
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
+      );
+    }
+  };
+
+  const checkMinimumDate = (
+    formData: any,
+    propertyKey: string,
+    propertyMetadata: any,
+    errors: any
+  ) => {
+    const dateString = formData[propertyKey];
+    if (dateString) {
+      const formattedDateString = formatDateString(dateString);
+      if (propertyMetadata.minimumDate === 'today') {
+        const dateTodayString = formatDateString();
+        if (dateTodayString > formattedDateString) {
+          errors[propertyKey].addError('must be today or after');
+        }
+      } else if (propertyMetadata.minimumDate.startsWith('field:')) {
+        checkFieldComparisons(
+          formData,
+          propertyKey,
+          propertyMetadata,
+          formattedDateString,
+          errors
+        );
+      }
+    }
+  };
+
   const getFieldsWithDateValidations = (
     jsonSchema: any,
     formData: any,
     errors: any
+    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
-    if ('properties' in jsonSchema) {
-      Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
-        const propertyMetadata = jsonSchema.properties[propertyKey];
-        if (
-          typeof propertyMetadata === 'object' &&
-          'minimumDate' in propertyMetadata &&
-          propertyMetadata.minimumDate === 'today'
-        ) {
-          const dateToday = new Date();
-          const dateValue = formData[propertyKey];
-          if (dateValue) {
-            const dateValueObject = new Date(dateValue);
-            const dateValueString = dateValueObject.toISOString().split('T')[0];
-            const dateTodayString = dateToday.toISOString().split('T')[0];
-            if (dateTodayString > dateValueString) {
-              errors[propertyKey].addError('must be today or after');
-            }
-          }
+    // if the jsonSchema has an items attribute then assume the element itself
+    // doesn't have a custom validation but it's children could so use that
+    const jsonSchemaToUse =
+      'items' in jsonSchema ? jsonSchema.items : jsonSchema;
+
+    if ('properties' in jsonSchemaToUse) {
+      Object.keys(jsonSchemaToUse.properties).forEach((propertyKey: string) => {
+        const propertyMetadata = jsonSchemaToUse.properties[propertyKey];
+        if ('minimumDate' in propertyMetadata) {
+          checkMinimumDate(formData, propertyKey, propertyMetadata, errors);
         }
 
         // recurse through all nested properties as well
-        getFieldsWithDateValidations(
-          propertyMetadata,
-          formData[propertyKey],
-          errors[propertyKey]
-        );
+        let formDataToSend = formData[propertyKey];
+        if (formDataToSend) {
+          if (formDataToSend.constructor.name !== 'Array') {
+            formDataToSend = [formDataToSend];
+          }
+          formDataToSend.forEach((item: any, index: number) => {
+            let errorsToSend = errors[propertyKey];
+            if (index in errorsToSend) {
+              errorsToSend = errorsToSend[index];
+            }
+            getFieldsWithDateValidations(propertyMetadata, item, errorsToSend);
+          });
+        }
       });
     }
     return errors;

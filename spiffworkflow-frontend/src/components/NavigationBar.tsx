@@ -29,7 +29,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { UnauthenticatedError } from '../services/HttpService';
-import { SPIFF_ENVIRONMENT } from '../config';
+import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
@@ -61,8 +61,8 @@ export default function NavigationBar() {
   // default to readthedocs and let someone specify an environment variable to override:
   //
   let documentationUrl = 'https://spiffworkflow.readthedocs.io';
-  if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
-    documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
+  if (DOCUMENTATION_URL) {
+    documentationUrl = DOCUMENTATION_URL;
   }
 
   const versionInfo = appVersionInfo();
@@ -120,15 +120,19 @@ export default function NavigationBar() {
           <a target="_blank" href={documentationUrl} rel="noreferrer">
             Documentation
           </a>
-          <hr />
-          <Button
-            data-qa="logout-button"
-            className="button-link"
-            onClick={handleLogout}
-          >
-            <Logout />
-            &nbsp;&nbsp;Sign out
-          </Button>
+          {!UserService.authenticationDisabled() ? (
+            <>
+              <hr />
+              <Button
+                data-qa="logout-button"
+                className="button-link"
+                onClick={handleLogout}
+              >
+                <Logout />
+                &nbsp;&nbsp;Sign out
+              </Button>
+            </>
+          ) : null}
         </ToggletipContent>
       </Toggletip>
     </div>

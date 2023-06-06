@@ -3,10 +3,8 @@ from __future__ import annotations
 import copy
 import time
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Optional
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -15,19 +13,14 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance_correlation import (
-    MessageInstanceCorrelationRuleModel,
-)
+from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.services.assertion_service import safe_assertion
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
@@ -77,14 +70,13 @@ class EngineStepDelegate:
         pass
 
 
-SubprocessSpecLoader = Callable[[], Optional[Dict[str, Any]]]
+SubprocessSpecLoader = Callable[[], dict[str, Any] | None]
 
 
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
     def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader):
-        """__init__."""
         self.delegate = delegate
         self.subprocess_spec_loader = subprocess_spec_loader
 
@@ -382,7 +374,6 @@ class WorkflowExecutionService:
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
     ):
-        """__init__."""
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
@@ -395,7 +386,6 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
-        """Do_engine_steps."""
         with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
             if tripped:
                 raise AssertionError(
@@ -484,11 +474,11 @@ class WorkflowExecutionService:
             )
             for correlation_property in event["value"]:
                 message_correlation = MessageInstanceCorrelationRuleModel(
-                    message_instance_id=message_instance.id,
+                    message_instance=message_instance,
                     name=correlation_property.name,
                     retrieval_expression=correlation_property.retrieval_expression,
                 )
-                message_instance.correlation_rules.append(message_correlation)
+                db.session.add(message_correlation)
             db.session.add(message_instance)
 
             bpmn_process = self.process_instance_model.bpmn_process
@@ -505,7 +495,6 @@ class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """A profiled version of the workflow execution service."""
 
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
-        """__do_engine_steps."""
         import cProfile
         from pstats import SortKey
 

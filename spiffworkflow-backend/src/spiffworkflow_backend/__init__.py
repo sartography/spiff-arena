@@ -1,4 +1,3 @@
-"""__init__."""
 import base64
 import faulthandler
 import json
@@ -25,23 +24,16 @@ from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
-from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
-    openid_blueprint,
-)
+from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.routes.user import set_new_access_token_in_cookie
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.background_processing_service import (
-    BackgroundProcessingService,
-)
+from spiffworkflow_backend.services.background_processing_service import BackgroundProcessingService
 
 
 class MyJSONEncoder(DefaultJSONProvider):
-    """MyJSONEncoder."""
-
     def default(self, obj: Any) -> Any:
-        """Default."""
         if hasattr(obj, "serialized"):
             return obj.serialized
         elif isinstance(obj, sqlalchemy.engine.row.Row):  # type: ignore
@@ -61,17 +53,18 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().default(obj)
 
     def dumps(self, obj: Any, **kwargs: Any) -> Any:
-        """Dumps."""
         kwargs.setdefault("default", self.default)
         return super().dumps(obj, **kwargs)
 
 
 def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler) -> None:
-    """Start_scheduler."""
     scheduler = scheduler_class()
 
-    # TODO: polling intervals for different jobs
+    # TODO: polling intervals for messages job
     polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
+    not_started_polling_interval_in_seconds = app.config[
+        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS"
+    ]
     user_input_required_polling_interval_in_seconds = app.config[
         "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"
     ]
@@ -83,6 +76,11 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",
         seconds=10,
+    )
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_not_started_process_instances,
+        "interval",
+        seconds=not_started_polling_interval_in_seconds,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
@@ -117,7 +115,6 @@ class NoOpCipher:
 
 
 def create_app() -> flask.app.Flask:
-    """Create_app."""
     faulthandler.enable()
 
     # We need to create the sqlite database in a known location.
@@ -204,7 +201,6 @@ def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.app
 
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:
-    """Get_hacked_up_app_for_script."""
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     os.environ[flask_env_key] = "whatevs"
@@ -242,13 +238,11 @@ def traces_sampler(sampling_context: Any) -> Any:
 
 
 def configure_sentry(app: flask.app.Flask) -> None:
-    """Configure_sentry."""
     import sentry_sdk
     from sentry_sdk.integrations.flask import FlaskIntegration
 
     # get rid of NotFound errors
     def before_send(event: Any, hint: Any) -> Any:
-        """Before_send."""
         if "exc_info" in hint:
             _exc_type, exc_value, _tb = hint["exc_info"]
             # NotFound is mostly from web crawlers

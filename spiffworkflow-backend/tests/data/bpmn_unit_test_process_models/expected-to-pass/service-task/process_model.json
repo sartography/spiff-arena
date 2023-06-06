@@ -1,0 +1,9 @@
+{
+    "description": "Service Task",
+    "display_name": "Service Task",
+    "exception_notification_addresses": [],
+    "fault_or_suspend_on_exception": "fault",
+    "files": [],
+    "primary_file_name": "service_task.bpmn",
+    "primary_process_id": "ServiceTaskProcess"
+}

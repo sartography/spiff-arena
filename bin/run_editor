@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if [[ -z "${1:-}" ]]; then
+  >&2 echo "usage: $(basename "$0") [SPIFF_EDITOR_BPMN_SPEC_DIR]"
+  exit 1
+fi
+
+if [[ ! -d "$1" ]]; then
+  >&2 echo "ERROR: the first argument must be a directory."
+  exit 1
+fi
+
+SPIFF_EDITOR_BPMN_SPEC_DIR=$1 \
+docker compose -f editor.docker-compose.yml up -d
+
+SPIFF_EDITOR_BASE_URL="${SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND:-http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}}"
+SPIFF_EDITOR_URL_PATH="${SPIFF_EDITOR_URL_PATH:-/admin/process-groups}"
+
+echo ""
+echo "Spiff Editor is ready."
+echo ""
+echo "Please open ${SPIFF_EDITOR_BASE_URL}${SPIFF_EDITOR_URL_PATH}"

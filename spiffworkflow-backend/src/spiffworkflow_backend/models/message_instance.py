@@ -1,39 +1,33 @@
-"""Message_instance."""
 import enum
 from dataclasses import dataclass
-from typing import Any
-from typing import Optional
 from typing import TYPE_CHECKING
+from typing import Any
 
 from flask import current_app
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 
 if TYPE_CHECKING:
-    from spiffworkflow_backend.models.message_instance_correlation import (  # noqa: F401
+    from spiffworkflow_backend.models.message_instance_correlation import (  # noqa: F401,I001
         MessageInstanceCorrelationRuleModel,
     )
 
 
 class MessageTypes(enum.Enum):
-    """MessageTypes."""
-
     send = "send"
     receive = "receive"
 
 
 class MessageStatuses(enum.Enum):
-    """MessageStatuses."""
-
     ready = "ready"
     running = "running"
     completed = "completed"
@@ -63,16 +57,16 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-    correlation_rules = relationship("MessageInstanceCorrelationRuleModel", back_populates="message_instance")
+    correlation_rules = relationship(
+        "MessageInstanceCorrelationRuleModel", back_populates="message_instance", cascade="delete"
+    )
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:
-        """Validate_message_type."""
         return self.validate_enum_field(key, value, MessageTypes)
 
     @validates("status")
     def validate_status(self, key: str, value: Any) -> Any:
-        """Validate_status."""
         return self.validate_enum_field(key, value, MessageStatuses)
 
     def correlates(self, other: Any, expression_engine: PythonScriptEngine) -> bool:
@@ -149,9 +143,8 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
 
 @listens_for(Session, "before_flush")  # type: ignore
 def ensure_failure_cause_is_set_if_message_instance_failed(
-    session: Any, _flush_context: Optional[Any], _instances: Optional[Any]
+    session: Any, _flush_context: Any | None, _instances: Any | None
 ) -> None:
-    """Ensure_failure_cause_is_set_if_message_instance_failed."""
     for instance in session.new:
         if isinstance(instance, MessageInstanceModel):
             if instance.status == "failed" and instance.failure_cause is None:

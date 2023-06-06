@@ -9,9 +9,9 @@
 
 ## 🚀 Getting Started with SpiffWorkflow
 
-SpiffWorkflow is a platform that facilitates the execution of business processes performed within the Status platform.
+SpiffWorkflow is a platform that facilitates the execution of business processes. To begin using SpiffWorkflow, it is necessary to acquire the appropriate credentials and URL. 
 
-To access SpiffWorkflow, simply sign in using your Keycloak account. Once you have successfully signed in to the Spiff platform, it is crucial to familiarize yourself with the various sections within the SpiffWorkflow. This will enable you to gain a comprehensive understanding of the interface. 
+Upon receiving the credentials, here is how you can get started with SpiffWorkflow!
 
 ```{image} images/Untitled.png
 :alt: Login Page
@@ -20,13 +20,7 @@ To access SpiffWorkflow, simply sign in using your Keycloak account. Once you ha
 
 ```{image} images/Untitled_1.png
 :alt: Home Page
-:width: 45%
-```
-
-```{admonition} Signing In
-:class: warning
-
-⚠️ In the event that you encounter any difficulties signing in to Spiff, please reach out to Jakub (**@jakubgs**) on Discord for assistance and further guidance.
+:width: 53%
 ```
 
 Here, we will provide a generic overview of each section step by step, allowing you to navigate and engage with the platform more effectively.
@@ -41,7 +35,7 @@ Once you are signed in, you can start exploring the home page. The home page has
 - The "Completed" section allows you to view all completed process instances, including those initiated by you, those initiated by other SpiffWorkflow users with tasks completed by you and if applicable, those with tasks completed by a group of which you are a member.
 - The “Start New” section displays the processes you are permitted to start according to your role.
 
-```{admonition} Signing In
+```{admonition} Key terms
 :class: info
 💡 **Process:** A process is a sequence of tasks that must be completed to achieve a specific goal.
 
@@ -58,26 +52,20 @@ If you are a member of a team, you may also have one or more Instances with task
 The process section provides a comprehensive view of the process ecosystem by showcasing process groups and process models. 
 
 ```{admonition} Process Groups
-:class: info
-💡 A **process group** is a way of grouping a bunch of **process models.** A **process model** contains all the files necessary to execute a specific process.
+A **process group** is a way of grouping a bunch of **process models** and a **process model** contains all the files necessary to execute a specific process.
 ```
-
--- 
+ 
 ![Untitled](images/Untitled_4.png)
 
 ### Step 3: Explore the Process Instances section
 
-The Process Instance section provides a detailed view of individual process instances, allowing you to track their progress and manage them effectively. This section includes essential information such as the instance ID, process name, the individual who started the process, the end date, and the current status. 
+The Process Instance section provides a detailed view of individual process instances, allowing you to track their progress and manage them effectively. 
+
+This section includes essential information such as the instance ID, process name, the individual who started the process, the end date, and the current status. 
 
 ![Untitled](images/Untitled_5.png)
 
-```{admonition} Desktop Notifications
-:class: info
-💡 To receive SpiffWorkflow notifications in StatusApp Desktop, Public key from your Status account should be added to your **Bamboo profile**. This will ensure that workflow-related notifications are sent to you.
-
-```
-
-When getting started with SpiffWorkflow, it's essential to take the time to explore and familiarize yourself with the platform's interface and features. Feel free to ask questions about the platform's features or how to get started. The PPG team is always on hand to provide assistance and support when needed. 
+When getting started with SpiffWorkflow, it's essential to take the time to explore and familiarize yourself with the platform's interface and features. Feel free to ask questions about the platform's features or how to get started.
 
 ---
 
@@ -198,8 +186,7 @@ Once you have successfully signed in, navigate to the process section. This sect
 
 ![Untitled](images/Untitled_16.png)
 
-> **Step 2: Find and click on the process**
-> 
+### Step 2: Find and click on the process
 
 You can either search for a process model using the search bar or navigate through displayed processes to find the process model.
 
@@ -272,37 +259,3 @@ A prompt will appear, allowing you to provide a name for the identifier associat
 If you want to filter by ID, go to the "Find by Id" section of the page. Enter the ID and click "Submit". The system will show you the process instance with the corresponding ID.
 
 You can now view the process instances that you filtered for and take appropriate action based on their status. This can help you manage your workflows more efficiently and keep track of the progress of various process instances.
-
----
-
-## 🗳️ How to request additional permissions
-
-As a user, you may be required to access certain process groups or start process models in order to perform desired actions. However, you may not have the necessary access or permissions to do so. In this case, you will need to request access or additional permissions from the admins - PPG team. 
-
-By following these steps, you can submit a request and seek the necessary permissions to perform the desired actions.
-
-### Step 1: Navigate & Search
-
-Once you are signed in, navigate to the "**Process**" section. Use the search bar or browse through the available process models until you find "**Request Access**”. Click on the process model to open it. 
-
-![Untitled](images/Untitled_29.png)
-
-If you want to access the request access process from **Home** section and click on the "**Start New +**" button. This will open the "Processes I can start" section where you can find the “Request Access” process.
-
-![Untitled](images/Untitled_30.png)
-
-### Step 2: Start the Process
-
-Once the "**Process Request**" model is open, initiate the process by clicking on the "Start" button.
-
-![Untitled](images/Untitled_31.png)
-
-### Step 3: Provide Request Details & Submit
-
-A task will be presented to capture the necessary information and details for special permissions request. Find the “**Description”** text field and enter the relevant information and details about your request.
-
-Ensure that all required details have been included such as Process name, Process group name, and type of permissions you need. Click on the "**Submit**" button or similar action to submit your access or special permissions request.
-
-![Untitled](images/Untitled_32.png)
-
-By following these steps, you can request the special permissions needed to carry out your tasks effectively.

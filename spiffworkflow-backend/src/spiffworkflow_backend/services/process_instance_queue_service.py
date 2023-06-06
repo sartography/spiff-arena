@@ -1,19 +1,13 @@
 import contextlib
 import time
-from typing import Generator
-from typing import List
-from typing import Optional
+from collections.abc import Generator
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.process_instance_queue import (
-    ProcessInstanceQueueModel,
-)
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
@@ -31,8 +25,6 @@ class ProcessInstanceQueueService:
     def _configure_and_save_queue_entry(
         cls, process_instance: ProcessInstanceModel, queue_entry: ProcessInstanceQueueModel
     ) -> None:
-        # TODO: configurable params (priority/run_at)
-        queue_entry.run_at_in_seconds = round(time.time())
         queue_entry.priority = 2
         queue_entry.status = process_instance.status
         queue_entry.locked_by = None
@@ -42,13 +34,18 @@ class ProcessInstanceQueueService:
         db.session.commit()
 
     @classmethod
-    def enqueue_new_process_instance(cls, process_instance: ProcessInstanceModel) -> None:
-        queue_entry = ProcessInstanceQueueModel(process_instance_id=process_instance.id)
+    def enqueue_new_process_instance(cls, process_instance: ProcessInstanceModel, run_at_in_seconds: int) -> None:
+        queue_entry = ProcessInstanceQueueModel(
+            process_instance_id=process_instance.id, run_at_in_seconds=run_at_in_seconds
+        )
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
     def _enqueue(cls, process_instance: ProcessInstanceModel) -> None:
         queue_entry = ProcessInstanceLockService.unlock(process_instance.id)
+        current_time = round(time.time())
+        if current_time > queue_entry.run_at_in_seconds:
+            queue_entry.run_at_in_seconds = current_time
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
@@ -115,14 +112,16 @@ class ProcessInstanceQueueService:
     @classmethod
     def entries_with_status(
         cls,
-        status_value: str = ProcessInstanceStatus.waiting.value,
-        locked_by: Optional[str] = None,
-    ) -> List[ProcessInstanceQueueModel]:
+        status_value: str,
+        locked_by: str | None,
+        run_at_in_seconds_threshold: int,
+    ) -> list[ProcessInstanceQueueModel]:
         return (
             db.session.query(ProcessInstanceQueueModel)
             .filter(
                 ProcessInstanceQueueModel.status == status_value,
                 ProcessInstanceQueueModel.locked_by == locked_by,
+                ProcessInstanceQueueModel.run_at_in_seconds <= run_at_in_seconds_threshold,
             )
             .all()
         )
@@ -130,8 +129,23 @@ class ProcessInstanceQueueService:
     @classmethod
     def peek_many(
         cls,
-        status_value: str = ProcessInstanceStatus.waiting.value,
-    ) -> List[int]:
-        queue_entries = cls.entries_with_status(status_value, None)
+        status_value: str,
+        run_at_in_seconds_threshold: int,
+    ) -> list[int]:
+        queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold)
         ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status
+
+    @staticmethod
+    def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:
+        queue_entry = (
+            db.session.query(ProcessInstanceQueueModel)
+            .filter(ProcessInstanceQueueModel.process_instance_id == process_instance.id)
+            .first()
+        )
+
+        if queue_entry is None:
+            return False
+
+        current_time = round(time.time())
+        return queue_entry.run_at_in_seconds > current_time

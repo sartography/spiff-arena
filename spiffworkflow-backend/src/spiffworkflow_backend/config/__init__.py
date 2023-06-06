@@ -2,15 +2,18 @@
 import os
 import threading
 import uuid
+from urllib.parse import urlparse
 
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
 
 from spiffworkflow_backend.services.logging_service import setup_logger
 
+HTTP_REQUEST_TIMEOUT_SECONDS = 15
+
 
 class ConfigurationError(Exception):
-    """ConfigurationError."""
+    pass
 
 
 def setup_database_configs(app: Flask) -> None:
@@ -56,7 +59,6 @@ def setup_database_configs(app: Flask) -> None:
 
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
-    """Load_config_file."""
     try:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
@@ -78,8 +80,44 @@ def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
             )
 
 
+# see the message in the ConfigurationError below for why we are checking this.
+# we really do not want this to raise when there is not a problem, so there are lots of return statements littered throughout.
+def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
+    if not app.config.get("SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY"):
+        return
+
+    frontend_url = app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND")
+    backend_url = app.config.get("SPIFFWORKFLOW_BACKEND_URL")
+
+    if frontend_url is None or backend_url is None:
+        return
+    if frontend_url == "" or backend_url == "":
+        return
+    if not frontend_url.startswith("https://") or not backend_url.startswith("https://"):
+        return
+
+    frontend_url_parsed = urlparse(frontend_url)
+    frontend_domain = frontend_url_parsed.netloc
+    backend_url_parsed = urlparse(backend_url)
+    backend_domain = backend_url_parsed.netloc
+
+    if frontend_domain == backend_domain:
+        # probably backend and frontend are using different paths.
+        # routing by path will work just fine and won't cause any problems with setting cookies
+        return
+
+    if backend_domain.endswith(frontend_domain):
+        return
+
+    raise ConfigurationError(
+        "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND and SPIFFWORKFLOW_BACKEND_URL are incompatible. We need backend to set"
+        " cookies for frontend, so they need to be on the same domain. A common setup is to have frontend on"
+        " example.com and backend on api.example.com. If you do not need this functionality, you can avoid this check"
+        " by setting environment variable SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY=false"
+    )
+
+
 def setup_config(app: Flask) -> None:
-    """Setup_config."""
     # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
@@ -144,3 +182,4 @@ def setup_config(app: Flask) -> None:
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
+    _check_for_incompatible_frontend_and_backend_urls(app)

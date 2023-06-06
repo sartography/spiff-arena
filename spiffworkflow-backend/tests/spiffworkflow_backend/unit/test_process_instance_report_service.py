@@ -1,10 +1,6 @@
-"""Test_process_instance_report_service."""
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -12,6 +8,9 @@ from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportMetadataInvalidError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.user_service import UserService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceReportService(BaseTest):
@@ -21,7 +20,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_completed_instances_initiated_by_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -115,7 +113,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_completed_instances_with_tasks_completed_by_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -191,7 +188,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_completed_instances_with_tasks_completed_by_my_groups."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -278,7 +274,6 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_filter_by_with_relation_to_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(

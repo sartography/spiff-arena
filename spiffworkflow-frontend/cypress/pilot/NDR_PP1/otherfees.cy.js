@@ -84,37 +84,38 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.wait(10000);
+  cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 };
 
-  //Check if the process instance is completed successfully
-  const checkProcessInstanceCompleted = (
-    username,
-    password,
-    processInstanceId
+//Check if the process instance is completed successfully
+const checkProcessInstanceCompleted = (
+  username,
+  password,
+  processInstanceId
 ) => {
-      cy.wait(2000);
-      cy.log('========Login with : ', username);
-      cy.log('========processInstanceId: ', processInstanceId);
-      cy.login(username, password);
+  cy.wait(2000);
+  cy.log('========Login with : ', username);
+  cy.log('========processInstanceId: ', processInstanceId);
+  cy.login(username, password);
 
-      cy.wait(1000);
-      cy.visit('/admin/process-instances/find-by-id');
-      cy.get('#process-instance-id-input').type(processInstanceId);
+  cy.wait(1000);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
 
-      cy.get('button')
-          .contains(/^Submit$/)
-          .click();
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
 
-      cy.wait(2000);
-      cy.get('#tag-1 > span').contains('complete');
+  cy.wait(2000);
+  cy.get('#tag-1 > span').contains('complete');
 }
 
-describe.only('Other Fees Path - Without Files', () => {
+describe('Other Fees Path - Without Files', () => {
   Cypress._.times(1, () => {
     // Budget owner approves the request
-    it('Budget owner approves', () => {
+    it('1.Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -216,11 +217,12 @@ describe.only('Other Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -242,7 +244,7 @@ describe.only('Other Fees Path - Without Files', () => {
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it('2.Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -331,11 +333,12 @@ describe.only('Other Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -357,7 +360,7 @@ describe.only('Other Fees Path - Without Files', () => {
     });
 
     // Budget owner request for additional details
-    it('Budget owner need more info', () => {
+    it('3.Budget owner need more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -446,11 +449,12 @@ describe.only('Other Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -491,10 +495,10 @@ describe.only('Other Fees Path - Without Files', () => {
   });
 });
 
-describe('Other Fees Path - With Files', () => {
+describe.only('Other Fees Path - With Files', () => {
   Cypress._.times(1, () => {
     // Budget owner approves the request
-    it('Budget owner approves', () => {
+    it('4.Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -647,11 +651,11 @@ describe('Other Fees Path - With Files', () => {
           .click();
 
         cy.wait(20000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -673,7 +677,7 @@ describe('Other Fees Path - With Files', () => {
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it('5.Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -812,12 +816,12 @@ describe('Other Fees Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
@@ -839,7 +843,7 @@ describe('Other Fees Path - With Files', () => {
     });
 
     // Budget owner request for additional details
-    it('Budget owner need more info', () => {
+    it('6.Budget owner need more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -978,12 +982,12 @@ describe('Other Fees Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(1000);
 
