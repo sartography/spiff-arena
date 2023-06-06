@@ -3356,7 +3356,6 @@ class TestProcessApi(BaseTest):
         request_data = {
             "group_by": ["client"],
             "filter_by": [
-                # {"field_name": "client", "field_value": 'client1', "operator": "equals"},
                 {"field_name": "start_in_seconds", "field_value": 30, "operator": "less_than"},
                 {"field_name": "start_in_seconds", "field_value": 5, "operator": "greater_than_or_equal"},
             ],
@@ -3372,7 +3371,9 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        print(f"response.json: {response.json}")
+
+        expected_result = {"client1": 6.0, "client2": 5.0}
+        assert response.json == expected_result
 
     def test_process_data_show(
         self,

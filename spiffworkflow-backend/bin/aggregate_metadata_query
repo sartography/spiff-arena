@@ -18,4 +18,55 @@ mysql -uroot spiffworkflow_backend_local_development -e '
   ) AS hey
   GROUP BY hey.client
   ;
+
+  # SELECT max(anon_1.client) AS max_1, sum(anon_1.duration_in_seconds) AS sum_1
+  # FROM (
+  #   SELECT
+  #     p.id AS id,
+  #     p.process_model_identifier AS process_model_identifier,
+  #     p.process_model_display_name AS process_model_display_name,
+  #     p.process_initiator_id AS process_initiator_id,
+  #     p.bpmn_process_definition_id AS bpmn_process_definition_id,
+  #     p.bpmn_process_id AS bpmn_process_id,
+  #     p.spiff_serializer_version AS spiff_serializer_version,
+  #     p.start_in_seconds AS start_in_seconds,
+  #     p.end_in_seconds AS end_in_seconds,
+  #     p.task_updated_at_in_seconds AS task_updated_at_in_seconds,
+  #     p.updated_at_in_seconds AS updated_at_in_seconds,
+  #     p.created_at_in_seconds AS created_at_in_seconds,
+  #     p.status AS status,
+  #     p.bpmn_version_control_type AS bpmn_version_control_type,
+  #     p.bpmn_version_control_identifier AS bpmn_version_control_identifier,
+  #     m_client.value AS client,
+  #     m_duration.value AS duration_in_seconds
+  #   FROM process_instance p
+  #   JOIN process_instance_metadata m_duration ON m_duration.process_instance_id = p.id AND m_duration.key = "duration_in_seconds"
+  #   JOIN process_instance_metadata m_project ON m_project.process_instance_id = p.id AND m_project.key = "project"
+  #   JOIN process_instance_metadata m_client ON m_client.process_instance_id = p.id AND m_client.key = "client"
+  # )
+  # AS anon_1 GROUP BY anon_1.client;
+  SELECT max(anon_1.client) AS max_1, sum(anon_1.duration_in_seconds) AS sum_1
+  FROM (
+    SELECT process_instance.id AS id,
+      process_instance.process_model_identifier AS process_model_identifier,
+      process_instance.process_model_display_name AS process_model_display_name,
+      process_instance.process_initiator_id AS process_initiator_id,
+      process_instance.bpmn_process_definition_id AS bpmn_process_definition_id,
+      process_instance.bpmn_process_id AS bpmn_process_id,
+      process_instance.spiff_serializer_version AS spiff_serializer_version,
+      process_instance.start_in_seconds AS start_in_seconds,
+      process_instance.end_in_seconds AS end_in_seconds,
+      process_instance.task_updated_at_in_seconds AS task_updated_at_in_seconds,
+      process_instance.updated_at_in_seconds AS updated_at_in_seconds,
+      process_instance.created_at_in_seconds AS created_at_in_seconds,
+      process_instance.status AS status,
+      process_instance.bpmn_version_control_type AS bpmn_version_control_type,
+      process_instance.bpmn_version_control_identifier AS bpmn_version_control_identifier,
+      process_instance_metadata_1.value AS client,
+      process_instance_metadata_2.value AS duration_in_seconds
+    FROM process_instance
+    INNER JOIN process_instance_metadata AS process_instance_metadata_1 ON process_instance.id = process_instance_metadata_1.process_instance_id
+    INNER JOIN process_instance_metadata AS process_instance_metadata_2 ON process_instance.id = process_instance_metadata_2.process_instance_id
+    WHERE process_instance_metadata_1.`key` = "client" AND process_instance_metadata_2.`key` = "duration_in_seconds"
+  ) AS anon_1 GROUP BY anon_1.client
 '

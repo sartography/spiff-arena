@@ -42,7 +42,7 @@ function run_autofixers() {
   # python_files=$(find $python_dirs -type f -name "*.py" ! -name '.null-ls*' ! -name '_null-ls*')
   # Don't check things in git-ignore:
   python_files=$(git ls-files $python_dirs | grep .py$)
-  ruff --fix $python_files
+  ruff --fix $python_files || echo ''
 }
 
 function run_pre_commmit() {

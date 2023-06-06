@@ -1269,7 +1269,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Workflow"
-  
+
   /process-instances/aggregations:
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_aggregate
