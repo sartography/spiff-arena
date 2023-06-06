@@ -39,10 +39,10 @@ function run_autofixers() {
   fi
 
   python_dirs=$(get_python_dirs)
-  # python_files=$(find $python_dirs -type f -name "*.py" ! -name '.null-ls*' ! -name '_null-ls*')
-  # Don't check things in git-ignore:
-  python_files=$(git ls-files $python_dirs | grep .py$)
-  ruff --fix $python_files || echo ''
+
+  # this is here only to fix potential issues and we do not care if it fails
+  # let the failure in precommit fail it instead
+  ruff --fix $python_dirs || echo ''
 }
 
 function run_pre_commmit() {
