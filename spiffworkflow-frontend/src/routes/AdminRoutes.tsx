@@ -23,7 +23,6 @@ import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
-import ProcessInstanceAggregations from './ProcessInstanceAggregations';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -142,10 +141,6 @@ export default function AdminRoutes() {
         <Route
           path="process-instances/find-by-id"
           element={<ProcessInstanceFindById />}
-        />
-        <Route
-          path="process-instances/aggregations"
-          element={<ProcessInstanceAggregations />}
         />
       </Routes>
     );
