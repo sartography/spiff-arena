@@ -31,6 +31,8 @@ Once you are signed in, you can start exploring the home page. The home page has
 
 ![Untitled](images/Untitled_2.png)
 
+
+
 - The "In Progress" section provides an overview of all ongoing process instances, including those initiated by you, those awaiting your action, or those awaiting action from a team you are a member of (Optional).
 - The "Completed" section allows you to view all completed process instances, including those initiated by you, those initiated by other SpiffWorkflow users with tasks completed by you and if applicable, those with tasks completed by a group of which you are a member.
 - The “Start New” section displays the processes you are permitted to start according to your role.
