@@ -3295,6 +3295,85 @@ class TestProcessApi(BaseTest):
         assert response.json["results"][1]["id"] == process_instance_one.id
         assert response.json["results"][0]["id"] == process_instance_two.id
 
+    def test_process_instance_can_get_aggregated_data(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/hello_world",
+            process_model_source_directory="nested-task-data-structure",
+        )
+        ProcessModelService.update_process_model(
+            process_model,
+            {
+                "metadata_extraction_paths": [
+                    {"key": "time_ns", "path": "outer.time"},
+                ]
+            },
+        )
+
+        metadata_values = {
+            "pi1": {
+                "client": "client1",
+                "duration_in_seconds": "1",
+                "start_in_seconds": "10",
+            },
+            "pi2": {
+                "client": "client1",
+                "duration_in_seconds": "5",
+                "start_in_seconds": "15",
+            },
+            "pi3": {
+                "client": "client2",
+                "duration_in_seconds": "5",
+                "start_in_seconds": "20",
+            },
+            "pi4": {
+                "client": "client1",
+                "duration_in_seconds": "8",
+                "start_in_seconds": "35",
+            },
+            "pi5": {
+                "client": "client1",
+                "duration_in_seconds": "8",
+                "start_in_seconds": "1",
+            },
+        }
+
+        for _, metadata in metadata_values.items():
+            process_instance = self.create_process_instance_from_process_model(process_model)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.do_engine_steps(save=True)
+            assert process_instance.status == "complete"
+            for key, value in metadata.items():
+                pim = ProcessInstanceMetadataModel(key=key, value=value, process_instance_id=process_instance.id)
+                db.session.add(pim)
+            db.session.commit()
+
+        request_data = {
+            "group_by": ["client"],
+            "filter_by": [
+                # {"field_name": "client", "field_value": 'client1', "operator": "equals"},
+                {"field_name": "start_in_seconds", "field_value": 30, "operator": "less_than"},
+                {"field_name": "start_in_seconds", "field_value": 5, "operator": "greater_than_or_equal"},
+            ],
+            "aggregator_type": "sum",
+            "aggregator_field": "duration_in_seconds",
+        }
+
+        response = client.post(
+            "/v1.0/process-instances/aggregations",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(request_data),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        print(f"response.json: {response.json}")
+
     def test_process_data_show(
         self,
         app: Flask,

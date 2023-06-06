@@ -1269,6 +1269,27 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Workflow"
+  
+  /process-instances/aggregations:
+    post:
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_aggregate
+      summary: Get an aggregation of process instance metadata based on input body given
+      tags:
+        - Process Instances
+      requestBody:
+        description: Aggregation request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: The process instance report was updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /process-instances/reports/{report_id}:
     parameters:

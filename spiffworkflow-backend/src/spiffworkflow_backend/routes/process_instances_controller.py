@@ -1,6 +1,9 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from sqlalchemy import func
 from typing import Any
+
+import sqlalchemy
 
 import flask.wrappers
 from flask import current_app
@@ -8,7 +11,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from sqlalchemy import and_
+from sqlalchemy import and_, cast
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
@@ -600,6 +603,70 @@ def process_instance_find_by_id(
         "uri_type": uri_type,
     }
     return make_response(jsonify(response_json), 200)
+
+
+def process_instance_aggregate(
+    body: dict,
+) -> Response:
+    process_instance_query = ProcessInstanceModel.query
+    # process_instance_query = db.session.query(ProcessInstanceModel)
+    instance_metadata_aliases = {}
+    for filter in body["filter_by"]:
+        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
+        instance_metadata_aliases[filter['field_name']] = instance_metadata_alias
+
+        conditions = [
+            ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
+            instance_metadata_alias.key == filter['field_name'],
+        ]
+
+        if filter['operator'] == 'equals':
+            conditions.append(instance_metadata_alias.value == filter["field_value"])
+        elif filter['operator'] == 'less_than':
+            conditions.append(cast(instance_metadata_alias.value, sqlalchemy.Integer) < filter["field_value"])
+        elif filter['operator'] == 'greater_than_or_equal':
+            conditions.append(cast(instance_metadata_alias.value, sqlalchemy.Integer) >= filter["field_value"])
+
+        process_instance_query = process_instance_query.join(
+            instance_metadata_alias, and_(*conditions)
+        )#.add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
+
+    parameters = []
+    for group_by_column in body['group_by']:
+        if group_by_column not in instance_metadata_aliases:
+            instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
+            instance_metadata_aliases[group_by_column] = instance_metadata_alias
+            process_instance_query.join(instance_metadata_alias)
+        parameters.append(instance_metadata_aliases[group_by_column].key)
+        process_instance_query = process_instance_query.add_columns(instance_metadata_aliases[group_by_column].key.label(group_by_column))
+
+    # process_instance_query = process_instance_query.group_by(*parameters)
+
+    if body['aggregator_field'] not in instance_metadata_aliases:
+        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
+        instance_metadata_aliases[body['aggregator_field']] = instance_metadata_alias
+        process_instance_query.join(instance_metadata_alias)
+    process_instance_query = process_instance_query.add_columns(instance_metadata_aliases[body['aggregator_field']].key.label(body['aggregator_field']))
+
+    # if body['aggregator_type'] == 'sum':
+
+    # process_instance_query = process_instance_query.add_columns(*parameters, func.sum(instance_metadata_aliases[body['aggregator_field']].key))
+    # process_instance_query = process_instance_query.with_entities(*parameters)
+
+    client_column = instance_metadata_aliases['client']
+    duration_in_seconds_column = instance_metadata_aliases['duration_in_seconds']
+    main_pim_table = ProcessInstanceMetadataModel
+    pis = process_instance_query.subquery()
+    import pdb; pdb.set_trace()
+    # result = db.session.query(func.max(client_column.key), func.sum(duration_in_seconds_column.value)).select_from(process_instance_query.subquery()).group_by(*parameters).all()
+    result = db.session.query(func.max(pis.c.client), func.sum(pis.c.duration_in_seconds)).group_by(pis.c.client).all()
+    # result = db.session.query(ProcessInstanceMetadataModel).filter(ProcessInstanceMetadataModel.process_instance_id.in_(process_instance_query.subquery())).group_by(*parameters).add_columns(func.max(client_column.key), func.sum(duration_in_seconds_column.value)).all()
+    import pdb; pdb.set_trace()
+
+
+    # result = process_instance_query.all()
+
+    return make_response(jsonify(result), 200)
 
 
 def send_user_signal_event(
