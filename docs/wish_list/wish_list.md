@@ -17,8 +17,11 @@ It might also be available in the footer or under a help icon when displaying a 
 
 ## Modeler Experience
 
+### Markdown Support for Process Groups and Models
+Allow us to define a markdown file for a process group or process model, which would be displayed in the process group or process model in the tile view, or at the top of the details page when a group or model is selected.
+
 ### Form Builder
-Let's invest in a much better Form Builder experience, so that it is trivial to build new forms or modify existing forms
+Let's invest in a much better Form Builder experience, so that it is trivial to build new forms or modify existing forms.
 
 
 
