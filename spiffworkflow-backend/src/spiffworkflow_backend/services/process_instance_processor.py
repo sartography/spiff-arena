@@ -1,12 +1,12 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal
-import uuid
 import json
 import logging
 import os
 import re
 import time
+import uuid
 from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
@@ -350,7 +350,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             methods = self.__get_augment_methods(task)
             if external_methods:
                 methods.update(external_methods)
-            super().execute(task, script, methods)
+            # do not run script if it is blank
+            if script:
+                super().execute(task, script, methods)
             return True
         except WorkflowException as e:
             raise e
