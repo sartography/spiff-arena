@@ -1,12 +1,12 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal
-import uuid
 import json
 import logging
 import os
 import re
 import time
+import uuid
 from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
