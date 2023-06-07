@@ -53,8 +53,11 @@ function SelectWidget({
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
-    // errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
-    errorMessageForField = rawErrors[0];
+    if ('validationErrorMessage' in schema) {
+      errorMessageForField = (schema as any).validationErrorMessage;
+    } else {
+      errorMessageForField = rawErrors[0];
+    }
   }
 
   // ok. so in safari, the select widget showed the first option, whereas in chrome it forced you to select an option.
