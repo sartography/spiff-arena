@@ -1,6 +1,7 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal
+import uuid
 import json
 import logging
 import os
@@ -277,6 +278,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "sum": sum,
             "time": time,
             "timedelta": timedelta,
+            "uuid": uuid,
         }
 
         use_restricted_script_engine = True
