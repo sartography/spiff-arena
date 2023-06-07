@@ -211,11 +211,12 @@ export default function TaskShow() {
   const checkFieldComparisons = (
     formData: any,
     propertyKey: string,
-    propertyMetadata: any,
+    minimumDateCheck: string,
     formattedDateString: string,
-    errors: any
+    errors: any,
+    jsonSchema: any
   ) => {
-    const fieldIdentifierToCompareWith = propertyMetadata.minimumDate.replace(
+    const fieldIdentifierToCompareWith = minimumDateCheck.replace(
       /^field:/,
       ''
     );
@@ -224,8 +225,16 @@ export default function TaskShow() {
       if (dateToCompareWith) {
         const dateStringToCompareWith = formatDateString(dateToCompareWith);
         if (dateStringToCompareWith > formattedDateString) {
+          let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+          if (
+            fieldIdentifierToCompareWith in jsonSchema.properties &&
+            jsonSchema.properties[fieldIdentifierToCompareWith].title
+          ) {
+            fieldToCompareWithTitle =
+              jsonSchema.properties[fieldIdentifierToCompareWith].title;
+          }
           errors[propertyKey].addError(
-            `must be equal to or greater than '${fieldIdentifierToCompareWith}'`
+            `must be equal to or greater than '${fieldToCompareWithTitle}'`
           );
         }
       } else {
@@ -244,25 +253,30 @@ export default function TaskShow() {
     formData: any,
     propertyKey: string,
     propertyMetadata: any,
-    errors: any
+    errors: any,
+    jsonSchema: any
   ) => {
     const dateString = formData[propertyKey];
     if (dateString) {
       const formattedDateString = formatDateString(dateString);
-      if (propertyMetadata.minimumDate === 'today') {
-        const dateTodayString = formatDateString();
-        if (dateTodayString > formattedDateString) {
-          errors[propertyKey].addError('must be today or after');
+      const minimumDateChecks = propertyMetadata.minimumDate.split(',');
+      minimumDateChecks.forEach((mdc: string) => {
+        if (mdc === 'today') {
+          const dateTodayString = formatDateString();
+          if (dateTodayString > formattedDateString) {
+            errors[propertyKey].addError('must be today or after');
+          }
+        } else if (mdc.startsWith('field:')) {
+          checkFieldComparisons(
+            formData,
+            propertyKey,
+            mdc,
+            formattedDateString,
+            errors,
+            jsonSchema
+          );
         }
-      } else if (propertyMetadata.minimumDate.startsWith('field:')) {
-        checkFieldComparisons(
-          formData,
-          propertyKey,
-          propertyMetadata,
-          formattedDateString,
-          errors
-        );
-      }
+      });
     }
   };
 
@@ -281,7 +295,13 @@ export default function TaskShow() {
       Object.keys(jsonSchemaToUse.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchemaToUse.properties[propertyKey];
         if ('minimumDate' in propertyMetadata) {
-          checkMinimumDate(formData, propertyKey, propertyMetadata, errors);
+          checkMinimumDate(
+            formData,
+            propertyKey,
+            propertyMetadata,
+            errors,
+            jsonSchemaToUse
+          );
         }
 
         // recurse through all nested properties as well
