@@ -15,9 +15,7 @@ import {
   HeaderMenuItem,
   HeaderGlobalAction,
   HeaderGlobalBar,
-  // @ts-ignore
 } from '@carbon/react';
-// @ts-ignore
 import { Logout, Login } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -32,7 +30,6 @@ import { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 
-// for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
   const handleLogout = () => {
     UserService.doLogout();
