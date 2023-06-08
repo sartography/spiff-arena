@@ -131,6 +131,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model:*", "create"),
+                ("/process-model-tests/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
@@ -214,6 +215,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model/*", "create"),
+                ("/process-model-tests/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
@@ -311,6 +313,8 @@ class TestAuthorizationService(BaseTest):
                 ("/debug/*", "create"),
                 ("/messages", "read"),
                 ("/messages/*", "create"),
+                ("/process-data-file-download/*", "read"),
+                ("/process-data/*", "read"),
                 ("/process-instance-reset/*", "create"),
                 ("/process-instance-resume/*", "create"),
                 ("/process-instance-suspend/*", "create"),
@@ -326,6 +330,7 @@ class TestAuthorizationService(BaseTest):
                 ("/send-event/*", "create"),
                 ("/task-complete/*", "create"),
                 ("/task-data/*", "update"),
+                ("/task-data/*", "read"),
             ]
         )
         permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
