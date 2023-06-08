@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -129,9 +129,7 @@ export default function ProcessModelEditDiagram() {
 
   usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
-  useEffect(() => {
-    // Grab all available process models in case we need to search for them.
-    // Taken from the Process Group List
+  const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
     const processResults = (result: any) => {
       const selectionArray = result.map((item: any) => {
         const label = `${item.display_name} (${item.identifier})`;
@@ -139,13 +137,19 @@ export default function ProcessModelEditDiagram() {
         return item;
       });
       setProcesses(selectionArray);
+      if (onProcessesFetched) {
+        onProcessesFetched(selectionArray);
+      }
     };
     HttpService.makeCallToBackend({
       path: `/processes`,
       successCallback: processResults,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // it is critical to only run this once.
+  }, []);
+
+  useEffect(() => {
+    getProcessesCallback();
+  }, [getProcessesCallback]);
 
   useEffect(() => {
     const fileResult = (result: any) => {
@@ -900,6 +904,32 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchBpmnEditor = (processId: string) => {
+    const openProcessModelFileInNewTab = (
+      processReference: ProcessReference
+    ) => {
+      const path = generatePath(
+        '/admin/process-models/:process_model_path/files/:file_name',
+        {
+          process_model_path: modifyProcessIdentifierForPathParam(
+            processReference.process_model_id
+          ),
+          file_name: processReference.file_name,
+        }
+      );
+      window.open(path);
+    };
+
+    const openFileNameForProcessId = (
+      processesReferences: ProcessReference[]
+    ) => {
+      const processRef = processesReferences.find((p) => {
+        return p.identifier === processId;
+      });
+      if (processRef) {
+        openProcessModelFileInNewTab(processRef);
+      }
+    };
+
     // using the "setState" method with a function gives us access to the
     // most current state of processes. Otherwise it uses the stale state
     // when passing the callback to a non-React component like bpmn-js:
@@ -908,17 +938,10 @@ export default function ProcessModelEditDiagram() {
       const processRef = upToDateProcesses.find((p) => {
         return p.identifier === processId;
       });
-      if (processRef) {
-        const path = generatePath(
-          '/admin/process-models/:process_model_path/files/:file_name',
-          {
-            process_model_path: modifyProcessIdentifierForPathParam(
-              processRef.process_model_id
-            ),
-            file_name: processRef.file_name,
-          }
-        );
-        window.open(path);
+      if (!processRef) {
+        getProcessesCallback(openFileNameForProcessId);
+      } else {
+        openProcessModelFileInNewTab(processRef);
       }
       return upToDateProcesses;
     });
