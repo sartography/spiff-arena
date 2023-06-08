@@ -1,6 +1,7 @@
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from spiffworkflow_backend.specs.start_event import StartEvent
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 
 
 class MyCustomParser(BpmnDmnParser):  # type: ignore
@@ -10,3 +11,7 @@ class MyCustomParser(BpmnDmnParser):  # type: ignore
     OVERRIDE_PARSER_CLASSES.update(SpiffBpmnParser.OVERRIDE_PARSER_CLASSES)
 
     StartEvent.register_parser_class(OVERRIDE_PARSER_CLASSES)
+
+    DATA_STORE_CLASSES = {}
+
+    TypeaheadDataStore.register_data_store_class(DATA_STORE_CLASSES)

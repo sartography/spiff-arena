@@ -81,8 +81,10 @@ from spiffworkflow_backend.services.workflow_execution_service import WorkflowEx
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
+TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
