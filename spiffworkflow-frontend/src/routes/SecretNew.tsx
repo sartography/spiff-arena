@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @ts-ignore
-import { Stack } from '@carbon/react';
-import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
+import { Form, TextInput, Button, ButtonSet, Stack } from '@carbon/react';
 import HttpService from '../services/HttpService';
 
 export default function SecretNew() {
-  const [value, setValue] = useState('');
-  const [key, setKey] = useState('');
+  const [value, setValue] = useState<string>('');
+  const [key, setKey] = useState<string>('');
+  const [keyIsInvalid, setKeyIsInvalid] = useState<boolean>(false);
+  const [valueIsInvalid, setValueIsInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const navigateToSecret = (_result: any) => {
@@ -19,16 +18,24 @@ export default function SecretNew() {
     navigate(`/admin/configuration/secrets`);
   };
 
-  const changeSpacesToDash = (someString: string) => {
-    // change spaces to `-`
-    let s1 = someString.replace(' ', '-');
-    // remove any trailing `-`
-    s1 = s1.replace(/-$/, '');
-    return s1;
-  };
-
   const addSecret = (event: any) => {
     event.preventDefault();
+
+    let hasErrors = false;
+    setKeyIsInvalid(false);
+    if (!key.match(/^[\w-]+$/)) {
+      setKeyIsInvalid(true);
+      hasErrors = true;
+    }
+    setValueIsInvalid(false);
+    if (value.trim().length < 1) {
+      setValueIsInvalid(true);
+      hasErrors = true;
+    }
+    if (hasErrors) {
+      return;
+    }
+
     HttpService.makeCallToBackend({
       path: `/secrets`,
       successCallback: navigateToSecret,
@@ -40,41 +47,41 @@ export default function SecretNew() {
     });
   };
 
-  const warningStyle = {
-    color: 'red',
-  };
-
   return (
     <main style={{ padding: '1rem 0' }}>
       <h1>Add Secret</h1>
       <Form onSubmit={addSecret}>
-        <Form.Group className="mb-3" controlId="formDisplayName">
-          <Form.Label>
-            Key: <span style={warningStyle}>No Spaces</span>
-          </Form.Label>
-          <Form.Control
-            type="text"
+        <Stack gap={5}>
+          <TextInput
+            id="secret-key"
+            labelText="Key*"
             value={key}
-            onChange={(e) => setKey(changeSpacesToDash(e.target.value))}
+            invalid={keyIsInvalid}
+            invalidText="The key must be alphanumeric characters and underscores"
+            onChange={(e: any) => setKey(e.target.value)}
           />
-        </Form.Group>
-        <Form.Group className="mb-3" controlId="formIdentifier">
-          <Form.Label>Value:</Form.Label>
-          <Form.Control
-            type="text"
+          <TextInput
+            id="secret-value"
+            labelText="Value*"
             value={value}
-            onChange={(e) => {
+            invalid={valueIsInvalid}
+            invalidText="The value must be set"
+            onChange={(e: any) => {
               setValue(e.target.value);
             }}
           />
-        </Form.Group>
-        <Stack orientation="horizontal" gap={3}>
-          <Button variant="primary" type="submit">
-            Submit
-          </Button>
-          <Button variant="danger" type="button" onClick={navigateToSecrets}>
-            Cancel
-          </Button>
+          <ButtonSet>
+            <Button kind="primary" type="submit">
+              Submit
+            </Button>
+            <Button
+              kind=""
+              className="button-white-background"
+              onClick={navigateToSecrets}
+            >
+              Cancel
+            </Button>
+          </ButtonSet>
         </Stack>
       </Form>
     </main>
