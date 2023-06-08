@@ -124,10 +124,18 @@ export default function ReactDiagramEditor({
   const alreadyImportedXmlRef = useRef(false);
 
   const { targetUris } = useUriListForPermissions();
-  const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processModelShowPath]: ['PUT'],
-    [targetUris.processModelFileShowPath]: ['POST', 'GET', 'PUT', 'DELETE'],
-  };
+  const permissionRequestData: PermissionsToCheck = {};
+
+  if (diagramType !== 'readonly') {
+    permissionRequestData[targetUris.processModelShowPath] = ['PUT'];
+    permissionRequestData[targetUris.processModelFileShowPath] = [
+      'POST',
+      'GET',
+      'PUT',
+      'DELETE',
+    ];
+  }
+
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
 

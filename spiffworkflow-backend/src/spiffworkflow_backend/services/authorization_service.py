@@ -77,6 +77,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
@@ -534,6 +535,9 @@ class AuthorizationService:
 
         # read comes from PG and PM permissions
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data-file-download/*"))
 
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
