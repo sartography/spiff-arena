@@ -7,8 +7,8 @@ import {
 } from 'react-router-dom';
 import {
   Button,
+  ButtonSet,
   Modal,
-  Content,
   Tabs,
   TabList,
   Tab,
@@ -17,10 +17,14 @@ import {
   TextInput,
   Grid,
   Column,
-  // @ts-ignore
 } from '@carbon/react';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
+import {
+  SkipForward,
+  SkipBack,
+  PlayOutline,
+  Close,
+  Checkmark,
+} from '@carbon/icons-react';
 
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
@@ -576,7 +580,10 @@ export default function ProcessModelEditDiagram() {
 
       if (scriptUnitTestResult.context) {
         errorStringElement = (
-          <span>Unexpected result. Please see the comparison below.</span>
+          <span>
+            Unexpected result. Please see the expected / actual comparison
+            below.
+          </span>
         );
         let outputJson = '{}';
         if (currentScriptUnitTest) {
@@ -634,14 +641,28 @@ export default function ProcessModelEditDiagram() {
       let scriptUnitTestResultBoolElement = null;
       if (scriptUnitTestResult) {
         scriptUnitTestResultBoolElement = (
-          <Col xs={1}>
+          <>
             {scriptUnitTestResult.result === true && (
-              <span style={{ color: 'green', fontSize: '3em' }}>✓</span>
+              <Button
+                kind="ghost"
+                className="green-icon"
+                renderIcon={Checkmark}
+                iconDescription="Unit tests passed"
+                hasIconOnly
+                size="lg"
+              />
             )}
             {scriptUnitTestResult.result === false && (
-              <span style={{ color: 'red', fontSize: '3em' }}>✘</span>
+              <Button
+                kind="ghost"
+                className="red-icon"
+                renderIcon={Close}
+                iconDescription="Unit tests failed"
+                hasIconOnly
+                size="lg"
+              />
             )}
-          </Col>
+          </>
         );
       }
       let inputJson = currentScriptUnitTest.inputJson.value;
@@ -663,78 +684,80 @@ export default function ProcessModelEditDiagram() {
 
       return (
         <main>
-          <Content>
-            <Row>
-              <Col xs={8}>
-                <Button variant="link" disabled>
-                  Unit Test: {currentScriptUnitTest.id}
-                </Button>
-              </Col>
-              <Col xs={1}>
+          <Grid condensed fullWidth>
+            <Column md={4} lg={8} sm={2}>
+              <p className="with-top-margin-for-unit-test-name">
+                Unit Test: {currentScriptUnitTest.id}
+              </p>
+            </Column>
+            <Column md={4} lg={8} sm={2}>
+              <ButtonSet>
                 <Button
+                  kind="ghost"
                   data-qa="unit-test-previous-button"
-                  onClick={setPreviousScriptUnitTest}
-                  variant="link"
+                  renderIcon={SkipBack}
+                  iconDescription="Previous Unit Test"
+                  hasIconOnly
+                  size="lg"
                   disabled={previousButtonDisable}
-                >
-                  &laquo;
-                </Button>
-              </Col>
-              <Col xs={1}>
+                  onClick={setPreviousScriptUnitTest}
+                />
                 <Button
+                  kind="ghost"
                   data-qa="unit-test-next-button"
-                  style={{ fontSize: '1.5em' }}
-                  onClick={setNextScriptUnitTest}
-                  variant="link"
+                  renderIcon={SkipForward}
+                  iconDescription="Next Unit Test"
+                  hasIconOnly
+                  size="lg"
                   disabled={nextButtonDisable}
-                >
-                  &raquo;
-                </Button>
-              </Col>
-              <Col xs={1}>
+                  onClick={setNextScriptUnitTest}
+                />
                 <Button
-                  className="justify-content-end"
+                  kind="ghost"
                   data-qa="unit-test-run"
-                  style={{ fontSize: '1.5em' }}
+                  renderIcon={PlayOutline}
+                  iconDescription="Run Unit Test"
+                  hasIconOnly
+                  size="lg"
                   onClick={runCurrentUnitTest}
-                >
-                  Run
-                </Button>
-              </Col>
-              <Col xs={1}>{scriptUnitTestResultBoolElement}</Col>
-            </Row>
-            <Row>
-              <Col>{unitTestFailureElement()}</Col>
-            </Row>
-            <Row>
-              <Col>
-                <div>Input Json:</div>
-                <div>
-                  <Editor
-                    height={500}
-                    width="auto"
-                    defaultLanguage="json"
-                    options={Object.assign(jsonEditorOptions(), {})}
-                    value={inputJson}
-                    onChange={handleEditorScriptTestUnitInputChange}
-                  />
-                </div>
-              </Col>
-              <Col>
-                <div>Expected Output Json:</div>
-                <div>
-                  <Editor
-                    height={500}
-                    width="auto"
-                    defaultLanguage="json"
-                    options={Object.assign(jsonEditorOptions(), {})}
-                    value={outputJson}
-                    onChange={handleEditorScriptTestUnitOutputChange}
-                  />
-                </div>
-              </Col>
-            </Row>
-          </Content>
+                />
+                {scriptUnitTestResultBoolElement}
+              </ButtonSet>
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column md={8} lg={16} sm={4}>
+              {unitTestFailureElement()}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column md={4} lg={8} sm={2}>
+              <div>Input Json:</div>
+              <div>
+                <Editor
+                  height={500}
+                  width="auto"
+                  defaultLanguage="json"
+                  options={Object.assign(jsonEditorOptions(), {})}
+                  value={inputJson}
+                  onChange={handleEditorScriptTestUnitInputChange}
+                />
+              </div>
+            </Column>
+            <Column md={4} lg={8} sm={2}>
+              <div>Expected Output Json:</div>
+              <div>
+                <Editor
+                  height={500}
+                  width="auto"
+                  defaultLanguage="json"
+                  options={Object.assign(jsonEditorOptions(), {})}
+                  value={outputJson}
+                  onChange={handleEditorScriptTestUnitOutputChange}
+                />
+              </div>
+            </Column>
+          </Grid>
         </main>
       );
     }
