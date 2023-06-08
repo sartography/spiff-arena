@@ -19,6 +19,8 @@ if [[ "${RUN_WITH_DAEMON:-}" != "false" ]]; then
   additional_args="${additional_args} -d"
 fi
 
+docker --version
+
 docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" build
 docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" stop
 
