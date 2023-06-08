@@ -440,7 +440,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
-    return len(list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]))
+    return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
 def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | None, str | None, None]:
