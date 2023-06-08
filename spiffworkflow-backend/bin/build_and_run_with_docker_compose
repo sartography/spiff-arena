@@ -37,4 +37,5 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RECREATE_DATABASE:-}" == "true" ]]; then
   docker volume rm spiffworkflow-backend_spiffworkflow_backend || echo 'docker volume not found'
 fi
 
+docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" pull
 docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" up --wait $additional_args
