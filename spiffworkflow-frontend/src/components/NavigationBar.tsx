@@ -229,13 +229,6 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         {configurationElement()}
-        <HeaderMenuItem
-          hidden
-          href="/admin/process-instances/reports"
-          isCurrentPage={isActivePage('/admin/process-instances/reports')}
-        >
-          Perspectives
-        </HeaderMenuItem>
       </>
     );
   };
