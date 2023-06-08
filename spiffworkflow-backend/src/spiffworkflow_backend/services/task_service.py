@@ -157,7 +157,7 @@ class TaskService:
         """
         (parent_subprocess_guid, _parent_subprocess) = self.__class__._task_subprocess(spiff_task)
         if parent_subprocess_guid is not None:
-            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task_from_id(
+            spiff_task_of_parent_subprocess = spiff_task.workflow.top_workflow.get_task_from_id(
                 UUID(parent_subprocess_guid)
             )
 
@@ -242,11 +242,11 @@ class TaskService:
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
-        if spiff_workflow.outer_workflow != spiff_workflow:
+        if spiff_workflow.parent:
             direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
                 id=bpmn_process.direct_parent_process_id
             ).first()
-            self.update_bpmn_process(spiff_workflow.outer_workflow, direct_parent_bpmn_process)
+            self.update_bpmn_process(spiff_workflow.parent, direct_parent_bpmn_process)
 
     def update_task_model(
         self,
@@ -311,7 +311,7 @@ class TaskService:
             # This is the top level workflow, which has no guid
             # check for bpmn_process_id because mypy doesn't realize bpmn_process can be None
             if self.process_instance.bpmn_process_id is None:
-                spiff_workflow = spiff_task.workflow._get_outermost_workflow()
+                spiff_workflow = spiff_task.workflow.top_workflow
                 bpmn_process = self.add_bpmn_process(
                     bpmn_process_dict=self.serializer.workflow_to_dict(spiff_workflow),
                     spiff_workflow=spiff_workflow,
@@ -369,10 +369,10 @@ class TaskService:
             bpmn_process.bpmn_process_definition = bpmn_process_definition
 
             if top_level_process is not None:
-                subprocesses = spiff_workflow._get_outermost_workflow().subprocesses
+                subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent = top_level_process
                 for subprocess_guid, subprocess in subprocesses.items():
-                    if subprocess == spiff_workflow.outer_workflow:
+                    if subprocess == spiff_workflow.parent:
                         direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
                             guid=str(subprocess_guid)
                         ).first()
@@ -674,7 +674,7 @@ class TaskService:
 
     @classmethod
     def _task_subprocess(cls, spiff_task: SpiffTask) -> tuple[str | None, BpmnWorkflow | None]:
-        top_level_workflow = spiff_task.workflow._get_outermost_workflow()
+        top_level_workflow = spiff_task.workflow.top_workflow
         my_wf = spiff_task.workflow  # This is the workflow the spiff_task is part of
         my_sp = None
         my_sp_id = None

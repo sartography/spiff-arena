@@ -1009,7 +1009,7 @@ class ProcessInstanceProcessor:
 
                 # in the xml, it's the id attribute. this identifies the process where the activity lives.
                 # if it's in a subprocess, it's the inner process.
-                bpmn_process_identifier = ready_or_waiting_task.workflow.name
+                bpmn_process_identifier = ready_or_waiting_task.workflow.spec.name
 
                 form_file_name = None
                 ui_form_file_name = None

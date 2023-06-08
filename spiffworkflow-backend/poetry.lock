@@ -2384,8 +2384,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "main"
-resolved_reference = "01a25fc3f829786c4b65d19fd0fda408de37c79f"
+reference = "improvement/better-subworkflow-management"
+resolved_reference = "f511e2ddf1d1cbfae762ff3e58576a46a1f0ce19"
 
 [[package]]
 name = "sqlalchemy"
@@ -2839,4 +2839,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "67863394f8de94eaddd20964ae383c6dc3416bbdec623e399b5a8a0d163e5178"
+content-hash = "d06ddd0e52968edb70b3557cdc564abb6c4c916938d00fea7858940746c7e058"
