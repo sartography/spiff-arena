@@ -1556,7 +1556,16 @@ class ProcessInstanceProcessor:
             task_guid=task_model.guid,
             user_id=user.id,
         )
-        task_service.process_parents_and_children_and_save_to_database(spiff_task)
+
+        # children of a multi-instance task has the attribute "triggered" set to True
+        # so use that to determine if a spiff_task is apart of a multi-instance task
+        # and therefore we need to process its parent since the current task will not
+        # know what is actually going on.
+        # Basically "triggered" means "this task is not part of the task spec outputs"
+        spiff_task_to_process = spiff_task
+        if spiff_task_to_process.triggered is True:
+            spiff_task_to_process = spiff_task.parent
+        task_service.process_parents_and_children_and_save_to_database(spiff_task_to_process)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
