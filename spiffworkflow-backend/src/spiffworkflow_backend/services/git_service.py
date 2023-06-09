@@ -153,15 +153,15 @@ class GitService:
     @classmethod
     def handle_web_hook(cls, webhook: dict) -> bool:
         cls.check_for_publish_configs()
-
         if "repository" not in webhook or "clone_url" not in webhook["repository"]:
             raise InvalidGitWebhookBodyError(
                 f"Cannot find required keys of 'repository:clone_url' from webhook body: {webhook}"
             )
-
-        config_clone_url = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"]
         repo = webhook["repository"]
         valid_clone_urls = [repo["clone_url"], repo["git_url"], repo["ssh_url"]]
+        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        with FileSystemService.cd(bpmn_spec_absolute_dir):
+            config_clone_url = cls.run_shell_command_to_get_stdout(["git", "config", "--get", "remote.origin.url"])
         if config_clone_url not in valid_clone_urls:
             raise GitCloneUrlMismatchError(
                 f"Configured clone url does not match the repo URLs from webhook: {config_clone_url} =/="
