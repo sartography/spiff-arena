@@ -1,22 +1,34 @@
 from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.models.typeahead import TypeaheadModel
 from typing import Any
+from spiffworkflow_backend.models.db import db
 
 class TypeaheadDataStore(BpmnDataStoreSpecification):
     """TypeaheadDataStore."""
 
-    def get(self, my_task):
+    def get(self, my_task) -> None:
         """get."""
-        assert self.bpmn_id == "employees_for_typeahead"
         my_task.data[self.bpmn_id] = "tmp"
 
     def set(self, my_task):
         """set."""
-        assert self.bpmn_id == "employees_for_typeahead"
-        tmp = my_task.data[self.bpmn_id]
+        typeahead_data_by_category = my_task.data[self.bpmn_id]
+        for category, items in typeahead_data_by_category.items():
+            db.session.query(TypeaheadModel).filter_by(category=category).delete()
+            objects = [self._make_object(category, item) for item in items]
+            db.session.bulk_save_objects(objects)
+        db.session.commit()
         del my_task.data[self.bpmn_id]
 
+    def _make_object(self, category: str, item: dict[str, Any]) -> TypeaheadModel:
+        return TypeaheadModel(
+            category=category,
+            search_term=item["search_term"],
+            result=item["result"],
+            )
+        
     @staticmethod
     def register_converter(spec_config: dict[str, Any]):
         spec_config["task_specs"].append(TypeaheadDataStoreConverter)
@@ -24,7 +36,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]):
         data_store_classes["TypeaheadDataStore"] = TypeaheadDataStore
-        # TODO: tmp
+        # TODO: tmp, remove before merging
         data_store_classes["SomeDataStore"] = TypeaheadDataStore
 
 
