@@ -5,7 +5,6 @@
 :caption: Getting Started
 learn_basics/learn_basics.md
 quick_start/quick_start.md
-learn_basics/bpmn_terminology.md
 ```
 
 ```{toctree}
@@ -48,6 +47,7 @@ how_to/complete_a_task_on_behalf_of_another_user.md
 :maxdepth: 3
 :caption: Glossary
 glossary/glossary.md
+learn_basics/bpmn_terminology.md
 
 ```
 
