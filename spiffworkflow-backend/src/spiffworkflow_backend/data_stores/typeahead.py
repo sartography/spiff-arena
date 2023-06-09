@@ -40,8 +40,6 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]):
         data_store_classes["TypeaheadDataStore"] = TypeaheadDataStore
-        # TODO: tmp, remove before merging
-        data_store_classes["SomeDataStore"] = TypeaheadDataStore
 
 
 class TypeaheadDataStoreConverter(BpmnSpecConverter):

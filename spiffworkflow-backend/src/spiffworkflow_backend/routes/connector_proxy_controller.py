@@ -45,4 +45,4 @@ def _remote_typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.
     return Response(response, status=status, mimetype="application/json")
 
 def _has_local_data(category: str) -> bool:
-    return db.session.query(TypeaheadModel).filter_by(category=category).first() is not None
+    return db.session.query(TypeaheadModel.category).filter_by(category=category).first() is not None
