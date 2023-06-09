@@ -126,7 +126,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             spiff_task.run()
 
     def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
-        ready_tasks = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY)])
+        ready_tasks = list(bpmn_process_instance.get_tasks(TaskState.READY))
         if len(ready_tasks) > 0:
             return ready_tasks[0]
         return None

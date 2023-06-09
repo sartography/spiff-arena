@@ -10,7 +10,7 @@ export const useUriListForPermissions = () => {
       processGroupListPath: '/v1.0/process-groups',
       processGroupShowPath: `/v1.0/process-groups/${params.process_group_id}`,
       processInstanceActionPath: `/v1.0/process-instances/${params.process_model_id}/${params.process_instance_id}`,
-      processInstanceCompleteTaskPath: `/v1.0/complete-task/${params.process_model_id}/${params.process_instance_id}`,
+      processInstanceCompleteTaskPath: `/v1.0/task-complete/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceCreatePath: `/v1.0/process-instances/${params.process_model_id}`,
       processInstanceErrorEventDetails: `/v1.0/event-error-details/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceListPath: '/v1.0/process-instances',
