@@ -203,14 +203,15 @@ export default function TaskListTable({
     }
     rowElements.push(
       <td>
-        <Button
-          variant="primary"
-          href={taskUrl}
-          hidden={processInstanceTask.process_instance_status === 'suspended'}
-          disabled={!hasAccessToCompleteTask}
-        >
-          Go
-        </Button>
+        {processInstanceTask.process_instance_status === 'suspended' ? null : (
+          <Button
+            variant="primary"
+            href={taskUrl}
+            disabled={!hasAccessToCompleteTask}
+          >
+            Go
+          </Button>
+        )}
       </td>
     );
     return <tr key={processInstanceTask.id}>{rowElements}</tr>;

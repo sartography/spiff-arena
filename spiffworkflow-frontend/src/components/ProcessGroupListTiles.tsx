@@ -97,7 +97,7 @@ export default function ProcessGroupListTiles({
     return (
       <>
         {/* so we can check if the groups have loaded in cypress tests */}
-        <div data-qa="process-groups-loaded" hidden />
+        <div data-qa="process-groups-loaded" className="hidden" />
         {processGroupArea()}
       </>
     );

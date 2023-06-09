@@ -278,9 +278,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
 
     can_complete = False
     try:
-        AuthorizationService.assert_user_can_complete_task(
-            process_instance.id, task_definition.bpmn_identifier, g.user
-        )
+        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
     except HumanTaskNotFoundError:
         can_complete = False
@@ -440,7 +438,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
-    return len(list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]))
+    return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
 def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | None, str | None, None]:
@@ -483,7 +481,7 @@ def _task_submit_shared(
 
     processor = ProcessInstanceProcessor(process_instance)
     spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, spiff_task.task_spec.name, principal.user)
+    AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
 
     if spiff_task.state != TaskState.READY:
         raise (
