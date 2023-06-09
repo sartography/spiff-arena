@@ -4,6 +4,7 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
+import { useState } from 'react';
 import {
   PermissionsToCheck,
   ProcessModel,
@@ -78,6 +79,7 @@ export default function ProcessInstanceRun({
 }: OwnProps) {
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
+  const [disableStartButton, setDisableStartButton] = useState<boolean>(false);
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     processModel.id
   );
@@ -109,20 +111,29 @@ export default function ProcessInstanceRun({
     HttpService.makeCallToBackend({
       path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
-      failureCallback: addError,
+      failureCallback: (result: any) => {
+        addError(result);
+        setDisableStartButton(false);
+      },
       httpMethod: 'POST',
     });
   };
 
   const processInstanceCreateAndRun = () => {
     removeError();
+    setDisableStartButton(true);
     HttpService.makeCallToBackend({
       path: processInstanceCreatePath,
       successCallback: processModelRun,
-      failureCallback: addError,
+      failureCallback: (result: any) => {
+        addError(result);
+        setDisableStartButton(false);
+      },
       httpMethod: 'POST',
     });
   };
+
+  // if checkPermissions is false then assume the page using this component has already checked the permissions
   if (checkPermissions) {
     return (
       <Can I="POST" a={processInstanceCreatePath} ability={ability}>
@@ -130,6 +141,7 @@ export default function ProcessInstanceRun({
           data-qa="start-process-instance"
           onClick={processInstanceCreateAndRun}
           className={className}
+          disabled={disableStartButton}
         >
           Start
         </Button>
@@ -137,7 +149,11 @@ export default function ProcessInstanceRun({
     );
   }
   return (
-    <Button onClick={processInstanceCreateAndRun} className={className}>
+    <Button
+      onClick={processInstanceCreateAndRun}
+      className={className}
+      disabled={disableStartButton}
+    >
       Start
     </Button>
   );

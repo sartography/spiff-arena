@@ -10,6 +10,7 @@ from werkzeug.utils import ImportStringError
 from spiffworkflow_backend.services.logging_service import setup_logger
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
+CONNECTOR_PROXY_COMMAND_TIMEOUT = 30
 
 
 class ConfigurationError(Exception):
