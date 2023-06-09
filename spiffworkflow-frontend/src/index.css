@@ -260,6 +260,10 @@ h1.with-icons {
   margin-top: 4px;
 }
 
+.with-top-margin-for-unit-test-name {
+  margin-top: 11px;
+}
+
 .with-large-bottom-margin {
   margin-bottom: 3em;
 }
