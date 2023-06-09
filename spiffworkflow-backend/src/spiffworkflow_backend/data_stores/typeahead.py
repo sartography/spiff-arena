@@ -11,7 +11,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):
 
     def get(self, my_task) -> None:
         """get."""
-        my_task.data[self.bpmn_id] = "tmp"
+        raise Exception("This is a write only data store.")
 
     def set(self, my_task):
         """set."""
