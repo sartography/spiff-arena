@@ -779,6 +779,27 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
+  /extensions/{modified_process_model_identifier}:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.extensions_controller.extension_run
+      summary: Run an extension for a given process model
+      tags:
+        - Extensions
+      responses:
+        "200":
+          description: Resulting task data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
   /process-models/{modified_process_model_identifier}/script-unit-tests:
     parameters:
       - name: modified_process_model_identifier
