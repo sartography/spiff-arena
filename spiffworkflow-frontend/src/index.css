@@ -260,6 +260,10 @@ h1.with-icons {
   margin-top: 4px;
 }
 
+.with-top-margin-for-unit-test-name {
+  margin-top: 11px;
+}
+
 .with-large-bottom-margin {
   margin-bottom: 3em;
 }
@@ -577,4 +581,17 @@ svg.notification-icon {
 
 .version-info-column {
   width: 50%;
+}
+
+/* From bootstrap _reboot.scss, people got used to this when we
+* had the bootstrap stylesheets, and they liked it.
+* Otherwise, the hr in the user profile dropdown shows up as a dot
+* and from markdown it's a little darker.
+*/
+hr {
+    border: 0;
+    border-top: 1px solid;
+    color: inherit;
+    margin: 1rem 0;
+    opacity: .25;
 }

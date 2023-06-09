@@ -15,11 +15,6 @@ class WorkflowService:
     @classmethod
     def next_start_event_configuration(cls, workflow: BpmnWorkflow, now_in_utc: datetime) -> StartConfiguration | None:
         start_events = cls.future_start_events(workflow)
-        configurations = list(
-            map(
-                lambda start_event: start_event.task_spec.configuration(start_event, now_in_utc),  # type: ignore
-                start_events,
-            )
-        )
+        configurations = [start_event.task_spec.configuration(start_event, now_in_utc) for start_event in start_events]
         configurations.sort(key=lambda configuration: configuration[1])  # type: ignore
         return configurations[0] if len(configurations) > 0 else None

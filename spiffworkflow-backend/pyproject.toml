@@ -168,6 +168,7 @@ explicit_package_bases = false
 [tool.ruff]
 select = [
   "B",   # flake8-bugbear
+  "C",   # mccabe
   "E",   # pycodestyle error
   # "ERA",  # eradicate
   "F",   # pyflakes
@@ -180,6 +181,7 @@ select = [
 ]
 
 ignore = [
+  "C901",  # "complexity" category
   "PLR",  # "refactoring" category has "too many lines in method" type stuff
   "PLC1901",
   "PLE1205"  # saw this Too many arguments for `logging` format string give a false positive once

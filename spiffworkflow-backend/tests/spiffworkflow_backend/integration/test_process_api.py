@@ -1725,7 +1725,7 @@ class TestProcessApi(BaseTest):
         stream_results = _dequeued_interstitial_stream(process_instance_id)
         results = list(stream_results)
         # strip the "data:" prefix and convert remaining string to dict.
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         # There should be 2 results back -
         # the first script task should not be returned (it contains no end user instructions)
         # The second script task should produce rendered jinja text
@@ -1746,7 +1746,7 @@ class TestProcessApi(BaseTest):
 
         # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
         results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         assert len(results) == 1
         assert json_results[0]["task"]["state"] == "READY"
         assert json_results[0]["task"]["can_complete"] is False
@@ -1760,7 +1760,7 @@ class TestProcessApi(BaseTest):
         processor.save()
 
         results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         assert len(results) == 1
         assert json_results[0]["task"]["state"] == "READY"
         assert json_results[0]["task"]["can_complete"] is False
@@ -1777,7 +1777,7 @@ class TestProcessApi(BaseTest):
         list(_dequeued_interstitial_stream(process_instance_id))
         list(_dequeued_interstitial_stream(process_instance_id))
         results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         assert len(json_results) == 1
         assert json_results[0]["task"]["state"] == "COMPLETED"
         assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am the end task"
