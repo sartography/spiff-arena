@@ -1,20 +1,21 @@
 from time import time
 from typing import Any
 
-from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter
-from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification
+from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type: ignore
+from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 
 
-class TypeaheadDataStore(BpmnDataStoreSpecification):
+class TypeaheadDataStore(BpmnDataStoreSpecification):  # type: ignore
     """TypeaheadDataStore."""
 
-    def get(self, my_task) -> None:
+    def get(self, my_task: SpiffTask) -> None:
         """get."""
         raise Exception("This is a write only data store.")
 
-    def set(self, my_task):
+    def set(self, my_task: SpiffTask) -> None:
         """set."""
         typeahead_data_by_category = my_task.data[self.bpmn_id]
         for category, items in typeahead_data_by_category.items():
@@ -35,22 +36,22 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):
         )
 
     @staticmethod
-    def register_converter(spec_config: dict[str, Any]):
+    def register_converter(spec_config: dict[str, Any]) -> None:
         spec_config["task_specs"].append(TypeaheadDataStoreConverter)
 
     @staticmethod
-    def register_data_store_class(data_store_classes: dict[str, Any]):
+    def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["TypeaheadDataStore"] = TypeaheadDataStore
 
 
-class TypeaheadDataStoreConverter(BpmnSpecConverter):
+class TypeaheadDataStoreConverter(BpmnSpecConverter):  # type: ignore
     """TypeaheadDataStoreConverter."""
 
-    def __init__(self, registry):
+    def __init__(self, registry):  # type: ignore
         """__init__."""
         super().__init__(TypeaheadDataStore, registry)
 
-    def to_dict(self, spec):
+    def to_dict(self, spec: Any) -> dict[str, Any]:
         """to_dict."""
         return {
             "bpmn_id": spec.bpmn_id,
@@ -59,6 +60,6 @@ class TypeaheadDataStoreConverter(BpmnSpecConverter):
             "is_unlimited": spec.is_unlimited,
         }
 
-    def from_dict(self, dct):
+    def from_dict(self, dct: dict[str, Any]) -> TypeaheadDataStore:
         """from_dict."""
         return TypeaheadDataStore(**dct)

@@ -28,7 +28,7 @@ def _local_typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.R
         db.session.query(TypeaheadModel.result)
         .filter(
             TypeaheadModel.category == category,
-            TypeaheadModel.search_term.ilike(f"{prefix}%"),
+            TypeaheadModel.search_term.ilike(f"{prefix}%"),  # type: ignore
         )
         .order_by(TypeaheadModel.search_term)
         .limit(limit)
