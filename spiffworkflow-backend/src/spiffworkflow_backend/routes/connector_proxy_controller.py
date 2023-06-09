@@ -2,6 +2,7 @@ from typing import Any
 
 import flask.wrappers
 import requests
+import json
 from flask import current_app
 from flask.wrappers import Response
 
@@ -22,14 +23,17 @@ def typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.Response
     return _remote_typeahead(category, prefix, limit)
 
 def _local_typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.Response:
-    assert False
-    url = f"{connector_proxy_typeahead_url()}/v1/typeahead/{category}?prefix={prefix}&limit={limit}"
+    results = db.session.query(TypeaheadModel.result).filter(
+        TypeaheadModel.category==category,
+        TypeaheadModel.search_term.ilike(f"{prefix}%"),
+    ).order_by(TypeaheadModel.search_term).limit(limit).all() or []
 
-    proxy_response = requests.get(url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
-    status = proxy_response.status_code
-    response = proxy_response.text
+    # this is a bummer but sqlalchemy returns a tuple of one field for each result
+    results = [result[0] for result in results]
 
-    return Response(response, status=status, mimetype="application/json")
+    response = json.dumps(results)
+    
+    return Response(response, status=200, mimetype="application/json")
 
 def _remote_typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.Response:
     url = f"{connector_proxy_typeahead_url()}/v1/typeahead/{category}?prefix={prefix}&limit={limit}"
