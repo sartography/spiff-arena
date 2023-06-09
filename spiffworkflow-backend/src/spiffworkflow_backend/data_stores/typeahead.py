@@ -4,6 +4,7 @@ from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 from typing import Any
 from spiffworkflow_backend.models.db import db
+from time import time
 
 class TypeaheadDataStore(BpmnDataStoreSpecification):
     """TypeaheadDataStore."""
@@ -23,10 +24,13 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):
         del my_task.data[self.bpmn_id]
 
     def _make_object(self, category: str, item: dict[str, Any]) -> TypeaheadModel:
+        now = round(time())
         return TypeaheadModel(
             category=category,
             search_term=item["search_term"],
             result=item["result"],
+            created_at_in_seconds=now,
+            updated_at_in_seconds=now,
             )
         
     @staticmethod
