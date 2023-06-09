@@ -1,10 +1,11 @@
+from time import time
+from typing import Any
+
 from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification
-from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.models.typeahead import TypeaheadModel
-from typing import Any
 from spiffworkflow_backend.models.db import db
-from time import time
+from spiffworkflow_backend.models.typeahead import TypeaheadModel
+
 
 class TypeaheadDataStore(BpmnDataStoreSpecification):
     """TypeaheadDataStore."""
@@ -31,12 +32,12 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):
             result=item["result"],
             created_at_in_seconds=now,
             updated_at_in_seconds=now,
-            )
-        
+        )
+
     @staticmethod
     def register_converter(spec_config: dict[str, Any]):
         spec_config["task_specs"].append(TypeaheadDataStoreConverter)
-        
+
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]):
         data_store_classes["TypeaheadDataStore"] = TypeaheadDataStore
@@ -61,5 +62,3 @@ class TypeaheadDataStoreConverter(BpmnSpecConverter):
     def from_dict(self, dct):
         """from_dict."""
         return TypeaheadDataStore(**dct)
-
-    
