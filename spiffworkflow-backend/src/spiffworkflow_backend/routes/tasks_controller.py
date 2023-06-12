@@ -370,6 +370,8 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
     def render_instructions(spiff_task: SpiffTask) -> str:
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        if task_model is None:
+            return ""
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
 

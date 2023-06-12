@@ -8,6 +8,7 @@ import re
 import time
 import uuid
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import datetime
 from datetime import timedelta
 from hashlib import sha256
@@ -1643,7 +1644,7 @@ class ProcessInstanceProcessor:
                 return task
         return None
 
-    def terminate(self) -> None:
+    def remove_spiff_tasks_for_termination(self) -> None:
         start_time = time.time()
         deleted_tasks = self.bpmn_process_instance.cancel() or []
         spiff_tasks = self.bpmn_process_instance.get_tasks()
@@ -1670,6 +1671,10 @@ class ProcessInstanceProcessor:
             db.session.delete(task)
 
         self.save()
+
+    def terminate(self) -> None:
+        with suppress(KeyError):
+            self.remove_spiff_tasks_for_termination()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
         ProcessInstanceTmpService.add_event_to_process_instance(
