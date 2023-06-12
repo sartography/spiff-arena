@@ -311,6 +311,8 @@ class TestAuthorizationService(BaseTest):
                 ("/authentications", "read"),
                 ("/can-run-privileged-script/*", "create"),
                 ("/debug/*", "create"),
+                ("/event-error-details/*", "read"),
+                ("/logs/*", "read"),
                 ("/messages", "read"),
                 ("/messages/*", "create"),
                 ("/process-data-file-download/*", "read"),
