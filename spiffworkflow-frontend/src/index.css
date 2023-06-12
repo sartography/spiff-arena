@@ -595,3 +595,7 @@ hr {
     margin: 1rem 0;
     opacity: .25;
 }
+
+.primary-file-text-suffix {
+  font-style: italic;
+}
