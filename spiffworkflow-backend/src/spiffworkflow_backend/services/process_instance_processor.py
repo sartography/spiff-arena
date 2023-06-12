@@ -8,6 +8,7 @@ import re
 import time
 import uuid
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import datetime
 from datetime import timedelta
 from hashlib import sha256
@@ -15,7 +16,6 @@ from typing import Any
 from typing import NewType
 from typing import TypedDict
 from uuid import UUID
-from contextlib import suppress
 
 import _strptime  # type: ignore
 import dateparser
