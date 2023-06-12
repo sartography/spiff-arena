@@ -532,11 +532,13 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
 
-        # read comes from PG and PM permissions
+        # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/event-error-details/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data-file-download/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
 
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
