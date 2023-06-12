@@ -1,4 +1,4 @@
-# Quick start guide
+# QuickStart Guide
 
 ```{admonition} Welcome to the SpiffWorkflow quick start guide!
 :class: info
@@ -31,6 +31,8 @@ Once you are signed in, you can start exploring the home page. The home page has
 
 ![Untitled](images/Untitled_2.png)
 
+
+
 - The "In Progress" section provides an overview of all ongoing process instances, including those initiated by you, those awaiting your action, or those awaiting action from a team you are a member of (Optional).
 - The "Completed" section allows you to view all completed process instances, including those initiated by you, those initiated by other SpiffWorkflow users with tasks completed by you and if applicable, those with tasks completed by a group of which you are a member.
 - The “Start New” section displays the processes you are permitted to start according to your role.
@@ -54,8 +56,7 @@ The process section provides a comprehensive view of the process ecosystem by sh
 ```{admonition} Process Groups
 A **process group** is a way of grouping a bunch of **process models** and a **process model** contains all the files necessary to execute a specific process.
 ```
-
--- 
+ 
 ![Untitled](images/Untitled_4.png)
 
 ### Step 3: Explore the Process Instances section
@@ -187,8 +188,7 @@ Once you have successfully signed in, navigate to the process section. This sect
 
 ![Untitled](images/Untitled_16.png)
 
-> **Step 2: Find and click on the process**
-> 
+### Step 2: Find and click on the process
 
 You can either search for a process model using the search bar or navigate through displayed processes to find the process model.
 
@@ -261,37 +261,3 @@ A prompt will appear, allowing you to provide a name for the identifier associat
 If you want to filter by ID, go to the "Find by Id" section of the page. Enter the ID and click "Submit". The system will show you the process instance with the corresponding ID.
 
 You can now view the process instances that you filtered for and take appropriate action based on their status. This can help you manage your workflows more efficiently and keep track of the progress of various process instances.
-
----
-
-## 🗳️ How to request additional permissions
-
-As a user, you may be required to access certain process groups or start process models in order to perform desired actions. However, you may not have the necessary access or permissions to do so. In this case, you will need to request access or additional permissions from the admins - PPG team. 
-
-By following these steps, you can submit a request and seek the necessary permissions to perform the desired actions.
-
-### Step 1: Navigate & Search
-
-Once you are signed in, navigate to the "**Process**" section. Use the search bar or browse through the available process models until you find "**Request Access**”. Click on the process model to open it. 
-
-![Untitled](images/Untitled_29.png)
-
-If you want to access the request access process from **Home** section and click on the "**Start New +**" button. This will open the "Processes I can start" section where you can find the “Request Access” process.
-
-![Untitled](images/Untitled_30.png)
-
-### Step 2: Start the Process
-
-Once the "**Process Request**" model is open, initiate the process by clicking on the "Start" button.
-
-![Untitled](images/Untitled_31.png)
-
-### Step 3: Provide Request Details & Submit
-
-A task will be presented to capture the necessary information and details for special permissions request. Find the “**Description”** text field and enter the relevant information and details about your request.
-
-Ensure that all required details have been included such as Process name, Process group name, and type of permissions you need. Click on the "**Submit**" button or similar action to submit your access or special permissions request.
-
-![Untitled](images/Untitled_32.png)
-
-By following these steps, you can request the special permissions needed to carry out your tasks effectively.

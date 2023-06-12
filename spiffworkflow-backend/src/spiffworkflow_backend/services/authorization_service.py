@@ -2,12 +2,9 @@ import inspect
 import re
 from dataclasses import dataclass
 from hashlib import sha256
-from hmac import compare_digest
 from hmac import HMAC
-from typing import Optional
-from typing import Set
+from hmac import compare_digest
 from typing import TypedDict
-from typing import Union
 
 import jwt
 import yaml
@@ -15,9 +12,6 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from sqlalchemy import or_
-from sqlalchemy import text
-
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -36,6 +30,8 @@ from spiffworkflow_backend.services.authentication_service import TokenNotProvid
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import or_
+from sqlalchemy import text
 
 
 class PermissionsFileNotSetError(Exception):
@@ -81,6 +77,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
@@ -91,7 +88,7 @@ class UserToGroupDict(TypedDict):
 
 
 class AddedPermissionDict(TypedDict):
-    group_identifiers: Set[str]
+    group_identifiers: set[str]
     permission_assignments: list[PermissionAssignmentModel]
     user_to_group_identifiers: list[UserToGroupDict]
 
@@ -112,7 +109,7 @@ class AuthorizationService:
 
     # https://stackoverflow.com/a/71320673/6090676
     @classmethod
-    def verify_sha256_token(cls, auth_header: Optional[str]) -> None:
+    def verify_sha256_token(cls, auth_header: str | None) -> None:
         if auth_header is None:
             raise TokenNotProvidedError(
                 "unauthorized",
@@ -189,7 +186,7 @@ class AuthorizationService:
             db.session.commit()
 
     @classmethod
-    def import_permissions_from_yaml_file(cls, user_model: Optional[UserModel] = None) -> AddedPermissionDict:
+    def import_permissions_from_yaml_file(cls, user_model: UserModel | None = None) -> AddedPermissionDict:
         group_permissions = cls.parse_permissions_yaml_into_group_info()
         result = cls.add_permissions_from_group_permissions(group_permissions, user_model)
         return result
@@ -198,7 +195,7 @@ class AuthorizationService:
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
-        permission_target: Optional[PermissionTargetModel] = PermissionTargetModel.query.filter_by(
+        permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(
             uri=target_uri_normalized
         ).first()
         if permission_target is None:
@@ -214,7 +211,7 @@ class AuthorizationService:
         permission_target: PermissionTargetModel,
         permission: str,
     ) -> PermissionAssignmentModel:
-        permission_assignment: Optional[PermissionAssignmentModel] = PermissionAssignmentModel.query.filter_by(
+        permission_assignment: PermissionAssignmentModel | None = PermissionAssignmentModel.query.filter_by(
             principal_id=principal.id,
             permission_target_id=permission_target.id,
             permission=permission,
@@ -268,7 +265,7 @@ class AuthorizationService:
         return False
 
     @classmethod
-    def get_permission_from_http_method(cls, http_method: str) -> Optional[str]:
+    def get_permission_from_http_method(cls, http_method: str) -> str | None:
         request_method_mapper = {
             "POST": "create",
             "GET": "read",
@@ -319,7 +316,7 @@ class AuthorizationService:
         )
 
     @staticmethod
-    def decode_auth_token(auth_token: str) -> dict[str, Union[str, None]]:
+    def decode_auth_token(auth_token: str) -> dict[str, str | None]:
         secret_key = current_app.config.get("SECRET_KEY")
         if secret_key is None:
             raise KeyError("we need current_app.config to have a SECRET_KEY")
@@ -339,24 +336,23 @@ class AuthorizationService:
     @staticmethod
     def assert_user_can_complete_task(
         process_instance_id: int,
-        task_bpmn_identifier: str,
+        task_guid: str,
         user: UserModel,
     ) -> bool:
         human_task = HumanTaskModel.query.filter_by(
-            task_name=task_bpmn_identifier,
+            task_id=task_guid,
             process_instance_id=process_instance_id,
             completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
-                f"Could find an human task with task name '{task_bpmn_identifier}'"
-                f" for process instance '{process_instance_id}'"
+                f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
             )
 
         if user not in human_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update"
-                f" task'{task_bpmn_identifier}' for process instance"
+                f" task'{task_guid}' for process instance"
                 f" '{process_instance_id}'"
             )
         return True
@@ -536,8 +532,13 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
 
-        # read comes from PG and PM permissions
+        # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/event-error-details/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data-file-download/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
 
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
@@ -687,9 +688,9 @@ class AuthorizationService:
 
     @classmethod
     def add_permissions_from_group_permissions(
-        cls, group_permissions: list[GroupPermissionsDict], user_model: Optional[UserModel] = None
+        cls, group_permissions: list[GroupPermissionsDict], user_model: UserModel | None = None
     ) -> AddedPermissionDict:
-        unique_user_group_identifiers: Set[str] = set()
+        unique_user_group_identifiers: set[str] = set()
         user_to_group_identifiers: list[UserToGroupDict] = []
         permission_assignments = []
 

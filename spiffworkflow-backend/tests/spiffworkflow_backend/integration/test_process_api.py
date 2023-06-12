@@ -5,27 +5,19 @@ import os
 import time
 from hashlib import sha256
 from typing import Any
-from typing import Dict
 
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.task import TaskState  # type: ignore
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
-    ProcessEntityNotFoundError,
-)
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
@@ -37,27 +29,23 @@ from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 # from spiffworkflow_backend.services.git_service import GitService
 
 
 class TestProcessApi(BaseTest):
-    """TestProcessAPi."""
-
     def test_returns_403_if_user_does_not_have_permission(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_returns_403_if_user_does_not_have_permission."""
         user = self.find_or_create_user()
         response = client.get(
             "/v1.0/process-groups",
@@ -84,7 +72,6 @@ class TestProcessApi(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_permissions_check."""
         user = self.find_or_create_user()
         self.add_permissions_to_user(user, target_uri="/v1.0/process-groups", permission_names=["read"])
         request_body = {
@@ -116,7 +103,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_create."""
         process_group_id = "test_process_group"
         process_group_display_name = "Test Process Group"
         # creates the group directory, and the json file
@@ -166,7 +152,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_create_with_natural_language."""
         process_group_id = "test_process_group"
         process_group_description = "Test Process Group"
         process_model_id = "sample"
@@ -277,7 +262,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_delete."""
         process_group_id = "test_process_group"
         process_model_id = "sample"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -308,7 +292,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_delete_with_instances."""
         test_process_group_id = "runs_without_input"
         test_process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
@@ -359,7 +342,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_update."""
         self.create_process_group_with_api(client, with_super_admin_user, "test_process_group", "Test Process Group")
         process_model_identifier = "test_process_group/make_cookies"
         self.create_process_model_with_api(
@@ -399,7 +381,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_list_all."""
         group_id = "test_group/test_sub_group"
         self.create_process_group_with_api(client, with_super_admin_user, group_id)
 
@@ -434,7 +415,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_list."""
         # create a group
         group_id = "test_group"
         self.create_process_group_with_api(client, with_super_admin_user, group_id)
@@ -601,7 +581,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_add_process_group."""
         process_group = ProcessGroup(
             id="test",
             display_name="Another Test Category",
@@ -638,7 +617,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_group_delete."""
         process_group_id = "test"
         process_group_display_name = "My Process Group"
 
@@ -860,7 +838,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_update."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         bad_process_model_identifier = f"x{process_model_identifier}"
         modified_bad_process_model_identifier = bad_process_model_identifier.replace("/", ":")
@@ -881,7 +858,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_update."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
@@ -923,7 +899,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_update."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
@@ -958,7 +933,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_file."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
@@ -978,7 +952,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_workflow_from_workflow_spec."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
@@ -1109,7 +1082,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_process_group_when_found."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         process_group_id, process_model_id = os.path.split(process_model_identifier)
 
@@ -1131,7 +1103,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_process_group_show_when_nested."""
         self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
@@ -1165,7 +1136,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_process_model_when_found."""
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client, with_super_admin_user, bpmn_file_name="random_fact.bpmn"
         )
@@ -1190,7 +1160,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_process_model_when_not_found."""
         process_model_dir_name = "THIS_NO_EXISTS"
         group_id = self.create_process_group_with_api(client, with_super_admin_user, "my_group")
         bad_process_model_id = f"{group_id}/{process_model_dir_name}"
@@ -1210,7 +1179,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_create."""
         test_process_model_id = "runs_without_input/sample"
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, test_process_model_id, headers)
@@ -1229,7 +1197,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_run."""
         # process_model_id = "runs_without_input/sample"
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
@@ -1266,7 +1233,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_show."""
         process_group_id = "simple_script"
         process_model_id = "simple_script"
         process_model_identifier = self.create_group_and_model_with_bpmn(
@@ -1305,7 +1271,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_show_with_specified_process_identifier."""
         process_model_id = "call_activity_nested"
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
@@ -1352,7 +1317,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_send_when_starting_process_instance."""
         # ensure process model is loaded
         process_group_id = "test_message_send"
         process_model_id = "message_receiver"
@@ -1400,7 +1364,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_send_when_providing_message_to_running_process_instance."""
         process_group_id = "test_message_send"
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
@@ -1476,7 +1439,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_send_when_providing_message_to_running_process_instance."""
         process_group_id = "test_message_send"
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
@@ -1571,7 +1533,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_send_when_providing_message_to_running_process_instance."""
         # this task will wait on a catch event
         process_group_id = "test_message_send"
         process_model_id = "message_sender"
@@ -1634,7 +1595,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_delete."""
         process_group_id = "my_process_group"
         process_model_id = "sample"
         bpmn_file_location = "sample"
@@ -1674,7 +1634,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_run_user_task."""
         process_group_id = "my_process_group"
         process_model_id = "dynamic_enum_select_fields"
         bpmn_file_location = "dynamic_enum_select_fields"
@@ -1766,7 +1725,7 @@ class TestProcessApi(BaseTest):
         stream_results = _dequeued_interstitial_stream(process_instance_id)
         results = list(stream_results)
         # strip the "data:" prefix and convert remaining string to dict.
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         # There should be 2 results back -
         # the first script task should not be returned (it contains no end user instructions)
         # The second script task should produce rendered jinja text
@@ -1787,7 +1746,21 @@ class TestProcessApi(BaseTest):
 
         # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
         results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
+        assert len(results) == 1
+        assert json_results[0]["task"]["state"] == "READY"
+        assert json_results[0]["task"]["can_complete"] is False
+        assert json_results[0]["task"]["title"] == "Please Approve"
+        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
+
+        # Suspending the task should still report that the user can not complete the task.
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.suspend()
+        processor.save()
+
+        results = list(_dequeued_interstitial_stream(process_instance_id))
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         assert len(results) == 1
         assert json_results[0]["task"]["state"] == "READY"
         assert json_results[0]["task"]["can_complete"] is False
@@ -1804,7 +1777,7 @@ class TestProcessApi(BaseTest):
         list(_dequeued_interstitial_stream(process_instance_id))
         list(_dequeued_interstitial_stream(process_instance_id))
         results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
         assert len(json_results) == 1
         assert json_results[0]["task"]["state"] == "COMPLETED"
         assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am the end task"
@@ -1816,7 +1789,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_list_with_default_list."""
         process_group_id = "runs_without_input"
         process_model_id = "sample"
         bpmn_file_location = "sample"
@@ -1852,7 +1824,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_list_with_paginated_items."""
         process_group_id = "runs_without_input"
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
@@ -1891,7 +1862,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_list_filter."""
         process_group_id = "runs_without_input"
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
@@ -2067,7 +2037,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_report_list."""
         process_group_id = "runs_without_input"
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
@@ -2106,7 +2075,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_error_handler."""
         process_group_id = "data"
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
@@ -2147,7 +2115,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_error_handler_suspend."""
         process_group_id = "data"
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
@@ -2183,7 +2150,6 @@ class TestProcessApi(BaseTest):
         assert process.status == "suspended"
 
     def test_error_handler_system_notification(self) -> None:
-        """Test_error_handler_system_notification."""
         # TODO: make sure the system notification process is run on exceptions
         ...
 
@@ -2194,7 +2160,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_task_data_is_set_even_if_process_instance_errors."""
         process_model = load_test_spec(
             process_model_id="group/error_with_task_data",
             bpmn_file_name="script_error_with_task_data.bpmn",
@@ -2223,7 +2188,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_create."""
         process_group_id = "hello_world"
         process_model_id = "hello_world"
         file_name = "hello_world.svg"
@@ -2258,7 +2222,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_get_message_instances_by_process_instance_id."""
         process_group_id = "test_message_send"
         process_model_id = "message_receiver"
         bpmn_file_name = "message_receiver.bpmn"
@@ -2549,7 +2512,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_suspend."""
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
         process_model_identifier = self.create_group_and_model_with_bpmn(
@@ -2615,7 +2577,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_script_unit_test_run."""
         process_group_id = "test_group"
         process_model_id = "simple_script"
         bpmn_file_name = "simple_script.bpmn"
@@ -2672,7 +2633,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_script_unit_test_run."""
         process_group_id = "test_group"
         process_model_id = "process_navigation"
         bpmn_file_name = "process_navigation.bpmn"
@@ -2708,7 +2668,7 @@ class TestProcessApi(BaseTest):
         )
 
         # This is exactly the same the test above, but some reason I to a totally irrelevant type.
-        data: Dict = {
+        data: dict = {
             "correlation_properties": [],
             "expression": None,
             "external": True,
@@ -2749,7 +2709,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_script_unit_test_run."""
         process_group_id = "test_group"
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
@@ -2810,7 +2769,6 @@ class TestProcessApi(BaseTest):
         assert len(response.json) == 7
 
     def setup_initial_groups_for_move_tests(self, client: FlaskClient, with_super_admin_user: UserModel) -> None:
-        """Setup_initial_groups_for_move_tests."""
         groups = ["group_a", "group_b", "group_b/group_bb"]
         # setup initial groups
         for group in groups:
@@ -2828,7 +2786,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_move_model."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
         process_model_id = "test_model"
@@ -2876,7 +2833,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_move_group."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
         # add sub group to `group_a`
@@ -3103,7 +3059,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_get_process_instance_list_with_report_metadata_and_process_initator."""
         user_one = self.create_user_with_permission(username="user_one")
 
         process_model = load_test_spec(
@@ -3276,7 +3231,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_instance_list_can_order_by_metadata."""
         process_model = load_test_spec(
             "test_group/hello_world",
             process_model_source_directory="nested-task-data-structure",
@@ -3348,7 +3302,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_data_show."""
         process_model = load_test_spec(
             "test_group/data_object_test",
             process_model_source_directory="data_object_test",

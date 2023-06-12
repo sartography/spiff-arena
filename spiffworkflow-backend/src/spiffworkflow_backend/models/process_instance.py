@@ -1,4 +1,3 @@
-"""Process_instance."""
 from __future__ import annotations
 
 from typing import Any
@@ -15,31 +14,27 @@ from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.bpmn_process_definition import (
-    BpmnProcessDefinitionModel,
-)
-from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
 
 
 class ProcessInstanceNotFoundError(Exception):
-    """ProcessInstanceNotFoundError."""
+    pass
 
 
 class ProcessInstanceTaskDataCannotBeUpdatedError(Exception):
-    """ProcessInstanceTaskDataCannotBeUpdatedError."""
+    pass
 
 
 class ProcessInstanceCannotBeDeletedError(Exception):
-    """ProcessInstanceCannotBeDeletedError."""
+    pass
 
 
 class ProcessInstanceStatus(SpiffEnum):
-    """ProcessInstanceStatus."""
-
     not_started = "not_started"
     user_input_required = "user_input_required"
     waiting = "waiting"
@@ -50,26 +45,21 @@ class ProcessInstanceStatus(SpiffEnum):
 
 
 class ProcessInstanceModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceModel."""
-
     __tablename__ = "process_instance"
     __allow_unmapped__ = True
     id: int = db.Column(db.Integer, primary_key=True)
     process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
-    process_initiator = relationship("UserModel")
-
     bpmn_process_definition_id: int | None = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id), nullable=True, index=True  # type: ignore
     )
-    bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
     bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True, index=True)  # type: ignore
-    bpmn_process = relationship(BpmnProcessModel, cascade="delete")
-    tasks = relationship("TaskModel", cascade="delete")  # type: ignore
-    process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
 
     spiff_serializer_version = db.Column(db.String(50), nullable=True)
+
+    process_initiator = relationship("UserModel")
+    bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     active_human_tasks = relationship(
         "HumanTaskModel",
@@ -78,6 +68,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         ),
     )  # type: ignore
 
+    bpmn_process = relationship(BpmnProcessModel, cascade="delete")
+    tasks = relationship("TaskModel", cascade="delete")  # type: ignore
+    process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
+    process_instance_file_data = relationship("ProcessInstanceFileDataModel", cascade="delete")  # type: ignore
     human_tasks = relationship(
         "HumanTaskModel",
         cascade="delete",
@@ -146,11 +140,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @validates("status")
     def validate_status(self, key: str, value: Any) -> Any:
-        """Validate_status."""
         return self.validate_enum_field(key, value, ProcessInstanceStatus)
 
     def can_submit_task(self) -> bool:
-        """Can_submit_task."""
         return not self.has_terminal_status() and self.status != "suspended"
 
     def can_receive_message(self) -> bool:
@@ -158,7 +150,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         return not self.has_terminal_status() and self.status != "suspended"
 
     def has_terminal_status(self) -> bool:
-        """Has_terminal_status."""
         return self.status in self.terminal_statuses()
 
     @classmethod
@@ -176,11 +167,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
 
 class ProcessInstanceModelSchema(Schema):
-    """ProcessInstanceModelSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessInstanceModel
         fields = [
             "id",
@@ -198,13 +185,10 @@ class ProcessInstanceModelSchema(Schema):
     status = marshmallow.fields.Method("get_status", dump_only=True)
 
     def get_status(self, obj: ProcessInstanceModel) -> str:
-        """Get_status."""
         return obj.status
 
 
 class ProcessInstanceApi:
-    """ProcessInstanceApi."""
-
     def __init__(
         self,
         id: int,
@@ -214,7 +198,6 @@ class ProcessInstanceApi:
         process_model_display_name: str,
         updated_at_in_seconds: int,
     ) -> None:
-        """__init__."""
         self.id = id
         self.status = status
         self.next_task = next_task  # The next task that requires user input.
@@ -224,11 +207,7 @@ class ProcessInstanceApi:
 
 
 class ProcessInstanceApiSchema(Schema):
-    """ProcessInstanceApiSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessInstanceApi
         fields = [
             "id",
@@ -245,7 +224,6 @@ class ProcessInstanceApiSchema(Schema):
 
     @marshmallow.post_load
     def make_process_instance(self, data: dict[str, Any], **kwargs: dict) -> ProcessInstanceApi:
-        """Make_process_instance."""
         keys = [
             "id",
             "status",

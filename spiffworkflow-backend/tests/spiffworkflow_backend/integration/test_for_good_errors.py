@@ -1,15 +1,14 @@
-"""Test_various_bpmn_constructs."""
 from typing import Any
 
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestForGoodErrors(BaseTest):
@@ -53,7 +52,6 @@ class TestForGoodErrors(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_task_data_is_set_even_if_process_instance_errors."""
         process_model = load_test_spec(
             process_model_id="group/end_user_instructions_error",
             bpmn_file_name="instructions_error.bpmn",

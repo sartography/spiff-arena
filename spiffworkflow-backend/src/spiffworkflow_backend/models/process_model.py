@@ -1,4 +1,3 @@
-"""Process_model."""
 from __future__ import annotations
 
 import enum
@@ -14,42 +13,50 @@ from marshmallow.decorators import post_load
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.file import File
 
+# we only want to save these items to the json file
+PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
+    "display_name",
+    "description",
+    "primary_file_name",
+    "primary_process_id",
+    "fault_or_suspend_on_exception",
+    "exception_notification_addresses",
+    "metadata_extraction_paths",
+]
+
 
 class NotificationType(enum.Enum):
-    """NotificationType."""
-
     fault = "fault"
     suspend = "suspend"
 
 
 @dataclass(order=True)
 class ProcessModelInfo:
-    """ProcessModelInfo."""
-
     sort_index: str = field(init=False)
 
     id: str
     display_name: str
     description: str
-    process_group: Any | None = None
     primary_file_name: str | None = None
     primary_process_id: str | None = None
-    display_order: int | None = 0
-    files: list[File] | None = field(default_factory=list[File])
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
     metadata_extraction_paths: list[dict[str, str]] | None = None
+
+    process_group: Any | None = None
+    files: list[File] | None = field(default_factory=list[File])
 
     # just for the API
     parent_groups: list[ProcessGroupLite] | None = None
     bpmn_version_control_identifier: str | None = None
 
+    # TODO: delete these once they no no longer mentioned in current process_model.json files
+    display_order: int | None = 0
+
     def __post_init__(self) -> None:
-        """__post_init__."""
         self.sort_index = self.id
 
     def __eq__(self, other: Any) -> bool:
-        """__eq__."""
         if not isinstance(other, ProcessModelInfo):
             return False
         if other.id == self.id:
@@ -61,12 +68,10 @@ class ProcessModelInfo:
     # this is because we have to store ids in the database, and we want the same
     # database snapshot to work on any OS.
     def id_for_file_path(self) -> str:
-        """Id_for_file_path."""
         return self.id.replace("/", os.sep)
 
     @classmethod
     def modify_process_identifier_for_path_param(cls, identifier: str) -> str:
-        """Identifier."""
         if "\\" in identifier:
             raise Exception(f"Found backslash in identifier: {identifier}")
 
@@ -74,17 +79,12 @@ class ProcessModelInfo:
 
 
 class ProcessModelInfoSchema(Schema):
-    """ProcessModelInfoSchema."""
-
     class Meta:
-        """Meta."""
-
         model = ProcessModelInfo
 
     id = marshmallow.fields.String(required=True)
     display_name = marshmallow.fields.String(required=True)
     description = marshmallow.fields.String()
-    display_order = marshmallow.fields.Integer(allow_none=True)
     primary_file_name = marshmallow.fields.String(allow_none=True)
     primary_process_id = marshmallow.fields.String(allow_none=True)
     files = marshmallow.fields.List(marshmallow.fields.Nested("File"))
@@ -100,5 +100,4 @@ class ProcessModelInfoSchema(Schema):
 
     @post_load
     def make_spec(self, data: dict[str, str | bool | int | NotificationType], **_: Any) -> ProcessModelInfo:
-        """Make_spec."""
         return ProcessModelInfo(**data)  # type: ignore

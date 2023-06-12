@@ -1,16 +1,15 @@
-"""Message_model."""
 from dataclasses import dataclass
 
 from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
 from sqlalchemy import UniqueConstraint
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 
 class SpecReferenceNotFoundError(Exception):
-    """SpecReferenceNotFoundError."""
+    pass
 
 
 @dataclass()
@@ -56,7 +55,6 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
 
     @classmethod
     def from_spec_reference(cls, ref: SpecReference) -> "SpecReferenceCache":
-        """From_spec_reference."""
         return cls(
             identifier=ref.identifier,
             display_name=ref.display_name,
@@ -71,11 +69,7 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
 
 
 class SpecReferenceSchema(Schema):  # type: ignore
-    """FileSchema."""
-
     class Meta:
-        """Meta."""
-
         model = SpecReference
         fields = [
             "identifier",

@@ -1,11 +1,8 @@
-"""User."""
 import ast
 import base64
 import json
 import re
 from typing import Any
-from typing import Dict
-from typing import Optional
 
 import flask
 import jwt
@@ -20,14 +17,12 @@ from werkzeug.wrappers import Response
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
-from spiffworkflow_backend.services.authentication_service import (
-    MissingAccessTokenError,
-)
+from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.group_service import GroupService
@@ -40,7 +35,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 # authorization_exclusion_list = ['status']
-def verify_token(token: Optional[str] = None, force_run: Optional[bool] = False) -> None:
+def verify_token(token: str | None = None, force_run: bool | None = False) -> None:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
@@ -189,7 +184,7 @@ def set_new_access_token_in_cookie(
     It will also delete the cookies if the user has logged out.
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
-    domain_for_frontend_cookie: Optional[str] = re.sub(
+    domain_for_frontend_cookie: str | None = re.sub(
         r"^https?:\/\/",
         "",
         current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"],
@@ -247,7 +242,7 @@ def parse_id_token(token: str) -> Any:
     return json.loads(decoded)
 
 
-def login_return(code: str, state: str, session_state: str = "") -> Optional[Response]:
+def login_return(code: str, state: str, session_state: str = "") -> Response | None:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
     auth_token_object = AuthenticationService().get_auth_token_object(code)
@@ -301,7 +296,6 @@ def login_with_access_token(access_token: str) -> Response:
 
 
 def login_api() -> Response:
-    """Login_api."""
     redirect_url = "/v1.0/login_api_return"
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), redirect_url)
@@ -320,8 +314,7 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     return access_token
 
 
-def logout(id_token: str, redirect_url: Optional[str]) -> Response:
-    """Logout."""
+def logout(id_token: str, redirect_url: str | None) -> Response:
     if redirect_url is None:
         redirect_url = ""
     tld = current_app.config["THREAD_LOCAL_DATA"]
@@ -330,13 +323,11 @@ def logout(id_token: str, redirect_url: Optional[str]) -> Response:
 
 
 def logout_return() -> Response:
-    """Logout_return."""
     frontend_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
     return redirect(f"{frontend_url}/")
 
 
-def get_decoded_token(token: str) -> Optional[Dict]:
-    """Get_token_type."""
+def get_decoded_token(token: str) -> dict | None:
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
     except Exception as e:
@@ -353,7 +344,6 @@ def get_decoded_token(token: str) -> Optional[Dict]:
 
 
 def get_scope(token: str) -> str:
-    """Get_scope."""
     scope = ""
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     if "scope" in decoded_token:
@@ -361,8 +351,7 @@ def get_scope(token: str) -> str:
     return scope
 
 
-def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserModel]:
-    """Get_user_from_decoded_internal_token."""
+def get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | None:
     sub = decoded_token["sub"]
     parts = sub.split("::")
     service = parts[0].split(":")[1]
@@ -377,7 +366,6 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
 
 
 def _clear_auth_tokens_from_thread_local_data() -> None:
-    """_clear_auth_tokens_from_thread_local_data."""
     tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token"):
         delattr(tld, "new_access_token")

@@ -1,13 +1,10 @@
-"""Logging_service."""
 import json
 import logging
 import re
 import sys
 from typing import Any
-from typing import Optional
 
 from flask.app import Flask
-
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -18,11 +15,11 @@ from flask.app import Flask
 # %(message)s—The log message.
 
 # full message list:
-# {'name': 'gunicorn.error', 'msg': 'GET /admin/token', 'args': (), 'levelname': 'DEBUG', 'levelno': 10, 'pathname': '~/.cache/pypoetry/virtualenvs/spiffworkflow-backend-R_hdWfN1-py3.10/lib/python3.10/site-packages/gunicorn/glogging.py', 'filename': 'glogging.py', 'module': 'glogging', 'exc_info': None, 'exc_text': None, 'stack_info': None, 'lineno': 267, 'funcName': 'debug', 'created': 1657307111.4513023, 'msecs': 451.30228996276855, 'relativeCreated': 1730.785846710205, 'thread': 139945864087360, 'threadName': 'MainThread', 'processName': 'MainProcess', 'process': 2109561, 'message': 'GET /admin/token', 'asctime': '2022-07-08T15:05:11.451Z'}
+# {'name': 'gunicorn.error', 'msg': 'GET /admin/token', 'args': (), 'levelname': 'DEBUG', 'levelno': 10, 'pathname': '~/.cache/pypoetry/virtualenvs/spiffworkflow-backend-R_hdWfN1-py3.10/lib/python3.10/site-packages/gunicorn/glogging.py', 'filename': 'glogging.py', 'module': 'glogging', 'exc_info': None, 'exc_text': None, 'stack_info': None, 'lineno': 267, 'funcName': 'debug', 'created': 1657307111.4513023, 'msecs': 451.30228996276855, 'relativeCreated': 1730.785846710205, 'thread': 139945864087360, 'threadName': 'MainThread', 'processName': 'MainProcess', 'process': 2109561, 'message': 'GET /admin/token', 'asctime': '2022-07-08T15:05:11.451Z'}  # noqa: E501
 
 
 class InvalidLogLevelError(Exception):
-    """InvalidLogLevelError."""
+    pass
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -38,22 +35,23 @@ class JsonFormatter(logging.Formatter):
 
     def __init__(
         self,
-        fmt_dict: Optional[dict] = None,
+        fmt_dict: dict | None = None,
         time_format: str = "%Y-%m-%dT%H:%M:%S",
         msec_format: str = "%s.%03dZ",
     ):
-        """__init__."""
         self.fmt_dict = fmt_dict if fmt_dict is not None else {"message": "message"}
         self.default_time_format = time_format
         self.default_msec_format = msec_format
         self.datefmt = None
 
-    def usesTime(self) -> bool:
+    def usesTime(self) -> bool:  # noqa: N802, this is overriding a method from python's stdlib
         """Overwritten to look for the attribute in the format dict values instead of the fmt string."""
         return "asctime" in self.fmt_dict.values()
 
     # we are overriding a method that returns a string and returning a dict, hence the Any
-    def formatMessage(self, record: logging.LogRecord) -> Any:
+    def formatMessage(  # noqa: N802, this is overriding a method from python's stdlib
+        self, record: logging.LogRecord
+    ) -> Any:
         """Overwritten to return a dictionary of the relevant LogRecord attributes instead of a string.
 
         KeyError is raised if an unknown attribute is provided in the fmt_dict.
@@ -88,7 +86,6 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logger(app: Flask) -> None:
-    """Setup_logger."""
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 

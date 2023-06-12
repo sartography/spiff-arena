@@ -1,27 +1,20 @@
-"""Fact_service."""
 from typing import Any
 
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 
 
 class FactService(Script):
-    """FactService."""
-
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
         return False
 
     def get_description(self) -> str:
-        """Get_description."""
         return """Just your basic class that can pull in data from a few api endpoints and
         do a basic task."""
 
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
-        """Run."""
         if "type" not in kwargs:
             raise Exception("Please specify a 'type' of fact as a keyword argument.")
         else:

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -8,85 +8,18 @@ import {
   Tabs,
   Grid,
   Column,
-  ComboBox,
   Button,
   ButtonSet,
 } from '@carbon/react';
 
-// eslint-disable-next-line import/no-named-as-default
-import Form from '../themes/carbon';
+import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
-
-// TODO: move this somewhere else
-function TypeaheadWidget({
-  id,
-  onChange,
-  options: { category, itemFormat },
-}: {
-  id: string;
-  onChange: any;
-  options: any;
-}) {
-  const pathForCategory = (inputText: string) => {
-    return `/connector-proxy/typeahead/${category}?prefix=${inputText}&limit=100`;
-  };
-
-  const lastSearchTerm = useRef('');
-  const [items, setItems] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const itemFormatRegex = /[^{}]+(?=})/g;
-  const itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
-
-  const itemToString = (item: any) => {
-    if (!item) {
-      return null;
-    }
-
-    let str = itemFormat;
-    itemFormatSubstitutions.forEach((key: string) => {
-      str = str.replace(`{${key}}`, item[key]);
-    });
-    return str;
-  };
-
-  const handleTypeAheadResult = (result: any, inputText: string) => {
-    if (lastSearchTerm.current === inputText) {
-      setItems(result);
-    }
-  };
-
-  const typeaheadSearch = (inputText: string) => {
-    if (inputText) {
-      lastSearchTerm.current = inputText;
-      // TODO: check cache of prefixes -> results
-      HttpService.makeCallToBackend({
-        path: pathForCategory(inputText),
-        successCallback: (result: any) =>
-          handleTypeAheadResult(result, inputText),
-      });
-    }
-  };
-
-  return (
-    <ComboBox
-      onInputChange={typeaheadSearch}
-      onChange={(event: any) => {
-        setSelectedItem(event.selectedItem);
-        onChange(itemToString(event.selectedItem));
-      }}
-      id={id}
-      items={items}
-      itemToString={itemToString}
-      placeholder={`Start typing to search for ${category}...`}
-      selectedItem={selectedItem}
-    />
-  );
-}
+import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 
 export default function TaskShow() {
   const [task, setTask] = useState<Task | null>(null);
@@ -100,9 +33,11 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
+  // if a user can complete a task then the for-me page should
+  // always work for them so use that since it will work in all cases
   const navigateToInterstitial = (myTask: Task) => {
     navigate(
-      `/admin/process-instances/${modifyProcessIdentifierForPathParam(
+      `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         myTask.process_model_identifier
       )}/${myTask.process_instance_id}/interstitial`
     );
@@ -276,11 +211,12 @@ export default function TaskShow() {
   const checkFieldComparisons = (
     formData: any,
     propertyKey: string,
-    propertyMetadata: any,
+    minimumDateCheck: string,
     formattedDateString: string,
-    errors: any
+    errors: any,
+    jsonSchema: any
   ) => {
-    const fieldIdentifierToCompareWith = propertyMetadata.minimumDate.replace(
+    const fieldIdentifierToCompareWith = minimumDateCheck.replace(
       /^field:/,
       ''
     );
@@ -289,8 +225,16 @@ export default function TaskShow() {
       if (dateToCompareWith) {
         const dateStringToCompareWith = formatDateString(dateToCompareWith);
         if (dateStringToCompareWith > formattedDateString) {
+          let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+          if (
+            fieldIdentifierToCompareWith in jsonSchema.properties &&
+            jsonSchema.properties[fieldIdentifierToCompareWith].title
+          ) {
+            fieldToCompareWithTitle =
+              jsonSchema.properties[fieldIdentifierToCompareWith].title;
+          }
           errors[propertyKey].addError(
-            `must be equal to or greater than '${fieldIdentifierToCompareWith}'`
+            `must be equal to or greater than '${fieldToCompareWithTitle}'`
           );
         }
       } else {
@@ -309,25 +253,30 @@ export default function TaskShow() {
     formData: any,
     propertyKey: string,
     propertyMetadata: any,
-    errors: any
+    errors: any,
+    jsonSchema: any
   ) => {
     const dateString = formData[propertyKey];
     if (dateString) {
       const formattedDateString = formatDateString(dateString);
-      if (propertyMetadata.minimumDate === 'today') {
-        const dateTodayString = formatDateString();
-        if (dateTodayString > formattedDateString) {
-          errors[propertyKey].addError('must be today or after');
+      const minimumDateChecks = propertyMetadata.minimumDate.split(',');
+      minimumDateChecks.forEach((mdc: string) => {
+        if (mdc === 'today') {
+          const dateTodayString = formatDateString();
+          if (dateTodayString > formattedDateString) {
+            errors[propertyKey].addError('must be today or after');
+          }
+        } else if (mdc.startsWith('field:')) {
+          checkFieldComparisons(
+            formData,
+            propertyKey,
+            mdc,
+            formattedDateString,
+            errors,
+            jsonSchema
+          );
         }
-      } else if (propertyMetadata.minimumDate.startsWith('field:')) {
-        checkFieldComparisons(
-          formData,
-          propertyKey,
-          propertyMetadata,
-          formattedDateString,
-          errors
-        );
-      }
+      });
     }
   };
 
@@ -346,7 +295,13 @@ export default function TaskShow() {
       Object.keys(jsonSchemaToUse.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchemaToUse.properties[propertyKey];
         if ('minimumDate' in propertyMetadata) {
-          checkMinimumDate(formData, propertyKey, propertyMetadata, errors);
+          checkMinimumDate(
+            formData,
+            propertyKey,
+            propertyMetadata,
+            errors,
+            jsonSchemaToUse
+          );
         }
 
         // recurse through all nested properties as well

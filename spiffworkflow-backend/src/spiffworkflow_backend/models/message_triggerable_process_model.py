@@ -1,11 +1,8 @@
-"""Message_correlation_property."""
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 
 class MessageTriggerableProcessModel(SpiffworkflowBaseDBModel):
-    """MessageTriggerableProcessModel."""
-
     __tablename__ = "message_triggerable_process_model"
 
     id = db.Column(db.Integer, primary_key=True)

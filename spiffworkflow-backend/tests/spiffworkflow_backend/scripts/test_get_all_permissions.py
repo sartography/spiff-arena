@@ -1,13 +1,11 @@
 from operator import itemgetter
 
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.get_all_permissions import GetAllPermissions
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestGetAllPermissions(BaseTest):

@@ -2,11 +2,11 @@ import pytest
 from flask import Flask
 from flask import g
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.routes.messages_controller import message_send
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestMessages(BaseTest):

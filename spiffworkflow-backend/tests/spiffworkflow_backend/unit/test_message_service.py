@@ -1,17 +1,13 @@
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageService(BaseTest):
@@ -34,8 +30,8 @@ class TestMessageService(BaseTest):
             "amount": "100.00",
         }
 
-        # Load up the definition for the receiving process (it has a message start event that should cause it to
-        # fire when a unique message comes through.
+        # Load up the definition for the receiving process
+        # It has a message start event that should cause it to fire when a unique message comes through
         # Fire up the first process
         load_test_spec(
             "test_group/message_receive",
@@ -92,7 +88,6 @@ class TestMessageService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_send_message_to_multiple_process_models."""
         # self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_sender = load_test_spec(

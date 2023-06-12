@@ -56,8 +56,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 import HttpService from '../services/HttpService';
 
-import 'react-bootstrap-typeahead/css/Typeahead.css';
-import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import {
   PaginationObject,
   ProcessModel,
@@ -98,6 +96,7 @@ type OwnProps = {
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
   headerElement?: React.ReactElement;
+  tableHtmlId?: string;
 };
 
 interface dateParameters {
@@ -119,6 +118,7 @@ export default function ProcessInstanceListTable({
   showActionsColumn = false,
   showLinkToReport = false,
   headerElement,
+  tableHtmlId,
 }: OwnProps) {
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -490,6 +490,7 @@ export default function ProcessInstanceListTable({
         HttpService.makeCallToBackend({
           path: `/process-instances/report-metadata${queryParamString}`,
           successCallback: getProcessInstances,
+          onUnauthorized: stopRefreshing,
         });
       } else {
         getProcessInstances();
@@ -542,6 +543,7 @@ export default function ProcessInstanceListTable({
     permissionsLoaded,
     reportIdentifier,
     searchParams,
+    stopRefreshing,
   ]);
 
   const processInstanceReportSaveTag = () => {
@@ -1646,8 +1648,14 @@ export default function ProcessInstanceListTable({
       );
     });
 
+    let tableProps: any = { size: 'lg' };
+    if (tableHtmlId) {
+      tableProps = { ...tableProps, id: tableHtmlId };
+    }
+
     return (
-      <Table size="lg">
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <Table {...tableProps}>
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (

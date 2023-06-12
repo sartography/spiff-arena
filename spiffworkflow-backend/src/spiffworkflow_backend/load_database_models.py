@@ -7,6 +7,11 @@ some models need to be loaded before others for relationships and to
 avoid circular imports
 """
 
+# unused imports are needed for SQLAlchemy to load the models
+# ruff: noqa: F401
+
+# we do not want to sort imports in this file, since the order matters
+# ruff: noqa: I001
 
 from spiffworkflow_backend.models.db import add_listeners
 
@@ -70,6 +75,12 @@ from spiffworkflow_backend.models.process_instance_queue import (
 )  # noqa: F401
 from spiffworkflow_backend.models.active_user import (
     ActiveUserModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.process_model_cycle import (
+    ProcessModelCycleModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.typeahead import (
+    TypeaheadModel,
 )  # noqa: F401
 
 add_listeners()

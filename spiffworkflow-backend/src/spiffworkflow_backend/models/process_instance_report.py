@@ -1,4 +1,3 @@
-"""Process_instance."""
 from __future__ import annotations
 
 import sys
@@ -7,15 +6,17 @@ from dataclasses import dataclass
 from typing import Any
 
 if sys.version_info < (3, 11):
-    from typing_extensions import TypedDict, NotRequired
+    from typing_extensions import NotRequired
+    from typing_extensions import TypedDict
 else:
-    from typing import TypedDict, NotRequired
+    from typing import NotRequired
+    from typing import TypedDict
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
@@ -46,37 +47,28 @@ class Report(TypedDict):
 
 
 class ProcessInstanceReportAlreadyExistsError(Exception):
-    """ProcessInstanceReportAlreadyExistsError."""
+    pass
 
 
 class ProcessInstanceReportResult(TypedDict):
-    """ProcessInstanceReportResult."""
-
     report_metadata: ReportMetadata
     results: list[dict]
 
 
 # https://stackoverflow.com/a/56842689/6090676
 class Reversor:
-    """Reversor."""
-
     def __init__(self, obj: Any):
-        """__init__."""
         self.obj = obj
 
     def __eq__(self, other: Any) -> Any:
-        """__eq__."""
         return other.obj == self.obj
 
     def __lt__(self, other: Any) -> Any:
-        """__lt__."""
         return other.obj < self.obj
 
 
 @dataclass
 class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceReportModel."""
-
     __tablename__ = "process_instance_report"
     __table_args__ = (
         db.UniqueConstraint(
@@ -103,7 +95,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def default_order_by(cls) -> list[str]:
-        """Default_order_by."""
         return ["-start_in_seconds", "-id"]
 
     @classmethod
@@ -123,7 +114,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 f"Process instance report with identifier already exists: {identifier}"
             )
 
-        report_metadata_dict = typing.cast(typing.Dict[str, Any], report_metadata)
+        report_metadata_dict = typing.cast(dict[str, Any], report_metadata)
         json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata_dict)
 
         process_instance_report = cls(

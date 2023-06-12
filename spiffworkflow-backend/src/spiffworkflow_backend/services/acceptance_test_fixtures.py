@@ -1,19 +1,15 @@
-"""Acceptance_test_fixtures."""
 import time
 
 from flask import current_app
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
-    """Load_fixtures."""
     current_app.logger.debug("load_acceptance_test_fixtures() start")
     test_process_model_id = "misc/acceptance-tests-group-one/acceptance-tests-model-1"
     user = BaseTest.find_or_create_user()

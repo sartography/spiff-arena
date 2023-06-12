@@ -1,27 +1,22 @@
-"""PermissionAssignment."""
 import enum
 from typing import Any
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import validates
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 
 
 class PermitDeny(enum.Enum):
-    """PermitDeny."""
-
     # permit, aka grant
     permit = "permit"
     deny = "deny"
 
 
 class Permission(enum.Enum):
-    """Permission."""
-
     # from original requirements
     # instantiate = 1
     # administer = 2
@@ -34,8 +29,6 @@ class Permission(enum.Enum):
 
 
 class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
-    """PermissionAssignmentModel."""
-
     __tablename__ = "permission_assignment"
     __table_args__ = (
         db.UniqueConstraint(
@@ -53,10 +46,8 @@ class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
 
     @validates("grant_type")
     def validate_grant_type(self, key: str, value: str) -> Any:
-        """Validate_grant_type."""
         return self.validate_enum_field(key, value, PermitDeny)
 
     @validates("permission")
     def validate_permission(self, key: str, value: str) -> Any:
-        """Validate_permission."""
         return self.validate_enum_field(key, value, Permission)

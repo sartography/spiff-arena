@@ -1,6 +1,5 @@
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel

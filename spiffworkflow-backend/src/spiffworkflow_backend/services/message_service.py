@@ -1,34 +1,21 @@
-"""Message_service."""
-from typing import Optional
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_processor import (
-    CustomBpmnScriptEngine,
-)
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
 class MessageServiceError(Exception):
-    """MessageServiceError."""
+    pass
 
 
 class MessageService:
-    """MessageService."""
-
     @classmethod
-    def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> Optional[MessageInstanceModel]:
+    def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
@@ -47,7 +34,7 @@ class MessageService:
             status=MessageStatuses.ready.value,
             message_type=MessageTypes.receive.value,
         ).all()
-        message_instance_receive: Optional[MessageInstanceModel] = None
+        message_instance_receive: MessageInstanceModel | None = None
         try:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
@@ -134,7 +121,6 @@ class MessageService:
     def get_process_instance_for_message_instance(
         message_instance_receive: MessageInstanceModel,
     ) -> ProcessInstanceModel:
-        """Process_message_receive."""
         process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
             id=message_instance_receive.process_instance_id
         ).first()
@@ -157,7 +143,6 @@ class MessageService:
         message_model_name: str,
         message_payload: dict,
     ) -> None:
-        """process_message_receive."""
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.bpmn_process_instance.catch_bpmn_message(message_model_name, message_payload)
         processor_receive.do_engine_steps(save=True)

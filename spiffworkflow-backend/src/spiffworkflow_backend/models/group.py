@@ -1,18 +1,16 @@
-"""Group."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import relationship
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 if TYPE_CHECKING:
-    from spiffworkflow_backend.models.user_group_assignment import (  # noqa: F401
-        UserGroupAssignmentModel,
-    )  # noqa: F401
+    # noqa: F401
     from spiffworkflow_backend.models.user import UserModel  # noqa: F401
+    from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel  # noqa: F401
 
 
 SPIFF_NO_AUTH_ANONYMOUS_GROUP = "spiff_anonymous_group"

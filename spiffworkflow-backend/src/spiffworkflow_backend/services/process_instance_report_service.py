@@ -1,29 +1,17 @@
-"""Process_instance_report_service."""
 import copy
 import re
+from collections.abc import Generator
 from typing import Any
-from typing import Generator
-from typing import Optional
-from typing import Type
 
 import sqlalchemy
 from flask import current_app
-from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import or_
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import selectinload
-from sqlalchemy.orm.util import AliasedClass
-
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
@@ -31,6 +19,12 @@ from spiffworkflow_backend.models.process_instance_report import ReportMetadataC
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.util import AliasedClass
 
 
 class ProcessInstanceReportNotFoundError(Exception):
@@ -42,10 +36,8 @@ class ProcessInstanceReportMetadataInvalidError(Exception):
 
 
 class ProcessInstanceReportService:
-    """ProcessInstanceReportService."""
-
     @classmethod
-    def system_metadata_map(cls, metadata_key: str) -> Optional[ReportMetadata]:
+    def system_metadata_map(cls, metadata_key: str) -> ReportMetadata | None:
         # TODO replace with system reports that are loaded on launch (or similar)
         terminal_status_values = ",".join(ProcessInstanceModel.terminal_statuses())
         non_terminal_status_values = ",".join(ProcessInstanceModel.non_terminal_statuses())
@@ -197,8 +189,8 @@ class ProcessInstanceReportService:
     def report_with_identifier(
         cls,
         user: UserModel,
-        report_id: Optional[int] = None,
-        report_identifier: Optional[str] = None,
+        report_id: int | None = None,
+        report_identifier: str | None = None,
     ) -> ProcessInstanceReportModel:
         if report_id is not None:
             process_instance_report = ProcessInstanceReportModel.query.filter_by(
@@ -237,7 +229,6 @@ class ProcessInstanceReportService:
         process_instance_sqlalchemy_rows: list[sqlalchemy.engine.row.Row],  # type: ignore
         metadata_columns: list[ReportMetadataColumn],
     ) -> list[dict]:
-        """Add_metadata_columns_to_process_instance."""
         results = []
         cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
@@ -292,7 +283,6 @@ class ProcessInstanceReportService:
 
     @classmethod
     def _get_potential_owner_usernames(cls, assigned_user: AliasedClass) -> Any:
-        """_get_potential_owner_usernames."""
         potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
             assigned_user.username.distinct()
         ).label("potential_owner_usernames")
@@ -306,8 +296,7 @@ class ProcessInstanceReportService:
         return potential_owner_usernames_from_group_concat_or_similar
 
     @classmethod
-    def get_column_names_for_model(cls, model: Type[SpiffworkflowBaseDBModel]) -> list[str]:
-        """Get_column_names_for_model."""
+    def get_column_names_for_model(cls, model: type[SpiffworkflowBaseDBModel]) -> list[str]:
         return [i.name for i in model.__table__.columns]
 
     @classmethod

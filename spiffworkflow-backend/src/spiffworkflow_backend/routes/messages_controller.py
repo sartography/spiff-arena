@@ -1,8 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
-from typing import Dict
-from typing import Optional
 
 import flask.wrappers
 from flask import g
@@ -19,11 +17,10 @@ from spiffworkflow_backend.services.message_service import MessageService
 
 
 def message_instance_list(
-    process_instance_id: Optional[int] = None,
+    process_instance_id: int | None = None,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
-    """Message_instance_list."""
     # to make sure the process instance exists
     message_instances_query = MessageInstanceModel.query
 
@@ -67,7 +64,7 @@ def message_instance_list(
 #  --data-raw '{"payload":{"sure": "yes", "food": "spicy"}}'
 def message_send(
     message_name: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
 ) -> flask.wrappers.Response:
     if "payload" not in body:
         raise (

@@ -2,25 +2,18 @@
 import re
 
 from flask.app import Flask
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-
 
 class TestProcessModel(BaseTest):
-    """TestProcessModel."""
-
     def test_initializes_files_as_empty_array(self) -> None:
-        """Test_initializes_files_as_empty_array."""
         process_model_one = self._create_test_process_model(id="model_one", display_name="Model One")
         assert process_model_one.files == []
 
@@ -29,7 +22,6 @@ class TestProcessModel(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_run_process_model_with_call_activities."""
         process_model = load_test_spec(
             "test_group/call_activity_test",
             # bpmn_file_name="call_activity_test.bpmn",
@@ -46,7 +38,6 @@ class TestProcessModel(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_run_process_model_with_call_activities."""
         process_model = load_test_spec(
             "test_group/call_activity_nested",
             process_model_source_directory="call_activity_nested",
@@ -74,7 +65,6 @@ class TestProcessModel(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_run_process_model_with_call_activities."""
         process_model = load_test_spec(
             "test_group/call_activity_nested",
             process_model_source_directory="call_activity_nested",
@@ -107,7 +97,6 @@ class TestProcessModel(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_run_process_model_with_call_activities."""
         process_model = self.create_process_model_with_metadata()
 
         process_instance = self.create_process_instance_from_process_model(process_model)
@@ -130,7 +119,6 @@ class TestProcessModel(BaseTest):
         assert process_instance_metadata_awesome_var.value == "123"
 
     def _create_test_process_model(self, id: str, display_name: str) -> ProcessModelInfo:
-        """Create_test_process_model."""
         return ProcessModelInfo(
             id=id,
             display_name=display_name,

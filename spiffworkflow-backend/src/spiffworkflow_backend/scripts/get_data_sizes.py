@@ -1,13 +1,8 @@
-"""Get_data_sizes."""
 from typing import Any
 
-from spiffworkflow_backend.models.script_attributes_context import (
-    ScriptAttributesContext,
-)
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 
 class TaskNotGivenToScriptError(Exception):
@@ -15,20 +10,16 @@ class TaskNotGivenToScriptError(Exception):
 
 
 class GetDataSizes(Script):
-    """GetDataSizes."""
-
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
         return False
 
     def get_description(self) -> str:
-        """Get_description."""
         return """Returns a dictionary of information about the size of task data and
             the python environment for the currently running process."""
 
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
-        """Run."""
         if script_attributes_context.task is None:
             raise TaskNotGivenToScriptError(
                 "The task was not given to script 'get_data_sizes'. "

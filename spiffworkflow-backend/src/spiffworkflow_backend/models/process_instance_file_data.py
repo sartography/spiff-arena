@@ -1,19 +1,15 @@
-"""Process_instance_file_data."""
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.mysql import LONGBLOB
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
 @dataclass
 class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceFileDataModel."""
-
     __tablename__ = "process_instance_file_data"
 
     id: int = db.Column(db.Integer, primary_key=True)
@@ -21,7 +17,7 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
         ForeignKey(ProcessInstanceModel.id), nullable=False, index=True  # type: ignore
     )
     identifier: str = db.Column(db.String(255), nullable=False)
-    list_index: Optional[int] = db.Column(db.Integer, nullable=True)
+    list_index: int | None = db.Column(db.Integer, nullable=True)
     mimetype: str = db.Column(db.String(255), nullable=False)
     filename: str = db.Column(db.String(255), nullable=False)
     # this is not deferred because there is no reason to query this model if you do not want the contents

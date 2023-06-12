@@ -131,7 +131,7 @@ You can do that by following these steps:
 ### Step 6: Fire up the website
 
 1. Go to Terminal ->  New Terminal
-1. type:  **sphinx-autobuild . _build/html** at the prompt and hit enter.
+1. type:  **sphinx-autobuild . _build/html  -W -a -j auto -n** at the prompt and hit enter.
 1. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 

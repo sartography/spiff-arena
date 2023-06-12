@@ -8,6 +8,9 @@ import {
 import {OPTION_TYPE, SpiffExtensionSelect} from './SpiffExtensionSelect';
 import {SpiffExtensionLaunchButton} from './SpiffExtensionLaunchButton';
 import {SpiffExtensionTextArea} from './SpiffExtensionTextArea';
+import {SpiffExtensionTextInput} from './SpiffExtensionTextInput';
+import {hasEventDefinition} from 'bpmn-js/lib/util/DiUtil';
+import { PropertyDescription } from 'bpmn-js-properties-panel/';
 
 const LOW_PRIORITY = 500;
 
@@ -32,6 +35,7 @@ export default function ExtensionsPropertiesProvider(
       if (is(element, 'bpmn:UserTask')) {
         groups.push(createUserGroup(element, translate, moddle, commandStack));
       }
+
       if (is(element, 'bpmn:BusinessRuleTask')) {
         groups.push(
           createBusinessRuleGroup(element, translate, moddle, commandStack)
@@ -45,10 +49,21 @@ export default function ExtensionsPropertiesProvider(
           'bpmn:EndEvent',
           'bpmn:ScriptTask',
           'bpmn:IntermediateCatchEvent',
+          'bpmn:CallActivity',
+          'bpmn:SubProcess',
         ])
       ) {
         groups.push(
           createUserInstructionsGroup(element, translate, moddle, commandStack)
+        );
+      }
+      if (
+        is(element, 'bpmn:BoundaryEvent') &&
+        hasEventDefinition(element, 'bpmn:SignalEventDefinition') &&
+        isAny(element.businessObject.attachedToRef, ['bpmn:ManualTask', 'bpmn:UserTask'])
+      ) {
+        groups.push(
+          createSignalButtonGroup(element, translate, moddle, commandStack)
         );
       }
       if (is(element, 'bpmn:ServiceTask')) {
@@ -257,6 +272,41 @@ function createUserInstructionsGroup (
     ],
   };
 }
+
+/**
+ * Create a group on the main panel with a text box for specifying a
+ * a Button Label that is associated with a signal event.)
+ * @param element
+ * @param translate
+ * @param moddle
+ * @returns entries
+ */
+function createSignalButtonGroup (
+  element,
+  translate,
+  moddle,
+  commandStack
+) {
+  let description =
+    <p style={{maxWidth : "330px"}}> If attached to a user/manual task, setting this value will display a button which a user can click to immediately fire this signal event.
+    </p>
+  return {
+    id: 'signal_button',
+    label: translate('Button'),
+    entries: [
+      {
+        element,
+        moddle,
+        commandStack,
+        component: SpiffExtensionTextInput,
+        name: 'spiffworkflow:signalButtonLabel',
+        label: 'Button Label',
+        description: description
+      },
+    ],
+  };
+}
+
 
 /**
  * Create a group on the main panel with a text box (for choosing the dmn to connect)

@@ -1,19 +1,20 @@
-"""ServiceTask_service."""
 import json
+import re
 from typing import Any
 
 import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
-
+from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
+from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
 
 
 class ConnectorProxyError(Exception):
-    """ConnectorProxyError."""
+    pass
 
 
 def connector_proxy_url() -> Any:
@@ -22,11 +23,8 @@ def connector_proxy_url() -> Any:
 
 
 class ServiceTaskDelegate:
-    """ServiceTaskDelegate."""
-
-    @staticmethod
-    def check_prefixes(value: Any) -> Any:
-        """Check_prefixes."""
+    @classmethod
+    def handle_template_substitutions(cls, value: Any) -> Any:
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
             if value.startswith(secret_prefix):
@@ -42,6 +40,24 @@ class ServiceTaskDelegate:
                 with open(full_path) as f:
                     return f.read()
 
+            if "SPIFF_SECRET:" in value:
+                spiff_secret_match = re.match(r".*SPIFF_SECRET:(?P<variable_name>\w+).*", value)
+                if spiff_secret_match is not None:
+                    spiff_variable_name = spiff_secret_match.group("variable_name")
+                    secret = SecretService.get_secret(spiff_variable_name)
+                    with sentry_sdk.start_span(op="task", description="decrypt_secret"):
+                        decrypted_value = SecretService._decrypt(secret.value)
+                        return re.sub(r"\bSPIFF_SECRET:\w+", decrypted_value, value)
+
+        return value
+
+    @classmethod
+    def value_with_secrets_replaced(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return cls.handle_template_substitutions(value)
+        elif isinstance(value, dict):
+            for key, v in value.items():
+                value[key] = cls.value_with_secrets_replaced(v)
         return value
 
     @staticmethod
@@ -69,17 +85,17 @@ class ServiceTaskDelegate:
             )
         return msg
 
-    @staticmethod
-    def call_connector(name: str, bpmn_params: Any, task_data: Any) -> str:
+    @classmethod
+    def call_connector(cls, name: str, bpmn_params: Any, task_data: Any) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{name}"
         current_app.logger.info(f"Calling connector proxy using connector: {name}")
         with sentry_sdk.start_span(op="connector_by_name", description=name):
             with sentry_sdk.start_span(op="call-connector", description=call_url):
-                params = {k: ServiceTaskDelegate.check_prefixes(v["value"]) for k, v in bpmn_params.items()}
+                params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__task_data"] = task_data
 
-                proxied_response = requests.post(call_url, json=params)
+                proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
                 response_text = proxied_response.text
                 json_parse_error = None
 
@@ -102,7 +118,10 @@ class ServiceTaskDelegate:
                     message = ServiceTaskDelegate.get_message_for_status(proxied_response.status_code)
                     error = f"Received an unexpected response from service {name} : {message}"
                     if "error" in parsed_response:
-                        error += parsed_response["error"]
+                        error_response = parsed_response["error"]
+                        if isinstance(error_response, list | dict):
+                            error_response = json.dumps(parsed_response["error"])
+                        error += error_response
                     if json_parse_error:
                         error += "A critical component (The connector proxy) is not responding correctly."
                     raise ConnectorProxyError(error)
@@ -123,13 +142,11 @@ class ServiceTaskDelegate:
 
 
 class ServiceTaskService:
-    """ServiceTaskService."""
-
     @staticmethod
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/commands")
+            response = requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []
@@ -144,7 +161,7 @@ class ServiceTaskService:
     def authentication_list() -> Any:
         """Returns a list of available authentications."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/auths")
+            response = requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []

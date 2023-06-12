@@ -1,10 +1,9 @@
-"""Refresh_token."""
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
 
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 # from sqlalchemy.orm import relationship
 
@@ -13,8 +12,6 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 @dataclass()
 class RefreshTokenModel(SpiffworkflowBaseDBModel):
-    """RefreshTokenModel."""
-
     __tablename__ = "refresh_token"
 
     id: int = db.Column(db.Integer, primary_key=True)

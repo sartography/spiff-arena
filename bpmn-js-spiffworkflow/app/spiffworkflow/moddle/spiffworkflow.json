@@ -71,6 +71,17 @@
       ]
     },
     {
+      "name": "signalButtonLabel",
+      "superClass": [ "Element" ],
+      "properties": [
+        {
+          "name": "value",
+          "isBody": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
       "name": "properties",
       "superClass": [
         "Element"

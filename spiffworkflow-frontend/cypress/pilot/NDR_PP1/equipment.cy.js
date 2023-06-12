@@ -90,38 +90,39 @@ const submitWithUser = (
   //     .click();
   // }
 
-  cy.get('button').contains('Return to Home', { timeout: 60000 });
+  cy.wait(10000);
+  cy.contains('Process Instance Id:', { timeout: 60000 });
   cy.logout();
 };
 
-  //Check if the process instance is completed successfully
-  const checkProcessInstanceCompleted = (
-    username,
-    password,
-    processInstanceId
+//Check if the process instance is completed successfully
+const checkProcessInstanceCompleted = (
+  username,
+  password,
+  processInstanceId
 ) => {
-      cy.wait(2000);
-      cy.log('========Login with : ', username);
-      cy.log('========processInstanceId: ', processInstanceId);
-      cy.login(username, password);
+  cy.wait(2000);
+  cy.log('========Login with : ', username);
+  cy.log('========processInstanceId: ', processInstanceId);
+  cy.login(username, password);
 
-      cy.wait(1000);
-      cy.visit('/admin/process-instances/find-by-id');
-      cy.get('#process-instance-id-input').type(processInstanceId);
+  cy.wait(1000);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
 
-      cy.get('button')
-          .contains(/^Submit$/)
-          .click();
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
 
-      cy.wait(2000);
-      cy.get('#tag-1 > span').contains('complete');
+  cy.wait(2000);
+  cy.get('#tag-1 > span').contains('complete');
 }
 
 // Equipment Path - Without Files
-describe.only('Equipment Path - Without Files', () => {
+describe('Equipment Path - Without Files', () => {
   Cypress._.times(1, () => {
     // Out of Policy. People Ops Partner Group and Budget owner approves the request
-    it('Out of Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('1.Out of Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -253,11 +254,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
         cy.log('=====after logout ---');
@@ -292,7 +294,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('2.Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -382,11 +384,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -420,7 +423,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('3.Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -509,11 +512,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -574,7 +578,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves the request
-    it('Within Policy. People Ops Partner Group approves', () => {
+    it('4.Within Policy. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -663,11 +667,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -688,7 +693,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group rejects the request
-    it('Within Policy. People Ops Partner Group rejects', () => {
+    it('5.Within Policy. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -777,11 +782,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -802,7 +808,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group request additional info
-    it('Within Policy. People Ops Partner Group needs more info', () => {
+    it('6.Within Policy. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -891,11 +897,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -933,7 +940,7 @@ describe.only('Equipment Path - Without Files', () => {
       });
     });
     // Within Policy. People Ops Partner Group and Budget owner approves the request
-    it('Within Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('7.Within Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1022,11 +1029,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1060,7 +1068,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('8.Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1149,11 +1157,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1187,7 +1196,7 @@ describe.only('Equipment Path - Without Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('9.Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1276,11 +1285,12 @@ describe.only('Equipment Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.get('button')
+        cy.wait(6000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1334,10 +1344,10 @@ describe.only('Equipment Path - Without Files', () => {
 });
 
 // Equipment Path - With Files
-describe('Equipment Path - With Files', () => {
+describe.only('Equipment Path - With Files', () => {
   Cypress._.times(1, () => {
     // Out of Policy. People Ops Partner Group and Budget owner approves the request
-    it('Out of Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('10.Out of Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1518,12 +1528,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1557,7 +1567,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('11.Out of Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1695,12 +1705,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1734,7 +1744,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Out of Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('12.Out of Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -1871,12 +1881,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -1937,7 +1947,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves the request
-    it('Within Policy. People Ops Partner Group approves', () => {
+    it('13.Within Policy. People Ops Partner Group approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2075,12 +2085,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2101,7 +2111,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group rejects the request
-    it('Within Policy. People Ops Partner Group rejects', () => {
+    it('14.Within Policy. People Ops Partner Group rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2239,12 +2249,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2265,7 +2275,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group request additional info
-    it('Within Policy. People Ops Partner Group needs more info', () => {
+    it('15.Within Policy. People Ops Partner Group needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2402,12 +2412,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2445,7 +2455,7 @@ describe('Equipment Path - With Files', () => {
       });
     });
     // Within Policy. People Ops Partner Group and Budget owner approves the request
-    it('Within Policy. People Ops Partner Group and Budget owner approves', () => {
+    it('16.Within Policy. People Ops Partner Group and Budget owner approves', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2582,12 +2592,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2621,7 +2631,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner rejects the request
-    it('Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
+    it('17.Within Policy. People Ops Partner Group approves and Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2758,12 +2768,12 @@ describe('Equipment Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
-        cy.get('button')
+        cy.wait(20000);
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 
@@ -2797,7 +2807,7 @@ describe('Equipment Path - With Files', () => {
     });
 
     // Within Policy. People Ops Partner Group approves and Budget owner request for additional details
-    it('Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
+    it('18.Within Policy. People Ops Partner Group approves and Budget owner needs more info', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -2936,11 +2946,11 @@ describe('Equipment Path - With Files', () => {
           .click();
 
         cy.wait(20000);
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Return to Home$/)
-          .click();
+          .click();*/
 
-        cy.contains('Started by me', { timeout: 60000 });
+        cy.contains('Process Instance Id:', { timeout: 60000 });
         cy.logout();
         cy.wait(2000);
 

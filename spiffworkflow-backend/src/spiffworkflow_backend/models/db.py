@@ -1,4 +1,3 @@
-"""Db."""
 from __future__ import annotations
 
 import enum
@@ -16,8 +15,6 @@ migrate = Migrate()
 
 
 class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
-    """SpiffworkflowBaseDBModel."""
-
     __abstract__ = True
 
     @classmethod
@@ -40,7 +37,6 @@ class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
         return result
 
     def validate_enum_field(self, key: str, value: Any, enum_variable: enum.EnumMeta) -> Any:
-        """Validate_enum_field."""
         try:
             m_type = getattr(enum_variable, value, None)
         except Exception as e:

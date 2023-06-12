@@ -1,6 +1,6 @@
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
-from typing import Dict
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
@@ -14,8 +14,11 @@ from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+StartConfiguration = tuple[int, int, int]
 
 # TODO: cylce timers and repeat counts?
+
+
 class StartEvent(DefaultStartEvent):  # type: ignore
     def __init__(self, wf_spec, bpmn_id, event_definition, **kwargs):  # type: ignore
         if isinstance(event_definition, TimerEventDefinition):
@@ -26,35 +29,43 @@ class StartEvent(DefaultStartEvent):  # type: ignore
             self.timer_definition = None
 
     @staticmethod
-    def register_converter(spec_config: Dict[str, Any]) -> None:
+    def register_converter(spec_config: dict[str, Any]) -> None:
         spec_config["task_specs"].remove(DefaultStartEventConverter)
         spec_config["task_specs"].append(StartEventConverter)
 
     @staticmethod
-    def register_parser_class(parser_config: Dict[str, Any]) -> None:
+    def register_parser_class(parser_config: dict[str, Any]) -> None:
         parser_config[full_tag("startEvent")] = (SpiffStartEventParser, StartEvent)
 
-    def start_delay_in_seconds(self, my_task: SpiffTask, now_in_utc: datetime) -> int:
-        script_engine = my_task.workflow.script_engine
-        evaluated_expression = None
-        parsed_duration = None
-
-        if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
-            evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
+    def configuration(self, my_task: SpiffTask, now_in_utc: datetime) -> StartConfiguration:
+        evaluated_expression = self.evaluated_timer_expression(my_task)
+        cycles = 0
+        duration = 0
+        time_delta = timedelta(seconds=0)
 
         if evaluated_expression is not None:
             if isinstance(self.timer_definition, TimeDateEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_time_or_duration(evaluated_expression)
                 time_delta = parsed_duration - now_in_utc
-                return time_delta.seconds  # type: ignore
             elif isinstance(self.timer_definition, DurationTimerEventDefinition):
                 parsed_duration = TimerEventDefinition.parse_iso_duration(evaluated_expression)
                 time_delta = TimerEventDefinition.get_timedelta_from_start(parsed_duration, now_in_utc)
-                return time_delta.seconds  # type: ignore
             elif isinstance(self.timer_definition, CycleTimerEventDefinition):
-                return 0
+                cycles, start, cycle_duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
+                time_delta = start - now_in_utc + cycle_duration
+                duration = cycle_duration.seconds
 
-        return 0
+        start_delay_in_seconds = int(time_delta.total_seconds())
+
+        return (cycles, start_delay_in_seconds, duration)
+
+    def evaluated_timer_expression(self, my_task: SpiffTask) -> Any:
+        script_engine = my_task.workflow.script_engine
+        evaluated_expression = None
+
+        if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
+            evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
+        return evaluated_expression
 
 
 class StartEventConverter(EventConverter):  # type: ignore

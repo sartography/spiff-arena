@@ -19,6 +19,8 @@ if [[ "${RUN_WITH_DAEMON:-}" != "false" ]]; then
   additional_args="${additional_args} -d"
 fi
 
+docker --version
+
 docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" build
 docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" stop
 
@@ -36,5 +38,8 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RECREATE_DATABASE:-}" == "true" ]]; then
   # bin/wait_for_server_to_be_up script.
   docker volume rm spiffworkflow-backend_spiffworkflow_backend || echo 'docker volume not found'
 fi
+
+# docker compose isn't automatically pulling the image in ci so do it explicitly with docker
+docker pull mysql:8.0.29
 
 docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" up --wait $additional_args

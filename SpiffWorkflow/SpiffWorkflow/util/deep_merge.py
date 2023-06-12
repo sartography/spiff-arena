@@ -1,3 +1,22 @@
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
+
 class DeepMerge(object):
     # Merges two deeply nested json-like dictionaries,
     # useful for updating things like task data.
@@ -12,7 +31,8 @@ class DeepMerge(object):
     @staticmethod
     def merge(a, b, path=None):
         "merges b into a"
-        if path is None: path = []
+        if path is None:
+            path = []
         for key in b:
             if key in a:
                 if a[key] == b[key]:

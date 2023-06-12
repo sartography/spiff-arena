@@ -1,66 +1,73 @@
-from .helpers.spec import TaskSpecConverter
+# Copyright (C) 2023 Sartography
+#
+# This file is part of SpiffWorkflow.
+#
+# SpiffWorkflow is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# SpiffWorkflow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301  USA
 
-from ...specs.StartTask import StartTask
-from ...specs.Simple import Simple
-
-from ..specs.BpmnProcessSpec import _EndJoin
-from ..specs.BpmnSpecMixin import _BpmnCondition
-from ..specs.NoneTask import NoneTask
-from ..specs.UserTask import UserTask
-from ..specs.ManualTask import ManualTask
-from ..specs.ScriptTask import ScriptTask
-from ..specs.MultiInstanceTask import StandardLoopTask, SequentialMultiInstanceTask, ParallelMultiInstanceTask
-from ..specs.SubWorkflowTask import CallActivity, TransactionSubprocess, SubWorkflowTask
-from ..specs.ExclusiveGateway import ExclusiveGateway
-from ..specs.InclusiveGateway import InclusiveGateway
-from ..specs.ParallelGateway import ParallelGateway
-from ..specs.events.StartEvent import StartEvent
-from ..specs.events.EndEvent import EndEvent
-from ..specs.events.IntermediateEvent import (
-    BoundaryEvent,
-    _BoundaryEventParent,
-    EventBasedGateway,
+from SpiffWorkflow.bpmn.specs.control import BpmnStartTask, _EndJoin, _BoundaryEventParent, SimpleBpmnTask
+from SpiffWorkflow.bpmn.specs.bpmn_task_spec import _BpmnCondition
+from SpiffWorkflow.bpmn.specs.defaults import (
+    UserTask,
+    ManualTask,
+    NoneTask,
+    ScriptTask,
+    ExclusiveGateway,
+    InclusiveGateway,
+    ParallelGateway,
+    StandardLoopTask,
+    SequentialMultiInstanceTask,
+    ParallelMultiInstanceTask,
+    CallActivity,
+    TransactionSubprocess,
+    SubWorkflowTask,
+    StartEvent,
+    EndEvent,
     IntermediateCatchEvent,
     IntermediateThrowEvent,
+    BoundaryEvent,
+    EventBasedGateway,
     SendTask,
     ReceiveTask,
 )
 
-
-class DefaultTaskSpecConverter(TaskSpecConverter):
-
-    def to_dict(self, spec):
-        dct = self.get_default_attributes(spec)
-        return dct
-
-    def from_dict(self, dct):
-        return self.task_spec_from_dict(dct)
-
-
-class SimpleTaskConverter(DefaultTaskSpecConverter):
-    def __init__(self, registry):
-        super().__init__(Simple, registry)
-
-
-class StartTaskConverter(DefaultTaskSpecConverter):
-    def __init__(self, registry):
-        super().__init__(StartTask, registry)
-
-
-class EndJoinConverter(DefaultTaskSpecConverter):
-    def __init__(self, registry):
-        super().__init__(_EndJoin, registry)
+from .helpers.spec import TaskSpecConverter
 
 
 class BpmnTaskSpecConverter(TaskSpecConverter):
 
     def to_dict(self, spec):
         dct = self.get_default_attributes(spec)
-        dct.update(self.get_bpmn_attributes(spec))
         return dct
 
     def from_dict(self, dct):
         return self.task_spec_from_dict(dct)
+
+
+class SimpleBpmnTaskConverter(BpmnTaskSpecConverter):
+    def __init__(self, registry):
+        super().__init__(SimpleBpmnTask, registry)
+
+class BpmnStartTaskConverter(BpmnTaskSpecConverter):
+    def __init__(self, registry):
+        super().__init__(BpmnStartTask, registry)
+
+class EndJoinConverter(BpmnTaskSpecConverter):
+    def __init__(self, registry):
+        super().__init__(_EndJoin, registry)
+
 
 
 class NoneTaskConverter(BpmnTaskSpecConverter):
@@ -85,7 +92,6 @@ class ScriptTaskConverter(BpmnTaskSpecConverter):
 
     def to_dict(self, spec):
         dct = self.get_default_attributes(spec)
-        dct.update(self.get_bpmn_attributes(spec))
         dct['script'] = spec.script
         return dct
 
@@ -97,7 +103,6 @@ class StandardLoopTaskConverter(BpmnTaskSpecConverter):
 
     def to_dict(self, spec):
         dct = self.get_default_attributes(spec)
-        dct.update(self.get_bpmn_attributes(spec))
         dct.update(self.get_standard_loop_attributes(spec))
         return dct
 
@@ -106,7 +111,6 @@ class MultiInstanceTaskConverter(BpmnTaskSpecConverter):
 
     def to_dict(self, spec):
         dct = self.get_default_attributes(spec)
-        dct.update(self.get_bpmn_attributes(spec))
         dct['task_spec'] = spec.task_spec
         dct['cardinality'] = spec.cardinality
         dct['data_input'] = self.registry.convert(spec.data_input)
@@ -294,8 +298,8 @@ class EventBasedGatewayConverter(EventConverter):
 
 
 DEFAULT_TASK_SPEC_CONVERTER_CLASSES = [
-    SimpleTaskConverter,
-    StartTaskConverter,
+    SimpleBpmnTaskConverter,
+    BpmnStartTaskConverter,
     EndJoinConverter,
     NoneTaskConverter,
     UserTaskConverter,

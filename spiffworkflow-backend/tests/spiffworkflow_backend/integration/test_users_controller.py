@@ -1,14 +1,11 @@
-"""Test_users_controller."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.user import UserModel
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUsersController(BaseTest):
-    """TestUsersController."""
-
     def test_user_search_returns_a_user(
         self,
         app: Flask,
@@ -16,7 +13,6 @@ class TestUsersController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_user_search_returns_a_user."""
         self.find_or_create_user(username="aa")
         self.find_or_create_user(username="ab")
         self.find_or_create_user(username="abc")
@@ -35,7 +31,6 @@ class TestUsersController(BaseTest):
         username_prefix: str,
         expected_count: int,
     ) -> None:
-        """_assert_search_has_count."""
         response = client.get(
             f"/v1.0/users/search?username_prefix={username_prefix}",
             headers=self.logged_in_headers(with_super_admin_user),

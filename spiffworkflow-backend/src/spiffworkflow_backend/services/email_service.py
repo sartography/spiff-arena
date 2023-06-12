@@ -1,7 +1,3 @@
-"""Email_service."""
-from typing import List
-from typing import Optional
-
 from flask import current_app
 from flask_mail import Message  # type: ignore
 
@@ -13,13 +9,13 @@ class EmailService:
     def add_email(
         subject: str,
         sender: str,
-        recipients: List[str],
+        recipients: list[str],
         content: str,
         content_html: str,
-        cc: Optional[str] = None,
-        bcc: Optional[str] = None,
-        reply_to: Optional[str] = None,
-        attachment_files: Optional[dict] = None,
+        cc: str | None = None,
+        bcc: str | None = None,
+        reply_to: str | None = None,
+        attachment_files: dict | None = None,
     ) -> None:
         """We will receive all data related to an email and send it."""
         mail = current_app.config["MAIL_APP"]
