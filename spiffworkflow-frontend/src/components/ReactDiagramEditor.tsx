@@ -467,32 +467,33 @@ export default function ReactDiagramEditor({
       if (alreadyImportedXmlRef.current) {
         return;
       }
-      diagramModelerToUse._moddle // eslint-disable-line no-underscore-dangle
-        .fromXML(diagramXMLToDisplay)
-        .then((result: any) => {
-          const refs = result.references.filter(
-            (r: any) =>
-              r.property === 'bpmn:loopDataInputRef' ||
-              r.property === 'bpmn:loopDataOutputRef'
-          );
-          const desc =
-            diagramModelerToUse._moddle.registry.getEffectiveDescriptor( // eslint-disable-line
-              'bpmn:ItemAwareElement'
+      if (diagramType === 'bpmn') {
+        diagramModelerToUse._moddle // eslint-disable-line no-underscore-dangle
+          .fromXML(diagramXMLToDisplay)
+          .then((result: any) => {
+            const refs = result.references.filter(
+              (r: any) =>
+                r.property === 'bpmn:loopDataInputRef' ||
+                r.property === 'bpmn:loopDataOutputRef'
             );
-          refs.forEach((ref: any) => {
-            const props = {
-              id: ref.id,
-              name: ref.id ? typeof ref.name === 'undefined' : ref.name,
-            };
-            const elem = diagramModelerToUse._moddle.create(desc, props); // eslint-disable-line no-underscore-dangle
-            elem.$parent = ref.element;
-            ref.element.set(ref.property, elem);
+            const desc =
+              diagramModelerToUse._moddle.registry.getEffectiveDescriptor( // eslint-disable-line
+                'bpmn:ItemAwareElement'
+              );
+            refs.forEach((ref: any) => {
+              const props = {
+                id: ref.id,
+                name: ref.id ? typeof ref.name === 'undefined' : ref.name,
+              };
+              const elem = diagramModelerToUse._moddle.create(desc, props); // eslint-disable-line no-underscore-dangle
+              elem.$parent = ref.element;
+              ref.element.set(ref.property, elem);
+            });
+            diagramModelerToUse.importDefinitions(result.rootElement);
           });
-          diagramModelerToUse.importDefinitions(result.rootElement);
-          if (diagramType === 'bpmn' || diagramType === 'readonly') {
-            diagramModelerToUse.get('canvas').zoom('fit-viewport');
-          }
-        });
+      } else {
+        diagramModelerToUse.importXML(diagramXMLToDisplay);
+      }
 
       alreadyImportedXmlRef.current = true;
     }
