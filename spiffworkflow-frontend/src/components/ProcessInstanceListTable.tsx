@@ -56,8 +56,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 import HttpService from '../services/HttpService';
 
-import 'react-bootstrap-typeahead/css/Typeahead.css';
-import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import {
   PaginationObject,
   ProcessModel,

@@ -352,9 +352,14 @@ export default function ProcessModelShow() {
         );
       }
 
-      let primarySuffix = '';
+      let primarySuffix = null;
       if (isPrimaryBpmnFile) {
-        primarySuffix = '- Primary File';
+        primarySuffix = (
+          <span>
+            &nbsp;-{' '}
+            <span className="primary-file-text-suffix">Primary File</span>
+          </span>
+        );
       }
       let fileLink = null;
       const fileUrl = profileModelFileEditUrl(processModelFile);

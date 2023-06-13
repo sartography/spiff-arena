@@ -455,7 +455,7 @@ class TaskService:
     ) -> None:
         """Update given spiff tasks in the database and remove deleted tasks."""
         # Remove all the deleted/pruned tasks from the database.
-        deleted_task_guids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
+        deleted_task_guids = [str(t.id) for t in deleted_spiff_tasks]
         tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
         human_tasks_to_clear = HumanTaskModel.query.filter(
             HumanTaskModel.task_id.in_(deleted_task_guids)  # type: ignore

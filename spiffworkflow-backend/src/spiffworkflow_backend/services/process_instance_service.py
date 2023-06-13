@@ -426,7 +426,7 @@ class ProcessInstanceService:
         data: dict[str, Any],
         user: UserModel,
     ) -> None:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, spiff_task.task_spec.name, user)
+        AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), user)
         cls.save_file_data_and_replace_with_digest_references(
             data,
             process_instance.id,
@@ -521,7 +521,7 @@ class ProcessInstanceService:
         can_complete = False
         try:
             AuthorizationService.assert_user_can_complete_task(
-                processor.process_instance_model.id, spiff_task.task_spec.name, g.user
+                processor.process_instance_model.id, str(spiff_task.id), g.user
             )
             can_complete = True
         except HumanTaskNotFoundError:

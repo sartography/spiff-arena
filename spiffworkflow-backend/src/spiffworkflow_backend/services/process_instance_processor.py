@@ -8,6 +8,7 @@ import re
 import time
 import uuid
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import datetime
 from datetime import timedelta
 from hashlib import sha256
@@ -41,6 +42,7 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -84,6 +86,7 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
+TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
@@ -134,7 +137,7 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
         return {}
 
     def last_result(self) -> dict[str, Any]:
-        return {k: v for k, v in self._last_result.items()}
+        return dict(self._last_result.items())
 
     def clear_state(self) -> None:
         pass
@@ -212,7 +215,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
 
     def last_result(self) -> dict[str, Any]:
-        return {k: v for k, v in self.state.items()}
+        return dict(self.state.items())
 
     def clear_state(self) -> None:
         self.state = {}
@@ -350,7 +353,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             methods = self.__get_augment_methods(task)
             if external_methods:
                 methods.update(external_methods)
-            super().execute(task, script, methods)
+            # do not run script if it is blank
+            if script:
+                super().execute(task, script, methods)
             return True
         except WorkflowException as e:
             raise e
@@ -1556,7 +1561,16 @@ class ProcessInstanceProcessor:
             task_guid=task_model.guid,
             user_id=user.id,
         )
-        task_service.process_parents_and_children_and_save_to_database(spiff_task)
+
+        # children of a multi-instance task has the attribute "triggered" set to True
+        # so use that to determine if a spiff_task is apart of a multi-instance task
+        # and therefore we need to process its parent since the current task will not
+        # know what is actually going on.
+        # Basically "triggered" means "this task is not part of the task spec outputs"
+        spiff_task_to_process = spiff_task
+        if spiff_task_to_process.triggered is True:
+            spiff_task_to_process = spiff_task.parent
+        task_service.process_parents_and_children_and_save_to_database(spiff_task_to_process)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
@@ -1630,7 +1644,7 @@ class ProcessInstanceProcessor:
                 return task
         return None
 
-    def terminate(self) -> None:
+    def remove_spiff_tasks_for_termination(self) -> None:
         start_time = time.time()
         deleted_tasks = self.bpmn_process_instance.cancel() or []
         spiff_tasks = self.bpmn_process_instance.get_tasks()
@@ -1657,6 +1671,10 @@ class ProcessInstanceProcessor:
             db.session.delete(task)
 
         self.save()
+
+    def terminate(self) -> None:
+        with suppress(KeyError):
+            self.remove_spiff_tasks_for_termination()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
         ProcessInstanceTmpService.add_event_to_process_instance(

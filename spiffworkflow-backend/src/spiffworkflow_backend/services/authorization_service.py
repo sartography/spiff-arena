@@ -336,24 +336,23 @@ class AuthorizationService:
     @staticmethod
     def assert_user_can_complete_task(
         process_instance_id: int,
-        task_bpmn_identifier: str,
+        task_guid: str,
         user: UserModel,
     ) -> bool:
         human_task = HumanTaskModel.query.filter_by(
-            task_name=task_bpmn_identifier,
+            task_id=task_guid,
             process_instance_id=process_instance_id,
             completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
-                f"Could find an human task with task name '{task_bpmn_identifier}'"
-                f" for process instance '{process_instance_id}'"
+                f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
             )
 
         if user not in human_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update"
-                f" task'{task_bpmn_identifier}' for process instance"
+                f" task'{task_guid}' for process instance"
                 f" '{process_instance_id}'"
             )
         return True
@@ -533,11 +532,13 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
 
-        # read comes from PG and PM permissions
+        # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/event-error-details/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data-file-download/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
 
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))

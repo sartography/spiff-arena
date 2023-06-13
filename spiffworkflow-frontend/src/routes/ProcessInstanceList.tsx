@@ -2,8 +2,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import 'react-datepicker/dist/react-datepicker.css';
 
-import 'react-bootstrap-typeahead/css/Typeahead.css';
-import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { getProcessModelFullIdentifierFromSearchParams } from '../helpers';

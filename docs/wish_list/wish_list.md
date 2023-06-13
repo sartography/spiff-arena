@@ -23,5 +23,13 @@ Allow us to define a markdown file for a process group or process model, which w
 ### Form Builder
 Let's invest in a much better Form Builder experience, so that it is trivial to build new forms or modify existing forms.
 
+## Connector Proxy
 
+### Support Multiple Connector Proxies
+Service Tasks have been a huge win, there are multiple reasons that supporting more than one Connector Proxy would be beneficial:
+
+1. Connect to several separately hosted services
+2. Support mulitple services written in multiple languages
+3. Allow some connectors to be local (http get/post) vs remote (xero/coin gecko)
+4. Could support non http based connectors (git interactions could be a workflow)
 

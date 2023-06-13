@@ -1,4 +1,4 @@
-# Quick start guide
+# QuickStart Guide
 
 ```{admonition} Welcome to the SpiffWorkflow quick start guide!
 :class: info

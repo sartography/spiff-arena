@@ -6,6 +6,10 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+# note that backend had autoapi hooked up at one point to generate python API docs.
+# if we want that again some day, here were the docs in that sub-folder docs dir:
+#   https://github.com/sartography/spiff-arena/blob/d9b303db782b1004a818c426283e9cfbc5ed0ec7/spiffworkflow-backend/docs/conf.py
+
 project = 'SpiffWorkflow'
 copyright = '2023, Sartography'
 author = 'Sartography' # Very ok to add your name here.

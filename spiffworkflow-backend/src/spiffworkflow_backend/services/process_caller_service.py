@@ -36,4 +36,4 @@ class ProcessCallerService:
             .filter(ProcessCallerCacheModel.process_identifier == process_id)
             .all()
         )
-        return list(set(map(lambda r: r.calling_process_identifier, records)))  # type: ignore
+        return list({r.calling_process_identifier for r in records})
