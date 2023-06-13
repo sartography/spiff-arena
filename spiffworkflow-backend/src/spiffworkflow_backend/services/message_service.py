@@ -7,6 +7,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from SpiffWorkflow.bpmn.workflow import BpmnMessage
+
 
 
 class MessageServiceError(Exception):
@@ -143,8 +145,13 @@ class MessageService:
         message_model_name: str,
         message_payload: dict,
     ) -> None:
+        bpmn_message = BpmnMessage(
+            None,
+            message_model_name,
+            message_payload,
+        )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
-        processor_receive.bpmn_process_instance.catch_bpmn_message(message_model_name, message_payload)
+        processor_receive.bpmn_process_instance.catch_bpmn_message(bpmn_message)
         processor_receive.do_engine_steps(save=True)
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)
