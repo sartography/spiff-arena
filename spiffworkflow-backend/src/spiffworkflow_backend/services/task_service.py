@@ -246,7 +246,7 @@ class TaskService:
             direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
                 id=bpmn_process.direct_parent_process_id
             ).first()
-            self.update_bpmn_process(spiff_workflow.parent, direct_parent_bpmn_process)
+            self.update_bpmn_process(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
 
     def update_task_model(
         self,
@@ -321,7 +321,7 @@ class TaskService:
             if bpmn_process is None:
                 spiff_workflow = spiff_task.workflow
                 bpmn_process = self.add_bpmn_process(
-                    bpmn_process_dict=self.serializer.workflow_to_dict(subprocess),
+                    bpmn_process_dict=self.serializer.subworkflow_to_dict(subprocess),
                     top_level_process=self.process_instance.bpmn_process,
                     bpmn_process_guid=subprocess_guid,
                     spiff_workflow=spiff_workflow,
@@ -372,7 +372,7 @@ class TaskService:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent = top_level_process
                 for subprocess_guid, subprocess in subprocesses.items():
-                    if subprocess == spiff_workflow.parent:
+                    if subprocess == spiff_workflow.parent_workflow:
                         direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
                             guid=str(subprocess_guid)
                         ).first()

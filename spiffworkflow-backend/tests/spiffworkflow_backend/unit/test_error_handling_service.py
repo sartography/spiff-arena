@@ -1,8 +1,6 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend import db
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -80,5 +78,5 @@ class TestErrorHandlingService(BaseTest):
     #     # and considered complete.
     #     messages = db.session.query(MessageInstanceModel).all()
     #     assert 2 == len(messages)
-        # assert "completed" == messages[0].status
-        # assert "completed" == messages[1].status
+    # assert "completed" == messages[0].status
+    # assert "completed" == messages[1].status
