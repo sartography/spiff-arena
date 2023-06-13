@@ -1,6 +1,8 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -50,33 +52,33 @@ class TestErrorHandlingService(BaseTest):
         process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.suspended.value == process_instance.status
 
-    # def test_error_sends_bpmn_message(
-    #     self,
-    #     app: Flask,
-    #     client: FlaskClient,
-    #     with_db_and_bpmn_file_cleanup: None,
-    # ) -> None:
-    #     """Real BPMN Messages should get generated and processes should fire off and complete."""
-    #     process_model = load_test_spec(
-    #         "test_group/error_send_message_bpmn",
-    #         process_model_source_directory="error",
-    #         bpmn_file_name="error.bpmn",  # Slightly misnamed, it sends and receives
-    #     )
-    #     """ Process Model that will listen for errors sent."""
-    #     load_test_spec(
-    #         "test_group/admin_tools/error_handler",
-    #         process_model_source_directory="error",
-    #         bpmn_file_name="error_handler.bpmn",  # Slightly misnamed, it sends and receives
-    #     )
-    #     process_model.exception_notification_addresses = ["dan@ILoveToReadErrorsInMyEmails.com"]
-    #     ProcessModelService.save_process_model(process_model)
-    #     # kick off the process and assure it got marked as an error.
-    #     process_instance = self.run_process_model_and_handle_error(process_model)
-    #     assert ProcessInstanceStatus.error.value == process_instance.status
-    #
-    #     # Both send and receive messages should be generated, matched
-    #     # and considered complete.
-    #     messages = db.session.query(MessageInstanceModel).all()
-    #     assert 2 == len(messages)
-    # assert "completed" == messages[0].status
-    # assert "completed" == messages[1].status
+    def test_error_sends_bpmn_message(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Real BPMN Messages should get generated and processes should fire off and complete."""
+        process_model = load_test_spec(
+            "test_group/error_send_message_bpmn",
+            process_model_source_directory="error",
+            bpmn_file_name="error.bpmn",  # Slightly misnamed, it sends and receives
+        )
+        """ Process Model that will listen for errors sent."""
+        load_test_spec(
+            "test_group/admin_tools/error_handler",
+            process_model_source_directory="error",
+            bpmn_file_name="error_handler.bpmn",  # Slightly misnamed, it sends and receives
+        )
+        process_model.exception_notification_addresses = ["dan@ILoveToReadErrorsInMyEmails.com"]
+        ProcessModelService.save_process_model(process_model)
+        # kick off the process and assure it got marked as an error.
+        process_instance = self.run_process_model_and_handle_error(process_model)
+        assert ProcessInstanceStatus.error.value == process_instance.status
+
+        # Both send and receive messages should be generated, matched
+        # and considered complete.
+        messages = db.session.query(MessageInstanceModel).all()
+        assert 2 == len(messages)
+        assert "completed" == messages[0].status
+        assert "completed" == messages[1].status
