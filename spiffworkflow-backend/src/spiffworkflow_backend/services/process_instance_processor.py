@@ -1077,9 +1077,6 @@ class ProcessInstanceProcessor:
         event_definition = self._event_serializer.registry.restore(event_data)
         if payload is not None:
             event_definition.payload = payload
-        current_app.logger.info(
-            f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}"
-        )
         try:
             self.bpmn_process_instance.catch(event_definition)
         except Exception as e:

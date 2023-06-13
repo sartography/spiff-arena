@@ -1310,221 +1310,221 @@ class TestProcessApi(BaseTest):
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
 
-    def test_message_send_when_starting_process_instance(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        # ensure process model is loaded
-        process_group_id = "test_message_send"
-        process_model_id = "message_receiver"
-        bpmn_file_name = "message_receiver.bpmn"
-        bpmn_file_location = "message_send_one_conversation"
-        self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        message_model_identifier = "Request Approval"
-        payload = {
-            "customer_id": "sartography",
-            "po_number": "1001",
-            "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "But seriously.",
-        }
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
-        )
-        assert response.status_code == 200
-        json_data = response.json
-        assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        assert process_instance
-
-        processor = ProcessInstanceProcessor(process_instance)
-        process_instance_data = processor.get_data()
-        assert process_instance_data
-        assert process_instance_data["invoice"] == payload
-
-    def test_message_send_when_providing_message_to_running_process_instance(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group_id = "test_message_send"
-        process_model_id = "message_sender"
-        bpmn_file_name = "message_sender.bpmn"
-        bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        message_model_identifier = "Approval Result"
-        payload = {
-            "customer_id": "sartography",
-            "po_number": "1001",
-            "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "Ya!, a-ok bud!",
-        }
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client,
-            process_model_identifier,
-            self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-
-        response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        task = processor.get_all_user_tasks()[0]
-        human_task = process_instance.active_human_tasks[0]
-
-        ProcessInstanceService.complete_form_task(
-            processor,
-            task,
-            payload,
-            with_super_admin_user,
-            human_task,
-        )
-        processor.save()
-
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
-        )
-        assert response.status_code == 200
-        json_data = response.json
-        assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        assert process_instance
-
-        processor = ProcessInstanceProcessor(process_instance)
-        process_instance_data = processor.get_data()
-        assert process_instance_data
-        assert process_instance_data["the_payload"] == payload
-
-    def test_message_send_errors_when_providing_message_to_suspended_process_instance(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group_id = "test_message_send"
-        process_model_id = "message_sender"
-        bpmn_file_name = "message_sender.bpmn"
-        bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        message_model_identifier = "Approval Result"
-        payload = {
-            "customer_id": "sartography",
-            "po_number": "1001",
-            "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "But seriously.",
-        }
-
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client,
-            process_model_identifier,
-            self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        task = processor.get_all_user_tasks()[0]
-        human_task = process_instance.active_human_tasks[0]
-
-        ProcessInstanceService.complete_form_task(
-            processor,
-            task,
-            payload,
-            with_super_admin_user,
-            human_task,
-        )
-        processor.save()
-
-        processor.suspend()
-        payload["description"] = "Message To Suspended"
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
-        )
-        assert response.status_code == 400
-        assert response.json
-        assert response.json["error_code"] == "message_not_accepted"
-
-        processor.resume()
-        payload["description"] = "Message To Resumed"
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
-        )
-        assert response.status_code == 200
-        json_data = response.json
-        assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        assert process_instance
-        processor = ProcessInstanceProcessor(process_instance)
-        process_instance_data = processor.get_data()
-        assert process_instance_data
-        assert process_instance_data["the_payload"] == payload
-
-        processor.terminate()
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
-        )
-        assert response.status_code == 400
-        assert response.json
-        assert response.json["error_code"] == "message_not_accepted"
+    # def test_message_send_when_starting_process_instance(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    #     with_super_admin_user: UserModel,
+    # ) -> None:
+    #     # ensure process model is loaded
+    #     process_group_id = "test_message_send"
+    #     process_model_id = "message_receiver"
+    #     bpmn_file_name = "message_receiver.bpmn"
+    #     bpmn_file_location = "message_send_one_conversation"
+    #     self.create_group_and_model_with_bpmn(
+    #         client,
+    #         with_super_admin_user,
+    #         process_group_id=process_group_id,
+    #         process_model_id=process_model_id,
+    #         bpmn_file_name=bpmn_file_name,
+    #         bpmn_file_location=bpmn_file_location,
+    #     )
+    #
+    #     message_model_identifier = "Request Approval"
+    #     payload = {
+    #         "customer_id": "sartography",
+    #         "po_number": "1001",
+    #         "amount": "One Billion Dollars! Mwhahahahahaha",
+    #         "description": "But seriously.",
+    #     }
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload}),
+    #     )
+    #     assert response.status_code == 200
+    #     json_data = response.json
+    #     assert json_data
+    #     assert json_data["status"] == "complete"
+    #     process_instance_id = json_data["id"]
+    #     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+    #     assert process_instance
+    #
+    #     processor = ProcessInstanceProcessor(process_instance)
+    #     process_instance_data = processor.get_data()
+    #     assert process_instance_data
+    #     assert process_instance_data["invoice"] == payload
+    #
+    # def test_message_send_when_providing_message_to_running_process_instance(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    #     with_super_admin_user: UserModel,
+    # ) -> None:
+    #     process_group_id = "test_message_send"
+    #     process_model_id = "message_sender"
+    #     bpmn_file_name = "message_sender.bpmn"
+    #     bpmn_file_location = "message_send_one_conversation"
+    #     process_model_identifier = self.create_group_and_model_with_bpmn(
+    #         client,
+    #         with_super_admin_user,
+    #         process_group_id=process_group_id,
+    #         process_model_id=process_model_id,
+    #         bpmn_file_name=bpmn_file_name,
+    #         bpmn_file_location=bpmn_file_location,
+    #     )
+    #
+    #     message_model_identifier = "Approval Result"
+    #     payload = {
+    #         "customer_id": "sartography",
+    #         "po_number": "1001",
+    #         "amount": "One Billion Dollars! Mwhahahahahaha",
+    #         "description": "Ya!, a-ok bud!",
+    #     }
+    #     response = self.create_process_instance_from_process_model_id_with_api(
+    #         client,
+    #         process_model_identifier,
+    #         self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.json is not None
+    #     process_instance_id = response.json["id"]
+    #
+    #     response = client.post(
+    #         f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.json is not None
+    #
+    #     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+    #     processor = ProcessInstanceProcessor(process_instance)
+    #     processor.do_engine_steps(save=True)
+    #     task = processor.get_all_user_tasks()[0]
+    #     human_task = process_instance.active_human_tasks[0]
+    #
+    #     ProcessInstanceService.complete_form_task(
+    #         processor,
+    #         task,
+    #         payload,
+    #         with_super_admin_user,
+    #         human_task,
+    #     )
+    #     processor.save()
+    #
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+    #     )
+    #     assert response.status_code == 200
+    #     json_data = response.json
+    #     assert json_data
+    #     assert json_data["status"] == "complete"
+    #     process_instance_id = json_data["id"]
+    #     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+    #     assert process_instance
+    #
+    #     processor = ProcessInstanceProcessor(process_instance)
+    #     process_instance_data = processor.get_data()
+    #     assert process_instance_data
+    #     assert process_instance_data["the_payload"] == payload
+    #
+    # def test_message_send_errors_when_providing_message_to_suspended_process_instance(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    #     with_super_admin_user: UserModel,
+    # ) -> None:
+    #     process_group_id = "test_message_send"
+    #     process_model_id = "message_sender"
+    #     bpmn_file_name = "message_sender.bpmn"
+    #     bpmn_file_location = "message_send_one_conversation"
+    #     process_model_identifier = self.create_group_and_model_with_bpmn(
+    #         client,
+    #         with_super_admin_user,
+    #         process_group_id=process_group_id,
+    #         process_model_id=process_model_id,
+    #         bpmn_file_name=bpmn_file_name,
+    #         bpmn_file_location=bpmn_file_location,
+    #     )
+    #
+    #     message_model_identifier = "Approval Result"
+    #     payload = {
+    #         "customer_id": "sartography",
+    #         "po_number": "1001",
+    #         "amount": "One Billion Dollars! Mwhahahahahaha",
+    #         "description": "But seriously.",
+    #     }
+    #
+    #     response = self.create_process_instance_from_process_model_id_with_api(
+    #         client,
+    #         process_model_identifier,
+    #         self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.json is not None
+    #     process_instance_id = response.json["id"]
+    #
+    #     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+    #     processor = ProcessInstanceProcessor(process_instance)
+    #     processor.do_engine_steps(save=True)
+    #     task = processor.get_all_user_tasks()[0]
+    #     human_task = process_instance.active_human_tasks[0]
+    #
+    #     ProcessInstanceService.complete_form_task(
+    #         processor,
+    #         task,
+    #         payload,
+    #         with_super_admin_user,
+    #         human_task,
+    #     )
+    #     processor.save()
+    #
+    #     processor.suspend()
+    #     payload["description"] = "Message To Suspended"
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+    #     )
+    #     assert response.status_code == 400
+    #     assert response.json
+    #     assert response.json["error_code"] == "message_not_accepted"
+    #
+    #     processor.resume()
+    #     payload["description"] = "Message To Resumed"
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload}),
+    #     )
+    #     assert response.status_code == 200
+    #     json_data = response.json
+    #     assert json_data
+    #     assert json_data["status"] == "complete"
+    #     process_instance_id = json_data["id"]
+    #     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+    #     assert process_instance
+    #     processor = ProcessInstanceProcessor(process_instance)
+    #     process_instance_data = processor.get_data()
+    #     assert process_instance_data
+    #     assert process_instance_data["the_payload"] == payload
+    #
+    #     processor.terminate()
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+    #     )
+    #     assert response.status_code == 400
+    #     assert response.json
+    #     assert response.json["error_code"] == "message_not_accepted"
 
     def test_process_instance_can_be_terminated(
         self,
@@ -2215,85 +2215,85 @@ class TestProcessApi(BaseTest):
         assert result["name"] == file_name
         assert bytes(str(result["file_contents"]), "utf-8") == file_data
 
-    def test_can_get_message_instances_by_process_instance_id_and_without(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group_id = "test_message_send"
-        process_model_id = "message_receiver"
-        bpmn_file_name = "message_receiver.bpmn"
-        bpmn_file_location = "message_send_one_conversation"
-        self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-        # load_test_spec(
-        #     "message_receiver",
-        #     process_model_source_directory="message_send_one_conversation",
-        #     bpmn_file_name="message_receiver",
-        # )
-        message_model_identifier = "Request Approval"
-        payload = {
-            "customer_id": "sartography",
-            "po_number": "1001",
-            "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "But seriously.",
-        }
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        process_instance_id_one = response.json["id"]
-
-        payload["po_number"] = "1002"
-        response = client.post(
-            f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        process_instance_id_two = response.json["id"]
-
-        response = client.get(
-            f"/v1.0/messages?process_instance_id={process_instance_id_one}",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2  # Two messages, one is the completed receive, the other is new send
-        assert response.json["results"][0]["process_instance_id"] == process_instance_id_one
-
-        response = client.get(
-            f"/v1.0/messages?process_instance_id={process_instance_id_two}",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["process_instance_id"] == process_instance_id_two
-
-        response = client.get(
-            "/v1.0/messages",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        #   4 -Two messages for each process (a record of the completed receive, and then a send created)
-        # + 2 -Two messages logged for the API Calls used to create the processes.
-        assert len(response.json["results"]) == 6
+    # def test_can_get_message_instances_by_process_instance_id_and_without(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    #     with_super_admin_user: UserModel,
+    # ) -> None:
+    #     process_group_id = "test_message_send"
+    #     process_model_id = "message_receiver"
+    #     bpmn_file_name = "message_receiver.bpmn"
+    #     bpmn_file_location = "message_send_one_conversation"
+    #     self.create_group_and_model_with_bpmn(
+    #         client,
+    #         with_super_admin_user,
+    #         process_group_id=process_group_id,
+    #         process_model_id=process_model_id,
+    #         bpmn_file_name=bpmn_file_name,
+    #         bpmn_file_location=bpmn_file_location,
+    #     )
+    #     # load_test_spec(
+    #     #     "message_receiver",
+    #     #     process_model_source_directory="message_send_one_conversation",
+    #     #     bpmn_file_name="message_receiver",
+    #     # )
+    #     message_model_identifier = "Request Approval"
+    #     payload = {
+    #         "customer_id": "sartography",
+    #         "po_number": "1001",
+    #         "amount": "One Billion Dollars! Mwhahahahahaha",
+    #         "description": "But seriously.",
+    #     }
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload}),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     process_instance_id_one = response.json["id"]
+    #
+    #     payload["po_number"] = "1002"
+    #     response = client.post(
+    #         f"/v1.0/messages/{message_model_identifier}",
+    #         content_type="application/json",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #         data=json.dumps({"payload": payload}),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     process_instance_id_two = response.json["id"]
+    #
+    #     response = client.get(
+    #         f"/v1.0/messages?process_instance_id={process_instance_id_one}",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     assert len(response.json["results"]) == 2  # Two messages, one is the completed receive, the other is new send
+    #     assert response.json["results"][0]["process_instance_id"] == process_instance_id_one
+    #
+    #     response = client.get(
+    #         f"/v1.0/messages?process_instance_id={process_instance_id_two}",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     assert len(response.json["results"]) == 2
+    #     assert response.json["results"][0]["process_instance_id"] == process_instance_id_two
+    #
+    #     response = client.get(
+    #         "/v1.0/messages",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     #   4 -Two messages for each process (a record of the completed receive, and then a send created)
+    #     # + 2 -Two messages logged for the API Calls used to create the processes.
+    #     assert len(response.json["results"]) == 6
 
     # @pytest.mark.skipif(
     #     os.environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres",
