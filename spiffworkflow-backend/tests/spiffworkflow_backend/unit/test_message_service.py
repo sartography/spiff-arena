@@ -29,7 +29,6 @@ class TestMessageService(BaseTest):
             "description": "We built a new feature for messages!",
             "amount": "100.00",
         }
-        import pdb; pdb.set_trace()
 
         # Load up the definition for the receiving process
         # It has a message start event that should cause it to fire when a unique message comes through

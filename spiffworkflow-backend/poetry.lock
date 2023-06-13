@@ -2385,7 +2385,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "improvement/better-subworkflow-management"
-resolved_reference = "f511e2ddf1d1cbfae762ff3e58576a46a1f0ce19"
+resolved_reference = "ea0a7bf4e9db55050a070a55ea3743ad630475de"
 
 [[package]]
 name = "sqlalchemy"

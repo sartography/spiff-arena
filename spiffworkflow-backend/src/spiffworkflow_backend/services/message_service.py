@@ -1,3 +1,4 @@
+from SpiffWorkflow.bpmn.workflow import BpmnMessage  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
@@ -7,8 +8,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from SpiffWorkflow.bpmn.workflow import BpmnMessage
-
 
 
 class MessageServiceError(Exception):
