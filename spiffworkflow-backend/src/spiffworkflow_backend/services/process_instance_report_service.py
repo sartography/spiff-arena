@@ -99,6 +99,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
@@ -123,6 +124,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -147,6 +149,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
@@ -316,7 +319,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def non_metadata_columns(cls) -> list[str]:
-        return cls.process_instance_stock_columns() + ["process_initiator_username"]
+        return cls.process_instance_stock_columns() + ["process_initiator_username", "last_milestone_bpmn_identifier"]
 
     @classmethod
     def builtin_column_options(cls) -> list[ReportMetadataColumn]:
@@ -336,6 +339,7 @@ class ProcessInstanceReportService:
                 "filterable": False,
             },
             {"Header": "Status", "accessor": "status", "filterable": False},
+            {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
         ]
         return return_value
 

@@ -1518,6 +1518,14 @@ export default function ProcessInstanceListTable({
   const formatProcessModelDisplayName = (_row: any, identifier: any) => {
     return <span>{identifier}</span>;
   };
+  const formatLastMilestone = (_row: any, value: any) => {
+    let valueToUse = value;
+    const milestoneLengthLimit = 20;
+    if (valueToUse.length > milestoneLengthLimit) {
+      valueToUse = `${value.substring(0, milestoneLengthLimit)}...`;
+    }
+    return <span title={value}>{valueToUse}</span>;
+  };
 
   const formatSecondsForDisplay = (_row: any, seconds: any) => {
     return convertSecondsToFormattedDateTime(seconds) || '-';
@@ -1536,6 +1544,7 @@ export default function ProcessInstanceListTable({
       end_in_seconds: formatSecondsForDisplay,
       updated_at_in_seconds: formatSecondsForDisplay,
       task_updated_at_in_seconds: formatSecondsForDisplay,
+      last_milestone_bpmn_identifier: formatLastMilestone,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter =
