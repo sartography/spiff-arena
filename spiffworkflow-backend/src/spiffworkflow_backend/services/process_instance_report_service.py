@@ -500,23 +500,23 @@ class ProcessInstanceReportService:
                         HumanTaskModel.completed.is_(False)  # type: ignore
                     )
 
+                    # Check to make sure the task is not only available for the group but the user as well
+                    if instances_with_tasks_waiting_for_me is not True:
+                        human_task_user_alias = aliased(HumanTaskUserModel)
+                        process_instance_query = process_instance_query.join(
+                            human_task_user_alias,
+                            and_(
+                                human_task_user_alias.human_task_id == HumanTaskModel.id,
+                                human_task_user_alias.user_id == user.id,
+                            ),
+                        )
+
             process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
             process_instance_query = process_instance_query.join(
                 UserGroupAssignmentModel,
                 UserGroupAssignmentModel.group_id == GroupModel.id,
             )
             process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
-
-            # Check to make sure the task is not only available for the group but the user as well
-            if instances_with_tasks_waiting_for_me is not True:
-                human_task_user_alias = aliased(HumanTaskUserModel)
-                process_instance_query = process_instance_query.join(
-                    human_task_user_alias,
-                    and_(
-                        human_task_user_alias.human_task_id == HumanTaskModel.id,
-                        human_task_user_alias.user_id == user.id,
-                    ),
-                )
 
         instance_metadata_aliases = {}
         if report_metadata["columns"] is None or len(report_metadata["columns"]) < 1:
