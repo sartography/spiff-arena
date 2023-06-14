@@ -63,6 +63,7 @@ class ProcessInstanceReportService:
                 },
                 {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -98,8 +99,8 @@ class ProcessInstanceReportService:
                 {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
@@ -124,7 +125,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -149,7 +150,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
+                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
@@ -249,9 +250,9 @@ class ProcessInstanceReportService:
                         metadata_column["accessor"]
                     ]
 
-            if "last_milestone_bpmn_identifier" in process_instance_mapping:
-                process_instance_dict["last_milestone_bpmn_identifier"] = process_instance_mapping[
-                    "last_milestone_bpmn_identifier"
+            if "last_milestone_bpmn_name" in process_instance_mapping:
+                process_instance_dict["last_milestone_bpmn_name"] = process_instance_mapping[
+                    "last_milestone_bpmn_name"
                 ]
 
             results.append(process_instance_dict)
@@ -319,7 +320,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def non_metadata_columns(cls) -> list[str]:
-        return cls.process_instance_stock_columns() + ["process_initiator_username", "last_milestone_bpmn_identifier"]
+        return cls.process_instance_stock_columns() + ["process_initiator_username", "last_milestone_bpmn_name"]
 
     @classmethod
     def builtin_column_options(cls) -> list[ReportMetadataColumn]:
@@ -338,8 +339,8 @@ class ProcessInstanceReportService:
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
+            {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             {"Header": "Status", "accessor": "status", "filterable": False},
-            {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
         ]
         return return_value
 
@@ -428,12 +429,17 @@ class ProcessInstanceReportService:
             .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
             .filter(
                 or_(
-                    TaskDefinitionModel.typename == "IntermediateThrowEvent",
                     and_(
-                        BpmnProcessModel.direct_parent_process_id == None,  # noqa: E711
-                        TaskDefinitionModel.typename.in_(["SimpleBpmnTask", "BpmnStartTask"]),  # type: ignore
+                        TaskDefinitionModel.typename.in_(["StartEvent", "EndEvent", "IntermediateThrowEvent"]),  # type: ignore
+                        TaskDefinitionModel.bpmn_name != None,  # noqa: E711
                     ),
-                )
+                    and_(
+                        or_(
+                            BpmnProcessModel.direct_parent_process_id == None,  # noqa: E711
+                        ),
+                        TaskDefinitionModel.typename.in_(["StartEvent", "EndEvent"]),  # type: ignore
+                    ),
+                ),
             )
             .group_by(ProcessInstanceEventModel.process_instance_id)
             .subquery()
@@ -445,7 +451,7 @@ class ProcessInstanceReportService:
         last_milestone_subquery = (
             db.session.query(  # type: ignore
                 ProcessInstanceEventModel.process_instance_id.label("process_instance_id"),  # type: ignore
-                func.max(TaskDefinitionModel.bpmn_identifier).label("last_milestone_bpmn_identifier"),
+                func.max(TaskDefinitionModel.bpmn_name).label("last_milestone_bpmn_name"),
             )
             .join(max_pie_subquery, ProcessInstanceEventModel.id == max_pie_subquery.c.max_pie_id)
             .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
@@ -459,7 +465,7 @@ class ProcessInstanceReportService:
         process_instance_query = process_instance_query.outerjoin(
             last_milestone_subquery, last_milestone_subquery.c.process_instance_id == ProcessInstanceModel.id
         ).add_columns(  # type: ignore
-            func.max(last_milestone_subquery.c.last_milestone_bpmn_identifier).label("last_milestone_bpmn_identifier")
+            func.max(last_milestone_subquery.c.last_milestone_bpmn_name).label("last_milestone_bpmn_name")
         )
 
         return process_instance_query

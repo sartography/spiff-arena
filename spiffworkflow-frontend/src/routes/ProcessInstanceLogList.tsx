@@ -49,7 +49,9 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const params = useParams();
   const [clearAll, setClearAll] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
+  const [processInstanceLogs, setProcessInstanceLogs] = useState<
+    ProcessInstanceLogEntry[]
+  >([]);
   const [pagination, setPagination] = useState(null);
 
   const [taskTypes, setTaskTypes] = useState<string[]>([]);

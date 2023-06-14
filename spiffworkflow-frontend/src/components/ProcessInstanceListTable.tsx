@@ -1509,7 +1509,7 @@ export default function ProcessInstanceListTable({
     }
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
-  const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
+  const formatProcessInstanceId = (_row: ProcessInstance, id: number) => {
     return <span data-qa="paginated-entity-id">{id}</span>;
   };
   const formatProcessModelIdentifier = (_row: any, identifier: any) => {
@@ -1518,13 +1518,31 @@ export default function ProcessInstanceListTable({
   const formatProcessModelDisplayName = (_row: any, identifier: any) => {
     return <span>{identifier}</span>;
   };
-  const formatLastMilestone = (_row: any, value: any) => {
+  const formatLastMilestone = (
+    processInstance: ProcessInstance,
+    value: any
+  ) => {
     let valueToUse = value;
-    const milestoneLengthLimit = 20;
-    if (valueToUse.length > milestoneLengthLimit) {
-      valueToUse = `${value.substring(0, milestoneLengthLimit)}...`;
+    if (!valueToUse) {
+      if (processInstance.status === 'not_started') {
+        valueToUse = 'Created';
+      } else if (
+        ['complete', 'error', 'terminated'].includes(processInstance.status)
+      ) {
+        valueToUse = 'Completed';
+      } else {
+        valueToUse = 'Started';
+      }
     }
-    return <span title={value}>{valueToUse}</span>;
+    let truncatedValue = valueToUse;
+    const milestoneLengthLimit = 20;
+    if (truncatedValue.length > milestoneLengthLimit) {
+      truncatedValue = `${truncatedValue.substring(
+        0,
+        milestoneLengthLimit
+      )}...`;
+    }
+    return <span title={valueToUse}>{truncatedValue}</span>;
   };
 
   const formatSecondsForDisplay = (_row: any, seconds: any) => {
@@ -1544,7 +1562,7 @@ export default function ProcessInstanceListTable({
       end_in_seconds: formatSecondsForDisplay,
       updated_at_in_seconds: formatSecondsForDisplay,
       task_updated_at_in_seconds: formatSecondsForDisplay,
-      last_milestone_bpmn_identifier: formatLastMilestone,
+      last_milestone_bpmn_name: formatLastMilestone,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter =
