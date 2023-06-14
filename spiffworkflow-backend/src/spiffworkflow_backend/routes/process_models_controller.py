@@ -291,6 +291,9 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
     file.process_model_id = process_model.id
+
+    if file.type == FileType.bpmn.value:
+        file.bpmn_process_ids = SpecFileService.get_bpmn_process_ids_for_file_contents(file_contents)
     
     return make_response(jsonify(file), 200)
 
