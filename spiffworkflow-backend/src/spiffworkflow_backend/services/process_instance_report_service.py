@@ -507,6 +507,17 @@ class ProcessInstanceReportService:
             )
             process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
 
+            # Check to make sure the task is not only available for the group but the user as well
+            if instances_with_tasks_waiting_for_me is not True:
+                human_task_user_alias = aliased(HumanTaskUserModel)
+                process_instance_query = process_instance_query.join(
+                    human_task_user_alias,
+                    and_(
+                        human_task_user_alias.human_task_id == HumanTaskModel.id,
+                        human_task_user_alias.user_id == user.id,
+                    ),
+                )
+
         instance_metadata_aliases = {}
         if report_metadata["columns"] is None or len(report_metadata["columns"]) < 1:
             report_metadata["columns"] = cls.builtin_column_options()
