@@ -3,7 +3,7 @@ groups:
   admin:
     users: [admin@spiffworkflow.org]
   group1:
-    users: [jason@sartography.com, kb@sartography.com]
+    users: [jason@sartography.com, kevin@sartography.com]
   group2:
     users: [dan@sartography.com]
 

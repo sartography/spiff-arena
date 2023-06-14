@@ -790,7 +790,9 @@ class ProcessInstanceProcessor:
                 )
             else:
                 if group_model is None:
-                    raise (NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}"))
+                    raise (
+                        NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}")
+                    )
                 potential_owner_ids = [i.user_id for i in group_model.user_group_assignments]
                 self.raise_if_no_potential_owners(
                     potential_owner_ids,
