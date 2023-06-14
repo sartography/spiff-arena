@@ -173,7 +173,7 @@ export default function ProcessModelEditDiagram() {
   useEffect(() => {
     if (processModel !== null) {
       HttpService.makeCallToBackend({
-        path: `/processes/callers?bpmn_process_identifier=${processModel.primary_process_id}`,
+        path: `/processes/callers/${processModel.primary_process_id},bob`,
         successCallback: setCallers,
       });
     }

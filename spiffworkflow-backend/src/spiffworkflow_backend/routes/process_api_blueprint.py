@@ -68,8 +68,10 @@ def process_list() -> Any:
     return SpecReferenceSchema(many=True).dump(references)
 
 
-def process_caller_list(bpmn_process_identifier: str) -> Any:
-    callers = ProcessCallerService.callers(bpmn_process_identifier)
+def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
+    print(f"______________>>>> {bpmn_process_identifiers}")
+    print(f"______________>>>> {type(bpmn_process_identifiers)}")
+    callers = ProcessCallerService.callers(bpmn_process_identifiers)
     references = (
         SpecReferenceCache.query.filter_by(type="process").filter(SpecReferenceCache.identifier.in_(callers)).all()
     )

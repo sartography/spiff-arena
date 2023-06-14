@@ -1,7 +1,8 @@
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller import ProcessCallerCacheModel
 from sqlalchemy import or_
-
+from spiffworkflow_backend.services.custom_parser import MyCustomParser
+import io
 
 class ProcessCallerService:
     @staticmethod
@@ -30,10 +31,10 @@ class ProcessCallerService:
         db.session.commit()
 
     @staticmethod
-    def callers(process_id: str) -> list[str]:
+    def callers(process_ids: list[str]) -> list[str]:
         records = (
             db.session.query(ProcessCallerCacheModel)
-            .filter(ProcessCallerCacheModel.process_identifier == process_id)
+            .filter(ProcessCallerCacheModel.process_identifier.in_(process_ids))
             .all()
         )
-        return list({r.calling_process_identifier for r in records})
+        return sorted({r.calling_process_identifier for r in records})

@@ -34,7 +34,8 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelWit
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-
+from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
+from spiffworkflow_backend.models.file import FileType
 
 def process_model_create(
     modified_process_group_id: str, body: dict[str, str | bool | int | None | list]
@@ -290,6 +291,7 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
     file.process_model_id = process_model.id
+    
     return make_response(jsonify(file), 200)
 
 
