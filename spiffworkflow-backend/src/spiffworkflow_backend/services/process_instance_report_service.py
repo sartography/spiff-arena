@@ -415,6 +415,8 @@ class ProcessInstanceReportService:
 
     @classmethod
     def add_last_milestone(cls, process_instance_query: Query) -> Query:
+        # get a subquery for the max process_instance_event that is associcated with
+        # a top-level bpmn process start and end events or is an IntermediateThrowEvent
         max_pie_subquery = (
             db.session.query(func.max(ProcessInstanceEventModel.id).label("max_pie_id"))  # type: ignore
             .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
@@ -432,6 +434,10 @@ class ProcessInstanceReportService:
             .group_by(ProcessInstanceEventModel.process_instance_id)
             .subquery()
         )
+
+        # get another subquery to get the task bpmn identifier so we can use it for an outerjoin with a process_instance.
+        # this is also here since we need the join to all tables to be innerjoins but the main process instance needs them to
+        # be outerjoins. otherwise if a process instance hasn't actually run yet, it won't return in the query.
         last_milestone_subquery = (
             db.session.query(  # type: ignore
                 ProcessInstanceEventModel.process_instance_id.label("process_instance_id"),  # type: ignore
@@ -443,11 +449,15 @@ class ProcessInstanceReportService:
             .group_by(ProcessInstanceEventModel.process_instance_id)
             .subquery()
         )
+
+        # use an outerjoin so records still return even if the instance hasn't been started and therefore
+        # does not have any events associated with it
         process_instance_query = process_instance_query.outerjoin(
             last_milestone_subquery, last_milestone_subquery.c.process_instance_id == ProcessInstanceModel.id
         ).add_columns(  # type: ignore
             func.max(last_milestone_subquery.c.last_milestone_bpmn_identifier).label("last_milestone_bpmn_identifier")
         )
+
         return process_instance_query
 
     @classmethod
