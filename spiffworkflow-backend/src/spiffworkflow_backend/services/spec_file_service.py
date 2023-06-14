@@ -82,7 +82,7 @@ class SpecFileService(FileSystemService):
         parser = MyCustomParser()
         parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data))
         return list(parser.process_parsers.keys())
-    
+
     @classmethod
     def get_references_for_file_contents(
         cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
