@@ -171,9 +171,10 @@ export default function ProcessModelEditDiagram() {
   }, [processModelPath, params]);
 
   useEffect(() => {
-    if (processModel !== null) {
+    const bpmn_process_ids = processModelFile?.bpmn_process_ids;
+    if (processModel !== null && bpmn_process_ids) {
       HttpService.makeCallToBackend({
-        path: `/processes/callers/${processModel.primary_process_id},bob`,
+        path: `/processes/callers/${bpmn_process_ids.join(',')}`,
         successCallback: setCallers,
       });
     }
