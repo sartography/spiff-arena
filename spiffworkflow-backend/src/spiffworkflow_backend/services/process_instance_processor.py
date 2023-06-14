@@ -771,29 +771,31 @@ class ProcessInstanceProcessor:
         lane_assignment_id = None
         if re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
             potential_owner_ids = [self.process_instance_model.process_initiator_id]
-        elif "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
-            for username in task.data["lane_owners"][task_lane]:
-                lane_owner_user = UserModel.query.filter_by(username=username).first()
-                if lane_owner_user is not None:
-                    potential_owner_ids.append(lane_owner_user.id)
-            self.raise_if_no_potential_owners(
-                potential_owner_ids,
-                (
-                    "No users found in task data lane owner list for lane:"
-                    f" {task_lane}. The user list used:"
-                    f" {task.data['lane_owners'][task_lane]}"
-                ),
-            )
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
-            if group_model is None:
-                raise (NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}"))
-            potential_owner_ids = [i.user_id for i in group_model.user_group_assignments]
-            lane_assignment_id = group_model.id
-            self.raise_if_no_potential_owners(
-                potential_owner_ids,
-                f"Could not find any users in group to assign to lane: {task_lane}",
-            )
+            if group_model is not None:
+                lane_assignment_id = group_model.id
+            if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
+                for username in task.data["lane_owners"][task_lane]:
+                    lane_owner_user = UserModel.query.filter_by(username=username).first()
+                    if lane_owner_user is not None:
+                        potential_owner_ids.append(lane_owner_user.id)
+                self.raise_if_no_potential_owners(
+                    potential_owner_ids,
+                    (
+                        "No users found in task data lane owner list for lane:"
+                        f" {task_lane}. The user list used:"
+                        f" {task.data['lane_owners'][task_lane]}"
+                    ),
+                )
+            else:
+                if group_model is None:
+                    raise (NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}"))
+                potential_owner_ids = [i.user_id for i in group_model.user_group_assignments]
+                self.raise_if_no_potential_owners(
+                    potential_owner_ids,
+                    f"Could not find any users in group to assign to lane: {task_lane}",
+                )
 
         return {
             "potential_owner_ids": potential_owner_ids,
