@@ -164,7 +164,7 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id is None
+        assert human_task.lane_assignment_id == finance_group.id
         assert len(human_task.potential_owners) == 2
         assert human_task.potential_owners == [finance_user_three, finance_user_four]
 
@@ -179,7 +179,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert human_task.completed_by_user_id == finance_user_three.id
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id is None
+        assert human_task.lane_assignment_id == finance_group.id
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user_four
 

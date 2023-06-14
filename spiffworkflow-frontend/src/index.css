@@ -463,7 +463,14 @@ svg.notification-icon {
   max-width: 10rem;
   min-width: 5rem;
   word-break: normal;
+}
 
+/* make this the same width as the carbon datePickerItem element
+ * so the calendar icon stays on the input box.
+ * CLASS: cds--date-picker-input__wrapper
+*/
+.cds--date-picker-container .cds--form__helper-text {
+  width: 18rem;
 }
 
 /* lime green */
