@@ -1,5 +1,9 @@
 import copy
 import re
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task import TaskModel # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from collections.abc import Generator
 from typing import Any
 
@@ -11,6 +15,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
@@ -239,6 +244,7 @@ class ProcessInstanceReportService:
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
                         metadata_column["accessor"]
                     ]
+            process_instance_dict['last_milestone_bpmn_identifier'] = process_instance_mapping['last_milestone_bpmn_identifier']
 
             results.append(process_instance_dict)
         return results
@@ -483,6 +489,32 @@ class ProcessInstanceReportService:
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
             human_task_already_joined = True
+
+        max_pie_subquery = (
+            db.session.query(func.max(ProcessInstanceEventModel.id).label("max_pie_id"))  # type: ignore
+            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
+            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+            .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
+            .filter(or_(
+                TaskDefinitionModel.typename == "IntermediateThrowEvent",
+                # TaskDefinitionModel.typename.in_(["SimpleBpmnTask", "BpmnStartTask"]),  # type: ignore
+                # BpmnProcessModel.direct_parent_process_id == None,
+                and_(
+                    BpmnProcessModel.direct_parent_process_id == None,
+                    TaskDefinitionModel.typename.in_(["SimpleBpmnTask", "BpmnStartTask"])  # type: ignore
+                )
+            ))
+            .group_by(ProcessInstanceEventModel.process_instance_id)
+            .subquery()
+        )
+        process_instance_query = (
+            process_instance_query
+            .join(ProcessInstanceEventModel, ProcessInstanceModel.id == ProcessInstanceEventModel.process_instance_id)
+            .join(max_pie_subquery, ProcessInstanceEventModel.id == max_pie_subquery.c.max_pie_id)
+            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
+            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        )
+        process_instance_query = process_instance_query.add_columns(func.max(TaskDefinitionModel.bpmn_identifier).label("last_milestone_bpmn_identifier"))
 
         if user_group_identifier is not None:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
