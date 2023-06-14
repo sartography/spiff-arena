@@ -1,16 +1,15 @@
 import copy
 import re
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from collections.abc import Generator
 from typing import Any
 
 import sqlalchemy
 from flask import current_app
+from flask_sqlalchemy.query import Query
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -21,6 +20,8 @@ from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_instance_report import ReportMetadataColumn
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -244,7 +245,11 @@ class ProcessInstanceReportService:
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
                         metadata_column["accessor"]
                     ]
-            process_instance_dict['last_milestone_bpmn_identifier'] = process_instance_mapping['last_milestone_bpmn_identifier']
+
+            if "last_milestone_bpmn_identifier" in process_instance_mapping:
+                process_instance_dict["last_milestone_bpmn_identifier"] = process_instance_mapping[
+                    "last_milestone_bpmn_identifier"
+                ]
 
             results.append(process_instance_dict)
         return results
@@ -364,6 +369,86 @@ class ProcessInstanceReportService:
                 filter_found = True
         if filter_found is False:
             filters.append(new_filter)
+
+    @classmethod
+    def filter_by_user_group_identifier(
+        cls,
+        process_instance_query: Query,
+        user_group_identifier: str,
+        user: UserModel,
+        human_task_already_joined: bool | None = False,
+        process_status: str | None = None,
+        instances_with_tasks_waiting_for_me: bool | None = False,
+    ) -> Query:
+        group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
+        if user_group_identifier:
+            group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
+
+        if human_task_already_joined is False:
+            process_instance_query = process_instance_query.join(HumanTaskModel)  # type: ignore
+        if process_status is not None:
+            non_active_statuses = [
+                s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
+            ]
+            if len(non_active_statuses) == 0:
+                process_instance_query = process_instance_query.filter(
+                    HumanTaskModel.completed.is_(False)  # type: ignore
+                )
+                # Check to make sure the task is not only available for the group but the user as well
+                if instances_with_tasks_waiting_for_me is not True:
+                    human_task_user_alias = aliased(HumanTaskUserModel)
+                    process_instance_query = process_instance_query.join(  # type: ignore
+                        human_task_user_alias,
+                        and_(
+                            human_task_user_alias.human_task_id == HumanTaskModel.id,
+                            human_task_user_alias.user_id == user.id,
+                        ),
+                    )
+
+        process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))  # type: ignore
+        process_instance_query = process_instance_query.join(  # type: ignore
+            UserGroupAssignmentModel,
+            UserGroupAssignmentModel.group_id == GroupModel.id,
+        )
+        process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
+        return process_instance_query
+
+    @classmethod
+    def add_last_milestone(cls, process_instance_query: Query) -> Query:
+        max_pie_subquery = (
+            db.session.query(func.max(ProcessInstanceEventModel.id).label("max_pie_id"))  # type: ignore
+            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
+            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+            .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
+            .filter(
+                or_(
+                    TaskDefinitionModel.typename == "IntermediateThrowEvent",
+                    and_(
+                        BpmnProcessModel.direct_parent_process_id == None,  # noqa: E711
+                        TaskDefinitionModel.typename.in_(["SimpleBpmnTask", "BpmnStartTask"]),  # type: ignore
+                    ),
+                )
+            )
+            .group_by(ProcessInstanceEventModel.process_instance_id)
+            .subquery()
+        )
+        last_milestone_subquery = (
+            db.session.query(  # type: ignore
+                ProcessInstanceEventModel.process_instance_id.label("process_instance_id"),  # type: ignore
+                func.max(TaskDefinitionModel.bpmn_identifier).label("last_milestone_bpmn_identifier"),
+            )
+            .join(max_pie_subquery, ProcessInstanceEventModel.id == max_pie_subquery.c.max_pie_id)
+            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
+            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+            .group_by(ProcessInstanceEventModel.process_instance_id)
+            .subquery()
+        )
+        process_instance_query = process_instance_query.outerjoin(
+            last_milestone_subquery, last_milestone_subquery.c.process_instance_id == ProcessInstanceModel.id
+        ).add_columns(  # type: ignore
+            func.max(last_milestone_subquery.c.last_milestone_bpmn_identifier).label("last_milestone_bpmn_identifier")
+        )
+        return process_instance_query
 
     @classmethod
     def run_process_instance_report(
@@ -490,65 +575,17 @@ class ProcessInstanceReportService:
             )
             human_task_already_joined = True
 
-        max_pie_subquery = (
-            db.session.query(func.max(ProcessInstanceEventModel.id).label("max_pie_id"))  # type: ignore
-            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
-            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-            .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
-            .filter(or_(
-                TaskDefinitionModel.typename == "IntermediateThrowEvent",
-                # TaskDefinitionModel.typename.in_(["SimpleBpmnTask", "BpmnStartTask"]),  # type: ignore
-                # BpmnProcessModel.direct_parent_process_id == None,
-                and_(
-                    BpmnProcessModel.direct_parent_process_id == None,
-                    TaskDefinitionModel.typename.in_(["SimpleBpmnTask", "BpmnStartTask"])  # type: ignore
-                )
-            ))
-            .group_by(ProcessInstanceEventModel.process_instance_id)
-            .subquery()
-        )
-        process_instance_query = (
-            process_instance_query
-            .join(ProcessInstanceEventModel, ProcessInstanceModel.id == ProcessInstanceEventModel.process_instance_id)
-            .join(max_pie_subquery, ProcessInstanceEventModel.id == max_pie_subquery.c.max_pie_id)
-            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
-            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-        )
-        process_instance_query = process_instance_query.add_columns(func.max(TaskDefinitionModel.bpmn_identifier).label("last_milestone_bpmn_identifier"))
-
         if user_group_identifier is not None:
-            group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
-            if user_group_identifier:
-                group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
-
-            if human_task_already_joined is False:
-                process_instance_query = process_instance_query.join(HumanTaskModel)
-            if process_status is not None:
-                non_active_statuses = [
-                    s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
-                ]
-                if len(non_active_statuses) == 0:
-                    process_instance_query = process_instance_query.filter(
-                        HumanTaskModel.completed.is_(False)  # type: ignore
-                    )
-
-                    # Check to make sure the task is not only available for the group but the user as well
-                    if instances_with_tasks_waiting_for_me is not True:
-                        human_task_user_alias = aliased(HumanTaskUserModel)
-                        process_instance_query = process_instance_query.join(
-                            human_task_user_alias,
-                            and_(
-                                human_task_user_alias.human_task_id == HumanTaskModel.id,
-                                human_task_user_alias.user_id == user.id,
-                            ),
-                        )
-
-            process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
-            process_instance_query = process_instance_query.join(
-                UserGroupAssignmentModel,
-                UserGroupAssignmentModel.group_id == GroupModel.id,
+            process_instance_query = cls.filter_by_user_group_identifier(
+                process_instance_query=process_instance_query,
+                user_group_identifier=user_group_identifier,
+                user=user,
+                human_task_already_joined=human_task_already_joined,
+                process_status=process_status,
+                instances_with_tasks_waiting_for_me=instances_with_tasks_waiting_for_me,
             )
-            process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
+
+        process_instance_query = cls.add_last_milestone(process_instance_query)
 
         instance_metadata_aliases = {}
         if report_metadata["columns"] is None or len(report_metadata["columns"]) < 1:
