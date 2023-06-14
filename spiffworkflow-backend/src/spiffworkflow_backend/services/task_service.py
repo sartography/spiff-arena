@@ -242,7 +242,7 @@ class TaskService:
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
-        if spiff_workflow.parent:
+        if spiff_workflow.parent_task_id:
             direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
                 id=bpmn_process.direct_parent_process_id
             ).first()
