@@ -1539,7 +1539,7 @@ export default function ProcessInstanceListTable({
     if (truncatedValue.length > milestoneLengthLimit) {
       truncatedValue = `${truncatedValue.substring(
         0,
-        milestoneLengthLimit
+        milestoneLengthLimit - 3
       )}...`;
     }
     return <span title={valueToUse}>{truncatedValue}</span>;
