@@ -117,7 +117,6 @@ export default function ProcessInstanceLogList({
       searchParamsToInclude
     );
 
-    console.log('The Search Params are ', pickedSearchParams);
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
         pickedSearchParams
