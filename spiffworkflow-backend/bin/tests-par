@@ -12,9 +12,9 @@ if [[ ! -f ./src/instance/db_unit_testing_gw0.sqlite3 ]] ; then
   exit 1
 fi
 
-# check if python package hey is installed
+# check if python package pytest-xdist is installed
 if ! python -c "import xdist" &>/dev/null; then
-  >&2 echo -e "ERROR: please install the python package pytest-xdist first:\n\n\tpip install pytest-xdist"
+  >&2 echo -e "ERROR: please install the python package pytest-xdist by running poetry install"
   exit 1
 fi
 
