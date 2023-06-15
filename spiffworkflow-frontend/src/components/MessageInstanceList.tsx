@@ -40,7 +40,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       path: `/messages?${queryParamString}`,
       successCallback: setMessageInstanceListFromResult,
     });
-  }, []);
+  }, [processInstanceId, searchParams]);
 
   const handleCorrelationDisplayClose = () => {
     setMessageInstanceForModal(null);

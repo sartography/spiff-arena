@@ -126,11 +126,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  let processInstanceLogListPageBaseUrl = `/admin/logs/for-me/${params.process_model_id}/${params.process_instance_id}`;
   const processInstanceShowPageBaseUrlAllVariant = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
-    processInstanceLogListPageBaseUrl = `/admin/logs/${params.process_model_id}/${params.process_instance_id}`;
   }
 
   const handleAddErrorInUseEffect = useCallback((value: ErrorForDisplay) => {
@@ -401,7 +399,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Column>
         </Grid>
         {(processInstance.process_metadata || []).map(
-          (processInstanceMetadata, i) => (
+          (processInstanceMetadata) => (
             <Grid condensed fullWidth>
               <Column sm={1} md={1} lg={2} className="grid-list-title">
                 {processInstanceMetadata.key}:

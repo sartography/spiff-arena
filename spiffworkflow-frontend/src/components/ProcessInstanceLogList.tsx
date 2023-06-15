@@ -117,7 +117,7 @@ export default function ProcessInstanceLogList({
       searchParamsToInclude
     );
 
-    console.log("The Search Params are ", pickedSearchParams)
+    console.log('The Search Params are ', pickedSearchParams);
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
         pickedSearchParams
@@ -138,7 +138,13 @@ export default function ProcessInstanceLogList({
         setTaskBpmnIdentifiers(result.task_bpmn_identifiers);
       },
     });
-  }, [searchParams, targetUris.processInstanceLogListPath, isEventsView]);
+  }, [
+    searchParams,
+    processInstanceId,
+    processModelId,
+    targetUris.processInstanceLogListPath,
+    isEventsView,
+  ]);
 
   const handleErrorEventModalClose = () => {
     setEventForModal(null);

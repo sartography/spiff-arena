@@ -38,7 +38,7 @@ export default function InstructionsForEndUser({
       setCollapsable(true);
       setCollapsed(true);
     }
-  }, [allowCollapse, lineCount]);
+  }, [allowCollapse, lineCount, wordCount]);
 
   if (!task) {
     return null;

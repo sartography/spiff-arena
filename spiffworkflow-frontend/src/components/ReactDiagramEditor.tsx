@@ -44,11 +44,9 @@ import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle
 // @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 // @ts-expect-error TS(7016) FIXME
-import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
 // @ts-expect-error TS(7016) FIXME
 import TouchModule from 'diagram-js/lib/navigation/touch';
 // @ts-expect-error TS(7016) FIXME
-import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -428,7 +426,6 @@ export default function ReactDiagramEditor({
       if ((modeler as any).constructor.name === 'Viewer') {
         canvas.zoom('fit-viewport');
       }
-
 
       // highlighting a field
       // Option 3 at:

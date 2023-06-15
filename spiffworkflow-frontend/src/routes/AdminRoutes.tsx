@@ -16,8 +16,6 @@ import ProcessInstanceReportList from './ProcessInstanceReportList';
 import ProcessInstanceReportNew from './ProcessInstanceReportNew';
 import ProcessInstanceReportEdit from './ProcessInstanceReportEdit';
 import ReactFormEditor from './ReactFormEditor';
-import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
-import MessageInstanceList from '../components/MessageInstanceList';
 import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
