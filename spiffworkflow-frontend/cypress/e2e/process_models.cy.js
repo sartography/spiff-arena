@@ -74,7 +74,6 @@ describe('process-models', () => {
     cy.contains(`${jsonFileName}.json`).should('not.exist');
 
     // add new bpmn file
-    cy.getBySel('process-model-add-file').click();
     cy.contains('New BPMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=StartEvent_1]').click();
@@ -93,7 +92,6 @@ describe('process-models', () => {
     cy.contains(`${bpmnFileName}.bpmn`).should('exist');
 
     // add new dmn file
-    cy.getBySel('process-model-add-file').click();
     cy.contains('New DMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=decision_1]').click();
@@ -111,7 +109,6 @@ describe('process-models', () => {
     cy.contains(`${dmnFileName}.dmn`).should('exist');
 
     // add new json file
-    cy.getBySel('process-model-add-file').click();
     cy.contains('New JSON File').click();
     cy.contains(/^Process Model File$/);
     // Some reason, cypress evals json strings so we have to escape it it with '{{}'
