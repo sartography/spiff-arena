@@ -65,6 +65,12 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
 
+    api_view_function = current_app.view_functions[request.endpoint]
+    if token is None and api_view_function.__name__ in ['task_show']: # and something else
+        task_guid = request.path.split('/')[-1]
+        process_instance_id = int(request.path.split('/')[-2])
+        token = AuthorizationService.create_anonymous_token(process_instance_id, task_guid)
+
     if token:
         user_model = None
         decoded_token = get_decoded_token(token)
