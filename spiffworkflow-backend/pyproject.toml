@@ -37,6 +37,7 @@ sentry-sdk = "^1.10"
 mysql-connector-python = "*"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
+pytest-xdist = "^3.3.1"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
 
