@@ -30,7 +30,6 @@ flask-restful = "*"
 flask-simple-crypt = "^0.3.3"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-# SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"

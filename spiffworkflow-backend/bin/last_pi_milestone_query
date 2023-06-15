@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+mysql -uroot spiffworkflow_backend_local_development -e '
+  SELECT td.bpmn_identifier FROM process_instance p
+
+  JOIN process_instance_event pie ON pie.process_instance_id = p.id
+  JOIN task t ON t.guid = pie.task_guid
+  JOIN task_definition td ON td.id = t.task_definition_id
+
+  JOIN (
+    SELECT max(pie.id) as max_pie_id
+    FROM process_instance_event pie
+
+    JOIN task t ON t.guid = pie.task_guid
+    JOIN task_definition td ON td.id = t.task_definition_id
+    JOIN bpmn_process bp ON bp.id = t.bpmn_process_id
+
+    WHERE td.typename = "IntermediateThrowEvent" OR (bp.direct_parent_process_id is NULL AND td.typename IN ("SimpleBpmnTask", "BpmnStartTask"))
+
+    GROUP BY pie.process_instance_id
+  ) AS max_pie ON max_pie.max_pie_id = pie.id
+
+  WHERE pie.process_instance_id = 27
+  ;
+'
