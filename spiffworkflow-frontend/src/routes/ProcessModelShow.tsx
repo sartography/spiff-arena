@@ -526,7 +526,6 @@ export default function ProcessModelShow() {
         size="lg"
         label="Add File"
         type="inline"
-        data-qa="process-model-add-file"
         onChange={(a: any) => {
           if (a.selectedItem.text === 'New BPMN File') {
             navigate(
