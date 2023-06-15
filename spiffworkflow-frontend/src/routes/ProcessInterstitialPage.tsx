@@ -16,7 +16,7 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
   }
 
   return (
-    <>
+    <div className="show-page">
       <ProcessBreadcrumb
         hotCrumbs={[
           ['Process Groups', '/admin'],
@@ -36,6 +36,6 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
         processInstanceShowPageUrl={processInstanceShowPageUrl}
         allowRedirect
       />
-    </>
+    </div>
   );
 }

@@ -15,3 +15,30 @@
 @use '@carbon/colors';
 // @use '@carbon/react/scss/colors';
 @use '@carbon/react/scss/themes';
+
+// Not certain the best location for this, but here are some global
+// tweaks the markdown styles.
+
+main {
+  max-width: 1440px;
+  margin: auto;
+}
+
+p, li, h1, h2, h3, h4, h5, h6, blockquote {
+  max-width: 640px;
+}
+
+div.show-page, div.markdown, div.markdown-collapsed, div.markdown-collapsable {
+  margin: 0 auto;
+  max-width: 1000px;
+  padding: 15px 0 15px 0;
+}
+
+.wmde-markdown ol {
+  list-style: decimal;
+}
+
+.wmde-markdown ul {
+  list-style: disc;
+}
+

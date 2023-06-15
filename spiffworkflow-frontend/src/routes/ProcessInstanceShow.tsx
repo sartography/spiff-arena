@@ -20,15 +20,18 @@ import {
   Grid,
   Column,
   Button,
-  ButtonSet,
   Tag,
   Modal,
   Dropdown,
   Stack,
   Loading,
+  Tabs,
+  Tab,
+  TabList,
+  TabPanels,
+  TabPanel,
   // @ts-ignore
 } from '@carbon/react';
-import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -45,7 +48,6 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
-  ProcessInstanceMetadata,
   Task,
   TaskDefinitionPropertiesJson,
 } from '../interfaces';
@@ -54,6 +56,8 @@ import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import ProcessInterstitial from '../components/ProcessInterstitial';
+import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
+import MessageInstanceList from '../components/MessageInstanceList';
 
 type OwnProps = {
   variant: string;
@@ -83,8 +87,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventToSend, setEventToSend] = useState<any>({});
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
-    useState<boolean>(false);
-  const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
     useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
@@ -337,6 +339,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
+            Status:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3}>
+            <Tag type="gray" size="sm" className="span-tag">
+              {processInstance.status} {statusIcon}
+            </Tag>
+          </Column>
+        </Grid>
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started By:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -388,64 +400,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             {processInstance.bpmn_version_control_type})
           </Column>
         </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Status:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3}>
-            <Tag type="gray" size="sm" className="span-tag">
-              {processInstance.status} {statusIcon}
-            </Tag>
-          </Column>
-        </Grid>
-        <br />
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={2}>
-            <ButtonSet>
-              <Can
-                I="GET"
-                a={targetUris.processInstanceLogListPath}
-                ability={ability}
-              >
-                <Button
-                  size="sm"
-                  className="button-white-background"
-                  data-qa="process-instance-log-list-link"
-                  href={`${processInstanceLogListPageBaseUrl}`}
-                >
-                  Logs
-                </Button>
-              </Can>
-              <Can
-                I="GET"
-                a={targetUris.messageInstanceListPath}
-                ability={ability}
-              >
-                <Button
-                  size="sm"
-                  className="button-white-background"
-                  data-qa="process-instance-message-instance-list-link"
-                  href={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
-                >
-                  Messages
-                </Button>
-              </Can>
-              {processInstance.process_metadata &&
-              processInstance.process_metadata.length > 0 ? (
-                <Button
-                  size="sm"
-                  className="button-white-background"
-                  data-qa="process-instance-show-metadata"
-                  onClick={() => {
-                    setShowProcessInstanceMetadata(true);
-                  }}
-                >
-                  Details
-                </Button>
-              ) : null}
-            </ButtonSet>
-          </Column>
-        </Grid>
+        {(processInstance.process_metadata || []).map(
+          (processInstanceMetadata, i) => (
+            <Grid condensed fullWidth>
+              <Column sm={1} md={1} lg={2} className="grid-list-title">
+                {processInstanceMetadata.key}:
+              </Column>
+              <Column sm={3} md={3} lg={3} className="grid-date">
+                {processInstanceMetadata.value}
+              </Column>
+            </Grid>
+          )
+        )}
       </>
     );
   };
@@ -943,41 +909,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const processInstanceMetadataArea = () => {
-    if (
-      !processInstance ||
-      (processInstance.process_metadata &&
-        processInstance.process_metadata.length < 1)
-    ) {
-      return null;
-    }
-    const metadataComponents: any[] = [];
-    (processInstance.process_metadata || []).forEach(
-      (processInstanceMetadata: ProcessInstanceMetadata) => {
-        metadataComponents.push(
-          <Grid condensed fullWidth>
-            <Column sm={3} md={3} lg={5} className="grid-list-title">
-              {processInstanceMetadata.key}
-            </Column>
-            <Column sm={3} md={3} lg={3} className="grid-date">
-              {processInstanceMetadata.value}
-            </Column>
-          </Grid>
-        );
-      }
-    );
-    return (
-      <Modal
-        open={showProcessInstanceMetadata}
-        modalHeading="Details"
-        passiveModal
-        onRequestClose={() => setShowProcessInstanceMetadata(false)}
-      >
-        {metadataComponents}
-      </Modal>
-    );
-  };
-
   const taskUpdateDisplayArea = () => {
     if (!taskToDisplay) {
       return null;
@@ -1099,71 +1030,114 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       params.process_model_id ? params.process_model_id : ''
     );
 
+    const getTabs = () => {
+      const canViewLogs = ability.can(
+        'GET',
+        targetUris.processInstanceLogListPath
+      );
+      const canViewMsgs = ability.can(
+        'GET',
+        targetUris.messageInstanceListPath
+      );
+
+      return (
+        <Tabs>
+          <TabList aria-label="List of tabs">
+            <Tab>Diagram</Tab>
+            <Tab disabled={!canViewLogs}>Milestones</Tab>
+            <Tab disabled={!canViewLogs}>Events</Tab>
+            <Tab disabled={!canViewMsgs}>Messages</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>
+              <ReactDiagramEditor
+                processModelId={processModelId || ''}
+                diagramXML={processInstance.bpmn_xml_file_contents || ''}
+                fileName={processInstance.bpmn_xml_file_contents || ''}
+                tasks={tasks}
+                diagramType="readonly"
+                onElementClick={handleClickedDiagramTask}
+              />
+              <div id="diagram-container" />
+            </TabPanel>
+            <TabPanel>
+              <ProcessInstanceLogList
+                variant={variant}
+                isEventsView={false}
+                processModelId={modifiedProcessModelId || ''}
+                processInstanceId={processInstance.id}
+              />
+            </TabPanel>
+            <TabPanel>
+              <ProcessInstanceLogList
+                variant={variant}
+                isEventsView
+                processModelId={modifiedProcessModelId || ''}
+                processInstanceId={processInstance.id}
+              />
+            </TabPanel>
+            <TabPanel>
+              <MessageInstanceList processInstanceId={processInstance.id} />
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      );
+    };
+
     return (
       <>
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            ['Process Groups', '/admin'],
-            {
-              entityToExplode: processModelId,
-              entityType: 'process-model-id',
-              linkLastItem: true,
-            },
-            [`Process Instance Id: ${processInstance.id}`],
-          ]}
-        />
-        <Stack orientation="horizontal" gap={1}>
-          <h1 className="with-icons">
-            Process Instance Id: {processInstance.id}
-          </h1>
-          {buttonIcons()}
-        </Stack>
-        <ProcessInterstitial
-          processInstanceId={processInstance.id}
-          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
-          allowRedirect={false}
-          smallSpinner
-        />
-        <br />
-        <br />
-        <Grid condensed fullWidth>
-          <Column md={6} lg={8} sm={4}>
-            <TaskListTable
-              apiPath="/tasks"
-              additionalParams={`process_instance_id=${processInstance.id}`}
-              tableTitle="Tasks I can complete"
-              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
-              paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty="There are no tasks you can complete for this process instance."
-              shouldPaginateTable={false}
-              showProcessModelIdentifier={false}
-              showProcessId={false}
-              showStartedBy={false}
-              showTableDescriptionAsTooltip
-              showDateStarted={false}
-              showLastUpdated={false}
-              hideIfNoTasks
-              canCompleteAllTasks
-            />
-          </Column>
-        </Grid>
-        {getInfoTag()}
-        <br />
-        {taskUpdateDisplayArea()}
-        {processDataDisplayArea()}
-        {processInstanceMetadataArea()}
-        <br />
-        {viewMostRecentStateComponent()}
-        <ReactDiagramEditor
-          processModelId={processModelId || ''}
-          diagramXML={processInstance.bpmn_xml_file_contents || ''}
-          fileName={processInstance.bpmn_xml_file_contents || ''}
-          tasks={tasks}
-          diagramType="readonly"
-          onElementClick={handleClickedDiagramTask}
-        />
-
-        <div id="diagram-container" />
+        <div className="show-page">
+          <ProcessBreadcrumb
+            hotCrumbs={[
+              ['Process Groups', '/admin'],
+              {
+                entityToExplode: processModelId,
+                entityType: 'process-model-id',
+                linkLastItem: true,
+              },
+              [`Process Instance Id: ${processInstance.id}`],
+            ]}
+          />
+          <Stack orientation="horizontal" gap={1}>
+            <h1 className="with-icons">
+              Process Instance Id: {processInstance.id}
+            </h1>
+            {buttonIcons()}
+          </Stack>
+          {getInfoTag()}
+          <ProcessInterstitial
+            processInstanceId={processInstance.id}
+            processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
+            allowRedirect={false}
+            smallSpinner
+          />
+          <Grid condensed fullWidth>
+            <Column md={6} lg={8} sm={4}>
+              <TaskListTable
+                apiPath="/tasks"
+                additionalParams={`process_instance_id=${processInstance.id}`}
+                tableTitle="Tasks I can complete"
+                tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+                paginationClassName="with-large-bottom-margin"
+                textToShowIfEmpty="There are no tasks you can complete for this process instance."
+                shouldPaginateTable={false}
+                showProcessModelIdentifier={false}
+                showProcessId={false}
+                showStartedBy={false}
+                showTableDescriptionAsTooltip
+                showDateStarted={false}
+                showLastUpdated={false}
+                hideIfNoTasks
+                canCompleteAllTasks
+              />
+            </Column>
+          </Grid>
+          {taskUpdateDisplayArea()}
+          {processDataDisplayArea()}
+          <br />
+          {viewMostRecentStateComponent()}
+        </div>
+        {getTabs()}
       </>
     );
   }

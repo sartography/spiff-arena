@@ -216,12 +216,7 @@ export default function ReactDiagramEditor({
 
         // taken from the non-modeling components at
         //  bpmn-js/lib/Modeler.js
-        additionalModules: [
-          KeyboardMoveModule,
-          MoveCanvasModule,
-          TouchModule,
-          ZoomScrollModule,
-        ],
+        additionalModules: [KeyboardMoveModule, TouchModule],
       });
     }
 
@@ -424,11 +419,16 @@ export default function ReactDiagramEditor({
       const canvas = (modeler as any).get('canvas');
 
       // only get the canvas if the dmn active viewer is actually
-      // a Modeler and not an Editor which is what it will when we are
+      // a Modeler and not an Editor which is what it will be when we are
       // actively editing a decision table
       if ((modeler as any).constructor.name === 'Modeler') {
         canvas.zoom('fit-viewport');
       }
+
+      if ((modeler as any).constructor.name === 'Viewer') {
+        canvas.zoom('fit-viewport');
+      }
+
 
       // highlighting a field
       // Option 3 at:

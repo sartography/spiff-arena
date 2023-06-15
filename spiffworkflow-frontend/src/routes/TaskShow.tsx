@@ -451,7 +451,7 @@ export default function TaskShow() {
     }
 
     return (
-      <main>
+      <div className="show-page">
         <ProcessBreadcrumb
           hotCrumbs={[
             [
@@ -470,7 +470,7 @@ export default function TaskShow() {
         </h3>
         <InstructionsForEndUser task={task} />
         {formElement()}
-      </main>
+      </div>
     );
   }
 
