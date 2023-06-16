@@ -17,7 +17,7 @@ import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import {
   modifyProcessIdentifierForPathParam,
-  recursivelyNullifyUndefinedValuesInPlace,
+  recursivelyChangeNullAndUndefined,
 } from '../helpers';
 import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -49,7 +49,9 @@ export default function TaskShow() {
   useEffect(() => {
     const processResult = (result: Task) => {
       setTask(result);
-      setTaskData(result.data);
+
+      // convert null back to undefined so rjsf doesn't attempt to incorrectly validate them
+      setTaskData(recursivelyChangeNullAndUndefined(result.data, undefined));
       setDisabled(false);
       if (!result.can_complete) {
         navigateToInterstitial(result);
@@ -123,7 +125,7 @@ export default function TaskShow() {
 
     // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
     // so we convert undefined values to null recursively so that we can unset values in form fields
-    recursivelyNullifyUndefinedValuesInPlace(dataToSubmit);
+    recursivelyChangeNullAndUndefined(dataToSubmit, null);
 
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,

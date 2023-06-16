@@ -26,19 +26,19 @@ export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
 };
 
-export const recursivelyNullifyUndefinedValuesInPlace = (obj: any) => {
+export const recursivelyChangeNullAndUndefined = (obj: any, newValue: any) => {
   if (obj === null || obj === undefined) {
-    return null;
+    return newValue;
   }
   if (Array.isArray(obj)) {
     obj.forEach((value: any, index: number) => {
       // eslint-disable-next-line no-param-reassign
-      obj[index] = recursivelyNullifyUndefinedValuesInPlace(value);
+      obj[index] = recursivelyChangeNullAndUndefined(value, newValue);
     });
   } else if (typeof obj === 'object') {
     Object.entries(obj).forEach(([key, value]) => {
       // eslint-disable-next-line no-param-reassign
-      obj[key] = recursivelyNullifyUndefinedValuesInPlace(value);
+      obj[key] = recursivelyChangeNullAndUndefined(value, newValue);
     });
   }
   return obj;
