@@ -313,7 +313,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const lastUpdatedTimeTag = (
       <Grid condensed fullWidth>
-        <Column sm={1} md={1} lg={2} className="grid-list-title">
+        <Column sm={2} md={2} lg={4} className="grid-list-title">
           {lastUpdatedTimeLabel}:{' '}
         </Column>
         <Column sm={3} md={3} lg={3} className="grid-date">
@@ -323,30 +323,33 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
 
     let statusIcon = <InProgress />;
+    let statusColor = 'gray';
     if (processInstance.status === 'suspended') {
       statusIcon = <PauseOutline />;
     } else if (processInstance.status === 'complete') {
       statusIcon = <Checkmark />;
+      statusColor = 'green';
     } else if (processInstance.status === 'terminated') {
       statusIcon = <StopOutline />;
     } else if (processInstance.status === 'error') {
       statusIcon = <Warning />;
+      statusColor = 'red';
     }
 
     return (
       <>
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
+          <Column sm={2} md={2} lg={4} className="grid-list-title">
             Status:{' '}
           </Column>
           <Column sm={3} md={3} lg={3}>
-            <Tag type="gray" size="sm" className="span-tag">
+            <Tag type={statusColor} size="sm" className="span-tag">
               {processInstance.status} {statusIcon}
             </Tag>
           </Column>
         </Grid>
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
+          <Column sm={2} md={2} lg={4} className="grid-list-title">
             Started By:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -355,7 +358,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Grid>
         {processInstance.process_model_with_diagram_identifier ? (
           <Grid condensed fullWidth>
-            <Column sm={1} md={1} lg={2} className="grid-list-title">
+            <Column sm={2} md={2} lg={4} className="grid-list-title">
               Current Diagram:{' '}
             </Column>
             <Column sm={4} md={6} lg={8} className="grid-date">
@@ -371,7 +374,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Grid>
         ) : null}
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
+          <Column sm={2} md={2} lg={4} className="grid-list-title">
             Started:{' '}
           </Column>
           <Column
@@ -390,7 +393,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Grid>
         {lastUpdatedTimeTag}
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
+          <Column sm={2} md={2} lg={4} className="grid-list-title">
             Process model revision:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -401,7 +404,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {(processInstance.process_metadata || []).map(
           (processInstanceMetadata) => (
             <Grid condensed fullWidth>
-              <Column sm={1} md={1} lg={2} className="grid-list-title">
+              <Column sm={2} md={2} lg={4} className="grid-list-title">
                 {processInstanceMetadata.key}:
               </Column>
               <Column sm={3} md={3} lg={3} className="grid-date">
