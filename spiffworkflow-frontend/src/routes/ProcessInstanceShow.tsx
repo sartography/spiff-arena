@@ -1041,6 +1041,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         targetUris.messageInstanceListPath
       );
 
+      const getMessageDisplay = () => {
+        if (canViewMsgs) {
+          return <MessageInstanceList processInstanceId={processInstance.id} />;
+        }
+        return null;
+      };
+
       return (
         <Tabs>
           <TabList aria-label="List of tabs">
@@ -1077,9 +1084,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 processInstanceId={processInstance.id}
               />
             </TabPanel>
-            <TabPanel>
-              <MessageInstanceList processInstanceId={processInstance.id} />
-            </TabPanel>
+            <TabPanel>{getMessageDisplay()}</TabPanel>
           </TabPanels>
         </Tabs>
       );
