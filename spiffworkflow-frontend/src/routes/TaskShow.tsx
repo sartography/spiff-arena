@@ -15,10 +15,7 @@ import {
 import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import {
-  modifyProcessIdentifierForPathParam,
-  recursivelyNullifyUndefinedValuesInPlace,
-} from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
@@ -122,9 +119,9 @@ export default function TaskShow() {
     delete dataToSubmit.isManualTask;
 
     // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
-    // so we convert undefined values to null recursively so that we can unset values in form fields
-    recursivelyNullifyUndefinedValuesInPlace(dataToSubmit);
-
+    // so there is no way to clear out a field that previously had a value.
+    // To resolve this, we could potentially go through the object that we are posting (either in here or in
+    // HttpService) and translate all undefined values to null.
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
       successCallback: processSubmitResult,
