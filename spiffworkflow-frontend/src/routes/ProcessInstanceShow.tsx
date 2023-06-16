@@ -1026,7 +1026,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  if (processInstance && (tasks || tasksCallHadError)) {
+  if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
