@@ -362,12 +362,6 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
     return ""
 
 
-def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
-    return_hash: dict = {"type": return_type}
-    return_hash[return_type] = entity
-    return f"data: {current_app.json.dumps(return_hash)} \n\n"
-
-
 def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
@@ -394,17 +388,17 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
                 task.properties = {"instructionsForEndUser": instructions}
-                yield render_data("task", task)
+                yield _render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 # do not do any processing if the instance is not currently active
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield render_data("unrunnable_instance", process_instance)
+                    yield _render_data("unrunnable_instance", process_instance)
                     return
                 try:
                     processor.do_engine_steps(execution_strategy_name="one_at_a_time")
@@ -414,7 +408,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     api_error = ApiError.from_workflow_exception(
                         "engine_steps_error", "Failed to complete an automated task.", exp=wfe
                     )
-                    yield render_data("error", api_error)
+                    yield _render_data("error", api_error)
                     return
         processor.refresh_waiting_tasks()
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
@@ -434,10 +428,10 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             task.properties = {"instructionsForEndUser": instructions}
-            yield render_data("task", task)
+            yield _render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
@@ -472,8 +466,14 @@ def interstitial(process_instance_id: int) -> Response:
             status_code=500,
             response_headers={"Content-type": "text/event-stream"},
         )
-        api_error.response_message = render_data("error", api_error)
-        raise api_error
+        api_error.response_message = _render_data("error", api_error)
+        raise api_error from ex
+
+
+def _render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
+    return_hash: dict = {"type": return_type}
+    return_hash[return_type] = entity
+    return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
 
 def _task_submit_shared(
