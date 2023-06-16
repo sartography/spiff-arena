@@ -362,6 +362,12 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
     return ""
 
 
+def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
+    return_hash: dict = {"type": return_type}
+    return_hash[return_type] = entity
+    return f"data: {current_app.json.dumps(return_hash)} \n\n"
+
+
 def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
@@ -374,11 +380,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             return ""
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
-
-    def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
-        return_hash: dict = {"type": return_type}
-        return_hash[return_type] = entity
-        return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -448,7 +449,6 @@ def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | N
 
     # TODO: currently this just redirects back to home if the process has not been started
     # need something better to show?
-
     if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
         with ProcessInstanceQueueService.dequeued(process_instance):
             yield from _interstitial_stream(process_instance)
@@ -456,11 +456,24 @@ def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | N
 
 def interstitial(process_instance_id: int) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
-    return Response(
-        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
-    )
+    try:
+        return Response(
+            stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
+            mimetype="text/event-stream",
+            headers={"X-Accel-Buffering": "no"},
+        )
+    except Exception as ex:
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+            response_headers={'Content-type': 'text/event-stream'}
+        )
+        api_error.response_message = render_data('error', api_error)
+        raise api_error
 
 
 def _task_submit_shared(
