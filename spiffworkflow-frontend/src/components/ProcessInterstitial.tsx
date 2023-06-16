@@ -16,6 +16,7 @@ type OwnProps = {
   processInstanceShowPageUrl: string;
   allowRedirect: boolean;
   smallSpinner?: boolean;
+  collapsableInstructions?: boolean;
 };
 
 export default function ProcessInterstitial({
@@ -23,6 +24,7 @@ export default function ProcessInterstitial({
   allowRedirect,
   processInstanceShowPageUrl,
   smallSpinner = false,
+  collapsableInstructions = false,
 }: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
@@ -156,7 +158,7 @@ export default function ProcessInterstitial({
         <InstructionsForEndUser
           task={myTask}
           defaultMessage={defaultMsg}
-          allowCollapse
+          allowCollapse={collapsableInstructions}
         />
       );
     }
@@ -191,7 +193,7 @@ export default function ProcessInterstitial({
         <InstructionsForEndUser
           task={myTask}
           defaultMessage="There are no additional instructions or information for this task."
-          allowCollapse
+          allowCollapse={collapsableInstructions}
         />
       </div>
     );

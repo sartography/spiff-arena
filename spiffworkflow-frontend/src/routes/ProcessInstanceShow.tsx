@@ -1108,6 +1108,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
             allowRedirect={false}
             smallSpinner
+            collapsableInstructions={true}
           />
           <Grid condensed fullWidth>
             <Column md={6} lg={8} sm={4}>

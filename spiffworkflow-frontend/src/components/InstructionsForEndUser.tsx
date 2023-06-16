@@ -25,20 +25,31 @@ export default function InstructionsForEndUser({
   if (instructionsForEndUser) {
     instructions = instructionsForEndUser;
   }
-  const lineCount = instructions.split('\n').length;
-  const wordCount: number = instructions.split(' ').length;
+
   const maxLineCount: number = 8;
   const maxWordCount: number = 75;
+
+  const lineCount = (arg: string) => {
+    return arg.split('\n').length;
+  };
+
+  const wordCount = (arg: string) => {
+    return arg.split(' ').length;
+  };
 
   useEffect(() => {
     if (
       allowCollapse &&
-      (lineCount >= maxLineCount || wordCount > maxWordCount)
+      (lineCount(instructions) >= maxLineCount ||
+        wordCount(instructions) > maxWordCount)
     ) {
       setCollapsable(true);
       setCollapsed(true);
+    } else {
+      setCollapsable(false);
+      setCollapsed(false);
     }
-  }, [allowCollapse, lineCount, wordCount]);
+  }, [allowCollapse, instructions]);
 
   if (!task) {
     return null;
@@ -64,13 +75,13 @@ export default function InstructionsForEndUser({
 
   let instructionsShown = instructions;
   if (collapsed) {
-    if (wordCount > maxWordCount) {
+    if (wordCount(instructions) > maxWordCount) {
       instructionsShown = instructions
         .split(' ')
         .slice(0, maxWordCount)
         .join(' ');
       instructionsShown += '...';
-    } else if (lineCount > maxLineCount) {
+    } else if (lineCount(instructions) > maxLineCount) {
       instructionsShown = instructions.split('\n').slice(0, 5).join(' ');
       instructionsShown += '...';
     }
