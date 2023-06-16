@@ -70,7 +70,7 @@ export default function ProcessModelShow() {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelTestsPath]: ['POST'],
     [targetUris.processModelPublishPath]: ['POST'],
-    [targetUris.processInstanceListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
     [targetUris.processInstanceCreatePath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
@@ -615,7 +615,7 @@ export default function ProcessModelShow() {
 
   if (processModel) {
     return (
-      <>
+      <div className="show-page">
         {fileUploadModal()}
         {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
@@ -696,7 +696,11 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         {processModelFilesSection()}
-        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
+        <Can
+          I="POST"
+          a={targetUris.processInstanceListForMePath}
+          ability={ability}
+        >
           <ProcessInstanceListTable
             headerElement={<h2>My Process Instances</h2>}
             filtersEnabled={false}
@@ -713,7 +717,7 @@ export default function ProcessModelShow() {
           />
           <span data-qa="process-model-show-permissions-loaded" />
         </Can>
-      </>
+      </div>
     );
   }
   return null;
