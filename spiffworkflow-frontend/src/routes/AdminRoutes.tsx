@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import ProcessGroupList from './ProcessGroupList';
 import ProcessGroupShow from './ProcessGroupShow';
 import ProcessGroupNew from './ProcessGroupNew';
@@ -21,6 +21,7 @@ import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
+import MessageListPage from "./MessageListPage";
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -131,6 +132,7 @@ export default function AdminRoutes() {
           path="process-instances/find-by-id"
           element={<ProcessInstanceFindById />}
         />
+        <Route path="messages" element={<MessageListPage />} />
       </Routes>
     );
   }

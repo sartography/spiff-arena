@@ -44,9 +44,7 @@ import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle
 // @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 // @ts-expect-error TS(7016) FIXME
-// @ts-expect-error TS(7016) FIXME
 import TouchModule from 'diagram-js/lib/navigation/touch';
-// @ts-expect-error TS(7016) FIXME
 
 import { useNavigate } from 'react-router-dom';
 

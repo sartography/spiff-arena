@@ -16,7 +16,7 @@ import { FormatProcessModelDisplayName } from './MiniComponents';
 import { MessageInstance } from '../interfaces';
 
 type OwnProps = {
-  processInstanceId: number;
+  processInstanceId?: number;
 };
 
 export default function MessageInstanceList({ processInstanceId }: OwnProps) {
@@ -34,7 +34,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     let queryParamString = `per_page=${perPage}&page=${page}`;
-    queryParamString += `&process_instance_id=${processInstanceId}`;
+    if (processInstanceId) {
+      queryParamString += `&process_instance_id=${processInstanceId}`;
+    }
 
     HttpService.makeCallToBackend({
       path: `/messages?${queryParamString}`,
