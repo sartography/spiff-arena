@@ -470,9 +470,9 @@ def interstitial(process_instance_id: int) -> Response:
                 f"Error was: {ex.__class__.__name__}: {str(ex)}"
             ),
             status_code=500,
-            response_headers={'Content-type': 'text/event-stream'}
+            response_headers={"Content-type": "text/event-stream"},
         )
-        api_error.response_message = render_data('error', api_error)
+        api_error.response_message = render_data("error", api_error)
         raise api_error
 
 
