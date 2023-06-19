@@ -17,6 +17,7 @@ type OwnProps = {
   allowRedirect: boolean;
   smallSpinner?: boolean;
   collapsableInstructions?: boolean;
+  executeTasks?: boolean;
 };
 
 export default function ProcessInterstitial({
@@ -25,6 +26,7 @@ export default function ProcessInterstitial({
   processInstanceShowPageUrl,
   smallSpinner = false,
   collapsableInstructions = false,
+  executeTasks = true,
 }: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
@@ -39,29 +41,32 @@ export default function ProcessInterstitial({
   const { addError } = useAPIError();
 
   useEffect(() => {
-    fetchEventSource(`${BACKEND_BASE_URL}/tasks/${processInstanceId}`, {
-      headers: getBasicHeaders(),
-      onmessage(ev) {
-        const retValue = JSON.parse(ev.data);
-        if (retValue.type === 'error') {
-          addError(retValue.error);
-        } else if (retValue.type === 'task') {
-          setData((prevData) => [retValue.task, ...prevData]);
-          setLastTask(retValue.task);
-        } else if (retValue.type === 'unrunnable_instance') {
-          setProcessInstance(retValue.unrunnable_instance);
-        }
-      },
-      onerror(error: any) {
-        // if backend returns a 500 then stop attempting to load the task
-        setState('CLOSED');
-        addError(error);
-        throw error;
-      },
-      onclose() {
-        setState('CLOSED');
-      },
-    });
+    fetchEventSource(
+      `${BACKEND_BASE_URL}/tasks/${processInstanceId}?execute_tasks=${executeTasks}`,
+      {
+        headers: getBasicHeaders(),
+        onmessage(ev) {
+          const retValue = JSON.parse(ev.data);
+          if (retValue.type === 'error') {
+            addError(retValue.error);
+          } else if (retValue.type === 'task') {
+            setData((prevData) => [retValue.task, ...prevData]);
+            setLastTask(retValue.task);
+          } else if (retValue.type === 'unrunnable_instance') {
+            setProcessInstance(retValue.unrunnable_instance);
+          }
+        },
+        onerror(error: any) {
+          // if backend returns a 500 then stop attempting to load the task
+          setState('CLOSED');
+          addError(error);
+          throw error;
+        },
+        onclose() {
+          setState('CLOSED');
+        },
+      }
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 

@@ -1816,6 +1816,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: execute_tasks
+        in: query
+        required: false
+        description: Execute ready tasks on the process instance.
+        schema:
+          type: boolean
     get:
       tags:
         - Tasks
