@@ -3,7 +3,7 @@ import {
   isInteger,
   slugifyString,
   underscorizeString,
-  recursivelyNullifyUndefinedValuesInPlace,
+  recursivelyChangeNullAndUndefined,
 } from './helpers';
 
 test('it can slugify a string', () => {
@@ -58,9 +58,43 @@ test('it can replace undefined values in object with null', () => {
 
   expect((sampleData.items[1] as any).contacts.zoom).toEqual(undefined);
 
-  const result = recursivelyNullifyUndefinedValuesInPlace(sampleData);
+  const result = recursivelyChangeNullAndUndefined(sampleData, null);
   expect(result).toEqual(sampleData);
   expect(result.items[1].contacts.zoom).toEqual(null);
+  expect(result.items[2]).toEqual('HEY');
+  expect(result.contacts.awesome).toEqual(false);
+  expect(result.contacts.info).toEqual('');
+});
+
+test('it can replace null values in object with undefined', () => {
+  const sampleData = {
+    talentType: 'foo',
+    rating: 'bar',
+    contacts: {
+      gmeets: null,
+      zoom: null,
+      phone: 'baz',
+      awesome: false,
+      info: '',
+    },
+    items: [
+      null,
+      {
+        contacts: {
+          gmeets: null,
+          zoom: null,
+          phone: 'baz',
+        },
+      },
+      'HEY',
+    ],
+  };
+
+  expect((sampleData.items[1] as any).contacts.zoom).toEqual(null);
+
+  const result = recursivelyChangeNullAndUndefined(sampleData, undefined);
+  expect(result).toEqual(sampleData);
+  expect(result.items[1].contacts.zoom).toEqual(undefined);
   expect(result.items[2]).toEqual('HEY');
   expect(result.contacts.awesome).toEqual(false);
   expect(result.contacts.info).toEqual('');
