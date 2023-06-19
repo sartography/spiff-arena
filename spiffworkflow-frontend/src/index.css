@@ -168,7 +168,7 @@ code {
 }
 
 .cds--breadcrumb {
-  margin-bottom: 1em;
+  margin-bottom: 2em;
 }
 
 .process-description {
@@ -329,8 +329,8 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 
 .cds--tile.tile-process-group {
   padding: 0px;
-  margin: 12px;
-  width: 320px;
+  margin: 16px;
+  width: 354px;
   height: 264px;
   background: #F4F4F4;
   order: 1;
@@ -338,7 +338,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 }
 
 .tile-process-group-content-container {
-  width: 320px;
+  width: 354px;
   height: 264px;
   padding: 1em;
   position: relative;
@@ -492,11 +492,6 @@ svg.notification-icon {
   font-weight: bold;
 }
 
-.user_instructions {
-  filter: opacity(1);
-  font-size: 1.2em;
-  margin: 15px 0;
-}
 
 .user_instructions_0 {
   filter: opacity(1);

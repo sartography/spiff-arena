@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { ErrorOutline } from '@carbon/icons-react';
 import {
   Table,
+  Tabs,
+  TabList,
+  Tab,
   Grid,
   Column,
   ButtonSet,
@@ -11,8 +14,14 @@ import {
   Loading,
   // @ts-ignore
 } from '@carbon/react';
-import { createSearchParams, Link, useSearchParams } from 'react-router-dom';
-import PaginationForTable from './PaginationForTable';
+import {
+  createSearchParams,
+  Link,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import PaginationForTable from '../components/PaginationForTable';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
   convertSecondsToFormattedDateTime,
@@ -25,30 +34,23 @@ import {
   ProcessInstanceEventErrorDetail,
   ProcessInstanceLogEntry,
 } from '../interfaces';
-import Filters from './Filters';
+import Filters from '../components/Filters';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import {
   childrenForErrorObject,
   errorForDisplayFromProcessInstanceErrorDetail,
-} from './ErrorDisplay';
+} from '../components/ErrorDisplay';
 
 type OwnProps = {
-  variant: string; // 'all' or 'for-me'
-  isEventsView: boolean;
-  processModelId: string;
-  processInstanceId: number;
+  variant: string;
 };
 
-export default function ProcessInstanceLogList({
-  variant,
-  isEventsView = true,
-  processModelId,
-  processInstanceId,
-}: OwnProps) {
+export default function ProcessInstanceLogList({ variant }: OwnProps) {
+  const params = useParams();
   const [clearAll, setClearAll] = useState<boolean>(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [taskTypes, setTaskTypes] = useState<string[]>([]);
   const [eventTypes, setEventTypes] = useState<string[]>([]);
@@ -69,18 +71,17 @@ export default function ProcessInstanceLogList({
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
   const randomNumberBetween0and1 = Math.random();
 
-  searchParams.set('events', isEventsView ? 'true' : 'false');
-
   let shouldDisplayClearButton = false;
   if (randomNumberBetween0and1 < 0.05) {
     // 5% chance of being here
     shouldDisplayClearButton = true;
   }
 
-  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${processModelId}`;
+  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}`;
   if (variant === 'all') {
-    processInstanceShowPageBaseUrl = `/admin/process-instances/${processModelId}`;
+    processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
+  const isEventsView = searchParams.get('events') === 'true';
   const taskNameHeader = isEventsView ? 'Task Name' : 'Milestone';
 
   const updateSearchParams = (value: string, key: string) => {
@@ -129,7 +130,7 @@ export default function ProcessInstanceLogList({
       typeaheadQueryParamString = '?task_type=IntermediateThrowEvent';
     }
     HttpService.makeCallToBackend({
-      path: `/v1.0/logs/typeahead-filter-values/${processModelId}/${processInstanceId}${typeaheadQueryParamString}`,
+      path: `/v1.0/logs/typeahead-filter-values/${params.process_model_id}/${params.process_instance_id}${typeaheadQueryParamString}`,
       successCallback: (result: any) => {
         setTaskTypes(result.task_types);
         setEventTypes(result.event_types);
@@ -139,8 +140,7 @@ export default function ProcessInstanceLogList({
     });
   }, [
     searchParams,
-    processInstanceId,
-    processModelId,
+    params,
     targetUris.processInstanceLogListPath,
     isEventsView,
   ]);
@@ -487,12 +487,60 @@ export default function ProcessInstanceLogList({
     );
   };
 
+  const tabs = () => {
+    const selectedTabIndex = isEventsView ? 1 : 0;
+    return (
+      <Tabs selectedIndex={selectedTabIndex}>
+        <TabList aria-label="List of tabs">
+          <Tab
+            title="Only show a subset of the logs, and show fewer columns"
+            data-qa="process-instance-log-milestones"
+            onClick={() => {
+              resetFilters();
+              searchParams.set('events', 'false');
+              setSearchParams(searchParams);
+            }}
+          >
+            Milestones
+          </Tab>
+          <Tab
+            title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
+            data-qa="process-instance-log-events"
+            onClick={() => {
+              resetFilters();
+              searchParams.set('events', 'true');
+              setSearchParams(searchParams);
+            }}
+          >
+            Events
+          </Tab>
+        </TabList>
+      </Tabs>
+    );
+  };
+
   const { page, perPage } = getPageInfoFromSearchParams(searchParams);
   if (clearAll) {
     return <p>Page cleared 👍</p>;
   }
   return (
     <>
+      <ProcessBreadcrumb
+        hotCrumbs={[
+          ['Process Groups', '/admin'],
+          {
+            entityToExplode: params.process_model_id || '',
+            entityType: 'process-model-id',
+            linkLastItem: true,
+          },
+          [
+            `Process Instance: ${params.process_instance_id}`,
+            `${processInstanceShowPageBaseUrl}/${params.process_instance_id}`,
+          ],
+          ['Logs'],
+        ]}
+      />
+      {tabs()}
       {errorEventModal()}
       <Filters
         filterOptions={filterOptions}

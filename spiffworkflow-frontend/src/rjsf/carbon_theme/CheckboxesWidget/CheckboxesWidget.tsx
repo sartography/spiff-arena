@@ -55,6 +55,9 @@ function CheckboxesWidget({
 
   return (
     <>
+      <FormLabel required={required} htmlFor={id}>
+        {label || schema.title}
+      </FormLabel>
       <FormGroup id={id} row={!!inline}>
         {Array.isArray(enumOptions) &&
           enumOptions.map((option, index: number) => {

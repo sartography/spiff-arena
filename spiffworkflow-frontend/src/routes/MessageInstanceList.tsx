@@ -3,26 +3,23 @@ import { useEffect, useState } from 'react';
 import { ErrorOutline } from '@carbon/icons-react';
 // @ts-ignore
 import { Table, Modal, Button } from '@carbon/react';
-import { Link, useSearchParams } from 'react-router-dom';
-import PaginationForTable from './PaginationForTable';
-import ProcessBreadcrumb from './ProcessBreadcrumb';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import PaginationForTable from '../components/PaginationForTable';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
-import { FormatProcessModelDisplayName } from './MiniComponents';
+import { FormatProcessModelDisplayName } from '../components/MiniComponents';
 import { MessageInstance } from '../interfaces';
 
-type OwnProps = {
-  processInstanceId?: number;
-};
-
-export default function MessageInstanceList({ processInstanceId }: OwnProps) {
+export default function MessageInstanceList() {
+  const params = useParams();
+  const [searchParams] = useSearchParams();
   const [messageIntances, setMessageInstances] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [searchParams] = useSearchParams();
 
   const [messageInstanceForModal, setMessageInstanceForModal] =
     useState<MessageInstance | null>(null);
@@ -34,15 +31,16 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     let queryParamString = `per_page=${perPage}&page=${page}`;
-    if (processInstanceId) {
-      queryParamString += `&process_instance_id=${processInstanceId}`;
+    if (searchParams.get('process_instance_id')) {
+      queryParamString += `&process_instance_id=${searchParams.get(
+        'process_instance_id'
+      )}`;
     }
-
     HttpService.makeCallToBackend({
       path: `/messages?${queryParamString}`,
       successCallback: setMessageInstanceListFromResult,
     });
-  }, [processInstanceId, searchParams]);
+  }, [searchParams, params]);
 
   const handleCorrelationDisplayClose = () => {
     setMessageInstanceForModal(null);
