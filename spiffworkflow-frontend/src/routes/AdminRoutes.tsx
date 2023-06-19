@@ -21,7 +21,7 @@ import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
-import MessageListPage from './MessageListPage';
+import MessageListPage from "./MessageListPage";
 
 export default function AdminRoutes() {
   const location = useLocation();
