@@ -51,7 +51,7 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskNotFou
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError, ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -362,7 +362,9 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
     return ""
 
 
-def _interstitial_stream(process_instance: ProcessInstanceModel, execute_tasks: bool = True) -> Generator[str, str | None, None]:
+def _interstitial_stream(
+    process_instance: ProcessInstanceModel, execute_tasks: bool = True
+) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
@@ -441,17 +443,19 @@ def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
-def _dequeued_interstitial_stream(process_instance_id: int, execute_tasks: bool = True) -> Generator[str | None, str | None, None]:
+def _dequeued_interstitial_stream(
+    process_instance_id: int, execute_tasks: bool = True
+) -> Generator[str | None, str | None, None]:
     try:
         process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-        processor = ProcessInstanceProcessor(process_instance)
+        ProcessInstanceProcessor(process_instance)
 
         # TODO: currently this just redirects back to home if the process has not been started
         # need something better to show?
         if execute_tasks:
             if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-                    with ProcessInstanceQueueService.dequeued(process_instance):
-                        yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+                with ProcessInstanceQueueService.dequeued(process_instance):
+                    yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
         else:
             # no reason to get a lock if we are reading only
             yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
