@@ -212,7 +212,7 @@ export default function NavigationBar() {
           isCurrentPage={isActivePage('/admin/process-groups')}
           data-qa="header-nav-processes"
         >
-          Process Models
+          Processes
         </HeaderMenuItem>
         <HeaderMenuItem
           href="/admin/process-instances"
