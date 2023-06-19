@@ -77,7 +77,7 @@ With SpiffWorkflow, you can easily initiate a new process instance. Here's a ste
 
 ### Step 1: Sign in and navigate to Home section
 
-The first thing you need to do is sign in to your account on SpiffWorkflow. Once you're signed in, you'll see three tabs in the Home section: In progress, Completed, and Start New. If you want to start a new process, click the "Start New +" button. This will bring up "Processes I can start" section.
+The first thing you need to do is sign in to your account on SpiffWorkflow. Once you're signed in, you'll see three tabs in the Home section: In progress, Completed, and Start New. If you want to start a new process, click the "Start New +" button. This will bring up "Process Models I can start" section.
 
 ![Untitled](images/Untitled_6.png)
 
