@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
-import { Loading, InlineNotification } from '@carbon/react';
+import { Loading } from '@carbon/react';
 import { BACKEND_BASE_URL } from '../config';
 import { getBasicHeaders } from '../services/HttpService';
 
@@ -16,7 +16,6 @@ type OwnProps = {
   processInstanceShowPageUrl: string;
   allowRedirect: boolean;
   smallSpinner?: boolean;
-  collapsableInstructions?: boolean;
 };
 
 export default function ProcessInterstitial({
@@ -24,7 +23,6 @@ export default function ProcessInterstitial({
   allowRedirect,
   processInstanceShowPageUrl,
   smallSpinner = false,
-  collapsableInstructions = false,
 }: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
@@ -77,13 +75,13 @@ export default function ProcessInterstitial({
   }, [allowRedirect, state]);
 
   useEffect(() => {
-    // Added this separate use effect so that the timer interval will be cleared if
+    // Added this seperate use effect so that the timer interval will be cleared if
     // we end up redirecting back to the TaskShow page.
     if (shouldRedirectToTask(lastTask)) {
       lastTask.properties.instructionsForEndUser = '';
       const timerId = setInterval(() => {
         navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
-      }, 500);
+      }, 2000);
       return () => clearInterval(timerId);
     }
     if (shouldRedirectToProcessInstance()) {
@@ -120,27 +118,16 @@ export default function ProcessInterstitial({
     return null;
   };
 
-  const inlineMessage = (
-    title: string,
-    subtitle: string,
-    kind: string = 'info'
-  ) => {
-    return (
-      <div>
-        <InlineNotification kind={kind} subtitle={subtitle} title={title} />
-      </div>
-    );
-  };
-
   const userMessageForProcessInstance = (
     pi: ProcessInstance,
     myTask: ProcessInstanceTask | null = null
   ) => {
     if (['terminated', 'suspended'].includes(pi.status)) {
-      return inlineMessage(
-        `Process ${pi.status}`,
-        'This process instance was {pi.status} by an administrator. Please get in touch with them for more information.',
-        'warning'
+      return (
+        <p>
+          This process instance was {pi.status} by an administrator. Please get
+          in touch with them for more information.
+        </p>
       );
     }
     if (pi.status === 'error') {
@@ -148,21 +135,17 @@ export default function ProcessInterstitial({
       if (myTask && myTask.error_message) {
         errMessage = errMessage.concat(myTask.error_message);
       }
-      return inlineMessage(`Process Error`, errMessage, 'error');
+      return <p>{errMessage}</p>;
     }
     // Otherwise we are not started, waiting, complete, or user_input_required
     const defaultMsg =
       'There are no additional instructions or information for this process.';
     if (myTask) {
       return (
-        <InstructionsForEndUser
-          task={myTask}
-          defaultMessage={defaultMsg}
-          allowCollapse={collapsableInstructions}
-        />
+        <InstructionsForEndUser task={myTask} defaultMessage={defaultMsg} />
       );
     }
-    return inlineMessage(`Process Error`, defaultMsg, 'info');
+    return <p>{defaultMsg}</p>;
   };
 
   const userMessage = (myTask: ProcessInstanceTask) => {
@@ -171,29 +154,27 @@ export default function ProcessInterstitial({
     }
 
     if (!myTask.can_complete && userTasks.includes(myTask.type)) {
-      return inlineMessage(
-        '',
-        `This next task is assigned to a different person or team. There is no action for you to take at this time.`
+      return (
+        <p>
+          This next task is assigned to a different person or team. There is no
+          action for you to take at this time.
+        </p>
       );
     }
     if (shouldRedirectToTask(myTask)) {
-      return inlineMessage('', `Redirecting ...`);
+      return <div>Redirecting you to the next task now ...</div>;
     }
     if (myTask && myTask.can_complete && userTasks.includes(myTask.type)) {
-      return inlineMessage(
-        '',
-        `The task "${myTask.title}" is ready for you to complete.`
-      );
+      return `The task ${myTask.title} is ready for you to complete.`;
     }
     if (myTask.error_message) {
-      return inlineMessage('Error', myTask.error_message, 'error');
+      return <div>{myTask.error_message}</div>;
     }
     return (
       <div>
         <InstructionsForEndUser
           task={myTask}
           defaultMessage="There are no additional instructions or information for this task."
-          allowCollapse={collapsableInstructions}
         />
       </div>
     );
@@ -210,19 +191,18 @@ export default function ProcessInterstitial({
     displayableData = [data[0]];
   }
 
-  const className = (index: number) => {
-    if (displayableData.length === 1) {
-      return 'user_instructions';
-    }
-    return index < 4 ? `user_instructions_${index}` : `user_instructions_4`;
-  };
-
   if (lastTask) {
     return (
       <div>
         {getLoadingIcon()}
         {displayableData.map((d, index) => (
-          <div className={className(index)}>{userMessage(d)}</div>
+          <div
+            className={
+              index < 4 ? `user_instructions_${index}` : `user_instructions_4`
+            }
+          >
+            {userMessage(d)}
+          </div>
         ))}
       </div>
     );
