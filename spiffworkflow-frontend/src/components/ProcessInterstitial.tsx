@@ -52,6 +52,12 @@ export default function ProcessInterstitial({
           setProcessInstance(retValue.unrunnable_instance);
         }
       },
+      onerror(error: any) {
+        // if backend returns a 500 then stop attempting to load the task
+        setState('CLOSED');
+        addError(error);
+        throw error;
+      },
       onclose() {
         setState('CLOSED');
       },

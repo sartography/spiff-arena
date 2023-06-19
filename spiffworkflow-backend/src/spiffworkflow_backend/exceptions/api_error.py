@@ -50,6 +50,11 @@ class ApiError(Exception):
     task_name: str | None = ""
     task_trace: list | None = field(default_factory=list)
 
+    # these are useful if the error response cannot be json but has to be something else
+    # such as returning content type 'text/event-stream' for the interstitial page
+    response_headers: dict | None = None
+    response_message: str | None = None
+
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
         msg = "ApiError: % s. " % self.message
@@ -302,4 +307,13 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
             status_code=status_code,
         )
 
-    return make_response(jsonify(api_exception), api_exception.status_code)
+    response_message = api_exception.response_message
+    if response_message is None:
+        response_message = jsonify(api_exception)
+
+    error_response = make_response(response_message, api_exception.status_code)
+    if api_exception.response_headers is not None:
+        for header, value in api_exception.response_headers.items():
+            error_response.headers[header] = value
+
+    return error_response

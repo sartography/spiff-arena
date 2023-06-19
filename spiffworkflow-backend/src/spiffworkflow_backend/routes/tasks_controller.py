@@ -375,11 +375,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
 
-    def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
-        return_hash: dict = {"type": return_type}
-        return_hash[return_type] = entity
-        return f"data: {current_app.json.dumps(return_hash)} \n\n"
-
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
@@ -393,17 +388,17 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
                 task.properties = {"instructionsForEndUser": instructions}
-                yield render_data("task", task)
+                yield _render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 # do not do any processing if the instance is not currently active
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield render_data("unrunnable_instance", process_instance)
+                    yield _render_data("unrunnable_instance", process_instance)
                     return
                 try:
                     processor.do_engine_steps(execution_strategy_name="one_at_a_time")
@@ -413,7 +408,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     api_error = ApiError.from_workflow_exception(
                         "engine_steps_error", "Failed to complete an automated task.", exp=wfe
                     )
-                    yield render_data("error", api_error)
+                    yield _render_data("error", api_error)
                     return
         processor.refresh_waiting_tasks()
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
@@ -433,10 +428,10 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             task.properties = {"instructionsForEndUser": instructions}
-            yield render_data("task", task)
+            yield _render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
@@ -448,7 +443,6 @@ def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | N
 
     # TODO: currently this just redirects back to home if the process has not been started
     # need something better to show?
-
     if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
         with ProcessInstanceQueueService.dequeued(process_instance):
             yield from _interstitial_stream(process_instance)
@@ -456,11 +450,30 @@ def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | N
 
 def interstitial(process_instance_id: int) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
-    return Response(
-        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
-    )
+    try:
+        return Response(
+            stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
+            mimetype="text/event-stream",
+            headers={"X-Accel-Buffering": "no"},
+        )
+    except Exception as ex:
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+            response_headers={"Content-type": "text/event-stream"},
+        )
+        api_error.response_message = _render_data("error", api_error)
+        raise api_error from ex
+
+
+def _render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
+    return_hash: dict = {"type": return_type}
+    return_hash[return_type] = entity
+    return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
 
 def _task_submit_shared(
