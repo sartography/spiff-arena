@@ -14,7 +14,6 @@ export const useUriListForPermissions = () => {
       processInstanceCreatePath: `/v1.0/process-instances/${params.process_model_id}`,
       processInstanceErrorEventDetails: `/v1.0/event-error-details/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceListPath: '/v1.0/process-instances',
-      processInstanceListForMePath: `/v1.0/process-instances/for-me`,
       processInstanceLogListPath: `/v1.0/logs/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceReportListPath: '/v1.0/process-instances/reports',
       processInstanceResetPath: `/v1.0/process-instance-reset/${params.process_model_id}/${params.process_instance_id}`,
