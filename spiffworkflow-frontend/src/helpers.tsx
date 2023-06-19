@@ -26,24 +26,6 @@ export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
 };
 
-export const recursivelyNullifyUndefinedValuesInPlace = (obj: any) => {
-  if (obj === null || obj === undefined) {
-    return null;
-  }
-  if (Array.isArray(obj)) {
-    obj.forEach((value: any, index: number) => {
-      // eslint-disable-next-line no-param-reassign
-      obj[index] = recursivelyNullifyUndefinedValuesInPlace(value);
-    });
-  } else if (typeof obj === 'object') {
-    Object.entries(obj).forEach(([key, value]) => {
-      // eslint-disable-next-line no-param-reassign
-      obj[key] = recursivelyNullifyUndefinedValuesInPlace(value);
-    });
-  }
-  return obj;
-};
-
 export const selectKeysFromSearchParams = (obj: any, keys: string[]) => {
   const newSearchParams: { [key: string]: string } = {};
   keys.forEach((key: string) => {
