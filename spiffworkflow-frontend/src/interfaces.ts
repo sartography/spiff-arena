@@ -67,6 +67,8 @@ export interface Task {
   form_schema: any;
   form_ui_schema: any;
   signal_buttons: SignalButton[];
+
+  saved_form_data?: any;
 }
 
 export interface ProcessInstanceTask {

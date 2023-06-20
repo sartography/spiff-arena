@@ -63,11 +63,13 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
     python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    saved_form_data_hash: str | None = db.Column(db.String(255), nullable=True, index=True)
 
     start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
 
     data: dict | None = None
+    saved_form_data: dict | None = None
 
     # these are here to be compatible with task api
     form_schema: dict | None = None
@@ -88,6 +90,11 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     def json_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+
+    def get_saved_form_data(self) -> dict | None:
+        if self.saved_form_data_hash is not None:
+            return JsonDataModel.find_data_dict_by_hash(self.saved_form_data_hash)
+        return None
 
 
 class Task:

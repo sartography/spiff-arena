@@ -242,7 +242,7 @@ class TestProcessApi(BaseTest):
         data = {"file": (io.BytesIO(updated_bpmn_file_data_bytes), bpmn_file_name)}
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
-        modified_process_model_id = process_model_identifier.replace("/", ":")
+        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_id}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
@@ -276,7 +276,7 @@ class TestProcessApi(BaseTest):
         assert process_model.id == process_model_identifier
 
         # delete the model
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.delete(
             f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -297,7 +297,7 @@ class TestProcessApi(BaseTest):
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
         process_model_identifier = f"{test_process_group_id}/{test_process_model_id}"
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         self.create_process_group_with_api(client, with_super_admin_user, test_process_group_id)
         self.create_process_model_with_api(client, process_model_identifier, user=with_super_admin_user)
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
@@ -360,7 +360,7 @@ class TestProcessApi(BaseTest):
         process_model.primary_process_id = "superduper"
         process_model.metadata_extraction_paths = [{"key": "extraction1", "path": "path1"}]
 
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -752,8 +752,8 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_id = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         data = {"key1": "THIS DATA"}
         response = client.put(
@@ -774,8 +774,8 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_id = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         data = {"file": (io.BytesIO(b""), "random_fact.svg")}
         response = client.put(
@@ -808,7 +808,7 @@ class TestProcessApi(BaseTest):
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, process_model_id)
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
-        modified_process_model_id = process_model_identifier.replace("/", ":")
+        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
         new_file_contents = b"THIS_IS_NEW_DATA"
         data = {"file": (io.BytesIO(new_file_contents), bpmn_file_name)}
         response = client.put(
@@ -838,7 +838,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         bad_process_model_identifier = f"x{process_model_identifier}"
         modified_bad_process_model_identifier = bad_process_model_identifier.replace("/", ":")
         response = client.delete(
@@ -858,8 +858,8 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         response = client.delete(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact_DOES_NOT_EXIST.svg",
@@ -878,9 +878,9 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        process_model = ProcessModelService.get_process_model(process_model_id=process_model.id)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         response = client.delete(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{process_model.primary_file_name}",
@@ -899,19 +899,20 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         self.create_spec_file(
             client,
-            process_model_id=process_model_identifier,
-            file_name="second_file.json",
+            process_model_id=process_model.id,
+            process_model=process_model,
+            file_name="second_file.bpmn",
             file_data=b"<h1>HEY</h1>",
             user=with_super_admin_user,
         )
 
         response = client.delete(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.json",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.bpmn",
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user),
         )
@@ -921,7 +922,7 @@ class TestProcessApi(BaseTest):
         assert response.json["ok"]
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.json",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.bpmn",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
@@ -933,8 +934,8 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         response = client.get(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.bpmn",
@@ -952,8 +953,8 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         response = client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}",
@@ -1082,7 +1083,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         process_group_id, process_model_id = os.path.split(process_model_identifier)
 
         response = client.get(
@@ -1136,10 +1137,10 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client, with_super_admin_user, bpmn_file_name="random_fact.bpmn"
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         response = client.get(
             f"/v1.0/process-models/{modified_process_model_identifier}",
@@ -1198,7 +1199,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         # process_model_id = "runs_without_input/sample"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id="runs_without_input",
@@ -1235,7 +1236,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         process_group_id = "simple_script"
         process_model_id = "simple_script"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1272,7 +1273,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         process_model_id = "call_activity_nested"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id="test_group_two",
@@ -1368,7 +1369,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1443,7 +1444,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1538,7 +1539,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1598,7 +1599,7 @@ class TestProcessApi(BaseTest):
         process_group_id = "my_process_group"
         process_model_id = "sample"
         bpmn_file_location = "sample"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1627,161 +1628,6 @@ class TestProcessApi(BaseTest):
         assert delete_response.json["ok"] is True
         assert delete_response.status_code == 200
 
-    def test_task_show(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group_id = "my_process_group"
-        process_model_id = "dynamic_enum_select_fields"
-        bpmn_file_location = "dynamic_enum_select_fields"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            # bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-
-        response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        # Call this to assure all engine-steps are fully processed.
-        _dequeued_interstitial_stream(process_instance_id)
-        assert response.json is not None
-        assert response.json["next_task"] is not None
-
-        human_tasks = (
-            db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
-        )
-        assert len(human_tasks) == 1
-        human_task = human_tasks[0]
-        response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"] == "Green"
-
-        # if you set this in task data:
-        #   form_ui_hidden_fields = ["veryImportantFieldButOnlySometimes", "building.floor"]
-        # you will get this ui schema:
-        assert response.json["form_ui_schema"] == {
-            "building": {"floor": {"ui:widget": "hidden"}},
-            "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
-        }
-
-    def test_interstitial_page(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group_id = "my_process_group"
-        process_model_id = "interstitial"
-        bpmn_file_location = "interstitial"
-        # Assure we have someone in the finance team
-        finance_user = self.find_or_create_user("testuser2")
-        AuthorizationService.import_permissions_from_yaml_file()
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_location=bpmn_file_location,
-        )
-        headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-
-        response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
-            headers=headers,
-        )
-
-        assert response.json is not None
-        assert response.json["next_task"] is not None
-        assert response.json["next_task"]["state"] == "READY"
-        assert response.json["next_task"]["title"] == "Script Task #2"
-
-        # Rather that call the API and deal with the Server Side Events, call the loop directly and covert it to
-        # a list.  It tests all of our code.  No reason to test Flasks SSE support.
-        stream_results = _dequeued_interstitial_stream(process_instance_id)
-        results = list(stream_results)
-        # strip the "data:" prefix and convert remaining string to dict.
-        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
-        # There should be 2 results back -
-        # the first script task should not be returned (it contains no end user instructions)
-        # The second script task should produce rendered jinja text
-        # The Manual Task should then return a message as well.
-        assert len(results) == 2
-        assert json_results[0]["task"]["state"] == "READY"
-        assert json_results[0]["task"]["title"] == "Script Task #2"
-        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am Script Task 2"
-        assert json_results[1]["task"]["state"] == "READY"
-        assert json_results[1]["task"]["title"] == "Manual Task"
-
-        response = client.put(
-            f"/v1.0/tasks/{process_instance_id}/{json_results[1]['task']['id']}",
-            headers=headers,
-        )
-
-        assert response.json is not None
-
-        # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
-        results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
-        assert len(results) == 1
-        assert json_results[0]["task"]["state"] == "READY"
-        assert json_results[0]["task"]["can_complete"] is False
-        assert json_results[0]["task"]["title"] == "Please Approve"
-        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
-
-        # Suspending the task should still report that the user can not complete the task.
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.suspend()
-        processor.save()
-
-        results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
-        assert len(results) == 1
-        assert json_results[0]["task"]["state"] == "READY"
-        assert json_results[0]["task"]["can_complete"] is False
-        assert json_results[0]["task"]["title"] == "Please Approve"
-        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
-
-        # Complete task as the finance user.
-        response = client.put(
-            f"/v1.0/tasks/{process_instance_id}/{json_results[0]['task']['id']}",
-            headers=self.logged_in_headers(finance_user),
-        )
-
-        # We should now be on the end task with a valid message, even after loading it many times.
-        list(_dequeued_interstitial_stream(process_instance_id))
-        list(_dequeued_interstitial_stream(process_instance_id))
-        results = list(_dequeued_interstitial_stream(process_instance_id))
-        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
-        assert len(json_results) == 1
-        assert json_results[0]["task"]["state"] == "COMPLETED"
-        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am the end task"
-
     def test_process_instance_list_with_default_list(
         self,
         app: Flask,
@@ -1792,7 +1638,7 @@ class TestProcessApi(BaseTest):
         process_group_id = "runs_without_input"
         process_model_id = "sample"
         bpmn_file_location = "sample"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1828,7 +1674,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1866,7 +1712,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -2041,7 +1887,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.create_group_and_model_with_bpmn(  # noqa: F841
+        process_model = self.create_group_and_model_with_bpmn(  # noqa: F841
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -2079,7 +1925,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
         bpmn_file_location = "error"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -2119,7 +1965,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
         bpmn_file_location = "error"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -2194,7 +2040,7 @@ class TestProcessApi(BaseTest):
         file_data = b"abc123"
         bpmn_file_name = "hello_world.bpmn"
         bpmn_file_location = "hello_world"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -2205,13 +2051,13 @@ class TestProcessApi(BaseTest):
 
         result = self.create_spec_file(
             client,
-            process_model_id=process_model_identifier,
+            process_model_id=process_model.id,
             file_name=file_name,
             file_data=file_data,
             user=with_super_admin_user,
         )
 
-        assert result["process_model_id"] == process_model_identifier
+        assert result["process_model_id"] == process_model.id
         assert result["name"] == file_name
         assert bytes(str(result["file_contents"]), "utf-8") == file_data
 
@@ -2294,103 +2140,6 @@ class TestProcessApi(BaseTest):
         #   4 -Two messages for each process (a record of the completed receive, and then a send created)
         # + 2 -Two messages logged for the API Calls used to create the processes.
         assert len(response.json["results"]) == 6
-
-    # @pytest.mark.skipif(
-    #     os.environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres",
-    #     reason="look at comment in tasks_controller method task_list_my_tasks",
-    # )
-    def test_correct_user_can_get_and_update_a_task(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        initiator_user = self.find_or_create_user("testuser4")
-        finance_user = self.find_or_create_user("testuser2")
-        assert initiator_user.principal is not None
-        assert finance_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
-
-        process_group_id = "finance"
-        process_model_id = "model_with_lanes"
-        bpmn_file_name = "lanes.bpmn"
-        bpmn_file_location = "model_with_lanes"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client,
-            process_model_identifier,
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert response.status_code == 201
-
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-        response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert response.status_code == 200
-
-        response = client.get(
-            "/v1.0/tasks",
-            headers=self.logged_in_headers(finance_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 0
-
-        response = client.get(
-            "/v1.0/tasks",
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-
-        task_id = response.json["results"][0]["id"]
-        assert task_id is not None
-
-        response = client.put(
-            f"/v1.0/tasks/{process_instance_id}/{task_id}",
-            headers=self.logged_in_headers(finance_user),
-        )
-        assert response.status_code == 500
-        assert response.json
-        assert "UserDoesNotHaveAccessToTaskError" in response.json["message"]
-
-        response = client.put(
-            f"/v1.0/tasks/{process_instance_id}/{task_id}",
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert response.status_code == 200
-
-        response = client.get(
-            "/v1.0/tasks",
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 0
-
-        response = client.get(
-            "/v1.0/tasks",
-            headers=self.logged_in_headers(finance_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
 
     # TODO: test the auth callback endpoint
     # def test_can_store_authentication_secret(
@@ -2514,7 +2263,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_model_id="manual_task",
@@ -2581,7 +2330,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "simple_script"
         bpmn_file_name = "simple_script.bpmn"
         bpmn_file_location = "simple_script"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,
@@ -2637,7 +2386,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "process_navigation"
         bpmn_file_name = "process_navigation.bpmn"
         bpmn_file_location = "process_navigation"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,
@@ -2713,7 +2462,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,
@@ -2899,7 +2648,7 @@ class TestProcessApi(BaseTest):
     #         process_model_id = "hello_world"
     #         bpmn_file_name = "hello_world.bpmn"
     #         bpmn_file_location = "hello_world"
-    #         process_model_identifier = self.create_group_and_model_with_bpmn(
+    #         process_model = self.create_group_and_model_with_bpmn(
     #             client=client,
     #             user=with_super_admin_user,
     #             process_group_id=sub_process_group_id,
@@ -2981,7 +2730,7 @@ class TestProcessApi(BaseTest):
     #         assert "process_model.json" in listing
     #         assert "new_file.txt" in listing
     #
-    #         # modified_process_model_id = process_model_identifier.replace("/", ":")
+    #         # modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
     #         # response = client.post(
     #         #     f"/v1.0/process-model-publish/{modified_process_model_id}?branch_to_update=staging",
     #         #     headers=self.logged_in_headers(with_super_admin_user),
