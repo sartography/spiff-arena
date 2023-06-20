@@ -1,3 +1,4 @@
+from SpiffWorkflow.bpmn.workflow import BpmnMessage  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
@@ -143,8 +144,13 @@ class MessageService:
         message_model_name: str,
         message_payload: dict,
     ) -> None:
+        bpmn_message = BpmnMessage(
+            None,
+            message_model_name,
+            message_payload,
+        )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
-        processor_receive.bpmn_process_instance.catch_bpmn_message(message_model_name, message_payload)
+        processor_receive.bpmn_process_instance.catch_bpmn_message(bpmn_message)
         processor_receive.do_engine_steps(save=True)
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)
