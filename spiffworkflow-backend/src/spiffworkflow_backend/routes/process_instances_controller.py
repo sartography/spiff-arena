@@ -438,7 +438,10 @@ def process_instance_task_list(
         if bpmn_process is None:
             raise ApiError(
                 error_code="bpmn_process_not_found",
-                message=f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance '{process_instance.id}'",
+                message=(
+                    f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance"
+                    f" '{process_instance.id}'"
+                ),
                 status_code=400,
             )
 
