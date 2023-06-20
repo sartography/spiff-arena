@@ -451,7 +451,6 @@ class WorkflowExecutionService:
     def queue_waiting_receive_messages(self) -> None:
         waiting_events = self.bpmn_process_instance.waiting_events()
         waiting_message_events = filter(lambda e: e["event_type"] == "MessageEventDefinition", waiting_events)
-
         for event in waiting_message_events:
             # Ensure we are only creating one message instance for each waiting message
             if (
