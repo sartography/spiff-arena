@@ -29,7 +29,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel, db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -171,13 +171,12 @@ def task_data_show(
 
 
 def task_data_update(
-    process_instance_id: str,
+    process_instance_id: int,
     modified_process_model_identifier: str,
     task_guid: str,
     body: dict,
 ) -> Response:
-    """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
@@ -225,13 +224,13 @@ def task_data_update(
 
 def manual_complete_task(
     modified_process_model_identifier: str,
-    process_instance_id: str,
+    process_instance_id: int,
     task_guid: str,
     body: dict,
 ) -> Response:
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
         processor.manual_complete_task(task_guid, execute, g.user)
@@ -246,6 +245,56 @@ def manual_complete_task(
         mimetype="application/json",
     )
 
+
+def task_assign(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    task_guid: str,
+    body: dict,
+) -> Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
+    if process_instance.status != ProcessInstanceStatus.suspended.value:
+        raise ApiError(
+            error_code="error_not_suspended",
+            message="The process instance must be suspended to perform this operation",
+            status_code=400,
+        )
+
+    if "user_ids" not in body:
+        raise ApiError(
+            error_code="malformed_request",
+            message="user_ids as an array must be given in the body of the request.",
+            status_code=400,
+        )
+
+    process_model = _get_process_model(
+        process_instance.process_model_identifier,
+    )
+
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    human_tasks = HumanTaskModel.query.filter_by(
+       process_instance_id=process_instance.id, task_id=task_model.guid
+    ).all()
+
+    if len(human_tasks) > 1:
+        raise ApiError(
+            error_code="multiple_tasks_found",
+            message="More than one ready tasks were found. This should never happen.",
+            status_code=400,
+        )
+
+    human_task = human_tasks[0]
+
+    for user_id in body['user_ids']:
+        human_task_user = HumanTaskUserModel.query.filter_by(user_id=user_id, human_task=human_task).first()
+        if human_task_user is None:
+            human_task_user = HumanTaskUserModel(user_id=user_id, human_task=human_task)
+            db.session.add(human_task_user)
+
+    SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
+
+    return make_response(jsonify({"ok": True}), 200)
 
 def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -346,6 +395,25 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     return make_response(jsonify(task_model), 200)
 
 
+def interstitial(process_instance_id: int) -> Response:
+    """A Server Side Events Stream for watching the execution of engine tasks."""
+    return Response(
+        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
+        mimetype="text/event-stream",
+        headers={"X-Accel-Buffering": "no"},
+    )
+
+
+def task_submit(
+    process_instance_id: int,
+    task_guid: str,
+    body: dict[str, Any],
+    save_as_draft: bool = False,
+) -> flask.wrappers.Response:
+    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
+        return _task_submit_shared(process_instance_id, task_guid, body, save_as_draft)
+
+
 def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | None = None) -> str:
     """Assure any instructions for end user are processed for jinja syntax."""
     if extensions is None:
@@ -416,7 +484,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     yield render_data("error", api_error)
                     return
         processor.refresh_waiting_tasks()
-        ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
+        ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
         tasks = get_reportable_tasks()
         if ready_engine_task_count == 0:
             break  # No more tasks to report
@@ -439,7 +507,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             yield render_data("task", task)
 
 
-def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
+def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
@@ -452,15 +520,6 @@ def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | N
     if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
         with ProcessInstanceQueueService.dequeued(process_instance):
             yield from _interstitial_stream(process_instance)
-
-
-def interstitial(process_instance_id: int) -> Response:
-    """A Server Side Events Stream for watching the execution of engine tasks."""
-    return Response(
-        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
-    )
 
 
 def _task_submit_shared(
@@ -559,16 +618,6 @@ def _task_submit_shared(
         status=202,
         mimetype="application/json",
     )
-
-
-def task_submit(
-    process_instance_id: int,
-    task_guid: str,
-    body: dict[str, Any],
-    save_as_draft: bool = False,
-) -> flask.wrappers.Response:
-    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body, save_as_draft)
 
 
 def _get_tasks(

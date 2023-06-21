@@ -20,6 +20,7 @@ export const useUriListForPermissions = () => {
       processInstanceResumePath: `/v1.0/process-instance-resume/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceSendEventPath: `/v1.0/send-event/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceSuspendPath: `/v1.0/process-instance-suspend/${params.process_model_id}/${params.process_instance_id}`,
+      processInstanceTaskAssignPath: `/v1.0/task-assign/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceTaskDataPath: `/v1.0/task-data/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceTaskListForMePath: `/v1.0/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}/task-info`,
       processInstanceTaskListPath: `/v1.0/process-instances/${params.process_model_id}/${params.process_instance_id}/task-info`,

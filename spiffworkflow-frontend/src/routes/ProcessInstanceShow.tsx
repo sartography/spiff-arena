@@ -107,6 +107,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE', 'GET'],
     [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
@@ -669,6 +670,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance &&
       processInstance.status === 'suspended' &&
       ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
+      isActiveTask(task) &&
+      showingActiveTask()
+    );
+  };
+
+  const canAssignTask = (task: Task) => {
+    return (
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
       isActiveTask(task) &&
       showingActiveTask()
     );
