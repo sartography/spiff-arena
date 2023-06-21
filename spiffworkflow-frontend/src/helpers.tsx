@@ -11,6 +11,10 @@ import {
   DEFAULT_PAGE,
 } from './components/PaginationForTable';
 
+export const doNothing = () => {
+  return undefined;
+};
+
 // https://www.30secondsofcode.org/js/s/slugify
 export const slugifyString = (str: any) => {
   return str

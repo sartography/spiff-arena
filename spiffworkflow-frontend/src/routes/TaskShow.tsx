@@ -16,7 +16,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import { modifyProcessIdentifierForPathParam } from '../helpers';
+import { modifyProcessIdentifierForPathParam, doNothing } from '../helpers';
 import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
@@ -92,7 +92,7 @@ export default function TaskShow() {
       path: `/tasks/${params.process_instance_id}/${params.task_id}/save-draft`,
       postBody: formData,
       httpMethod: 'POST',
-      successCallback: () => console.log('YAY'),
+      successCallback: doNothing,
       failureCallback: addError,
     });
   };
