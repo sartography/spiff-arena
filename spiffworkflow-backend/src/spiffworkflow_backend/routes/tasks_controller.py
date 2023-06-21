@@ -562,6 +562,18 @@ def _task_submit_shared(
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
         return make_response(jsonify(task), 200)
 
+    return Response(
+        json.dumps(
+            {
+                "ok": True,
+                "process_model_identifier": process_instance.process_model_identifier,
+                "process_instance_id": process_instance_id,
+            }
+        ),
+        status=202,
+        mimetype="application/json",
+    )
+
 
 def task_submit(
     process_instance_id: int,

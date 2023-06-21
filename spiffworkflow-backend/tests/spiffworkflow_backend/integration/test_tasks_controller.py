@@ -1,19 +1,20 @@
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 import json
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
-from spiffworkflow_backend.models.user import UserModel
-from flask.testing import FlaskClient
+
 from flask.app import Flask
+from flask.testing import FlaskClient
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestTasksController(BaseTest):
-
     def test_task_show(
         self,
         app: Flask,
@@ -24,7 +25,7 @@ class TestTasksController(BaseTest):
         process_group_id = "my_process_group"
         process_model_id = "dynamic_enum_select_fields"
         bpmn_file_location = "dynamic_enum_select_fields"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -34,14 +35,12 @@ class TestTasksController(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert response.json is not None
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         # Call this to assure all engine-steps are fully processed.
@@ -83,7 +82,7 @@ class TestTasksController(BaseTest):
         # Assure we have someone in the finance team
         finance_user = self.find_or_create_user("testuser2")
         AuthorizationService.import_permissions_from_yaml_file()
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -91,14 +90,12 @@ class TestTasksController(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert response.json is not None
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=headers,
         )
 
@@ -189,7 +186,7 @@ class TestTasksController(BaseTest):
         process_model_id = "model_with_lanes"
         bpmn_file_name = "lanes.bpmn"
         bpmn_file_location = "model_with_lanes"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -200,7 +197,7 @@ class TestTasksController(BaseTest):
 
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             headers=self.logged_in_headers(initiator_user),
         )
         assert response.status_code == 201
@@ -208,7 +205,7 @@ class TestTasksController(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(initiator_user),
         )
         assert response.status_code == 200
@@ -271,18 +268,16 @@ class TestTasksController(BaseTest):
     ) -> None:
         process_group_id = "test_group"
         process_model_id = "simple_form"
-        process_model_identifier = f"{process_group_id}/{process_model_id}"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
         )
 
-
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 201
@@ -290,7 +285,7 @@ class TestTasksController(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -306,7 +301,7 @@ class TestTasksController(BaseTest):
         task_id = response.json["results"][0]["id"]
         assert task_id is not None
 
-        draft_data = { "HEY": "I'm draft" }
+        draft_data = {"HEY": "I'm draft"}
 
         response = client.post(
             f"/v1.0/tasks/{process_instance_id}/{task_id}/save-draft",
@@ -322,4 +317,4 @@ class TestTasksController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert response.json['saved_form_data'] == draft_data
+        assert response.json["saved_form_data"] == draft_data

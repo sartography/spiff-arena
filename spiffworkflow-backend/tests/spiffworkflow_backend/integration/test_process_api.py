@@ -12,8 +12,6 @@ from flask.testing import FlaskClient
 from SpiffWorkflow.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -25,8 +23,6 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -242,9 +238,9 @@ class TestProcessApi(BaseTest):
         data = {"file": (io.BytesIO(updated_bpmn_file_data_bytes), bpmn_file_name)}
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
-        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -297,14 +293,14 @@ class TestProcessApi(BaseTest):
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
         process_model_identifier = f"{test_process_group_id}/{test_process_model_id}"
-        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
+        modified_process_model_identifier = process_model_identifier.replace("/", ":")
         self.create_process_group_with_api(client, with_super_admin_user, test_process_group_id)
         self.create_process_model_with_api(client, process_model_identifier, user=with_super_admin_user)
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
         self.create_spec_file(
             client=client,
             process_model_id=process_model_identifier,
-            process_model_location=test_process_model_id,
+            process_model_location=bpmn_file_location,
             file_name=bpmn_file_name,
             file_data=bpmn_file_data_bytes,
             user=with_super_admin_user,
@@ -753,11 +749,11 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         data = {"key1": "THIS DATA"}
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg?file_contents_hash=does_not_matter",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -775,11 +771,11 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         data = {"file": (io.BytesIO(b""), "random_fact.svg")}
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg?file_contents_hash=does_not_matter",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -808,11 +804,11 @@ class TestProcessApi(BaseTest):
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, process_model_id)
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
-        modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        modified_process_model_identifier = process_model_identifier.replace("/", ":")
         new_file_contents = b"THIS_IS_NEW_DATA"
         data = {"file": (io.BytesIO(new_file_contents), bpmn_file_name)}
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -824,7 +820,7 @@ class TestProcessApi(BaseTest):
         assert response.json["file_contents"] is not None
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_id}/files/simple_form.json",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/simple_form.json",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -839,7 +835,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        bad_process_model_identifier = f"x{process_model_identifier}"
+        bad_process_model_identifier = f"x{process_model.id}"
         modified_bad_process_model_identifier = bad_process_model_identifier.replace("/", ":")
         response = client.delete(
             f"/v1.0/process-models/{modified_bad_process_model_identifier}/files/random_fact.svg",
@@ -1084,7 +1080,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        process_group_id, process_model_id = os.path.split(process_model_identifier)
+        process_group_id, process_model_id = os.path.split(process_model.id)
 
         response = client.get(
             f"/v1.0/process-groups/{process_group_id}",
@@ -1094,7 +1090,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["id"] == process_group_id
-        assert response.json["process_models"][0]["id"] == process_model_identifier
+        assert response.json["process_models"][0]["id"] == process_model.id
         assert response.json["parent_groups"] == []
 
     def test_get_process_group_show_when_nested(
@@ -1149,7 +1145,7 @@ class TestProcessApi(BaseTest):
 
         assert response.status_code == 200
         assert response.json is not None
-        assert response.json["id"] == process_model_identifier
+        assert response.json["id"] == process_model.id
         assert len(response.json["files"]) == 1
         assert response.json["files"][0]["name"] == "random_fact.bpmn"
         assert response.json["parent_groups"] == [{"display_name": "test_group", "id": "test_group"}]
@@ -1209,13 +1205,11 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1223,7 +1217,7 @@ class TestProcessApi(BaseTest):
         assert type(response.json["updated_at_in_seconds"]) is int
         assert response.json["updated_at_in_seconds"] > 0
         assert response.json["status"] == "complete"
-        assert response.json["process_model_identifier"] == process_model_identifier
+        assert response.json["process_model_identifier"] == process_model.id
         assert response.json["data"]["Mike"] == "Awesome"
         assert response.json["data"]["person"] == "Kevin"
 
@@ -1242,10 +1236,10 @@ class TestProcessApi(BaseTest):
             process_group_id=process_group_id,
             process_model_id=process_model_id,
         )
-        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model_identifier)
+        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
         create_response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
+            client, process_model.id, headers
         )
         assert create_response.json is not None
         process_instance_id = create_response.json["id"]
@@ -1260,7 +1254,7 @@ class TestProcessApi(BaseTest):
         assert show_response.json is not None
         assert show_response.status_code == 200
         file_system_root = FileSystemService.root_path()
-        file_path = f"{file_system_root}/{process_model_identifier}/{process_model_id}.bpmn"
+        file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(file_path) as f_open:
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
@@ -1282,10 +1276,10 @@ class TestProcessApi(BaseTest):
         )
         spec_reference = SpecReferenceCache.query.filter_by(identifier="Level2b").first()
         assert spec_reference
-        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model_identifier)
+        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
         create_response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
+            client, process_model.id, headers
         )
         assert create_response.json is not None
         assert create_response.status_code == 201
@@ -1302,7 +1296,7 @@ class TestProcessApi(BaseTest):
         assert show_response.json is not None
         assert show_response.status_code == 200
         file_system_root = FileSystemService.root_path()
-        process_instance_file_path = f"{file_system_root}/{process_model_identifier}/{process_model_id}.bpmn"
+        process_instance_file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(process_instance_file_path) as f_open:
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] != xml_file_contents
@@ -1387,14 +1381,14 @@ class TestProcessApi(BaseTest):
         }
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1463,7 +1457,7 @@ class TestProcessApi(BaseTest):
 
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1550,14 +1544,14 @@ class TestProcessApi(BaseTest):
 
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1572,7 +1566,7 @@ class TestProcessApi(BaseTest):
         assert len(all_tasks) == 8
 
         response = client.post(
-            f"/v1.0/process-instance-terminate/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            f"/v1.0/process-instance-terminate/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1608,21 +1602,19 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert response.json is not None
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
         assert response.status_code == 200
 
         delete_response = client.delete(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert delete_response.json["ok"] is True
@@ -1647,7 +1639,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
+        self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
 
         response = self.post_to_process_instance_list(client, with_super_admin_user)
         assert len(response.json["results"]) == 1
@@ -1657,7 +1649,7 @@ class TestProcessApi(BaseTest):
 
         process_instance_dict = response.json["results"][0]
         assert type(process_instance_dict["id"]) is int
-        assert process_instance_dict["process_model_identifier"] == process_model_identifier
+        assert process_instance_dict["process_model_identifier"] == process_model.id
         assert type(process_instance_dict["start_in_seconds"]) is int
         assert process_instance_dict["start_in_seconds"] > 0
         assert process_instance_dict["end_in_seconds"] is None
@@ -1683,11 +1675,11 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
-        self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
-        self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
-        self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
-        self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
+        self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
 
         response = self.post_to_process_instance_list(client, with_super_admin_user, param_string="?per_page=2&page=3")
         assert len(response.json["results"]) == 1
@@ -1727,8 +1719,8 @@ class TestProcessApi(BaseTest):
             process_instance = ProcessInstanceModel(
                 status=ProcessInstanceStatus[statuses[i]].value,
                 process_initiator=with_super_admin_user,
-                process_model_identifier=process_model_identifier,
-                process_model_display_name=process_model_identifier,
+                process_model_identifier=process_model.id,
+                process_model_display_name=process_model.id,
                 updated_at_in_seconds=round(time.time()),
                 start_in_seconds=(1000 * i) + 1000,
                 end_in_seconds=(1000 * i) + 2000,
@@ -1742,7 +1734,7 @@ class TestProcessApi(BaseTest):
             "filter_by": [
                 {
                     "field_name": "process_model_identifier",
-                    "field_value": process_model_identifier,
+                    "field_value": process_model.id,
                     "operator": "equals",
                 }
             ],
@@ -1762,7 +1754,7 @@ class TestProcessApi(BaseTest):
                 "filter_by": [
                     {
                         "field_name": "process_model_identifier",
-                        "field_value": process_model_identifier,
+                        "field_value": process_model.id,
                         "operator": "equals",
                     },
                     {
@@ -1785,7 +1777,7 @@ class TestProcessApi(BaseTest):
             "filter_by": [
                 {
                     "field_name": "process_model_identifier",
-                    "field_value": process_model_identifier,
+                    "field_value": process_model.id,
                     "operator": "equals",
                 },
                 {"field_name": "process_status", "field_value": "not_started,complete", "operator": "equals"},
@@ -1934,14 +1926,14 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        process_instance_id = self._setup_testing_instance(client, process_model_identifier, with_super_admin_user)
+        process_instance_id = self._setup_testing_instance(client, process_model.id, with_super_admin_user)
 
         process = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == process_instance_id).first()
         assert process is not None
         assert process.status == "not_started"
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -1974,8 +1966,8 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        process_instance_id = self._setup_testing_instance(client, process_model_identifier, with_super_admin_user)
-        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        process_instance_id = self._setup_testing_instance(client, process_model.id, with_super_admin_user)
+        process_model = ProcessModelService.get_process_model(process_model.id)
         ProcessModelService.update_process_model(
             process_model,
             {"fault_or_suspend_on_exception": NotificationType.suspend.value},
@@ -1986,7 +1978,7 @@ class TestProcessApi(BaseTest):
         assert process.status == "not_started"
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -2052,6 +2044,8 @@ class TestProcessApi(BaseTest):
         result = self.create_spec_file(
             client,
             process_model_id=process_model.id,
+            process_model=process_model,
+            process_model_location=bpmn_file_location,
             file_name=file_name,
             file_data=file_data,
             user=with_super_admin_user,
@@ -2274,22 +2268,20 @@ class TestProcessApi(BaseTest):
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
         self.create_spec_file(
             client=client,
-            process_model_id=process_model_identifier,
-            process_model_location=process_model_identifier,
+            process_model_id=process_model.id,
+            process_model_location=bpmn_file_location,
             file_name=bpmn_file_name,
             file_data=bpmn_file_data_bytes,
             user=with_super_admin_user,
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert response.json is not None
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -2297,14 +2289,14 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "user_input_required"
 
         client.post(
-            f"/v1.0/process-instance-suspend/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            f"/v1.0/process-instance-suspend/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance.status == "suspended"
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
@@ -2312,7 +2304,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 400
 
         response = client.post(
-            f"/v1.0/process-instance-resume/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            f"/v1.0/process-instance-resume/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -2342,8 +2334,8 @@ class TestProcessApi(BaseTest):
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
         self.create_spec_file(
             client=client,
-            process_model_id=process_model_identifier,
-            process_model_location=process_model_identifier,
+            process_model_id=process_model.id,
+            process_model_location=bpmn_file_location,
             file_name=bpmn_file_name,
             file_data=bpmn_file_data_bytes,
             user=with_super_admin_user,
@@ -2398,21 +2390,19 @@ class TestProcessApi(BaseTest):
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
         self.create_spec_file(
             client=client,
-            process_model_id=process_model_identifier,
-            process_model_location=process_model_identifier,
+            process_model_id=process_model.id,
+            process_model_location=bpmn_file_location,
             file_name=bpmn_file_name,
             file_data=bpmn_file_data_bytes,
             user=with_super_admin_user,
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -2427,7 +2417,7 @@ class TestProcessApi(BaseTest):
             "typename": "MessageEventDefinition",
         }
         response = client.post(
-            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
             data=json.dumps(data),
@@ -2438,13 +2428,13 @@ class TestProcessApi(BaseTest):
         assert response.json["state"] == "COMPLETED"
 
         response = client.get(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info?all_tasks=true",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info?all_tasks=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
         end_task = next(task for task in response.json if task["bpmn_identifier"] == "Event_174a838")
         response = client.get(
-            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{end_task['guid']}",
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{end_task['guid']}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -2474,33 +2464,31 @@ class TestProcessApi(BaseTest):
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
         self.create_spec_file(
             client=client,
-            process_model_id=process_model_identifier,
-            process_model_location=process_model_identifier,
+            process_model_id=process_model.id,
+            process_model_location=bpmn_file_location,
             file_name=bpmn_file_name,
             file_data=bpmn_file_data_bytes,
             user=with_super_admin_user,
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
         response = client.get(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert len(response.json) == 7
         human_task = next(task for task in response.json if task["bpmn_identifier"] == "manual_task_one")
 
         response = client.post(
-            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{human_task['guid']}",
+            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{human_task['guid']}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
             data=json.dumps({"execute": False}),
@@ -2511,7 +2499,7 @@ class TestProcessApi(BaseTest):
         assert task_model.state == "COMPLETED"
 
         response = client.get(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -2657,7 +2645,7 @@ class TestProcessApi(BaseTest):
     #             bpmn_file_location=bpmn_file_location,
     #         )
     #         process_model_absolute_dir = os.path.join(
-    #             bpmn_root, process_model_identifier
+    #             bpmn_root, process_model.id
     #         )
     #
     #         output = GitService.run_shell_command_to_get_stdout(["git", "status"])
@@ -2691,7 +2679,7 @@ class TestProcessApi(BaseTest):
     #         assert "nothing to commit" in output
     #         assert "working tree clean" in output
     #
-    #         # process_model = ProcessModelService.get_process_model(process_model_identifier)
+    #         # process_model = ProcessModelService.get_process_model(process_model.id)
     #
     #         listing = os.listdir(process_model_absolute_dir)
     #         assert len(listing) == 2
@@ -2730,9 +2718,9 @@ class TestProcessApi(BaseTest):
     #         assert "process_model.json" in listing
     #         assert "new_file.txt" in listing
     #
-    #         # modified_process_model_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+    #         # modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
     #         # response = client.post(
-    #         #     f"/v1.0/process-model-publish/{modified_process_model_id}?branch_to_update=staging",
+    #         #     f"/v1.0/process-model-publish/{modified_process_model_identifier}?branch_to_update=staging",
     #         #     headers=self.logged_in_headers(with_super_admin_user),
     #         # )
     #
