@@ -529,10 +529,7 @@ class ProcessInstanceService:
         except UserDoesNotHaveAccessToTaskError:
             can_complete = False
 
-        if hasattr(spiff_task.task_spec, "spec"):
-            call_activity_process_identifier = spiff_task.task_spec.spec
-        else:
-            call_activity_process_identifier = None
+        call_activity_process_identifier = spiff_task.task_spec.bpmn_id
 
         parent_id = None
         if spiff_task.parent:
