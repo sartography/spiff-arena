@@ -19,13 +19,15 @@ If the desired task or process you would like to view is not found in the parent
 
 - Select the blue arrow located on the bottom right of the highlighted activity activity, indicated in yellow.
   
-<img src="images/active_subtask.png" alt="inactive_subtask" width="100"/>
+
+![Untitled](images/active_subtask.png)
 
 ```{admonition} Note
 
 🗒 Note: This could also be applied to activities that has been completed or is no longer active.
 ```
-<img src="images/inactive_subtask.png" alt="inactive_subtask" width="100"/>
+
+![Untitled](images/inactive_subtask.png)
 
 ### Call Activity
 
@@ -34,7 +36,8 @@ If the desired task or process you would like to view is not found in the parent
 #### Step 2: Select activity
 
 - Select the highlighted activity, indicated in yellow.
-<img src="images/active_call_process.png" alt="inactive_subtask" width="100"/>
+
+![Untitled](images/active_call_process.png)
 
 ```{admonition} Note
 
@@ -45,7 +48,7 @@ If the desired task or process you would like to view is not found in the parent
 
 A pop-up menu will appear. Select ‘View Call Activity Diagram’ to navigate to the sub-process.
 
-<img src="images/call_activity_popup.png" alt="inactive_subtask" width="500"/>
+```{image} images/call_activity_popup.png
 
 
 ---
@@ -55,4 +58,4 @@ A pop-up menu will appear. Select ‘View Call Activity Diagram’ to navigate t
 
 | ✅ Success | 🚫 Error |
 | --- | --- |
-| You will be redirected to the corresponding diagram. Repeat the above steps until the highlighted activity becomes anything other than a call activity or sub task, which means you will find yourself in the lowest active process.|None |
+| You will be redirected to the corresponding diagram. Repeat the above steps until the highlighted activity becomes anything other than a call activity or sub task, which means you will find yourself in the lowest active process.|None 
