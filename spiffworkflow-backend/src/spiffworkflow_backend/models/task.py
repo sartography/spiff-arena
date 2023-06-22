@@ -120,8 +120,6 @@ class Task:
         form_ui_schema: dict | None = None,
         parent: str | None = None,
         event_definition: dict[str, Any] | None = None,
-        call_activity_process_identifier: str | None = None,
-        calling_subprocess_task_id: str | None = None,
         error_message: str | None = None,
     ):
         self.id = id
@@ -135,8 +133,6 @@ class Task:
         self.lane = lane
         self.parent = parent
         self.event_definition = event_definition
-        self.call_activity_process_identifier = call_activity_process_identifier
-        self.calling_subprocess_task_id = calling_subprocess_task_id
 
         self.data = data
         if self.data is None:
@@ -194,8 +190,6 @@ class Task:
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
             "event_definition": self.event_definition,
-            "call_activity_process_identifier": self.call_activity_process_identifier,
-            "calling_subprocess_task_id": self.calling_subprocess_task_id,
             "error_message": self.error_message,
         }
 
