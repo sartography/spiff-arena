@@ -71,15 +71,15 @@ export default function SecretNew() {
             }}
           />
           <ButtonSet>
-            <Button kind="primary" type="submit">
-              Submit
-            </Button>
             <Button
               kind=""
               className="button-white-background"
               onClick={navigateToSecrets}
             >
               Cancel
+            </Button>
+            <Button kind="primary" type="submit">
+              Submit
             </Button>
           </ButtonSet>
         </Stack>
