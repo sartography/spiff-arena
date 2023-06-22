@@ -7,6 +7,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
+  Edit,
   TrashCan,
   StopOutline,
   PauseOutline,
@@ -591,9 +592,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const cancelUpdatingTask = () => {
+    setEditingTaskData(false);
+    setSelectingEvent(false);
+    initializeTaskDataToDisplay(taskToDisplay);
+    setEventPayload('{}');
+    removeError();
+  };
+
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
+    if (editingTaskData) {
+      cancelUpdatingTask();
+    }
   };
 
   const getTaskById = (taskId: string) => {
@@ -713,14 +725,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return [];
   };
 
-  const cancelUpdatingTask = () => {
-    setEditingTaskData(false);
-    setSelectingEvent(false);
-    initializeTaskDataToDisplay(taskToDisplay);
-    setEventPayload('{}');
-    removeError();
-  };
-
   const taskDataStringToObject = (dataString: string) => {
     return JSON.parse(dataString);
   };
@@ -735,7 +739,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }; // spread operator
       setTaskToDisplay(taskToDisplayCopy);
     }
-    refreshPage();
   };
 
   const saveTaskData = () => {
@@ -763,7 +766,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     HttpService.makeCallToBackend({
       path: targetUris.processInstanceSendEventPath,
       httpMethod: 'POST',
-      successCallback: saveTaskDataResult,
+      successCallback: refreshPage,
       failureCallback: addError,
       postBody: eventToSend,
     });
@@ -811,88 +814,63 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (editingTaskData) {
-      buttons.push(
-        <Button data-qa="save-task-data-button" onClick={saveTaskData}>
-          Save
-        </Button>
-      );
-      buttons.push(
-        <Button
-          data-qa="cancel-task-data-edit-button"
-          onClick={cancelUpdatingTask}
-        >
-          Cancel
-        </Button>
-      );
-    } else if (selectingEvent) {
-      buttons.push(
-        <Button data-qa="send-event-button" onClick={sendEvent}>
-          Send
-        </Button>
-      );
-      buttons.push(
-        <Button
-          data-qa="cancel-task-data-edit-button"
-          onClick={cancelUpdatingTask}
-        >
-          Cancel
-        </Button>
-      );
-    } else {
+    if (!editingTaskData) {
       if (canEditTaskData(task)) {
         buttons.push(
           <Button
+            kind="ghost"
+            renderIcon={Edit}
+            iconDescription="Edit Task Data"
+            title="HEY"
+            hasIconOnly
             data-qa="edit-task-data-button"
             onClick={() => setEditingTaskData(true)}
-          >
-            Edit
-          </Button>
+          />
         );
       }
-      if (canCompleteTask(task)) {
-        buttons.push(
-          <Button
-            data-qa="mark-task-complete-button"
-            onClick={() => completeTask(false)}
-          >
-            Skip Task
-          </Button>
-        );
-        buttons.push(
-          <Button
-            data-qa="execute-task-complete-button"
-            onClick={() => completeTask(true)}
-          >
-            Execute Task
-          </Button>
-        );
-      }
-      if (canSendEvent(task)) {
-        buttons.push(
-          <Button
-            data-qa="select-event-button"
-            onClick={() => setSelectingEvent(true)}
-          >
-            Send Event
-          </Button>
-        );
-      }
-      if (canResetProcess(task)) {
-        let titleText =
-          'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
-        titleText += 'Yes, we invented a time machine. ';
-        titleText += 'And no, you cannot go back after using this feature.';
-        buttons.push(
-          <Button
-            title={titleText}
-            data-qa="reset-process-button"
-            onClick={() => resetProcessInstance()}
-          >
-            Reset Process Here
-          </Button>
-        );
-      }
+      // if (canCompleteTask(task)) {
+      //   buttons.push(
+      //     <Button
+      //       data-qa="mark-task-complete-button"
+      //       onClick={() => completeTask(false)}
+      //     >
+      //       Skip Task
+      //     </Button>
+      //   );
+      //   buttons.push(
+      //     <Button
+      //       data-qa="execute-task-complete-button"
+      //       onClick={() => completeTask(true)}
+      //     >
+      //       Execute Task
+      //     </Button>
+      //   );
+      // }
+      // if (canSendEvent(task)) {
+      //   buttons.push(
+      //     <Button
+      //       data-qa="select-event-button"
+      //       onClick={() => setSelectingEvent(true)}
+      //     >
+      //       Send Event
+      //     </Button>
+      //   );
+      // }
+      // if (canResetProcess(task)) {
+      //   let titleText =
+      //     'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
+      //   titleText += 'Yes, we invented a time machine. ';
+      //   titleText += 'And no, you cannot go back after using this feature.';
+      //   buttons.push(
+      //     <Button
+      //       title={titleText}
+      //       data-qa="reset-process-button"
+      //       onClick={() => resetProcessInstance()}
+      //     >
+      //       Reset Process Here
+      //     </Button>
+      //   );
+      // }
     }
 
     return buttons;
@@ -903,20 +881,47 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (taskDataToDisplay.startsWith('ERROR:')) {
       taskDataClassName = 'failure-string';
     }
-    return editingTaskData ? (
-      <Editor
-        height={600}
-        width="auto"
-        defaultLanguage="json"
-        defaultValue={taskDataToDisplay}
-        onChange={(value) => setTaskDataToDisplay(value || '')}
-      />
-    ) : (
+    const numberOfLines = taskDataToDisplay.split('\n').length;
+    let heightInEm = numberOfLines + 5;
+    let scrollEnabled = false;
+    let minimapEnabled = false;
+    if (heightInEm > 30) {
+      heightInEm = 30;
+      scrollEnabled = true;
+      minimapEnabled = true;
+    }
+
+    const editorReadOnly = !editingTaskData;
+
+    console.log('taskDataToDisplay', taskDataToDisplay);
+    if (!taskDataToDisplay) {
+      return null;
+    }
+
+    return (
       <>
         {showTaskDataLoading ? (
           <Loading className="some-class" withOverlay={false} small />
         ) : null}
-        <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
+        {taskDataClassName !== '' ? (
+          <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
+        ) : (
+          <Editor
+            height={`${heightInEm}rem`}
+            width="auto"
+            defaultLanguage="json"
+            defaultValue={taskDataToDisplay}
+            onChange={(value) => {
+              console.log('value', value);
+              setTaskDataToDisplay(value || '');
+            }}
+            options={{
+              readOnly: editorReadOnly,
+              scrollBeyondLastLine: scrollEnabled,
+              minimap: { enabled: minimapEnabled },
+            }}
+          />
+        )}
       </>
     );
   };
@@ -995,47 +1000,62 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
     const candidateEvents: any = getEvents(taskToUse);
-    if (taskToDisplay) {
-      let taskTitleText = taskToUse.guid;
-      if (taskToUse.bpmn_name) {
-        taskTitleText += ` (${taskToUse.bpmn_name})`;
-      }
-      return (
-        <Modal
-          open={!!taskToUse}
-          passiveModal
-          onRequestClose={handleTaskDataDisplayClose}
-        >
-          <Stack orientation="horizontal" gap={2}>
-            <span title={taskTitleText}>{taskToUse.bpmn_identifier}</span> (
-            {taskToUse.typename}
-            ): {taskToUse.state}
-            {taskDisplayButtons(taskToUse)}
-          </Stack>
+
+    let primaryButtonText = 'Close';
+    let secondaryButtonText = null;
+    let onRequestSubmit = handleTaskDataDisplayClose;
+    let onSecondarySubmit = handleTaskDataDisplayClose;
+    let dangerous = false;
+    if (editingTaskData) {
+      primaryButtonText = 'Save';
+      secondaryButtonText = 'Cancel';
+      onSecondarySubmit = cancelUpdatingTask;
+      onRequestSubmit = saveTaskData;
+      dangerous = true;
+    }
+    return (
+      <Modal
+        open={!!taskToUse}
+        danger={dangerous}
+        primaryButtonText={primaryButtonText}
+        secondaryButtonText={secondaryButtonText}
+        onRequestClose={handleTaskDataDisplayClose}
+        onSecondarySubmit={onSecondarySubmit}
+        onRequestSubmit={onRequestSubmit}
+        modalHeading={`${taskToUse.bpmn_identifier} (${taskToUse.typename}
+              ): ${taskToUse.state}`}
+      >
+        {taskToUse.bpmn_name ? (
           <div>
             <Stack orientation="horizontal" gap={2}>
-              Guid: {taskToUse.guid}
+              Name: {taskToUse.bpmn_name}
             </Stack>
           </div>
-          {taskToUse.state === 'COMPLETED' ? (
-            <div>
-              <Stack orientation="horizontal" gap={2}>
-                {completionViewLink(
-                  'View process instance at the time when this task was active.',
-                  taskToUse.guid
-                )}
-              </Stack>
-              <br />
-              <br />
-            </div>
-          ) : null}
-          {selectingEvent
-            ? eventSelector(candidateEvents)
-            : taskDataContainer()}
-        </Modal>
-      );
-    }
-    return null;
+        ) : null}
+
+        <div>
+          <Stack orientation="horizontal" gap={2}>
+            Guid: {taskToUse.guid}
+          </Stack>
+        </div>
+        <Stack orientation="horizontal" gap={2}>
+          {taskDisplayButtons(taskToUse)}
+        </Stack>
+        {taskToUse.state === 'COMPLETED' ? (
+          <div>
+            <Stack orientation="horizontal" gap={2}>
+              {completionViewLink(
+                'View process instance at the time when this task was active.',
+                taskToUse.guid
+              )}
+            </Stack>
+            <br />
+            <br />
+          </div>
+        ) : null}
+        {selectingEvent ? eventSelector(candidateEvents) : taskDataContainer()}
+      </Modal>
+    );
   };
 
   const buttonIcons = () => {

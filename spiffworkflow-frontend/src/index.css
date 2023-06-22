@@ -179,6 +179,10 @@ h1.with-icons {
   margin-top: 5px;
 }
 
+.with-icons {
+  margin-top: 14px;
+}
+
 .grid-list-title {
   font-weight: 600;
   font-size: 14px;
