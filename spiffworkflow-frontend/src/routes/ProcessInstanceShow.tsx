@@ -1117,6 +1117,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             allowRedirect={false}
             smallSpinner
             collapsableInstructions
+            executeTasks={false}
           />
           <Grid condensed fullWidth>
             <Column md={6} lg={8} sm={4}>
