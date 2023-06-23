@@ -7,13 +7,17 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  Edit,
-  TrashCan,
-  StopOutline,
-  PauseOutline,
-  PlayOutline,
-  InProgress,
+  Asterisk,
   Checkmark,
+  Edit,
+  InProgress,
+  PauseOutline,
+  Play,
+  PlayOutline,
+  Reset,
+  SkipForward,
+  StopOutline,
+  TrashCan,
   Warning,
   // @ts-ignore
 } from '@carbon/icons-react';
@@ -828,49 +832,66 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           />
         );
       }
-      // if (canCompleteTask(task)) {
-      //   buttons.push(
-      //     <Button
-      //       data-qa="mark-task-complete-button"
-      //       onClick={() => completeTask(false)}
-      //     >
-      //       Skip Task
-      //     </Button>
-      //   );
-      //   buttons.push(
-      //     <Button
-      //       data-qa="execute-task-complete-button"
-      //       onClick={() => completeTask(true)}
-      //     >
-      //       Execute Task
-      //     </Button>
-      //   );
-      // }
-      // if (canSendEvent(task)) {
-      //   buttons.push(
-      //     <Button
-      //       data-qa="select-event-button"
-      //       onClick={() => setSelectingEvent(true)}
-      //     >
-      //       Send Event
-      //     </Button>
-      //   );
-      // }
-      // if (canResetProcess(task)) {
-      //   let titleText =
-      //     'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
-      //   titleText += 'Yes, we invented a time machine. ';
-      //   titleText += 'And no, you cannot go back after using this feature.';
-      //   buttons.push(
-      //     <Button
-      //       title={titleText}
-      //       data-qa="reset-process-button"
-      //       onClick={() => resetProcessInstance()}
-      //     >
-      //       Reset Process Here
-      //     </Button>
-      //   );
-      // }
+      if (canCompleteTask(task)) {
+        buttons.push(
+          <Button
+            kind="ghost"
+            renderIcon={SkipForward}
+            iconDescription="Skip Task"
+            hasIconOnly
+            data-qa="mark-task-complete-button"
+            onClick={() => completeTask(false)}
+          >
+            Skip Task
+          </Button>
+        );
+        buttons.push(
+          <Button
+            kind="ghost"
+            renderIcon={Play}
+            iconDescription="Execute Task"
+            hasIconOnly
+            data-qa="execute-task-complete-button"
+            onClick={() => completeTask(true)}
+          >
+            Execute Task
+          </Button>
+        );
+      }
+      if (canSendEvent(task)) {
+        buttons.push(
+          <Button
+            kind="ghost"
+            renderIcon={Asterisk}
+            iconDescription="Send Event"
+            hasIconOnly
+            data-qa="select-event-button"
+            onClick={() => setSelectingEvent(true)}
+          >
+            Send Event
+          </Button>
+        );
+      }
+      if (canResetProcess(task)) {
+        let titleText =
+          'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
+        titleText += 'Yes, we invented a time machine. ';
+        titleText +=
+          'And no, you cannot change your mind after using this feature.';
+        buttons.push(
+          <Button
+            kind="ghost"
+            renderIcon={Reset}
+            iconDescription="Reset Process Here"
+            hasIconOnly
+            title={titleText}
+            data-qa="reset-process-button"
+            onClick={() => resetProcessInstance()}
+          >
+            Reset Process Here
+          </Button>
+        );
+      }
     }
 
     return buttons;
