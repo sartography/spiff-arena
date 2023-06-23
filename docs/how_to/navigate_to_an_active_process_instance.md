@@ -29,7 +29,7 @@ If the desired task or process you would like to view is not found in the parent
 
 ![Untitled](images/inactive_subtask.png)
 
-### Call Activitygit 
+### Call Activitygit git pull
 
 #### Step 1: Locate current active call activity
 
