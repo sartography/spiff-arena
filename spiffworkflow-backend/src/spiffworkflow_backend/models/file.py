@@ -70,6 +70,7 @@ class File:
     references: list[SpecReference] | None = None
     file_contents: bytes | None = None
     process_model_id: str | None = None
+    bpmn_process_ids: list[str] | None = None
     file_contents_hash: str | None = None
 
     def __post_init__(self) -> None:
