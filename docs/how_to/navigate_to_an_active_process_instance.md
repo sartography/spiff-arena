@@ -29,7 +29,7 @@ If the desired task or process you would like to view is not found in the parent
 
 ![Untitled](images/inactive_subtask.png)
 
-### Call Activity
+### Call Activitygit 
 
 #### Step 1: Locate current active call activity
 
@@ -58,4 +58,5 @@ A pop-up menu will appear. Select ‘View Call Activity Diagram’ to navigate t
 
 | ✅ Success | 🚫 Error |
 | --- | --- |
-| You will be redirected to the corresponding diagram. Repeat the above steps until the highlighted activity becomes anything other than a call activity or sub task, which means you will find yourself in the lowest active process.|None 
+| You will be redirected to the corresponding diagram. Repeat the above steps until the highlighted activity becomes anything other than a call activity or sub task, which means you will find yourself in the lowest active process.|None
+
