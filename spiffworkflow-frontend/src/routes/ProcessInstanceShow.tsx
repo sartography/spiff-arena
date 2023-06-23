@@ -56,6 +56,7 @@ import {
   ProcessInstanceMetadata,
   Task,
   TaskDefinitionPropertiesJson,
+  User,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
@@ -98,9 +99,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
     useState<boolean>(false);
 
-  const [assigningTask, setAssigningTask] = useState<boolean>(false);
-  const [usersToAssignTaskTo, setUsersToAssignTaskTo] = useState<
-    string[] | null
+  const [addingPotentialOwners, setAddingPotentialOwners] =
+    useState<boolean>(false);
+  const [additionalPotentialOwners, setAdditionalPotentialOwners] = useState<
+    User[] | null
   >(null);
 
   const { addError, removeError } = useAPIError();
@@ -607,21 +609,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
-  const cancelUpdatingTask = () => {
+  const resetTaskActionDetails = () => {
     setEditingTaskData(false);
     setSelectingEvent(false);
-    setAssigningTask(false);
+    setAddingPotentialOwners(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
-    setUsersToAssignTaskTo(null);
+    setAdditionalPotentialOwners(null);
     removeError();
   };
 
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
-    if (editingTaskData || selectingEvent || assigningTask) {
-      cancelUpdatingTask();
+    if (editingTaskData || selectingEvent || addingPotentialOwners) {
+      resetTaskActionDetails();
     }
   };
 
@@ -705,7 +707,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canAssignTask = (task: Task) => {
+  const canAddPotentialOwners = (task: Task) => {
     return (
       HUMAN_TASK_TYPES.includes(task.typename) &&
       processInstance &&
@@ -781,6 +783,28 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const addPotentialOwners = () => {
+    if (!additionalPotentialOwners) {
+      return;
+    }
+    if (!taskToDisplay) {
+      return;
+    }
+    removeError();
+
+    const userIds = additionalPotentialOwners.map((user: User) => user.id);
+
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceTaskAssignPath}/${taskToDisplay.guid}`,
+      httpMethod: 'POST',
+      successCallback: resetTaskActionDetails,
+      failureCallback: addError,
+      postBody: {
+        user_ids: userIds,
+      },
+    });
+  };
+
   const sendEvent = () => {
     if ('payload' in eventToSend)
       eventToSend.payload = JSON.parse(eventPayload);
@@ -806,6 +830,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const taskDisplayButtons = (task: Task) => {
     const buttons = [];
+    if (editingTaskData || addingPotentialOwners || selectingEvent) {
+      return null;
+    }
 
     if (
       task.typename === 'ScriptTask' &&
@@ -838,96 +865,94 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (!editingTaskData) {
-      if (canEditTaskData(task)) {
-        buttons.push(
-          <Button
-            kind="ghost"
-            renderIcon={Edit}
-            align="top-left"
-            iconDescription="Edit Task Data"
-            hasIconOnly
-            data-qa="edit-task-data-button"
-            onClick={() => setEditingTaskData(true)}
-          />
-        );
-      }
-      if (canAssignTask(task)) {
-        buttons.push(
-          <Button
-            kind="ghost"
-            renderIcon={UserFollow}
-            align="top-left"
-            iconDescription="Assign to Users"
-            hasIconOnly
-            data-qa="assign-task-button"
-            onClick={() => setAssigningTask(true)}
-          />
-        );
-      }
-      if (canCompleteTask(task)) {
-        buttons.push(
-          <Button
-            kind="ghost"
-            renderIcon={Play}
-            align="top-left"
-            iconDescription="Execute Task"
-            hasIconOnly
-            data-qa="execute-task-complete-button"
-            onClick={() => completeTask(true)}
-          >
-            Execute Task
-          </Button>
-        );
-        buttons.push(
-          <Button
-            kind="ghost"
-            renderIcon={SkipForward}
-            align="top-left"
-            iconDescription="Skip Task"
-            hasIconOnly
-            data-qa="mark-task-complete-button"
-            onClick={() => completeTask(false)}
-          >
-            Skip Task
-          </Button>
-        );
-      }
-      if (canSendEvent(task)) {
-        buttons.push(
-          <Button
-            kind="ghost"
-            renderIcon={Send}
-            align="top-left"
-            iconDescription="Send Event"
-            hasIconOnly
-            data-qa="select-event-button"
-            onClick={() => setSelectingEvent(true)}
-          >
-            Send Event
-          </Button>
-        );
-      }
-      if (canResetProcess(task)) {
-        let titleText =
-          'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
-        titleText += 'Yes, we invented a time machine. ';
-        titleText +=
-          'And no, you cannot change your mind after using this feature.';
-        buttons.push(
-          <Button
-            kind="ghost"
-            renderIcon={Reset}
-            hasIconOnly
-            iconDescription="Reset Process Here"
-            title={titleText}
-            data-qa="reset-process-button"
-            onClick={() => resetProcessInstance()}
-          />
-        );
-      }
+    if (canEditTaskData(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Edit}
+          align="top-left"
+          iconDescription="Edit Task Data"
+          hasIconOnly
+          data-qa="edit-task-data-button"
+          onClick={() => setEditingTaskData(true)}
+        />
+      );
     }
-
+    if (canAddPotentialOwners(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={UserFollow}
+          align="top-left"
+          iconDescription="Assign user"
+          title="Allow an additional user to complete this task"
+          hasIconOnly
+          data-qa="add-potential-owners-button"
+          onClick={() => setAddingPotentialOwners(true)}
+        />
+      );
+    }
+    if (canCompleteTask(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Play}
+          align="top-left"
+          iconDescription="Execute Task"
+          hasIconOnly
+          data-qa="execute-task-complete-button"
+          onClick={() => completeTask(true)}
+        >
+          Execute Task
+        </Button>
+      );
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={SkipForward}
+          align="top-left"
+          iconDescription="Skip Task"
+          hasIconOnly
+          data-qa="mark-task-complete-button"
+          onClick={() => completeTask(false)}
+        >
+          Skip Task
+        </Button>
+      );
+    }
+    if (canSendEvent(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Send}
+          align="top-left"
+          iconDescription="Send Event"
+          hasIconOnly
+          data-qa="select-event-button"
+          onClick={() => setSelectingEvent(true)}
+        >
+          Send Event
+        </Button>
+      );
+    }
+    if (canResetProcess(task)) {
+      let titleText =
+        'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
+      titleText += 'Yes, we invented a time machine. ';
+      titleText +=
+        'And no, you cannot change your mind after using this feature.';
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Reset}
+          hasIconOnly
+          iconDescription="Reset Process Here"
+          title={titleText}
+          data-qa="reset-process-button"
+          onClick={() => resetProcessInstance()}
+        />
+      );
+    }
     return buttons;
   };
 
@@ -945,8 +970,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       scrollEnabled = true;
       minimapEnabled = true;
     }
+    let taskDataHeader = 'Task data';
+    let editorReadOnly = true;
+    let taskDataHeaderClassName = 'with-half-rem-bottom-margin';
 
-    const editorReadOnly = !editingTaskData;
+    if (editingTaskData) {
+      editorReadOnly = false;
+      taskDataHeader = 'Edit task data';
+      taskDataHeaderClassName = 'task-data-details-header';
+    }
 
     if (!taskDataToDisplay) {
       return null;
@@ -960,59 +992,88 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {taskDataClassName !== '' ? (
           <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
         ) : (
-          <Editor
-            height={`${heightInEm}rem`}
-            width="auto"
-            defaultLanguage="json"
-            defaultValue={taskDataToDisplay}
-            onChange={(value) => {
-              setTaskDataToDisplay(value || '');
-            }}
-            options={{
-              readOnly: editorReadOnly,
-              scrollBeyondLastLine: scrollEnabled,
-              minimap: { enabled: minimapEnabled },
-            }}
-          />
+          <>
+            <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
+            <Editor
+              height={`${heightInEm}rem`}
+              width="auto"
+              defaultLanguage="json"
+              defaultValue={taskDataToDisplay}
+              onChange={(value) => {
+                setTaskDataToDisplay(value || '');
+              }}
+              options={{
+                readOnly: editorReadOnly,
+                scrollBeyondLastLine: scrollEnabled,
+                minimap: { enabled: minimapEnabled },
+              }}
+            />
+          </>
         )}
       </>
     );
   };
 
-  const userAssignmentSelector = () => {
+  const potentialOwnerSelector = () => {
     return (
       <Stack orientation="vertical">
-        <UserSearch onSelectedUser={(user: any) => console.log('user', user)} />
+        <h3 className="task-data-details-header">Update task ownership</h3>
+        <div className="indented-content">
+          <p className="explanatory-message with-tiny-bottom-margin">
+            Select a user who should be allowed to complete this task
+          </p>
+          <UserSearch
+            className="modal-dropdown"
+            onSelectedUser={(user: User) => {
+              setAdditionalPotentialOwners([user]);
+            }}
+          />
+        </div>
       </Stack>
     );
   };
 
   const eventSelector = (candidateEvents: any) => {
-    const editor = (
-      <Editor
-        height={300}
-        width="auto"
-        defaultLanguage="json"
-        defaultValue={eventPayload}
-        onChange={(value: any) => setEventPayload(value || '{}')}
-        options={{ readOnly: !eventTextEditorEnabled }}
-      />
-    );
+    let editor = null;
+    let className = 'modal-dropdown';
+    if (eventTextEditorEnabled) {
+      className = '';
+      editor = (
+        <Editor
+          height={300}
+          width="auto"
+          defaultLanguage="json"
+          defaultValue={eventPayload}
+          onChange={(value: any) => setEventPayload(value || '{}')}
+          options={{ readOnly: !eventTextEditorEnabled }}
+        />
+      );
+    }
     return (
       <Stack orientation="vertical">
-        <Dropdown
-          id="process-instance-select-event"
-          label="Select Event"
-          items={candidateEvents}
-          itemToString={(item: any) => item.name || item.label || item.typename}
-          onChange={(value: any) => {
-            setEventToSend(value.selectedItem);
-            setEventTextEditorEnabled(
-              eventsThatNeedPayload.includes(value.selectedItem.typename)
-            );
-          }}
-        />
-        {editor}
+        <h3 className="task-data-details-header">Choose event to send</h3>
+        <div className="indented-content">
+          <p className="explanatory-message with-tiny-bottom-margin">
+            Select an event to send. A message event will require a body as
+            well.
+          </p>
+          <Dropdown
+            id="process-instance-select-event"
+            className={className}
+            label="Select Event"
+            items={candidateEvents}
+            itemToString={(item: any) =>
+              item.name || item.label || item.typename
+            }
+            onChange={(value: any) => {
+              setEventToSend(value.selectedItem);
+              setEventTextEditorEnabled(
+                eventsThatNeedPayload.includes(value.selectedItem.typename)
+              );
+            }}
+          />
+          {editor}
+        </div>
       </Stack>
     );
   };
@@ -1025,8 +1086,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (selectingEvent) {
       const candidateEvents: any = getEvents(taskToDisplay);
       dataArea = eventSelector(candidateEvents);
-    } else if (assigningTask) {
-      dataArea = userAssignmentSelector();
+    } else if (addingPotentialOwners) {
+      dataArea = potentialOwnerSelector();
     }
     return dataArea;
   };
@@ -1080,14 +1141,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (editingTaskData) {
       primaryButtonText = 'Save';
       secondaryButtonText = 'Cancel';
-      onSecondarySubmit = cancelUpdatingTask;
+      onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = saveTaskData;
       dangerous = true;
     } else if (selectingEvent) {
       primaryButtonText = 'Send';
       secondaryButtonText = 'Cancel';
-      onSecondarySubmit = cancelUpdatingTask;
+      onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = sendEvent;
+      dangerous = true;
+    } else if (addingPotentialOwners) {
+      primaryButtonText = 'Add';
+      secondaryButtonText = 'Cancel';
+      onSecondarySubmit = resetTaskActionDetails;
+      onRequestSubmit = addPotentialOwners;
       dangerous = true;
     }
 
@@ -1103,18 +1170,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         modalHeading={`${taskToUse.bpmn_identifier} (${taskToUse.typename}
               ): ${taskToUse.state}`}
       >
-        {taskToUse.bpmn_name ? (
+        <div className="indented-content explanatory-message">
+          {taskToUse.bpmn_name ? (
+            <div>
+              <Stack orientation="horizontal" gap={2}>
+                Name: {taskToUse.bpmn_name}
+              </Stack>
+            </div>
+          ) : null}
+
           <div>
             <Stack orientation="horizontal" gap={2}>
-              Name: {taskToUse.bpmn_name}
+              Guid: {taskToUse.guid}
             </Stack>
           </div>
-        ) : null}
-
-        <div>
-          <Stack orientation="horizontal" gap={2}>
-            Guid: {taskToUse.guid}
-          </Stack>
         </div>
         <ButtonSet>{taskDisplayButtons(taskToUse)}</ButtonSet>
         {taskToUse.state === 'COMPLETED' ? (

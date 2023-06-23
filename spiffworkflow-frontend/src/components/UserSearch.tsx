@@ -1,24 +1,30 @@
 import { ComboBox } from '@carbon/react';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { User } from '../interfaces';
+import { CarbonComboBoxSelection, User } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
   onSelectedUser: Function;
+  label?: string;
+  className?: string;
 };
 
-export default function UserSearch({ onSelectedUser }: OwnProps) {
+export default function UserSearch({
+  onSelectedUser,
+  className,
+  label = 'User',
+}: OwnProps) {
   const lastRequestedInitatorSearchTerm = useRef<string>();
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [userList, setUserList] = useState<string[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userList, setUserList] = useState<User[]>([]);
 
   const handleUserSearchResult = (result: any, inputText: string) => {
     if (lastRequestedInitatorSearchTerm.current === result.username_prefix) {
-      setUserList(result.users.map((user: User) => user.username));
+      setUserList(result.users);
       result.users.forEach((user: User) => {
         if (user.username === inputText) {
-          setSelectedUser(user.username);
+          setSelectedUser(user);
         }
       });
     }
@@ -45,19 +51,21 @@ export default function UserSearch({ onSelectedUser }: OwnProps) {
   return (
     <ComboBox
       onInputChange={addDebouncedSearchUser}
-      className="user-search-class"
-      onChange={onSelectedUser}
+      className={className}
+      onChange={(selection: CarbonComboBoxSelection) => {
+        onSelectedUser(selection.selectedItem);
+      }}
       id="user-search"
       data-qa="user-search"
       items={userList}
       itemToString={(processInstanceInitatorOption: User) => {
         if (processInstanceInitatorOption) {
-          return processInstanceInitatorOption;
+          return processInstanceInitatorOption.username;
         }
         return null;
       }}
       placeholder="Start typing username"
-      titleText="Started by"
+      titleText={label}
       selectedItem={selectedUser}
     />
   );

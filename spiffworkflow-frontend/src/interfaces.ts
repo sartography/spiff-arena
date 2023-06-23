@@ -286,7 +286,7 @@ export interface PaginationObject {
 }
 
 export interface CarbonComboBoxSelection {
-  selectedItem: ProcessModel;
+  selectedItem: any;
 }
 
 export interface CarbonComboBoxProcessSelection {
