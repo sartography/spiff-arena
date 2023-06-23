@@ -16,6 +16,7 @@ from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
+from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -290,6 +291,10 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
     file.process_model_id = process_model.id
+
+    if file.type == FileType.bpmn.value:
+        file.bpmn_process_ids = SpecFileService.get_bpmn_process_ids_for_file_contents(file_contents)
+
     return make_response(jsonify(file), 200)
 
 
