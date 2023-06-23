@@ -171,13 +171,14 @@ export default function ProcessModelEditDiagram() {
   }, [processModelPath, params]);
 
   useEffect(() => {
-    if (processModel !== null) {
+    const bpmnProcessIds = processModelFile?.bpmn_process_ids;
+    if (processModel !== null && bpmnProcessIds) {
       HttpService.makeCallToBackend({
-        path: `/processes/callers?bpmn_process_identifier=${processModel.primary_process_id}`,
+        path: `/processes/callers/${bpmnProcessIds.join(',')}`,
         successCallback: setCallers,
       });
     }
-  }, [processModel]);
+  }, [processModel, processModelFile]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
