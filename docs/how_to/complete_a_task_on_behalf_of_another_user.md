@@ -1,10 +1,9 @@
-# How to complete a task on behalf of another user
+# Complete a task on behalf of another user
 
 
 ```{admonition} Goal
-:class: info
 
-Steps to follow for successfully carrying out an activity and changing instance variables should it be required.
+👟 Steps to follow for successfully carrying out an activity and changing instance variables should it be required.
 ```
 
 ---
@@ -20,46 +19,51 @@ This enables a smooth continuation of the process from the initial user's perspe
 
 ### Step 1: Find the active Process Instance
 
-[Instance is assigned to another  User](https://www.notion.so/Instance-is-assigned-to-another-User-9cb81c5676cc4ff3b60d7eca4a4b997c) 
+In order to locate the active Process Instance, have a look at these pages to find an active instance to suspend.
+
+[How to find an Instance assigned to someone else](https://www.notion.so/How-to-find-an-Instance-assigned-to-someone-else-59e45e944655411581d780cf7a010230?pvs=21) 
+[How to find an Instance assigned to myself](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/find_an_Instance_assigned_to_myself.md)
 
 ### Step 2: Navigate to the active User Task
 
-[How to view process variables](https://www.notion.so/How-to-view-process-variables-ef1a9ac598314499a4625698a1c2feed) 
+[How to navigate to the active User Task](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/navigate_to_an_active_process_instance.md) 
 
-```{admonition} Note
-:class: note
 
-👤 Note that you need Admin rights to complete the following steps.
-```
 
 ### Step 3: Suspend the Process
 
-- **How to suspend process**
-  
-    put link to suspend process here
+```{admonition} Note
+
+👷‍♂️ Note that you need Admin rights to complete the following steps.
+```
+
+[How to suspend a process](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/resume_a_process.md)
 
 ### Step 4: Complete the task
 
 Select the highlighted activity. This will open a pop-up view of the Instance variables.
 
-Select “Edit” which opens a code editor.
+#### Without amending metadata
 
-![editBtn](file:///C:/Upwork/Sartography%20Docs/spiff-arena/docs/_build/html/_images/editBtn.png)
+#### With amending metadata
 
+```{admonition} Note
+
+👷‍♂️ Note that you need Admin rights to complete the following steps.
+```
+
+
+- Select the highlighted activity. This will open a pop-up view of the Instance variables.
+
+- Select “Edit” which opens a code editor.
 
 - Scroll down to find the line to edit.
 
 ```{admonition} Note
-:class: note
-
 ℹ️ It is important to identify if any variables require updating and which specific variables need modification in order to achieve the same result as if a user had completed the form. The outcome may vary depending on the necessary adjustments to these variables and the given scenario.
 ```
 
-- View input example here: 
-[**Review options available for "review_outcome" field**
-**Approved:** "review_outcome": "app”
-**Rejected:** "review_outcome": "rej”
-**Request additional info:** "review_outcome": "nai” ]
+- Edit Metadata by changing the variables for the process instance.
 
 - Select “Save” to apply changes.
 
@@ -76,4 +80,5 @@ Select “Edit” which opens a code editor.
 
 ## 👨‍🏫Examples
 
-[**Steps for Admin** **approving on behalf of Budget owner:** ](https://www.notion.so/Steps-for-Admin-approving-on-behalf-of-Budget-owner-64e76b05ca2a43e7ac2075e71734de22)
+[**Steps for Admin** **approving on behalf of Budget owner:** ]
+

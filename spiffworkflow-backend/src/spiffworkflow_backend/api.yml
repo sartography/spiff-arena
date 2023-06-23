@@ -633,14 +633,17 @@ paths:
               schema:
                 type: string
 
-  /processes/callers:
+  /processes/callers/{bpmn_process_identifiers}:
     parameters:
-      - name: bpmn_process_identifier
-        in: query
+      - name: bpmn_process_identifiers
+        in: path
         required: true
-        description: the bpmn process identifier/id (not the name with spaces and not the process model identifier)
+        description: the bpmn process identifiers/ids (not the names with spaces and not the process model identifiers)
         schema:
-          type: string
+          type: array
+          items:
+            type: string
+          minItems: 1
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_caller_list
       summary:

@@ -435,6 +435,16 @@ def process_instance_task_list(
     bpmn_process_ids = []
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
+        if bpmn_process is None:
+            raise ApiError(
+                error_code="bpmn_process_not_found",
+                message=(
+                    f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance"
+                    f" '{process_instance.id}'"
+                ),
+                status_code=400,
+            )
+
         bpmn_processes = TaskService.bpmn_process_and_descendants([bpmn_process])
         bpmn_process_ids = [p.id for p in bpmn_processes]
 
