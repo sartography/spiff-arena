@@ -29,7 +29,8 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel, db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -268,13 +269,13 @@ def task_assign(
             status_code=400,
         )
 
-    process_model = _get_process_model(
+    _get_process_model(
         process_instance.process_model_identifier,
     )
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     human_tasks = HumanTaskModel.query.filter_by(
-       process_instance_id=process_instance.id, task_id=task_model.guid
+        process_instance_id=process_instance.id, task_id=task_model.guid
     ).all()
 
     if len(human_tasks) > 1:
@@ -286,7 +287,7 @@ def task_assign(
 
     human_task = human_tasks[0]
 
-    for user_id in body['user_ids']:
+    for user_id in body["user_ids"]:
         human_task_user = HumanTaskUserModel.query.filter_by(user_id=user_id, human_task=human_task).first()
         if human_task_user is None:
             human_task_user = HumanTaskUserModel(user_id=user_id, human_task=human_task)
@@ -295,6 +296,7 @@ def task_assign(
     SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
 
     return make_response(jsonify({"ok": True}), 200)
+
 
 def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)

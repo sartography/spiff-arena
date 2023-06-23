@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  Asterisk,
+  Send,
   Checkmark,
   Edit,
   InProgress,
@@ -15,6 +15,7 @@ import {
   Play,
   PlayOutline,
   Reset,
+  RuleDraft,
   SkipForward,
   StopOutline,
   TrashCan,
@@ -68,6 +69,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
+
+  const eventsThatNeedPayload = ['MessageEventDefinition'];
 
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
@@ -607,7 +610,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
-    if (editingTaskData) {
+    if (editingTaskData || selectingEvent) {
       cancelUpdatingTask();
     }
   };
@@ -670,8 +673,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const canSendEvent = (task: Task) => {
     // We actually could allow this for any waiting events
-    const taskTypes = ['Event Based Gateway'];
+    const taskTypes = ['EventBasedGateway'];
     return (
+      !selectingEvent &&
       processInstance &&
       processInstance.status === 'waiting' &&
       ability.can('POST', targetUris.processInstanceSendEventPath) &&
@@ -691,15 +695,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canAssignTask = (task: Task) => {
-    return (
-      processInstance &&
-      processInstance.status === 'suspended' &&
-      ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
-      isActiveTask(task) &&
-      showingActiveTask()
-    );
-  };
+  // const canAssignTask = (task: Task) => {
+  //   return (
+  //     processInstance &&
+  //     processInstance.status === 'suspended' &&
+  //     ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
+  //     isActiveTask(task) &&
+  //     showingActiveTask()
+  //   );
+  // };
 
   const canResetProcess = (task: Task) => {
     return (
@@ -713,7 +717,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const getEvents = (task: Task) => {
     const handleMessage = (eventDefinition: EventDefinition) => {
-      if (eventDefinition.typename === 'MessageEventDefinition') {
+      if (eventsThatNeedPayload.includes(eventDefinition.typename)) {
         const newEvent = eventDefinition;
         delete newEvent.message_var;
         newEvent.payload = {};
@@ -721,11 +725,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
       return eventDefinition;
     };
-    if (task.event_definition && task.event_definition.event_definitions)
-      return task.event_definition.event_definitions.map((e: EventDefinition) =>
+    const eventDefinition =
+      task.task_definition_properties_json.event_definition;
+    if (eventDefinition && eventDefinition.event_definitions)
+      return eventDefinition.event_definitions.map((e: EventDefinition) =>
         handleMessage(e)
       );
-    if (task.event_definition) return [handleMessage(task.event_definition)];
+    if (eventDefinition) return [handleMessage(eventDefinition)];
     return [];
   };
 
@@ -791,16 +797,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const buttons = [];
 
     if (
-      task.typename === 'Script Task' &&
+      task.typename === 'ScriptTask' &&
       ability.can('PUT', targetUris.processModelShowPath)
     ) {
       buttons.push(
         <Button
+          kind="ghost"
+          align="top-left"
+          renderIcon={RuleDraft}
+          iconDescription="Create Script Unit Test"
+          hasIconOnly
           data-qa="create-script-unit-test-button"
           onClick={createScriptUnitTest}
-        >
-          Create Script Unit Test
-        </Button>
+        />
       );
     }
 
@@ -824,8 +833,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <Button
             kind="ghost"
             renderIcon={Edit}
+            align="top-left"
             iconDescription="Edit Task Data"
-            title="HEY"
             hasIconOnly
             data-qa="edit-task-data-button"
             onClick={() => setEditingTaskData(true)}
@@ -836,19 +845,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         buttons.push(
           <Button
             kind="ghost"
-            renderIcon={SkipForward}
-            iconDescription="Skip Task"
-            hasIconOnly
-            data-qa="mark-task-complete-button"
-            onClick={() => completeTask(false)}
-          >
-            Skip Task
-          </Button>
-        );
-        buttons.push(
-          <Button
-            kind="ghost"
             renderIcon={Play}
+            align="top-left"
             iconDescription="Execute Task"
             hasIconOnly
             data-qa="execute-task-complete-button"
@@ -857,12 +855,26 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             Execute Task
           </Button>
         );
+        buttons.push(
+          <Button
+            kind="ghost"
+            renderIcon={SkipForward}
+            align="top-left"
+            iconDescription="Skip Task"
+            hasIconOnly
+            data-qa="mark-task-complete-button"
+            onClick={() => completeTask(false)}
+          >
+            Skip Task
+          </Button>
+        );
       }
       if (canSendEvent(task)) {
         buttons.push(
           <Button
             kind="ghost"
-            renderIcon={Asterisk}
+            renderIcon={Send}
+            align="top-left"
             iconDescription="Send Event"
             hasIconOnly
             data-qa="select-event-button"
@@ -882,14 +894,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <Button
             kind="ghost"
             renderIcon={Reset}
-            iconDescription="Reset Process Here"
             hasIconOnly
+            iconDescription="Reset Process Here"
             title={titleText}
             data-qa="reset-process-button"
             onClick={() => resetProcessInstance()}
-          >
-            Reset Process Here
-          </Button>
+          />
         );
       }
     }
@@ -914,7 +924,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     const editorReadOnly = !editingTaskData;
 
-    console.log('taskDataToDisplay', taskDataToDisplay);
     if (!taskDataToDisplay) {
       return null;
     }
@@ -933,7 +942,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             defaultLanguage="json"
             defaultValue={taskDataToDisplay}
             onChange={(value) => {
-              console.log('value', value);
               setTaskDataToDisplay(value || '');
             }}
             options={{
@@ -969,7 +977,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onChange={(value: any) => {
             setEventToSend(value.selectedItem);
             setEventTextEditorEnabled(
-              value.selectedItem.typename === 'MessageEventDefinition'
+              eventsThatNeedPayload.includes(value.selectedItem.typename)
             );
           }}
         />
@@ -1033,6 +1041,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       onSecondarySubmit = cancelUpdatingTask;
       onRequestSubmit = saveTaskData;
       dangerous = true;
+    } else if (selectingEvent) {
+      primaryButtonText = 'Send';
+      secondaryButtonText = 'Cancel';
+      onSecondarySubmit = cancelUpdatingTask;
+      onRequestSubmit = sendEvent;
+      dangerous = true;
     }
     return (
       <Modal
@@ -1059,9 +1073,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             Guid: {taskToUse.guid}
           </Stack>
         </div>
-        <Stack orientation="horizontal" gap={2}>
-          {taskDisplayButtons(taskToUse)}
-        </Stack>
+        <ButtonSet>{taskDisplayButtons(taskToUse)}</ButtonSet>
         {taskToUse.state === 'COMPLETED' ? (
           <div>
             <Stack orientation="horizontal" gap={2}>
