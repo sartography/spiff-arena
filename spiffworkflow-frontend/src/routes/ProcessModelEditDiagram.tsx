@@ -171,14 +171,14 @@ export default function ProcessModelEditDiagram() {
   }, [processModelPath, params]);
 
   useEffect(() => {
-    const bpmn_process_ids = processModelFile?.bpmn_process_ids;
-    if (processModel !== null && bpmn_process_ids) {
+    const bpmnProcessIds = processModelFile?.bpmn_process_ids;
+    if (processModel !== null && bpmnProcessIds) {
       HttpService.makeCallToBackend({
-        path: `/processes/callers/${bpmn_process_ids.join(',')}`,
+        path: `/processes/callers/${bpmnProcessIds.join(',')}`,
         successCallback: setCallers,
       });
     }
-  }, [processModel]);
+  }, [processModel, processModelFile]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
