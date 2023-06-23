@@ -565,7 +565,7 @@ class TestProcessApi(BaseTest):
 
         # get the results
         response = client.get(
-            "/v1.0/processes/callers?bpmn_process_identifier=Level2",
+            "/v1.0/processes/callers/Level2",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
