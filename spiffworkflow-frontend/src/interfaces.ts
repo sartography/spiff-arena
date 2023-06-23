@@ -124,6 +124,7 @@ export interface ProcessFile {
   type: string;
   file_contents?: string;
   file_contents_hash?: string;
+  bpmn_process_ids?: string[];
 }
 
 export interface ProcessInstanceMetadata {

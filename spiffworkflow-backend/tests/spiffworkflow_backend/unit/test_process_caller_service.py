@@ -110,19 +110,19 @@ class TestProcessCallerService(BaseTest):
         assert ProcessCallerService.count() == 2
 
     def test_can_return_no_callers_when_no_records(self, with_no_process_callers: None) -> None:
-        assert ProcessCallerService.callers("bob") == []
+        assert ProcessCallerService.callers(["bob"]) == []
 
     def test_can_return_no_callers_when_process_id_is_unknown(self, with_multiple_process_callers: None) -> None:
-        assert ProcessCallerService.callers("bob") == []
+        assert ProcessCallerService.callers(["bob"]) == []
 
     def test_can_return_single_caller(self, with_single_process_caller: None) -> None:
-        assert ProcessCallerService.callers("called_once") == ["one_caller"]
+        assert ProcessCallerService.callers(["called_once"]) == ["one_caller"]
 
     def test_can_return_mulitple_callers(self, with_multiple_process_callers: None) -> None:
-        callers = sorted(ProcessCallerService.callers("called_many"))
+        callers = sorted(ProcessCallerService.callers(["called_many"]))
         assert callers == ["one_caller", "three_caller", "two_caller"]
 
     def test_can_return_single_caller_when_there_are_other_process_ids(
         self, with_single_process_caller: None, with_multiple_process_callers: None
     ) -> None:
-        assert ProcessCallerService.callers("called_once") == ["one_caller"]
+        assert ProcessCallerService.callers(["called_once"]) == ["one_caller"]
