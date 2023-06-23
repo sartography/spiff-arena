@@ -22,6 +22,13 @@ export const slugifyString = (str: any) => {
     .replace(/-+$/g, '');
 };
 
+export const HUMAN_TASK_TYPES = [
+  'User Task',
+  'Manual Task',
+  'UserTask',
+  'ManualTask',
+];
+
 export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
 };

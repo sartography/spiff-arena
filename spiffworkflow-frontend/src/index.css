@@ -610,3 +610,8 @@ hr {
 .primary-file-text-suffix {
   font-style: italic;
 }
+
+.user-search-class {
+  height: 20rem;
+  width: "auto";
+}

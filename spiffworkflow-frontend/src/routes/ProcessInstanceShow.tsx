@@ -12,6 +12,7 @@ import {
   Edit,
   InProgress,
   PauseOutline,
+  UserFollow,
   Play,
   PlayOutline,
   Reset,
@@ -40,6 +41,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
@@ -60,6 +62,7 @@ import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import ProcessInterstitial from '../components/ProcessInterstitial';
+import UserSearch from '../components/UserSearch';
 
 type OwnProps = {
   variant: string;
@@ -94,6 +97,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     useState<boolean>(false);
   const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
     useState<boolean>(false);
+
+  const [assigningTask, setAssigningTask] = useState<boolean>(false);
+  const [usersToAssignTaskTo, setUsersToAssignTaskTo] = useState<
+    string[] | null
+  >(null);
 
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
@@ -602,15 +610,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const cancelUpdatingTask = () => {
     setEditingTaskData(false);
     setSelectingEvent(false);
+    setAssigningTask(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
+    setUsersToAssignTaskTo(null);
     removeError();
   };
 
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
-    if (editingTaskData || selectingEvent) {
+    if (editingTaskData || selectingEvent || assigningTask) {
       cancelUpdatingTask();
     }
   };
@@ -695,15 +705,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  // const canAssignTask = (task: Task) => {
-  //   return (
-  //     processInstance &&
-  //     processInstance.status === 'suspended' &&
-  //     ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
-  //     isActiveTask(task) &&
-  //     showingActiveTask()
-  //   );
-  // };
+  const canAssignTask = (task: Task) => {
+    return (
+      HUMAN_TASK_TYPES.includes(task.typename) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
+      isActiveTask(task) &&
+      showingActiveTask()
+    );
+  };
 
   const canResetProcess = (task: Task) => {
     return (
@@ -841,6 +852,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           />
         );
       }
+      if (canAssignTask(task)) {
+        buttons.push(
+          <Button
+            kind="ghost"
+            renderIcon={UserFollow}
+            align="top-left"
+            iconDescription="Assign to Users"
+            hasIconOnly
+            data-qa="assign-task-button"
+            onClick={() => setAssigningTask(true)}
+          />
+        );
+      }
       if (canCompleteTask(task)) {
         buttons.push(
           <Button
@@ -955,6 +979,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const userAssignmentSelector = () => {
+    return (
+      <Stack orientation="vertical">
+        <UserSearch onSelectedUser={(user: any) => console.log('user', user)} />
+      </Stack>
+    );
+  };
+
   const eventSelector = (candidateEvents: any) => {
     const editor = (
       <Editor
@@ -966,11 +998,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         options={{ readOnly: !eventTextEditorEnabled }}
       />
     );
-    return selectingEvent ? (
+    return (
       <Stack orientation="vertical">
         <Dropdown
           id="process-instance-select-event"
-          titleText="Event"
           label="Select Event"
           items={candidateEvents}
           itemToString={(item: any) => item.name || item.label || item.typename}
@@ -983,9 +1014,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         />
         {editor}
       </Stack>
-    ) : (
-      taskDataContainer()
     );
+  };
+
+  const taskActionDetails = () => {
+    if (!taskToDisplay) {
+      return null;
+    }
+    let dataArea = taskDataContainer();
+    if (selectingEvent) {
+      const candidateEvents: any = getEvents(taskToDisplay);
+      dataArea = eventSelector(candidateEvents);
+    } else if (assigningTask) {
+      dataArea = userAssignmentSelector();
+    }
+    return dataArea;
   };
 
   const processInstanceMetadataArea = () => {
@@ -1028,7 +1071,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
     const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
-    const candidateEvents: any = getEvents(taskToUse);
 
     let primaryButtonText = 'Close';
     let secondaryButtonText = null;
@@ -1048,6 +1090,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       onRequestSubmit = sendEvent;
       dangerous = true;
     }
+
     return (
       <Modal
         open={!!taskToUse}
@@ -1086,7 +1129,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <br />
           </div>
         ) : null}
-        {selectingEvent ? eventSelector(candidateEvents) : taskDataContainer()}
+        {taskActionDetails()}
       </Modal>
     );
   };
