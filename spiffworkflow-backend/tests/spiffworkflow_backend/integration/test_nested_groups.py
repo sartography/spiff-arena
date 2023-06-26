@@ -24,7 +24,7 @@ class TestNestedGroups(BaseTest):
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -34,13 +34,13 @@ class TestNestedGroups(BaseTest):
         )
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
@@ -79,7 +79,7 @@ class TestNestedGroups(BaseTest):
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
+        process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -89,7 +89,7 @@ class TestNestedGroups(BaseTest):
         )
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            process_model_identifier,
+            process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
         process_instance_id = response.json["id"]

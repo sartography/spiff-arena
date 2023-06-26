@@ -1018,7 +1018,7 @@ class ProcessInstanceProcessor:
 
                 # in the xml, it's the id attribute. this identifies the process where the activity lives.
                 # if it's in a subprocess, it's the inner process.
-                bpmn_process_identifier = ready_or_waiting_task.workflow.name
+                bpmn_process_identifier = ready_or_waiting_task.workflow.spec.name
 
                 form_file_name = None
                 ui_form_file_name = None
@@ -1081,9 +1081,6 @@ class ProcessInstanceProcessor:
         event_definition = self._event_serializer.registry.restore(event_data)
         if payload is not None:
             event_definition.payload = payload
-        current_app.logger.info(
-            f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}"
-        )
         try:
             self.bpmn_process_instance.catch(event_definition)
         except Exception as e:
@@ -1340,7 +1337,7 @@ class ProcessInstanceProcessor:
         for task in tasks:
             if task.task_spec.description != "Call Activity":
                 continue
-            spec_to_check = task.task_spec.spec
+            spec_to_check = task.task_spec.bpmn_id
 
             if spec_to_check not in loaded_specs:
                 lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
