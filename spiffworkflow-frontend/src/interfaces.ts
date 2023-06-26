@@ -73,7 +73,6 @@ export interface ProcessInstanceTask {
   id: string;
   task_id: string;
   can_complete: boolean;
-  calling_subprocess_task_id: string;
   created_at_in_seconds: number;
   current_user_is_potential_owner: number;
   data: any;
