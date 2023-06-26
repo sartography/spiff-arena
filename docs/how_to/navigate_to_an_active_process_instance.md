@@ -48,10 +48,7 @@ If the desired task or process you would like to view is not found in the parent
 
 A pop-up menu will appear. Select ‘View Call Activity Diagram’ to navigate to the sub-process.
 
-```{image} images/call_activity_popup.png
-
-
----
+![Untitled](images/call_activity_popup.png)
 
  
 ## **Outcome**
