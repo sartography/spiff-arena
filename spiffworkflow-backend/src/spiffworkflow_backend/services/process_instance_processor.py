@@ -1337,7 +1337,7 @@ class ProcessInstanceProcessor:
         for task in tasks:
             if task.task_spec.description != "Call Activity":
                 continue
-            spec_to_check = task.task_spec.spec
+            spec_to_check = task.task_spec.bpmn_id
 
             if spec_to_check not in loaded_specs:
                 lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)

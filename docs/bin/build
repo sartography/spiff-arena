@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+run_ci="false"
+if grep -qE -- "--ci\>" <<<"$@" ; then
+  run_ci="true"
+fi
+
+rm -rf _build/html
+
+sphinx_command="sphinx-autobuild"
+if [[ "$run_ci" == "true" ]]; then
+  sphinx_command="sphinx-build"
+fi
+
+#>> sphinx-build --help 2>&1 | grep -E '^ +\-[aWn]\>'
+#   -a                write all files (default: only write new and changed
+#   -j N              build in parallel with N processes where possible
+#   -n                nit-picky mode, warn about all missing references
+#   -W                turn warnings into errors
+"$sphinx_command" . _build/html  -W -a  -n -j auto

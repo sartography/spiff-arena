@@ -11,6 +11,10 @@ import {
   DEFAULT_PAGE,
 } from './components/PaginationForTable';
 
+export const doNothing = () => {
+  return undefined;
+};
+
 // https://www.30secondsofcode.org/js/s/slugify
 export const slugifyString = (str: any) => {
   return str
@@ -31,6 +35,24 @@ export const HUMAN_TASK_TYPES = [
 
 export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
+};
+
+export const recursivelyChangeNullAndUndefined = (obj: any, newValue: any) => {
+  if (obj === null || obj === undefined) {
+    return newValue;
+  }
+  if (Array.isArray(obj)) {
+    obj.forEach((value: any, index: number) => {
+      // eslint-disable-next-line no-param-reassign
+      obj[index] = recursivelyChangeNullAndUndefined(value, newValue);
+    });
+  } else if (typeof obj === 'object') {
+    Object.entries(obj).forEach(([key, value]) => {
+      // eslint-disable-next-line no-param-reassign
+      obj[key] = recursivelyChangeNullAndUndefined(value, newValue);
+    });
+  }
+  return obj;
 };
 
 export const selectKeysFromSearchParams = (obj: any, keys: string[]) => {
