@@ -61,7 +61,7 @@ class BaseTest:
         process_model_id: str | None = "random_fact",
         bpmn_file_name: str | None = None,
         bpmn_file_location: str | None = None,
-    ) -> str:
+    ) -> ProcessModelInfo:
         """Creates a process group.
 
         Creates a process model
@@ -83,13 +83,13 @@ class BaseTest:
             user=user,
         )
 
-        load_test_spec(
+        process_model = load_test_spec(
             process_model_id=process_model_identifier,
             bpmn_file_name=bpmn_file_name,
             process_model_source_directory=bpmn_file_location,
         )
 
-        return process_model_identifier
+        return process_model
 
     def create_process_group(
         self,
@@ -188,7 +188,7 @@ class BaseTest:
         process_model_id: str,
         process_model_location: str | None = None,
         process_model: ProcessModelInfo | None = None,
-        file_name: str = "random_fact.svg",
+        file_name: str = "random_fact.bpmn",
         file_data: bytes = b"abcdef",
         user: UserModel | None = None,
     ) -> Any:
