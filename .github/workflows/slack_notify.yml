@@ -2,7 +2,7 @@ name: Slack Notification
 
 on:
   workflow_run:
-    workflows: ["Backend Tests", "Frontend Tests", "Docker Image For Main Builds", "Release Builds"]
+    workflows: ["Backend Tests", "Frontend Tests", "Docker Image For Main Builds", "Release Builds", "Build Docs"]
     types: [completed]
 
 jobs:
