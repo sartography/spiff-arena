@@ -167,11 +167,6 @@ class TestTaskService(BaseTest):
             process_model_source_directory="signal_event_extensions",
             bpmn_file_name="signal_event_extensions",
         )
-        load_test_spec(
-            "test_group/SpiffCatchEventExtensions",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="SpiffCatchEventExtensions",
-        )
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
