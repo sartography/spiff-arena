@@ -502,7 +502,6 @@ class ProcessInstanceService:
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
-        calling_subprocess_task_id: str | None = None,
     ) -> Task:
         task_type = spiff_task.task_spec.description
 
@@ -528,11 +527,6 @@ class ProcessInstanceService:
             can_complete = False
         except UserDoesNotHaveAccessToTaskError:
             can_complete = False
-
-        if hasattr(spiff_task.task_spec, "spec"):
-            call_activity_process_identifier = spiff_task.task_spec.spec
-        else:
-            call_activity_process_identifier = None
 
         parent_id = None
         if spiff_task.parent:
@@ -561,8 +555,6 @@ class ProcessInstanceService:
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
-            call_activity_process_identifier=call_activity_process_identifier,
-            calling_subprocess_task_id=calling_subprocess_task_id,
             error_message=error_message,
         )
 
