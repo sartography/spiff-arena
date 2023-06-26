@@ -1,0 +1,42 @@
+name: Docs
+
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    working-directory: docs
+
+jobs:
+  build:
+    name: build-docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.3.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4.6.1
+        with:
+          python-version: 3.11
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt pip
+          pip --version
+
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
+      - name: Pip Install
+        run: |
+          pip install -r requirements.txt
+      - name: Build
+        run: |
+          ./bin/build --ci
