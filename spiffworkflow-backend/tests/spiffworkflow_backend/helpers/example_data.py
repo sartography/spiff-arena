@@ -61,6 +61,9 @@ class ExampleDataLoader:
         )
 
         files = sorted(glob.glob(file_glob))
+
+        if len(files) == 0:
+            raise Exception(f"Could not find any files with file_glob: {file_glob}")
         for file_path in files:
             if os.path.isdir(file_path):
                 continue  # Don't try to process sub directories

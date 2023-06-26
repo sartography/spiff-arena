@@ -27,9 +27,9 @@ class TestPermissions(BaseTest):
     ) -> None:
         process_group_id = "group-a"
         load_test_spec(
-            "group-a/timers_intermediate_catch_event",
-            bpmn_file_name="timers_intermediate_catch_event.bpmn",
-            process_model_source_directory="timers_intermediate_catch_event",
+            "group-a/timer_intermediate_catch_event",
+            bpmn_file_name="timer_intermediate_catch_event.bpmn",
+            process_model_source_directory="timer_intermediate_catch_event",
         )
         dan = self.find_or_create_user()
         principal = dan.principal
@@ -53,12 +53,15 @@ class TestPermissions(BaseTest):
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_b_id = process_group_ids[1]
-        for process_group_id in process_group_ids:
-            load_test_spec(
-                f"{process_group_id}/timers_intermediate_catch_event",
-                bpmn_file_name="timers_intermediate_catch_event",
-                process_model_source_directory="timers_intermediate_catch_event",
-            )
+        load_test_spec(
+            f"{process_group_a_id}/timer_intermediate_catch_event",
+            bpmn_file_name="timer_intermediate_catch_event",
+            process_model_source_directory="timer_intermediate_catch_event",
+        )
+        load_test_spec(
+            f"{process_group_b_id}/hello_world",
+            process_model_source_directory="hello_world",
+        )
         group_a_admin = self.find_or_create_user()
 
         permission_target = PermissionTargetModel(uri=f"/{process_group_a_id}")
@@ -80,12 +83,15 @@ class TestPermissions(BaseTest):
     def test_user_can_be_granted_access_through_a_group(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
-        for process_group_id in process_group_ids:
-            load_test_spec(
-                f"{process_group_id}/timers_intermediate_catch_event",
-                bpmn_file_name="timers_intermediate_catch_event.bpmn",
-                process_model_source_directory="timers_intermediate_catch_event",
-            )
+        load_test_spec(
+            f"{process_group_a_id}/timer_intermediate_catch_event",
+            bpmn_file_name="timer_intermediate_catch_event",
+            process_model_source_directory="timer_intermediate_catch_event",
+        )
+        load_test_spec(
+            f"{process_group_ids[1]}/hello_world",
+            process_model_source_directory="hello_world",
+        )
         user = self.find_or_create_user()
         group = GroupModel(identifier="groupA")
         db.session.add(group)
@@ -118,12 +124,15 @@ class TestPermissions(BaseTest):
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_b_id = process_group_ids[1]
-        for process_group_id in process_group_ids:
-            load_test_spec(
-                f"{process_group_id}/timers_intermediate_catch_event",
-                bpmn_file_name="timers_intermediate_catch_event.bpmn",
-                process_model_source_directory="timers_intermediate_catch_event",
-            )
+        load_test_spec(
+            f"{process_group_a_id}/timer_intermediate_catch_event",
+            bpmn_file_name="timer_intermediate_catch_event",
+            process_model_source_directory="timer_intermediate_catch_event",
+        )
+        load_test_spec(
+            f"{process_group_b_id}/hello_world",
+            process_model_source_directory="hello_world",
+        )
         group_a_admin = self.find_or_create_user()
 
         permission_target = PermissionTargetModel(uri="/%")
