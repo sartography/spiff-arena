@@ -1852,12 +1852,6 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: save_as_draft
-        in: query
-        required: false
-        description: Save the data to task but do not complete it.
-        schema:
-          type: boolean
     get:
       tags:
         - Tasks
@@ -1875,6 +1869,44 @@ paths:
         - Tasks
       operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
       summary: Update the form data for a tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessGroup"
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "202":
+          description: "ok: true"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /tasks/{process_instance_id}/{task_guid}/save-draft:
+    parameters:
+      - name: task_guid
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    post:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_save_draft
+      summary: Update the draft form for this task
       requestBody:
         content:
           application/json:

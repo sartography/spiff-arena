@@ -286,6 +286,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
         can_complete = False
 
     task_model.data = task_model.get_data()
+    task_model.saved_form_data = task_model.get_saved_form_data()
     task_model.process_model_display_name = process_model.display_name
     task_model.process_model_identifier = process_model.id
     task_model.typename = task_definition.typename
@@ -500,11 +501,49 @@ def _render_data(return_type: str, entity: ApiError | Task | ProcessInstanceMode
     return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
 
+def task_save_draft(
+    process_instance_id: int,
+    task_guid: str,
+    body: dict[str, Any],
+) -> flask.wrappers.Response:
+    principal = _find_principal_or_raise()
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    if not process_instance.can_submit_task():
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=(
+                f"Process Instance ({process_instance.id}) has status "
+                f"{process_instance.status} which does not allow tasks to be submitted."
+            ),
+            status_code=400,
+        )
+    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+        task_model, body, "saved_form_data_hash"
+    )
+    if json_data_dict is not None:
+        JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
+        db.session.add(task_model)
+        db.session.commit()
+
+    return Response(
+        json.dumps(
+            {
+                "ok": True,
+                "process_model_identifier": process_instance.process_model_identifier,
+                "process_instance_id": process_instance_id,
+            }
+        ),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
-    save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -531,59 +570,34 @@ def _task_submit_shared(
             )
         )
 
-    # multi-instance code from crconnect - we may need it or may not
-    # if terminate_loop and spiff_task.is_looping():
-    #     spiff_task.terminate_loop()
-    #
-    # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
-    # task spec, complete that form as well.
-    # if update_all:
-    #     last_index = spiff_task.task_info()["mi_index"]
-    #     next_task = processor.next_task()
-    #     while next_task and next_task.task_info()["mi_index"] > last_index:
-    #         __update_task(processor, next_task, form_data, user)
-    #         last_index = next_task.task_info()["mi_index"]
-    #         next_task = processor.next_task()
+    human_task = _find_human_task_or_raise(
+        process_instance_id=process_instance_id,
+        task_guid=task_guid,
+        only_tasks_that_can_be_completed=True,
+    )
 
-    if save_as_draft:
-        task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-        ProcessInstanceService.update_form_task_data(process_instance, spiff_task, body, g.user)
-        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-            task_model, spiff_task.data, "json_data_hash"
-        )
-        if json_data_dict is not None:
-            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-            db.session.add(task_model)
-            db.session.commit()
-    else:
-        human_task = _find_human_task_or_raise(
-            process_instance_id=process_instance_id,
-            task_guid=task_guid,
-            only_tasks_that_can_be_completed=True,
-        )
+    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceService.complete_form_task(
+                processor=processor,
+                spiff_task=spiff_task,
+                data=body,
+                user=g.user,
+                human_task=human_task,
+            )
 
-        with sentry_sdk.start_span(op="task", description="complete_form_task"):
-            with ProcessInstanceQueueService.dequeued(process_instance):
-                ProcessInstanceService.complete_form_task(
-                    processor=processor,
-                    spiff_task=spiff_task,
-                    data=body,
-                    user=g.user,
-                    human_task=human_task,
-                )
-
-        next_human_task_assigned_to_me = (
-            HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
-            .order_by(asc(HumanTaskModel.id))  # type: ignore
-            .join(HumanTaskUserModel)
-            .filter_by(user_id=principal.user_id)
-            .first()
-        )
-        if next_human_task_assigned_to_me:
-            return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-        elif processor.next_task():
-            task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-            return make_response(jsonify(task), 200)
+    next_human_task_assigned_to_me = (
+        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+        .order_by(asc(HumanTaskModel.id))  # type: ignore
+        .join(HumanTaskUserModel)
+        .filter_by(user_id=principal.user_id)
+        .first()
+    )
+    if next_human_task_assigned_to_me:
+        return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
+    elif processor.next_task():
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        return make_response(jsonify(task), 200)
 
     return Response(
         json.dumps(
@@ -602,10 +616,9 @@ def task_submit(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
-    save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body, save_as_draft)
+        return _task_submit_shared(process_instance_id, task_guid, body)
 
 
 def _get_tasks(

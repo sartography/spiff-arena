@@ -12,10 +12,15 @@ import {
   ButtonSet,
 } from '@carbon/react';
 
+import { useDebouncedCallback } from 'use-debounce';
 import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import { modifyProcessIdentifierForPathParam } from '../helpers';
+import {
+  doNothing,
+  modifyProcessIdentifierForPathParam,
+  recursivelyChangeNullAndUndefined,
+} from '../helpers';
 import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
@@ -27,7 +32,6 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
-  const [noValidate, setNoValidate] = useState<boolean>(false);
 
   const [taskData, setTaskData] = useState<any>(null);
 
@@ -46,7 +50,10 @@ export default function TaskShow() {
   useEffect(() => {
     const processResult = (result: Task) => {
       setTask(result);
-      setTaskData(result.data);
+
+      // convert null back to undefined so rjsf doesn't attempt to incorrectly validate them
+      const taskDataToUse = result.saved_form_data || result.data;
+      setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setDisabled(false);
       if (!result.can_complete) {
         navigateToInterstitial(result);
@@ -83,6 +90,28 @@ export default function TaskShow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
+  // Before we auto-saved form data, we remembered what data was in the form, and then created a synthetic submit event
+  // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
+  // frontend code to support that Save and close button is here, in case we need to reference that someday:
+  //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
+  const autoSaveTaskData = (formData: any) => {
+    HttpService.makeCallToBackend({
+      path: `/tasks/${params.process_instance_id}/${params.task_id}/save-draft`,
+      postBody: formData,
+      httpMethod: 'POST',
+      successCallback: doNothing,
+      failureCallback: addError,
+    });
+  };
+
+  const addDebouncedTaskDataAutoSave = useDebouncedCallback(
+    (value: string) => {
+      autoSaveTaskData(value);
+    },
+    // delay in ms
+    1000
+  );
+
   const processSubmitResult = (result: any) => {
     removeError();
     if (result.ok) {
@@ -108,20 +137,16 @@ export default function TaskShow() {
       navigate(`/tasks`);
       return;
     }
-    let queryParams = '';
+    const queryParams = '';
 
-    // if validations are turned off then save as draft
-    if (noValidate) {
-      queryParams = '?save_as_draft=true';
-    }
     setDisabled(true);
     removeError();
     delete dataToSubmit.isManualTask;
 
     // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
-    // so there is no way to clear out a field that previously had a value.
-    // To resolve this, we could potentially go through the object that we are posting (either in here or in
-    // HttpService) and translate all undefined values to null.
+    // so we convert undefined values to null recursively so that we can unset values in form fields
+    recursivelyChangeNullAndUndefined(dataToSubmit, null);
+
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
       successCallback: processSubmitResult,
@@ -323,16 +348,8 @@ export default function TaskShow() {
     return errors;
   };
 
-  // This turns off validations and then dispatches the click event after
-  // waiting a second to give the state time to update.
-  // This is to allow saving the form without validations causing issues.
-  const handleSaveAndCloseButton = () => {
-    setNoValidate(true);
-    setTimeout(() => {
-      (document.getElementById('our-very-own-form') as any).dispatchEvent(
-        new Event('submit', { cancelable: true, bubbles: true })
-      );
-    }, 1000);
+  const handleCloseButton = () => {
+    navigate(`/tasks`);
   };
 
   const formElement = () => {
@@ -384,12 +401,12 @@ export default function TaskShow() {
         closeButton = (
           <Button
             id="close-button"
-            onClick={handleSaveAndCloseButton}
+            onClick={handleCloseButton}
             disabled={disabled}
             kind="secondary"
             title="Save changes without submitting."
           >
-            Save and Close
+            Close
           </Button>
         );
       }
@@ -427,14 +444,16 @@ export default function TaskShow() {
             id="our-very-own-form"
             disabled={disabled}
             formData={taskData}
-            onChange={(obj: any) => setTaskData(obj.formData)}
+            onChange={(obj: any) => {
+              setTaskData(obj.formData);
+              addDebouncedTaskDataAutoSave(obj.formData);
+            }}
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
             widgets={widgets}
             validator={validator}
             customValidate={customValidate}
-            noValidate={noValidate}
             omitExtraData
           >
             {reactFragmentToHideSubmitButton}
