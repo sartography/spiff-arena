@@ -572,7 +572,9 @@ class TaskService:
         return (bpmn_processes, task_models)
 
     @classmethod
-    def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel) -> list[str]:
+    def full_bpmn_process_path(
+        cls, bpmn_process: BpmnProcessModel, definition_column: str = "bpmn_identifier"
+    ) -> list[str]:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
         bpmn_process_identifiers: list[str] = []
         if bpmn_process.guid:
@@ -586,8 +588,10 @@ class TaskService:
                 _task_models_of_parent_bpmn_processes,
             ) = TaskService.task_models_of_parent_bpmn_processes(task_model)
             for parent_bpmn_process in parent_bpmn_processes:
-                bpmn_process_identifiers.append(parent_bpmn_process.bpmn_process_definition.bpmn_identifier)
-        bpmn_process_identifiers.append(bpmn_process.bpmn_process_definition.bpmn_identifier)
+                bpmn_process_identifiers.append(
+                    getattr(parent_bpmn_process.bpmn_process_definition, definition_column)
+                )
+        bpmn_process_identifiers.append(getattr(bpmn_process.bpmn_process_definition, definition_column))
         return bpmn_process_identifiers
 
     @classmethod
