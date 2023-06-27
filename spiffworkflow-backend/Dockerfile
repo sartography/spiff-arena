@@ -27,8 +27,7 @@ FROM base AS setup
 RUN pip install poetry==1.3.2
 RUN useradd _gunicorn --no-create-home --user-group
 
-# default-libmysqlclient-dev for mysqlclient lib, which is deemed better than the mysql-connector-python lib by sqlalchemy
-# https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
+# default-libmysqlclient-dev for mysqlclient lib
 RUN apt-get update \
  && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config
 
