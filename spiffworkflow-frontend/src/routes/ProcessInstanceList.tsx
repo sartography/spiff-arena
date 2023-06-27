@@ -49,7 +49,7 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
       <br />
       {processInstanceBreadcrumbElement()}
       {processInstanceTitleElement()}
-      <ProcessInstanceListTable variant={variant} showActionsColumn />
+      <ProcessInstanceListTable  variant={variant} />
     </>
   );
 }
