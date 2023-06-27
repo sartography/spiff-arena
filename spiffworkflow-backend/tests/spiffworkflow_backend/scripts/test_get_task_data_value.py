@@ -19,7 +19,5 @@ class TestGetTaskDataValue(BaseTest):
             process_instance_id=process_instance_id,
             process_model_identifier=process_model_identifier,
         )
-        result = GetTaskDataValue().run(
-            script_attributes_context, "the_var_name", "the_default_value"
-        )
+        result = GetTaskDataValue().run(script_attributes_context, "the_var_name", "the_default_value")
         assert result == "the_default_value"
