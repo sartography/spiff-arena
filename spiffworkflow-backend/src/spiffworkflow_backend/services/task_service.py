@@ -26,6 +26,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundErr
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
 
@@ -593,6 +594,21 @@ class TaskService:
                 )
         bpmn_process_identifiers.append(getattr(bpmn_process.bpmn_process_definition, definition_column))
         return bpmn_process_identifiers
+
+    @classmethod
+    def task_draft_data_from_task_model(
+        cls, task_model: TaskModel, create_if_not_exists: bool = False
+    ) -> TaskDraftDataModel | None:
+        full_bpmn_process_id_path = cls.full_bpmn_process_path(task_model.bpmn_process, "id")
+        task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+        task_draft_data: TaskDraftDataModel | None = TaskDraftDataModel.query.filter_by(
+            process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
+        ).first()
+        if task_draft_data is None and create_if_not_exists:
+            task_draft_data = TaskDraftDataModel(
+                process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
+            )
+        return task_draft_data
 
     @classmethod
     def bpmn_process_for_called_activity_or_top_level_process(cls, task_model: TaskModel) -> BpmnProcessModel:

@@ -42,12 +42,12 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -286,11 +286,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     except UserDoesNotHaveAccessToTaskError:
         can_complete = False
 
-    full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
-    task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.id}"
-    task_draft_data = TaskDraftDataModel.query.filter_by(
-        process_instance_id=process_instance.id, task_definition_id_path=task_definition_id_path
-    ).first()
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model, create_if_not_exists=True)
 
     saved_form_data = None
     if task_draft_data is not None:
@@ -491,25 +487,23 @@ def task_save_draft(
             ),
             status_code=400,
         )
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
-    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
-    task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.id}"
-    task_draft_data = TaskDraftDataModel.query.filter_by(
-        process_instance_id=process_instance.id, task_definition_id_path=task_definition_id_path
-    ).first()
-    if task_draft_data is None:
-        task_draft_data = TaskDraftDataModel(
-            process_instance_id=process_instance.id, task_definition_id_path=task_definition_id_path
-        )
 
-    json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-        task_draft_data, body, "saved_form_data_hash"
-    )
-    if json_data_dict is not None:
-        JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-        db.session.add(task_draft_data)
-        db.session.commit()
+    try:
+        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+    except HumanTaskAlreadyCompletedError:
+        return make_response(jsonify({"ok": True}), 200)
+
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model, create_if_not_exists=True)
+
+    if task_draft_data is not None:
+        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+            task_draft_data, body, "saved_form_data_hash"
+        )
+        if json_data_dict is not None:
+            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
+            db.session.add(task_draft_data)
+            db.session.commit()
 
     return Response(
         json.dumps(
