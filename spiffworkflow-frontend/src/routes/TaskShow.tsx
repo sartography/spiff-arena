@@ -34,6 +34,8 @@ export default function TaskShow() {
   const [disabled, setDisabled] = useState(false);
 
   const [taskData, setTaskData] = useState<any>(null);
+  const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
+    useState<boolean>(true);
 
   const { addError, removeError } = useAPIError();
 
@@ -58,28 +60,6 @@ export default function TaskShow() {
       if (!result.can_complete) {
         navigateToInterstitial(result);
       }
-
-      /*  Disable call to load previous tasks -- do not display menu.
-      const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-        result.process_model_identifier
-      )}/${params.process_instance_id}/task-info`;
-      // if user is unauthorized to get process-instance task-info then don't do anything
-      // Checking like this so we can dynamically create the url with the correct process model
-      //  instead of passing the process model identifier in through the params
-      HttpService.makeCallToBackend({
-        path: url,
-        successCallback: (tasks: any) => {
-          setDisabled(false);
-          setUserTasks(tasks);
-        },
-        onUnauthorized: () => {
-          setDisabled(false);
-        },
-        failureCallback: (error: any) => {
-          addError(error);
-        },
-      });
-      */
     };
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
@@ -94,22 +74,38 @@ export default function TaskShow() {
   // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
   // frontend code to support that Save and close button is here, in case we need to reference that someday:
   //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
-  const autoSaveTaskData = (formData: any) => {
+  const autoSaveTaskData = (formData: any, successCallback?: Function) => {
+    let successCallbackToUse = successCallback;
+    if (!successCallbackToUse) {
+      successCallbackToUse = doNothing;
+    }
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}/save-draft`,
       postBody: formData,
       httpMethod: 'POST',
-      successCallback: doNothing,
+      successCallback: successCallbackToUse,
       failureCallback: addError,
     });
   };
 
+  const sendAutosaveEvent = (eventDetails?: any) => {
+    (document.getElementById('hidden-form-for-autosave') as any).dispatchEvent(
+      new CustomEvent('submit', {
+        cancelable: true,
+        bubbles: true,
+        detail: eventDetails,
+      })
+    );
+  };
+
   const addDebouncedTaskDataAutoSave = useDebouncedCallback(
-    (value: string) => {
-      autoSaveTaskData(value);
+    () => {
+      if (autosaveOnFormChanges) {
+        sendAutosaveEvent();
+      }
     },
     // delay in ms
-    1000
+    500
   );
 
   const processSubmitResult = (result: any) => {
@@ -127,12 +123,25 @@ export default function TaskShow() {
     }
   };
 
+  const handleAutosaveFormSubmit = (formObject: any, event: any) => {
+    const dataToSubmit = formObject?.formData;
+    let successCallback = null;
+    if (event.detail && 'successCallback' in event.detail) {
+      successCallback = event.detail.successCallback;
+    }
+    autoSaveTaskData(
+      recursivelyChangeNullAndUndefined(dataToSubmit, null),
+      successCallback
+    );
+  };
+
   const handleFormSubmit = (formObject: any, _event: any) => {
     if (disabled) {
       return;
     }
 
     const dataToSubmit = formObject?.formData;
+
     if (!dataToSubmit) {
       navigate(`/tasks`);
       return;
@@ -349,7 +358,9 @@ export default function TaskShow() {
   };
 
   const handleCloseButton = () => {
-    navigate(`/tasks`);
+    setAutosaveOnFormChanges(false);
+    const successCallback = () => navigate(`/tasks`);
+    sendAutosaveEvent({ successCallback });
   };
 
   const formElement = () => {
@@ -437,16 +448,19 @@ export default function TaskShow() {
 
     const widgets = { typeahead: TypeaheadWidget };
 
+    // we are using two forms here so we can have one that validates data and one that does not.
+    // this allows us to autosave form data without extra attributes and without validations
+    // but still requires validations when the user submits the form that they can edit.
     return (
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
           <Form
-            id="our-very-own-form"
+            id="form-to-submit"
             disabled={disabled}
             formData={taskData}
             onChange={(obj: any) => {
               setTaskData(obj.formData);
-              addDebouncedTaskDataAutoSave(obj.formData);
+              addDebouncedTaskDataAutoSave();
             }}
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
@@ -458,6 +472,17 @@ export default function TaskShow() {
           >
             {reactFragmentToHideSubmitButton}
           </Form>
+          <Form
+            id="hidden-form-for-autosave"
+            formData={taskData}
+            onSubmit={handleAutosaveFormSubmit}
+            schema={jsonSchema}
+            uiSchema={formUiSchema}
+            widgets={widgets}
+            validator={validator}
+            noValidate
+            omitExtraData
+          />
         </Column>
       </Grid>
     );
