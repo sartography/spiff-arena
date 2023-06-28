@@ -42,6 +42,10 @@ class HumanTaskNotFoundError(Exception):
     pass
 
 
+class HumanTaskAlreadyCompletedError(Exception):
+    pass
+
+
 class UserDoesNotHaveAccessToTaskError(Exception):
     pass
 
@@ -342,11 +346,16 @@ class AuthorizationService:
         human_task = HumanTaskModel.query.filter_by(
             task_id=task_guid,
             process_instance_id=process_instance_id,
-            completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
                 f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
+            )
+
+        if human_task.completed:
+            raise HumanTaskAlreadyCompletedError(
+                f"Human task with task guid '{task_guid}' for process instance '{process_instance_id}' has already"
+                " been completed"
             )
 
         if user not in human_task.potential_owners:
