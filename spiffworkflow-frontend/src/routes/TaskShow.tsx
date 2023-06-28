@@ -415,9 +415,9 @@ export default function TaskShow() {
             onClick={handleCloseButton}
             disabled={disabled}
             kind="secondary"
-            title="Save changes without submitting."
+            title="Save data as draft and close the form."
           >
-            Close
+            Save and Close
           </Button>
         );
       }
