@@ -313,10 +313,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const lastUpdatedTimeTag = (
       <Grid condensed fullWidth>
-        <Column sm={2} md={2} lg={4} className="grid-list-title">
+        <Column sm={2} md={2} lg={3} className="grid-list-title">
           {lastUpdatedTimeLabel}:{' '}
         </Column>
-        <Column sm={3} md={3} lg={3} className="grid-date">
+        <Column sm={3} md={6} lg={8} className="grid-date">
           {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
         </Column>
       </Grid>
@@ -339,26 +339,26 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={4} className="grid-list-title">
+          <Column sm={2} md={2} lg={3} className="grid-list-title">
             Status:{' '}
           </Column>
-          <Column sm={3} md={3} lg={3}>
+          <Column sm={3} md={6} lg={8}>
             <Tag type={statusColor} size="sm" className="span-tag">
               {processInstance.status} {statusIcon}
             </Tag>
           </Column>
         </Grid>
         <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={4} className="grid-list-title">
+          <Column sm={2} md={2} lg={3} className="grid-list-title">
             Started By:{' '}
           </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
+          <Column sm={3} md={6} lg={8} className="grid-date">
             {processInstance.process_initiator_username}
           </Column>
         </Grid>
         {processInstance.process_model_with_diagram_identifier ? (
           <Grid condensed fullWidth>
-            <Column sm={2} md={2} lg={4} className="grid-list-title">
+            <Column sm={2} md={2} lg={3} className="grid-list-title">
               Current Diagram:{' '}
             </Column>
             <Column sm={4} md={6} lg={8} className="grid-date">
@@ -374,7 +374,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Grid>
         ) : null}
         <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={4} className="grid-list-title">
+          <Column sm={2} md={2} lg={3} className="grid-list-title">
             Started:{' '}
           </Column>
           <Column
@@ -393,10 +393,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Grid>
         {lastUpdatedTimeTag}
         <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={4} className="grid-list-title">
+          <Column sm={2} md={2} lg={3} className="grid-list-title">
             Process model revision:{' '}
           </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
+          <Column sm={3} md={6} lg={8} className="grid-date">
             {processInstance.bpmn_version_control_identifier} (
             {processInstance.bpmn_version_control_type})
           </Column>
@@ -404,10 +404,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {(processInstance.process_metadata || []).map(
           (processInstanceMetadata) => (
             <Grid condensed fullWidth>
-              <Column sm={2} md={2} lg={4} className="grid-list-title">
+              <Column sm={2} md={2} lg={3} className="grid-list-title">
                 {processInstanceMetadata.key}:
               </Column>
-              <Column sm={3} md={3} lg={3} className="grid-date">
+              <Column sm={3} md={6} lg={8} className="grid-date">
                 {processInstanceMetadata.value}
               </Column>
             </Grid>

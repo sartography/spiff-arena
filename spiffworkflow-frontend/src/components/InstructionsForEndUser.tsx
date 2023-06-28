@@ -95,7 +95,7 @@ export default function InstructionsForEndUser({
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
         */}
         <div data-color-mode="light">
-          <MDEditor.Markdown source={instructionsShown} />
+          <MDEditor.Markdown linkTarget="_blank" source={instructionsShown} />
         </div>
       </div>
       {showCollapseToggle()}
