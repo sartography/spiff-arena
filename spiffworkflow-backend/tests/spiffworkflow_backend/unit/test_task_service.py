@@ -170,7 +170,10 @@ class TestTaskService(BaseTest):
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        events = TaskService.get_ready_signals_with_button_labels(process_instance.id)
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("my_manual_task", processor.bpmn_process_instance)
+        assert spiff_task is not None
+
+        events = TaskService.get_ready_signals_with_button_labels(process_instance.id, str(spiff_task.id))
         assert len(events) == 1
         signal_event = events[0]
         assert signal_event["event"]["name"] == "eat_spam"
