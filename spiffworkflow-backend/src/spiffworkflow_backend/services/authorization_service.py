@@ -501,7 +501,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-groups"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-models"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes/callers"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes/callers/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/user-groups/for-current-user"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
