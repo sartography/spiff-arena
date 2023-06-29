@@ -31,7 +31,7 @@ export default function TaskShow() {
   const [userTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
-  const [disabled, setDisabled] = useState(false);
+  const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
 
   const [taskData, setTaskData] = useState<any>(null);
   const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
@@ -56,7 +56,7 @@ export default function TaskShow() {
       // convert null back to undefined so rjsf doesn't attempt to incorrectly validate them
       const taskDataToUse = result.saved_form_data || result.data;
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
-      setDisabled(false);
+      setFormButtonsDisabled(false);
       if (!result.can_complete) {
         navigateToInterstitial(result);
       }
@@ -119,6 +119,7 @@ export default function TaskShow() {
         navigateToInterstitial(result);
       }
     } else {
+      setFormButtonsDisabled(false);
       addError(result);
     }
   };
@@ -136,7 +137,7 @@ export default function TaskShow() {
   };
 
   const handleFormSubmit = (formObject: any, _event: any) => {
-    if (disabled) {
+    if (formButtonsDisabled) {
       return;
     }
 
@@ -148,7 +149,7 @@ export default function TaskShow() {
     }
     const queryParams = '';
 
-    setDisabled(true);
+    setFormButtonsDisabled(true);
     removeError();
     delete dataToSubmit.isManualTask;
 
@@ -168,9 +169,10 @@ export default function TaskShow() {
   };
 
   const handleSignalSubmit = (event: EventDefinition) => {
-    if (disabled || !task) {
+    if (formButtonsDisabled || !task) {
       return;
     }
+    setFormButtonsDisabled(true);
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/send-user-signal-event`,
       successCallback: processSubmitResult,
@@ -206,7 +208,7 @@ export default function TaskShow() {
           );
         }
         if (userTask.state === 'FUTURE') {
-          return <Tab disabled>{userTask.name_for_display}</Tab>;
+          return <Tab formButtonsDisabled>{userTask.name_for_display}</Tab>;
         }
         if (userTask.state === 'READY') {
           return (
@@ -359,6 +361,7 @@ export default function TaskShow() {
 
   const handleCloseButton = () => {
     setAutosaveOnFormChanges(false);
+    setFormButtonsDisabled(true);
     const successCallback = () => navigate(`/tasks`);
     sendAutosaveEvent({ successCallback });
   };
@@ -413,7 +416,7 @@ export default function TaskShow() {
           <Button
             id="close-button"
             onClick={handleCloseButton}
-            disabled={disabled}
+            disabled={formButtonsDisabled}
             kind="secondary"
             title="Save data as draft and close the form."
           >
@@ -423,7 +426,11 @@ export default function TaskShow() {
       }
       reactFragmentToHideSubmitButton = (
         <ButtonSet>
-          <Button type="submit" id="submit-button" disabled={disabled}>
+          <Button
+            type="submit"
+            id="submit-button"
+            disabled={formButtonsDisabled}
+          >
             {submitButtonText}
           </Button>
           {closeButton}
@@ -431,7 +438,7 @@ export default function TaskShow() {
             {task.signal_buttons.map((signal) => (
               <Button
                 name="signal.signal"
-                disabled={disabled}
+                disabled={formButtonsDisabled}
                 onClick={() => handleSignalSubmit(signal.event)}
               >
                 {signal.label}
@@ -456,7 +463,7 @@ export default function TaskShow() {
         <Column sm={4} md={5} lg={8}>
           <Form
             id="form-to-submit"
-            disabled={disabled}
+            disabled={formButtonsDisabled}
             formData={taskData}
             onChange={(obj: any) => {
               setTaskData(obj.formData);

@@ -642,7 +642,7 @@ class TaskService:
         return extensions
 
     @classmethod
-    def get_ready_signals_with_button_labels(cls, process_instance_id: int) -> list[dict]:
+    def get_ready_signals_with_button_labels(cls, process_instance_id: int, associated_task_guid: str) -> list[dict]:
         waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(
             state="WAITING", process_instance_id=process_instance_id
         ).all()
@@ -660,7 +660,13 @@ class TaskService:
                 else {}
             )
             if "signalButtonLabel" in extensions and "name" in event_definition:
-                result.append({"event": event_definition, "label": extensions["signalButtonLabel"]})
+                parent_task_model = task_model.parent_task_model()
+                if (
+                    parent_task_model
+                    and "children" in parent_task_model.properties_json
+                    and associated_task_guid in parent_task_model.properties_json["children"]
+                ):
+                    result.append({"event": event_definition, "label": extensions["signalButtonLabel"]})
         return result
 
     @classmethod
