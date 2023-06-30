@@ -281,12 +281,10 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     try:
         AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
-    except HumanTaskNotFoundError:
-        can_complete = False
-    except UserDoesNotHaveAccessToTaskError:
+    except (HumanTaskNotFoundError, UserDoesNotHaveAccessToTaskError, HumanTaskAlreadyCompletedError):
         can_complete = False
 
-    task_draft_data = TaskService.task_draft_data_from_task_model(task_model, create_if_not_exists=True)
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
 
     saved_form_data = None
     if task_draft_data is not None:
@@ -563,6 +561,13 @@ def _task_submit_shared(
                 user=g.user,
                 human_task=human_task,
             )
+
+    # delete draft data when we submit a task to ensure cycling back to the task contains the
+    # most up-to-date data
+    task_draft_data = TaskService.task_draft_data_from_task_model(human_task.task_model)
+    if task_draft_data is not None:
+        db.session.delete(task_draft_data)
+        db.session.commit()
 
     next_human_task_assigned_to_me = (
         HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
