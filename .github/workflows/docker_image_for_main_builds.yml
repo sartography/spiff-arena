@@ -31,6 +31,7 @@ on:
   push:
     branches:
       - main
+      - spiffdemo
 
 jobs:
   create_frontend_docker_image:
@@ -38,6 +39,7 @@ jobs:
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: sartography/spiffworkflow-frontend
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
       packages: write
@@ -61,6 +63,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.description=Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
+            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}
           tags: |
             type=ref,event=branch,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
@@ -84,6 +87,7 @@ jobs:
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: sartography/spiffworkflow-backend
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
       packages: write
@@ -107,6 +111,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.description=Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
+            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}
           tags: |
             type=ref,event=branch,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
