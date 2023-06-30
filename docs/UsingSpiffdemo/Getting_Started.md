@@ -4,7 +4,7 @@ Spiffarena is providing users a platform to explore workflow concepts through a 
 ## How to Login to Spiffarena
 To begin your journey with Spiffarena, open your web browser and navigate to the spiffarena website(Currently Spiffdemo.org)  
 
-```{image} ./images/Login.png
+```{image} ./Images/Login.png
 :alt: fishy
 :class: bg-primary mb-1
 :width: 300px
