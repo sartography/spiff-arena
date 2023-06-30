@@ -2,12 +2,17 @@
 Spiffarena is providing users a platform to explore workflow concepts through a collection of top-level examples, diagrams, and workflows. Users can interact with pre-built models, make modifications, and visualize process flows.
 
 ## How to Login to Spiffarena
+To begin your journey with Spiffarena, open your web browser and navigate to the spiffarena website(Currently Spiffdemo.org)  
 
-![Login](Images/Login.png)
-
-To begin your journey with Spiffarena, open your web browser and navigate to the spiffarena website(Currently Spiffdemo.org)
-
+```{image} ./images/Login.png
+:alt: fishy
+:class: bg-primary mb-1
+:width: 300px
+:align: center 
+```            
+&nbsp;  
 On the login screen, you will find the option to log in using Single Sign-On.  Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.  
+
 
 ```{admonition} Note: 
 Stay tuned as we expand our sign-on options beyond Gmail.
