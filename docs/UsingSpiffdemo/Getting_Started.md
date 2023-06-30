@@ -2,15 +2,15 @@
 Spiffarena is providing users a platform to explore workflow concepts through a collection of top-level examples, diagrams, and workflows. Users can interact with pre-built models, make modifications, and visualize process flows.
 
 ## How to Login to Spiffarena
-To begin your journey with Spiffarena, open your web browser and navigate to the spiffarena website(Currently Spiffdemo.org)  
 
 ```{image} ./Images/Login.png
 :alt: fishy
 :class: bg-primary mb-1
-:width: 300px
-:align: center 
-```            
-&nbsp;  
+:width: 230px
+:align: right 
+``` 
+To begin your journey with Spiffarena, open your web browser and navigate to the spiffarena website (Currently Spiffdemo.org).  
+
 On the login screen, you will find the option to log in using Single Sign-On.  Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.  
 
 
@@ -241,3 +241,5 @@ c. **Perfect Score**: If the score indicates a perfect score, a manual task disp
 Once the score messages are displayed, a **signal event** is included, providing users with the option to continue and conclude the process or choose to repeat the process from the beginning. Signal events enable external forces or internal errors to interact with the process, and in this scenario, a button press allows for the interruption of the diagram's normal course.
 
 ![](Images/Signal_EM.png)
+
+
