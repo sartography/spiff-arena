@@ -209,15 +209,15 @@ In this BPMN diagram example, the process is outlined step by step: The process 
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.
 
-![](images/Manual_EM.png)
+![](Images/Manual_EM.png)
 
 Next, a **User task** named "Display Questions"is added, facilitating the collection of information from real individuals through web forms. In the properties section, a JSON form is created to specify the questions for the users to respond to.
 
-![](images/User_EM.png)
+![](Images/User_EM.png)
 
  Once the user completes the form, the gathered data is passed on to a **script task** named "Modify Information", responsible for calculating the data score. The script for this calculation is embedded in the properties section.
 
-![](images/Script_Em.png)
+![](Images/Script_Em.png)
 
 As an alternative approach, the data score can also be determined using a **DMN table** named "Determine Score Message". Decision tables offer an effective means of defining business rules in an easily comprehensible format. The DMN table calculates the score based on pre-defined rules.
 
