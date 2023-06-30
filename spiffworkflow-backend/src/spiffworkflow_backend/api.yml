@@ -1926,6 +1926,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  # NOTE: this should probably be /process-instances instead
   /tasks/{process_instance_id}/send-user-signal-event:
     parameters:
       - name: process_instance_id

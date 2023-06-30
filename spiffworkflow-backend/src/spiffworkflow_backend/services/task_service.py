@@ -26,6 +26,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundErr
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
 
@@ -572,7 +573,9 @@ class TaskService:
         return (bpmn_processes, task_models)
 
     @classmethod
-    def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel) -> list[str]:
+    def full_bpmn_process_path(
+        cls, bpmn_process: BpmnProcessModel, definition_column: str = "bpmn_identifier"
+    ) -> list[str]:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
         bpmn_process_identifiers: list[str] = []
         if bpmn_process.guid:
@@ -586,9 +589,26 @@ class TaskService:
                 _task_models_of_parent_bpmn_processes,
             ) = TaskService.task_models_of_parent_bpmn_processes(task_model)
             for parent_bpmn_process in parent_bpmn_processes:
-                bpmn_process_identifiers.append(parent_bpmn_process.bpmn_process_definition.bpmn_identifier)
-        bpmn_process_identifiers.append(bpmn_process.bpmn_process_definition.bpmn_identifier)
+                bpmn_process_identifiers.append(
+                    getattr(parent_bpmn_process.bpmn_process_definition, definition_column)
+                )
+        bpmn_process_identifiers.append(getattr(bpmn_process.bpmn_process_definition, definition_column))
         return bpmn_process_identifiers
+
+    @classmethod
+    def task_draft_data_from_task_model(
+        cls, task_model: TaskModel, create_if_not_exists: bool = False
+    ) -> TaskDraftDataModel | None:
+        full_bpmn_process_id_path = cls.full_bpmn_process_path(task_model.bpmn_process, "id")
+        task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+        task_draft_data: TaskDraftDataModel | None = TaskDraftDataModel.query.filter_by(
+            process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
+        ).first()
+        if task_draft_data is None and create_if_not_exists:
+            task_draft_data = TaskDraftDataModel(
+                process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
+            )
+        return task_draft_data
 
     @classmethod
     def bpmn_process_for_called_activity_or_top_level_process(cls, task_model: TaskModel) -> BpmnProcessModel:
@@ -622,7 +642,7 @@ class TaskService:
         return extensions
 
     @classmethod
-    def get_ready_signals_with_button_labels(cls, process_instance_id: int) -> list[dict]:
+    def get_ready_signals_with_button_labels(cls, process_instance_id: int, associated_task_guid: str) -> list[dict]:
         waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(
             state="WAITING", process_instance_id=process_instance_id
         ).all()
@@ -640,7 +660,13 @@ class TaskService:
                 else {}
             )
             if "signalButtonLabel" in extensions and "name" in event_definition:
-                result.append({"event": event_definition, "label": extensions["signalButtonLabel"]})
+                parent_task_model = task_model.parent_task_model()
+                if (
+                    parent_task_model
+                    and "children" in parent_task_model.properties_json
+                    and associated_task_guid in parent_task_model.properties_json["children"]
+                ):
+                    result.append({"event": event_definition, "label": extensions["signalButtonLabel"]})
         return result
 
     @classmethod

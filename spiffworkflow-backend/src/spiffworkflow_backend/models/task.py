@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -63,7 +65,6 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
     python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
-    saved_form_data_hash: str | None = db.Column(db.String(255), nullable=True, index=True)
 
     start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
@@ -91,10 +92,11 @@ class TaskModel(SpiffworkflowBaseDBModel):
     def json_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
 
-    def get_saved_form_data(self) -> dict | None:
-        if self.saved_form_data_hash is not None:
-            return JsonDataModel.find_data_dict_by_hash(self.saved_form_data_hash)
-        return None
+    def parent_task_model(self) -> TaskModel | None:
+        if "parent" not in self.properties_json:
+            return None
+        task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
+        return task_model
 
 
 class Task:

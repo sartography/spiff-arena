@@ -29,20 +29,10 @@ permissions:
     allowed_permissions: [all]
     uri: ELEVATED
 
-  read-all:
-    groups: ["Finance Team", hr, admin]
-    allowed_permissions: [read]
-    uri: /*
-
-  process-instances-find-by-id:
+  basic-permission:
     groups: [everybody]
-    allowed_permissions: [read]
-    uri: /process-instances/find-by-id/*
-
-  tasks-crud:
-    groups: [everybody]
-    allowed_permissions: [create, read, update, delete]
-    uri: /tasks/*
+    allowed_permissions: [all]
+    uri: BASIC
 
   finance-admin-group:
     groups: ["Finance Team"]
@@ -54,12 +44,7 @@ permissions:
     allowed_permissions: [start]
     uri: PG:finance
 
-  finance-admin-model-lanes:
-    groups: ["Finance Team"]
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-models/finance:model_with_lanes/*
-
-  finance-admin-instance-run:
-    groups: ["Finance Team"]
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-instances/*
+  read-all-finance:
+    groups: [hr]
+    allowed_permissions: [read]
+    uri: PG:finance
