@@ -35,5 +35,4 @@ If the Instance can not be find by searhing the list, follow these steps to sear
 
 | ✅ Success                                                    | 🚫 Error                                                      |
 | ------------------------------------------------------------ | :------------------------------------------------------------ |
-| The system will then display the parent process that contains the active instance searched for. [How to view process variables](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/view_process_variables.md) | Process instance Id does not exist ![suspend_status](images\process_instance_not_found.png) Repeat Step 2 with correct Id. Note: if the instance is not active anymore, you should be able to search for it.|
-
+| The system will then display the parent process that contains the active instance searched for. [How to view process variables](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/view_process_variables.md) | Process instance Id does not exist ![suspend_status](images/process_instance_not_found.png) Repeat Step 2 with correct Id. Note: if the instance is not active anymore, you should be able to search for it.|

@@ -37,6 +37,10 @@ class JsonDataDict(TypedDict):
 #   for added_key in added_keys:
 #       added[added_key] = b[added_key]
 #   final_tuple = [added, removed, changed]
+
+
+# to find the users of this model run:
+#   grep -R '_data_hash: ' src/spiffworkflow_backend/models/
 class JsonDataModel(SpiffworkflowBaseDBModel):
     __tablename__ = "json_data"
     id: int = db.Column(db.Integer, primary_key=True)

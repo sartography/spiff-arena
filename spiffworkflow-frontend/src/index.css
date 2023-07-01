@@ -606,3 +606,7 @@ hr {
 .primary-file-text-suffix {
   font-style: italic;
 }
+
+#hidden-form-for-autosave {
+  display: none;
+}

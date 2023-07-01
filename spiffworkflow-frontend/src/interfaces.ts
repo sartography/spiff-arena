@@ -67,13 +67,14 @@ export interface Task {
   form_schema: any;
   form_ui_schema: any;
   signal_buttons: SignalButton[];
+
+  saved_form_data?: any;
 }
 
 export interface ProcessInstanceTask {
   id: string;
   task_id: string;
   can_complete: boolean;
-  calling_subprocess_task_id: string;
   created_at_in_seconds: number;
   current_user_is_potential_owner: number;
   data: any;
@@ -124,6 +125,7 @@ export interface ProcessFile {
   type: string;
   file_contents?: string;
   file_contents_hash?: string;
+  bpmn_process_ids?: string[];
 }
 
 export interface ProcessInstanceMetadata {
