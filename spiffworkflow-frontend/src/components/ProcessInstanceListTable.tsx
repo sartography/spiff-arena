@@ -1781,7 +1781,7 @@ export default function ProcessInstanceListTable({
       {processInstanceReportSaveTag()}
       <Grid fullWidth condensed>
         {tableTitleLine()}
-        <Column sm={{ span: 16 }} md={{ span: 16 }} lg={{ span: 16 }}>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters
             filterOptions={filterOptions}
             showFilterOptions={showFilterOptions}
@@ -1790,7 +1790,7 @@ export default function ProcessInstanceListTable({
             filtersEnabled={filtersEnabled}
           />
         </Column>
-        <Column sm={{ span: 16 }} md={{ span: 16 }} lg={{ span: 16 }}>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           {resultsTable}
         </Column>
       </Grid>
