@@ -33,7 +33,7 @@ class TestProcessInstanceProcessor(BaseTest):
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = ProcessInstanceProcessor._script_engine
+        script_engine = ProcessInstanceProcessor._default_script_engine
 
         result = script_engine._evaluate("a", {"a": 1})
         assert result == 1
@@ -47,7 +47,7 @@ class TestProcessInstanceProcessor(BaseTest):
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = ProcessInstanceProcessor._script_engine
+        script_engine = ProcessInstanceProcessor._default_script_engine
         result = script_engine._evaluate("fact_service(type='norris')", {})
         assert result == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = None

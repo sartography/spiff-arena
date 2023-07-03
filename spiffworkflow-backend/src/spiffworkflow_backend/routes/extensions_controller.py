@@ -1,20 +1,17 @@
-from flask import make_response
-from flask import jsonify
+import flask.wrappers
 from flask import g
-from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from flask import jsonify
+from flask import make_response
+
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
-import flask.wrappers
-from flask.wrappers import Response
-
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
 def extension_run(
@@ -39,8 +36,10 @@ def extension_run(
 
     processor = None
     try:
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=False, execution_strategy_name='greedy')
+        processor = ProcessInstanceProcessor(
+            process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False)
+        )
+        processor.do_engine_steps(save=False, execution_strategy_name="greedy")
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,
