@@ -444,6 +444,27 @@ svg.notification-icon {
   color: red;
 }
 
+.filter-tag {
+  justify-content: left;
+  width: 100%;
+}
+.filter-tag > span {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.filter-tag > span > span {
+  margin-right: 0.5px;
+}
+
+.cds--btn--ghost.cds--btn--sm.button-tag {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+  flex-grow: 1;
+}
+
 .cds--btn--ghost.cds--btn--sm.button-tag-icon {
   padding-left: 0;
   padding-right: 0;
