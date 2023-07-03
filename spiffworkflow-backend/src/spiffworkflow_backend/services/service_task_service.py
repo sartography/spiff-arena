@@ -141,6 +141,10 @@ class ServiceTaskDelegate:
                 SecretService.update_secret(secret_key, refreshed_token_set, user_id)
                 return json.dumps(parsed_response["api_response"])
 
+# TODO: temp location, need to get this from somewhere dynamic so admins can edit in the UI
+AUTHS = {
+    "xero/OAuth": {},
+}
 
 class ServiceTaskService:
     @staticmethod
@@ -161,13 +165,4 @@ class ServiceTaskService:
     @staticmethod
     def authentication_list() -> Any:
         """Returns a list of available authentications."""
-        try:
-            response = requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
-
-            if response.status_code != 200:
-                return []
-
-            parsed_response = json.loads(response.text)
-            return parsed_response
-        except Exception as exception:
-            raise ConnectorProxyError(exception.__class__.__name__) from exception
+        return [{ "id": k, "parameters": [] } for k in sorted(AUTHS.keys())]
