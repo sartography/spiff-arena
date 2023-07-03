@@ -46,6 +46,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_o
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -266,7 +267,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
     extensions = TaskService.get_extensions_from_task_model(task_model)
-    task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id)
+    task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id, task_model.guid)
 
     if "properties" in extensions:
         properties = extensions["properties"]
@@ -279,12 +280,17 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     try:
         AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
-    except HumanTaskNotFoundError:
-        can_complete = False
-    except UserDoesNotHaveAccessToTaskError:
+    except (HumanTaskNotFoundError, UserDoesNotHaveAccessToTaskError, HumanTaskAlreadyCompletedError):
         can_complete = False
 
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+
+    saved_form_data = None
+    if task_draft_data is not None:
+        saved_form_data = task_draft_data.get_saved_form_data()
+
     task_model.data = task_model.get_data()
+    task_model.saved_form_data = saved_form_data
     task_model.process_model_display_name = process_model.display_name
     task_model.process_model_identifier = process_model.id
     task_model.typename = task_definition.typename
@@ -361,7 +367,9 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
     return ""
 
 
-def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, str | None, None]:
+def _interstitial_stream(
+    process_instance: ProcessInstanceModel, execute_tasks: bool = True
+) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
@@ -369,13 +377,10 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
     def render_instructions(spiff_task: SpiffTask) -> str:
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        if task_model is None:
+            return ""
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
-
-    def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
-        return_hash: dict = {"type": return_type}
-        return_hash[return_type] = entity
-        return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -390,28 +395,31 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
                 task.properties = {"instructionsForEndUser": instructions}
-                yield render_data("task", task)
+                yield _render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 # do not do any processing if the instance is not currently active
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield render_data("unrunnable_instance", process_instance)
+                    yield _render_data("unrunnable_instance", process_instance)
                     return
-                try:
-                    processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                except WorkflowTaskException as wfe:
-                    api_error = ApiError.from_workflow_exception(
-                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
-                    )
-                    yield render_data("error", api_error)
-                    return
+                if execute_tasks:
+                    try:
+                        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+                        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                        processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                    except WorkflowTaskException as wfe:
+                        api_error = ApiError.from_workflow_exception(
+                            "engine_steps_error", "Failed to complete an automated task.", exp=wfe
+                        )
+                        yield _render_data("error", api_error)
+                        return
+        if execute_tasks is False:
+            break
         processor.refresh_waiting_tasks()
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
         tasks = get_reportable_tasks()
@@ -430,33 +438,117 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             task.properties = {"instructionsForEndUser": instructions}
-            yield render_data("task", task)
+            yield _render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
-def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | None, str | None, None]:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+def _dequeued_interstitial_stream(
+    process_instance_id: int, execute_tasks: bool = True
+) -> Generator[str | None, str | None, None]:
+    try:
+        process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+        ProcessInstanceProcessor(process_instance)
 
-    # TODO: currently this just redirects back to home if the process has not been started
-    # need something better to show?
+        # TODO: currently this just redirects back to home if the process has not been started
+        # need something better to show?
+        if execute_tasks:
+            if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+                with ProcessInstanceQueueService.dequeued(process_instance):
+                    yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+        else:
+            # no reason to get a lock if we are reading only
+            yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+    except Exception as ex:
+        # the stream_with_context method seems to swallow exceptions so also attempt to catch errors here
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+        )
+        yield _render_data("error", api_error)
 
-    if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-        with ProcessInstanceQueueService.dequeued(process_instance):
-            yield from _interstitial_stream(process_instance)
 
-
-def interstitial(process_instance_id: int) -> Response:
+def interstitial(process_instance_id: int, execute_tasks: bool = True) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
+    try:
+        return Response(
+            stream_with_context(_dequeued_interstitial_stream(process_instance_id, execute_tasks=execute_tasks)),
+            mimetype="text/event-stream",
+            headers={"X-Accel-Buffering": "no"},
+        )
+    except Exception as ex:
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+            response_headers={"Content-type": "text/event-stream"},
+        )
+        api_error.response_message = _render_data("error", api_error)
+        raise api_error from ex
+
+
+def _render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
+    return_hash: dict = {"type": return_type}
+    return_hash[return_type] = entity
+    return f"data: {current_app.json.dumps(return_hash)} \n\n"
+
+
+def task_save_draft(
+    process_instance_id: int,
+    task_guid: str,
+    body: dict[str, Any],
+) -> flask.wrappers.Response:
+    principal = _find_principal_or_raise()
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    if not process_instance.can_submit_task():
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=(
+                f"Process Instance ({process_instance.id}) has status "
+                f"{process_instance.status} which does not allow tasks to be submitted."
+            ),
+            status_code=400,
+        )
+
+    try:
+        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+    except HumanTaskAlreadyCompletedError:
+        return make_response(jsonify({"ok": True}), 200)
+
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model, create_if_not_exists=True)
+
+    if task_draft_data is not None:
+        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+            task_draft_data, body, "saved_form_data_hash"
+        )
+        if json_data_dict is not None:
+            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
+            db.session.add(task_draft_data)
+            db.session.commit()
+
     return Response(
-        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
+        json.dumps(
+            {
+                "ok": True,
+                "process_model_identifier": process_instance.process_model_identifier,
+                "process_instance_id": process_instance_id,
+            }
+        ),
+        status=200,
+        mimetype="application/json",
     )
 
 
@@ -464,7 +556,6 @@ def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
-    save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -491,59 +582,41 @@ def _task_submit_shared(
             )
         )
 
-    # multi-instance code from crconnect - we may need it or may not
-    # if terminate_loop and spiff_task.is_looping():
-    #     spiff_task.terminate_loop()
-    #
-    # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
-    # task spec, complete that form as well.
-    # if update_all:
-    #     last_index = spiff_task.task_info()["mi_index"]
-    #     next_task = processor.next_task()
-    #     while next_task and next_task.task_info()["mi_index"] > last_index:
-    #         __update_task(processor, next_task, form_data, user)
-    #         last_index = next_task.task_info()["mi_index"]
-    #         next_task = processor.next_task()
+    human_task = _find_human_task_or_raise(
+        process_instance_id=process_instance_id,
+        task_guid=task_guid,
+        only_tasks_that_can_be_completed=True,
+    )
 
-    if save_as_draft:
-        task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-        ProcessInstanceService.update_form_task_data(process_instance, spiff_task, body, g.user)
-        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-            task_model, spiff_task.data, "json_data_hash"
-        )
-        if json_data_dict is not None:
-            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-            db.session.add(task_model)
-            db.session.commit()
-    else:
-        human_task = _find_human_task_or_raise(
-            process_instance_id=process_instance_id,
-            task_guid=task_guid,
-            only_tasks_that_can_be_completed=True,
-        )
+    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceService.complete_form_task(
+                processor=processor,
+                spiff_task=spiff_task,
+                data=body,
+                user=g.user,
+                human_task=human_task,
+            )
 
-        with sentry_sdk.start_span(op="task", description="complete_form_task"):
-            with ProcessInstanceQueueService.dequeued(process_instance):
-                ProcessInstanceService.complete_form_task(
-                    processor=processor,
-                    spiff_task=spiff_task,
-                    data=body,
-                    user=g.user,
-                    human_task=human_task,
-                )
+    # delete draft data when we submit a task to ensure cycling back to the task contains the
+    # most up-to-date data
+    task_draft_data = TaskService.task_draft_data_from_task_model(human_task.task_model)
+    if task_draft_data is not None:
+        db.session.delete(task_draft_data)
+        db.session.commit()
 
-        next_human_task_assigned_to_me = (
-            HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
-            .order_by(asc(HumanTaskModel.id))  # type: ignore
-            .join(HumanTaskUserModel)
-            .filter_by(user_id=principal.user_id)
-            .first()
-        )
-        if next_human_task_assigned_to_me:
-            return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-        elif processor.next_task():
-            task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-            return make_response(jsonify(task), 200)
+    next_human_task_assigned_to_me = (
+        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+        .order_by(asc(HumanTaskModel.id))  # type: ignore
+        .join(HumanTaskUserModel)
+        .filter_by(user_id=principal.user_id)
+        .first()
+    )
+    if next_human_task_assigned_to_me:
+        return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
+    elif processor.next_task():
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        return make_response(jsonify(task), 200)
 
     return Response(
         json.dumps(
@@ -562,10 +635,9 @@ def task_submit(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
-    save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body, save_as_draft)
+        return _task_submit_shared(process_instance_id, task_guid, body)
 
 
 def _get_tasks(

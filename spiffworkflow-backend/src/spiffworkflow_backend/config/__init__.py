@@ -10,7 +10,7 @@ from werkzeug.utils import ImportStringError
 from spiffworkflow_backend.services.logging_service import setup_logger
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
-CONNECTOR_PROXY_COMMAND_TIMEOUT = 30
+CONNECTOR_PROXY_COMMAND_TIMEOUT = 45
 
 
 class ConfigurationError(Exception):
@@ -18,11 +18,16 @@ class ConfigurationError(Exception):
 
 
 def setup_database_configs(app: Flask) -> None:
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+    parallel_test_suffix = ""
+    if worker_id is not None:
+        parallel_test_suffix = f"_{worker_id}"
+
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
         if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}.sqlite3"
+                f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}{parallel_test_suffix}.sqlite3"
             )
         elif app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
             app.config["SQLALCHEMY_DATABASE_URI"] = (

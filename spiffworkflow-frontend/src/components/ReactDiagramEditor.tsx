@@ -44,11 +44,7 @@ import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle
 // @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 // @ts-expect-error TS(7016) FIXME
-import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
-// @ts-expect-error TS(7016) FIXME
 import TouchModule from 'diagram-js/lib/navigation/touch';
-// @ts-expect-error TS(7016) FIXME
-import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -216,12 +212,7 @@ export default function ReactDiagramEditor({
 
         // taken from the non-modeling components at
         //  bpmn-js/lib/Modeler.js
-        additionalModules: [
-          KeyboardMoveModule,
-          MoveCanvasModule,
-          TouchModule,
-          ZoomScrollModule,
-        ],
+        additionalModules: [KeyboardMoveModule, TouchModule],
       });
     }
 
@@ -424,9 +415,13 @@ export default function ReactDiagramEditor({
       const canvas = (modeler as any).get('canvas');
 
       // only get the canvas if the dmn active viewer is actually
-      // a Modeler and not an Editor which is what it will when we are
+      // a Modeler and not an Editor which is what it will be when we are
       // actively editing a decision table
       if ((modeler as any).constructor.name === 'Modeler') {
+        canvas.zoom('fit-viewport');
+      }
+
+      if ((modeler as any).constructor.name === 'Viewer') {
         canvas.zoom('fit-viewport');
       }
 
@@ -467,11 +462,33 @@ export default function ReactDiagramEditor({
       if (alreadyImportedXmlRef.current) {
         return;
       }
-      diagramModelerToUse.importXML(diagramXMLToDisplay).then(() => {
-        if (diagramType === 'bpmn' || diagramType === 'readonly') {
-          diagramModelerToUse.get('canvas').zoom('fit-viewport');
-        }
-      });
+      if (diagramType === 'bpmn') {
+        diagramModelerToUse._moddle // eslint-disable-line no-underscore-dangle
+          .fromXML(diagramXMLToDisplay)
+          .then((result: any) => {
+            const refs = result.references.filter(
+              (r: any) =>
+                r.property === 'bpmn:loopDataInputRef' ||
+                r.property === 'bpmn:loopDataOutputRef'
+            );
+            const desc =
+              diagramModelerToUse._moddle.registry.getEffectiveDescriptor( // eslint-disable-line
+                'bpmn:ItemAwareElement'
+              );
+            refs.forEach((ref: any) => {
+              const props = {
+                id: ref.id,
+                name: ref.id ? typeof ref.name === 'undefined' : ref.name,
+              };
+              const elem = diagramModelerToUse._moddle.create(desc, props); // eslint-disable-line no-underscore-dangle
+              elem.$parent = ref.element;
+              ref.element.set(ref.property, elem);
+            });
+            diagramModelerToUse.importDefinitions(result.rootElement);
+          });
+      } else {
+        diagramModelerToUse.importXML(diagramXMLToDisplay);
+      }
 
       alreadyImportedXmlRef.current = true;
     }

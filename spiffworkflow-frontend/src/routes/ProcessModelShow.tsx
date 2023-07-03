@@ -70,7 +70,7 @@ export default function ProcessModelShow() {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelTestsPath]: ['POST'],
     [targetUris.processModelPublishPath]: ['POST'],
-    [targetUris.processInstanceListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
     [targetUris.processInstanceCreatePath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
@@ -352,9 +352,14 @@ export default function ProcessModelShow() {
         );
       }
 
-      let primarySuffix = '';
+      let primarySuffix = null;
       if (isPrimaryBpmnFile) {
-        primarySuffix = '- Primary File';
+        primarySuffix = (
+          <span>
+            &nbsp;-{' '}
+            <span className="primary-file-text-suffix">Primary File</span>
+          </span>
+        );
       }
       let fileLink = null;
       const fileUrl = profileModelFileEditUrl(processModelFile);
@@ -521,6 +526,7 @@ export default function ProcessModelShow() {
         size="lg"
         label="Add File"
         type="inline"
+        data-qa="process-model-add-file"
         onChange={(a: any) => {
           if (a.selectedItem.text === 'New BPMN File') {
             navigate(
@@ -610,7 +616,7 @@ export default function ProcessModelShow() {
 
   if (processModel) {
     return (
-      <>
+      <div className="show-page">
         {fileUploadModal()}
         {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
@@ -691,7 +697,11 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         {processModelFilesSection()}
-        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
+        <Can
+          I="POST"
+          a={targetUris.processInstanceListForMePath}
+          ability={ability}
+        >
           <ProcessInstanceListTable
             headerElement={<h2>My Process Instances</h2>}
             filtersEnabled={false}
@@ -708,7 +718,7 @@ export default function ProcessModelShow() {
           />
           <span data-qa="process-model-show-permissions-loaded" />
         </Can>
-      </>
+      </div>
     );
   }
   return null;

@@ -18,18 +18,18 @@ It will fire a message connected to the invoice keys above, starting another pro
   </bpmn:collaboration>
   <bpmn:correlationProperty id="po_number" name="Purchase Order Number">
     <bpmn:correlationPropertyRetrievalExpression messageRef="request_approval">
-      <bpmn:formalExpression>po_number</bpmn:formalExpression>
+      <bpmn:messagePath>po_number</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="approval_result">
-      <bpmn:formalExpression>po_number</bpmn:formalExpression>
+      <bpmn:messagePath>po_number</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:correlationProperty id="customer_id" name="Customer ID">
     <bpmn:correlationPropertyRetrievalExpression messageRef="request_approval">
-      <bpmn:formalExpression>customer_id</bpmn:formalExpression>
+      <bpmn:messagePath>customer_id</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="approval_result">
-      <bpmn:formalExpression>customer_id</bpmn:formalExpression>
+      <bpmn:messagePath>customer_id</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="message_send_process" name="Message Send Process" isExecutable="true">

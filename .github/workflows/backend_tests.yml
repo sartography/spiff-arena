@@ -67,7 +67,7 @@ jobs:
               session: "typeguard",
               database: "sqlite",
             }
-          - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+          # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
           # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
     env:

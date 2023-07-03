@@ -48,6 +48,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance:model1")
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
         self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
 
     def test_user_can_be_added_to_human_task_on_first_login(
         self,
@@ -285,7 +286,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/reports/*", "update"),
                 ("/process-models", "read"),
                 ("/processes", "read"),
-                ("/processes/callers", "read"),
+                ("/processes/callers/*", "read"),
                 ("/service-tasks", "read"),
                 ("/tasks/*", "create"),
                 ("/tasks/*", "delete"),
@@ -311,6 +312,8 @@ class TestAuthorizationService(BaseTest):
                 ("/authentications", "read"),
                 ("/can-run-privileged-script/*", "create"),
                 ("/debug/*", "create"),
+                ("/event-error-details/*", "read"),
+                ("/logs/*", "read"),
                 ("/messages", "read"),
                 ("/messages/*", "create"),
                 ("/process-data-file-download/*", "read"),

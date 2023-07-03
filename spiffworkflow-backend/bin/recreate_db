@@ -94,3 +94,10 @@ if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|
   fi
   FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 fi
+
+# for ./bin/tests-par (parallel tests with xdist)
+if [[ -f "./src/instance/db_unit_testing.sqlite3" ]] ; then
+  for i in $(seq 0 16); do
+    cp ./src/instance/db_unit_testing.sqlite3 ./src/instance/db_unit_testing_gw$i.sqlite3
+  done
+fi
