@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import ProcessGroupList from './ProcessGroupList';
 import ProcessGroupShow from './ProcessGroupShow';
 import ProcessGroupNew from './ProcessGroupNew';
@@ -16,13 +16,12 @@ import ProcessInstanceReportList from './ProcessInstanceReportList';
 import ProcessInstanceReportNew from './ProcessInstanceReportNew';
 import ProcessInstanceReportEdit from './ProcessInstanceReportEdit';
 import ReactFormEditor from './ReactFormEditor';
-import ProcessInstanceLogList from './ProcessInstanceLogList';
-import MessageInstanceList from './MessageInstanceList';
 import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
+import MessageListPage from './MessageListPage';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -113,14 +112,6 @@ export default function AdminRoutes() {
           element={<ReactFormEditor />}
         />
         <Route
-          path="logs/:process_model_id/:process_instance_id"
-          element={<ProcessInstanceLogList variant="all" />}
-        />
-        <Route
-          path="logs/for-me/:process_model_id/:process_instance_id"
-          element={<ProcessInstanceLogList variant="for-me" />}
-        />
-        <Route
           path="process-instances"
           element={<ProcessInstanceList variant="for-me" />}
         />
@@ -132,7 +123,6 @@ export default function AdminRoutes() {
           path="process-instances/all"
           element={<ProcessInstanceList variant="all" />}
         />
-        <Route path="messages" element={<MessageInstanceList />} />
         <Route path="configuration/*" element={<Configuration />} />
         <Route
           path="process-models/:process_model_id/form-builder"
@@ -142,6 +132,7 @@ export default function AdminRoutes() {
           path="process-instances/find-by-id"
           element={<ProcessInstanceFindById />}
         />
+        <Route path="messages" element={<MessageListPage />} />
       </Routes>
     );
   }

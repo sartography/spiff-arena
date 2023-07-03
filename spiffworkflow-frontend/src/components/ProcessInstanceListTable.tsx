@@ -1705,6 +1705,7 @@ export default function ProcessInstanceListTable({
           sm={{ span: 1, offset: 3 }}
           md={{ span: 1, offset: 7 }}
           lg={{ span: 1, offset: 15 }}
+          style={{ textAlign: 'right' }}
         >
           <Button
             data-qa="process-instance-list-link"
@@ -1720,12 +1721,12 @@ export default function ProcessInstanceListTable({
       );
     }
     return (
-      <Grid fullWidth condensed>
+      <>
         <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
           {headerElement}
         </Column>
         {filterButtonLink}
-      </Grid>
+      </>
     );
   };
 
@@ -1778,15 +1779,21 @@ export default function ProcessInstanceListTable({
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      {tableTitleLine()}
-      <Filters
-        filterOptions={filterOptions}
-        showFilterOptions={showFilterOptions}
-        setShowFilterOptions={setShowFilterOptions}
-        reportSearchComponent={reportSearchComponent}
-        filtersEnabled={filtersEnabled}
-      />
-      {resultsTable}
+      <Grid fullWidth condensed>
+        {tableTitleLine()}
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          <Filters
+            filterOptions={filterOptions}
+            showFilterOptions={showFilterOptions}
+            setShowFilterOptions={setShowFilterOptions}
+            reportSearchComponent={reportSearchComponent}
+            filtersEnabled={filtersEnabled}
+          />
+        </Column>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {resultsTable}
+        </Column>
+      </Grid>
     </>
   );
 }
