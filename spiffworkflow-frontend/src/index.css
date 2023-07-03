@@ -179,18 +179,20 @@ h1.with-icons {
   margin-top: 5px;
 }
 
-.grid-list-title {
+dl {
+  display: grid;
+  line-height: 1.2em;
+  grid-template-columns: 25% 75%;
+}
+
+dt {
   font-weight: 600;
   font-size: 14px;
   line-height: 18px;
   color: #161616;
+
 }
-.grid-date {
-  font-size: 14px;
-  line-height: 18px;
-  letter-spacing: 0.16px;
-  color: #525252;
-}
+
 .smaller-text {
   font-size: 14px;
 }
@@ -636,3 +638,4 @@ hr {
 #hidden-form-for-autosave {
   display: none;
 }
+

@@ -1659,7 +1659,7 @@ export default function ProcessInstanceListTable({
 
     return (
       // eslint-disable-next-line react/jsx-props-no-spreading
-      <Table {...tableProps}>
+      <Table {...tableProps} className="process-instance-list">
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
@@ -1785,7 +1785,7 @@ export default function ProcessInstanceListTable({
       {processInstanceReportSaveTag()}
       <Grid fullWidth condensed>
         {tableTitleLine()}
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }} style={{maxWidth:'fit-content'}}>
           <Filters
             filterOptions={filterOptions}
             showFilterOptions={showFilterOptions}
@@ -1794,7 +1794,7 @@ export default function ProcessInstanceListTable({
             filtersEnabled={filtersEnabled}
           />
         </Column>
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }} style={{maxWidth:'fit-content', margin:'auto'}}>
           {resultsTable}
         </Column>
       </Grid>
