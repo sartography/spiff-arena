@@ -201,7 +201,7 @@ dt {
   border:1px solid #000000;
   height:70vh;
   width:90vw;
-  margin:auto;
+  margin: 0 auto;
 }
 
 .with-bottom-margin {
