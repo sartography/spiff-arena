@@ -6,7 +6,6 @@ from spiffworkflow_backend.helpers.db_helper import try_to_connect
 
 
 def main() -> None:
-    """Main."""
     app = create_app()
     start_time = time.time()
     with app.app_context():

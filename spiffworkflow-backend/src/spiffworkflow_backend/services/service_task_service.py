@@ -121,6 +121,7 @@ class ServiceTaskDelegate:
                         error_response = parsed_response["error"]
                         if isinstance(error_response, list | dict):
                             error_response = json.dumps(parsed_response["error"])
+
                         error += error_response
                     if json_parse_error:
                         error += "A critical component (The connector proxy) is not responding correctly."
