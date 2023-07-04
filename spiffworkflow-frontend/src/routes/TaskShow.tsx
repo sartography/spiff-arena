@@ -116,7 +116,10 @@ export default function TaskShow() {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
       } else {
-        navigateToInterstitial(result);
+        console.log("This the thing that's doing the working?")
+        setTimeout(() => {
+          navigateToInterstitial(result);
+        }, 1000);
       }
     } else {
       setFormButtonsDisabled(false);

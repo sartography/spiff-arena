@@ -167,6 +167,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         return ["not_started", "user_input_required", "waiting"]
 
 
+
 class ProcessInstanceModelSchema(Schema):
     class Meta:
         model = ProcessInstanceModel
