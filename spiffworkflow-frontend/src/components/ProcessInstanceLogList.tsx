@@ -285,6 +285,7 @@ export default function ProcessInstanceLogList({
       timestampComponent = (
         <td>
           <Link
+            reloadDocument
             data-qa="process-instance-show-link"
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
             title="View state when task was completed"
