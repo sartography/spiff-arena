@@ -314,7 +314,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const lastUpdatedTimeTag = (
       <dl>
         <dt>{lastUpdatedTimeLabel}:</dt>
-        <dd>{convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}</dd>
+        <dd>
+          {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
+        </dd>
       </dl>
     );
 
@@ -373,8 +375,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {lastUpdatedTimeTag}
           <dl>
             <dt>Revision:</dt>
-            <dd>{processInstance.bpmn_version_control_identifier} (
-              {processInstance.bpmn_version_control_type})</dd>
+            <dd>
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </dd>
           </dl>
         </Column>
         <Column sm={4} md={4} lg={8}>
