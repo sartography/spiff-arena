@@ -44,6 +44,11 @@ import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle
 // @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 // @ts-expect-error TS(7016) FIXME
+import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
+// @ts-expect-error TS(7016) FIXME
+import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
+
+// @ts-expect-error TS(7016) FIXME
 import TouchModule from 'diagram-js/lib/navigation/touch';
 
 import { useNavigate } from 'react-router-dom';
@@ -212,7 +217,12 @@ export default function ReactDiagramEditor({
 
         // taken from the non-modeling components at
         //  bpmn-js/lib/Modeler.js
-        additionalModules: [KeyboardMoveModule, TouchModule],
+        additionalModules: [
+          KeyboardMoveModule,
+          MoveCanvasModule,
+          TouchModule,
+          ZoomScrollModule,
+        ],
       });
     }
 
@@ -485,6 +495,7 @@ export default function ReactDiagramEditor({
               ref.element.set(ref.property, elem);
             });
             diagramModelerToUse.importDefinitions(result.rootElement);
+            diagramModelerToUse.get('canvas').zoom('fit-viewport');
           });
       } else {
         diagramModelerToUse.importXML(diagramXMLToDisplay);
@@ -514,7 +525,6 @@ export default function ReactDiagramEditor({
         successCallback: setDiagramXMLStringFromResponseJson,
       });
     }
-
     (diagramModelerState as any).on('import.done', onImportDone);
 
     const diagramXMLToUse = diagramXML || diagramXMLString;
