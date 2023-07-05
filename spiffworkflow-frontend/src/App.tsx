@@ -16,7 +16,7 @@ import UserService from './services/UserService';
 import ErrorDisplay from './components/ErrorDisplay';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ScrollToTop from './components/ScrollToTop';
-import EditorRoutes from "./routes/EditorRoutes";
+import EditorRoutes from './routes/EditorRoutes';
 
 export default function App() {
   if (!UserService.isLoggedIn()) {

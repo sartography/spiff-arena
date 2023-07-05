@@ -6,7 +6,6 @@ import ProcessGroupShow from './ProcessGroupShow';
 import ProcessGroupNew from './ProcessGroupNew';
 import ProcessGroupEdit from './ProcessGroupEdit';
 import ProcessModelShow from './ProcessModelShow';
-import ProcessModelEditDiagram from './ProcessModelEditDiagram';
 import ProcessInstanceList from './ProcessInstanceList';
 import ProcessModelNew from './ProcessModelNew';
 import ProcessModelEdit from './ProcessModelEdit';
