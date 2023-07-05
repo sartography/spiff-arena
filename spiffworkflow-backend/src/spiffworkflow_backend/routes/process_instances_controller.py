@@ -714,6 +714,7 @@ def _find_process_instance_for_me_or_raise(
         .filter(
             or_(
                 HumanTaskUserModel.id.is_not(None),
+                HumanTaskModel.completed_by_user_id == g.user.id,
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
         )
