@@ -312,14 +312,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       lastUpdatedTime = processInstance.end_in_seconds;
     }
     const lastUpdatedTimeTag = (
-      <Grid condensed fullWidth>
-        <Column sm={2} md={2} lg={3} className="grid-list-title">
-          {lastUpdatedTimeLabel}:{' '}
-        </Column>
-        <Column sm={3} md={6} lg={8} className="grid-date">
+      <dl>
+        <dt>{lastUpdatedTimeLabel}:</dt>
+        <dd>
           {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
-        </Column>
-      </Grid>
+        </dd>
+      </dl>
     );
 
     let statusIcon = <InProgress />;
@@ -337,83 +335,63 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     return (
-      <>
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Status:{' '}
-          </Column>
-          <Column sm={3} md={6} lg={8}>
-            <Tag type={statusColor} size="sm" className="span-tag">
-              {processInstance.status} {statusIcon}
-            </Tag>
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Started By:{' '}
-          </Column>
-          <Column sm={3} md={6} lg={8} className="grid-date">
-            {processInstance.process_initiator_username}
-          </Column>
-        </Grid>
-        {processInstance.process_model_with_diagram_identifier ? (
-          <Grid condensed fullWidth>
-            <Column sm={2} md={2} lg={3} className="grid-list-title">
-              Current Diagram:{' '}
-            </Column>
-            <Column sm={4} md={6} lg={8} className="grid-date">
-              <Link
-                data-qa="go-to-current-diagram-process-model"
-                to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-                  processInstance.process_model_with_diagram_identifier || ''
-                )}`}
-              >
-                {processInstance.process_model_with_diagram_identifier}
-              </Link>
-            </Column>
-          </Grid>
-        ) : null}
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Started:{' '}
-          </Column>
-          <Column
-            sm={3}
-            md={3}
-            lg={3}
-            className="grid-date"
-            title={`Created At: ${convertSecondsToFormattedDateTime(
-              processInstance.created_at_in_seconds
-            )}`}
-          >
-            {convertSecondsToFormattedDateTime(
-              processInstance.start_in_seconds || 0
-            )}
-          </Column>
-        </Grid>
-        {lastUpdatedTimeTag}
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Process model revision:{' '}
-          </Column>
-          <Column sm={3} md={6} lg={8} className="grid-date">
-            {processInstance.bpmn_version_control_identifier} (
-            {processInstance.bpmn_version_control_type})
-          </Column>
-        </Grid>
-        {(processInstance.process_metadata || []).map(
-          (processInstanceMetadata) => (
-            <Grid condensed fullWidth>
-              <Column sm={2} md={2} lg={3} className="grid-list-title">
-                {processInstanceMetadata.key}:
-              </Column>
-              <Column sm={3} md={6} lg={8} className="grid-date">
-                {processInstanceMetadata.value}
-              </Column>
-            </Grid>
-          )
-        )}
-      </>
+      <Grid condensed fullWidth>
+        <Column sm={4} md={4} lg={8}>
+          <dl>
+            <dt>Status:</dt>
+            <dd>
+              <Tag type={statusColor} size="sm" className="span-tag">
+                {processInstance.status} {statusIcon}
+              </Tag>
+            </dd>
+          </dl>
+          <dl>
+            <dt>Started By:</dt>
+            <dd> {processInstance.process_initiator_username}</dd>
+          </dl>
+          {processInstance.process_model_with_diagram_identifier ? (
+            <dl>
+              <dt>Current Diagram: </dt>
+              <dd>
+                <Link
+                  data-qa="go-to-current-diagram-process-model"
+                  to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                    processInstance.process_model_with_diagram_identifier || ''
+                  )}`}
+                >
+                  {processInstance.process_model_with_diagram_identifier}
+                </Link>
+              </dd>
+            </dl>
+          ) : null}
+          <dl>
+            <dt>Started:</dt>
+            <dd>
+              {convertSecondsToFormattedDateTime(
+                processInstance.start_in_seconds || 0
+              )}
+            </dd>
+          </dl>
+          {lastUpdatedTimeTag}
+          <dl>
+            <dt>Revision:</dt>
+            <dd>
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </dd>
+          </dl>
+        </Column>
+        <Column sm={4} md={4} lg={8}>
+          {(processInstance.process_metadata || []).map(
+            (processInstanceMetadata) => (
+              <dl>
+                <dt>{processInstanceMetadata.key} :</dt>
+                <dd>{processInstanceMetadata.value}</dd>
+              </dl>
+            )
+          )}
+        </Column>
+      </Grid>
     );
   };
 

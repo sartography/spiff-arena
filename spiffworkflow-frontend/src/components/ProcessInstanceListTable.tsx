@@ -23,7 +23,6 @@ import {
   TableRow,
   TimePicker,
   Tag,
-  Stack,
   Modal,
   ComboBox,
   TextInput,
@@ -1166,50 +1165,54 @@ export default function ProcessInstanceListTable({
           reportColumnLabel = `${reportColumnLabel}=${reportColumnForEditing.filter_field_value}`;
         }
         tags.push(
-          <Tag type={tagType} size="sm">
-            <Button
-              kind="ghost"
-              size="sm"
-              className={`button-tag-icon ${tagTypeClass}`}
-              title={`Edit ${reportColumnForEditing.accessor} column`}
-              onClick={() => {
-                setReportColumnToOperateOn(reportColumnForEditing);
-                setShowReportColumnForm(true);
-                setReportColumnFormMode('edit');
-              }}
-            >
-              {reportColumnLabel}
-            </Button>
-            <Button
-              data-qa="remove-report-column"
-              renderIcon={Close}
-              iconDescription="Remove Column"
-              className={`button-tag-icon ${tagTypeClass}`}
-              hasIconOnly
-              size="sm"
-              kind="ghost"
-              onClick={() => removeColumn(reportColumnForEditing)}
-            />
-          </Tag>
+          <Column md={2} lg={2} sm={2}>
+            <Tag type={tagType} size="sm" className="filter-tag">
+              <Button
+                kind="ghost"
+                size="sm"
+                className={`button-tag ${tagTypeClass}`}
+                title={`Edit ${reportColumnForEditing.accessor} column`}
+                onClick={() => {
+                  setReportColumnToOperateOn(reportColumnForEditing);
+                  setShowReportColumnForm(true);
+                  setReportColumnFormMode('edit');
+                }}
+              >
+                {reportColumnLabel}
+              </Button>
+              <Button
+                data-qa="remove-report-column"
+                renderIcon={Close}
+                iconDescription="Remove Column"
+                className={`button-tag-icon ${tagTypeClass}`}
+                hasIconOnly
+                size="sm"
+                kind="ghost"
+                onClick={() => removeColumn(reportColumnForEditing)}
+              />
+            </Tag>
+          </Column>
         );
       });
       return (
-        <Stack orientation="horizontal">
+        <Grid fullWidth>
           {tags}
-          <Button
-            data-qa="add-column-button"
-            renderIcon={AddAlt}
-            iconDescription="Column options"
-            className="with-tiny-top-margin"
-            kind="ghost"
-            hasIconOnly
-            size="sm"
-            onClick={() => {
-              setShowReportColumnForm(true);
-              setReportColumnFormMode('new');
-            }}
-          />
-        </Stack>
+          <Column md={1} lg={1} sm={1}>
+            <Button
+              data-qa="add-column-button"
+              renderIcon={AddAlt}
+              iconDescription="Column options"
+              className="with-tiny-top-margin"
+              kind="ghost"
+              hasIconOnly
+              size="sm"
+              onClick={() => {
+                setShowReportColumnForm(true);
+                setReportColumnFormMode('new');
+              }}
+            />
+          </Column>
+        </Grid>
       );
     }
     return null;
@@ -1655,7 +1658,7 @@ export default function ProcessInstanceListTable({
 
     return (
       // eslint-disable-next-line react/jsx-props-no-spreading
-      <Table {...tableProps}>
+      <Table {...tableProps} className="process-instance-list">
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
@@ -1781,7 +1784,12 @@ export default function ProcessInstanceListTable({
       {processInstanceReportSaveTag()}
       <Grid fullWidth condensed>
         {tableTitleLine()}
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+        <Column
+          sm={{ span: 4 }}
+          md={{ span: 8 }}
+          lg={{ span: 16 }}
+          style={{ maxWidth: 'fit-content' }}
+        >
           <Filters
             filterOptions={filterOptions}
             showFilterOptions={showFilterOptions}
@@ -1790,7 +1798,12 @@ export default function ProcessInstanceListTable({
             filtersEnabled={filtersEnabled}
           />
         </Column>
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+        <Column
+          sm={{ span: 4 }}
+          md={{ span: 8 }}
+          lg={{ span: 16 }}
+          style={{ maxWidth: 'fit-content', margin: 'auto' }}
+        >
           {resultsTable}
         </Column>
       </Grid>

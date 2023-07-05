@@ -179,18 +179,20 @@ h1.with-icons {
   margin-top: 5px;
 }
 
-.grid-list-title {
+dl {
+  display: grid;
+  line-height: 1.2em;
+  grid-template-columns: 25% 75%;
+}
+
+dt {
   font-weight: 600;
   font-size: 14px;
   line-height: 18px;
   color: #161616;
+
 }
-.grid-date {
-  font-size: 14px;
-  line-height: 18px;
-  letter-spacing: 0.16px;
-  color: #525252;
-}
+
 .smaller-text {
   font-size: 14px;
 }
@@ -199,7 +201,7 @@ h1.with-icons {
   border:1px solid #000000;
   height:70vh;
   width:90vw;
-  margin:auto;
+  margin: 0 auto;
 }
 
 .with-bottom-margin {
@@ -444,6 +446,27 @@ svg.notification-icon {
   color: red;
 }
 
+.filter-tag {
+  justify-content: left;
+  width: 100%;
+}
+.filter-tag > span {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.filter-tag > span > span {
+  margin-right: 0.5px;
+}
+
+.cds--btn--ghost.cds--btn--sm.button-tag {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+  flex-grow: 1;
+}
+
 .cds--btn--ghost.cds--btn--sm.button-tag-icon {
   padding-left: 0;
   padding-right: 0;
@@ -615,3 +638,4 @@ hr {
 #hidden-form-for-autosave {
   display: none;
 }
+
