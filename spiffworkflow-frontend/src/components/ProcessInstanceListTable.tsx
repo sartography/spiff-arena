@@ -1778,7 +1778,7 @@ export default function ProcessInstanceListTable({
   }
 
   return (
-    <>
+    <div className="process-instance-list-table">
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
@@ -1788,7 +1788,6 @@ export default function ProcessInstanceListTable({
           sm={{ span: 4 }}
           md={{ span: 8 }}
           lg={{ span: 16 }}
-          style={{ maxWidth: 'fit-content' }}
         >
           <Filters
             filterOptions={filterOptions}
@@ -1802,11 +1801,10 @@ export default function ProcessInstanceListTable({
           sm={{ span: 4 }}
           md={{ span: 8 }}
           lg={{ span: 16 }}
-          style={{ maxWidth: 'fit-content', margin: 'auto' }}
         >
           {resultsTable}
         </Column>
       </Grid>
-    </>
+    </div>
   );
 }
