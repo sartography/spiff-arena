@@ -68,7 +68,6 @@ class PermissionToAssign:
 # the relevant permissions are the only API methods that are currently available for each path prefix.
 # if we add further API methods, we'll need to evaluate whether they should be added here.
 PATH_SEGMENTS_FOR_PERMISSION_ALL = [
-    {"path": "/extensions", "relevant_permissions": ["create"]},
     {"path": "/event-error-details", "relevant_permissions": ["read"]},
     {"path": "/logs", "relevant_permissions": ["read"]},
     {"path": "/logs/typeahead-filter-values", "relevant_permissions": ["read"]},

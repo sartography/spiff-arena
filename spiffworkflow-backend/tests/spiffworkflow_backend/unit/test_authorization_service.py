@@ -101,7 +101,6 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         expected_permissions = sorted(
             [
-                ("/extensions/some-process-group:some-process-model:*", "create"),
                 ("/event-error-details/some-process-group:some-process-model:*", "read"),
                 ("/logs/some-process-group:some-process-model:*", "read"),
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model:*", "read"),
@@ -190,7 +189,6 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         expected_permissions = sorted(
             [
-                ("/extensions/some-process-group:some-process-model/*", "create"),
                 ("/event-error-details/some-process-group:some-process-model/*", "read"),
                 ("/logs/some-process-group:some-process-model/*", "read"),
                 (
