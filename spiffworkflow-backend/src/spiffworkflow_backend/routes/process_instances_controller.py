@@ -713,8 +713,11 @@ def _find_process_instance_for_me_or_raise(
         )
         .filter(
             or_(
+                # you were allowed to complete it
                 HumanTaskUserModel.id.is_not(None),
+                # or you completed it (which admins can do even if it wasn't assigned via HumanTaskUserModel)
                 HumanTaskModel.completed_by_user_id == g.user.id,
+                # or you started it
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
         )
