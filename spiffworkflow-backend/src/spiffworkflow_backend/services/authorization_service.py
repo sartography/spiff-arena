@@ -540,6 +540,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/extensions/*"))
 
         # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
