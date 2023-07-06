@@ -440,7 +440,7 @@ export default function ReactDiagramEditor({
           'Not zooming the viewport for ',
           (modeler as any).constructor.name,
           modeler,
-          modeler.constructor
+          (modeler as any).constructor.constructor
         );
       }
 
