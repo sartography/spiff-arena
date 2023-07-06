@@ -73,29 +73,20 @@ export default function InstructionsForEndUser({
     return null;
   };
 
-  let instructionsShown = instructions;
+  let className = 'markdown';
   if (collapsed) {
-    if (wordCount(instructions) > maxWordCount) {
-      instructionsShown = instructions
-        .split(' ')
-        .slice(0, maxWordCount)
-        .join(' ');
-      instructionsShown += '...';
-    } else if (lineCount(instructions) > maxLineCount) {
-      instructionsShown = instructions.split('\n').slice(0, 5).join(' ');
-      instructionsShown += '...';
-    }
+    className += ' markdown-collapsed';
   }
 
   return (
     <div style={{ margin: '20px 0 20px 0' }}>
-      <div className="markdown">
+      <div className={className}>
         {/*
           https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
         */}
         <div data-color-mode="light">
-          <MDEditor.Markdown linkTarget="_blank" source={instructionsShown} />
+          <MDEditor.Markdown linkTarget="_blank" source={instructions} />
         </div>
       </div>
       {showCollapseToggle()}
