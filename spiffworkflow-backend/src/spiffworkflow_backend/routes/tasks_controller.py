@@ -416,7 +416,6 @@ def _interstitial_stream(
                         processor.do_engine_steps(execution_strategy_name="run_until_user_message")
                         processor.save()  # Fixme - maybe find a way not to do this on every loop?
                         processor.refresh_waiting_tasks()
-                        ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
 
                     except WorkflowTaskException as wfe:
                         api_error = ApiError.from_workflow_exception(
@@ -424,13 +423,33 @@ def _interstitial_stream(
                         )
                         yield _render_data("error", api_error)
                         return
+
+        # path used by the interstitial page while executing tasks - ie the background processor is not executing them
+        ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
         if execute_tasks and ready_engine_task_count == 0:
             break
-        if not execute_tasks and not is_locked:
-            break
-        db.session.refresh(process_instance)
-        if not execute_tasks and is_locked and process_instance.status not in ["not_started", "waiting"]:
-            break
+
+        if not execute_tasks:
+
+            # path used by the process instance show page to display most recent instructions
+            if not is_locked:
+                break
+
+            # HACK: db.session.refresh doesn't seem to refresh without rollback or commit so use rollback.
+            # we are not executing tasks so there shouldn't be anything to write anyway, so no harm in rollback.
+            # https://stackoverflow.com/a/20361132/6090676
+            # note that the thing changing the data in this case is probably the background worker,
+            # and it is definitely committing its changes, but since we have already queried the data,
+            # our session has stale results without the rollback.
+            db.session.rollback()
+            db.session.refresh(process_instance)
+
+            # if process instance is done or blocked by a human task, then break out
+            if is_locked and process_instance.status not in ["not_started", "waiting"]:
+                break
+
+            # only get a new processor if we are not executing tasks otherwise we are the ones updating it
+            processor = ProcessInstanceProcessor(process_instance)
 
         tasks = get_reportable_tasks()
 
@@ -457,7 +476,7 @@ def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
 
 
 def _dequeued_interstitial_stream(
-    process_instance_id: int, execute_tasks: bool = True, counter=0
+    process_instance_id: int, execute_tasks: bool = True
 ) -> Generator[str | None, str | None, None]:
     try:
         process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
