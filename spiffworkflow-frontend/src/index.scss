@@ -23,20 +23,20 @@ main {
 }
 
 .fixed-width-container {
-  padding-left: 0px;
+  padding-left: 0;
   overflow: visible;
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 99rem) {
   .fixed-width-container {
-    max-width: 1280px;
+    max-width: 99rem;
     padding-right: 0;
   }
 }
 
-@media (min-width: 1056px) {
+@media (min-width: 80rem) {
   .fixed-width-container {
-    padding-left: 180px;
+    padding-left: 10rem;
     padding-right: 2rem;
   }
 }
@@ -48,12 +48,26 @@ li.cds--accordion__item {
   max-width: 100%;
 }
 
-div.show-page, div.markdown, div.markdown-collapsed, div.markdown-collapsable {
-  margin: 0 auto;
+div.markdown {
   max-width: 1000px;
   padding: 15px 0 15px 0;
   overflow: visible;
 }
+
+div.markdown-collapsed {
+  max-height: 200px;
+  overflow: hidden;
+
+  --mask: linear-gradient(to bottom,
+          rgba(0,0,0, 1) 0,   rgba(0,0,0, 1) 40%,
+          rgba(0,0,0, 0) 95%, rgba(0,0,0, 0) 0
+  ) 100% 50% / 100% 100% repeat-x;
+
+  font: 2em/1.6em Arial;
+  -webkit-mask: var(--mask);
+  mask: var(--mask);
+}
+
 
 .cds--data-table-content {
   width: fit-content;

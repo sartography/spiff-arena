@@ -336,7 +336,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <Grid condensed fullWidth>
-        <Column sm={4} md={4} lg={8}>
+        <Column sm={4} md={4} lg={5}>
           <dl>
             <dt>Status:</dt>
             <dd>
@@ -1070,59 +1070,57 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <>
-        <div className="show-page">
-          <ProcessBreadcrumb
-            hotCrumbs={[
-              ['Process Groups', '/admin'],
-              {
-                entityToExplode: processModelId,
-                entityType: 'process-model-id',
-                linkLastItem: true,
-              },
-              [`Process Instance Id: ${processInstance.id}`],
-            ]}
-          />
-          <Stack orientation="horizontal" gap={1}>
-            <h1 className="with-icons">
-              Process Instance Id: {processInstance.id}
-            </h1>
-            {buttonIcons()}
-          </Stack>
-          {getInfoTag()}
-          <ProcessInterstitial
-            processInstanceId={processInstance.id}
-            processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
-            allowRedirect={false}
-            smallSpinner
-            collapsableInstructions
-            executeTasks={false}
-          />
-          <Grid condensed fullWidth>
-            <Column md={6} lg={8} sm={4}>
-              <TaskListTable
-                apiPath="/tasks"
-                additionalParams={`process_instance_id=${processInstance.id}`}
-                tableTitle="Tasks I can complete"
-                tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
-                paginationClassName="with-large-bottom-margin"
-                textToShowIfEmpty="There are no tasks you can complete for this process instance."
-                shouldPaginateTable={false}
-                showProcessModelIdentifier={false}
-                showProcessId={false}
-                showStartedBy={false}
-                showTableDescriptionAsTooltip
-                showDateStarted={false}
-                showLastUpdated={false}
-                hideIfNoTasks
-                canCompleteAllTasks
-              />
-            </Column>
-          </Grid>
-          {taskUpdateDisplayArea()}
-          {processDataDisplayArea()}
-          <br />
-          {viewMostRecentStateComponent()}
-        </div>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            {
+              entityToExplode: processModelId,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
+            [`Process Instance Id: ${processInstance.id}`],
+          ]}
+        />
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Instance Id: {processInstance.id}
+          </h1>
+          {buttonIcons()}
+        </Stack>
+        {getInfoTag()}
+        <ProcessInterstitial
+          processInstanceId={processInstance.id}
+          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
+          allowRedirect={false}
+          smallSpinner
+          collapsableInstructions
+          executeTasks={false}
+        />
+        <Grid condensed fullWidth>
+          <Column md={6} lg={8} sm={4}>
+            <TaskListTable
+              apiPath="/tasks"
+              additionalParams={`process_instance_id=${processInstance.id}`}
+              tableTitle="Tasks I can complete"
+              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+              paginationClassName="with-large-bottom-margin"
+              textToShowIfEmpty="There are no tasks you can complete for this process instance."
+              shouldPaginateTable={false}
+              showProcessModelIdentifier={false}
+              showProcessId={false}
+              showStartedBy={false}
+              showTableDescriptionAsTooltip
+              showDateStarted={false}
+              showLastUpdated={false}
+              hideIfNoTasks
+              canCompleteAllTasks
+            />
+          </Column>
+        </Grid>
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
+        <br />
+        {viewMostRecentStateComponent()}
         {getTabs()}
       </>
     );
