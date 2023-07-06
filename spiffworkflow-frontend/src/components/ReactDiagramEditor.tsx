@@ -431,10 +431,17 @@ export default function ReactDiagramEditor({
       // actively editing a decision table
       if ((modeler as any).constructor.name === 'Modeler') {
         canvas.zoom(FitViewport, 'auto');
-      }
-
-      if ((modeler as any).constructor.name === 'Viewer') {
+        console.log('Zooming the viewport for modeler');
+      } else if ((modeler as any).constructor.name === 'Viewer') {
         canvas.zoom(FitViewport, 'auto');
+        console.log('Zooming the viewport for the viewer');
+      } else {
+        console.log(
+          'Not zooming the viewport for ',
+          (modeler as any).constructor.name,
+          modeler,
+          modeler.constructor
+        );
       }
 
       // highlighting a field
@@ -497,6 +504,9 @@ export default function ReactDiagramEditor({
               ref.element.set(ref.property, elem);
             });
             diagramModelerToUse.importDefinitions(result.rootElement);
+            console.log(
+              'Zooming the viewport for bpmn at the end of displayDiagram'
+            );
             diagramModelerToUse.get('canvas').zoom(FitViewport, 'auto');
           });
       } else {
