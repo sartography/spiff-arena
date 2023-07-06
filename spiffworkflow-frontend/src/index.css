@@ -199,7 +199,7 @@ dt {
 
 .diagram-editor-canvas {
   border:1px solid #000000;
-  height:70vh;
+  height:78vh;
   width:90vw;
   margin: 0 auto;
 }
@@ -298,7 +298,6 @@ dt {
 .markdown table {
   color: #333;
   background: white;
-  border: 1px solid grey;
   font-size: 12pt;
   border-collapse: collapse;
 }
@@ -395,6 +394,13 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 td.actions-cell {
   width: 1em;
 }
+
+.process-instance-list-table {
+  margin: 0;
+  padding: 0;
+  width: fit-content;
+}
+
 
 .process-instance-table-header {
   margin-bottom: 1em;
