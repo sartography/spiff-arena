@@ -15,3 +15,65 @@
 @use '@carbon/colors';
 // @use '@carbon/react/scss/colors';
 @use '@carbon/react/scss/themes';
+
+// Not certain the best location for this, but here are some global
+// tweaks the markdown styles.
+
+main {
+}
+
+.fixed-width-container {
+  padding-left: 0px;
+  overflow: visible;
+}
+
+@media (min-width: 1400px) {
+  .fixed-width-container {
+    max-width: 1280px;
+    padding-right: 0;
+  }
+}
+
+@media (min-width: 1056px) {
+  .fixed-width-container {
+    padding-left: 180px;
+    padding-right: 2rem;
+  }
+}
+
+p, li, h1, h2, h3, h4, h5, h6, blockquote {
+  max-width: 640px;
+}
+li.cds--accordion__item {
+  max-width: 100%;
+}
+
+div.show-page, div.markdown, div.markdown-collapsed, div.markdown-collapsable {
+  margin: 0 auto;
+  max-width: 1000px;
+  padding: 15px 0 15px 0;
+  overflow: visible;
+}
+
+.cds--data-table-content {
+  width: fit-content;
+  min-width: 100%;
+  overflow-x: visible;
+}
+
+.wmde-markdown table {
+  width: fit-content;
+}
+
+.wmde-markdown ol {
+  list-style: decimal;
+}
+
+.wmde-markdown ul {
+  list-style: disc;
+}
+
+div.cds--tag svg {
+  vertical-align: middle;
+  display: inline-block;
+}

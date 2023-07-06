@@ -48,6 +48,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance:model1")
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
         self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
 
     def test_user_can_be_added_to_human_task_on_first_login(
         self,
@@ -128,6 +129,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model:*",
                     "delete",
                 ),
+                ("/process-instances/for-me/some-process-group:some-process-model:*", "read"),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model:*", "create"),
@@ -212,6 +214,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model/*",
                     "delete",
                 ),
+                ("/process-instances/for-me/some-process-group:some-process-model/*", "read"),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model/*", "create"),
@@ -285,7 +288,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/reports/*", "update"),
                 ("/process-models", "read"),
                 ("/processes", "read"),
-                ("/processes/callers", "read"),
+                ("/processes/callers/*", "read"),
                 ("/service-tasks", "read"),
                 ("/tasks/*", "create"),
                 ("/tasks/*", "delete"),

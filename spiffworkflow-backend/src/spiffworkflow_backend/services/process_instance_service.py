@@ -200,7 +200,7 @@ class ProcessInstanceService:
         )
         execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
         for process_instance in records:
-            current_app.logger.info(f"Processing process_instance {process_instance.id}")
+            current_app.logger.info(f"Processor {status_value}: Processing process_instance {process_instance.id}")
             try:
                 cls.run_process_instance_with_processor(
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name

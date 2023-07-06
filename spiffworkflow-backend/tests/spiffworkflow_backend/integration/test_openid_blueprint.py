@@ -61,7 +61,7 @@ class TestFlaskOpenId(BaseTest):
             "redirect_url": "http://localhost:7000/v1.0/login_return",
         }
         response = client.post("/openid/token", data=data, headers=headers)
-        assert response
+        assert response.status_code == 200
         assert response.is_json
         assert "access_token" in response.json
         assert "id_token" in response.json

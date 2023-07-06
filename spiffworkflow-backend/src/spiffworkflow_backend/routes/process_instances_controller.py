@@ -639,7 +639,16 @@ def send_bpmn_event(
 
 def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
     processor = ProcessInstanceProcessor(process_instance)
-    processor.send_bpmn_event(body)
+    try:
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.send_bpmn_event(body)
+    except (
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        raise e
+
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
     return make_response(jsonify(task), 200)
 
