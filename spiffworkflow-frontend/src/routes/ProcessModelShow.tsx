@@ -616,7 +616,7 @@ export default function ProcessModelShow() {
 
   if (processModel) {
     return (
-      <div className="show-page">
+      <>
         {fileUploadModal()}
         {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
@@ -718,7 +718,7 @@ export default function ProcessModelShow() {
           />
           <span data-qa="process-model-show-permissions-loaded" />
         </Can>
-      </div>
+      </>
     );
   }
   return null;
