@@ -92,6 +92,8 @@ type OwnProps = {
   activeUserElement?: React.ReactElement;
 };
 
+const FitViewport = 'fit-viewport';
+
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
   processModelId,
@@ -428,11 +430,11 @@ export default function ReactDiagramEditor({
       // a Modeler and not an Editor which is what it will be when we are
       // actively editing a decision table
       if ((modeler as any).constructor.name === 'Modeler') {
-        canvas.zoom('fit-viewport');
+        canvas.zoom(FitViewport, 'auto');
       }
 
       if ((modeler as any).constructor.name === 'Viewer') {
-        canvas.zoom('fit-viewport');
+        canvas.zoom(FitViewport, 'auto');
       }
 
       // highlighting a field
@@ -495,7 +497,7 @@ export default function ReactDiagramEditor({
               ref.element.set(ref.property, elem);
             });
             diagramModelerToUse.importDefinitions(result.rootElement);
-            diagramModelerToUse.get('canvas').zoom('fit-viewport');
+            diagramModelerToUse.get('canvas').zoom(FitViewport, 'auto');
           });
       } else {
         diagramModelerToUse.importXML(diagramXMLToDisplay);

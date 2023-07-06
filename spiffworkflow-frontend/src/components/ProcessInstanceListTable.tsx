@@ -1778,18 +1778,13 @@ export default function ProcessInstanceListTable({
   }
 
   return (
-    <>
+    <div className="process-instance-list-table">
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
       <Grid fullWidth condensed>
         {tableTitleLine()}
-        <Column
-          sm={{ span: 4 }}
-          md={{ span: 8 }}
-          lg={{ span: 16 }}
-          style={{ maxWidth: 'fit-content' }}
-        >
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters
             filterOptions={filterOptions}
             showFilterOptions={showFilterOptions}
@@ -1798,15 +1793,10 @@ export default function ProcessInstanceListTable({
             filtersEnabled={filtersEnabled}
           />
         </Column>
-        <Column
-          sm={{ span: 4 }}
-          md={{ span: 8 }}
-          lg={{ span: 16 }}
-          style={{ maxWidth: 'fit-content', margin: 'auto' }}
-        >
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           {resultsTable}
         </Column>
       </Grid>
-    </>
+    </div>
   );
 }

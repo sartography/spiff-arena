@@ -47,7 +47,7 @@ export default function HomePageRoutes() {
   };
 
   return (
-    <>
+    <div className="fixed-width-container">
       {renderTabs()}
       <Routes>
         <Route path="/" element={<InProgressInstances />} />
@@ -57,6 +57,6 @@ export default function HomePageRoutes() {
         <Route path="completed-instances" element={<CompletedInstances />} />
         <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>
-    </>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
-import time
 import uuid
 from collections.abc import Generator
 from sys import exc_info
@@ -53,8 +52,8 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskNotFou
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService, \
-    ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -430,7 +429,6 @@ def _interstitial_stream(
             break
 
         if not execute_tasks:
-
             # path used by the process instance show page to display most recent instructions
             if not is_locked:
                 break
