@@ -196,7 +196,7 @@ export default function ProcessModelEditDiagram() {
         'file_type'
       )}`;
       navigate(
-        `/admin/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`
+        `/editor/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`
       );
     }
   };
@@ -909,7 +909,7 @@ export default function ProcessModelEditDiagram() {
       processReference: ProcessReference
     ) => {
       const path = generatePath(
-        '/admin/process-models/:process_model_path/files/:file_name',
+        '/editor/process-models/:process_model_path/files/:file_name',
         {
           process_model_path: modifyProcessIdentifierForPathParam(
             processReference.process_model_id
@@ -962,7 +962,7 @@ export default function ProcessModelEditDiagram() {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
       const path = generatePath(
-        '/admin/process-models/:process_model_id/files/:file_name',
+        '/editor/process-models/:process_model_id/files/:file_name',
         {
           process_model_id: params.process_model_id,
           file_name: file.name,
