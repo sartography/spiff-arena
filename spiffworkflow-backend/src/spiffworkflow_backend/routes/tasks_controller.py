@@ -1,6 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
+import time
 import uuid
 from collections.abc import Generator
 from sys import exc_info
@@ -372,6 +373,7 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
 def _interstitial_stream(
     process_instance: ProcessInstanceModel, execute_tasks: bool = True, is_locked: bool = False
 ) -> Generator[str, str | None, None]:
+
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
@@ -441,13 +443,12 @@ def _interstitial_stream(
             # our session has stale results without the rollback.
             db.session.rollback()
             db.session.refresh(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
 
             # if process instance is done or blocked by a human task, then break out
             if is_locked and process_instance.status not in ["not_started", "waiting"]:
                 break
 
-            # only get a new processor if we are not executing tasks otherwise we are the ones updating it
-            processor = ProcessInstanceProcessor(process_instance)
 
         tasks = get_reportable_tasks()
 
@@ -481,6 +482,7 @@ def _dequeued_interstitial_stream(
 
         # TODO: currently this just redirects back to home if the process has not been started
         # need something better to show?
+        time.sleep(2)
         if execute_tasks:
             try:
                 if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
