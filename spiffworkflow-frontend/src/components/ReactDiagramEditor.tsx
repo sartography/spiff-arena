@@ -425,7 +425,7 @@ export default function ReactDiagramEditor({
       }
 
       const canvas = (modeler as any).get('canvas');
-      canvas.zoom(FitViewport, 'auto');  // Concerned this might bug out somehow.
+      canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
 
       // highlighting a field
       // Option 3 at:
