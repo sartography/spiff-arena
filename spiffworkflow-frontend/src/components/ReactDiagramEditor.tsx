@@ -429,20 +429,7 @@ export default function ReactDiagramEditor({
       // only get the canvas if the dmn active viewer is actually
       // a Modeler and not an Editor which is what it will be when we are
       // actively editing a decision table
-      if ((modeler as any).constructor.name === 'Modeler') {
-        canvas.zoom(FitViewport, 'auto');
-        console.log('Zooming the viewport for modeler');
-      } else if ((modeler as any).constructor.name === 'Viewer') {
-        canvas.zoom(FitViewport, 'auto');
-        console.log('Zooming the viewport for the viewer');
-      } else {
-        console.log(
-          'Not zooming the viewport for ',
-          (modeler as any).constructor.name,
-          modeler,
-          (modeler as any).constructor.constructor
-        );
-      }
+      canvas.zoom(FitViewport, 'auto');
 
       // highlighting a field
       // Option 3 at:
