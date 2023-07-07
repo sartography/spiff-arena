@@ -1195,7 +1195,7 @@ export default function ProcessInstanceListTable({
         );
       });
       return (
-        <Grid fullWidth>
+        <Grid narrow fullWidth className="filter-buttons">
           {tags}
           <Column md={1} lg={1} sm={1}>
             <Button

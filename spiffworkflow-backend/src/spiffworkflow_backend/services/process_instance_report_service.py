@@ -259,7 +259,9 @@ class ProcessInstanceReportService:
         return results
 
     @classmethod
-    def add_human_task_fields(cls, process_instance_dicts: list[dict]) -> list[dict]:
+    def add_human_task_fields(
+        cls, process_instance_dicts: list[dict], restrict_human_tasks_to_user: UserModel | None = None
+    ) -> list[dict]:
         fields_to_return = [
             "task_id",
             "task_title",
@@ -279,6 +281,10 @@ class ProcessInstanceReportService:
                 .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
                 .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
             )
+            if restrict_human_tasks_to_user is not None:
+                human_task_query = human_task_query.filter(
+                    HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id
+                )
             potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
             human_task = (
                 human_task_query.add_columns(
@@ -482,6 +488,7 @@ class ProcessInstanceReportService:
         # Always join that hot user table for good performance at serialization time.
         process_instance_query = process_instance_query.options(selectinload(ProcessInstanceModel.process_initiator))
         filters = report_metadata["filter_by"]
+        restrict_human_tasks_to_user = None
 
         for value in cls.check_filter_value(filters, "process_model_identifier"):
             process_model = ProcessModelService.get_process_model(
@@ -594,6 +601,7 @@ class ProcessInstanceReportService:
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
             human_task_already_joined = True
+            restrict_human_tasks_to_user = user
 
         if user_group_identifier is not None:
             process_instance_query = cls.filter_by_user_group_identifier(
@@ -662,7 +670,7 @@ class ProcessInstanceReportService:
 
         for value in cls.check_filter_value(filters, "with_oldest_open_task"):
             if value is True:
-                results = cls.add_human_task_fields(results)
+                results = cls.add_human_task_fields(results, restrict_human_tasks_to_user=restrict_human_tasks_to_user)
 
         report_metadata["filter_by"] = filters
         response_json = {
