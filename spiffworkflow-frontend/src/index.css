@@ -180,17 +180,23 @@ h1.with-icons {
 }
 
 dl {
-  display: grid;
-  line-height: 1.2em;
-  grid-template-columns: 25% 75%;
+  display: block;
+  grid-template-columns: 35% 65%;
+  font-size: .8rem;
+  line-height: 1.2rem;
 }
 
-dt {
+dl dt {
+  display: inline-block;
   font-weight: 600;
-  font-size: 14px;
-  line-height: 18px;
+  min-width: 5rem;
   color: #161616;
+}
 
+dl dd {
+  display: inline-block;
+  padding-left: 1rem;
+  color: #525252;
 }
 
 .smaller-text {
@@ -398,9 +404,11 @@ td.actions-cell {
 .process-instance-list-table {
   margin: 0;
   padding: 0;
-  width: fit-content;
 }
 
+.process-instance-list-table button.button-tag {
+  max-width: calc(100% - 1rem);
+}
 
 .process-instance-table-header {
   margin-bottom: 1em;
