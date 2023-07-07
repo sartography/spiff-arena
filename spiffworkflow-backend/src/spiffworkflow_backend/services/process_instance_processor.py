@@ -1095,6 +1095,7 @@ class ProcessInstanceProcessor:
         event_type = ProcessInstanceEventType.task_skipped.value
         start_time = time.time()
 
+        # manual actually means any human task
         if spiff_task.task_spec.manual:
             # Executing or not executing a human task results in the same state.
             current_app.logger.info(

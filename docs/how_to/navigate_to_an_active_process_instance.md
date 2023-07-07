@@ -48,11 +48,11 @@ If the desired task or process you would like to view is not found in the parent
 
 A pop-up menu will appear. Select ‘View Call Activity Diagram’ to navigate to the sub-process.
 
-![Untitled](images/call_activity_popup.png)
-
+```{image} images/call_activity_popup.png
+```
  
 ## **Outcome**
 
 | ✅ Success | 🚫 Error |
 | --- | --- |
-| You will be redirected to the corresponding diagram. Repeat the above steps until the highlighted activity becomes anything other than a call activity or sub task, which means you will find yourself in the lowest active process.|None 
+| You will be redirected to the corresponding diagram. Repeat the above steps until the highlighted activity becomes anything other than a call activity or sub task, which means you will find yourself in the lowest active process.|None

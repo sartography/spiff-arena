@@ -21,7 +21,7 @@ This enables a smooth continuation of the process from the initial user's perspe
 
 In order to locate the active Process Instance, have a look at these pages to find an active instance to suspend.
 
-[How to find an Instance assigned to someone else](https://www.notion.so/How-to-find-an-Instance-assigned-to-someone-else-59e45e944655411581d780cf7a010230?pvs=21) 
+[How to find an Instance assigned to someone else](https://github.com/sartography/spiff-arena/blob/ec9509339470e876c57766e45eedc9e40b7b0094/docs/how_to/find_an_Instance_assigned_to_someone_else.md)
 [How to find an Instance assigned to myself](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/find_an_Instance_assigned_to_myself.md)
 
 ### Step 2: Navigate to the active User Task
