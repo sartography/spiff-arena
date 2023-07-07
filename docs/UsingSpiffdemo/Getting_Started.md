@@ -1,22 +1,22 @@
-# Using Spiffarena
-Spiffarena is providing users a platform to explore workflow concepts through a collection of top-level examples, diagrams, and workflows. Users can interact with pre-built models, make modifications, and visualize process flows.
+# Using SpiffArena
+Sartography (the company developing SpiffWorkflow and SpiffArena) is providing users a platform to explore workflow concepts through a collection of examples, diagrams, and workflows. Users can interact with pre-built models, make modifications, and visualize process flows.
 
-## How to Login to Spiffarena
+## How to Login to SpiffArena
 
 ```{image} ./Images/Login.png
-:alt: fishy
+:alt: Login Screen
 :class: bg-primary mb-1
 :width: 230px
 :align: right 
 ``` 
-To begin your journey with Spiffarena, open your web browser and navigate to the spiffarena website (Currently Spiffdemo.org).  
+To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (Currently spiffdemo.org).  
 
 On the login screen, you will find the option to log in using Single Sign-On.  Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.  
 
 
 ```{admonition} Note: 
 Stay tuned as we expand our sign-on options beyond Gmail.
-More ways to access Spiffarena are coming your way!
+More ways to access SpiffArena are coming your way!
 ```
 ## Exploring the Examples
 
@@ -69,7 +69,7 @@ General
 -   Name field is usually empty unless user wants to provide it.
 It serves as a label or identifier for the process.
     
--   The ID is automatically populated by the system (default behavior) however it can be updated by the user, but it must remain unique within the other processes.
+-   The ID is automatically populated by the system (default behavior) however it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
     
 -   By default, all processes are executable, which means the engine can run the process.
     
