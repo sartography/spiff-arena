@@ -441,13 +441,12 @@ def _interstitial_stream(
             # our session has stale results without the rollback.
             db.session.rollback()
             db.session.refresh(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
 
             # if process instance is done or blocked by a human task, then break out
             if is_locked and process_instance.status not in ["not_started", "waiting"]:
                 break
 
-            # only get a new processor if we are not executing tasks otherwise we are the ones updating it
-            processor = ProcessInstanceProcessor(process_instance)
 
         tasks = get_reportable_tasks()
 
