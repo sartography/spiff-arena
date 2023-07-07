@@ -24,7 +24,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService, HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -524,6 +524,8 @@ class ProcessInstanceService:
                 processor.process_instance_model.id, str(spiff_task.id), g.user
             )
             can_complete = True
+        except HumanTaskAlreadyCompletedError:
+            can_complete = False
         except HumanTaskNotFoundError:
             can_complete = False
         except UserDoesNotHaveAccessToTaskError:

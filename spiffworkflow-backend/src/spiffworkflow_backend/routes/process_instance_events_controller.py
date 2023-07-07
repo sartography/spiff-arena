@@ -138,4 +138,16 @@ def error_detail_show(
                 status_code=400,
             )
         )
-    return make_response(jsonify(process_instance_event.error_details[0]), 200)
+    if len(process_instance_event.error_details) < 1:
+        raise (
+            ApiError(
+                error_code="process_instance_event_error_details_not_found",
+                message=f"Error details for process instance event could not be found: {process_instance_event_id}. "
+                "Perhaps no exception was available."
+                ,
+                status_code=400,
+            )
+        )
+
+    error_details = process_instance_event.error_details[0]
+    return make_response(jsonify(error_details), 200)

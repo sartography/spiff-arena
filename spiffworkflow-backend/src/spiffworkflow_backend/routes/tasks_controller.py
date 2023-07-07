@@ -542,7 +542,7 @@ def task_save_draft(
             error_code="process_instance_not_runnable",
             message=(
                 f"Process Instance ({process_instance.id}) has status "
-                f"{process_instance.status} which does not allow tasks to be submitted."
+                f"{process_instance.status} which does not allow draft data to be saved."
             ),
             status_code=400,
         )
