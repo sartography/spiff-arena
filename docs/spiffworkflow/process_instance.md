@@ -7,7 +7,7 @@ A process instance refers to a specific occurrence. Think of a process instance 
 Each Process Instance would have started at the starting point and moved on to subsequent steps. The data it collects along its path is unique to that instance. You therefor have to know how to locate a process instance. 
 
 Follow the following steps to understand how to locate a process instance:
-[How to find an Instance assigned to someone else](https://www.notion.so/How-to-find-an-Instance-assigned-to-someone-else-59e45e944655411581d780cf7a010230?pvs=21) 
+[How to find an Instance assigned to someone else](/how_to/find_an_Instance_assigned_to_someone_else)
 [How to find an Instance assigned to myself](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/find_an_Instance_assigned_to_myself.md)
 
 ## ℹ Information associated with an instance
