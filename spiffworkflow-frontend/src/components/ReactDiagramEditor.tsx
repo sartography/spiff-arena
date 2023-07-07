@@ -491,9 +491,6 @@ export default function ReactDiagramEditor({
               ref.element.set(ref.property, elem);
             });
             diagramModelerToUse.importDefinitions(result.rootElement);
-            console.log(
-              'Zooming the viewport for bpmn at the end of displayDiagram'
-            );
             diagramModelerToUse.get('canvas').zoom(FitViewport, 'auto');
           });
       } else {
