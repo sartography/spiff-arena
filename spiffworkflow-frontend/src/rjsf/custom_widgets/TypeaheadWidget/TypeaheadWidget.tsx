@@ -114,7 +114,15 @@ export default function TypeaheadWidget({
       onInputChange={typeaheadSearch}
       onChange={(event: any) => {
         setSelectedItem(event.selectedItem);
-        onChange(JSON.stringify(event.selectedItem));
+        let valueToUse = event.selectedItem;
+
+        // if the value is not truthy then do not stringify it
+        // otherwise things like null becomes "null"
+        if (valueToUse) {
+          valueToUse = JSON.stringify(valueToUse);
+        }
+
+        onChange(valueToUse);
       }}
       id={id}
       items={items}
