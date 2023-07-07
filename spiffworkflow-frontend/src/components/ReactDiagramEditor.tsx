@@ -425,11 +425,7 @@ export default function ReactDiagramEditor({
       }
 
       const canvas = (modeler as any).get('canvas');
-
-      // only get the canvas if the dmn active viewer is actually
-      // a Modeler and not an Editor which is what it will be when we are
-      // actively editing a decision table
-      canvas.zoom(FitViewport, 'auto');
+      canvas.zoom(FitViewport, 'auto');  // Concerned this might bug out somehow.
 
       // highlighting a field
       // Option 3 at:
