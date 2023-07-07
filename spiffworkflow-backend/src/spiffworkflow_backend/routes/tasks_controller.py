@@ -447,7 +447,6 @@ def _interstitial_stream(
             if is_locked and process_instance.status not in ["not_started", "waiting"]:
                 break
 
-
         tasks = get_reportable_tasks()
 
     spiff_task = processor.next_task()
