@@ -29,4 +29,4 @@
 
 | ✅ Success | 🚫 Error |
 | --- | --- |
-| The system will then display the parent process<br>that contains the active instance searched for.<br>[How to view process variables](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/view_process_variables.md) | Process instance Id does not exist![Image description](images/process_instance_not_found.png) Repeat Step 2 with correct Id|
+| The system will then display the parent process that contains the active instance searched for. [How to view process variables](https://github.com/sartography/spiff-arena/blob/main/docs/how_to/view_process_variables.md) | Process instance Id does not exist![Image description](images/process_instance_not_found.png) Repeat Step 2 with correct Id|
