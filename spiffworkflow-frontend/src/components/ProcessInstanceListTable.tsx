@@ -206,7 +206,8 @@ export default function ProcessInstanceListTable({
 
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
-  const [withOldestOpenTask, setWithOldestOpenTask] = useState<boolean>(false);
+  const [withOldestOpenTask, setWithOldestOpenTask] =
+    useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
     null
@@ -433,6 +434,14 @@ export default function ProcessInstanceListTable({
           if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
             reportMetadataBodyToUse.filter_by.push(arf);
           }
+        });
+      }
+
+      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
+      if (showActionsColumn) {
+        reportMetadataBodyToUse.filter_by.push({
+          field_name: 'with_oldest_open_task',
+          field_value: true,
         });
       }
 
