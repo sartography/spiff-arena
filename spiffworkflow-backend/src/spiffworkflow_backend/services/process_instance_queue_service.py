@@ -115,11 +115,14 @@ class ProcessInstanceQueueService:
         status_value: str,
         locked_by: str | None,
         run_at_in_seconds_threshold: int,
+        min_age_in_seconds: int = 0,
     ) -> list[ProcessInstanceQueueModel]:
         return (
             db.session.query(ProcessInstanceQueueModel)
             .filter(
                 ProcessInstanceQueueModel.status == status_value,
+                ProcessInstanceQueueModel.updated_at_in_seconds <= round(time.time()) - min_age_in_seconds,
+                # At least a minute old.
                 ProcessInstanceQueueModel.locked_by == locked_by,
                 ProcessInstanceQueueModel.run_at_in_seconds <= run_at_in_seconds_threshold,
             )
@@ -131,8 +134,9 @@ class ProcessInstanceQueueService:
         cls,
         status_value: str,
         run_at_in_seconds_threshold: int,
+        min_age_in_seconds: int = 0,
     ) -> list[int]:
-        queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold)
+        queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold, min_age_in_seconds)
         ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status
 
