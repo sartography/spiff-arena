@@ -474,6 +474,7 @@ export default function ProcessInstanceListTable({
       setProcessInstancesFromResult,
       stopRefreshing,
       systemReportOptions,
+      showActionsColumn,
       clearFilters,
     ]
   );
