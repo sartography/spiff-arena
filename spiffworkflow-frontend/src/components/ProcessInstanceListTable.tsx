@@ -1648,6 +1648,18 @@ export default function ProcessInstanceListTable({
           `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
         );
       };
+      let variantFromMetadata = 'all';
+      if (reportMetadata) {
+        reportMetadata.filter_by.forEach((filter: any) => {
+          if (
+            filter.field_name === 'with_relation_to_me' &&
+            filter.field_value
+          ) {
+            variantFromMetadata = 'for-me';
+          }
+        });
+      }
+
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
@@ -1655,6 +1667,7 @@ export default function ProcessInstanceListTable({
           key={processInstance.id}
           onClick={navigateToProcessInstance}
           onKeyDown={navigateToProcessInstance}
+          className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
         </tr>
