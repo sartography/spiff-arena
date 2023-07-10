@@ -150,7 +150,7 @@ export default function ProcessInterstitial({
     if (['terminated', 'suspended'].includes(pi.status)) {
       return inlineMessage(
         `Process ${pi.status}`,
-        'This process instance was {pi.status} by an administrator. Please get in touch with them for more information.',
+        `This process instance was ${pi.status} by an administrator. Please get in touch with them for more information.`,
         'warning'
       );
     }
