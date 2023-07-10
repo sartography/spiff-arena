@@ -78,7 +78,9 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
+from spiffworkflow_backend.services.workflow_execution_service import SkipOneExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
@@ -1093,6 +1095,9 @@ class ProcessInstanceProcessor:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
+        if execute:
+            event_type = ProcessInstanceEventType.task_executed_manually.value
+
         start_time = time.time()
 
         # manual actually means any human task
@@ -1112,7 +1117,15 @@ class ProcessInstanceProcessor:
             self.do_engine_steps(save=True, execution_strategy_name="one_at_a_time")
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
-            self.do_engine_steps(save=True, execution_strategy_name="skip_one")
+            task_model_delegate = TaskModelSavingDelegate(
+                serializer=self._serializer,
+                process_instance=self.process_instance_model,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            )
+            execution_strategy = SkipOneExecutionStrategy(
+                task_model_delegate, self.lazy_load_subprocess_specs, {"spiff_task": spiff_task}
+            )
+            self.do_engine_steps(save=True, execution_strategy=execution_strategy)
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
@@ -1359,18 +1372,20 @@ class ProcessInstanceProcessor:
         exit_at: None = None,
         save: bool = False,
         execution_strategy_name: str | None = None,
+        execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
         with ProcessInstanceQueueService.dequeued(self.process_instance_model):
             # TODO: ideally we just lock in the execution service, but not sure
             # about _add_bpmn_process_definitions and if that needs to happen in
             # the same lock like it does on main
-            self._do_engine_steps(exit_at, save, execution_strategy_name)
+            self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
 
     def _do_engine_steps(
         self,
         exit_at: None = None,
         save: bool = False,
         execution_strategy_name: str | None = None,
+        execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
         self._add_bpmn_process_definitions()
 
@@ -1380,16 +1395,17 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
 
-        if execution_strategy_name is None:
-            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
-        if execution_strategy_name is None:
-            raise ExecutionStrategyNotConfiguredError(
-                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+        if execution_strategy is None:
+            if execution_strategy_name is None:
+                execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
+            if execution_strategy_name is None:
+                raise ExecutionStrategyNotConfiguredError(
+                    "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+                )
+            execution_strategy = execution_strategy_named(
+                execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
             )
 
-        execution_strategy = execution_strategy_named(
-            execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
-        )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,

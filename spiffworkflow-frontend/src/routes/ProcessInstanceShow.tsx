@@ -468,7 +468,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const initializeTaskDataToDisplay = (task: Task | null) => {
     if (
       task &&
-      (task.state === 'COMPLETED' || task.state === 'READY') &&
+      (task.state === 'COMPLETED' ||
+        task.state === 'ERROR' ||
+        task.state === 'READY') &&
       ability.can('GET', targetUris.processInstanceTaskDataPath)
     ) {
       setShowTaskDataLoading(true);
@@ -586,7 +588,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       (task.state === 'WAITING' &&
         subprocessTypes.filter((t) => t === task.typename).length > 0) ||
-      task.state === 'READY'
+      task.state === 'READY' ||
+      (processInstance &&
+        processInstance.status === 'suspended' &&
+        task.state === 'ERROR')
     );
   };
 
