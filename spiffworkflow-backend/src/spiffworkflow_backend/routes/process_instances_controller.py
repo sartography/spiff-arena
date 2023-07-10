@@ -449,8 +449,7 @@ def process_instance_task_list(
         bpmn_process_ids = [p.id for p in bpmn_processes]
 
     task_model_query = db.session.query(TaskModel).filter(
-        TaskModel.process_instance_id == process_instance.id,
-        TaskModel.state.not_in(["LIKELY", "MAYBE"])
+        TaskModel.process_instance_id == process_instance.id, TaskModel.state.not_in(["LIKELY", "MAYBE"])  # type: ignore
     )
 
     to_task_model: TaskModel | None = None

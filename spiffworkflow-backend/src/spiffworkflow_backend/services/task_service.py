@@ -235,7 +235,7 @@ class TaskService:
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
-        start_task = spiff_workflow.get_tasks_from_spec_name('Start')
+        start_task = spiff_workflow.get_tasks_from_spec_name("Start")
         if len(start_task) > 0:
             new_properties_json["root"] = str(start_task[0].id)
         bpmn_process.properties_json = new_properties_json
