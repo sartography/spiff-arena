@@ -175,11 +175,7 @@ code {
 }
 
 .cds--breadcrumb {
-<<<<<<< HEAD
   margin-bottom: 2rem;
-=======
-  margin-bottom: 1em;
->>>>>>> origin/main
 }
 
 .process-description {
@@ -190,13 +186,6 @@ h1.with-icons {
   margin-top: 5px;
 }
 
-<<<<<<< HEAD
-.with-icons {
-  margin-top: 14px;
-}
-
-.grid-list-title {
-=======
 dl {
   display: block;
   grid-template-columns: 35% 65%;
@@ -206,7 +195,6 @@ dl {
 
 dl dt {
   display: inline-block;
->>>>>>> origin/main
   font-weight: 600;
   min-width: 5rem;
   color: #161616;
