@@ -450,6 +450,7 @@ def process_instance_task_list(
 
     task_model_query = db.session.query(TaskModel).filter(
         TaskModel.process_instance_id == process_instance.id,
+        TaskModel.state.not_in(["LIKELY", "MAYBE"])
     )
 
     to_task_model: TaskModel | None = None
