@@ -61,10 +61,10 @@ Cypress.Commands.add('login', (username, password) => {
 });
 
 Cypress.Commands.add('logout', (_selector, ..._args) => {
+  cy.wait(2000);
   // click the profile thingy in the top right
   cy.get('.user-profile-toggletip-button').click();
 
-  cy.wait(2000);
   cy.getBySel('logout-button').click();
   if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     // otherwise we can click logout, quickly load the next page, and the javascript
