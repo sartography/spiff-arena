@@ -15,6 +15,10 @@ SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE = False
 
 # NOTE: set this here since nox shoves tests and src code to
 # different places and this allows us to know exactly where we are at the start
+worker_id = environ.get("PYTEST_XDIST_WORKER")
+parallel_test_suffix = ""
+if worker_id is not None:
+    parallel_test_suffix = f"_{worker_id}"
 SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR = os.path.join(
     os.path.dirname(__file__),
     "..",
@@ -23,5 +27,5 @@ SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR = os.path.join(
     "tests",
     "spiffworkflow_backend",
     "files",
-    "bpmn_specs",
+    f"bpmn_specs{parallel_test_suffix}",
 )

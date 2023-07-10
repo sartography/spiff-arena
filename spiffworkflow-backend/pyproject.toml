@@ -31,6 +31,7 @@ flask-simple-crypt = "^0.3.3"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
+# SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
 mysql-connector-python = "*"
@@ -82,6 +83,7 @@ prometheus-flask-exporter = "^0.22.3"
 sqlalchemy = "^2.0.7"
 marshmallow-sqlalchemy = "^0.29.0"
 spiff-element-units = "^0.3.0"
+pytest-xdist = "^3.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

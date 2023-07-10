@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import {
   Send,
+  ButtonSet,
   Checkmark,
   Edit,
   InProgress,
@@ -27,15 +28,18 @@ import {
   Grid,
   Column,
   Button,
-  ButtonSet,
   Tag,
   Modal,
   Dropdown,
   Stack,
   Loading,
+  Tabs,
+  Tab,
+  TabList,
+  TabPanels,
+  TabPanel,
   // @ts-ignore
 } from '@carbon/react';
-import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -53,7 +57,6 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
-  ProcessInstanceMetadata,
   Task,
   TaskDefinitionPropertiesJson,
   User,
@@ -64,6 +67,8 @@ import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import ProcessInterstitial from '../components/ProcessInterstitial';
 import UserSearch from '../components/UserSearch';
+import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
+import MessageInstanceList from '../components/MessageInstanceList';
 
 type OwnProps = {
   variant: string;
@@ -95,8 +100,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventToSend, setEventToSend] = useState<any>({});
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
-    useState<boolean>(false);
-  const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
     useState<boolean>(false);
 
   const [addingPotentialOwners, setAddingPotentialOwners] =
@@ -143,11 +146,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  let processInstanceLogListPageBaseUrl = `/admin/logs/for-me/${params.process_model_id}/${params.process_instance_id}`;
   const processInstanceShowPageBaseUrlAllVariant = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
-    processInstanceLogListPageBaseUrl = `/admin/logs/${params.process_model_id}/${params.process_instance_id}`;
   }
 
   const handleAddErrorInUseEffect = useCallback((value: ErrorForDisplay) => {
@@ -331,141 +332,90 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       lastUpdatedTime = processInstance.end_in_seconds;
     }
     const lastUpdatedTimeTag = (
-      <Grid condensed fullWidth>
-        <Column sm={1} md={1} lg={2} className="grid-list-title">
-          {lastUpdatedTimeLabel}:{' '}
-        </Column>
-        <Column sm={3} md={3} lg={3} className="grid-date">
+      <dl>
+        <dt>{lastUpdatedTimeLabel}:</dt>
+        <dd>
           {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
-        </Column>
-      </Grid>
+        </dd>
+      </dl>
     );
 
     let statusIcon = <InProgress />;
+    let statusColor = 'gray';
     if (processInstance.status === 'suspended') {
       statusIcon = <PauseOutline />;
     } else if (processInstance.status === 'complete') {
       statusIcon = <Checkmark />;
+      statusColor = 'green';
     } else if (processInstance.status === 'terminated') {
       statusIcon = <StopOutline />;
     } else if (processInstance.status === 'error') {
       statusIcon = <Warning />;
+      statusColor = 'red';
     }
 
     return (
-      <>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Started By:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            {processInstance.process_initiator_username}
-          </Column>
-        </Grid>
-        {processInstance.process_model_with_diagram_identifier ? (
-          <Grid condensed fullWidth>
-            <Column sm={1} md={1} lg={2} className="grid-list-title">
-              Current Diagram:{' '}
-            </Column>
-            <Column sm={4} md={6} lg={8} className="grid-date">
-              <Link
-                data-qa="go-to-current-diagram-process-model"
-                to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-                  processInstance.process_model_with_diagram_identifier || ''
-                )}`}
+      <Grid condensed fullWidth>
+        <Column sm={4} md={4} lg={5}>
+          <dl>
+            <dt>Status:</dt>
+            <dd>
+              <Tag
+                type={statusColor}
+                size="sm"
+                className="span-tag process-instance-status"
               >
-                {processInstance.process_model_with_diagram_identifier}
-              </Link>
-            </Column>
-          </Grid>
-        ) : null}
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Started:{' '}
-          </Column>
-          <Column
-            sm={3}
-            md={3}
-            lg={3}
-            className="grid-date"
-            title={`Created At: ${convertSecondsToFormattedDateTime(
-              processInstance.created_at_in_seconds
-            )}`}
-          >
-            {convertSecondsToFormattedDateTime(
-              processInstance.start_in_seconds || 0
-            )}
-          </Column>
-        </Grid>
-        {lastUpdatedTimeTag}
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Process model revision:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            {processInstance.bpmn_version_control_identifier} (
-            {processInstance.bpmn_version_control_type})
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Status:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3}>
-            <Tag type="gray" size="sm" className="span-tag">
-              {processInstance.status} {statusIcon}
-            </Tag>
-          </Column>
-        </Grid>
-        <br />
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={2}>
-            <ButtonSet>
-              <Can
-                I="GET"
-                a={targetUris.processInstanceLogListPath}
-                ability={ability}
-              >
-                <Button
-                  size="sm"
-                  className="button-white-background"
-                  data-qa="process-instance-log-list-link"
-                  href={`${processInstanceLogListPageBaseUrl}`}
+                {processInstance.status} {statusIcon}
+              </Tag>
+            </dd>
+          </dl>
+          <dl>
+            <dt>Started By:</dt>
+            <dd> {processInstance.process_initiator_username}</dd>
+          </dl>
+          {processInstance.process_model_with_diagram_identifier ? (
+            <dl>
+              <dt>Current Diagram: </dt>
+              <dd>
+                <Link
+                  data-qa="go-to-current-diagram-process-model"
+                  to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                    processInstance.process_model_with_diagram_identifier || ''
+                  )}`}
                 >
-                  Logs
-                </Button>
-              </Can>
-              <Can
-                I="GET"
-                a={targetUris.messageInstanceListPath}
-                ability={ability}
-              >
-                <Button
-                  size="sm"
-                  className="button-white-background"
-                  data-qa="process-instance-message-instance-list-link"
-                  href={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
-                >
-                  Messages
-                </Button>
-              </Can>
-              {processInstance.process_metadata &&
-              processInstance.process_metadata.length > 0 ? (
-                <Button
-                  size="sm"
-                  className="button-white-background"
-                  data-qa="process-instance-show-metadata"
-                  onClick={() => {
-                    setShowProcessInstanceMetadata(true);
-                  }}
-                >
-                  Details
-                </Button>
-              ) : null}
-            </ButtonSet>
-          </Column>
-        </Grid>
-      </>
+                  {processInstance.process_model_with_diagram_identifier}
+                </Link>
+              </dd>
+            </dl>
+          ) : null}
+          <dl>
+            <dt>Started:</dt>
+            <dd>
+              {convertSecondsToFormattedDateTime(
+                processInstance.start_in_seconds || 0
+              )}
+            </dd>
+          </dl>
+          {lastUpdatedTimeTag}
+          <dl>
+            <dt>Revision:</dt>
+            <dd>
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </dd>
+          </dl>
+        </Column>
+        <Column sm={4} md={4} lg={8}>
+          {(processInstance.process_metadata || []).map(
+            (processInstanceMetadata) => (
+              <dl>
+                <dt>{processInstanceMetadata.key} :</dt>
+                <dd>{processInstanceMetadata.value}</dd>
+              </dl>
+            )
+          )}
+        </Column>
+      </Grid>
     );
   };
 
@@ -1092,41 +1042,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
-  const processInstanceMetadataArea = () => {
-    if (
-      !processInstance ||
-      (processInstance.process_metadata &&
-        processInstance.process_metadata.length < 1)
-    ) {
-      return null;
-    }
-    const metadataComponents: any[] = [];
-    (processInstance.process_metadata || []).forEach(
-      (processInstanceMetadata: ProcessInstanceMetadata) => {
-        metadataComponents.push(
-          <Grid condensed fullWidth>
-            <Column sm={3} md={3} lg={5} className="grid-list-title">
-              {processInstanceMetadata.key}
-            </Column>
-            <Column sm={3} md={3} lg={3} className="grid-date">
-              {processInstanceMetadata.value}
-            </Column>
-          </Grid>
-        );
-      }
-    );
-    return (
-      <Modal
-        open={showProcessInstanceMetadata}
-        modalHeading="Details"
-        passiveModal
-        onRequestClose={() => setShowProcessInstanceMetadata(false)}
-      >
-        {metadataComponents}
-      </Modal>
-    );
-  };
-
   const taskUpdateDisplayArea = () => {
     if (!taskToDisplay) {
       return null;
@@ -1270,10 +1185,69 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  if (processInstance && (tasks || tasksCallHadError)) {
+  if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
+
+    const getTabs = () => {
+      const canViewLogs = ability.can(
+        'GET',
+        targetUris.processInstanceLogListPath
+      );
+      const canViewMsgs = ability.can(
+        'GET',
+        targetUris.messageInstanceListPath
+      );
+
+      const getMessageDisplay = () => {
+        if (canViewMsgs) {
+          return <MessageInstanceList processInstanceId={processInstance.id} />;
+        }
+        return null;
+      };
+
+      return (
+        <Tabs>
+          <TabList aria-label="List of tabs">
+            <Tab>Diagram</Tab>
+            <Tab disabled={!canViewLogs}>Milestones</Tab>
+            <Tab disabled={!canViewLogs}>Events</Tab>
+            <Tab disabled={!canViewMsgs}>Messages</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>
+              <ReactDiagramEditor
+                processModelId={processModelId || ''}
+                diagramXML={processInstance.bpmn_xml_file_contents || ''}
+                fileName={processInstance.bpmn_xml_file_contents || ''}
+                tasks={tasks}
+                diagramType="readonly"
+                onElementClick={handleClickedDiagramTask}
+              />
+              <div id="diagram-container" />
+            </TabPanel>
+            <TabPanel>
+              <ProcessInstanceLogList
+                variant={variant}
+                isEventsView={false}
+                processModelId={modifiedProcessModelId || ''}
+                processInstanceId={processInstance.id}
+              />
+            </TabPanel>
+            <TabPanel>
+              <ProcessInstanceLogList
+                variant={variant}
+                isEventsView
+                processModelId={modifiedProcessModelId || ''}
+                processInstanceId={processInstance.id}
+              />
+            </TabPanel>
+            <TabPanel>{getMessageDisplay()}</TabPanel>
+          </TabPanels>
+        </Tabs>
+      );
+    };
 
     return (
       <>
@@ -1294,14 +1268,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </h1>
           {buttonIcons()}
         </Stack>
+        {getInfoTag()}
         <ProcessInterstitial
           processInstanceId={processInstance.id}
           processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
           allowRedirect={false}
           smallSpinner
+          collapsableInstructions
+          executeTasks={false}
         />
-        <br />
-        <br />
         <Grid condensed fullWidth>
           <Column md={6} lg={8} sm={4}>
             <TaskListTable
@@ -1323,23 +1298,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             />
           </Column>
         </Grid>
-        {getInfoTag()}
-        <br />
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
-        {processInstanceMetadataArea()}
         <br />
         {viewMostRecentStateComponent()}
-        <ReactDiagramEditor
-          processModelId={processModelId || ''}
-          diagramXML={processInstance.bpmn_xml_file_contents || ''}
-          fileName={processInstance.bpmn_xml_file_contents || ''}
-          tasks={tasks}
-          diagramType="readonly"
-          onElementClick={handleClickedDiagramTask}
-        />
-
-        <div id="diagram-container" />
+        {getTabs()}
       </>
     );
   }

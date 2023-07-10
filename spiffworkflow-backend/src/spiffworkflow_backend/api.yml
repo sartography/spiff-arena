@@ -1857,6 +1857,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: execute_tasks
+        in: query
+        required: false
+        description: Execute ready tasks on the process instance.
+        schema:
+          type: boolean
     get:
       tags:
         - Tasks
@@ -1958,6 +1964,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  # NOTE: this should probably be /process-instances instead
   /tasks/{process_instance_id}/send-user-signal-event:
     parameters:
       - name: process_instance_id

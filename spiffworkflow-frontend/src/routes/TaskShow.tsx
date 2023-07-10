@@ -31,9 +31,11 @@ export default function TaskShow() {
   const [userTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
-  const [disabled, setDisabled] = useState(false);
+  const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
 
   const [taskData, setTaskData] = useState<any>(null);
+  const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
+    useState<boolean>(true);
 
   const { addError, removeError } = useAPIError();
 
@@ -54,32 +56,10 @@ export default function TaskShow() {
       // convert null back to undefined so rjsf doesn't attempt to incorrectly validate them
       const taskDataToUse = result.saved_form_data || result.data;
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
-      setDisabled(false);
+      setFormButtonsDisabled(false);
       if (!result.can_complete) {
         navigateToInterstitial(result);
       }
-
-      /*  Disable call to load previous tasks -- do not display menu.
-      const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-        result.process_model_identifier
-      )}/${params.process_instance_id}/task-info`;
-      // if user is unauthorized to get process-instance task-info then don't do anything
-      // Checking like this so we can dynamically create the url with the correct process model
-      //  instead of passing the process model identifier in through the params
-      HttpService.makeCallToBackend({
-        path: url,
-        successCallback: (tasks: any) => {
-          setDisabled(false);
-          setUserTasks(tasks);
-        },
-        onUnauthorized: () => {
-          setDisabled(false);
-        },
-        failureCallback: (error: any) => {
-          addError(error);
-        },
-      });
-      */
     };
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
@@ -94,22 +74,38 @@ export default function TaskShow() {
   // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
   // frontend code to support that Save and close button is here, in case we need to reference that someday:
   //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
-  const autoSaveTaskData = (formData: any) => {
+  const autoSaveTaskData = (formData: any, successCallback?: Function) => {
+    let successCallbackToUse = successCallback;
+    if (!successCallbackToUse) {
+      successCallbackToUse = doNothing;
+    }
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}/save-draft`,
       postBody: formData,
       httpMethod: 'POST',
-      successCallback: doNothing,
+      successCallback: successCallbackToUse,
       failureCallback: addError,
     });
   };
 
+  const sendAutosaveEvent = (eventDetails?: any) => {
+    (document.getElementById('hidden-form-for-autosave') as any).dispatchEvent(
+      new CustomEvent('submit', {
+        cancelable: true,
+        bubbles: true,
+        detail: eventDetails,
+      })
+    );
+  };
+
   const addDebouncedTaskDataAutoSave = useDebouncedCallback(
-    (value: string) => {
-      autoSaveTaskData(value);
+    () => {
+      if (autosaveOnFormChanges) {
+        sendAutosaveEvent();
+      }
     },
     // delay in ms
-    1000
+    500
   );
 
   const processSubmitResult = (result: any) => {
@@ -123,23 +119,37 @@ export default function TaskShow() {
         navigateToInterstitial(result);
       }
     } else {
+      setFormButtonsDisabled(false);
       addError(result);
     }
   };
 
+  const handleAutosaveFormSubmit = (formObject: any, event: any) => {
+    const dataToSubmit = formObject?.formData;
+    let successCallback = null;
+    if (event.detail && 'successCallback' in event.detail) {
+      successCallback = event.detail.successCallback;
+    }
+    autoSaveTaskData(
+      recursivelyChangeNullAndUndefined(dataToSubmit, null),
+      successCallback
+    );
+  };
+
   const handleFormSubmit = (formObject: any, _event: any) => {
-    if (disabled) {
+    if (formButtonsDisabled) {
       return;
     }
 
     const dataToSubmit = formObject?.formData;
+
     if (!dataToSubmit) {
       navigate(`/tasks`);
       return;
     }
     const queryParams = '';
 
-    setDisabled(true);
+    setFormButtonsDisabled(true);
     removeError();
     delete dataToSubmit.isManualTask;
 
@@ -159,9 +169,10 @@ export default function TaskShow() {
   };
 
   const handleSignalSubmit = (event: EventDefinition) => {
-    if (disabled || !task) {
+    if (formButtonsDisabled || !task) {
       return;
     }
+    setFormButtonsDisabled(true);
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/send-user-signal-event`,
       successCallback: processSubmitResult,
@@ -197,7 +208,7 @@ export default function TaskShow() {
           );
         }
         if (userTask.state === 'FUTURE') {
-          return <Tab disabled>{userTask.name_for_display}</Tab>;
+          return <Tab formButtonsDisabled>{userTask.name_for_display}</Tab>;
         }
         if (userTask.state === 'READY') {
           return (
@@ -349,7 +360,10 @@ export default function TaskShow() {
   };
 
   const handleCloseButton = () => {
-    navigate(`/tasks`);
+    setAutosaveOnFormChanges(false);
+    setFormButtonsDisabled(true);
+    const successCallback = () => navigate(`/tasks`);
+    sendAutosaveEvent({ successCallback });
   };
 
   const formElement = () => {
@@ -402,17 +416,21 @@ export default function TaskShow() {
           <Button
             id="close-button"
             onClick={handleCloseButton}
-            disabled={disabled}
+            disabled={formButtonsDisabled}
             kind="secondary"
-            title="Save changes without submitting."
+            title="Save data as draft and close the form."
           >
-            Close
+            Save and Close
           </Button>
         );
       }
       reactFragmentToHideSubmitButton = (
         <ButtonSet>
-          <Button type="submit" id="submit-button" disabled={disabled}>
+          <Button
+            type="submit"
+            id="submit-button"
+            disabled={formButtonsDisabled}
+          >
             {submitButtonText}
           </Button>
           {closeButton}
@@ -420,7 +438,7 @@ export default function TaskShow() {
             {task.signal_buttons.map((signal) => (
               <Button
                 name="signal.signal"
-                disabled={disabled}
+                disabled={formButtonsDisabled}
                 onClick={() => handleSignalSubmit(signal.event)}
               >
                 {signal.label}
@@ -437,16 +455,19 @@ export default function TaskShow() {
 
     const widgets = { typeahead: TypeaheadWidget };
 
+    // we are using two forms here so we can have one that validates data and one that does not.
+    // this allows us to autosave form data without extra attributes and without validations
+    // but still requires validations when the user submits the form that they can edit.
     return (
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
           <Form
-            id="our-very-own-form"
-            disabled={disabled}
+            id="form-to-submit"
+            disabled={formButtonsDisabled}
             formData={taskData}
             onChange={(obj: any) => {
               setTaskData(obj.formData);
-              addDebouncedTaskDataAutoSave(obj.formData);
+              addDebouncedTaskDataAutoSave();
             }}
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
@@ -458,6 +479,17 @@ export default function TaskShow() {
           >
             {reactFragmentToHideSubmitButton}
           </Form>
+          <Form
+            id="hidden-form-for-autosave"
+            formData={taskData}
+            onSubmit={handleAutosaveFormSubmit}
+            schema={jsonSchema}
+            uiSchema={formUiSchema}
+            widgets={widgets}
+            validator={validator}
+            noValidate
+            omitExtraData
+          />
         </Column>
       </Grid>
     );
@@ -470,7 +502,7 @@ export default function TaskShow() {
     }
 
     return (
-      <main>
+      <>
         <ProcessBreadcrumb
           hotCrumbs={[
             [
@@ -489,7 +521,7 @@ export default function TaskShow() {
         </h3>
         <InstructionsForEndUser task={task} />
         {formElement()}
-      </main>
+      </>
     );
   }
 

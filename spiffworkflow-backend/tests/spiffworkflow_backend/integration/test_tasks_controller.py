@@ -318,3 +318,21 @@ class TestTasksController(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["saved_form_data"] == draft_data
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(draft_data),
+        )
+        assert response.status_code == 200
+
+        # ensure draft data is deleted after submitting the task
+        response = client.get(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["saved_form_data"] is None
+        assert response.json["data"]["HEY"] == draft_data["HEY"]
