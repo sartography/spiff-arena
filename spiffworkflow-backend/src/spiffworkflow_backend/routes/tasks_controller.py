@@ -47,10 +47,12 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_o
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -267,7 +269,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
     extensions = TaskService.get_extensions_from_task_model(task_model)
-    task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id)
+    task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id, task_model.guid)
 
     if "properties" in extensions:
         properties = extensions["properties"]
@@ -280,13 +282,17 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     try:
         AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
-    except HumanTaskNotFoundError:
-        can_complete = False
-    except UserDoesNotHaveAccessToTaskError:
+    except (HumanTaskNotFoundError, UserDoesNotHaveAccessToTaskError, HumanTaskAlreadyCompletedError):
         can_complete = False
 
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+
+    saved_form_data = None
+    if task_draft_data is not None:
+        saved_form_data = task_draft_data.get_saved_form_data()
+
     task_model.data = task_model.get_data()
-    task_model.saved_form_data = task_model.get_saved_form_data()
+    task_model.saved_form_data = saved_form_data
     task_model.process_model_display_name = process_model.display_name
     task_model.process_model_identifier = process_model.id
     task_model.typename = task_definition.typename
@@ -363,7 +369,9 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
     return ""
 
 
-def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, str | None, None]:
+def _interstitial_stream(
+    process_instance: ProcessInstanceModel, execute_tasks: bool = True, is_locked: bool = False
+) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
@@ -375,11 +383,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             return ""
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
-
-    def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
-        return_hash: dict = {"type": return_type}
-        return_hash[return_type] = entity
-        return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -394,33 +397,57 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
                 task.properties = {"instructionsForEndUser": instructions}
-                yield render_data("task", task)
+                yield _render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 # do not do any processing if the instance is not currently active
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield render_data("unrunnable_instance", process_instance)
+                    yield _render_data("unrunnable_instance", process_instance)
                     return
-                try:
-                    processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                except WorkflowTaskException as wfe:
-                    api_error = ApiError.from_workflow_exception(
-                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
-                    )
-                    yield render_data("error", api_error)
-                    return
-        processor.refresh_waiting_tasks()
+                if execute_tasks:
+                    try:
+                        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+                        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                        processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                        processor.refresh_waiting_tasks()
+
+                    except WorkflowTaskException as wfe:
+                        api_error = ApiError.from_workflow_exception(
+                            "engine_steps_error", "Failed to complete an automated task.", exp=wfe
+                        )
+                        yield _render_data("error", api_error)
+                        return
+
+        # path used by the interstitial page while executing tasks - ie the background processor is not executing them
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
+        if execute_tasks and ready_engine_task_count == 0:
+            break
+
+        if not execute_tasks:
+            # path used by the process instance show page to display most recent instructions
+            if not is_locked:
+                break
+
+            # HACK: db.session.refresh doesn't seem to refresh without rollback or commit so use rollback.
+            # we are not executing tasks so there shouldn't be anything to write anyway, so no harm in rollback.
+            # https://stackoverflow.com/a/20361132/6090676
+            # note that the thing changing the data in this case is probably the background worker,
+            # and it is definitely committing its changes, but since we have already queried the data,
+            # our session has stale results without the rollback.
+            db.session.rollback()
+            db.session.refresh(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
+
+            # if process instance is done or blocked by a human task, then break out
+            if is_locked and process_instance.status not in ["not_started", "waiting"]:
+                break
+
         tasks = get_reportable_tasks()
-        if ready_engine_task_count == 0:
-            break  # No more tasks to report
 
     spiff_task = processor.next_task()
     if spiff_task is not None:
@@ -434,34 +461,73 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             task.properties = {"instructionsForEndUser": instructions}
-            yield render_data("task", task)
+            yield _render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
-def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | None, str | None, None]:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+def _dequeued_interstitial_stream(
+    process_instance_id: int, execute_tasks: bool = True
+) -> Generator[str | None, str | None, None]:
+    try:
+        process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    # TODO: currently this just redirects back to home if the process has not been started
-    # need something better to show?
+        # TODO: currently this just redirects back to home if the process has not been started
+        # need something better to show?
+        if execute_tasks:
+            try:
+                if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+                    with ProcessInstanceQueueService.dequeued(process_instance):
+                        yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+            except ProcessInstanceIsAlreadyLockedError:
+                yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
+        else:
+            # no reason to get a lock if we are reading only
+            yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+    except Exception as ex:
+        # the stream_with_context method seems to swallow exceptions so also attempt to catch errors here
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+        )
+        yield _render_data("error", api_error)
 
-    if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-        with ProcessInstanceQueueService.dequeued(process_instance):
-            yield from _interstitial_stream(process_instance)
 
-
-def interstitial(process_instance_id: int) -> Response:
+def interstitial(process_instance_id: int, execute_tasks: bool = True) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
-    return Response(
-        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
-    )
+    try:
+        return Response(
+            stream_with_context(_dequeued_interstitial_stream(process_instance_id, execute_tasks=execute_tasks)),
+            mimetype="text/event-stream",
+            headers={"X-Accel-Buffering": "no"},
+        )
+    except Exception as ex:
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+            response_headers={"Content-type": "text/event-stream"},
+        )
+        api_error.response_message = _render_data("error", api_error)
+        raise api_error from ex
+
+
+def _render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
+    return_hash: dict = {"type": return_type}
+    return_hash[return_type] = entity
+    return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
 
 def task_save_draft(
@@ -480,15 +546,23 @@ def task_save_draft(
             ),
             status_code=400,
         )
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+
+    try:
+        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+    except HumanTaskAlreadyCompletedError:
+        return make_response(jsonify({"ok": True}), 200)
+
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-        task_model, body, "saved_form_data_hash"
-    )
-    if json_data_dict is not None:
-        JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-        db.session.add(task_model)
-        db.session.commit()
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model, create_if_not_exists=True)
+
+    if task_draft_data is not None:
+        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+            task_draft_data, body, "saved_form_data_hash"
+        )
+        if json_data_dict is not None:
+            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
+            db.session.add(task_draft_data)
+            db.session.commit()
 
     return Response(
         json.dumps(
@@ -548,6 +622,13 @@ def _task_submit_shared(
                 user=g.user,
                 human_task=human_task,
             )
+
+    # delete draft data when we submit a task to ensure cycling back to the task contains the
+    # most up-to-date data
+    task_draft_data = TaskService.task_draft_data_from_task_model(human_task.task_model)
+    if task_draft_data is not None:
+        db.session.delete(task_draft_data)
+        db.session.commit()
 
     next_human_task_assigned_to_me = (
         HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)

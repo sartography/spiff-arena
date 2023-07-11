@@ -168,7 +168,7 @@ code {
 }
 
 .cds--breadcrumb {
-  margin-bottom: 2em;
+  margin-bottom: 1em;
 }
 
 .process-description {
@@ -179,27 +179,35 @@ h1.with-icons {
   margin-top: 5px;
 }
 
-.grid-list-title {
+dl {
+  display: block;
+  grid-template-columns: 35% 65%;
+  font-size: .8rem;
+  line-height: 1.2rem;
+}
+
+dl dt {
+  display: inline-block;
   font-weight: 600;
-  font-size: 14px;
-  line-height: 18px;
+  min-width: 5rem;
   color: #161616;
 }
-.grid-date {
-  font-size: 14px;
-  line-height: 18px;
-  letter-spacing: 0.16px;
+
+dl dd {
+  display: inline-block;
+  padding-left: 1rem;
   color: #525252;
 }
+
 .smaller-text {
   font-size: 14px;
 }
 
 .diagram-editor-canvas {
   border:1px solid #000000;
-  height:70vh;
+  height:78vh;
   width:90vw;
-  margin:auto;
+  margin: 0 auto;
 }
 
 .with-bottom-margin {
@@ -296,7 +304,6 @@ h1.with-icons {
 .markdown table {
   color: #333;
   background: white;
-  border: 1px solid grey;
   font-size: 12pt;
   border-collapse: collapse;
 }
@@ -329,8 +336,8 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 
 .cds--tile.tile-process-group {
   padding: 0px;
-  margin: 16px;
-  width: 354px;
+  margin: 12px;
+  width: 320px;
   height: 264px;
   background: #F4F4F4;
   order: 1;
@@ -338,7 +345,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 }
 
 .tile-process-group-content-container {
-  width: 354px;
+  width: 320px;
   height: 264px;
   padding: 1em;
   position: relative;
@@ -394,6 +401,15 @@ td.actions-cell {
   width: 1em;
 }
 
+.process-instance-list-table {
+  margin: 0;
+  padding: 0;
+}
+
+.process-instance-list-table button.button-tag {
+  max-width: calc(100% - 1rem);
+}
+
 .process-instance-table-header {
   margin-bottom: 1em;
 }
@@ -444,6 +460,27 @@ svg.notification-icon {
   color: red;
 }
 
+.filter-tag {
+  justify-content: left;
+  width: 100%;
+}
+.filter-tag > span {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.filter-tag > span > span {
+  margin-right: 0.5px;
+}
+
+.cds--btn--ghost.cds--btn--sm.button-tag {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+  flex-grow: 1;
+}
+
 .cds--btn--ghost.cds--btn--sm.button-tag-icon {
   padding-left: 0;
   padding-right: 0;
@@ -492,6 +529,11 @@ svg.notification-icon {
   font-weight: bold;
 }
 
+.user_instructions {
+  filter: opacity(1);
+  font-size: 1.2em;
+  margin: 15px 0;
+}
 
 .user_instructions_0 {
   filter: opacity(1);
@@ -606,3 +648,8 @@ hr {
 .primary-file-text-suffix {
   font-style: italic;
 }
+
+#hidden-form-for-autosave {
+  display: none;
+}
+

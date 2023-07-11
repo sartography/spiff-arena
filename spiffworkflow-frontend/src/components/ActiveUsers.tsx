@@ -1,35 +1,50 @@
 import { useEffect, useState } from 'react';
 
 import HttpService from '../services/HttpService';
-import {
-  encodeBase64,
-  refreshAtInterval,
-  REFRESH_TIMEOUT_SECONDS,
-} from '../helpers';
 import { User } from '../interfaces';
+import { refreshAtInterval, REFRESH_TIMEOUT_SECONDS } from '../helpers';
+
+async function sha256(message: string) {
+  // encode as UTF-8
+  const msgBuffer = new TextEncoder().encode(message);
+
+  // hash the message
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+
+  // convert ArrayBuffer to Array
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  // convert bytes to hex string
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 export default function ActiveUsers() {
   // Handles getting and displaying active users.
   const [activeUsers, setActiveUsers] = useState<User[]>([]);
 
-  const lastVisitedIdentifier = encodeBase64(window.location.pathname);
   useEffect(() => {
     const updateActiveUsers = () => {
-      HttpService.makeCallToBackend({
-        path: `/active-users/updates/${lastVisitedIdentifier}`,
-        successCallback: setActiveUsers,
-        httpMethod: 'POST',
-      });
-    };
-
-    const unregisterUser = () => {
-      HttpService.makeCallToBackend({
-        path: `/active-users/unregister/${lastVisitedIdentifier}`,
-        successCallback: setActiveUsers,
-        httpMethod: 'POST',
-      });
+      const makeCall = (lastVisitedIdentifier: any) => {
+        HttpService.makeCallToBackend({
+          path: `/active-users/updates/${lastVisitedIdentifier}`,
+          successCallback: setActiveUsers,
+          httpMethod: 'POST',
+        });
+      };
+      sha256(window.location.pathname).then(makeCall);
     };
     updateActiveUsers();
+
+    const unregisterUser = () => {
+      const makeCall = (lastVisitedIdentifier: any) => {
+        HttpService.makeCallToBackend({
+          path: `/active-users/unregister/${lastVisitedIdentifier}`,
+          successCallback: setActiveUsers,
+          httpMethod: 'POST',
+        });
+      };
+      sha256(window.location.pathname).then(makeCall);
+    };
 
     return refreshAtInterval(
       15,

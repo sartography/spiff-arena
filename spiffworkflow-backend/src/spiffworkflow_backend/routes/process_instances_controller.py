@@ -639,7 +639,16 @@ def send_bpmn_event(
 
 def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
     processor = ProcessInstanceProcessor(process_instance)
-    processor.send_bpmn_event(body)
+    try:
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.send_bpmn_event(body)
+    except (
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        raise e
+
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
     return make_response(jsonify(task), 200)
 
@@ -704,7 +713,11 @@ def _find_process_instance_for_me_or_raise(
         )
         .filter(
             or_(
+                # you were allowed to complete it
                 HumanTaskUserModel.id.is_not(None),
+                # or you completed it (which admins can do even if it wasn't assigned via HumanTaskUserModel)
+                HumanTaskModel.completed_by_user_id == g.user.id,
+                # or you started it
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
         )
