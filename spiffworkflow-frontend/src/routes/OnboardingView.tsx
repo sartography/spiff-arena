@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react';
 import HttpService from '../services/HttpService';
 import InProgressInstances from './InProgressInstances';
+import { Onboarding } from '../interfaces';
+import MyTasks from './MyTasks';
 
 export default function OnboardingView() {
-  const [userGroups, setUserGroups] = useState<string[] | null>(null);
+  const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
   useEffect(() => {
     HttpService.makeCallToBackend({
       path: `/onboarding`,
-      successCallback: setUserGroups,
+      successCallback: setOnboarding,
     });
-  }, [setUserGroups]);
+  }, [setOnboarding]);
 
-  return <InProgressInstances />;
+  const onboardingElement = () => {
+    if (onboarding && onboarding.type === "default_view") {
+      if (onboarding.value === "my_tasks") {
+        return <MyTasks />;
+      }
+    }
+    
+    return <InProgressInstances />;
+  }
+
+  return onboardingElement();
 }
