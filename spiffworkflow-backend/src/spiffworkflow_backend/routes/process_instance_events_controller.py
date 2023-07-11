@@ -142,9 +142,10 @@ def error_detail_show(
         raise (
             ApiError(
                 error_code="process_instance_event_error_details_not_found",
-                message=f"Error details for process instance event could not be found: {process_instance_event_id}. "
-                "Perhaps no exception was available."
-                ,
+                message=(
+                    f"Error details for process instance event could not be found: {process_instance_event_id}. "
+                    "Perhaps no exception was available."
+                ),
                 status_code=400,
             )
         )
