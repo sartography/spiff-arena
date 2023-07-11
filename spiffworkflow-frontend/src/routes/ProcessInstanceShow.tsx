@@ -340,7 +340,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <dl>
             <dt>Status:</dt>
             <dd>
-              <Tag type={statusColor} size="sm" className="span-tag">
+              <Tag
+                type={statusColor}
+                size="sm"
+                className="span-tag process-instance-status"
+              >
                 {processInstance.status} {statusIcon}
               </Tag>
             </dd>
