@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import HttpService from '../services/HttpService';
 import InProgressInstances from './InProgressInstances';
 
-export default function DefaultView() {
+export default function OnboardingView() {
   const [userGroups, setUserGroups] = useState<string[] | null>(null);
 
   useEffect(() => {
     HttpService.makeCallToBackend({
-      path: `/user-groups/for-current-user`,
+      path: `/onboarding`,
       successCallback: setUserGroups,
     });
   }, [setUserGroups]);
