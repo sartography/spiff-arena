@@ -4,30 +4,34 @@ system, forming the building blocks for creating powerful workflows.
 
 It is essential to gain a thorough understanding of each process model
 on an individual level, comprehending their functionalities and
-capabilities. Once you have grasped the intricacies of these models,
-you can unleash your creativity and combine them in limitless ways,
-shaping workflows that align with your unique needs and imagination.
+capabilities. 
 
+Here are fundamental blocks of our system:
 
 ## Displaying Content
-The Spiffarena platform offers powerful features for displaying content  within your BPMN processes. Whether you need to present instructions, 
-messages, or dynamic data, Spiffarena provides various tools to make 
-your content engaging and informative. 
-Follow the steps below to 
-effectively display content in your processes:
+The Spiffarena platform offers powerful features for displaying content  within your BPMN processes.
+Follow the steps below to effectively display content in your processes:
 
-In this guide, we'll explore how to effectively display content in Spiffarena, providing a seamless user experience and engaging presentation of information. Let's dive in and learn the key aspects of displaying content within your workflows.
+In this guide, we'll explore how to effectively display content in Spiffarena, providing a seamless user experience and engaging presentation of information. 
+
+Let's dive in and learn the key aspects of displaying content within your workflows.
 
 ### Markdown: Formatting Content
 Markdown is a powerful tool for formatting and styling your content in Spiffarena. With Markdown, you can easily add headings, lists, tables, hyperlinks, and more to enhance the readability and visual appeal of your displayed content. 
 
 ### Jinja Templating: Dynamic Content Generation
 
-Jinja Templating in Spiffarena empowers you to generate dynamic content based on variables, conditions, and logic. By leveraging Jinja's syntax and functionality, you can customize your content to adapt to specific scenarios, display personalized information, or perform calculations based on collected data.
+Jinja Templating in Spiffarena empowers you to generate dynamic 
+content based on variables, conditions, and logic. By leveraging 
+Jinja's syntax and functionality, you can customize your content to 
+adapt to specific scenarios, display personalized information, or 
+perform calculations based on collected data.
 
 ### Combining Markdown and Jinja: Unleashing the Power
 
-The real magic happens when you combine Markdown and Jinja Templating in Spiffarena. By utilizing the strengths of both, you can create rich, interactive, and data-driven content that goes beyond static text. We'll demonstrate how to leverage Markdown and Jinja together to create captivating content that responds to user input, presents dynamic information, and enhances the overall user experience.
+By utilizing the strengths of Markdown and Jinja, you can create rich, 
+interactive, and data-driven content that goes beyond static text.
+We'll demonstrate using an example on how to leverage Markdown and Jinja together to create captivating content that responds to user input and presents  dynamic information.
 
 ### Basic Example for displaying content
 
@@ -73,7 +77,7 @@ generates a dictionary of colors.
 Script Task 2 includes a delay with the code "time.sleep(1)" and 
 focuses on making the colors more playful.
 Script Task 3 includes a delay with the code "time.sleep(2)" and aims 
-to enhance the silliness level.
+to increase the silliness level.
 
 ![Image](Images/Script_instructions.png)
 
@@ -109,7 +113,7 @@ Forms play a crucial role in capturing data, and Spiffarena offers a powerful fo
 
 1. Leveraging JSON Schema
 
-JSON Schema is an emerging standard for describing the structure of data in a JSON file. It provides a clear and concise way to define the expected properties and their types within the data. JSON Schema forms the foundation for building forms in Spiffarena.
+JSON Schema is an emerging standard for describing the structure of data in a JSON file. JSON Schema forms the foundation for building forms in Spiffarena.
 
 To simplify the form creation process, we leverage the React JSON 
 Schema Form (RJSF) library. RJSF is a powerful tool that uses JSON 
@@ -129,9 +133,12 @@ and advanced techniques.
 
 An alternative approach to creating JSON code is to utilize the form 
 builder feature, which allows you to easily create various fields 
-without the need for writing JSON manually. However, it's important to 
+without the need for writing JSON manually. 
+
+However, it's important to 
 note that the form builder may have certain limitations in terms of 
 features and may not be as powerful as using the JSON editor directly. 
+
 While the form builder provides convenience and simplicity, using the 
 JSON editor offers greater flexibility and control over the form 
 structure.
