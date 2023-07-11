@@ -1,6 +1,6 @@
 from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
-from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition # type: ignore
-from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
+from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
@@ -146,11 +146,13 @@ class MessageService:
     ) -> None:
         correlation_properties = []
         for cr in message_instance_receive.correlation_rules:
-            correlation_properties.append(CorrelationProperty(
-                name=cr.name,
-                retrieval_expression=cr.retrieval_expression,
-                correlation_keys=cr.correlation_key_names,
-            ))
+            correlation_properties.append(
+                CorrelationProperty(
+                    name=cr.name,
+                    retrieval_expression=cr.retrieval_expression,
+                    correlation_keys=cr.correlation_key_names,
+                )
+            )
         bpmn_message = MessageEventDefinition(
             name=message_instance_send.name,
             correlation_properties=correlation_properties,

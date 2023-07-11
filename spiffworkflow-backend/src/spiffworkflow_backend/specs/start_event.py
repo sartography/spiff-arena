@@ -6,9 +6,9 @@ from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import StartEventConverter as DefaultStartEventConverter
 from SpiffWorkflow.bpmn.specs.defaults import StartEvent as DefaultStartEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.simple import NoneEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import CycleTimerEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import DurationTimerEventDefinition
-from SpiffWorkflow.bpmn.specs.event_definitions.simple import NoneEventDefinition
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimeDateEventDefinition
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
