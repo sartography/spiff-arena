@@ -10,8 +10,8 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.specs.control import _BoundaryEventParent  # type: ignore
-from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -167,7 +167,7 @@ class ProcessInstanceService:
     @classmethod
     def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
         for ready_user_task in processor.bpmn_process_instance.get_ready_user_tasks():
-            if isinstance(ready_user_task.parent.task_spec, _BoundaryEventParent):
+            if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
                 return True
         return False
 
