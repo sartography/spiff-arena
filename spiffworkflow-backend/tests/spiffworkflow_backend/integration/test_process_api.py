@@ -2493,6 +2493,7 @@ class TestProcessApi(BaseTest):
             content_type="application/json",
             data=json.dumps({"execute": False}),
         )
+
         assert response.json["status"] == "suspended"
         task_model = TaskModel.query.filter_by(guid=human_task["guid"]).first()
         assert task_model is not None

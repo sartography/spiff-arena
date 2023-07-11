@@ -1762,7 +1762,7 @@ paths:
         required: true
         description: The unique id of the process instance
         schema:
-          type: string
+          type: integer
       - name: task_guid
         in: path
         required: true
