@@ -483,6 +483,7 @@ class WorkflowExecutionService:
                     message_instance=message_instance,
                     name=correlation_property.name,
                     retrieval_expression=correlation_property.retrieval_expression,
+                    correlation_key_names=correlation_property.correlation_keys,
                 )
                 db.session.add(message_correlation)
             db.session.add(message_instance)

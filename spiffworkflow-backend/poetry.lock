@@ -2324,7 +2324,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "feature/event-payloads"
-resolved_reference = "546923b4ba3dcc0013e4f334a2ab290b32c76c8a"
+resolved_reference = "b46713d925c791c8a07471d9a44cc53b6a75343b"
 
 [[package]]
 name = "sqlalchemy"

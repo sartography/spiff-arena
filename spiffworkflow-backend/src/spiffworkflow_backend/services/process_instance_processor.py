@@ -1,6 +1,7 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal
+from SpiffWorkflow.bpmn.event import BpmnEvent # type: ignore
 import json
 import logging
 import os
@@ -1079,10 +1080,12 @@ class ProcessInstanceProcessor:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.registry.restore(event_data)
-        if payload is not None:
-            event_definition.payload = payload
+        bpmn_event = BpmnEvent(
+            event_definition=event_definition,
+            payload=payload,
+        )
         try:
-            self.bpmn_process_instance.catch(event_definition)
+            self.bpmn_process_instance.send_event(bpmn_event)
         except Exception as e:
             print(e)
 
