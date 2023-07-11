@@ -185,6 +185,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
+          paginationQueryParamPrefix="message-list"
         />
       </>
     );
