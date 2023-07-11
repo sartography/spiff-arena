@@ -9,15 +9,23 @@ capabilities.
 Here are fundamental blocks of our system:
 
 ## Displaying Content
-The Spiffarena platform offers powerful features for displaying content  within your BPMN processes.
-Follow the steps below to effectively display content in your processes:
+The Spiffarena platform offers powerful features for displaying 
+content  within your BPMN processes.
+Follow the steps below to effectively display content in your 
+processes:
 
-In this guide, we'll explore how to effectively display content in Spiffarena, providing a seamless user experience and engaging presentation of information. 
+In this guide, we'll explore how to effectively display content in 
+Spiffarena, providing a seamless user experience and engaging 
+presentation of information. 
 
-Let's dive in and learn the key aspects of displaying content within your workflows.
+Let's dive in and learn the key aspects of displaying content within 
+your workflows.
 
 ### Markdown: Formatting Content
-Markdown is a powerful tool for formatting and styling your content in Spiffarena. With Markdown, you can easily add headings, lists, tables, hyperlinks, and more to enhance the readability and visual appeal of your displayed content. 
+Markdown is a powerful tool for formatting and styling your content in 
+Spiffarena. With Markdown, you can easily add headings, lists, tables, 
+hyperlinks, and more to enhance the readability and visual appeal of 
+your displayed content. 
 
 ### Jinja Templating: Dynamic Content Generation
 
@@ -31,11 +39,17 @@ perform calculations based on collected data.
 
 By utilizing the strengths of Markdown and Jinja, you can create rich, 
 interactive, and data-driven content that goes beyond static text.
-We'll demonstrate using an example on how to leverage Markdown and Jinja together to create captivating content that responds to user input and presents  dynamic information.
+We'll demonstrate using an example on how to leverage Markdown and 
+Jinja together to create captivating content that responds to user 
+input and presents  dynamic information.
 
 ### Basic Example for displaying content
 
-In our Spiffarena dashboard, we have a simple example of how to display content in the basics section. Now, let's explore the process workflow of the content display process model and discover various ways to present content in different scenarios.
+In our Spiffarena dashboard, we have a simple example of how to 
+display content in the basics section. Now, let's explore the process 
+workflow of the content display process model and discover various 
+ways to present content in different scenarios.
+
 
 #### Display Content Process Overview:
 
@@ -86,8 +100,11 @@ to increase the silliness level.
 ![Image](Images/Manual_instructions.png)
 
 A Manual Task will display content based on the collected data 
-and script-generated information. The instructions panel of the Manual Task provides the content to be displayed, which includes the form data entered by the user.
-It also offers an optional Chuck Norris joke based on user preference and a table of silly color names generated using Jinja templating.
+and script-generated information. The instructions panel of the Manual 
+Task provides the content to be displayed, which includes the form 
+data entered by the user.
+It also offers an optional Chuck Norris joke based on user preference 
+and a table of silly color names generated using Jinja templating.
 
 ![Image](Images/Manual_instructionss.png)
 
@@ -95,25 +112,37 @@ It also offers an optional Chuck Norris joke based on user preference and a tabl
 
 ![Image](Images/End.png)
 
-The process concludes with an End Event, indicating the end of the workflow.
-The instructions panel of the End Event suggests next steps, such as exploring the diagram in edit mode and completing the "Request a Playground" task.
+The process concludes with an End Event, indicating the end of the 
+workflow.
+The instructions panel of the End Event suggests next steps, such as 
+exploring the diagram in edit mode and completing the "Request a 
+Playground" task.
 
 ![Image](Images/end_message.png)
 
 ## Using Forms
 
-This feature allows you to create custom forms for collecting and managing data within your workflows. Whether you need a simple feedback form or a complex multi-step form, Spiffarena provides you with the tools to build and integrate forms seamlessly.
+This feature allows you to create custom forms for collecting and 
+managing data within your workflows. Whether you need a simple 
+feedback form or a complex multi-step form, Spiffarena provides you 
+with the tools to build and integrate forms seamlessly.
 
-With Spiffarena's form builder, you can start with basic form elements and gradually add more advanced components as your form requirements evolve. 
-Let's dive in and explore the possibilities of creating forms in Spiffarena.
+With Spiffarena's form builder, you can start with basic form elements 
+and gradually add more advanced components as your form requirements 
+evolve. 
+Let's dive in and explore the possibilities of creating forms in 
+Spiffarena.
 
 ### Instructions on Creating Forms
 
-Forms play a crucial role in capturing data, and Spiffarena offers a powerful form-building capability. Here are the ways to create forms:
+Forms play a crucial role in capturing data, and Spiffarena offers a 
+powerful form-building capability. Here are the ways to create forms:
 
 1. Leveraging JSON Schema
 
-JSON Schema is an emerging standard for describing the structure of data in a JSON file. JSON Schema forms the foundation for building forms in Spiffarena.
+JSON Schema is an emerging standard for describing the structure of 
+data in a JSON file. JSON Schema forms the foundation for building 
+forms in Spiffarena.
 
 To simplify the form creation process, we leverage the React JSON 
 Schema Form (RJSF) library. RJSF is a powerful tool that uses JSON 
@@ -151,25 +180,36 @@ Now that you have a grasp of how to create forms in Spiffarena using
 JSON Schema and RJSF, it's time to put your knowledge into action. 
 Lets cover the example of using forms process model in the basics.
 
-The BPMN diagram initiates with a start event, which is followed by a manual task aimed at providing a comprehensive understanding of web forms and the various approaches to displaying them. 
+The BPMN diagram initiates with a start event, which is followed by a 
+manual task aimed at providing a comprehensive understanding of web 
+forms and the various approaches to displaying them. 
 ![Image](Images/Form_manual_editor.png)
 
-The expected output of the form during the process execution can be observed in the attached image.
+The expected output of the form during the process execution can be 
+observed in the attached image.
 
 ![Image](Images/manual_outpul.png)
 
-Moving forward, the diagram incorporates a user task specifically designed for form display. Within the properties panel of the user task, two essential files are included: a JSON Schema (containing the form description in RSJF format) and a UI Schema (outlining the rules for displaying the form based on the RSJF schema). 
+Moving forward, the diagram incorporates a user task specifically 
+designed for form display. Within the properties panel of the user 
+task, two essential files are included: a JSON Schema (containing the 
+form description in RSJF format) and a UI Schema (outlining the rules 
+for displaying the form based on the RSJF schema). 
 
 ![Image](Images/BPMN_Form_display.png)
 
-The anticipated output of the form when the process is executed can be visualized in the attached image.
+The anticipated output of the form when the process is executed can be 
+visualized in the attached image.
 ![Image](Images/Form_display.png)
 
 
-Following that, a manual task is included, offering a simple form explanation. As users submit the form, the manual task will display the respective explanation.
+Following that, a manual task is included, offering a simple form 
+explanation. As users submit the form, the manual task will display 
+the respective explanation.
 ![Image](Images/Manual_lasttt.png)
 
-An attached image provides an overview of the expected form output during the process execution.
+An attached image provides an overview of the expected form output 
+during the process execution.
 
 ![Image](Images/Manual_last.png)
 
