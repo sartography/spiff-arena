@@ -2074,14 +2074,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "restrictedpython"
-version = "6.0"
+version = "6.1"
 description = "RestrictedPython is a defined subset of the Python language which allows to provide a program input into a trusted environment."
 category = "main"
 optional = false
 python-versions = ">=3.6, <3.12"
 files = [
-    {file = "RestrictedPython-6.0-py3-none-any.whl", hash = "sha256:3479303f7bff48a7dedad76f96e7704993c5e86c5adbd67f607295d5352f0fb8"},
-    {file = "RestrictedPython-6.0.tar.gz", hash = "sha256:405cf0bd9eec2f19b1326b5f48228efe56d6590b4e91826b8cc3b2cd400a96ad"},
+    {file = "RestrictedPython-6.1-py3-none-any.whl", hash = "sha256:0b2f1e54730ee29ac87a5dc684159bf163806038b02aa8561aaea840a8256a9f"},
+    {file = "RestrictedPython-6.1.tar.gz", hash = "sha256:7e58ea15cc92a0b916e0c8ca295e8b2c6d40fee4d12e1a2b5063d86efc279a9c"},
 ]
 
 [package.extras]
