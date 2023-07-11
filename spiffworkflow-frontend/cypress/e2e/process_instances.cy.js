@@ -159,20 +159,22 @@ describe('process-instances', () => {
     cy.runPrimaryBpmnFile();
     cy.getBySel('process-instance-list-link').click();
     cy.getBySel('process-instance-show-link-id').first().click();
-    cy.getBySel('process-instance-log-list-link').click();
-    cy.getBySel('process-instance-log-events').click();
+    cy.contains('Events').click();
     cy.contains('process_model_one');
     cy.contains('task_completed');
-    cy.basicPaginationTest();
+    cy.basicPaginationTest(undefined, 'pagination-options-events');
   });
 
   it('can filter', () => {
     cy.getBySel('process-instance-list-link').click();
-    cy.getBySel('process-instance-list-all').click();
-    cy.contains('All Process Instances');
+    cy.contains('My Process Instances');
+    cy.get('.process-instance-list-row-variant-for-me');
     cy.assertAtLeastOneItemInPaginatedResults();
 
-    cy.getBySel('filter-section-expand-toggle').click();
+    cy.getBySel('process-instance-list-all').click();
+    cy.contains('All Process Instances');
+    cy.get('.process-instance-list-row-variant-all');
+    cy.assertAtLeastOneItemInPaginatedResults();
 
     const statusSelect = '#process-instance-status-select';
     PROCESS_STATUSES.forEach((processStatus) => {
@@ -188,8 +190,9 @@ describe('process-instances', () => {
         cy.assertAtLeastOneItemInPaginatedResults();
         cy.getBySel(`process-instance-status-${processStatus}`);
 
-        // maybe waiting a bit before trying to click makes this work consistently?
+        // we tried 500 as well to try to make this work consistently
         cy.wait(1000);
+
         // there should really only be one, but in CI there are sometimes more
         cy.get('div[aria-label="Clear all selected items"]:first').click();
         cy.get('div[aria-label="Clear all selected items"]').should(

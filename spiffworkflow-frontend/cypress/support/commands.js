@@ -61,8 +61,10 @@ Cypress.Commands.add('login', (username, password) => {
 });
 
 Cypress.Commands.add('logout', (_selector, ..._args) => {
-  cy.get('#user-profile-toggletip').click();
   cy.wait(2000);
+  // click the profile thingy in the top right
+  cy.get('.user-profile-toggletip-button').click();
+
   cy.getBySel('logout-button').click();
   if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     // otherwise we can click logout, quickly load the next page, and the javascript
@@ -142,9 +144,15 @@ Cypress.Commands.add(
 
 Cypress.Commands.add(
   'basicPaginationTest',
-  (dataQaTagToUseToEnsureTableHasLoaded = 'paginated-entity-id') => {
-    cy.getBySel('pagination-options').scrollIntoView();
-    cy.get('.cds--select__item-count').find('.cds--select-input').select('2');
+  (
+    dataQaTagToUseToEnsureTableHasLoaded = 'paginated-entity-id',
+    paginationOptionsDataQa = 'pagination-options'
+  ) => {
+    cy.getBySel(paginationOptionsDataQa).scrollIntoView();
+    cy.getBySel(paginationOptionsDataQa)
+      .find('.cds--select__item-count')
+      .find('.cds--select-input')
+      .select('2');
 
     // NOTE: this is a em dash instead of en dash
     cy.contains(/\b1–2 of \d+/);
@@ -159,14 +167,17 @@ Cypress.Commands.add(
       .first()
       .then(($element) => {
         const oldId = $element.text().trim();
-        cy.get('.cds--pagination__button--forward').click();
-        cy.contains(
-          `[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`,
-          oldId
-        ).should('not.exist');
-        cy.contains(/\b3–4 of \d+/);
-        cy.get('.cds--pagination__button--backward').click();
-        cy.contains(/\b1–2 of \d+/);
+        cy.getBySel(paginationOptionsDataQa)
+          .find('.cds--pagination__button--forward')
+          .click();
+        cy.getBySel(paginationOptionsDataQa)
+          .contains(`[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`, oldId)
+          .should('not.exist');
+        cy.getBySel(paginationOptionsDataQa).contains(/\b3–4 of \d+/);
+        cy.getBySel(paginationOptionsDataQa)
+          .find('.cds--pagination__button--backward')
+          .click();
+        cy.getBySel(paginationOptionsDataQa).contains(/\b1–2 of \d+/);
         cy.contains(`[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`, oldId);
       });
   }

@@ -96,18 +96,19 @@ describe('tasks', () => {
     // This should get the first one which should be the one we just completed
     cy.getBySel('process-instance-show-link-id').first().click();
     cy.contains('Process Instance Id: ');
-    cy.contains('Status: complete');
+    cy.get('.process-instance-status').contains('complete');
   });
 
-  it('can paginate items', () => {
-    // make sure we have some tasks
-    kickOffModelWithForm();
-    kickOffModelWithForm();
-    kickOffModelWithForm();
-    kickOffModelWithForm();
-    kickOffModelWithForm();
-
-    cy.navigateToHome();
-    cy.basicPaginationTest('process-instance-show-link-id');
-  });
+  // we no longer have a tasks table so these are actually covered in the process_instances test
+  // it('can paginate items', () => {
+  //   // make sure we have some tasks
+  //   kickOffModelWithForm();
+  //   kickOffModelWithForm();
+  //   kickOffModelWithForm();
+  //   kickOffModelWithForm();
+  //   kickOffModelWithForm();
+  //
+  //   cy.navigateToHome();
+  //   cy.basicPaginationTest('process-instance-show-link-id');
+  // });
 });
