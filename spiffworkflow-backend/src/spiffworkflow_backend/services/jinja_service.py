@@ -10,7 +10,16 @@ from spiffworkflow_backend.services.task_service import TaskService
 
 
 class JinjaHelpers:
-    """These are helpers that added to jinja when rendering a template."""
+    """These are helpers that added to script tasks and to jinja for rendering templates.
+
+    Can be used from a jinja template as a filter like:
+        This is a template for {{ unsanitized_variable | sanitize_for_md }}.
+    Or as a python-style method call like:
+        This is a template for {{ jinja_helpers.sanitize_for_md(unsanitized_variable) }}.
+
+    It can also be used from a script task like:
+        sanitized_variable = jinja_helpers.sanitize_for_md(unsanitized_variable)
+    """
 
     @classmethod
     def sanitize_for_md(cls, value: str) -> str:
@@ -63,4 +72,5 @@ class JinjaService:
 
     @classmethod
     def get_filters(cls) -> dict:
+        """So we can use filter syntax in markdown."""
         return {"sanitize_for_md": JinjaHelpers.sanitize_for_md}
