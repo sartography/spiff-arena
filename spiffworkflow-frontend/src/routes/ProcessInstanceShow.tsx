@@ -8,7 +8,6 @@ import {
 } from 'react-router-dom';
 import {
   Send,
-  ButtonSet,
   Checkmark,
   Edit,
   InProgress,
@@ -25,6 +24,7 @@ import {
   // @ts-ignore
 } from '@carbon/icons-react';
 import {
+  ButtonSet,
   Grid,
   Column,
   Button,
