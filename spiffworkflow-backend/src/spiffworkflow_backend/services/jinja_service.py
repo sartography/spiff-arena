@@ -1,6 +1,5 @@
 import re
 from sys import exc_info
-from typing import Any
 
 import jinja2
 from jinja2 import TemplateSyntaxError
@@ -14,13 +13,13 @@ class JinjaHelpers:
     """These are helpers that added to jinja when rendering a template."""
 
     @classmethod
-    def sanitize_value_for_markdown(cls, *args: Any) -> str:
-        value = args[0]
+    def sanitize_for_md(cls, value: str) -> str:
+        """Sanitizes given value for markdown."""
         sanitized_value = re.sub(r"([|])", r"\\\1", value)
         return sanitized_value
 
-class JinjaService:
 
+class JinjaService:
     @classmethod
     def render_instructions_for_end_user(cls, task_model: TaskModel, extensions: dict | None = None) -> str:
         """Assure any instructions for end user are processed for jinja syntax."""
@@ -37,15 +36,14 @@ class JinjaService:
                     raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
         return ""
 
-
     @classmethod
     def render_jinja_template(cls, unprocessed_template: str, task_model: TaskModel) -> str:
         jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+        jinja_environment.filters.update(cls.get_filters())
         try:
             template = jinja_environment.from_string(unprocessed_template)
             return template.render(**(task_model.get_data()), jinja_helpers=JinjaHelpers)
         except jinja2.exceptions.TemplateError as template_error:
-            # import pdb; pdb.set_trace()
             wfe = TaskModelError(str(template_error), task_model=task_model, exception=template_error)
             if isinstance(template_error, TemplateSyntaxError):
                 wfe.line_number = template_error.lineno
@@ -53,7 +51,6 @@ class JinjaService:
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from template_error
         except Exception as error:
-            # import pdb; pdb.set_trace()
             _type, _value, tb = exc_info()
             wfe = TaskModelError(str(error), task_model=task_model, exception=error)
             while tb:
@@ -63,3 +60,7 @@ class JinjaService:
                 tb = tb.tb_next
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from error
+
+    @classmethod
+    def get_filters(cls) -> dict:
+        return {"sanitize_for_md": JinjaHelpers.sanitize_for_md}

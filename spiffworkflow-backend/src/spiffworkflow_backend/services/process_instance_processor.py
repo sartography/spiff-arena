@@ -71,6 +71,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -275,6 +276,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "enumerate": enumerate,
             "filter": filter,
             "format": format,
+            "jinja_helpers": JinjaHelpers,
             "json": json,
             "list": list,
             "map": map,
