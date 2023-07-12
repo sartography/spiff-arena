@@ -598,7 +598,14 @@ def task_save_draft(
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
-        return make_response(jsonify({"ok": True}), 200)
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=(
+                f"Process Instance ({process_instance.id}) has status "
+                f"{process_instance.status} which does not allow draft data to be saved."
+            ),
+            status_code=400,
+        )
 
     try:
         AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
