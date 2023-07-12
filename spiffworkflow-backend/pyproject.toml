@@ -34,7 +34,6 @@ SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "fe
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
-mysql-connector-python = "*"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
@@ -84,6 +83,10 @@ sqlalchemy = "^2.0.7"
 marshmallow-sqlalchemy = "^0.29.0"
 spiff-element-units = "^0.3.0"
 pytest-xdist = "^3.3.1"
+
+# mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
+# https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
+mysqlclient = "^2.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

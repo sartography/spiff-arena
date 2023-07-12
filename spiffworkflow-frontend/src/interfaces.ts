@@ -26,16 +26,17 @@ export interface TaskPropertiesJson {
   last_state_change: number;
 }
 
-export interface TaskDefinitionPropertiesJson {
-  spec: string;
-}
-
 export interface EventDefinition {
   typename: string;
   payload: any;
   event_definitions: [EventDefinition];
 
   message_var?: string;
+}
+
+export interface TaskDefinitionPropertiesJson {
+  spec: string;
+  event_definition: EventDefinition;
 }
 
 export interface SignalButton {
@@ -257,15 +258,16 @@ export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 export interface ErrorForDisplay {
   message: string;
 
-  messageClassName?: string;
-  sentry_link?: string;
-  task_name?: string;
-  task_id?: string;
-  line_number?: number;
+  error_code?: string;
   error_line?: string;
   file_name?: string;
-  task_trace?: string[];
+  line_number?: number;
+  messageClassName?: string;
+  sentry_link?: string;
   stacktrace?: string[];
+  task_id?: string;
+  task_name?: string;
+  task_trace?: string[];
 }
 
 export interface AuthenticationParam {
@@ -286,7 +288,7 @@ export interface PaginationObject {
 }
 
 export interface CarbonComboBoxSelection {
-  selectedItem: ProcessModel;
+  selectedItem: any;
 }
 
 export interface CarbonComboBoxProcessSelection {

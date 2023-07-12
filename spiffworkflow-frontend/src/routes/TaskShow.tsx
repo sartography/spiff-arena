@@ -21,7 +21,7 @@ import {
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
 } from '../helpers';
-import { EventDefinition, Task } from '../interfaces';
+import { ErrorForDisplay, EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
@@ -70,11 +70,26 @@ export default function TaskShow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
+  const handleAutoSaveError = (error: ErrorForDisplay) => {
+    if (
+      error.error_code &&
+      error.error_code === 'process_instance_not_runnable'
+    ) {
+      return undefined;
+    }
+    addError(error);
+    return undefined;
+  };
+
   // Before we auto-saved form data, we remembered what data was in the form, and then created a synthetic submit event
   // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
   // frontend code to support that Save and close button is here, in case we need to reference that someday:
   //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
   const autoSaveTaskData = (formData: any, successCallback?: Function) => {
+    // save-draft gets called when a manual task form loads but there's no data to save so don't do it
+    if (task?.typename === 'ManualTask') {
+      return undefined;
+    }
     let successCallbackToUse = successCallback;
     if (!successCallbackToUse) {
       successCallbackToUse = doNothing;
@@ -84,8 +99,9 @@ export default function TaskShow() {
       postBody: formData,
       httpMethod: 'POST',
       successCallback: successCallbackToUse,
-      failureCallback: addError,
+      failureCallback: handleAutoSaveError,
     });
+    return undefined;
   };
 
   const sendAutosaveEvent = (eventDetails?: any) => {

@@ -38,7 +38,7 @@ def setup_database_configs(app: Flask) -> None:
             db_pswd = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD")
             if db_pswd is None:
                 db_pswd = ""
-            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://root:{db_pswd}@localhost/{database_name}"
+            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:{db_pswd}@127.0.0.1/{database_name}"
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
 
@@ -184,6 +184,10 @@ def setup_config(app: Flask) -> None:
 
     if app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] == "":
         app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] = None
+
+    app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] = int(
+        app.config["SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
+    )
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
