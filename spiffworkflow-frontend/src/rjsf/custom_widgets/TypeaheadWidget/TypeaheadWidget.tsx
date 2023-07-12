@@ -7,6 +7,7 @@ interface typeaheadArgs {
   onChange: any;
   options: any;
   value: any;
+  schema?: any;
   uiSchema?: any;
   disabled?: boolean;
   readonly?: boolean;
@@ -20,6 +21,7 @@ export default function TypeaheadWidget({
   onChange,
   options: { category, itemFormat },
   value,
+  schema,
   uiSchema,
   disabled,
   readonly,
@@ -45,8 +47,15 @@ export default function TypeaheadWidget({
     }
   }
 
+  let labelToUse = label;
+  if (uiSchema && uiSchema['ui:title']) {
+    labelToUse = uiSchema['ui:title'];
+  } else if (schema && schema.title) {
+    labelToUse = schema.title;
+  }
+
   if (!category) {
-    errorMessageForField = `category is not set in the ui:options for this field: ${label}`;
+    errorMessageForField = `category is not set in the ui:options for this field: ${labelToUse}`;
     invalid = true;
   }
 
@@ -106,7 +115,13 @@ export default function TypeaheadWidget({
 
   if (!invalid && rawErrors && rawErrors.length > 0) {
     invalid = true;
-    [errorMessageForField] = rawErrors;
+    if ('validationErrorMessage' in schema) {
+      errorMessageForField = (schema as any).validationErrorMessage;
+    } else {
+      errorMessageForField = `${(labelToUse || '').replace(/\*$/, '')} ${
+        rawErrors[0]
+      }`;
+    }
   }
 
   return (
