@@ -23,7 +23,6 @@ import {
   TableRow,
   TimePicker,
   Tag,
-  Stack,
   Modal,
   ComboBox,
   TextInput,
@@ -207,7 +206,8 @@ export default function ProcessInstanceListTable({
 
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
-  const [withOldestOpenTask, setWithOldestOpenTask] = useState<boolean>(false);
+  const [withOldestOpenTask, setWithOldestOpenTask] =
+    useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
     null
@@ -437,6 +437,14 @@ export default function ProcessInstanceListTable({
         });
       }
 
+      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
+      if (showActionsColumn) {
+        reportMetadataBodyToUse.filter_by.push({
+          field_name: 'with_oldest_open_task',
+          field_value: true,
+        });
+      }
+
       if (filtersEnabled) {
         HttpService.makeCallToBackend({
           path: `/user-groups/for-current-user`,
@@ -466,6 +474,7 @@ export default function ProcessInstanceListTable({
       setProcessInstancesFromResult,
       stopRefreshing,
       systemReportOptions,
+      showActionsColumn,
       clearFilters,
     ]
   );
@@ -1166,50 +1175,54 @@ export default function ProcessInstanceListTable({
           reportColumnLabel = `${reportColumnLabel}=${reportColumnForEditing.filter_field_value}`;
         }
         tags.push(
-          <Tag type={tagType} size="sm">
-            <Button
-              kind="ghost"
-              size="sm"
-              className={`button-tag-icon ${tagTypeClass}`}
-              title={`Edit ${reportColumnForEditing.accessor} column`}
-              onClick={() => {
-                setReportColumnToOperateOn(reportColumnForEditing);
-                setShowReportColumnForm(true);
-                setReportColumnFormMode('edit');
-              }}
-            >
-              {reportColumnLabel}
-            </Button>
-            <Button
-              data-qa="remove-report-column"
-              renderIcon={Close}
-              iconDescription="Remove Column"
-              className={`button-tag-icon ${tagTypeClass}`}
-              hasIconOnly
-              size="sm"
-              kind="ghost"
-              onClick={() => removeColumn(reportColumnForEditing)}
-            />
-          </Tag>
+          <Column md={2} lg={2} sm={2}>
+            <Tag type={tagType} size="sm" className="filter-tag">
+              <Button
+                kind="ghost"
+                size="sm"
+                className={`button-tag ${tagTypeClass}`}
+                title={`Edit ${reportColumnForEditing.accessor} column`}
+                onClick={() => {
+                  setReportColumnToOperateOn(reportColumnForEditing);
+                  setShowReportColumnForm(true);
+                  setReportColumnFormMode('edit');
+                }}
+              >
+                {reportColumnLabel}
+              </Button>
+              <Button
+                data-qa="remove-report-column"
+                renderIcon={Close}
+                iconDescription="Remove Column"
+                className={`button-tag-icon ${tagTypeClass}`}
+                hasIconOnly
+                size="sm"
+                kind="ghost"
+                onClick={() => removeColumn(reportColumnForEditing)}
+              />
+            </Tag>
+          </Column>
         );
       });
       return (
-        <Stack orientation="horizontal">
+        <Grid narrow fullWidth className="filter-buttons">
           {tags}
-          <Button
-            data-qa="add-column-button"
-            renderIcon={AddAlt}
-            iconDescription="Column options"
-            className="with-tiny-top-margin"
-            kind="ghost"
-            hasIconOnly
-            size="sm"
-            onClick={() => {
-              setShowReportColumnForm(true);
-              setReportColumnFormMode('new');
-            }}
-          />
-        </Stack>
+          <Column md={1} lg={1} sm={1}>
+            <Button
+              data-qa="add-column-button"
+              renderIcon={AddAlt}
+              iconDescription="Column options"
+              className="with-tiny-top-margin"
+              kind="ghost"
+              hasIconOnly
+              size="sm"
+              onClick={() => {
+                setShowReportColumnForm(true);
+                setReportColumnFormMode('new');
+              }}
+            />
+          </Column>
+        </Grid>
       );
     }
     return null;
@@ -1635,6 +1648,18 @@ export default function ProcessInstanceListTable({
           `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
         );
       };
+      let variantFromMetadata = 'all';
+      if (reportMetadata) {
+        reportMetadata.filter_by.forEach((filter: any) => {
+          if (
+            filter.field_name === 'with_relation_to_me' &&
+            filter.field_value
+          ) {
+            variantFromMetadata = 'for-me';
+          }
+        });
+      }
+
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
@@ -1642,6 +1667,7 @@ export default function ProcessInstanceListTable({
           key={processInstance.id}
           onClick={navigateToProcessInstance}
           onKeyDown={navigateToProcessInstance}
+          className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
         </tr>
@@ -1655,7 +1681,7 @@ export default function ProcessInstanceListTable({
 
     return (
       // eslint-disable-next-line react/jsx-props-no-spreading
-      <Table {...tableProps}>
+      <Table {...tableProps} className="process-instance-list">
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
@@ -1705,6 +1731,7 @@ export default function ProcessInstanceListTable({
           sm={{ span: 1, offset: 3 }}
           md={{ span: 1, offset: 7 }}
           lg={{ span: 1, offset: 15 }}
+          style={{ textAlign: 'right' }}
         >
           <Button
             data-qa="process-instance-list-link"
@@ -1720,12 +1747,12 @@ export default function ProcessInstanceListTable({
       );
     }
     return (
-      <Grid fullWidth condensed>
+      <>
         <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
           {headerElement}
         </Column>
         {filterButtonLink}
-      </Grid>
+      </>
     );
   };
 
@@ -1774,19 +1801,25 @@ export default function ProcessInstanceListTable({
   }
 
   return (
-    <>
+    <div className="process-instance-list-table">
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      {tableTitleLine()}
-      <Filters
-        filterOptions={filterOptions}
-        showFilterOptions={showFilterOptions}
-        setShowFilterOptions={setShowFilterOptions}
-        reportSearchComponent={reportSearchComponent}
-        filtersEnabled={filtersEnabled}
-      />
-      {resultsTable}
-    </>
+      <Grid fullWidth condensed>
+        {tableTitleLine()}
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          <Filters
+            filterOptions={filterOptions}
+            showFilterOptions={showFilterOptions}
+            setShowFilterOptions={setShowFilterOptions}
+            reportSearchComponent={reportSearchComponent}
+            filtersEnabled={filtersEnabled}
+          />
+        </Column>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {resultsTable}
+        </Column>
+      </Grid>
+    </div>
   );
 }

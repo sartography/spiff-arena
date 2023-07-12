@@ -75,6 +75,10 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
     },
+    {
+        "path": "/process-instances/for-me",
+        "relevant_permissions": ["read"],
+    },
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},

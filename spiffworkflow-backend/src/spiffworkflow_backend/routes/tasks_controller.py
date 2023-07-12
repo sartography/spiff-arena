@@ -52,6 +52,7 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskNotFou
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -368,7 +369,9 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | 
     return ""
 
 
-def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, str | None, None]:
+def _interstitial_stream(
+    process_instance: ProcessInstanceModel, execute_tasks: bool = True, is_locked: bool = False
+) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
@@ -380,11 +383,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             return ""
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
-
-    def render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
-        return_hash: dict = {"type": return_type}
-        return_hash[return_type] = entity
-        return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -399,33 +397,57 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
                 task.properties = {"instructionsForEndUser": instructions}
-                yield render_data("task", task)
+                yield _render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 # do not do any processing if the instance is not currently active
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield render_data("unrunnable_instance", process_instance)
+                    yield _render_data("unrunnable_instance", process_instance)
                     return
-                try:
-                    processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                except WorkflowTaskException as wfe:
-                    api_error = ApiError.from_workflow_exception(
-                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
-                    )
-                    yield render_data("error", api_error)
-                    return
-        processor.refresh_waiting_tasks()
+                if execute_tasks:
+                    try:
+                        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+                        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                        processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                        processor.refresh_waiting_tasks()
+
+                    except WorkflowTaskException as wfe:
+                        api_error = ApiError.from_workflow_exception(
+                            "engine_steps_error", "Failed to complete an automated task.", exp=wfe
+                        )
+                        yield _render_data("error", api_error)
+                        return
+
+        # path used by the interstitial page while executing tasks - ie the background processor is not executing them
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
+        if execute_tasks and ready_engine_task_count == 0:
+            break
+
+        if not execute_tasks:
+            # path used by the process instance show page to display most recent instructions
+            if not is_locked:
+                break
+
+            # HACK: db.session.refresh doesn't seem to refresh without rollback or commit so use rollback.
+            # we are not executing tasks so there shouldn't be anything to write anyway, so no harm in rollback.
+            # https://stackoverflow.com/a/20361132/6090676
+            # note that the thing changing the data in this case is probably the background worker,
+            # and it is definitely committing its changes, but since we have already queried the data,
+            # our session has stale results without the rollback.
+            db.session.rollback()
+            db.session.refresh(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
+
+            # if process instance is done or blocked by a human task, then break out
+            if is_locked and process_instance.status not in ["not_started", "waiting"]:
+                break
+
         tasks = get_reportable_tasks()
-        if ready_engine_task_count == 0:
-            break  # No more tasks to report
 
     spiff_task = processor.next_task()
     if spiff_task is not None:
@@ -439,34 +461,73 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield render_data("error", api_error)
+                yield _render_data("error", api_error)
                 raise e
             task.properties = {"instructionsForEndUser": instructions}
-            yield render_data("task", task)
+            yield _render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
-def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str | None, str | None, None]:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+def _dequeued_interstitial_stream(
+    process_instance_id: int, execute_tasks: bool = True
+) -> Generator[str | None, str | None, None]:
+    try:
+        process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    # TODO: currently this just redirects back to home if the process has not been started
-    # need something better to show?
+        # TODO: currently this just redirects back to home if the process has not been started
+        # need something better to show?
+        if execute_tasks:
+            try:
+                if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+                    with ProcessInstanceQueueService.dequeued(process_instance):
+                        yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+            except ProcessInstanceIsAlreadyLockedError:
+                yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
+        else:
+            # no reason to get a lock if we are reading only
+            yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+    except Exception as ex:
+        # the stream_with_context method seems to swallow exceptions so also attempt to catch errors here
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+        )
+        yield _render_data("error", api_error)
 
-    if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-        with ProcessInstanceQueueService.dequeued(process_instance):
-            yield from _interstitial_stream(process_instance)
 
-
-def interstitial(process_instance_id: int) -> Response:
+def interstitial(process_instance_id: int, execute_tasks: bool = True) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
-    return Response(
-        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
-    )
+    try:
+        return Response(
+            stream_with_context(_dequeued_interstitial_stream(process_instance_id, execute_tasks=execute_tasks)),
+            mimetype="text/event-stream",
+            headers={"X-Accel-Buffering": "no"},
+        )
+    except Exception as ex:
+        api_error = ApiError(
+            error_code="interstitial_error",
+            message=(
+                f"Received error trying to run process instance: {process_instance_id}. "
+                f"Error was: {ex.__class__.__name__}: {str(ex)}"
+            ),
+            status_code=500,
+            response_headers={"Content-type": "text/event-stream"},
+        )
+        api_error.response_message = _render_data("error", api_error)
+        raise api_error from ex
+
+
+def _render_data(return_type: str, entity: ApiError | Task | ProcessInstanceModel) -> str:
+    return_hash: dict = {"type": return_type}
+    return_hash[return_type] = entity
+    return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
 
 def task_save_draft(
