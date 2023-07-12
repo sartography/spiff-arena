@@ -423,8 +423,7 @@ def _interstitial_stream(
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         if task_model is None:
             return ""
-        extensions = TaskService.get_extensions_from_task_model(task_model)
-        return JinjaService.render_instructions_for_end_user(task_model, extensions)
+        return JinjaService.render_instructions_for_end_user(task_model)
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
