@@ -3,12 +3,10 @@ import json
 import os
 import uuid
 from collections.abc import Generator
-from sys import exc_info
 from typing import Any
 from typing import TypedDict
 
 import flask.wrappers
-import jinja2
 import sentry_sdk
 from flask import current_app
 from flask import g
@@ -16,7 +14,6 @@ from flask import jsonify
 from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
-from jinja2 import TemplateSyntaxError
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -52,6 +49,7 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskAlread
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -399,7 +397,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
                 task_model.form_ui_schema = ui_form_contents
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
-    _render_instructions_for_end_user(task_model, extensions)
+    JinjaService.render_instructions_for_end_user(task_model, extensions)
     task_model.extensions = extensions
     return make_response(jsonify(task_model), 200)
 
@@ -411,22 +409,6 @@ def task_submit(
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
         return _task_submit_shared(process_instance_id, task_guid, body)
-
-
-def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | None = None) -> str:
-    """Assure any instructions for end user are processed for jinja syntax."""
-    if extensions is None:
-        extensions = TaskService.get_extensions_from_task_model(task_model)
-    if extensions and "instructionsForEndUser" in extensions:
-        if extensions["instructionsForEndUser"]:
-            try:
-                instructions = _render_jinja_template(extensions["instructionsForEndUser"], task_model)
-                extensions["instructionsForEndUser"] = instructions
-                return instructions
-            except TaskModelError as wfe:
-                wfe.add_note("Failed to render instructions for end user.")
-                raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
-    return ""
 
 
 def _interstitial_stream(
@@ -442,7 +424,7 @@ def _interstitial_stream(
         if task_model is None:
             return ""
         extensions = TaskService.get_extensions_from_task_model(task_model)
-        return _render_instructions_for_end_user(task_model, extensions)
+        return JinjaService.render_instructions_for_end_user(task_model, extensions)
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -820,7 +802,7 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
 
     file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
     try:
-        form_contents = _render_jinja_template(file_contents, task_model)
+        form_contents = JinjaService.render_jinja_template(file_contents, task_model)
         try:
             # form_contents is a str
             hot_dict: dict = json.loads(form_contents)
@@ -838,30 +820,6 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
         raise api_error
-
-
-def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> str:
-    jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
-    try:
-        template = jinja_environment.from_string(unprocessed_template)
-        return template.render(**(task_model.get_data()))
-    except jinja2.exceptions.TemplateError as template_error:
-        wfe = TaskModelError(str(template_error), task_model=task_model, exception=template_error)
-        if isinstance(template_error, TemplateSyntaxError):
-            wfe.line_number = template_error.lineno
-            wfe.error_line = template_error.source.split("\n")[template_error.lineno - 1]
-        wfe.add_note("Jinja2 template errors can happen when trying to display task data")
-        raise wfe from template_error
-    except Exception as error:
-        _type, _value, tb = exc_info()
-        wfe = TaskModelError(str(error), task_model=task_model, exception=error)
-        while tb:
-            if tb.tb_frame.f_code.co_filename == "<template>":
-                wfe.line_number = tb.tb_lineno
-                wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
-            tb = tb.tb_next
-        wfe.add_note("Jinja2 template errors can happen when trying to display task data")
-        raise wfe from error
 
 
 def _get_spiff_task_from_process_instance(
