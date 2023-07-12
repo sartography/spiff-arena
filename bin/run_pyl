@@ -75,7 +75,7 @@ for python_project in "${python_projects[@]}"; do
     pushd "$python_project"
     poetry install
     poetry run mypy $(get_python_dirs)
-    poetry run coverage run --parallel -m pytest
+    ./bin/tests-par
     popd
   fi
 done

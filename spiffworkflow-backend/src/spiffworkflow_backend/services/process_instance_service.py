@@ -19,12 +19,15 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -505,6 +508,7 @@ class ProcessInstanceService:
         add_docs_and_forms: bool = False,
     ) -> Task:
         task_type = spiff_task.task_spec.description
+        task_guid = str(spiff_task.id)
 
         props = {}
         if hasattr(spiff_task.task_spec, "extensions"):
@@ -520,10 +524,10 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_task(
-                processor.process_instance_model.id, str(spiff_task.id), g.user
-            )
+            AuthorizationService.assert_user_can_complete_task(processor.process_instance_model.id, task_guid, g.user)
             can_complete = True
+        except HumanTaskAlreadyCompletedError:
+            can_complete = False
         except HumanTaskNotFoundError:
             can_complete = False
         except UserDoesNotHaveAccessToTaskError:
@@ -537,9 +541,11 @@ class ProcessInstanceService:
 
         # Grab the last error message.
         error_message = None
-        for event in processor.process_instance_model.process_instance_events:
-            for detail in event.error_details:
-                error_message = detail.message
+        error_event = ProcessInstanceEventModel.query.filter_by(
+            task_guid=task_guid, event_type=ProcessInstanceEventType.task_failed.value
+        ).first()
+        if error_event:
+            error_message = error_event.error_details[-1].message
 
         task = Task(
             spiff_task.id,

@@ -29,6 +29,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -173,13 +174,12 @@ def task_data_show(
 
 
 def task_data_update(
-    process_instance_id: str,
+    process_instance_id: int,
     modified_process_model_identifier: str,
     task_guid: str,
     body: dict,
 ) -> Response:
-    """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
@@ -227,13 +227,13 @@ def task_data_update(
 
 def manual_complete_task(
     modified_process_model_identifier: str,
-    process_instance_id: str,
+    process_instance_id: int,
     task_guid: str,
     body: dict,
 ) -> Response:
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
         processor.manual_complete_task(task_guid, execute, g.user)
@@ -247,6 +247,57 @@ def manual_complete_task(
         status=200,
         mimetype="application/json",
     )
+
+
+def task_assign(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    task_guid: str,
+    body: dict,
+) -> Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
+    if process_instance.status != ProcessInstanceStatus.suspended.value:
+        raise ApiError(
+            error_code="error_not_suspended",
+            message="The process instance must be suspended to perform this operation",
+            status_code=400,
+        )
+
+    if "user_ids" not in body:
+        raise ApiError(
+            error_code="malformed_request",
+            message="user_ids as an array must be given in the body of the request.",
+            status_code=400,
+        )
+
+    _get_process_model(
+        process_instance.process_model_identifier,
+    )
+
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    human_tasks = HumanTaskModel.query.filter_by(
+        process_instance_id=process_instance.id, task_id=task_model.guid
+    ).all()
+
+    if len(human_tasks) > 1:
+        raise ApiError(
+            error_code="multiple_tasks_found",
+            message="More than one ready tasks were found. This should never happen.",
+            status_code=400,
+        )
+
+    human_task = human_tasks[0]
+
+    for user_id in body["user_ids"]:
+        human_task_user = HumanTaskUserModel.query.filter_by(user_id=user_id, human_task=human_task).first()
+        if human_task_user is None:
+            human_task_user = HumanTaskUserModel(user_id=user_id, human_task=human_task)
+            db.session.add(human_task_user)
+
+    SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
+
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
@@ -353,6 +404,15 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     return make_response(jsonify(task_model), 200)
 
 
+def task_submit(
+    process_instance_id: int,
+    task_guid: str,
+    body: dict[str, Any],
+) -> flask.wrappers.Response:
+    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
+        return _task_submit_shared(process_instance_id, task_guid, body)
+
+
 def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | None = None) -> str:
     """Assure any instructions for end user are processed for jinja syntax."""
     if extensions is None:
@@ -424,7 +484,7 @@ def _interstitial_stream(
                         return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
-        ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
+        ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
         if execute_tasks and ready_engine_task_count == 0:
             break
 
@@ -467,7 +527,7 @@ def _interstitial_stream(
             yield _render_data("task", task)
 
 
-def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
+def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
@@ -542,7 +602,7 @@ def task_save_draft(
             error_code="process_instance_not_runnable",
             message=(
                 f"Process Instance ({process_instance.id}) has status "
-                f"{process_instance.status} which does not allow tasks to be submitted."
+                f"{process_instance.status} which does not allow draft data to be saved."
             ),
             status_code=400,
         )
@@ -654,15 +714,6 @@ def _task_submit_shared(
         status=202,
         mimetype="application/json",
     )
-
-
-def task_submit(
-    process_instance_id: int,
-    task_guid: str,
-    body: dict[str, Any],
-) -> flask.wrappers.Response:
-    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body)
 
 
 def _get_tasks(

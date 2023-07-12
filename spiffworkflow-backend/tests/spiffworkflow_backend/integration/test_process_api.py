@@ -15,6 +15,8 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
@@ -2494,6 +2496,7 @@ class TestProcessApi(BaseTest):
             content_type="application/json",
             data=json.dumps({"execute": False}),
         )
+
         assert response.json["status"] == "suspended"
         task_model = TaskModel.query.filter_by(guid=human_task["guid"]).first()
         assert task_model is not None
@@ -2505,6 +2508,11 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert len(response.json) == 7
+
+        task_event = ProcessInstanceEventModel.query.filter_by(
+            task_guid=human_task["guid"], event_type=ProcessInstanceEventType.task_skipped.value
+        ).first()
+        assert task_event is not None
 
     def setup_initial_groups_for_move_tests(self, client: FlaskClient, with_super_admin_user: UserModel) -> None:
         groups = ["group_a", "group_b", "group_b/group_bb"]
