@@ -1541,7 +1541,14 @@ class ProcessInstanceProcessor:
             )
 
         task_model.start_in_seconds = time.time()
-        self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+        task_exception = None
+        task_event = ProcessInstanceEventType.task_completed.value
+        try:
+            self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+        except Exception as ex:
+            task_exception = ex
+            task_event = ProcessInstanceEventType.task_failed.value
+
         task_model.end_in_seconds = time.time()
 
         human_task.completed_by_user_id = user.id
@@ -1559,9 +1566,10 @@ class ProcessInstanceProcessor:
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
-            ProcessInstanceEventType.task_completed.value,
+            task_event,
             task_guid=task_model.guid,
             user_id=user.id,
+            exception=task_exception,
         )
 
         # children of a multi-instance task has the attribute "triggered" set to True
@@ -1576,6 +1584,9 @@ class ProcessInstanceProcessor:
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
+
+        if task_exception is not None:
+            raise task_exception
 
     def get_data(self) -> dict[str, Any]:
         return self.bpmn_process_instance.data  # type: ignore
