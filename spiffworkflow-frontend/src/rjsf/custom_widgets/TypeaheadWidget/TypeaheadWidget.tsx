@@ -16,6 +16,7 @@ interface typeaheadArgs {
   label?: string;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function TypeaheadWidget({
   id,
   onChange,
