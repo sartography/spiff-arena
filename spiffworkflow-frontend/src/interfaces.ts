@@ -26,16 +26,17 @@ export interface TaskPropertiesJson {
   last_state_change: number;
 }
 
-export interface TaskDefinitionPropertiesJson {
-  spec: string;
-}
-
 export interface EventDefinition {
   typename: string;
   payload: any;
   event_definitions: [EventDefinition];
 
   message_var?: string;
+}
+
+export interface TaskDefinitionPropertiesJson {
+  spec: string;
+  event_definition: EventDefinition;
 }
 
 export interface SignalButton {
@@ -286,7 +287,7 @@ export interface PaginationObject {
 }
 
 export interface CarbonComboBoxSelection {
-  selectedItem: ProcessModel;
+  selectedItem: any;
 }
 
 export interface CarbonComboBoxProcessSelection {
