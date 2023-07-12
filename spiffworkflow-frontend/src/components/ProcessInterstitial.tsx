@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
@@ -10,6 +10,7 @@ import { getBasicHeaders } from '../services/HttpService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
+import { HUMAN_TASK_TYPES } from '../helpers';
 
 type OwnProps = {
   processInstanceId: number;
@@ -35,9 +36,6 @@ export default function ProcessInterstitial({
     useState<ProcessInstance | null>(null);
 
   const navigate = useNavigate();
-  const userTasks = useMemo(() => {
-    return ['User Task', 'Manual Task'];
-  }, []);
   const { addError } = useAPIError();
 
   useEffect(() => {
@@ -77,10 +75,10 @@ export default function ProcessInterstitial({
         !processInstance &&
         myTask &&
         myTask.can_complete &&
-        userTasks.includes(myTask.type)
+        HUMAN_TASK_TYPES.includes(myTask.type)
       );
     },
-    [allowRedirect, processInstance, userTasks]
+    [allowRedirect, processInstance]
   );
 
   const shouldRedirectToProcessInstance = useCallback((): boolean => {
@@ -105,7 +103,6 @@ export default function ProcessInterstitial({
   }, [
     lastTask,
     navigate,
-    userTasks,
     shouldRedirectToTask,
     processInstanceId,
     processInstanceShowPageUrl,
@@ -181,7 +178,7 @@ export default function ProcessInterstitial({
       return userMessageForProcessInstance(processInstance, myTask);
     }
 
-    if (!myTask.can_complete && userTasks.includes(myTask.type)) {
+    if (!myTask.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)) {
       return inlineMessage(
         '',
         `This next task is assigned to a different person or team. There is no action for you to take at this time.`
@@ -190,7 +187,11 @@ export default function ProcessInterstitial({
     if (shouldRedirectToTask(myTask)) {
       return inlineMessage('', `Redirecting ...`);
     }
-    if (myTask && myTask.can_complete && userTasks.includes(myTask.type)) {
+    if (
+      myTask &&
+      myTask.can_complete &&
+      HUMAN_TASK_TYPES.includes(myTask.type)
+    ) {
       return inlineMessage(
         '',
         `The task "${myTask.title}" is ready for you to complete.`
