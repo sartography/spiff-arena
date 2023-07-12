@@ -185,6 +185,10 @@ def setup_config(app: Flask) -> None:
     if app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] == "":
         app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] = None
 
+    app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] = int(
+        app.config["SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
+    )
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)

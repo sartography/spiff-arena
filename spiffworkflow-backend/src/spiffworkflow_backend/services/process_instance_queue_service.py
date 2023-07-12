@@ -51,6 +51,7 @@ class ProcessInstanceQueueService:
     @classmethod
     def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:
         locked_by = ProcessInstanceLockService.locked_by()
+        current_time = round(time.time())
 
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id == process_instance.id,
@@ -58,6 +59,7 @@ class ProcessInstanceQueueService:
         ).update(
             {
                 "locked_by": locked_by,
+                "locked_at_in_seconds": current_time,
             }
         )
 
