@@ -77,8 +77,8 @@ export default function NavigationBar() {
       newActiveKey = '/admin/process-instances';
     } else if (location.pathname.match(/^\/admin\/configuration\b/)) {
       newActiveKey = '/admin/configuration';
-    } else if (location.pathname.match(/^\/admin\/datastore\b/)) {
-      newActiveKey = '/admin/datastore';
+    } else if (location.pathname.match(/^\/admin\/data-stores\b/)) {
+      newActiveKey = '/admin/data-stores';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
     } else if (location.pathname.match(/^\/tasks\b/)) {
@@ -88,6 +88,7 @@ export default function NavigationBar() {
   }, [location]);
 
   const isActivePage = (menuItemPath: string) => {
+    console.log('activeKey', activeKey, 'menuItemPath', menuItemPath);
     return activeKey === menuItemPath;
   };
 
