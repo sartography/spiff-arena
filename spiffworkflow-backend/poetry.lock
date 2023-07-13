@@ -2266,8 +2266,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "feature/event-payloads"
-resolved_reference = "414231680619aefb8a27a2153d808a52e25eb5ee"
+reference = "main"
+resolved_reference = "ebcdde95c2f59f67981add1eacf9f5e04520d50f"
 
 [[package]]
 name = "sqlalchemy"
@@ -2696,4 +2696,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "77f075a66c1b496dfc08c4d3785b71f5fb25c1c28ad66745b971bc2f477e4243"
+content-hash = "755b30cee83d139e40dcb609fc3417f26fc2a9eab24a41fe15174d4e24d739c2"
