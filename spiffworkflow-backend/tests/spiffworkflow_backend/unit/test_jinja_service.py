@@ -17,9 +17,7 @@ class TestJinjaService(BaseTest):
             process_model_id="test_group/manual-task-with-sanitized-markdown",
             process_model_source_directory="manual-task-with-sanitized-markdown",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -28,17 +26,19 @@ class TestJinjaService(BaseTest):
         task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
         assert task_model is not None
 
-        expected_result = "\n".join([
-            r"* From Filter: Sanitized \| from \| filter",
-            r"* From Method Call: Sanitized \| from \| method \| call",
-            r"* From ScriptTask: Sanitized \| from \| script \| task"
-        ])
+        expected_result = "\n".join(
+            [
+                r"* From Filter: Sanitized \| from \| filter",
+                r"* From Method Call: Sanitized \| from \| method \| call",
+                r"* From ScriptTask: Sanitized \| from \| script \| task",
+            ]
+        )
         result = JinjaService.render_instructions_for_end_user(task_model)
         assert result == expected_result
 
         expected_task_data = {
-            'from_filter': 'Sanitized | from | filter',
-            'from_method_call': 'Sanitized | from | method | call',
-            'from_script_task': 'Sanitized \\| from \\| script \\| task'
+            "from_filter": "Sanitized | from | filter",
+            "from_method_call": "Sanitized | from | method | call",
+            "from_script_task": "Sanitized \\| from \\| script \\| task",
         }
         assert task_model.get_data() == expected_task_data
