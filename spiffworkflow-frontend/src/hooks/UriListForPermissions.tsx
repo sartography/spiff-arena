@@ -7,6 +7,7 @@ export const useUriListForPermissions = () => {
     return {
       authenticationListPath: `/v1.0/authentications`,
       messageInstanceListPath: '/v1.0/messages',
+      dataStoreListPath: '/v1.0/data-stores',
       processGroupListPath: '/v1.0/process-groups',
       processGroupShowPath: `/v1.0/process-groups/${params.process_group_id}`,
       processInstanceActionPath: `/v1.0/process-instances/${params.process_model_id}/${params.process_instance_id}`,
