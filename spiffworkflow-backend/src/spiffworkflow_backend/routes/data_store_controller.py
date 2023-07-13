@@ -21,7 +21,7 @@ def data_store_list() -> flask.wrappers.Response:
     return make_response(jsonify(data_stores), 200)
 
 
-def data_store_items_list(
+def data_store_item_list(
     data_store_type: str, name: str, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
