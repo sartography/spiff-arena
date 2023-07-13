@@ -15,12 +15,12 @@
       <bpmn:outgoing>Flow_0rd9v57</bpmn:outgoing>
       <bpmn:script>from_filter = "Sanitized | from | filter"
 from_method_call = "Sanitized | from | method | call"
-from_script_task = jinja_helpers.sanitize_for_md("Sanitized | from | script | task")</bpmn:script>
+from_script_task = sanitize_for_md("Sanitized | from | script | task")</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:manualTask id="display_variables" name="Display Variables">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>* From Filter: {{ from_filter | sanitize_for_md }}
-* From Method Call: {{ jinja_helpers.sanitize_for_md(from_method_call) }}
+* From Method Call: {{ sanitize_for_md(from_method_call) }}
 * From ScriptTask: {{ from_script_task }}</spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0rd9v57</bpmn:incoming>

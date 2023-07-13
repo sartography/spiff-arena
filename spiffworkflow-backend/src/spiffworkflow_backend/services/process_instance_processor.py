@@ -276,7 +276,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "enumerate": enumerate,
             "filter": filter,
             "format": format,
-            "jinja_helpers": JinjaHelpers,
             "json": json,
             "list": list,
             "map": map,
@@ -286,6 +285,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            **JinjaHelpers.get_helper_mapping(),
         }
 
         use_restricted_script_engine = True

@@ -15,11 +15,16 @@ class JinjaHelpers:
     Can be used from a jinja template as a filter like:
         This is a template for {{ unsanitized_variable | sanitize_for_md }}.
     Or as a python-style method call like:
-        This is a template for {{ jinja_helpers.sanitize_for_md(unsanitized_variable) }}.
+        This is a template for {{ sanitize_for_md(unsanitized_variable) }}.
 
     It can also be used from a script task like:
-        sanitized_variable = jinja_helpers.sanitize_for_md(unsanitized_variable)
+        sanitized_variable = sanitize_for_md(unsanitized_variable)
     """
+
+    @classmethod
+    def get_helper_mapping(cls) -> dict:
+        """So we can use filter syntax in markdown."""
+        return {"sanitize_for_md": JinjaHelpers.sanitize_for_md}
 
     @classmethod
     def sanitize_for_md(cls, value: str) -> str:
@@ -48,10 +53,10 @@ class JinjaService:
     @classmethod
     def render_jinja_template(cls, unprocessed_template: str, task_model: TaskModel) -> str:
         jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
-        jinja_environment.filters.update(cls.get_filters())
+        jinja_environment.filters.update(JinjaHelpers.get_helper_mapping())
         try:
             template = jinja_environment.from_string(unprocessed_template)
-            return template.render(**(task_model.get_data()), jinja_helpers=JinjaHelpers)
+            return template.render(**(task_model.get_data()), **JinjaHelpers.get_helper_mapping())
         except jinja2.exceptions.TemplateError as template_error:
             wfe = TaskModelError(str(template_error), task_model=task_model, exception=template_error)
             if isinstance(template_error, TemplateSyntaxError):
@@ -69,8 +74,3 @@ class JinjaService:
                 tb = tb.tb_next
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from error
-
-    @classmethod
-    def get_filters(cls) -> dict:
-        """So we can use filter syntax in markdown."""
-        return {"sanitize_for_md": JinjaHelpers.sanitize_for_md}
