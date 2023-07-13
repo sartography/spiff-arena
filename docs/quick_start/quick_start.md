@@ -7,9 +7,9 @@
 ```
 
 
-## 🚀 Getting Started with Spiffarena
+## 🚀 Getting Started with SpiffArena
 
-Spiffarena is a platform that facilitates the execution of business processes. To begin using SpiffWorkflow, it is necessary to create your demo account using spiffdemo as explained [here](https://spiff-arena.readthedocs.io/en/latest/UsingSpiffdemo/Getting_Started.html#how-to-login-to-spiffarena). 
+Spiffarena is a platform that facilitates the execution of business processes. To begin using SpiffArena, you can create your demo account using spiffdemo as explained [here](https://spiff-arena.readthedocs.io/en/latest/UsingSpiffdemo/Getting_Started.html#how-to-login-to-spiffarena). 
 
 Here, we will provide a generic overview of each section step by step, allowing you to navigate and engage with the platform more effectively.
 
