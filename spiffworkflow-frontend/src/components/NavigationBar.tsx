@@ -52,6 +52,7 @@ export default function NavigationBar() {
     [targetUris.authenticationListPath]: ['GET'],
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.secretListPath]: ['GET'],
+    [targetUris.dataStoreListPath]: ['GET'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
@@ -76,6 +77,8 @@ export default function NavigationBar() {
       newActiveKey = '/admin/process-instances';
     } else if (location.pathname.match(/^\/admin\/configuration\b/)) {
       newActiveKey = '/admin/configuration';
+    } else if (location.pathname.match(/^\/admin\/datastore\b/)) {
+      newActiveKey = '/admin/datastore';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
     } else if (location.pathname.match(/^\/tasks\b/)) {
@@ -226,6 +229,14 @@ export default function NavigationBar() {
             isCurrentPage={isActivePage('/admin/messages')}
           >
             Messages
+          </HeaderMenuItem>
+        </Can>
+        <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
+          <HeaderMenuItem
+            href="/admin/data-stores"
+            isCurrentPage={isActivePage('/admin/data-stores')}
+          >
+            Data Stores
           </HeaderMenuItem>
         </Can>
         {configurationElement()}

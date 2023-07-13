@@ -44,6 +44,17 @@ export default function PaginationForTable({
   };
 
   if (pagination) {
+    const maxPages = 1000;
+    const pagesUnknown = pagination.pages > maxPages;
+    const totalItems =
+      pagination.pages < maxPages ? pagination.total : maxPages * perPage;
+    const itemText = () => {
+      const start = (page - 1) * perPage + 1;
+      return `Items ${start} to ${start + pagination.count} of ${
+        pagination.total
+      }`;
+    };
+
     return (
       <>
         {tableToDisplay}
@@ -55,10 +66,12 @@ export default function PaginationForTable({
           itemsPerPageText="Items per page:"
           page={page}
           pageNumberText="Page Number"
+          itemText={itemText}
           pageSize={perPage}
           pageSizes={perPageOptions || PER_PAGE_OPTIONS}
-          totalItems={pagination.total}
+          totalItems={totalItems}
           onChange={updateRows}
+          pagesUnknown={pagesUnknown}
         />
       </>
     );
