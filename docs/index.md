@@ -6,6 +6,7 @@
 UsingSpiffdemo/Getting_Started.md
 learn_basics/learn_basics.md
 quick_start/quick_start.md
+UsingSpiffdemo/Basic_Tools.md
 ```
 
 ```{toctree}
