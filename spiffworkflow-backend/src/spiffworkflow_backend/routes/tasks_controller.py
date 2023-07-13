@@ -51,6 +51,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -481,6 +482,7 @@ def _interstitial_stream(
                             "engine_steps_error", "Failed to complete an automated task.", exp=wfe
                         )
                         yield _render_data("error", api_error)
+                        ErrorHandlingService.handle_error(process_instance, wfe)
                         return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
