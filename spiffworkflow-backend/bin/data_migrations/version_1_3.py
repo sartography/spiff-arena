@@ -1,24 +1,28 @@
 
 from spiffworkflow_backend import create_app
+from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models import bpmn_process_definition
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
-def main():
+class VersionOneThree:
 
-    def run():
+    def run(self) -> None:
         app = create_app()
         with app.app_context():
             task_definitions = self.get_relevant_task_definitions()
-            for tdm in task_definitions:
-                self.process_task_definition(tdm)
+            for task_definition in task_definitions:
+                self.process_task_definition(task_definition)
+                relating_task_models = TaskModel.query.filter_by(task_definition_id=task_definition.id).all()
+                for task_model in relating_task_models:
+                    self.process_task_model(task_model)
+
 
     def get_relevant_task_definitions(self) -> list[TaskDefinitionModel]:
         task_definitions = TaskDefinitionModel.query.filter_by(typename='_BoundaryEventParent').all()
         return task_definitions
 
 
-    def process_task_definition(task_definition: TaskDefinitionModel) -> None:
+    def process_task_definition(self, task_definition: TaskDefinitionModel) -> None:
         task_definition.typename = 'BoundaryEventSplit'
         task_definition.bpmn_identifier = task_definition.bpmn_identifier.replace('BoundaryEventParent', 'BoundaryEventSplit')
 
@@ -61,7 +65,7 @@ def main():
             child_task_definition.properties_json['inputs'] = [name.replace('BoundaryEventParent', 'BoundaryEventSplit') for name in child_task_definition.properties_json['inputs']]
             db.session.add(child_task_definition)
 
-    # def update_tasks(wf):
+    def process_task_model(self, task_model: TaskModel):
     #     new_tasks = {}
     #     for task in wf['tasks'].values():
     #         if task['task_spec'].endswith('BoundaryEventParent'):
@@ -109,4 +113,4 @@ def main():
     # for sp in dct['subprocesses'].values():
     #     update_tasks(sp)
 
-main()
+VersionOneThree().run()
