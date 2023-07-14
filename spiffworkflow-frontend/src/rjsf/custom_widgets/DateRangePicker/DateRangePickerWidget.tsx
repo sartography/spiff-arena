@@ -86,8 +86,7 @@ export default function DateRangePickerWidget({
   }
 
   let dateValue: (Date | null)[] | null = value;
-  const dateRegex = new RegExp(DATE_RANGE_DELIMITER);
-  if (value && dateRegex.test(value)) {
+  if (value) {
     const [startDateString, endDateString] = value.split(DATE_RANGE_DELIMITER);
     let startDate = null;
     let endDate = null;
