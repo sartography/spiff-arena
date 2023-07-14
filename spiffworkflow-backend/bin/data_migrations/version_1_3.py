@@ -1,17 +1,16 @@
+import copy
 import json
 import os
-from SpiffWorkflow.task import TaskStateNames # type: ignore
-import copy
 import uuid
 from hashlib import sha256
-from sqlalchemy import or_
-from sqlalchemy.orm.attributes import flag_modified  # type: ignore
 
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.models.task import Task
+from sqlalchemy import or_
+from sqlalchemy.orm.attributes import flag_modified
 
 
 class VersionOneThree:
@@ -58,7 +57,7 @@ class VersionOneThree:
         properties_json["typename"] = task_definition.typename
         properties_json["name"] = task_definition.bpmn_identifier
         task_definition.properties_json = properties_json
-        flag_modified(task_definition, 'properties_json')  # type: ignore
+        flag_modified(task_definition, "properties_json")  # type: ignore
         db.session.add(task_definition)
 
         join_properties_json = {
@@ -91,7 +90,7 @@ class VersionOneThree:
                 name.replace("BoundaryEventParent", "BoundaryEventSplit")
                 for name in parent_task_definition.properties_json["outputs"]
             ]
-            flag_modified(parent_task_definition, 'properties_json')  # type: ignore
+            flag_modified(parent_task_definition, "properties_json")  # type: ignore
             db.session.add(parent_task_definition)
 
         for child_bpmn_identifier in properties_json["outputs"]:
@@ -104,12 +103,12 @@ class VersionOneThree:
                 name.replace("BoundaryEventParent", "BoundaryEventSplit")
                 for name in child_task_definition.properties_json["inputs"]
             ]
-            flag_modified(child_task_definition, 'properties_json')  # type: ignore
+            flag_modified(child_task_definition, "properties_json")  # type: ignore
             db.session.add(child_task_definition)
 
     def process_task_model(self, task_model: TaskModel, task_definition: TaskDefinitionModel) -> None:
         task_model.properties_json["task_spec"] = task_definition.bpmn_identifier
-        flag_modified(task_model, 'properties_json')  # type: ignore
+        flag_modified(task_model, "properties_json")  # type: ignore
         db.session.add(task_model)
 
         child_task_models = []
@@ -177,21 +176,22 @@ class VersionOneThree:
             db.session.add(new_task_model)
 
             child_task_model.properties_json["children"].append(new_task_model.guid)
-            flag_modified(child_task_model, 'properties_json')  # type: ignore
+            flag_modified(child_task_model, "properties_json")  # type: ignore
             db.session.add(child_task_model)
 
-
     def update_event_definitions(self, task_definition: TaskDefinitionModel) -> None:
-        if 'event_definition' in task_definition.properties_json:
+        if "event_definition" in task_definition.properties_json:
             properties_json = copy.copy(task_definition.properties_json)
-            properties_json['event_definition'].pop('internal', None)
-            properties_json['event_definition'].pop('external', None)
-            if 'escalation_code' in properties_json['event_definition']:
-                properties_json['event_definition']['code'] = properties_json['event_definition'].pop('escalation_code')
-            if 'error_code' in properties_json['event_definition']:
-                properties_json['event_definition']['code'] = properties_json['event_definition'].pop('error_code')
+            properties_json["event_definition"].pop("internal", None)
+            properties_json["event_definition"].pop("external", None)
+            if "escalation_code" in properties_json["event_definition"]:
+                properties_json["event_definition"]["code"] = properties_json["event_definition"].pop(
+                    "escalation_code"
+                )
+            if "error_code" in properties_json["event_definition"]:
+                properties_json["event_definition"]["code"] = properties_json["event_definition"].pop("error_code")
             task_definition.properties_json = properties_json
-            flag_modified(task_definition, 'properties_json')  # type: ignore
+            flag_modified(task_definition, "properties_json")  # type: ignore
             db.session.add(task_definition)
 
 
