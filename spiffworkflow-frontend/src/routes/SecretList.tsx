@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 // @ts-ignore
-import { Button, Table } from '@carbon/react';
+import { Button, Table, DatePicker, DatePickerInput } from '@carbon/react';
 import { MdDelete } from 'react-icons/md';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
@@ -9,6 +9,8 @@ import { getPageInfoFromSearchParams } from '../helpers';
 
 export default function SecretList() {
   const [searchParams] = useSearchParams();
+
+  const [dateRange, setDateRange] = useState([]);
 
   const [secrets, setSecrets] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -95,6 +97,21 @@ export default function SecretList() {
     return (
       <div>
         <h1>Secrets</h1>
+        <DatePicker
+          onChange={(selectedDates: any) => {
+            setDateRange(selectedDates);
+          }}
+          value={dateRange}
+          dateFormat="Y-m-d"
+          datePickerType="range"
+        >
+          <DatePickerInput
+            id="from"
+            placeholder="yyyy-mm-dd"
+            labelText="from"
+          />
+          <DatePickerInput id="to" placeholder="yyyy-mm-dd" labelText="to" />
+        </DatePicker>
         {SecretsDisplayArea()}
         <Button href="/admin/configuration/secrets/new">Add a secret</Button>
       </div>
