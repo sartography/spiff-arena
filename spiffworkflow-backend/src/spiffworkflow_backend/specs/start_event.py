@@ -53,7 +53,7 @@ class StartEvent(DefaultStartEvent):  # type: ignore
             elif isinstance(self.timer_definition, CycleTimerEventDefinition):
                 cycles, start, cycle_duration = TimerEventDefinition.parse_iso_recurring_interval(evaluated_expression)
                 time_delta = start - now_in_utc + cycle_duration
-                duration = cycle_duration.total_seconds()
+                duration = int(cycle_duration.total_seconds())
 
         start_delay_in_seconds = int(time_delta.total_seconds())
 
