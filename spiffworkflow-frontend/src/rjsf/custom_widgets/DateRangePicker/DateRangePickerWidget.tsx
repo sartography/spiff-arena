@@ -123,7 +123,6 @@ export default function DateRangePickerWidget({
       <DatePickerInput
         id={`${id}-end`}
         placeholder={DATE_FORMAT_FOR_DISPLAY}
-        helperText={helperText}
         type="text"
         size="md"
         disabled={disabled || readonly}
