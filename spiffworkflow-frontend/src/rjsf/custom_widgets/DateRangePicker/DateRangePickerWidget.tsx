@@ -8,6 +8,7 @@ import {
 import {
   convertDateObjectToFormattedString,
   convertStringToDate,
+  dateStringToYMDFormat,
 } from '../../../helpers';
 
 interface widgetArgs {
@@ -55,10 +56,12 @@ export default function DateRangePickerWidget({
       let dateRangeString;
       const startDate = convertDateObjectToFormattedString(dateRange[0]);
       if (startDate) {
+        const startDateYMD = dateStringToYMDFormat(startDate);
         const endDate = convertDateObjectToFormattedString(dateRange[1]);
-        dateRangeString = startDate;
+        dateRangeString = startDateYMD;
         if (endDate) {
-          dateRangeString = `${dateRangeString}${DATE_RANGE_DELIMITER}${endDate}`;
+          const endDateYMD = dateStringToYMDFormat(endDate);
+          dateRangeString = `${dateRangeString}${DATE_RANGE_DELIMITER}${endDateYMD}`;
         }
       }
       onChange(dateRangeString);
