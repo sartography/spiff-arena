@@ -900,6 +900,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           kind="ghost"
           renderIcon={Reset}
+          align="top-left"
           hasIconOnly
           iconDescription="Reset Process Here"
           title={titleText}
