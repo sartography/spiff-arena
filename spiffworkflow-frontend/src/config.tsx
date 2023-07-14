@@ -83,7 +83,8 @@ export const PROCESS_STATUSES = [
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss
-let generalDateFormat = 'yyyy-MM-dd';
+// let generalDateFormat = 'yyyy-MM-dd';
+let generalDateFormat = 'dd-MM-yyyy';
 if (
   'spiffworkflowFrontendJsenv' in window &&
   'DATE_FORMAT' in window.spiffworkflowFrontendJsenv
