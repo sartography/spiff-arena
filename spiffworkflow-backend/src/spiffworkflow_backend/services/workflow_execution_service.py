@@ -76,9 +76,12 @@ SubprocessSpecLoader = Callable[[], dict[str, Any] | None]
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader):
+    def __init__(
+        self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None
+    ):
         self.delegate = delegate
         self.subprocess_spec_loader = subprocess_spec_loader
+        self.options = options
 
     @abstractmethod
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
@@ -336,9 +339,14 @@ class SkipOneExecutionStrategy(ExecutionStrategy):
     """When you want to to skip over the next task, rather than execute it."""
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        if len(engine_steps) > 0:
-            spiff_task = engine_steps[0]
+        spiff_task = None
+        if self.options and "spiff_task" in self.options.keys():
+            spiff_task = self.options["spiff_task"]
+        else:
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+            if len(engine_steps) > 0:
+                spiff_task = engine_steps[0]
+        if spiff_task is not None:
             self.delegate.will_complete_task(spiff_task)
             spiff_task.complete()
             self.delegate.did_complete_task(spiff_task)

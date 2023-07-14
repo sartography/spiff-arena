@@ -34,3 +34,8 @@ class BackgroundProcessingService:
         with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:messages")
             MessageService.correlate_all_message_instances()
+
+    def remove_stale_locks(self) -> None:
+        """If something has been locked for a certain amount of time it is probably stale so unlock it."""
+        with self.app.app_context():
+            ProcessInstanceLockService.remove_stale_locks()

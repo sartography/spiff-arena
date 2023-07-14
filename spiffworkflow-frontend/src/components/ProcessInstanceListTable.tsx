@@ -206,7 +206,8 @@ export default function ProcessInstanceListTable({
 
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
-  const [withOldestOpenTask, setWithOldestOpenTask] = useState<boolean>(false);
+  const [withOldestOpenTask, setWithOldestOpenTask] =
+    useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
     null
@@ -436,6 +437,14 @@ export default function ProcessInstanceListTable({
         });
       }
 
+      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
+      if (showActionsColumn) {
+        reportMetadataBodyToUse.filter_by.push({
+          field_name: 'with_oldest_open_task',
+          field_value: true,
+        });
+      }
+
       if (filtersEnabled) {
         HttpService.makeCallToBackend({
           path: `/user-groups/for-current-user`,
@@ -465,6 +474,7 @@ export default function ProcessInstanceListTable({
       setProcessInstancesFromResult,
       stopRefreshing,
       systemReportOptions,
+      showActionsColumn,
       clearFilters,
     ]
   );
@@ -1195,7 +1205,7 @@ export default function ProcessInstanceListTable({
         );
       });
       return (
-        <Grid fullWidth>
+        <Grid narrow fullWidth className="filter-buttons">
           {tags}
           <Column md={1} lg={1} sm={1}>
             <Button
@@ -1638,6 +1648,18 @@ export default function ProcessInstanceListTable({
           `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
         );
       };
+      let variantFromMetadata = 'all';
+      if (reportMetadata) {
+        reportMetadata.filter_by.forEach((filter: any) => {
+          if (
+            filter.field_name === 'with_relation_to_me' &&
+            filter.field_value
+          ) {
+            variantFromMetadata = 'for-me';
+          }
+        });
+      }
+
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
@@ -1645,6 +1667,7 @@ export default function ProcessInstanceListTable({
           key={processInstance.id}
           onClick={navigateToProcessInstance}
           onKeyDown={navigateToProcessInstance}
+          className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
         </tr>
@@ -1778,18 +1801,13 @@ export default function ProcessInstanceListTable({
   }
 
   return (
-    <>
+    <div className="process-instance-list-table">
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
       <Grid fullWidth condensed>
         {tableTitleLine()}
-        <Column
-          sm={{ span: 4 }}
-          md={{ span: 8 }}
-          lg={{ span: 16 }}
-          style={{ maxWidth: 'fit-content' }}
-        >
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters
             filterOptions={filterOptions}
             showFilterOptions={showFilterOptions}
@@ -1798,15 +1816,10 @@ export default function ProcessInstanceListTable({
             filtersEnabled={filtersEnabled}
           />
         </Column>
-        <Column
-          sm={{ span: 4 }}
-          md={{ span: 8 }}
-          lg={{ span: 16 }}
-          style={{ maxWidth: 'fit-content', margin: 'auto' }}
-        >
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           {resultsTable}
         </Column>
       </Grid>
-    </>
+    </div>
   );
 }

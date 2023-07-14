@@ -6,6 +6,7 @@
 UsingSpiffdemo/Getting_Started.md
 learn_basics/learn_basics.md
 quick_start/quick_start.md
+UsingSpiffdemo/Basic_Tools.md
 ```
 
 ```{toctree}
@@ -35,37 +36,33 @@ wish_list/wish_list.md
 spiffworkflow/navigating-spiffworkflow.md
 spiffworkflow/creatingbpmn.md
 spiffworkflow/examples.md
+spiffworkflow/process_instance.md
 ```
 
 ```{toctree}
-:maxdepth: 1
-:caption: How to
-how_to/complete_a_task_on_behalf_of_another_user.md
+:maxdepth: 3
+:caption: In Depth Topics
+in_depth_topics/sub-processes_and_call_activities.md
+in_depth_topics/data_objects.md
 
 ```
 
 ```{toctree}
 :maxdepth: 3
-:caption: Glossary
+:caption: Installation and Integration
+installation_integration/admin_and_permissions.md
+installation_integration/permission_url.md
+
+```
+
+```{toctree}
+:maxdepth: 3
+:caption: Appendices
+appendices/bpmn_references.md
 glossary/glossary.md
 learn_basics/bpmn_terminology.md
 
 ```
-
-```{toctree}
-:maxdepth: 3
-:caption: Fix me unlinked files
-how_to/complete_a_task_on_behalf_of_another_user.md
-how_to/edit_process_variables.md
-how_to/find_an_Instance_assigned_to_myself.md
-how_to/find_an_Instance_assigned_to_someone_else.md
-how_to/navigate_to_an_active_process_instance.md
-how_to/resume_a_process.md
-how_to/suspend_a_process.md
-how_to/view_process_variables.md
-spiffworkflow/process_instance.md
-```
-
 
 ## Indices and tables
 
