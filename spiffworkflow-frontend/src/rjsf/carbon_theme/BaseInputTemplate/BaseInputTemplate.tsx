@@ -76,9 +76,6 @@ export default function BaseInputTemplate<
   } else if (schema && schema.title) {
     labelToUse = schema.title;
   }
-  if (required) {
-    labelToUse = `${labelToUse}*`;
-  }
 
   let helperText = null;
   if (uiSchema && uiSchema['ui:help']) {

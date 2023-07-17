@@ -138,6 +138,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
                 ("/process-models/some-process-group:some-process-model:*", "update"),
+                ("/task-assign/some-process-group:some-process-model:*", "create"),
                 ("/task-data/some-process-group:some-process-model:*", "read"),
                 ("/task-data/some-process-group:some-process-model:*", "update"),
             ]
@@ -223,6 +224,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
                 ("/process-models/some-process-group:some-process-model/*", "update"),
+                ("/task-assign/some-process-group:some-process-model/*", "create"),
                 ("/task-data/some-process-group:some-process-model/*", "read"),
                 ("/task-data/some-process-group:some-process-model/*", "update"),
             ]
@@ -313,6 +315,7 @@ class TestAuthorizationService(BaseTest):
             [
                 ("/authentications", "read"),
                 ("/can-run-privileged-script/*", "create"),
+                ("/data-stores/*", "read"),
                 ("/debug/*", "create"),
                 ("/event-error-details/*", "read"),
                 ("/logs/*", "read"),
@@ -333,6 +336,7 @@ class TestAuthorizationService(BaseTest):
                 ("/secrets/*", "read"),
                 ("/secrets/*", "update"),
                 ("/send-event/*", "create"),
+                ("/task-assign/*", "create"),
                 ("/task-complete/*", "create"),
                 ("/task-data/*", "update"),
                 ("/task-data/*", "read"),
