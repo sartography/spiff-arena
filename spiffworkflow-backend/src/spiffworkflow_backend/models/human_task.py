@@ -23,6 +23,14 @@ if TYPE_CHECKING:
 class HumanTaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "human_task"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "process_instance_id",
+            "task_id",
+            name="process_instance_task_unique",
+        ),
+    )
+
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(
         ForeignKey(ProcessInstanceModel.id), nullable=False, index=True  # type: ignore
