@@ -1749,7 +1749,12 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
-        <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }} style={{height: "48px"}}>
+        <Column
+          sm={{ span: 3 }}
+          md={{ span: 7 }}
+          lg={{ span: 15 }}
+          style={{ height: '48px' }}
+        >
           {headerElement}
         </Column>
         {filterButtonLink}
