@@ -527,7 +527,7 @@ export default function ProcessModelShow() {
         titleText=""
         size="lg"
         label="Add File"
-        type="inline"
+        type="default"
         data-qa="process-model-add-file"
         onChange={(a: any) => {
           if (a.selectedItem.text === 'New BPMN File') {
@@ -566,7 +566,7 @@ export default function ProcessModelShow() {
         className="megacondensed process-model-files-section"
       >
         <Column md={8} lg={14} sm={4}>
-          <Accordion align="end" open>
+          <Accordion align="end" open className="megacondensed-button">
             <AccordionItem
               open
               data-qa="files-accordion"

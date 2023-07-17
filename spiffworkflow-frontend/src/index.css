@@ -7,6 +7,7 @@
 
 .megacondensed {
   padding-left: 0px;
+  margin-left: 0px;
 }
 
 /* defaults to 3rem, which isn't long sufficient for "elizabeth" */
@@ -349,7 +350,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 
 .cds--tile.tile-process-group {
   padding: 0px;
-  margin: 12px;
+  margin: 12px 24px 12px 0px;
   width: 320px;
   height: 264px;
   background: #F4F4F4;

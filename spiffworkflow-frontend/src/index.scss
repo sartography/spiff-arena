@@ -79,6 +79,14 @@ div.markdown-collapsed {
   width: fit-content;
 }
 
+/* override carbon variable so we can left align accordions*/
+.cds--accordion {
+  --cds-layout-density-padding-inline-local: 0px;
+}
+.megacondensed-button .cds--btn {
+  --cds-layout-density-padding-inline-local: 0px;
+}
+
 .wmde-markdown ol {
   list-style: decimal;
 }
