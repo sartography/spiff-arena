@@ -1621,6 +1621,7 @@ export default function ProcessInstanceListTable({
               kind="secondary"
               href={taskShowUrl}
               style={{ width: '60px' }}
+              size="sm"
             >
               Go
             </Button>
