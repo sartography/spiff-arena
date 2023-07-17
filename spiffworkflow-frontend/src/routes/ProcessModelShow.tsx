@@ -7,7 +7,6 @@ import {
   TrashCan,
   Upload,
   View,
-  // @ts-ignore
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -25,7 +24,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -346,7 +344,7 @@ export default function ProcessModelShow() {
       let actionsTableCell = null;
       if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
         actionsTableCell = (
-          <TableCell key={`${processModelFile.name}-cell`}>
+          <TableCell key={`${processModelFile.name}-cell`} align="right">
             {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
           </TableCell>
         );
@@ -378,16 +376,20 @@ export default function ProcessModelShow() {
       return constructedTag;
     });
 
-    const headers = ['Name', 'Actions'];
     return (
       <Table size="lg" useZebraStyles={false}>
         <TableHead>
           <TableRow>
-            {headers.map((header) => (
-              <TableHeader id={header} key={header}>
-                {header}
-              </TableHeader>
-            ))}
+            <TableHeader id="Name" key="Name">
+              Name
+            </TableHeader>
+            <TableHeader
+              id="Actions"
+              key="Actions"
+              className="table-header-right-align"
+            >
+              Actions
+            </TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>{tags}</TableBody>

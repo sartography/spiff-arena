@@ -135,7 +135,12 @@ export default function ProcessInterstitial({
   ) => {
     return (
       <div>
-        <InlineNotification kind={kind} subtitle={subtitle} title={title} />
+        <InlineNotification
+          kind={kind}
+          subtitle={subtitle}
+          title={title}
+          lowContrast
+        />
       </div>
     );
   };

@@ -352,7 +352,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     return (
-      <Grid condensed fullWidth>
+      <Grid condensed fullWidth className="megacondensed">
         <Column sm={4} md={4} lg={5}>
           <dl>
             <dt>Status:</dt>
@@ -360,7 +360,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <Tag
                 type={statusColor}
                 size="sm"
-                className="span-tag process-instance-status"
+                className="tag-within-dl process-instance-status"
               >
                 {processInstance.status} {statusIcon}
               </Tag>
@@ -1265,6 +1265,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
+        {viewMostRecentStateComponent()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Instance Id: {processInstance.id}
@@ -1272,6 +1275,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {buttonIcons()}
         </Stack>
         {getInfoTag()}
+        <br />
         <ProcessInterstitial
           processInstanceId={processInstance.id}
           processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
@@ -1280,31 +1284,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           collapsableInstructions
           executeTasks={false}
         />
-        <Grid condensed fullWidth>
-          <Column md={6} lg={8} sm={4}>
-            <TaskListTable
-              apiPath="/tasks"
-              additionalParams={`process_instance_id=${processInstance.id}`}
-              tableTitle="Tasks I can complete"
-              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
-              paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty="There are no tasks you can complete for this process instance."
-              shouldPaginateTable={false}
-              showProcessModelIdentifier={false}
-              showProcessId={false}
-              showStartedBy={false}
-              showTableDescriptionAsTooltip
-              showDateStarted={false}
-              showLastUpdated={false}
-              hideIfNoTasks
-              canCompleteAllTasks
-            />
-          </Column>
-        </Grid>
-        {taskUpdateDisplayArea()}
-        {processDataDisplayArea()}
         <br />
-        {viewMostRecentStateComponent()}
+        <TaskListTable
+          apiPath="/tasks"
+          additionalParams={`process_instance_id=${processInstance.id}`}
+          tableTitle="Tasks I can complete"
+          tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+          paginationClassName="with-large-bottom-margin"
+          textToShowIfEmpty="There are no tasks you can complete for this process instance."
+          shouldPaginateTable={false}
+          showProcessModelIdentifier={false}
+          showProcessId={false}
+          showStartedBy={false}
+          showTableDescriptionAsTooltip
+          showDateStarted={false}
+          showLastUpdated={false}
+          hideIfNoTasks
+          canCompleteAllTasks
+        />
         {getTabs()}
       </>
     );

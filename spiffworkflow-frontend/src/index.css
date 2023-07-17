@@ -61,8 +61,9 @@ h3 {
   color: #161616;
 }
 
-.span-tag {
+.tag-within-dl {
   color: black;
+  margin-left: -3px;
 }
 
 .cds--btn.button-white-background {
@@ -189,8 +190,9 @@ h1.with-icons {
 dl {
   display: block;
   grid-template-columns: 35% 65%;
-  font-size: .8rem;
+  font-size: 14px;
   line-height: 1.2rem;
+  padding-top: 9px;
 }
 
 dl dt {
@@ -404,6 +406,12 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   max-width: 20rem;
 }
 
+/* carbon wants padding on all sides. our UI person wanted everything leaning against the left wall. */
+.cds--tab-content {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .clear-left {
   clear: left;
 }
@@ -427,8 +435,11 @@ td.actions-cell {
 
 .no-results-message {
   font-style: italic;
-  margin-left: 2rem;
   font-size: 14px;
+}
+
+th.table-header-right-align .cds--data-table, th.table-header-right-align .cds--table-header-label{
+  text-align: right;
 }
 
 .data-table-description {

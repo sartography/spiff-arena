@@ -1749,7 +1749,7 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
-        <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
+        <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }} style={{height: "48px"}}>
           {headerElement}
         </Column>
         {filterButtonLink}
@@ -1806,7 +1806,7 @@ export default function ProcessInstanceListTable({
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      <Grid fullWidth condensed>
+      <Grid fullWidth condensed className="megacondensed">
         {tableTitleLine()}
         <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters
