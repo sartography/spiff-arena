@@ -394,3 +394,13 @@ export interface TestCaseResults {
   failing: TestCaseResult[];
   passing: TestCaseResult[];
 }
+
+export interface DataStoreRecords {
+  results: any[];
+  pagination: PaginationObject;
+}
+
+export interface DataStore {
+  name: string;
+  type: string;
+}
