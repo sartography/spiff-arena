@@ -10,8 +10,9 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.specs.control import _BoundaryEventParent  # type: ignore
-from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -145,16 +146,16 @@ class ProcessInstanceService:
             db.session.commit()
 
     @classmethod
-    def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
+    def waiting_event_can_be_skipped(cls, waiting_event: PendingBpmnEvent, now_in_utc: datetime) -> bool:
         #
         # over time this function can gain more knowledge of different event types,
         # for now we are just handling Duration Timer events.
         #
         # example: {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'}
         #
-        spiff_event_type = waiting_event.get("event_type")
+        spiff_event_type = waiting_event.event_type
         if spiff_event_type == "DurationTimerEventDefinition":
-            event_value = waiting_event.get("value")
+            event_value = waiting_event.value
             if event_value is not None:
                 event_datetime = TimerEventDefinition.get_datetime(event_value)
                 return event_datetime > now_in_utc  # type: ignore
@@ -170,7 +171,7 @@ class ProcessInstanceService:
     @classmethod
     def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
         for ready_user_task in processor.bpmn_process_instance.get_ready_user_tasks():
-            if isinstance(ready_user_task.parent.task_spec, _BoundaryEventParent):
+            if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
                 return True
         return False
 
