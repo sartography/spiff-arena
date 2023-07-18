@@ -50,15 +50,16 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 
+from typing import Optional
+
 # from spiffworkflow_backend.services.process_instance_report_service import (
 #     ProcessInstanceReportFilter,
 # )
 
 
-def process_instance_create(
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+def _process_instance_create(
+    process_model_identifier: str,
+) -> ProcessInstanceModel:
 
     process_model = _get_process_model(process_model_identifier)
     if process_model.primary_file_name is None:
@@ -74,6 +75,14 @@ def process_instance_create(
     process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
         process_model_identifier, g.user
     )
+    return process_instance
+
+def process_instance_create(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+
+    process_instance = _process_instance_create(process_model_identifier)
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
@@ -81,11 +90,9 @@ def process_instance_create(
     )
 
 
-def process_instance_run(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-) -> flask.wrappers.Response:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+def _process_instance_run(
+        process_instance: ProcessInstanceModel,
+) -> Optional[ProcessInstanceProcessor]:
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",
@@ -121,6 +128,15 @@ def process_instance_run(
     if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
         MessageService.correlate_all_message_instances()
 
+    return processor
+
+def process_instance_run(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = _process_instance_run(process_instance)
+    
     # for mypy
     if processor is not None:
         process_instance_api = ProcessInstanceService.processor_to_process_instance_api(processor)
@@ -132,6 +148,13 @@ def process_instance_run(
     # FIXME: this should never happen currently but it'd be ideal to always do this
     # currently though it does not return next task so it cannnot be used to take the user to the next human task
     return make_response(jsonify(process_instance), 200)
+
+def process_instance_start(
+    process_model_identifier: str,
+) -> ProcessInstanceModel:
+    process_instance = _process_instance_create(process_model_identifier)
+    _ = _process_instance_run(process_instance)
+    return process_instance
 
 
 def process_instance_terminate(
