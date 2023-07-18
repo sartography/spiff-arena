@@ -9,7 +9,7 @@ from spiffworkflow_backend.helpers.db_helper import try_to_connect
 
 
 def main() -> None:
-    seconds_to_wait = 120
+    seconds_to_wait = 300
     print(f"sleeping for {seconds_to_wait} seconds to give the api container time to run the migration")
     time.sleep(seconds_to_wait)
     print("done sleeping")
