@@ -24,6 +24,7 @@ from flask import current_app
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
+from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
@@ -71,6 +72,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -78,7 +80,9 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
+from spiffworkflow_backend.services.workflow_execution_service import SkipOneExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
@@ -282,6 +286,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            **JinjaHelpers.get_helper_mapping(),
         }
 
         use_restricted_script_engine = True
@@ -1079,10 +1084,12 @@ class ProcessInstanceProcessor:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.registry.restore(event_data)
-        if payload is not None:
-            event_definition.payload = payload
+        bpmn_event = BpmnEvent(
+            event_definition=event_definition,
+            payload=payload,
+        )
         try:
-            self.bpmn_process_instance.catch(event_definition)
+            self.bpmn_process_instance.send_event(bpmn_event)
         except Exception as e:
             print(e)
 
@@ -1093,6 +1100,9 @@ class ProcessInstanceProcessor:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
+        if execute:
+            event_type = ProcessInstanceEventType.task_executed_manually.value
+
         start_time = time.time()
 
         # manual actually means any human task
@@ -1112,7 +1122,15 @@ class ProcessInstanceProcessor:
             self.do_engine_steps(save=True, execution_strategy_name="one_at_a_time")
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
-            self.do_engine_steps(save=True, execution_strategy_name="skip_one")
+            task_model_delegate = TaskModelSavingDelegate(
+                serializer=self._serializer,
+                process_instance=self.process_instance_model,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            )
+            execution_strategy = SkipOneExecutionStrategy(
+                task_model_delegate, self.lazy_load_subprocess_specs, {"spiff_task": spiff_task}
+            )
+            self.do_engine_steps(save=True, execution_strategy=execution_strategy)
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
@@ -1359,18 +1377,20 @@ class ProcessInstanceProcessor:
         exit_at: None = None,
         save: bool = False,
         execution_strategy_name: str | None = None,
+        execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
         with ProcessInstanceQueueService.dequeued(self.process_instance_model):
             # TODO: ideally we just lock in the execution service, but not sure
             # about _add_bpmn_process_definitions and if that needs to happen in
             # the same lock like it does on main
-            self._do_engine_steps(exit_at, save, execution_strategy_name)
+            self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
 
     def _do_engine_steps(
         self,
         exit_at: None = None,
         save: bool = False,
         execution_strategy_name: str | None = None,
+        execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
         self._add_bpmn_process_definitions()
 
@@ -1380,16 +1400,17 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
 
-        if execution_strategy_name is None:
-            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
-        if execution_strategy_name is None:
-            raise ExecutionStrategyNotConfiguredError(
-                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+        if execution_strategy is None:
+            if execution_strategy_name is None:
+                execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
+            if execution_strategy_name is None:
+                raise ExecutionStrategyNotConfiguredError(
+                    "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+                )
+            execution_strategy = execution_strategy_named(
+                execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
             )
 
-        execution_strategy = execution_strategy_named(
-            execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
-        )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
@@ -1541,7 +1562,14 @@ class ProcessInstanceProcessor:
             )
 
         task_model.start_in_seconds = time.time()
-        self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+        task_exception = None
+        task_event = ProcessInstanceEventType.task_completed.value
+        try:
+            self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+        except Exception as ex:
+            task_exception = ex
+            task_event = ProcessInstanceEventType.task_failed.value
+
         task_model.end_in_seconds = time.time()
 
         human_task.completed_by_user_id = user.id
@@ -1559,9 +1587,10 @@ class ProcessInstanceProcessor:
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
-            ProcessInstanceEventType.task_completed.value,
+            task_event,
             task_guid=task_model.guid,
             user_id=user.id,
+            exception=task_exception,
         )
 
         # children of a multi-instance task has the attribute "triggered" set to True
@@ -1576,6 +1605,9 @@ class ProcessInstanceProcessor:
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
+
+        if task_exception is not None:
+            raise task_exception
 
     def get_data(self) -> dict[str, Any]:
         return self.bpmn_process_instance.data  # type: ignore

@@ -40,7 +40,7 @@ export default function Filters({
         <Grid fullWidth>
           {reportSearchSection}
           <Column
-            className="filterIcon"
+            className="filter-icon"
             sm={{ span: 1, offset: 3 }}
             md={{ span: 1, offset: 7 }}
             lg={{ span: 1, offset: 15 }}

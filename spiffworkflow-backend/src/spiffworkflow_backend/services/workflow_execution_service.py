@@ -9,6 +9,7 @@ from uuid import UUID
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -76,9 +77,12 @@ SubprocessSpecLoader = Callable[[], dict[str, Any] | None]
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader):
+    def __init__(
+        self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None
+    ):
         self.delegate = delegate
         self.subprocess_spec_loader = subprocess_spec_loader
+        self.options = options
 
     @abstractmethod
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
@@ -336,9 +340,14 @@ class SkipOneExecutionStrategy(ExecutionStrategy):
     """When you want to to skip over the next task, rather than execute it."""
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        if len(engine_steps) > 0:
-            spiff_task = engine_steps[0]
+        spiff_task = None
+        if self.options and "spiff_task" in self.options.keys():
+            spiff_task = self.options["spiff_task"]
+        else:
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+            if len(engine_steps) > 0:
+                spiff_task = engine_steps[0]
+        if spiff_task is not None:
             self.delegate.will_complete_task(spiff_task)
             spiff_task.complete()
             self.delegate.did_complete_task(spiff_task)
@@ -425,15 +434,21 @@ class WorkflowExecutionService:
                 self.process_instance_saver()
 
     def process_bpmn_messages(self) -> None:
-        bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
-        for bpmn_message in bpmn_messages:
+        # FIXE: get_events clears out the events so if we have other events we care about
+        #   this will clear them out as well.
+        # Right now we only care about messages though.
+        bpmn_events = self.bpmn_process_instance.get_events()
+        for bpmn_event in bpmn_events:
+            if not isinstance(bpmn_event.event_definition, MessageEventDefinition):
+                continue
+            bpmn_message = bpmn_event.event_definition
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
                 user_id=self.process_instance_model.process_initiator_id,
                 # TODO: use the correct swimlane user when that is set up
                 message_type="send",
                 name=bpmn_message.name,
-                payload=bpmn_message.payload,
+                payload=bpmn_event.payload,
                 correlation_keys=self.bpmn_process_instance.correlations,
             )
             db.session.add(message_instance)
@@ -443,21 +458,21 @@ class WorkflowExecutionService:
                 bpmn_process_correlations = self.bpmn_process_instance.correlations
                 bpmn_process.properties_json["correlations"] = bpmn_process_correlations
                 # update correlations correctly but always null out bpmn_messages since they get cleared out later
-                bpmn_process.properties_json["bpmn_messages"] = []
+                bpmn_process.properties_json["bpmn_events"] = []
                 db.session.add(bpmn_process)
 
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
         waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(lambda e: e["event_type"] == "MessageEventDefinition", waiting_events)
+        waiting_message_events = filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events)
         for event in waiting_message_events:
             # Ensure we are only creating one message instance for each waiting message
             if (
                 MessageInstanceModel.query.filter_by(
                     process_instance_id=self.process_instance_model.id,
                     message_type="receive",
-                    name=event["name"],
+                    name=event.name,
                 ).count()
                 > 0
             ):
@@ -468,14 +483,15 @@ class WorkflowExecutionService:
                 process_instance_id=self.process_instance_model.id,
                 user_id=self.process_instance_model.process_initiator_id,
                 message_type="receive",
-                name=event["name"],
+                name=event.name,
                 correlation_keys=self.bpmn_process_instance.correlations,
             )
-            for correlation_property in event["value"]:
+            for correlation_property in event.value:
                 message_correlation = MessageInstanceCorrelationRuleModel(
                     message_instance=message_instance,
                     name=correlation_property.name,
                     retrieval_expression=correlation_property.retrieval_expression,
+                    correlation_key_names=correlation_property.correlation_keys,
                 )
                 db.session.add(message_correlation)
             db.session.add(message_instance)

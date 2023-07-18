@@ -21,6 +21,7 @@ import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
 import MessageListPage from './MessageListPage';
+import DataStorePage from './DataStorePage';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -125,6 +126,7 @@ export default function AdminRoutes() {
             element={<ProcessInstanceFindById />}
           />
           <Route path="messages" element={<MessageListPage />} />
+          <Route path="data-stores" element={<DataStorePage />} />
         </Routes>
       </div>
     );

@@ -92,6 +92,11 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
         "interval",
         seconds=user_input_required_polling_interval_in_seconds,
     )
+    scheduler.add_job(
+        BackgroundProcessingService(app).remove_stale_locks,
+        "interval",
+        seconds=app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"],
+    )
     scheduler.start()
 
 
