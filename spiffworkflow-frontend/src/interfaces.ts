@@ -11,8 +11,10 @@ export interface Secret {
 }
 
 export interface Onboarding {
-  type: string;
-  value: string;
+  type?: string;
+  value?: string;
+  process_instance_id?: string;
+  task_id?: string;
 }
 
 export interface ProcessData {
