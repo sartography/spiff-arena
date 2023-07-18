@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:process id="test_process_to_call" name="Test Process To Call" isExecutable="true">
     <bpmn:endEvent id="Event_03zsjvn">
       <bpmn:incoming>Flow_089aeua</bpmn:incoming>
@@ -51,9 +51,14 @@
       <bpmn:script>set_in_test_process_to_call_script = 1</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:boundaryEvent id="our_boundary_event" name="our_boundary_event" attachedToRef="test_process_to_call_script">
-      <bpmn:escalationEventDefinition id="EscalationEventDefinition_1bs7saf" />
+      <bpmn:escalationEventDefinition id="EscalationEventDefinition_0t7834v" escalationRef="Escalation_18qf8th" errorRef="[object Object]" />
     </bpmn:boundaryEvent>
   </bpmn:process>
+  <bpmn:escalation id="Escalation_18qf8th" name="Our Escalation" errorCode="26">
+    <bpmn:extensionElements>
+      <spiffworkflow:variableName>the_var</spiffworkflow:variableName>
+    </bpmn:extensionElements>
+  </bpmn:escalation>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="test_process_to_call">
       <bpmndi:BPMNShape id="Event_03zsjvn_di" bpmnElement="Event_03zsjvn">
@@ -69,10 +74,10 @@
         <dc:Bounds x="450" y="110" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0wfnf83_di" bpmnElement="our_boundary_event">
-        <dc:Bounds x="492" y="172" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_0bjx9wm_di" bpmnElement="our_boundary_event">
+        <dc:Bounds x="502" y="172" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="467" y="215" width="87" height="27" />
+          <dc:Bounds x="477" y="215" width="87" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1qsx5et_di" bpmnElement="Flow_1qsx5et">
