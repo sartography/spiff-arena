@@ -19,6 +19,7 @@ class VersionOneThree:
     Converts migration file from SpiffWorkflow to work with backend's db:
         https://github.com/sartography/SpiffWorkflow/blob/main/SpiffWorkflow/bpmn/serializer/migration/version_1_3.py
     """
+
     def run(self) -> None:
         os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
         if os.environ.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR") is None:

@@ -4,10 +4,11 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.routes.process_instances_controller import process_instance_start
 
+
 def get_onboarding() -> Response:
     process_instance, processor = process_instance_start("misc/jonjon/onboarding1")
     result = {}
-    
+
     if processor is not None:
         if process_instance.status == "complete":
             workflow_data = processor.bpmn_process_instance.data
@@ -18,5 +19,5 @@ def get_onboarding() -> Response:
                 "process_instance_id": process_instance.id,
                 "task_id": process_instance.active_human_tasks[0].task_id,
             }
-    
+
     return make_response(result, 200)
