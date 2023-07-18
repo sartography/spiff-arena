@@ -2,17 +2,13 @@
 from flask import make_response
 from flask.wrappers import Response
 
+from spiffworkflow_backend.routes.process_instances_controller import process_instance_start
 
 def get_onboarding() -> Response:
-    # TODO: this is an example of what would result from running an optional workflow to determine
-    # what onboarding to show
-    workflow_data = {
-        "x": 1,
-        "some_name": "bob",
-        "onboarding": {
-            "type": "default_view",
-            "value": "my_tasks",
-        },
-    }
+    process_instance, processor = process_instance_start("misc/jonjon/onboarding1")
+    workflow_data = {}
+    
+    if processor is not None and process_instance.status == "complete":
+        workflow_data = processor.bpmn_process_instance.data
     
     return make_response(workflow_data.get("onboarding", {}), 200)

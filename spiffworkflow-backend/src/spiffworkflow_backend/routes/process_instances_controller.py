@@ -51,6 +51,7 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 
 from typing import Optional
+from typing import Tuple
 
 # from spiffworkflow_backend.services.process_instance_report_service import (
 #     ProcessInstanceReportFilter,
@@ -151,10 +152,10 @@ def process_instance_run(
 
 def process_instance_start(
     process_model_identifier: str,
-) -> ProcessInstanceModel:
+) -> Tuple[ProcessInstanceModel, Optional[ProcessInstanceProcessor]]:
     process_instance = _process_instance_create(process_model_identifier)
-    _ = _process_instance_run(process_instance)
-    return process_instance
+    processor = _process_instance_run(process_instance)
+    return process_instance, processor
 
 
 def process_instance_terminate(
