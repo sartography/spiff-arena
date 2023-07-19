@@ -1,4 +1,6 @@
-from SpiffWorkflow.bpmn.workflow import BpmnMessage  # type: ignore
+from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
+from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
@@ -72,8 +74,7 @@ class MessageService:
             cls.process_message_receive(
                 receiving_process,
                 message_instance_receive,
-                message_instance_send.name,
-                message_instance_send.payload,
+                message_instance_send,
             )
             message_instance_receive.status = "completed"
             message_instance_receive.counterpart_id = message_instance_send.id
@@ -130,7 +131,7 @@ class MessageService:
                 (
                     (
                         "Process instance cannot be found for queued message:"
-                        f" {message_instance_receive.id}.Tried with id"
+                        f" {message_instance_receive.id}. Tried with id"
                         f" {message_instance_receive.process_instance_id}"
                     ),
                 )
@@ -141,16 +142,28 @@ class MessageService:
     def process_message_receive(
         process_instance_receive: ProcessInstanceModel,
         message_instance_receive: MessageInstanceModel,
-        message_model_name: str,
-        message_payload: dict,
+        message_instance_send: MessageInstanceModel,
     ) -> None:
-        bpmn_message = BpmnMessage(
-            None,
-            message_model_name,
-            message_payload,
+        correlation_properties = []
+        for cr in message_instance_receive.correlation_rules:
+            correlation_properties.append(
+                CorrelationProperty(
+                    name=cr.name,
+                    retrieval_expression=cr.retrieval_expression,
+                    correlation_keys=cr.correlation_key_names,
+                )
+            )
+        bpmn_message = MessageEventDefinition(
+            name=message_instance_send.name,
+            correlation_properties=correlation_properties,
+        )
+        bpmn_event = BpmnEvent(
+            event_definition=bpmn_message,
+            payload=message_instance_send.payload,
+            correlations=message_instance_send.correlation_keys,
         )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
-        processor_receive.bpmn_process_instance.catch_bpmn_message(bpmn_message)
+        processor_receive.bpmn_process_instance.send_event(bpmn_event)
         processor_receive.do_engine_steps(save=True)
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)
