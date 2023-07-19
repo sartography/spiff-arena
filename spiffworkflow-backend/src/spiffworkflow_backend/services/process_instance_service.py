@@ -10,7 +10,6 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -145,8 +144,9 @@ class ProcessInstanceService:
             db.session.add(cycle)
             db.session.commit()
 
+    # TODO: test me
     @classmethod
-    def waiting_event_can_be_skipped(cls, waiting_event: PendingBpmnEvent, now_in_utc: datetime) -> bool:
+    def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
         #
         # over time this function can gain more knowledge of different event types,
         # for now we are just handling Duration Timer events.
