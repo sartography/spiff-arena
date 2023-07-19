@@ -1,5 +1,10 @@
 # Data Objects
 
+```{tip} 
+:class: note
+🧾 Read more about Data Objects [here](https://medium.com/@danfunk/understanding-bpmns-data-objects-with-spiffworkflow-26e195e23398).
+```
+
 In BPMN (Business Process Model and Notation), a data object represents the information or data used and produced by activities within a business process. It represents the data elements or artifacts that are relevant to the process and provides a way to model the flow of data through the process.
 They help in clarifying the data flow and dependencies within the process, making it easier to understand how information is utilized and transformed throughout the process execution.
 
