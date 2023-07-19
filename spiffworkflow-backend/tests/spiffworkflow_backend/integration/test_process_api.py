@@ -2412,6 +2412,8 @@ class TestProcessApi(BaseTest):
         data: dict = {
             "correlation_properties": [],
             "expression": None,
+            "external": True,
+            "internal": False,
             "payload": {"message": "message 1"},
             "name": "Message 1",
             "typename": "MessageEventDefinition",
