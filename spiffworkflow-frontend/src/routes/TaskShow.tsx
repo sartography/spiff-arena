@@ -25,6 +25,8 @@ import { ErrorForDisplay, EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
+import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
+import { DATE_RANGE_DELIMITER } from '../config';
 
 export default function TaskShow() {
   const [task, setTask] = useState<Task | null>(null);
@@ -38,6 +40,11 @@ export default function TaskShow() {
     useState<boolean>(true);
 
   const { addError, removeError } = useAPIError();
+
+  const rjsfWidgets = {
+    typeahead: TypeaheadWidget,
+    'date-range': DateRangePickerWidget,
+  };
 
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
@@ -308,8 +315,12 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
-    const dateString = formData[propertyKey];
+    let dateString = formData[propertyKey];
     if (dateString) {
+      if (typeof dateString === 'string') {
+        // in the case of date ranges, just take the start date and check that
+        [dateString] = dateString.split(DATE_RANGE_DELIMITER);
+      }
       const formattedDateString = formatDateString(dateString);
       const minimumDateChecks = propertyMetadata.minimumDate.split(',');
       minimumDateChecks.forEach((mdc: string) => {
@@ -469,8 +480,6 @@ export default function TaskShow() {
       return getFieldsWithDateValidations(jsonSchema, formData, errors);
     };
 
-    const widgets = { typeahead: TypeaheadWidget };
-
     // we are using two forms here so we can have one that validates data and one that does not.
     // this allows us to autosave form data without extra attributes and without validations
     // but still requires validations when the user submits the form that they can edit.
@@ -488,7 +497,7 @@ export default function TaskShow() {
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
-            widgets={widgets}
+            widgets={rjsfWidgets}
             validator={validator}
             customValidate={customValidate}
             omitExtraData
@@ -501,7 +510,7 @@ export default function TaskShow() {
             onSubmit={handleAutosaveFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
-            widgets={widgets}
+            widgets={rjsfWidgets}
             validator={validator}
             noValidate
             omitExtraData
