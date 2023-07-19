@@ -15,4 +15,8 @@ class UserHasStartedInstance(Script):
         return """Returns boolean to indicate if the user has started an instance of the current process model."""
 
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
-        return ProcessInstanceService.user_has_started_instance(script_attributes_context.process_model_identifier)
+        process_model_identifer = script_attributes_context.process_model_identifier
+        if process_model_identifer is not None:
+            return ProcessInstanceService.user_has_started_instance(process_model_identifer)
+        else:
+            return False
