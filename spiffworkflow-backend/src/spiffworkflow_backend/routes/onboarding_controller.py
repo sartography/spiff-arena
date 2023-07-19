@@ -11,7 +11,7 @@ def get_onboarding() -> Response:
     result = {}
 
     with suppress(Exception):
-        process_instance, processor = process_instance_start("misc/jonjon/onboarding2")
+        process_instance, processor = process_instance_start("misc/jonjon/onboarding1")
 
         if processor is not None:
             if process_instance.status == "complete":
