@@ -59,6 +59,7 @@ installation_integration/permission_url.md
 :maxdepth: 3
 :caption: Appendices
 appendices/bpmn_references.md
+appendices/articles.md
 glossary/glossary.md
 learn_basics/bpmn_terminology.md
 
