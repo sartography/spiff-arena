@@ -144,7 +144,6 @@ class ProcessInstanceService:
             db.session.add(cycle)
             db.session.commit()
 
-    # TODO: test me
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
         #
@@ -153,9 +152,9 @@ class ProcessInstanceService:
         #
         # example: {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'}
         #
-        spiff_event_type = waiting_event.event_type
+        spiff_event_type = waiting_event.get("event_type")
         if spiff_event_type == "DurationTimerEventDefinition":
-            event_value = waiting_event.value
+            event_value = waiting_event.get("value")
             if event_value is not None:
                 event_datetime = TimerEventDefinition.get_datetime(event_value)
                 return event_datetime > now_in_utc  # type: ignore
