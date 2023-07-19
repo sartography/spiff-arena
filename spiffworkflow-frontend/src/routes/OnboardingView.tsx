@@ -28,7 +28,6 @@ export default function OnboardingView() {
         onboarding.process_instance_id &&
         onboarding.task_id
       ) {
-        console.log('HERE');
         navigate(
           `/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`
         );
