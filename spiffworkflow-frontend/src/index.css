@@ -123,6 +123,34 @@ h3 {
   padding-left: 0;
 }
 
+/* make the colors black to make it easier to read */
+.cds--btn--tertiary {
+  color: black;
+  border-color: black;
+}
+.cds--btn--tertiary:visited {
+  color: black;
+  border-color: black;
+}
+/* make the colors a little lighter black on hover
+ * so they match our normal scheme better
+ */
+.cds--btn--tertiary:focus {
+  color: white;
+  border-color: #393939;
+  background-color: #393939;
+}
+.cds--btn--tertiary:hover {
+  color: white;
+  border-color: #474747;
+  background-color: #474747;
+}
+.cds--btn--tertiary:visited:hover {
+  color: white;
+  border-color: #474747;
+  background-color: #474747;
+}
+
 .cds--header__global .cds--btn--primary.button-link {
   color: #f4f4f4;
   background-color: #393939;
@@ -694,4 +722,11 @@ hr {
 
 #hidden-form-for-autosave {
   display: none;
+}
+
+fieldset legend.header {
+  margin-bottom: 32px;
+}
+fieldset fieldset fieldset legend.header {
+  margin-bottom: 16px;
 }

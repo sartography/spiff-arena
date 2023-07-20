@@ -540,10 +540,10 @@ export default function TaskShow() {
           ]}
         />
         <div>{buildTaskNavigation()}</div>
-        <h3>
+        <h1>
           Task: {task.name_for_display} ({task.process_model_display_name})
           {statusString}
-        </h3>
+        </h1>
         <InstructionsForEndUser task={task} />
         {formElement()}
       </>

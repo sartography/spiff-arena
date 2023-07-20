@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@carbon/react';
 import {
   FormContextType,
   IconButtonProps,
@@ -6,7 +7,6 @@ import {
   StrictRJSFSchema,
 } from '@rjsf/utils';
 
-// @ts-ignore
 import { Add, TrashCan, ArrowUp, ArrowDown } from '@carbon/icons-react';
 
 export default function IconButton<
@@ -20,32 +20,32 @@ export default function IconButton<
     className,
     uiSchema,
     registry,
+    title,
     ...otherProps
   } = props;
   // icon string optios: plus, remove, arrow-up, arrow-down
-  let carbonIcon = (
-    <p>
-      Add new <Add />
-    </p>
-  );
+  let carbonIcon = Add;
   if (icon === 'remove') {
-    carbonIcon = <TrashCan />;
+    carbonIcon = TrashCan;
   }
   if (icon === 'arrow-up') {
-    carbonIcon = <ArrowUp />;
+    carbonIcon = ArrowUp;
   }
   if (icon === 'arrow-down') {
-    carbonIcon = <ArrowDown />;
+    carbonIcon = ArrowDown;
   }
 
   return (
-    <button
-      type="button"
+    <Button
       className={`btn btn-${iconType} ${className}`}
+      iconDescription={title}
+      kind="tertiary"
+      title={null}
+      hasIconOnly
+      size="sm"
+      renderIcon={carbonIcon}
       {...otherProps}
-    >
-      {carbonIcon}
-    </button>
+    />
   );
 }
 

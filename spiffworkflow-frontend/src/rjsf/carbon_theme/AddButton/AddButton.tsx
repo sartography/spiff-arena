@@ -5,11 +5,8 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-
-// @ts-ignore
-import { AddAlt } from '@carbon/icons-react';
-
-import IconButton from '../IconButton/IconButton';
+import { Button } from '@carbon/react';
+import { Add } from '@carbon/icons-react';
 
 /** The `AddButton` renders a button that represent the `Add` action on a form
  */
@@ -19,18 +16,17 @@ export default function AddButton<
   F extends FormContextType = any
 >({ className, onClick, disabled, registry }: IconButtonProps<T, S, F>) {
   return (
-    <div className="row">
-      <p className={`col-xs-3 col-xs-offset-9 text-right ${className}`}>
-        <IconButton
-          iconType="info"
-          icon="plus"
-          className="btn-add col-xs-12"
-          title="Add"
-          onClick={onClick}
-          disabled={disabled}
-          registry={registry}
-        />
-      </p>
-    </div>
+    <Button
+      iconType="info"
+      kind="tertiary"
+      size="sm"
+      renderIcon={Add}
+      title="Add"
+      onClick={onClick}
+      disabled={disabled}
+      registry={registry}
+    >
+      Add new
+    </Button>
   );
 }
