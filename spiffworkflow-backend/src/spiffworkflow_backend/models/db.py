@@ -47,6 +47,23 @@ class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
 
         return m_type.value
 
+    @classmethod
+    def commit_with_rollback_on_exception(cls) -> None:
+        """Attempts to commit the session and rolls back if it fails.
+
+        We may need to add other error handling here as we go. But sqlalchemy insists that we
+        "frame" our commits.
+
+        https://docs.sqlalchemy.org/en/20/errors.html#error-7s2a
+        https://docs.sqlalchemy.org/en/20/faq/sessions.html#faq-session-rollback
+        https://docs.sqlalchemy.org/en/20/orm/session_basics.html#session-faq-whentocreate
+        """
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
+
 
 def update_created_modified_on_create_listener(
     mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel

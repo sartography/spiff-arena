@@ -7,14 +7,20 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  TrashCan,
-  StopOutline,
-  PauseOutline,
-  PlayOutline,
-  InProgress,
+  Send,
   Checkmark,
+  Edit,
+  InProgress,
+  PauseOutline,
+  UserFollow,
+  Play,
+  PlayOutline,
+  Reset,
+  RuleDraft,
+  SkipForward,
+  StopOutline,
+  TrashCan,
   Warning,
-  // @ts-ignore
 } from '@carbon/icons-react';
 import {
   Grid,
@@ -30,13 +36,13 @@ import {
   TabList,
   TabPanels,
   TabPanel,
-  // @ts-ignore
 } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
@@ -50,12 +56,14 @@ import {
   ProcessInstance,
   Task,
   TaskDefinitionPropertiesJson,
+  User,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import ProcessInterstitial from '../components/ProcessInterstitial';
+import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
 import MessageInstanceList from '../components/MessageInstanceList';
 
@@ -67,6 +75,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
+
+  const eventsThatNeedPayload = ['MessageEventDefinition'];
 
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
@@ -89,6 +99,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
 
+  const [addingPotentialOwners, setAddingPotentialOwners] =
+    useState<boolean>(false);
+  const [additionalPotentialOwners, setAdditionalPotentialOwners] = useState<
+    User[] | null
+  >(null);
+
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -109,6 +125,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE', 'GET'],
     [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
@@ -312,14 +329,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       lastUpdatedTime = processInstance.end_in_seconds;
     }
     const lastUpdatedTimeTag = (
-      <Grid condensed fullWidth>
-        <Column sm={2} md={2} lg={3} className="grid-list-title">
-          {lastUpdatedTimeLabel}:{' '}
-        </Column>
-        <Column sm={3} md={6} lg={8} className="grid-date">
+      <dl>
+        <dt>{lastUpdatedTimeLabel}:</dt>
+        <dd>
           {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
-        </Column>
-      </Grid>
+        </dd>
+      </dl>
     );
 
     let statusIcon = <InProgress />;
@@ -337,83 +352,67 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     return (
-      <>
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Status:{' '}
-          </Column>
-          <Column sm={3} md={6} lg={8}>
-            <Tag type={statusColor} size="sm" className="span-tag">
-              {processInstance.status} {statusIcon}
-            </Tag>
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Started By:{' '}
-          </Column>
-          <Column sm={3} md={6} lg={8} className="grid-date">
-            {processInstance.process_initiator_username}
-          </Column>
-        </Grid>
-        {processInstance.process_model_with_diagram_identifier ? (
-          <Grid condensed fullWidth>
-            <Column sm={2} md={2} lg={3} className="grid-list-title">
-              Current Diagram:{' '}
-            </Column>
-            <Column sm={4} md={6} lg={8} className="grid-date">
-              <Link
-                data-qa="go-to-current-diagram-process-model"
-                to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-                  processInstance.process_model_with_diagram_identifier || ''
-                )}`}
+      <Grid condensed fullWidth>
+        <Column sm={4} md={4} lg={5}>
+          <dl>
+            <dt>Status:</dt>
+            <dd>
+              <Tag
+                type={statusColor}
+                size="sm"
+                className="span-tag process-instance-status"
               >
-                {processInstance.process_model_with_diagram_identifier}
-              </Link>
-            </Column>
-          </Grid>
-        ) : null}
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Started:{' '}
-          </Column>
-          <Column
-            sm={3}
-            md={3}
-            lg={3}
-            className="grid-date"
-            title={`Created At: ${convertSecondsToFormattedDateTime(
-              processInstance.created_at_in_seconds
-            )}`}
-          >
-            {convertSecondsToFormattedDateTime(
-              processInstance.start_in_seconds || 0
-            )}
-          </Column>
-        </Grid>
-        {lastUpdatedTimeTag}
-        <Grid condensed fullWidth>
-          <Column sm={2} md={2} lg={3} className="grid-list-title">
-            Process model revision:{' '}
-          </Column>
-          <Column sm={3} md={6} lg={8} className="grid-date">
-            {processInstance.bpmn_version_control_identifier} (
-            {processInstance.bpmn_version_control_type})
-          </Column>
-        </Grid>
-        {(processInstance.process_metadata || []).map(
-          (processInstanceMetadata) => (
-            <Grid condensed fullWidth>
-              <Column sm={2} md={2} lg={3} className="grid-list-title">
-                {processInstanceMetadata.key}:
-              </Column>
-              <Column sm={3} md={6} lg={8} className="grid-date">
-                {processInstanceMetadata.value}
-              </Column>
-            </Grid>
-          )
-        )}
-      </>
+                {processInstance.status} {statusIcon}
+              </Tag>
+            </dd>
+          </dl>
+          <dl>
+            <dt>Started By:</dt>
+            <dd> {processInstance.process_initiator_username}</dd>
+          </dl>
+          {processInstance.process_model_with_diagram_identifier ? (
+            <dl>
+              <dt>Current Diagram: </dt>
+              <dd>
+                <Link
+                  data-qa="go-to-current-diagram-process-model"
+                  to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                    processInstance.process_model_with_diagram_identifier || ''
+                  )}`}
+                >
+                  {processInstance.process_model_with_diagram_identifier}
+                </Link>
+              </dd>
+            </dl>
+          ) : null}
+          <dl>
+            <dt>Started:</dt>
+            <dd>
+              {convertSecondsToFormattedDateTime(
+                processInstance.start_in_seconds || 0
+              )}
+            </dd>
+          </dl>
+          {lastUpdatedTimeTag}
+          <dl>
+            <dt>Revision:</dt>
+            <dd>
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </dd>
+          </dl>
+        </Column>
+        <Column sm={4} md={4} lg={8}>
+          {(processInstance.process_metadata || []).map(
+            (processInstanceMetadata) => (
+              <dl>
+                <dt>{processInstanceMetadata.key} :</dt>
+                <dd>{processInstanceMetadata.value}</dd>
+              </dl>
+            )
+          )}
+        </Column>
+      </Grid>
     );
   };
 
@@ -486,7 +485,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const initializeTaskDataToDisplay = (task: Task | null) => {
     if (
       task &&
-      (task.state === 'COMPLETED' || task.state === 'READY') &&
+      (task.state === 'COMPLETED' ||
+        task.state === 'ERROR' ||
+        task.state === 'READY') &&
       ability.can('GET', targetUris.processInstanceTaskDataPath)
     ) {
       setShowTaskDataLoading(true);
@@ -557,9 +558,22 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const resetTaskActionDetails = () => {
+    setEditingTaskData(false);
+    setSelectingEvent(false);
+    setAddingPotentialOwners(false);
+    initializeTaskDataToDisplay(taskToDisplay);
+    setEventPayload('{}');
+    setAdditionalPotentialOwners(null);
+    removeError();
+  };
+
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
+    if (editingTaskData || selectingEvent || addingPotentialOwners) {
+      resetTaskActionDetails();
+    }
   };
 
   const getTaskById = (taskId: string) => {
@@ -604,7 +618,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       (task.state === 'WAITING' &&
         subprocessTypes.filter((t) => t === task.typename).length > 0) ||
-      task.state === 'READY'
+      task.state === 'READY' ||
+      (processInstance &&
+        processInstance.status === 'suspended' &&
+        task.state === 'ERROR')
     );
   };
 
@@ -620,8 +637,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const canSendEvent = (task: Task) => {
     // We actually could allow this for any waiting events
-    const taskTypes = ['Event Based Gateway'];
+    const taskTypes = ['EventBasedGateway'];
     return (
+      !selectingEvent &&
       processInstance &&
       processInstance.status === 'waiting' &&
       ability.can('POST', targetUris.processInstanceSendEventPath) &&
@@ -641,6 +659,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const canAddPotentialOwners = (task: Task) => {
+    return (
+      HUMAN_TASK_TYPES.includes(task.typename) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
+      isActiveTask(task) &&
+      showingActiveTask()
+    );
+  };
+
   const canResetProcess = (task: Task) => {
     return (
       ability.can('POST', targetUris.processInstanceResetPath) &&
@@ -653,7 +682,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const getEvents = (task: Task) => {
     const handleMessage = (eventDefinition: EventDefinition) => {
-      if (eventDefinition.typename === 'MessageEventDefinition') {
+      if (eventsThatNeedPayload.includes(eventDefinition.typename)) {
         const newEvent = eventDefinition;
         delete newEvent.message_var;
         newEvent.payload = {};
@@ -661,20 +690,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
       return eventDefinition;
     };
-    if (task.event_definition && task.event_definition.event_definitions)
-      return task.event_definition.event_definitions.map((e: EventDefinition) =>
+    const eventDefinition =
+      task.task_definition_properties_json.event_definition;
+    if (eventDefinition && eventDefinition.event_definitions)
+      return eventDefinition.event_definitions.map((e: EventDefinition) =>
         handleMessage(e)
       );
-    if (task.event_definition) return [handleMessage(task.event_definition)];
+    if (eventDefinition) return [handleMessage(eventDefinition)];
     return [];
-  };
-
-  const cancelUpdatingTask = () => {
-    setEditingTaskData(false);
-    setSelectingEvent(false);
-    initializeTaskDataToDisplay(taskToDisplay);
-    setEventPayload('{}');
-    removeError();
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -691,7 +714,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }; // spread operator
       setTaskToDisplay(taskToDisplayCopy);
     }
-    refreshPage();
   };
 
   const saveTaskData = () => {
@@ -713,13 +735,35 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const addPotentialOwners = () => {
+    if (!additionalPotentialOwners) {
+      return;
+    }
+    if (!taskToDisplay) {
+      return;
+    }
+    removeError();
+
+    const userIds = additionalPotentialOwners.map((user: User) => user.id);
+
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceTaskAssignPath}/${taskToDisplay.guid}`,
+      httpMethod: 'POST',
+      successCallback: resetTaskActionDetails,
+      failureCallback: addError,
+      postBody: {
+        user_ids: userIds,
+      },
+    });
+  };
+
   const sendEvent = () => {
     if ('payload' in eventToSend)
       eventToSend.payload = JSON.parse(eventPayload);
     HttpService.makeCallToBackend({
       path: targetUris.processInstanceSendEventPath,
       httpMethod: 'POST',
-      successCallback: saveTaskDataResult,
+      successCallback: refreshPage,
       failureCallback: addError,
       postBody: eventToSend,
     });
@@ -738,18 +782,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const taskDisplayButtons = (task: Task) => {
     const buttons = [];
+    if (editingTaskData || addingPotentialOwners || selectingEvent) {
+      return null;
+    }
 
     if (
-      task.typename === 'Script Task' &&
+      task.typename === 'ScriptTask' &&
       ability.can('PUT', targetUris.processModelShowPath)
     ) {
       buttons.push(
         <Button
+          kind="ghost"
+          align="top-left"
+          renderIcon={RuleDraft}
+          iconDescription="Create Script Unit Test"
+          hasIconOnly
           data-qa="create-script-unit-test-button"
           onClick={createScriptUnitTest}
-        >
-          Create Script Unit Test
-        </Button>
+        />
       );
     }
 
@@ -767,90 +817,95 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (editingTaskData) {
-      buttons.push(
-        <Button data-qa="save-task-data-button" onClick={saveTaskData}>
-          Save
-        </Button>
-      );
+    if (canEditTaskData(task)) {
       buttons.push(
         <Button
-          data-qa="cancel-task-data-edit-button"
-          onClick={cancelUpdatingTask}
-        >
-          Cancel
-        </Button>
+          kind="ghost"
+          renderIcon={Edit}
+          align="top-left"
+          iconDescription="Edit Task Data"
+          hasIconOnly
+          data-qa="edit-task-data-button"
+          onClick={() => setEditingTaskData(true)}
+        />
       );
-    } else if (selectingEvent) {
-      buttons.push(
-        <Button data-qa="send-event-button" onClick={sendEvent}>
-          Send
-        </Button>
-      );
-      buttons.push(
-        <Button
-          data-qa="cancel-task-data-edit-button"
-          onClick={cancelUpdatingTask}
-        >
-          Cancel
-        </Button>
-      );
-    } else {
-      if (canEditTaskData(task)) {
-        buttons.push(
-          <Button
-            data-qa="edit-task-data-button"
-            onClick={() => setEditingTaskData(true)}
-          >
-            Edit
-          </Button>
-        );
-      }
-      if (canCompleteTask(task)) {
-        buttons.push(
-          <Button
-            data-qa="mark-task-complete-button"
-            onClick={() => completeTask(false)}
-          >
-            Skip Task
-          </Button>
-        );
-        buttons.push(
-          <Button
-            data-qa="execute-task-complete-button"
-            onClick={() => completeTask(true)}
-          >
-            Execute Task
-          </Button>
-        );
-      }
-      if (canSendEvent(task)) {
-        buttons.push(
-          <Button
-            data-qa="select-event-button"
-            onClick={() => setSelectingEvent(true)}
-          >
-            Send Event
-          </Button>
-        );
-      }
-      if (canResetProcess(task)) {
-        let titleText =
-          'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
-        titleText += 'Yes, we invented a time machine. ';
-        titleText += 'And no, you cannot go back after using this feature.';
-        buttons.push(
-          <Button
-            title={titleText}
-            data-qa="reset-process-button"
-            onClick={() => resetProcessInstance()}
-          >
-            Reset Process Here
-          </Button>
-        );
-      }
     }
-
+    if (canAddPotentialOwners(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={UserFollow}
+          align="top-left"
+          iconDescription="Assign user"
+          title="Allow an additional user to complete this task"
+          hasIconOnly
+          data-qa="add-potential-owners-button"
+          onClick={() => setAddingPotentialOwners(true)}
+        />
+      );
+    }
+    if (canCompleteTask(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Play}
+          align="top-left"
+          iconDescription="Execute Task"
+          hasIconOnly
+          data-qa="execute-task-complete-button"
+          onClick={() => completeTask(true)}
+        >
+          Execute Task
+        </Button>
+      );
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={SkipForward}
+          align="top-left"
+          iconDescription="Skip Task"
+          hasIconOnly
+          data-qa="mark-task-complete-button"
+          onClick={() => completeTask(false)}
+        >
+          Skip Task
+        </Button>
+      );
+    }
+    if (canSendEvent(task)) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Send}
+          align="top-left"
+          iconDescription="Send Event"
+          hasIconOnly
+          data-qa="select-event-button"
+          onClick={() => setSelectingEvent(true)}
+        >
+          Send Event
+        </Button>
+      );
+    }
+    if (canResetProcess(task)) {
+      let titleText =
+        'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
+      titleText += 'Yes, we invented a time machine. ';
+      titleText +=
+        'And no, you cannot change your mind after using this feature.';
+      buttons.push(
+        <Button
+          kind="ghost"
+          renderIcon={Reset}
+          align="top-left"
+          hasIconOnly
+          iconDescription="Reset Process Here"
+          title={titleText}
+          data-qa="reset-process-button"
+          onClick={() => resetProcessInstance()}
+        />
+      );
+    }
     return buttons;
   };
 
@@ -859,55 +914,135 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (taskDataToDisplay.startsWith('ERROR:')) {
       taskDataClassName = 'failure-string';
     }
-    return editingTaskData ? (
-      <Editor
-        height={600}
-        width="auto"
-        defaultLanguage="json"
-        defaultValue={taskDataToDisplay}
-        onChange={(value) => setTaskDataToDisplay(value || '')}
-      />
-    ) : (
+    const numberOfLines = taskDataToDisplay.split('\n').length;
+    let heightInEm = numberOfLines + 5;
+    let scrollEnabled = false;
+    let minimapEnabled = false;
+    if (heightInEm > 30) {
+      heightInEm = 30;
+      scrollEnabled = true;
+      minimapEnabled = true;
+    }
+    let taskDataHeader = 'Task data';
+    let editorReadOnly = true;
+    let taskDataHeaderClassName = 'with-half-rem-bottom-margin';
+
+    if (editingTaskData) {
+      editorReadOnly = false;
+      taskDataHeader = 'Edit task data';
+      taskDataHeaderClassName = 'task-data-details-header';
+    }
+
+    if (!taskDataToDisplay) {
+      return null;
+    }
+
+    return (
       <>
         {showTaskDataLoading ? (
           <Loading className="some-class" withOverlay={false} small />
         ) : null}
-        <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
+        {taskDataClassName !== '' ? (
+          <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
+        ) : (
+          <>
+            <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
+            <Editor
+              height={`${heightInEm}rem`}
+              width="auto"
+              defaultLanguage="json"
+              defaultValue={taskDataToDisplay}
+              onChange={(value) => {
+                setTaskDataToDisplay(value || '');
+              }}
+              options={{
+                readOnly: editorReadOnly,
+                scrollBeyondLastLine: scrollEnabled,
+                minimap: { enabled: minimapEnabled },
+              }}
+            />
+          </>
+        )}
       </>
     );
   };
 
-  const eventSelector = (candidateEvents: any) => {
-    const editor = (
-      <Editor
-        height={300}
-        width="auto"
-        defaultLanguage="json"
-        defaultValue={eventPayload}
-        onChange={(value: any) => setEventPayload(value || '{}')}
-        options={{ readOnly: !eventTextEditorEnabled }}
-      />
-    );
-    return selectingEvent ? (
+  const potentialOwnerSelector = () => {
+    return (
       <Stack orientation="vertical">
-        <Dropdown
-          id="process-instance-select-event"
-          titleText="Event"
-          label="Select Event"
-          items={candidateEvents}
-          itemToString={(item: any) => item.name || item.label || item.typename}
-          onChange={(value: any) => {
-            setEventToSend(value.selectedItem);
-            setEventTextEditorEnabled(
-              value.selectedItem.typename === 'MessageEventDefinition'
-            );
-          }}
-        />
-        {editor}
+        <h3 className="task-data-details-header">Update task ownership</h3>
+        <div className="indented-content">
+          <p className="explanatory-message with-tiny-bottom-margin">
+            Select a user who should be allowed to complete this task
+          </p>
+          <UserSearch
+            className="modal-dropdown"
+            onSelectedUser={(user: User) => {
+              setAdditionalPotentialOwners([user]);
+            }}
+          />
+        </div>
       </Stack>
-    ) : (
-      taskDataContainer()
     );
+  };
+
+  const eventSelector = (candidateEvents: any) => {
+    let editor = null;
+    let className = 'modal-dropdown';
+    if (eventTextEditorEnabled) {
+      className = '';
+      editor = (
+        <Editor
+          height={300}
+          width="auto"
+          defaultLanguage="json"
+          defaultValue={eventPayload}
+          onChange={(value: any) => setEventPayload(value || '{}')}
+          options={{ readOnly: !eventTextEditorEnabled }}
+        />
+      );
+    }
+    return (
+      <Stack orientation="vertical">
+        <h3 className="task-data-details-header">Choose event to send</h3>
+        <div className="indented-content">
+          <p className="explanatory-message with-tiny-bottom-margin">
+            Select an event to send. A message event will require a body as
+            well.
+          </p>
+          <Dropdown
+            id="process-instance-select-event"
+            className={className}
+            label="Select Event"
+            items={candidateEvents}
+            itemToString={(item: any) =>
+              item.name || item.label || item.typename
+            }
+            onChange={(value: any) => {
+              setEventToSend(value.selectedItem);
+              setEventTextEditorEnabled(
+                eventsThatNeedPayload.includes(value.selectedItem.typename)
+              );
+            }}
+          />
+          {editor}
+        </div>
+      </Stack>
+    );
+  };
+
+  const taskActionDetails = () => {
+    if (!taskToDisplay) {
+      return null;
+    }
+    let dataArea = taskDataContainer();
+    if (selectingEvent) {
+      const candidateEvents: any = getEvents(taskToDisplay);
+      dataArea = eventSelector(candidateEvents);
+    } else if (addingPotentialOwners) {
+      dataArea = potentialOwnerSelector();
+    }
+    return dataArea;
   };
 
   const taskUpdateDisplayArea = () => {
@@ -915,48 +1050,75 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
     const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
-    const candidateEvents: any = getEvents(taskToUse);
-    if (taskToDisplay) {
-      let taskTitleText = taskToUse.guid;
-      if (taskToUse.bpmn_name) {
-        taskTitleText += ` (${taskToUse.bpmn_name})`;
-      }
-      return (
-        <Modal
-          open={!!taskToUse}
-          passiveModal
-          onRequestClose={handleTaskDataDisplayClose}
-        >
-          <Stack orientation="horizontal" gap={2}>
-            <span title={taskTitleText}>{taskToUse.bpmn_identifier}</span> (
-            {taskToUse.typename}
-            ): {taskToUse.state}
-            {taskDisplayButtons(taskToUse)}
-          </Stack>
+
+    let primaryButtonText = 'Close';
+    let secondaryButtonText = null;
+    let onRequestSubmit = handleTaskDataDisplayClose;
+    let onSecondarySubmit = handleTaskDataDisplayClose;
+    let dangerous = false;
+    if (editingTaskData) {
+      primaryButtonText = 'Save';
+      secondaryButtonText = 'Cancel';
+      onSecondarySubmit = resetTaskActionDetails;
+      onRequestSubmit = saveTaskData;
+      dangerous = true;
+    } else if (selectingEvent) {
+      primaryButtonText = 'Send';
+      secondaryButtonText = 'Cancel';
+      onSecondarySubmit = resetTaskActionDetails;
+      onRequestSubmit = sendEvent;
+      dangerous = true;
+    } else if (addingPotentialOwners) {
+      primaryButtonText = 'Add';
+      secondaryButtonText = 'Cancel';
+      onSecondarySubmit = resetTaskActionDetails;
+      onRequestSubmit = addPotentialOwners;
+      dangerous = true;
+    }
+
+    return (
+      <Modal
+        open={!!taskToUse}
+        danger={dangerous}
+        primaryButtonText={primaryButtonText}
+        secondaryButtonText={secondaryButtonText}
+        onRequestClose={handleTaskDataDisplayClose}
+        onSecondarySubmit={onSecondarySubmit}
+        onRequestSubmit={onRequestSubmit}
+        modalHeading={`${taskToUse.bpmn_identifier} (${taskToUse.typename}
+              ): ${taskToUse.state}`}
+      >
+        <div className="indented-content explanatory-message">
+          {taskToUse.bpmn_name ? (
+            <div>
+              <Stack orientation="horizontal" gap={2}>
+                Name: {taskToUse.bpmn_name}
+              </Stack>
+            </div>
+          ) : null}
+
           <div>
             <Stack orientation="horizontal" gap={2}>
               Guid: {taskToUse.guid}
             </Stack>
           </div>
-          {taskToUse.state === 'COMPLETED' ? (
-            <div>
-              <Stack orientation="horizontal" gap={2}>
-                {completionViewLink(
-                  'View process instance at the time when this task was active.',
-                  taskToUse.guid
-                )}
-              </Stack>
-              <br />
-              <br />
-            </div>
-          ) : null}
-          {selectingEvent
-            ? eventSelector(candidateEvents)
-            : taskDataContainer()}
-        </Modal>
-      );
-    }
-    return null;
+        </div>
+        {taskDisplayButtons(taskToUse)}
+        {taskToUse.state === 'COMPLETED' ? (
+          <div>
+            <Stack orientation="horizontal" gap={2}>
+              {completionViewLink(
+                'View process instance at the time when this task was active.',
+                taskToUse.guid
+              )}
+            </Stack>
+            <br />
+            <br />
+          </div>
+        ) : null}
+        {taskActionDetails()}
+      </Modal>
+    );
   };
 
   const buttonIcons = () => {
@@ -1092,59 +1254,57 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <>
-        <div className="show-page">
-          <ProcessBreadcrumb
-            hotCrumbs={[
-              ['Process Groups', '/admin'],
-              {
-                entityToExplode: processModelId,
-                entityType: 'process-model-id',
-                linkLastItem: true,
-              },
-              [`Process Instance Id: ${processInstance.id}`],
-            ]}
-          />
-          <Stack orientation="horizontal" gap={1}>
-            <h1 className="with-icons">
-              Process Instance Id: {processInstance.id}
-            </h1>
-            {buttonIcons()}
-          </Stack>
-          {getInfoTag()}
-          <ProcessInterstitial
-            processInstanceId={processInstance.id}
-            processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
-            allowRedirect={false}
-            smallSpinner
-            collapsableInstructions
-            executeTasks={false}
-          />
-          <Grid condensed fullWidth>
-            <Column md={6} lg={8} sm={4}>
-              <TaskListTable
-                apiPath="/tasks"
-                additionalParams={`process_instance_id=${processInstance.id}`}
-                tableTitle="Tasks I can complete"
-                tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
-                paginationClassName="with-large-bottom-margin"
-                textToShowIfEmpty="There are no tasks you can complete for this process instance."
-                shouldPaginateTable={false}
-                showProcessModelIdentifier={false}
-                showProcessId={false}
-                showStartedBy={false}
-                showTableDescriptionAsTooltip
-                showDateStarted={false}
-                showLastUpdated={false}
-                hideIfNoTasks
-                canCompleteAllTasks
-              />
-            </Column>
-          </Grid>
-          {taskUpdateDisplayArea()}
-          {processDataDisplayArea()}
-          <br />
-          {viewMostRecentStateComponent()}
-        </div>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            {
+              entityToExplode: processModelId,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
+            [`Process Instance Id: ${processInstance.id}`],
+          ]}
+        />
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Instance Id: {processInstance.id}
+          </h1>
+          {buttonIcons()}
+        </Stack>
+        {getInfoTag()}
+        <ProcessInterstitial
+          processInstanceId={processInstance.id}
+          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
+          allowRedirect={false}
+          smallSpinner
+          collapsableInstructions
+          executeTasks={false}
+        />
+        <Grid condensed fullWidth>
+          <Column md={6} lg={8} sm={4}>
+            <TaskListTable
+              apiPath="/tasks"
+              additionalParams={`process_instance_id=${processInstance.id}`}
+              tableTitle="Tasks I can complete"
+              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+              paginationClassName="with-large-bottom-margin"
+              textToShowIfEmpty="There are no tasks you can complete for this process instance."
+              shouldPaginateTable={false}
+              showProcessModelIdentifier={false}
+              showProcessId={false}
+              showStartedBy={false}
+              showTableDescriptionAsTooltip
+              showDateStarted={false}
+              showLastUpdated={false}
+              hideIfNoTasks
+              canCompleteAllTasks
+            />
+          </Column>
+        </Grid>
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
+        <br />
+        {viewMostRecentStateComponent()}
         {getTabs()}
       </>
     );

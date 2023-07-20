@@ -44,6 +44,11 @@ import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle
 // @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 // @ts-expect-error TS(7016) FIXME
+import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
+// @ts-expect-error TS(7016) FIXME
+import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
+
+// @ts-expect-error TS(7016) FIXME
 import TouchModule from 'diagram-js/lib/navigation/touch';
 
 import { useNavigate } from 'react-router-dom';
@@ -86,6 +91,8 @@ type OwnProps = {
   callers?: ProcessModelCaller[];
   activeUserElement?: React.ReactElement;
 };
+
+const FitViewport = 'fit-viewport';
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
@@ -212,7 +219,12 @@ export default function ReactDiagramEditor({
 
         // taken from the non-modeling components at
         //  bpmn-js/lib/Modeler.js
-        additionalModules: [KeyboardMoveModule, TouchModule],
+        additionalModules: [
+          KeyboardMoveModule,
+          MoveCanvasModule,
+          TouchModule,
+          ZoomScrollModule,
+        ],
       });
     }
 
@@ -413,17 +425,7 @@ export default function ReactDiagramEditor({
       }
 
       const canvas = (modeler as any).get('canvas');
-
-      // only get the canvas if the dmn active viewer is actually
-      // a Modeler and not an Editor which is what it will be when we are
-      // actively editing a decision table
-      if ((modeler as any).constructor.name === 'Modeler') {
-        canvas.zoom('fit-viewport');
-      }
-
-      if ((modeler as any).constructor.name === 'Viewer') {
-        canvas.zoom('fit-viewport');
-      }
+      canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
 
       // highlighting a field
       // Option 3 at:
@@ -485,6 +487,10 @@ export default function ReactDiagramEditor({
               ref.element.set(ref.property, elem);
             });
             diagramModelerToUse.importDefinitions(result.rootElement);
+            console.log(
+              'Zooming the viewport for bpmn at the end of displayDiagram'
+            );
+            diagramModelerToUse.get('canvas').zoom(FitViewport, 'auto');
           });
       } else {
         diagramModelerToUse.importXML(diagramXMLToDisplay);
@@ -514,7 +520,6 @@ export default function ReactDiagramEditor({
         successCallback: setDiagramXMLStringFromResponseJson,
       });
     }
-
     (diagramModelerState as any).on('import.done', onImportDone);
 
     const diagramXMLToUse = diagramXML || diagramXMLString;

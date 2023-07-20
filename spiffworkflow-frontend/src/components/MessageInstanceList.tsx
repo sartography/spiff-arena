@@ -179,13 +179,13 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     return (
       <>
         {breadcrumbElement}
-        <h1>Messages</h1>
         {correlationsDisplayModal()}
         <PaginationForTable
           page={page}
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
+          paginationQueryParamPrefix="message-list"
         />
       </>
     );

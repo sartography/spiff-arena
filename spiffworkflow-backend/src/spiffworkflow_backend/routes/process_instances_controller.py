@@ -449,7 +449,7 @@ def process_instance_task_list(
         bpmn_process_ids = [p.id for p in bpmn_processes]
 
     task_model_query = db.session.query(TaskModel).filter(
-        TaskModel.process_instance_id == process_instance.id,
+        TaskModel.process_instance_id == process_instance.id, TaskModel.state.not_in(["LIKELY", "MAYBE"])  # type: ignore
     )
 
     to_task_model: TaskModel | None = None
@@ -713,7 +713,11 @@ def _find_process_instance_for_me_or_raise(
         )
         .filter(
             or_(
+                # you were allowed to complete it
                 HumanTaskUserModel.id.is_not(None),
+                # or you completed it (which admins can do even if it wasn't assigned via HumanTaskUserModel)
+                HumanTaskModel.completed_by_user_id == g.user.id,
+                # or you started it
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
         )

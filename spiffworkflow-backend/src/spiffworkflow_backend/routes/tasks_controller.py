@@ -3,12 +3,10 @@ import json
 import os
 import uuid
 from collections.abc import Generator
-from sys import exc_info
 from typing import Any
 from typing import TypedDict
 
 import flask.wrappers
-import jinja2
 import sentry_sdk
 from flask import current_app
 from flask import g
@@ -16,7 +14,6 @@ from flask import jsonify
 from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
-from jinja2 import TemplateSyntaxError
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -29,6 +26,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -50,8 +48,11 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -172,13 +173,12 @@ def task_data_show(
 
 
 def task_data_update(
-    process_instance_id: str,
+    process_instance_id: int,
     modified_process_model_identifier: str,
     task_guid: str,
     body: dict,
 ) -> Response:
-    """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
@@ -226,13 +226,13 @@ def task_data_update(
 
 def manual_complete_task(
     modified_process_model_identifier: str,
-    process_instance_id: str,
+    process_instance_id: int,
     task_guid: str,
     body: dict,
 ) -> Response:
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
         processor.manual_complete_task(task_guid, execute, g.user)
@@ -246,6 +246,57 @@ def manual_complete_task(
         status=200,
         mimetype="application/json",
     )
+
+
+def task_assign(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    task_guid: str,
+    body: dict,
+) -> Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
+    if process_instance.status != ProcessInstanceStatus.suspended.value:
+        raise ApiError(
+            error_code="error_not_suspended",
+            message="The process instance must be suspended to perform this operation",
+            status_code=400,
+        )
+
+    if "user_ids" not in body:
+        raise ApiError(
+            error_code="malformed_request",
+            message="user_ids as an array must be given in the body of the request.",
+            status_code=400,
+        )
+
+    _get_process_model(
+        process_instance.process_model_identifier,
+    )
+
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    human_tasks = HumanTaskModel.query.filter_by(
+        process_instance_id=process_instance.id, task_id=task_model.guid
+    ).all()
+
+    if len(human_tasks) > 1:
+        raise ApiError(
+            error_code="multiple_tasks_found",
+            message="More than one ready tasks were found. This should never happen.",
+            status_code=400,
+        )
+
+    human_task = human_tasks[0]
+
+    for user_id in body["user_ids"]:
+        human_task_user = HumanTaskUserModel.query.filter_by(user_id=user_id, human_task=human_task).first()
+        if human_task_user is None:
+            human_task_user = HumanTaskUserModel(user_id=user_id, human_task=human_task)
+            db.session.add(human_task_user)
+
+    SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
+
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
@@ -347,29 +398,22 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
                 task_model.form_ui_schema = ui_form_contents
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
-    _render_instructions_for_end_user(task_model, extensions)
+    JinjaService.render_instructions_for_end_user(task_model, extensions)
     task_model.extensions = extensions
     return make_response(jsonify(task_model), 200)
 
 
-def _render_instructions_for_end_user(task_model: TaskModel, extensions: dict | None = None) -> str:
-    """Assure any instructions for end user are processed for jinja syntax."""
-    if extensions is None:
-        extensions = TaskService.get_extensions_from_task_model(task_model)
-    if extensions and "instructionsForEndUser" in extensions:
-        if extensions["instructionsForEndUser"]:
-            try:
-                instructions = _render_jinja_template(extensions["instructionsForEndUser"], task_model)
-                extensions["instructionsForEndUser"] = instructions
-                return instructions
-            except TaskModelError as wfe:
-                wfe.add_note("Failed to render instructions for end user.")
-                raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
-    return ""
+def task_submit(
+    process_instance_id: int,
+    task_guid: str,
+    body: dict[str, Any],
+) -> flask.wrappers.Response:
+    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
+        return _task_submit_shared(process_instance_id, task_guid, body)
 
 
 def _interstitial_stream(
-    process_instance: ProcessInstanceModel, execute_tasks: bool = True
+    process_instance: ProcessInstanceModel, execute_tasks: bool = True, is_locked: bool = False
 ) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
@@ -380,8 +424,7 @@ def _interstitial_stream(
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         if task_model is None:
             return ""
-        extensions = TaskService.get_extensions_from_task_model(task_model)
-        return _render_instructions_for_end_user(task_model, extensions)
+        return JinjaService.render_instructions_for_end_user(task_model)
 
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -413,19 +456,41 @@ def _interstitial_stream(
                         processor.do_engine_steps(execution_strategy_name="one_at_a_time")
                         processor.do_engine_steps(execution_strategy_name="run_until_user_message")
                         processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                        processor.refresh_waiting_tasks()
+
                     except WorkflowTaskException as wfe:
                         api_error = ApiError.from_workflow_exception(
                             "engine_steps_error", "Failed to complete an automated task.", exp=wfe
                         )
                         yield _render_data("error", api_error)
+                        ErrorHandlingService.handle_error(process_instance, wfe)
                         return
-        if execute_tasks is False:
+
+        # path used by the interstitial page while executing tasks - ie the background processor is not executing them
+        ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
+        if execute_tasks and ready_engine_task_count == 0:
             break
-        processor.refresh_waiting_tasks()
-        ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
+
+        if not execute_tasks:
+            # path used by the process instance show page to display most recent instructions
+            if not is_locked:
+                break
+
+            # HACK: db.session.refresh doesn't seem to refresh without rollback or commit so use rollback.
+            # we are not executing tasks so there shouldn't be anything to write anyway, so no harm in rollback.
+            # https://stackoverflow.com/a/20361132/6090676
+            # note that the thing changing the data in this case is probably the background worker,
+            # and it is definitely committing its changes, but since we have already queried the data,
+            # our session has stale results without the rollback.
+            db.session.rollback()
+            db.session.refresh(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
+
+            # if process instance is done or blocked by a human task, then break out
+            if is_locked and process_instance.status not in ["not_started", "waiting"]:
+                break
+
         tasks = get_reportable_tasks()
-        if ready_engine_task_count == 0:
-            break  # No more tasks to report
 
     spiff_task = processor.next_task()
     if spiff_task is not None:
@@ -445,7 +510,7 @@ def _interstitial_stream(
             yield _render_data("task", task)
 
 
-def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
+def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
 
@@ -454,14 +519,16 @@ def _dequeued_interstitial_stream(
 ) -> Generator[str | None, str | None, None]:
     try:
         process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-        ProcessInstanceProcessor(process_instance)
 
         # TODO: currently this just redirects back to home if the process has not been started
         # need something better to show?
         if execute_tasks:
-            if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-                with ProcessInstanceQueueService.dequeued(process_instance):
-                    yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+            try:
+                if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+                    with ProcessInstanceQueueService.dequeued(process_instance):
+                        yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
+            except ProcessInstanceIsAlreadyLockedError:
+                yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
         else:
             # no reason to get a lock if we are reading only
             yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
@@ -518,7 +585,7 @@ def task_save_draft(
             error_code="process_instance_not_runnable",
             message=(
                 f"Process Instance ({process_instance.id}) has status "
-                f"{process_instance.status} which does not allow tasks to be submitted."
+                f"{process_instance.status} which does not allow draft data to be saved."
             ),
             status_code=400,
         )
@@ -632,15 +699,6 @@ def _task_submit_shared(
     )
 
 
-def task_submit(
-    process_instance_id: int,
-    task_guid: str,
-    body: dict[str, Any],
-) -> flask.wrappers.Response:
-    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body)
-
-
 def _get_tasks(
     processes_started_by_user: bool = True,
     has_lane_assignment_id: bool = True,
@@ -745,7 +803,7 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
 
     file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
     try:
-        form_contents = _render_jinja_template(file_contents, task_model)
+        form_contents = JinjaService.render_jinja_template(file_contents, task_model)
         try:
             # form_contents is a str
             hot_dict: dict = json.loads(form_contents)
@@ -763,30 +821,6 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
         raise api_error
-
-
-def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> str:
-    jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
-    try:
-        template = jinja_environment.from_string(unprocessed_template)
-        return template.render(**(task_model.get_data()))
-    except jinja2.exceptions.TemplateError as template_error:
-        wfe = TaskModelError(str(template_error), task_model=task_model, exception=template_error)
-        if isinstance(template_error, TemplateSyntaxError):
-            wfe.line_number = template_error.lineno
-            wfe.error_line = template_error.source.split("\n")[template_error.lineno - 1]
-        wfe.add_note("Jinja2 template errors can happen when trying to display task data")
-        raise wfe from template_error
-    except Exception as error:
-        _type, _value, tb = exc_info()
-        wfe = TaskModelError(str(error), task_model=task_model, exception=error)
-        while tb:
-            if tb.tb_frame.f_code.co_filename == "<template>":
-                wfe.line_number = tb.tb_lineno
-                wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
-            tb = tb.tb_next
-        wfe.add_note("Jinja2 template errors can happen when trying to display task data")
-        raise wfe from error
 
 
 def _get_spiff_task_from_process_instance(

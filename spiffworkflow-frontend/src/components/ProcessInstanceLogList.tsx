@@ -82,6 +82,8 @@ export default function ProcessInstanceLogList({
     processInstanceShowPageBaseUrl = `/admin/process-instances/${processModelId}`;
   }
   const taskNameHeader = isEventsView ? 'Task Name' : 'Milestone';
+  const tableType = isEventsView ? 'events' : 'milestones';
+  const paginationQueryParamPrefix = `log-list-${tableType}`;
 
   const updateSearchParams = (value: string, key: string) => {
     if (value) {
@@ -96,7 +98,7 @@ export default function ProcessInstanceLogList({
     // Clear out any previous results to avoid a "flicker" effect where columns
     // are updated above the incorrect data.
     setProcessInstanceLogs([]);
-    setPagination(null);
+    // setPagination(null);
 
     const setProcessInstanceLogListFromResult = (result: any) => {
       setProcessInstanceLogs(result.results);
@@ -105,8 +107,6 @@ export default function ProcessInstanceLogList({
 
     const searchParamsToInclude = [
       'events',
-      'page',
-      'per_page',
       'bpmn_name',
       'bpmn_identifier',
       'task_type',
@@ -117,10 +117,17 @@ export default function ProcessInstanceLogList({
       searchParamsToInclude
     );
 
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
+
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
         pickedSearchParams
-      )}`,
+      )}&page=${page}&per_page=${perPage}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
 
@@ -143,6 +150,7 @@ export default function ProcessInstanceLogList({
     processModelId,
     targetUris.processInstanceLogListPath,
     isEventsView,
+    paginationQueryParamPrefix,
   ]);
 
   const handleErrorEventModalClose = () => {
@@ -285,6 +293,7 @@ export default function ProcessInstanceLogList({
       timestampComponent = (
         <td>
           <Link
+            reloadDocument
             data-qa="process-instance-show-link"
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
             title="View state when task was completed"
@@ -491,6 +500,7 @@ export default function ProcessInstanceLogList({
   if (clearAll) {
     return <p>Page cleared 👍</p>;
   }
+
   return (
     <>
       {errorEventModal()}
@@ -506,6 +516,8 @@ export default function ProcessInstanceLogList({
         perPage={perPage}
         pagination={pagination}
         tableToDisplay={buildTable()}
+        paginationQueryParamPrefix={paginationQueryParamPrefix}
+        paginationDataQATag={`pagination-options-${tableType}`}
       />
     </>
   );
