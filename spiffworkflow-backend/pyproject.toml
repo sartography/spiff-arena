@@ -2,18 +2,18 @@
 name = "spiffworkflow-backend"
 version = "0.0.0"
 description = "Spiffworkflow Backend"
-authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
-license = "MIT"
+authors = ["Sartography <sartography@users.noreply.github.com>"]
+license = "LGPL-2.1"
 readme = "README.rst"
-homepage = "https://github.com/sartography/spiffworkflow-backend"
-repository = "https://github.com/sartography/spiffworkflow-backend"
-documentation = "https://spiffworkflow-backend.readthedocs.io"
+homepage = "https://spiffworkflow.org"
+repository = "https://github.com/sartography/spiff-arena"
+documentation = "https://spiff-arena.readthedocs.io"
 classifiers = [
     "Development Status :: 1 - Planning",
 ]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
+Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
@@ -34,8 +34,6 @@ SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "ma
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
-pytest-flask = "^1.2.0"
-pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
 
@@ -82,7 +80,6 @@ prometheus-flask-exporter = "^0.22.3"
 sqlalchemy = "^2.0.7"
 marshmallow-sqlalchemy = "^0.29.0"
 spiff-element-units = "^0.3.0"
-pytest-xdist = "^3.3.1"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
 # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
@@ -98,6 +95,11 @@ xdoctest = {extras = ["colors"], version = "^1.0.1"}
 pre-commit = "^2.20.0"
 black = ">=21.10b0"
 ruff = "^0.0.270"
+
+pytest-random-order = "^1.1.0"
+pytest-flask = "^1.2.0"
+pytest-flask-sqlalchemy = "^1.1.0"
+pytest-xdist = "^3.3.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"
