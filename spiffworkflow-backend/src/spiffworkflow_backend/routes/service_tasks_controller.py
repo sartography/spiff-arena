@@ -13,6 +13,7 @@ from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.oauth_service import OAuthService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
+from spiffworkflow_backend.exceptions.api_error import ApiError
 
 
 def service_task_list() -> flask.wrappers.Response:
@@ -33,6 +34,12 @@ def authentication_list() -> flask.wrappers.Response:
 
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
 
+
+def authentication_begin(
+    service: str,
+    auth_method: str,
+) -> werkzeug.wrappers.Response:
+    raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
 
 def authentication_callback(
     service: str,

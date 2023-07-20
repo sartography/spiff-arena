@@ -1810,6 +1810,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
 
+  /authentication_begin/{service}/{auth_method}:
+    parameters:
+      - name: service
+        in: path
+        required: true
+        description: The name of the service
+        schema:
+          type: string
+      - name: auth_method
+        in: path
+        required: true
+        description: The method
+        schema:
+          type: string
+    get:
+      tags:
+        - Authentications
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_begin
+      summary: Begin an external authentication
+      responses:
+        "200":
+          description: All authentications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTask"
+
   /authentication_callback/{service}/{auth_method}:
     parameters:
       - name: service

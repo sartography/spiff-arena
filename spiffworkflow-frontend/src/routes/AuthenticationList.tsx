@@ -4,6 +4,7 @@ import { Table } from '@carbon/react';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
+import { BACKEND_BASE_URL } from '../config';
 
 export default function AuthenticationList() {
   const [authenticationList, setAuthenticationList] = useState<
@@ -56,11 +57,9 @@ export default function AuthenticationList() {
             <td>
               <a
                 data-qa="authentication-create-link"
-                href={`${connectProxyBaseUrl}/v1/auth/${
+                href={`${BACKEND_BASE_URL}/authentication_begin/${
                   row.id
-                }?redirect_url=${redirectUrl}/${
-                  row.id
-                }?token=${UserService.getAccessToken()}`}
+                }`}
               >
                 {row.id}
               </a>
