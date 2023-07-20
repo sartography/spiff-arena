@@ -275,6 +275,13 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
+    // field format:
+    //    field:[field_name_to_use]
+    //
+    // if field is a range:
+    //    field:[field_name_to_use]:[start or end]
+    //
+    // defaults to "start" in all cases
     const [_, fieldIdentifierToCompareWith, startOrEnd] =
       minimumDateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formData)) {
@@ -331,6 +338,7 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
+    // can be either "today" or another field
     let dateString = formData[propertyKey];
     if (dateString) {
       if (typeof dateString === 'string') {
