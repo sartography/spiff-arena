@@ -1,3 +1,5 @@
+from typing import Dict, List, Any
+
 # TODO: get this from somewhere dynamic, admins need to edit from the UI
 # TODO: ^ in the interim, need to get client_id/secret from env? secrets?
 AUTHS = {
@@ -15,4 +17,7 @@ AUTHS = {
 }
 
 class OAuthService:
-      pass
+      @staticmethod
+      def authentication_list() -> List[Dict[str, Any]]:
+            # TODO: build from AUTHS
+            return [{"id": "airtable/OAuth", "parameters": []}]

@@ -10,6 +10,7 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend.routes.user import verify_token
+from spiffworkflow_backend.services.oauth_service import OAuthService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 
@@ -21,8 +22,11 @@ def service_task_list() -> flask.wrappers.Response:
 
 def authentication_list() -> flask.wrappers.Response:
     available_authentications = ServiceTaskService.authentication_list()
+    available_v2_authentications = OAuthService.authentication_list()
+    
     response_json = {
         "results": available_authentications,
+        "resultsV2": available_v2_authentications,
         "connector_proxy_base_url": current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"],
         "redirect_url": f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback",
     }
