@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
-  ButtonSet,
   Form,
   Stack,
   TextInput,
@@ -382,12 +381,11 @@ export default function ProcessModelForm({
   };
 
   const formButtons = () => {
-    const buttons = [
+    return (
       <Button kind="secondary" type="submit">
         Submit
-      </Button>,
-    ];
-    return <ButtonSet>{buttons}</ButtonSet>;
+      </Button>
+    );
   };
   return (
     <Form onSubmit={handleFormSubmission}>
