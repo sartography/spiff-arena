@@ -40,7 +40,9 @@ def authentication_begin(
     auth_method: str,
 ) -> werkzeug.wrappers.Response:
     verify_token(request.args.get("token"), force_run=True)
-    raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
+    if not OAuthService.supported_service(service):
+        raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
+    return redirect(f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/admin/configuration")
 
 def authentication_callback(
     service: str,

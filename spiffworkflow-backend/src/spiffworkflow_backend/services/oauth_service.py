@@ -2,6 +2,7 @@ from typing import Dict, List, Any
 
 # TODO: get this from somewhere dynamic, admins need to edit from the UI
 # TODO: ^ in the interim, need to get client_id/secret from env? secrets?
+# TODO: also don't like the name
 AUTHS = {
       "airtable": {
             "name": "airtable",
@@ -21,3 +22,7 @@ class OAuthService:
       def authentication_list() -> List[Dict[str, Any]]:
             # TODO: build from AUTHS
             return [{"id": "airtable/OAuth", "parameters": []}]
+
+      @staticmethod
+      def supported_service(service: str) -> bool:
+            return service in AUTHS
