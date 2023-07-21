@@ -194,7 +194,14 @@ class ProcessModelService(FileSystemService):
         process_group_id: str | None = None,
         recursive: bool | None = False,
         filter_runnable_by_user: bool | None = False,
+        filter_runnable_as_extension: bool | None = False,
     ) -> list[ProcessModelInfo]:
+        if filter_runnable_as_extension and filter_runnable_by_user:
+            raise Exception(
+                "It is not valid to filter process models by both filter_runnable_by_user and"
+                " filter_runnable_as_extension"
+            )
+
         process_models = cls.get_process_models(process_group_id, recursive)
 
         permission_to_check = "read"
@@ -203,6 +210,9 @@ class ProcessModelService(FileSystemService):
         if filter_runnable_by_user:
             permission_to_check = "create"
             permission_base_uri = "/v1.0/process-instances"
+        if filter_runnable_as_extension:
+            permission_to_check = "create"
+            permission_base_uri = "/v1.0/extensions"
 
         # if user has access to uri/* with that permission then there's no reason to check each one individually
         guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())

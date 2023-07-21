@@ -782,6 +782,20 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
+  /extensions:
+    get:
+      operationId: spiffworkflow_backend.routes.extensions_controller.extension_list
+      summary: Returns the list of available extensions
+      tags:
+        - Extensions
+      responses:
+        "200":
+          description: Resulting extensions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
   /extensions/{modified_process_model_identifier}:
     parameters:
       - name: modified_process_model_identifier

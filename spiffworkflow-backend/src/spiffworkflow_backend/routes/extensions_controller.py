@@ -19,6 +19,8 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 def extension_run(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
+    _raise_unless_extensions_api_enabled()
+
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
 
     process_model = _get_process_model(process_model_identifier)
@@ -30,13 +32,6 @@ def extension_run(
                 " bpmn file. One must be set in order to instantiate this model."
             ),
             status_code=400,
-        )
-
-    if not current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
-        raise ApiError(
-            error_code="extensions_api_not_enabled",
-            message="The extensions api is not enabled. Cannot run process models in this way.",
-            status_code=403,
         )
 
     if not ProcessModelService.is_allowed_to_run_as_extension(process_model):
@@ -85,3 +80,42 @@ def extension_run(
         task_data = processor.get_data()
 
     return make_response(jsonify(task_data), 200)
+
+
+# actual frontend route
+# /extensions/:anything => Extensions component
+# maybe add jsonschema support when rendering the extension for primary page design
+# maybe add an element for markdown as well
+
+
+# backend extension ui schema for each model has something like:
+# {
+#     "top_level_navigation_items": [{
+#         "label": "Aggregate Metadata",
+#         "route": "/aggregate_metadata"
+#         }
+#     ],
+#     "routes": {
+#         "/aggregate_metadata": {
+#             "header": "Aggregate Metdata",
+#             "api": "aggregate_medadata"
+#         }
+#     }
+# }
+def extension_list() -> flask.wrappers.Response:
+    _raise_unless_extensions_api_enabled()
+    process_model_extensions = ProcessModelService.get_process_models_for_api(
+        process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
+        recursive=True,
+        filter_runnable_as_extension=True,
+    )
+    return make_response(jsonify(process_model_extensions), 200)
+
+
+def _raise_unless_extensions_api_enabled() -> None:
+    if not current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
+        raise ApiError(
+            error_code="extensions_api_not_enabled",
+            message="The extensions api is not enabled. Cannot run process models in this way.",
+            status_code=403,
+        )
