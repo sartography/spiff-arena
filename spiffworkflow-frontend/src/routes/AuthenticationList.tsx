@@ -59,7 +59,7 @@ export default function AuthenticationList() {
                 data-qa="authentication-create-link"
                 href={`${BACKEND_BASE_URL}/authentication_begin/${
                   row.id
-                }`}
+                }?token=${UserService.getAccessToken()}`}
               >
                 {row.id}
               </a>
