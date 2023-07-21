@@ -6,6 +6,7 @@ from glob import glob
 from json import JSONDecodeError
 from typing import TypeVar
 
+from flask import current_app
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
@@ -99,6 +100,14 @@ class ProcessModelService(FileSystemService):
             if hasattr(process_model, atu_key):
                 setattr(process_model, atu_key, atu_value)
         cls.save_process_model(process_model)
+
+    @classmethod
+    def is_allowed_to_run_as_extension(cls, process_model: ProcessModelInfo) -> bool:
+        if not current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
+            return False
+
+        configured_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]
+        return process_model.id.startswith(f"{configured_prefix}/")
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:

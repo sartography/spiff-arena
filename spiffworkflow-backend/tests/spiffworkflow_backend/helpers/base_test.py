@@ -2,9 +2,12 @@ import io
 import json
 import os
 import time
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import Any
 
 from flask import current_app
+from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -449,3 +452,12 @@ class BaseTest:
         customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")
         assert po_curr is not None
         assert customer_curr is not None
+
+    @contextmanager
+    def app_config_mock(self, app: Flask, config_identifier: str, new_config_value: Any) -> Generator:
+        initial_value = app.config[config_identifier]
+        app.config[config_identifier] = new_config_value
+        try:
+            yield
+        finally:
+            app.config[config_identifier] = initial_value

@@ -1,4 +1,5 @@
 import flask.wrappers
+from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -12,6 +13,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 def extension_run(
@@ -28,6 +30,23 @@ def extension_run(
                 " bpmn file. One must be set in order to instantiate this model."
             ),
             status_code=400,
+        )
+
+    if not current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
+        raise ApiError(
+            error_code="extensions_api_not_enabled",
+            message="The extensions api is not enabled. Cannot run process models in this way.",
+            status_code=403,
+        )
+
+    if not ProcessModelService.is_allowed_to_run_as_extension(process_model):
+        raise ApiError(
+            error_code="invalid_process_model_extension",
+            message=(
+                f"Process Model '{process_model_identifier}' cannot be run as an extension. It must be in the correct"
+                f" Process Group: {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
+            ),
+            status_code=403,
         )
 
     process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
