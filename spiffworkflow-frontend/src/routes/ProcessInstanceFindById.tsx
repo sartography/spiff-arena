@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @ts-ignore
-import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
+import { Button, Form, Stack, TextInput } from '@carbon/react';
 import { isInteger, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
 import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
@@ -65,8 +64,7 @@ export default function ProcessInstanceFindById() {
   };
 
   const formButtons = () => {
-    const buttons = [<Button type="submit">Submit</Button>];
-    return <ButtonSet>{buttons}</ButtonSet>;
+    return <Button type="submit">Submit</Button>;
   };
 
   return (

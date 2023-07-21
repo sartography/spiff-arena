@@ -444,7 +444,7 @@ td.actions-cell {
   margin: 2rem 0;
 }
 
-.filterIcon {
+.filter-icon {
   text-align: right;
   padding-bottom: 10px;
 }
@@ -474,6 +474,7 @@ svg.notification-icon {
 .filter-tag {
   justify-content: left;
   width: 100%;
+  height: 2rem;
 }
 .filter-tag > span {
   display: flex;
@@ -488,14 +489,14 @@ svg.notification-icon {
 .cds--btn--ghost.cds--btn--sm.button-tag {
   padding-left: 0;
   padding-right: 0;
-  padding-top: 0;
+  padding-top: 0px;
   flex-grow: 1;
 }
 
 .cds--btn--ghost.cds--btn--sm.button-tag-icon {
   padding-left: 0;
   padding-right: 0;
-  padding-top: 0;
+  padding-top: 0px;
 }
 
 /* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */

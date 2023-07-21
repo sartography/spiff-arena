@@ -21,10 +21,8 @@ import {
   StopOutline,
   TrashCan,
   Warning,
-  // @ts-ignore
 } from '@carbon/icons-react';
 import {
-  ButtonSet,
   Grid,
   Column,
   Button,
@@ -38,7 +36,6 @@ import {
   TabList,
   TabPanels,
   TabPanel,
-  // @ts-ignore
 } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
@@ -1106,7 +1103,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Stack>
           </div>
         </div>
-        <ButtonSet>{taskDisplayButtons(taskToUse)}</ButtonSet>
+        {taskDisplayButtons(taskToUse)}
         {taskToUse.state === 'COMPLETED' ? (
           <div>
             <Stack orientation="horizontal" gap={2}>
