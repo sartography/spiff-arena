@@ -39,6 +39,7 @@ def authentication_begin(
     service: str,
     auth_method: str,
 ) -> werkzeug.wrappers.Response:
+    verify_token(request.args.get("token"), force_run=True)
     raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
 
 def authentication_callback(
