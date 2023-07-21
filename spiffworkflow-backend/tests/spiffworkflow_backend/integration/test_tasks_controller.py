@@ -54,7 +54,7 @@ class TestTasksController(BaseTest):
         assert len(human_tasks) == 1
         human_task = human_tasks[0]
         response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
+            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}?with_form_data=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -122,7 +122,7 @@ class TestTasksController(BaseTest):
         assert json_results[1]["task"]["title"] == "Manual Task"
 
         response = client.put(
-            f"/v1.0/tasks/{process_instance_id}/{json_results[1]['task']['id']}",
+            f"/v1.0/tasks/{process_instance_id}/{json_results[1]['task']['id']}?with_form_data=true",
             headers=headers,
         )
 
@@ -153,7 +153,7 @@ class TestTasksController(BaseTest):
 
         # Complete task as the finance user.
         response = client.put(
-            f"/v1.0/tasks/{process_instance_id}/{json_results[0]['task']['id']}",
+            f"/v1.0/tasks/{process_instance_id}/{json_results[0]['task']['id']}?with_form_data=true",
             headers=self.logged_in_headers(finance_user),
         )
 
@@ -312,7 +312,7 @@ class TestTasksController(BaseTest):
         assert response.status_code == 200
 
         response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            f"/v1.0/tasks/{process_instance_id}/{task_id}?with_form_data=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -329,7 +329,7 @@ class TestTasksController(BaseTest):
 
         # ensure draft data is deleted after submitting the task
         response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            f"/v1.0/tasks/{process_instance_id}/{task_id}?with_form_data=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
