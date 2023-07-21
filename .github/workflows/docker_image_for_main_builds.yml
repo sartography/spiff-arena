@@ -31,6 +31,7 @@ on:
   push:
     branches:
       - main
+      - feature/event-payloads-part-2
       - spiffdemo
 
 jobs:
