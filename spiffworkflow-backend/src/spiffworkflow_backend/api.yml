@@ -1890,6 +1890,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: with_form_data
+        in: query
+        required: false
+        description: Include task data for forms
+        schema:
+          type: boolean
     get:
       tags:
         - Tasks

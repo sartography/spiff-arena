@@ -299,7 +299,9 @@ def task_assign(
     return make_response(jsonify({"ok": True}), 200)
 
 
-def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
+def task_show(
+    process_instance_id: int, task_guid: str = "next", with_form_data: bool = False
+) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     if process_instance.status == ProcessInstanceStatus.suspended.value:
@@ -313,20 +315,8 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
         process_instance.process_model_identifier,
     )
 
-    form_schema_file_name = ""
-    form_ui_schema_file_name = ""
-
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
-    extensions = TaskService.get_extensions_from_task_model(task_model)
-    task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id, task_model.guid)
-
-    if "properties" in extensions:
-        properties = extensions["properties"]
-        if "formJsonSchemaFilename" in properties:
-            form_schema_file_name = properties["formJsonSchemaFilename"]
-        if "formUiSchemaFilename" in properties:
-            form_ui_schema_file_name = properties["formUiSchemaFilename"]
 
     can_complete = False
     try:
@@ -335,71 +325,89 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     except (HumanTaskNotFoundError, UserDoesNotHaveAccessToTaskError, HumanTaskAlreadyCompletedError):
         can_complete = False
 
-    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
-
-    saved_form_data = None
-    if task_draft_data is not None:
-        saved_form_data = task_draft_data.get_saved_form_data()
-
-    task_model.data = task_model.get_data()
-    task_model.saved_form_data = saved_form_data
     task_model.process_model_display_name = process_model.display_name
     task_model.process_model_identifier = process_model.id
     task_model.typename = task_definition.typename
     task_model.can_complete = can_complete
-    task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
     task_model.name_for_display = TaskService.get_name_for_display(task_definition)
 
-    process_model_with_form = process_model
+    if with_form_data:
+        task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
+        process_model_with_form = process_model
 
-    refs = SpecFileService.get_references_for_process(process_model_with_form)
-    all_processes = [i.identifier for i in refs]
-    if task_process_identifier not in all_processes:
-        top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
-        bpmn_file_full_path = ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
-            top_bpmn_process.bpmn_process_definition.bpmn_identifier
-        )
-        relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
-        process_model_relative_path = os.path.dirname(relative_path)
-        process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
-
-    if task_definition.typename == "UserTask":
-        if not form_schema_file_name:
-            raise (
-                ApiError(
-                    error_code="missing_form_file",
-                    message=(
-                        f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid:"
-                        f" {task_guid}"
-                    ),
-                    status_code=400,
-                )
+        refs = SpecFileService.get_references_for_process(process_model_with_form)
+        all_processes = [i.identifier for i in refs]
+        if task_process_identifier not in all_processes:
+            top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
+            bpmn_file_full_path = ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+                top_bpmn_process.bpmn_process_definition.bpmn_identifier
+            )
+            relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
+            process_model_relative_path = os.path.dirname(relative_path)
+            process_model_with_form = ProcessModelService.get_process_model_from_relative_path(
+                process_model_relative_path
             )
 
-        form_dict = _prepare_form_data(
-            form_schema_file_name,
-            task_model,
-            process_model_with_form,
+        form_schema_file_name = ""
+        form_ui_schema_file_name = ""
+        extensions = TaskService.get_extensions_from_task_model(task_model)
+        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
+            process_instance_id, task_model.guid
         )
 
-        if task_model.data:
-            _update_form_schema_with_task_data_as_needed(form_dict, task_model)
+        if "properties" in extensions:
+            properties = extensions["properties"]
+            if "formJsonSchemaFilename" in properties:
+                form_schema_file_name = properties["formJsonSchemaFilename"]
+            if "formUiSchemaFilename" in properties:
+                form_ui_schema_file_name = properties["formUiSchemaFilename"]
 
-        if form_dict:
-            task_model.form_schema = form_dict
+        task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
 
-        if form_ui_schema_file_name:
-            ui_form_contents = _prepare_form_data(
-                form_ui_schema_file_name,
+        saved_form_data = None
+        if task_draft_data is not None:
+            saved_form_data = task_draft_data.get_saved_form_data()
+
+        task_model.data = task_model.get_data()
+        task_model.saved_form_data = saved_form_data
+        if task_definition.typename == "UserTask":
+            if not form_schema_file_name:
+                raise (
+                    ApiError(
+                        error_code="missing_form_file",
+                        message=(
+                            f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid:"
+                            f" {task_guid}"
+                        ),
+                        status_code=400,
+                    )
+                )
+
+            form_dict = _prepare_form_data(
+                form_schema_file_name,
                 task_model,
                 process_model_with_form,
             )
-            if ui_form_contents:
-                task_model.form_ui_schema = ui_form_contents
 
-        _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
-    JinjaService.render_instructions_for_end_user(task_model, extensions)
-    task_model.extensions = extensions
+            if task_model.data:
+                _update_form_schema_with_task_data_as_needed(form_dict, task_model)
+
+            if form_dict:
+                task_model.form_schema = form_dict
+
+            if form_ui_schema_file_name:
+                ui_form_contents = _prepare_form_data(
+                    form_ui_schema_file_name,
+                    task_model,
+                    process_model_with_form,
+                )
+                if ui_form_contents:
+                    task_model.form_ui_schema = ui_form_contents
+
+            _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
+        JinjaService.render_instructions_for_end_user(task_model, extensions)
+        task_model.extensions = extensions
+
     return make_response(jsonify(task_model), 200)
 
 
