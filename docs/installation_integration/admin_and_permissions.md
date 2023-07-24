@@ -96,10 +96,12 @@ All the required workflows can be downloaded from [Github - set-permissions](htt
 Select to upload all downloaded files to the newly created Process model. 
 ![add_file](images/add_file.png) 
 
-Upload the following files
-permissions.bpmn - _Primary file_
-groups_permissions.dmn
-users_to_groups.dmn
+**Upload the following files:**
+
+- permissions.bpmn - _Primary file_ 
+- groups_permissions.dmn
+- users_to_groups.dmn
+  
 ![upload_file](images/upload_file.png) 
 
 the Process Model view should now include all uploaded files. 

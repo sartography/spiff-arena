@@ -32,16 +32,19 @@ wish_list/wish_list.md
 
 ```{toctree}
 :maxdepth: 3
-:caption: Spiffworkflow
-spiffworkflow/navigating-spiffworkflow.md
-spiffworkflow/creatingbpmn.md
-spiffworkflow/examples.md
-spiffworkflow/process_instance.md
+:caption: SpiffSparkles
+spiffsparkles/find_a_process_instance.md
+spiffsparkles/navigate_to_an_active_process_instance.md
+spiffsparkles/suspend_resume_terminate.md
+spiffsparkles/complete_task_on_behalf_of_another_user.md
+spiffsparkles/assign_task_to_a_different_user.md
+spiffsparkles/process_instance.md
 ```
 
 ```{toctree}
 :maxdepth: 3
 :caption: BPMN
+bpmn/bpmn.md
 bpmn/gateways.md
 bpmn/sub-processes_and_call_activities.md
 bpmn/data_objects.md
