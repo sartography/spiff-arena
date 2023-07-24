@@ -7,8 +7,8 @@ AUTHS = {
       "airtable": {
             "name": "airtable",
             "version": "2",
-            "client_id": "XXX",
-            "client_secret": "XXX",
+            "client_id": "secret:AIRTABLE_CLIENT_ID",
+            "client_secret": "secret:AIRTABLE_CLIENT_SECRET",
             "endpoint_url": "https://airtable.com/",
             "authorization_url": "https://airtable.com/oauth2/v1/authorize",
             "access_token_url": "https://airtable.com/oauth2/v1/token",
@@ -20,8 +20,7 @@ AUTHS = {
 class OAuthService:
       @staticmethod
       def authentication_list() -> List[Dict[str, Any]]:
-            # TODO: build from AUTHS
-            return [{"id": "airtable/OAuth", "parameters": []}]
+            return [{"id": f"{k}/OAuth", "parameters": []} for k in AUTHS.keys()]
 
       @staticmethod
       def supported_service(service: str) -> bool:

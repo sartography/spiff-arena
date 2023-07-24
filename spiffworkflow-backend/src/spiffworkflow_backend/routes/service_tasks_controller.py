@@ -42,6 +42,7 @@ def authentication_begin(
     verify_token(request.args.get("token"), force_run=True)
     if not OAuthService.supported_service(service):
         raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
+    # TODO: this is temporary, will redirect to the oauth flow
     return redirect(f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/admin/configuration")
 
 def authentication_callback(
