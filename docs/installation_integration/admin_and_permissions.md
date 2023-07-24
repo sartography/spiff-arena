@@ -96,10 +96,12 @@ All the required workflows can be downloaded from [Github - set-permissions](htt
 Select to upload all downloaded files to the newly created Process model. 
 ![add_file](images/add_file.png) 
 
-Upload the following files
-permissions.bpmn - _Primary file_
-groups_permissions.dmn
-users_to_groups.dmn
+**Upload the following files:**
+
+- permissions.bpmn - _Primary file_ 
+- groups_permissions.dmn
+- users_to_groups.dmn
+  
 ![upload_file](images/upload_file.png) 
 
 the Process Model view should now include all uploaded files. 
@@ -107,7 +109,7 @@ the Process Model view should now include all uploaded files.
 
 ### Step 4: Understand the Process Models
 
-[Read more about DMN tables and how they work here.](../appendices/bpmn_references.md)
+[Read more about DMN tables and how they work here.](../bpmn/dmn.md)
 
 #### Users to Groups
 
@@ -126,7 +128,7 @@ Based on DMN functionality, leaving the "*" column empty means that all rules ('
 Now that the groups have been identified their permissions can be set by adding the group name under the "permissions_group" column. 
 
 - To determine a user's capabilities within the permissible scope, you can define specific permissions. These permissions can be combined in a sequence if multiple apply to a particular rule. For instance, ["read", "start"] indicates that the user can perform both reading and starting actions. Alternatively, [All] can be employed to grant unrestricted access.
-- The hit policy is set to "Collect" which means that all conditions that are true will be applied. [Read more about DMN tables and hit policies here.](../appendices/bpmn_references.md)
+- The hit policy is set to "Collect" which means that all conditions that are true will be applied. [Read more about DMN tables and hit policies here.](../bpmn/dmn.md)
 - The permission URL can be configured to define the user's access privileges. Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs. In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient. However, it is also feasible to directly incorporate any API URL into the permissions.
   
 In truth what you are doing is writing an expression. In this case it would read that if the variable 'permissions_group' type string is equal to 'permissions' variable of type string then set the 'permission_url' equal to the associated value.
