@@ -24,7 +24,6 @@ from flask import current_app
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
-from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
@@ -1084,12 +1083,10 @@ class ProcessInstanceProcessor:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.registry.restore(event_data)
-        bpmn_event = BpmnEvent(
-            event_definition=event_definition,
-            payload=payload,
-        )
+        if payload is not None:
+            event_definition.payload = payload
         try:
-            self.bpmn_process_instance.send_event(bpmn_event)
+            self.bpmn_process_instance.catch(event_definition)
         except Exception as e:
             print(e)
 
