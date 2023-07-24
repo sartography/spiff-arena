@@ -41,9 +41,12 @@ spiffworkflow/process_instance.md
 
 ```{toctree}
 :maxdepth: 3
-:caption: In Depth Topics
-in_depth_topics/sub-processes_and_call_activities.md
-in_depth_topics/data_objects.md
+:caption: BPMN
+bpmn/gateways.md
+bpmn/sub-processes_and_call_activities.md
+bpmn/data_objects.md
+bpmn/dmn.md
+
 
 ```
 
@@ -58,9 +61,8 @@ installation_integration/permission_url.md
 ```{toctree}
 :maxdepth: 3
 :caption: Appendices
-appendices/bpmn_references.md
+appendices/glossary.md
 appendices/articles.md
-glossary/glossary.md
 learn_basics/bpmn_terminology.md
 
 ```
