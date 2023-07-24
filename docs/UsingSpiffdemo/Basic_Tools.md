@@ -9,33 +9,22 @@ capabilities.
 Here are fundamental blocks of our system:
 
 ## Displaying Content
-The Spiffarena platform offers powerful features for displaying 
+The SpiffArena platform offers powerful features for displaying 
 content  within your BPMN processes.
-Follow the steps below to effectively display content in your 
-processes:
 
 In this guide, we'll explore how to effectively display content in 
-Spiffarena, providing a seamless user experience and engaging 
+SpiffArena, providing a seamless user experience and engaging 
 presentation of information. 
 
 Let's dive in and learn the key aspects of displaying content within 
 your workflows.
 
-### Markdown: Formatting Content
-Markdown is a powerful tool for formatting and styling your content in 
-Spiffarena. With Markdown, you can easily add headings, lists, tables, 
+- **Markdown**: Markdown is a powerful tool for formatting and styling your content in 
+SpiffArena. With Markdown, you can easily add headings, lists, tables, 
 hyperlinks, and more to enhance the readability and visual appeal of 
 your displayed content. 
 
-### Jinja Templating: Dynamic Content Generation
-
-Jinja Templating in Spiffarena empowers you to generate dynamic 
-content based on variables, conditions, and logic. By leveraging 
-Jinja's syntax and functionality, you can customize your content to 
-adapt to specific scenarios, display personalized information, or 
-perform calculations based on collected data.
-
-### Combining Markdown and Jinja: Unleashing the Power
+- **Jinja Templating**: Jinja Templating in SpiffArena empowers you to generate dynamic content based on variables, conditions, and logic. By leveraging Jinja's syntax and functionality, you can customize your content to adapt to specific scenarios, display personalized information, or perform calculations based on collected data.
 
 By utilizing the strengths of Markdown and Jinja, you can create rich, 
 interactive, and data-driven content that goes beyond static text.
@@ -45,11 +34,10 @@ input and presents  dynamic information.
 
 ### Basic Example for displaying content
 
-In our Spiffarena dashboard, we have a simple example of how to 
+In our SpiffArena dashboard, we have a simple example of how to 
 display content in the basics section. Now, let's explore the process 
 workflow of the content display process model and discover various 
 ways to present content in different scenarios.
-
 
 #### Display Content Process Overview:
 
@@ -124,25 +112,25 @@ Playground" task.
 
 This feature allows you to create custom forms for collecting and 
 managing data within your workflows. Whether you need a simple 
-feedback form or a complex multi-step form, Spiffarena provides you 
+feedback form or a complex multi-step form, SpiffArena provides you 
 with the tools to build and integrate forms seamlessly.
 
-With Spiffarena's form builder, you can start with basic form elements 
+With SpiffArena's form builder, you can start with basic form elements 
 and gradually add more advanced components as your form requirements 
 evolve. 
 Let's dive in and explore the possibilities of creating forms in 
-Spiffarena.
+SpiffArena.
 
 ### Instructions on Creating Forms
 
-Forms play a crucial role in capturing data, and Spiffarena offers a 
+Forms play a crucial role in capturing data, and SpiffArena offers a 
 powerful form-building capability. Here are the ways to create forms:
 
-1. Leveraging JSON Schema
+1. **Leveraging JSON Schema**
 
 JSON Schema is an emerging standard for describing the structure of 
 data in a JSON file. JSON Schema forms the foundation for building 
-forms in Spiffarena.
+forms in SpiffArena.
 
 To simplify the form creation process, we leverage the React JSON 
 Schema Form (RJSF) library. RJSF is a powerful tool that uses JSON 
@@ -158,7 +146,7 @@ to refer to the official [RJSF documentation](https://rjsf-team.github.
 io/react-jsonschema-form/docs/) for comprehensive details 
 and advanced techniques.
 
-2. Using Form Builder
+2. **Using Form Builder**
 
 An alternative approach to creating JSON code is to utilize the form 
 builder feature, which allows you to easily create various fields 
@@ -168,27 +156,28 @@ However, it's important to
 note that the form builder may have certain limitations in terms of 
 features and may not be as powerful as using the JSON editor directly. 
 
-While the form builder provides convenience and simplicity, using the 
-JSON editor offers greater flexibility and control over the form 
-structure.
-
 ![Image](Images/Form-Builder.png)
 
 
 ### Basic Example for Using Forms
-Now that you have a grasp of how to create forms in Spiffarena using 
+Now that you have a grasp of how to create forms in SpiffArena using 
 JSON Schema and RJSF, it's time to put your knowledge into action. 
 Lets cover the example of using forms process model in the basics.
+
+1. **Start Event**
 
 The BPMN diagram initiates with a start event, which is followed by a 
 manual task aimed at providing a comprehensive understanding of web 
 forms and the various approaches to displaying them. 
+
 ![Image](Images/Form_manual_editor.png)
 
 The expected output of the form during the process execution can be 
 observed in the attached image.
 
 ![Image](Images/manual_outpul.png)
+
+2. **User Task to display form**
 
 Moving forward, the diagram incorporates a user task specifically 
 designed for form display. Within the properties panel of the user 
@@ -200,12 +189,15 @@ for displaying the form based on the RSJF schema).
 
 The anticipated output of the form when the process is executed can be 
 visualized in the attached image.
+
 ![Image](Images/Form_display.png)
 
+3. **Manual Task to display infomation**
 
 Following that, a manual task is included, offering a simple form 
 explanation. As users submit the form, the manual task will display 
 the respective explanation.
+
 ![Image](Images/Manual_lasttt.png)
 
 An attached image provides an overview of the expected form output 
@@ -215,12 +207,70 @@ during the process execution.
 
 
 ## Writing Scripts 
+Writing scripts refers to the process of creating custom code or scripts to increase the functionality and automation of a software application or system. 
 
+In SpiffArena, writing scripts involves creating code snippets or 
+specific tasks, manipulate data, or handle complex logic.
 
-asdas
+The scripting language used for writing scripts in SpiffArena is  Python, a widely used programming language. Python provides a rich set of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
+
+Let's explore an example of a Script Task in our basics section:
+
+1. **Start Event and User Task - "Form"**
+
+The process begins with a Start Event, followed by a User Task named "Form." Users will fill out the form, and the data will be passed to the next task, which is a Script Task.
+![](Images/Script_Example_S2.png)
+
+2. **Script Task to collect data**
+
+In the Script Task, we have created a script that collects three variables from the form and calculates a score based on certain conditions. The score is then stored in the "score" variable.
+
+![](Images/Script_Example_S3.png)
+
+Here's the script:
+
+![](Images/Script_Example_S4.png)
+
+3. **Manual Task with Pre-Script**
+
+After the Script Task, we have a Manual Task with a pre-script and instructions to display the score. 
+![](Images/Script_Example_S5.png)
+
+- **Prescript** is added as an example, While you can have tasks that are dedicated scripts, it can become a bit noisy, and we want our diagrams to convey a clear sense of the business logic and rules. For this reason it is also possible to add scripts to all Task types - using Pre and Post Scripts. This manual task contains a pre-script that also calculated PI using the Leibniz’s formula.
+
+- **Post Scripts** are also available on most task types, but they execute AFTER the task is completed. These are great for user forms where you want to modify and clean up the form results before moving on to the next task.
+
 ## Making Decisions
+DMN tables are powerful tools for modeling and implementing business rules and decision logic. They allow you to define rules and their associated conditions and actions in a structured manner. By evaluating the conditions in each rule, the DMN engine can determine which rules are triggered based on the provided inputs and execute the corresponding actions. This provides a flexible and configurable approach to decision-making in various scenarios.
 
-asda
+More detailed information [here](https://spiff-arena.readthedocs.io/en/latest/appendices/bpmn_references.html#).
+
+Let's delve into a practical example of a process workflow by examining a basic Decision Model and Notation (DMN) table. This sample illustrates how real-world workflows incorporate decision tables.
+
+Here's a concise outline of the process workflow:
+
+The workflow springs into action with a start event. Next in line is a user task which includes a form. Here, the customer fills out the form and makes a selection from a variety of pizzas.
+
+![Image](Images/DMN_task_S1.png)
+
+To establish the price, we use bussiness properties tasks. Upon clicking on the element within the workflow, the properties tab located on the right side will display a section labeled 'Select Decision Table'.
+
+![Image](Images/DMN_task_S2.png)
+
+The relevant Decision table must be created within the directory by producing a .dmn file. This file is then attached to the workflow by selecting it under 'Select Decision Table'.
+
+This is what a typical DMN table looks like:
+
+![Image](Images/DMN_task_S3.png)
+
+See more details for DMN Components [here](https://spiff-arena.readthedocs.io/en/latest/appendices/bpmn_references.html#dmn-components)
+
+After integrating the DMN element, the next step involves a manual task titled 'Receipt'. This task incorporates a pre-script which is designed to compute the total cost. Additionally, it includes instructions to display the outcome.
+
+![Image](Images/DMN_task_S4.png)
+
+Overall, this simplified workflow exemplifies the practical application of DMN tables within a process, showcasing their critical role in decision-making and task automation.
+
 ## Assigning Tasks
 
 asda

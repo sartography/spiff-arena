@@ -3,6 +3,7 @@
 ```{toctree}
 :maxdepth: 3
 :caption: Getting Started
+UsingSpiffdemo/Introduction.md
 UsingSpiffdemo/Getting_Started.md
 learn_basics/learn_basics.md
 quick_start/quick_start.md

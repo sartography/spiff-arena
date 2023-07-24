@@ -185,10 +185,10 @@ Instructions
 ![](https://lh5.googleusercontent.com/lcGDq-colYTa0zRq5yObuN6D5aW2wH-PheyYFMPJ9D77lZ_-fQlUrtFHNwKmCod4v1JYrWnblJEzW5VkVFM_I_Q1d8fhiWC98DPK4ZDctI7Jbqf11DdXSJAUVvZ2C2ubv-3FKXzVkbgGY8Fnk0irSdo)
 
 
-###  Essential Example
+### Essential Example
 Now that we have explored the minimal example, let's delve into a more comprehensive BPMN model known as the Essential Example. This example serves as a stepping stone towards a deeper understanding of BPMN, as it incorporates a variety of fundamental concepts that work harmoniously together.
 
-#### **Access the Process Directory**
+#### Access the Process Directory
 Clicking on the process name will open the directory dedicated to the Essential Example process. Here are the four files in the Process:
 
 **BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard. 
@@ -209,7 +209,7 @@ Here's what a DMN table looks like:
 **UI Schema**: A file that defines the layout, structure, and behavior of user interfaces, facilitating the development of intuitive and interactive user experiences.
 ![Image](Images/UI-Schema.png)
 
-#### **Process Workflow**
+#### Understand the Process Workflow
 In this BPMN diagram example, the process is outlined step by step: The process initiates with a start event, serving as the entry point for the workflow.
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.
