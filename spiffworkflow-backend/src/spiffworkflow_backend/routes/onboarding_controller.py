@@ -4,14 +4,14 @@ from contextlib import suppress
 from flask import make_response
 from flask.wrappers import Response
 
-from spiffworkflow_backend.routes.process_instances_controller import process_instance_start
+from spiffworkflow_backend.routes.process_instances_controller import _process_instance_start
 
 
 def get_onboarding() -> Response:
     result = {}
 
     with suppress(Exception):
-        process_instance, processor = process_instance_start("site-administration/onboarding")
+        process_instance, processor = _process_instance_start("site-administration/onboarding")
 
         if processor is not None:
             if process_instance.status == "complete":

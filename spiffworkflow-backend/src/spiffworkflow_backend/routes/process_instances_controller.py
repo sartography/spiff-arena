@@ -149,7 +149,7 @@ def process_instance_run(
     return make_response(jsonify(process_instance), 200)
 
 
-def process_instance_start(
+def _process_instance_start(
     process_model_identifier: str,
 ) -> tuple[ProcessInstanceModel, ProcessInstanceProcessor | None]:
     process_instance = _process_instance_create(process_model_identifier)
