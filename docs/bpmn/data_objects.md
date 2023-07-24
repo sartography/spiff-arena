@@ -48,4 +48,4 @@ A Data Store represents a persistent storage location where data is stored and r
 | ![name_field](images/name_field.png) | **Name:** Update Customer Information | An identifier used to uniquely identify the element within the BPMN model. |
 | ![id_field](images/id_field.png) | **ID:** Example - updateCustomerInformation | A descriptive name given to the element, providing a human-readable label or title. |
 | ![name_field](images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
-| ![name_field](images/data_object_properties.png) | **Element Documentation:** inventory_items| Enter an existing data object ID |
+| ![name_field](images/data_object_prop.png) | **Element Documentation:** inventory_items| Enter an existing data object ID |
