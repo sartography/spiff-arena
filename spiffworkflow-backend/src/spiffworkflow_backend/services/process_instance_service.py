@@ -116,7 +116,7 @@ class ProcessInstanceService:
         for cycle in cycles:
             db.session.delete(cycle)
 
-        if cycle_count != 0:
+        if cycle_count != 0 and duration_in_seconds != 0:
             cycle = ProcessModelCycleModel(
                 process_model_identifier=process_model_identifier,
                 cycle_count=cycle_count,
