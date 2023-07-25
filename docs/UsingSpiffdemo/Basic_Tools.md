@@ -24,7 +24,8 @@ SpiffArena. With Markdown, you can easily add headings, lists, tables,
 hyperlinks, and more to enhance the readability and visual appeal of 
 your displayed content. 
 
-- **Jinja Templating**: Jinja Templating in SpiffArena empowers you to generate dynamic content based on variables, conditions, and logic. By leveraging Jinja's syntax and functionality, you can customize your content to adapt to specific scenarios, display personalized information, or perform calculations based on collected data.
+- **Jinja Templating**: Jinja Templating in SpiffArena empowers you to generate dynamic content based on variables, conditions, and logic. 
+By leveraging Jinja's syntax and functionality, you can customize your content to adapt to specific scenarios, display personalized information, or perform calculations based on collected data.
 
 By utilizing the strengths of Markdown and Jinja, you can create rich, 
 interactive, and data-driven content that goes beyond static text.
@@ -263,16 +264,10 @@ This is what a typical DMN table looks like:
 
 ![Image](Images/DMN_task_S3.png)
 
-See more details for DMN Components [here](https://spiff-arena.readthedocs.io/en/latest/appendices/bpmn_references.html#dmn-components)
+See more details for DMN Components [here](/appendices/bpmn_references.md)
 
 After integrating the DMN element, the next step involves a manual task titled 'Receipt'. This task incorporates a pre-script which is designed to compute the total cost. Additionally, it includes instructions to display the outcome.
 
 ![Image](Images/DMN_task_S4.png)
 
 Overall, this simplified workflow exemplifies the practical application of DMN tables within a process, showcasing their critical role in decision-making and task automation.
-
-## Assigning Tasks
-
-asda
-## Gathering Information
-asdads
