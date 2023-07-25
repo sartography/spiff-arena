@@ -549,7 +549,12 @@ class ProcessInstanceReportService:
             ]
             if filter_for_column:
                 isouter = False
-                conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
+                    conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "not equals":
+                    conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "contains":
+                    conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, and_(*conditions), isouter=isouter
             ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))

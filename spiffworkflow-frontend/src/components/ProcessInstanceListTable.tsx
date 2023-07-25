@@ -41,6 +41,7 @@ import {
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
+  getKeyByValue,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
@@ -67,6 +68,7 @@ import {
   User,
   ErrorForDisplay,
   PermissionsToCheck,
+  ObjectWithStringKeysAndValues,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -163,6 +165,12 @@ export default function ProcessInstanceListTable({
 
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
+
+  const filterOperatorMappings: ObjectWithStringKeysAndValues = {
+    Is: 'equals',
+    'Is Not': 'not equals',
+    Contains: 'contains',
+  };
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -1073,6 +1081,18 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  const setReportColumnConditionOperator = (selectedItem: string) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      reportColumnToOperateOnCopy.filter_operator =
+        filterOperatorMappings[selectedItem];
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+      setRequiresRefilter(true);
+    }
+  };
+
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -1120,6 +1140,19 @@ export default function ProcessInstanceListTable({
     ]);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
+        <Dropdown
+          titleText="System report"
+          id="report-column-condition-operator"
+          items={Object.keys(filterOperatorMappings)}
+          selectedItem={getKeyByValue(
+            filterOperatorMappings,
+            reportColumnToOperateOn.filter_operator
+          )}
+          onChange={(value: any) => {
+            setReportColumnConditionOperator(value.selectedItem);
+            setRequiresRefilter(true);
+          }}
+        />,
         <TextInput
           id="report-column-condition-value"
           name="report-column-condition-value"
