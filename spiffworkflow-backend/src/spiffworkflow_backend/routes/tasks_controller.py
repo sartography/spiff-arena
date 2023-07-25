@@ -426,6 +426,11 @@ def _interstitial_stream(
             return ""
         return JinjaService.render_instructions_for_end_user(task_model)
 
+    # do not attempt to get task instructions if process instance is suspended or was terminated
+    if process_instance.status in ["suspended", "terminated"]:
+        yield _render_data("unrunnable_instance", process_instance)
+        return
+
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
