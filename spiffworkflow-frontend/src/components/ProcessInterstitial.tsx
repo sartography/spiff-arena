@@ -179,9 +179,22 @@ export default function ProcessInterstitial({
     }
 
     if (!myTask.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)) {
+      let message = 'This next task is assigned to a different person or team.';
+      if (myTask.assigned_user_group_identifier) {
+        message = `This next task is assigned to group: ${myTask.assigned_user_group_identifier}.`;
+      } else if (myTask.potential_owner_usernames) {
+        let potentialOwnerArray = myTask.potential_owner_usernames.split(',');
+        if (potentialOwnerArray.length > 2) {
+          potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
+        }
+        message = `This next task is assigned to user(s): ${potentialOwnerArray.join(
+          ', '
+        )}.`;
+      }
+
       return inlineMessage(
         '',
-        `This next task is assigned to a different person or team. There is no action for you to take at this time.`
+        `${message} There is no action for you to take at this time.`
       );
     }
     if (shouldRedirectToTask(myTask)) {

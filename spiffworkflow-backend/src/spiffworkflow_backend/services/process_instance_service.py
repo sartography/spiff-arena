@@ -15,6 +15,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition  # t
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -534,6 +535,20 @@ class ProcessInstanceService:
         except UserDoesNotHaveAccessToTaskError:
             can_complete = False
 
+        # if the current user cannot complete the task then find out who can
+        assigned_user_group_identifier = None
+        potential_owner_usernames = None
+        if can_complete is False:
+            human_task = HumanTaskModel.query.filter_by(task_id=task_guid).first()
+            if human_task is not None:
+                if human_task.lane_assignment_id is not None:
+                    group = GroupModel.query.filter_by(id=human_task.lane_assignment_id).first()
+                    if group is not None:
+                        assigned_user_group_identifier = group.identifier
+                elif len(human_task.potential_owners) > 0:
+                    user_list = [u.email for u in human_task.potential_owners]
+                    potential_owner_usernames = ",".join(user_list)
+
         parent_id = None
         if spiff_task.parent:
             parent_id = spiff_task.parent.id
@@ -564,6 +579,8 @@ class ProcessInstanceService:
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
             error_message=error_message,
+            assigned_user_group_identifier=assigned_user_group_identifier,
+            potential_owner_usernames=potential_owner_usernames,
         )
 
         return task
