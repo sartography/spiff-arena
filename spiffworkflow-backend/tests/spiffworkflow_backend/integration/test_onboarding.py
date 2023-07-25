@@ -13,10 +13,8 @@ class TestOnboarding(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        headers = self.logged_in_headers(with_super_admin_user)
-
         results = client.get(
-            f"/v1.0/onboarding",
+            "/v1.0/onboarding",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -33,7 +31,7 @@ class TestOnboarding(BaseTest):
         process_group_id = "site-administration"
         process_model_id = "onboarding"
         bpmn_file_location = "onboarding"
-        process_model = self.create_group_and_model_with_bpmn(
+        self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -41,10 +39,8 @@ class TestOnboarding(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        headers = self.logged_in_headers(with_super_admin_user)
-        
         results = client.get(
-            f"/v1.0/onboarding",
+            "/v1.0/onboarding",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
