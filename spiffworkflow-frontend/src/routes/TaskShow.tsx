@@ -275,35 +275,58 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
-    const fieldIdentifierToCompareWith = minimumDateCheck.replace(
-      /^field:/,
-      ''
-    );
-    if (fieldIdentifierToCompareWith in formData) {
-      const dateToCompareWith = formData[fieldIdentifierToCompareWith];
-      if (dateToCompareWith) {
-        const dateStringToCompareWith = formatDateString(dateToCompareWith);
-        if (dateStringToCompareWith > formattedDateString) {
-          let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
-          if (
-            fieldIdentifierToCompareWith in jsonSchema.properties &&
-            jsonSchema.properties[fieldIdentifierToCompareWith].title
-          ) {
-            fieldToCompareWithTitle =
-              jsonSchema.properties[fieldIdentifierToCompareWith].title;
-          }
-          errors[propertyKey].addError(
-            `must be equal to or greater than '${fieldToCompareWithTitle}'`
-          );
-        }
-      } else {
-        errors[propertyKey].addError(
-          `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
-        );
-      }
-    } else {
+    // field format:
+    //    field:[field_name_to_use]
+    //
+    // if field is a range:
+    //    field:[field_name_to_use]:[start or end]
+    //
+    // defaults to "start" in all cases
+    const [_, fieldIdentifierToCompareWith, startOrEnd] =
+      minimumDateCheck.split(':');
+    if (!(fieldIdentifierToCompareWith in formData)) {
       errors[propertyKey].addError(
         `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
+      );
+      return;
+    }
+
+    const rawDateToCompareWith = formData[fieldIdentifierToCompareWith];
+    if (!rawDateToCompareWith) {
+      errors[propertyKey].addError(
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
+      );
+      return;
+    }
+
+    const [startDate, endDate] =
+      rawDateToCompareWith.split(DATE_RANGE_DELIMITER);
+    let dateToCompareWith = startDate;
+    if (startOrEnd && startOrEnd === 'end') {
+      dateToCompareWith = endDate;
+    }
+
+    if (!dateToCompareWith) {
+      const errorMessage = `was supposed to be compared against '${[
+        fieldIdentifierToCompareWith,
+        startOrEnd,
+      ].join(':')}' but that field did not have a value`;
+      errors[propertyKey].addError(errorMessage);
+      return;
+    }
+
+    const dateStringToCompareWith = formatDateString(dateToCompareWith);
+    if (dateStringToCompareWith > formattedDateString) {
+      let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+      if (
+        fieldIdentifierToCompareWith in jsonSchema.properties &&
+        jsonSchema.properties[fieldIdentifierToCompareWith].title
+      ) {
+        fieldToCompareWithTitle =
+          jsonSchema.properties[fieldIdentifierToCompareWith].title;
+      }
+      errors[propertyKey].addError(
+        `must be equal to or greater than '${fieldToCompareWithTitle}'`
       );
     }
   };
@@ -315,6 +338,7 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
+    // can be either "today" or another field
     let dateString = formData[propertyKey];
     if (dateString) {
       if (typeof dateString === 'string') {
