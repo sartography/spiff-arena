@@ -288,7 +288,7 @@ export default function ReactFormEditor() {
               <Button
                 onClick={() =>
                   navigate(
-                    `/admin/process-models/${modifiedProcessModelId}/files/${params.file_name}`
+                    `/editor/process-models/${modifiedProcessModelId}/files/${params.file_name}`
                   )
                 }
                 variant="danger"
