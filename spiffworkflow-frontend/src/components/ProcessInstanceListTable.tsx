@@ -68,7 +68,7 @@ import {
   User,
   ErrorForDisplay,
   PermissionsToCheck,
-  ObjectWithStringKeysAndValues,
+  FilterOperatorMapping,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -166,10 +166,12 @@ export default function ProcessInstanceListTable({
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
 
-  const filterOperatorMappings: ObjectWithStringKeysAndValues = {
-    Is: 'equals',
-    'Is Not': 'not equals',
-    Contains: 'contains',
+  const filterOperatorMappings: FilterOperatorMapping = {
+    Is: { id: 'equals', requires_value: true },
+    'Is Not': { id: 'not equals', requires_value: true },
+    Contains: { id: 'contains', requires_value: true },
+    'Is Empty': { id: 'is_empty', requires_value: false },
+    'Is Not Empty': { id: 'is_not_empty', requires_value: false },
   };
 
   const processInstanceListPathPrefix =
@@ -971,6 +973,18 @@ export default function ProcessInstanceListTable({
     setReportColumnToOperateOn(null);
   };
 
+  const getFilterOperatorFromReportColumn = (
+    reportColumnForEditing: ReportColumnForEditing
+  ) => {
+    if (reportColumnForEditing.filter_operator) {
+      // eslint-disable-next-line prefer-destructuring
+      return Object.entries(filterOperatorMappings).filter(([_key, value]) => {
+        return value.id === reportColumnForEditing.filter_operator;
+      })[0][1];
+    }
+    return null;
+  };
+
   const getNewFiltersFromReportForEditing = (
     reportColumnForEditing: ReportColumnForEditing
   ) => {
@@ -988,14 +1002,23 @@ export default function ProcessInstanceListTable({
       const existingReportFilter = getFilterByFromReportMetadata(
         reportColumnForEditing.accessor
       );
+      const filterOperator = getFilterOperatorFromReportColumn(
+        reportColumnForEditing
+      );
       if (existingReportFilter) {
         const existingReportFilterIndex =
           reportMetadataCopy.filter_by.indexOf(existingReportFilter);
-        if (reportColumnForEditing.filter_field_value) {
+        if (filterOperator && !filterOperator.requires_value) {
+          newReportFilter.field_value = '';
+          newReportFilters[existingReportFilterIndex] = newReportFilter;
+        } else if (reportColumnForEditing.filter_field_value) {
           newReportFilters[existingReportFilterIndex] = newReportFilter;
         } else {
           newReportFilters.splice(existingReportFilterIndex, 1);
         }
+      } else if (filterOperator && !filterOperator.requires_value) {
+        newReportFilter.field_value = '';
+        newReportFilters = newReportFilters.concat([newReportFilter]);
       } else if (reportColumnForEditing.filter_field_value) {
         newReportFilters = newReportFilters.concat([newReportFilter]);
       }
@@ -1086,13 +1109,14 @@ export default function ProcessInstanceListTable({
       const reportColumnToOperateOnCopy = {
         ...reportColumnToOperateOn,
       };
-      reportColumnToOperateOnCopy.filter_operator =
-        filterOperatorMappings[selectedItem];
+      const filterOperator = filterOperatorMappings[selectedItem];
+      reportColumnToOperateOnCopy.filter_operator = filterOperator.id;
       setReportColumnToOperateOn(reportColumnToOperateOnCopy);
       setRequiresRefilter(true);
     }
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -1141,30 +1165,39 @@ export default function ProcessInstanceListTable({
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
         <Dropdown
-          titleText="System report"
+          titleText="Operator"
           id="report-column-condition-operator"
           items={Object.keys(filterOperatorMappings)}
           selectedItem={getKeyByValue(
             filterOperatorMappings,
-            reportColumnToOperateOn.filter_operator
+            reportColumnToOperateOn.filter_operator,
+            'id'
           )}
           onChange={(value: any) => {
             setReportColumnConditionOperator(value.selectedItem);
             setRequiresRefilter(true);
           }}
-        />,
-        <TextInput
-          id="report-column-condition-value"
-          name="report-column-condition-value"
-          labelText="Condition Value"
-          value={
-            reportColumnToOperateOn
-              ? reportColumnToOperateOn.filter_field_value
-              : ''
-          }
-          onChange={setReportColumnConditionValue}
         />
       );
+
+      const filterOperator = getFilterOperatorFromReportColumn(
+        reportColumnToOperateOn
+      );
+      if (filterOperator && filterOperator.requires_value) {
+        formElements.push(
+          <TextInput
+            id="report-column-condition-value"
+            name="report-column-condition-value"
+            labelText="Condition Value"
+            value={
+              reportColumnToOperateOn
+                ? reportColumnToOperateOn.filter_field_value
+                : ''
+            }
+            onChange={setReportColumnConditionValue}
+          />
+        );
+      }
     }
     formElements.push(
       <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
