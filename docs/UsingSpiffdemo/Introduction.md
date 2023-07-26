@@ -12,13 +12,11 @@ The SpiffWorkflow library provides a Python API for managing processes with mini
 
 ![SpiffWorkflow](Images/SpiffArena_workflow.svg)
 
-The full source code for SpiffArena is available on GitHub, encouraging contributions from the community. Users can test out SpiffArena by following the provided Getting Started guide. 
+The full source code for SpiffArena is available on GitHub, encouraging contributions from the community. Users can test out SpiffArena by following the provided [Quick Start Guide](quick_start/quick_start). 
 
 ## Purpose vs Applications
 
-The purpose of SpiffArena is to streamline the management of workflows, combining many tools into one application. It is designed to be a tool for professionals and scientists, not a simple paint-by-numbers solution. The platform is built on the belief in a future filled with human innovation, supported by software that increases transparency, understanding, and collaboration. It aims to create transparency, automate tasks, and deliver on schedule.
-
-In terms of applications, SpiffArena can be used by Python developers who want to create custom workflow systems or embed BPMN features into existing applications. It can be used to pull information from one system and use it in another, reducing the need for manual intervention. It also allows for the automation of tasks, freeing up time for more important work. 
+The purpose of SpiffArena is to streamline the management of workflows, combining many tools into one application. In terms of applications, SpiffWorkflow can be used by Python developers who want to create custom workflow systems or embed BPMN features into existing applications. It can be used to pull information from one system and use it in another, reducing the need for manual intervention. It also allows for the automation of tasks, freeing up time for more important work. 
 
 ### SpiffArena Features
 
