@@ -25,7 +25,6 @@ A call process is similar to a sub-process in that it encapsulates part of a wor
 - **Delegation**: When different people or teams need to be responsible for the execution of tasks within a process, a call activity can be useful and can be assigned to the most appropriate person or team.
 
 - **Access Control**: If a specific segment of a process isn't meant to be available to every user, converting it into a call process can aid in establishing access control over that particular process. Additional information about this can be found in the [Admin and Permission](../installation_integration/admin_and_permissions.md) section.
-- 
 
 ## Sub-processes
 
@@ -38,3 +37,5 @@ Sub-processes are generally employed within a single process, whereas a call act
 - **Consolidate similar functionalities:** When you have a group of tasks that are closely related and work well together, but don't need to be used or replicated elsewhere in other processes. 
   
 - **Call activity is not required:** When these tasks don't meet the conditions needed for a call activity a sub-process can achieve the same goal.
+  
+- **Conditions or events needs to be applied:** When specific conditions or events, such as a timer event, need to be applied to a set of tasks, but these tasks do not collectively form a reusable workflow that can be called as a separate process. 

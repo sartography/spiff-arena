@@ -21,7 +21,7 @@ import {
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
 } from '../helpers';
-import { ErrorForDisplay, EventDefinition, Task } from '../interfaces';
+import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
@@ -77,17 +77,6 @@ export default function TaskShow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
-  const handleAutoSaveError = (error: ErrorForDisplay) => {
-    if (
-      error.error_code &&
-      error.error_code === 'process_instance_not_runnable'
-    ) {
-      return undefined;
-    }
-    addError(error);
-    return undefined;
-  };
-
   // Before we auto-saved form data, we remembered what data was in the form, and then created a synthetic submit event
   // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
   // frontend code to support that Save and close button is here, in case we need to reference that someday:
@@ -106,7 +95,6 @@ export default function TaskShow() {
       postBody: formData,
       httpMethod: 'POST',
       successCallback: successCallbackToUse,
-      failureCallback: handleAutoSaveError,
     });
     return undefined;
   };
@@ -275,35 +263,58 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
-    const fieldIdentifierToCompareWith = minimumDateCheck.replace(
-      /^field:/,
-      ''
-    );
-    if (fieldIdentifierToCompareWith in formData) {
-      const dateToCompareWith = formData[fieldIdentifierToCompareWith];
-      if (dateToCompareWith) {
-        const dateStringToCompareWith = formatDateString(dateToCompareWith);
-        if (dateStringToCompareWith > formattedDateString) {
-          let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
-          if (
-            fieldIdentifierToCompareWith in jsonSchema.properties &&
-            jsonSchema.properties[fieldIdentifierToCompareWith].title
-          ) {
-            fieldToCompareWithTitle =
-              jsonSchema.properties[fieldIdentifierToCompareWith].title;
-          }
-          errors[propertyKey].addError(
-            `must be equal to or greater than '${fieldToCompareWithTitle}'`
-          );
-        }
-      } else {
-        errors[propertyKey].addError(
-          `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
-        );
-      }
-    } else {
+    // field format:
+    //    field:[field_name_to_use]
+    //
+    // if field is a range:
+    //    field:[field_name_to_use]:[start or end]
+    //
+    // defaults to "start" in all cases
+    const [_, fieldIdentifierToCompareWith, startOrEnd] =
+      minimumDateCheck.split(':');
+    if (!(fieldIdentifierToCompareWith in formData)) {
       errors[propertyKey].addError(
         `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
+      );
+      return;
+    }
+
+    const rawDateToCompareWith = formData[fieldIdentifierToCompareWith];
+    if (!rawDateToCompareWith) {
+      errors[propertyKey].addError(
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
+      );
+      return;
+    }
+
+    const [startDate, endDate] =
+      rawDateToCompareWith.split(DATE_RANGE_DELIMITER);
+    let dateToCompareWith = startDate;
+    if (startOrEnd && startOrEnd === 'end') {
+      dateToCompareWith = endDate;
+    }
+
+    if (!dateToCompareWith) {
+      const errorMessage = `was supposed to be compared against '${[
+        fieldIdentifierToCompareWith,
+        startOrEnd,
+      ].join(':')}' but that field did not have a value`;
+      errors[propertyKey].addError(errorMessage);
+      return;
+    }
+
+    const dateStringToCompareWith = formatDateString(dateToCompareWith);
+    if (dateStringToCompareWith > formattedDateString) {
+      let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+      if (
+        fieldIdentifierToCompareWith in jsonSchema.properties &&
+        jsonSchema.properties[fieldIdentifierToCompareWith].title
+      ) {
+        fieldToCompareWithTitle =
+          jsonSchema.properties[fieldIdentifierToCompareWith].title;
+      }
+      errors[propertyKey].addError(
+        `must be equal to or greater than '${fieldToCompareWithTitle}'`
       );
     }
   };
@@ -315,6 +326,7 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
+    // can be either "today" or another field
     let dateString = formData[propertyKey];
     if (dateString) {
       if (typeof dateString === 'string') {
