@@ -11,15 +11,14 @@ from flask_oauthlib.client import OAuth
 # TODO: also don't like the name
 AUTHS = {
       "airtable": {
-            "name": "airtable",
-            "version": "2",
-            "client_id": "secret:AIRTABLE_CLIENT_ID",
-            "client_secret": "secret:AIRTABLE_CLIENT_SECRET",
-            "endpoint_url": "https://airtable.com/",
-            "authorization_url": "https://airtable.com/oauth2/v1/authorize",
+            "consumer_key": "secret:AIRTABLE_CONSUMER_ID",
+            "consumer_secret": "secret:AIRTABLE_CONSUMER_SECRET",
+            "request_token_params": { "scope": "data.records:read schema.bases:read" },
+            "base_url": "https://airtable.com/",
+            "access_token_method": "POST",
             "access_token_url": "https://airtable.com/oauth2/v1/token",
-            "refresh_token_url": "https://airtable.com/oauth2/v1/token",
-            "scope": "data.records:read schema.bases:read",
+            "authorize_url": "https://airtable.com/oauth2/v1/authorize",
+            "request_token_url": "https://airtable.com/oauth2/v1/token",
       },
 }
 
@@ -36,12 +35,12 @@ class OAuthService:
       def remote_app(service: str) -> Any: # TODO what is this type
             config = AUTHS[service].copy()
 
-            for k in ["client_id", "client_secret"]:
+            for k in ["consumer_key", "consumer_secret"]:
                   if k in config:
                         config[k] = SecretService.resolve_possibly_secret_value(config[k])
 
             app = Flask(__name__)
             oauth = OAuth(app)
-            remote_app = OAuth.remote_app(**config)
+            remote_app = oauth.remote_app(service, **config)
                         
             return remote_app
