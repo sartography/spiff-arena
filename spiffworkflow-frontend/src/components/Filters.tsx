@@ -30,7 +30,7 @@ export default function Filters({
     let reportSearchSection = null;
     if (reportSearchComponent) {
       reportSearchSection = (
-        <Column sm={2} md={4} lg={7}>
+        <Column sm={3} md={7} lg={15}>
           {reportSearchComponent()}
         </Column>
       );

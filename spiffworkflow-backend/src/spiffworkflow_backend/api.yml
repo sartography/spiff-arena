@@ -1976,7 +1976,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
@@ -3187,6 +3187,13 @@ components:
         report_metadata:
           nullable: false
           $ref: "#/components/schemas/ReportMetadata"
+    # if we pass a payload and give it a field of the wrong type (say we pass a field with value null and it wants a string)
+    # it will fail validation and not pass the request to the controller. that is generally not desirable
+    # until we take a closer look at the schemas in here.
+    AwesomeUnspecifiedPayload:
+      properties:
+        anythingyouwant:
+          type: string
     ReportMetadata:
       properties:
         columns:

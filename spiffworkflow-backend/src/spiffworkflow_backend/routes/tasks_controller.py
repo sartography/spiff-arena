@@ -14,6 +14,7 @@ from flask import jsonify
 from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
+from MySQLdb import OperationalError  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -426,6 +427,11 @@ def _interstitial_stream(
             return ""
         return JinjaService.render_instructions_for_end_user(task_model)
 
+    # do not attempt to get task instructions if process instance is suspended or was terminated
+    if process_instance.status in ["suspended", "terminated"]:
+        yield _render_data("unrunnable_instance", process_instance)
+        return
+
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
@@ -581,13 +587,21 @@ def task_save_draft(
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
-        raise ApiError(
-            error_code="process_instance_not_runnable",
-            message=(
-                f"Process Instance ({process_instance.id}) has status "
-                f"{process_instance.status} which does not allow draft data to be saved."
+        return Response(
+            json.dumps(
+                {
+                    "ok": True,
+                    "saved": False,
+                    "message": (
+                        f"Process Instance ({process_instance.id}) has status "
+                        f"{process_instance.status} which does not allow draft data to be saved."
+                    ),
+                    "process_model_identifier": process_instance.process_model_identifier,
+                    "process_instance_id": process_instance_id,
+                }
             ),
-            status_code=400,
+            status=200,
+            mimetype="application/json",
         )
 
     try:
@@ -605,12 +619,30 @@ def task_save_draft(
         if json_data_dict is not None:
             JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
             db.session.add(task_draft_data)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except OperationalError as exception:
+                db.session.rollback()
+                if "Deadlock" in str(exception):
+                    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+                    # if we do not find a task_draft_data record, that means it was deleted when the form was submitted
+                    # and we therefore have no need to save draft data
+                    if task_draft_data is not None:
+                        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+                            task_draft_data, body, "saved_form_data_hash"
+                        )
+                        if json_data_dict is not None:
+                            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
+                            db.session.add(task_draft_data)
+                            db.session.commit()
+                else:
+                    raise exception
 
     return Response(
         json.dumps(
             {
                 "ok": True,
+                "saved": True,
                 "process_model_identifier": process_instance.process_model_identifier,
                 "process_instance_id": process_instance_id,
             }
