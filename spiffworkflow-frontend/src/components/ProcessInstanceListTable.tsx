@@ -371,6 +371,27 @@ export default function ProcessInstanceListTable({
           setProcessInstanceReportSelection(processInstanceReport);
         }
       }
+      if (additionalReportFilters) {
+        additionalReportFilters.forEach((arf: ReportFilter) => {
+          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
+            reportMetadataBodyToUse.filter_by.push(arf);
+          }
+        });
+      }
+
+      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
+      if (
+        showActionsColumn &&
+        !reportMetadataBodyToUse.filter_by.some(
+          (rf: ReportFilter) => rf.field_name === 'with_oldest_open_task'
+        )
+      ) {
+        const withOldestReportFilter = {
+          field_name: 'with_oldest_open_task',
+          field_value: true,
+        };
+        reportMetadataBodyToUse.filter_by.push(withOldestReportFilter);
+      }
 
       // a bit hacky, clear out all filters before setting them from report metadata
       // to ensure old filters are cleared out.
@@ -427,6 +448,13 @@ export default function ProcessInstanceListTable({
         setShowFilterOptions(true);
       }
 
+      if (filtersEnabled) {
+        HttpService.makeCallToBackend({
+          path: `/user-groups/for-current-user`,
+          successCallback: setUserGroups,
+        });
+      }
+
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
@@ -438,30 +466,8 @@ export default function ProcessInstanceListTable({
         // eslint-disable-next-line prefer-destructuring
         perPage = perPageOptions[1];
       }
+
       const queryParamString = `per_page=${perPage}&page=${page}`;
-      if (additionalReportFilters) {
-        additionalReportFilters.forEach((arf: ReportFilter) => {
-          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
-            reportMetadataBodyToUse.filter_by.push(arf);
-          }
-        });
-      }
-
-      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
-      if (showActionsColumn) {
-        reportMetadataBodyToUse.filter_by.push({
-          field_name: 'with_oldest_open_task',
-          field_value: true,
-        });
-      }
-
-      if (filtersEnabled) {
-        HttpService.makeCallToBackend({
-          path: `/user-groups/for-current-user`,
-          successCallback: setUserGroups,
-        });
-      }
-
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
@@ -962,6 +968,13 @@ export default function ProcessInstanceListTable({
         (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
       );
       Object.assign(reportMetadataCopy, { columns: newColumns });
+      const newFilters = reportMetadataCopy.filter_by.filter(
+        (rf: ReportFilter) => rf.field_name !== reportColumn.accessor
+      );
+      Object.assign(reportMetadataCopy, {
+        columns: newColumns,
+        filter_by: newFilters,
+      });
       setReportMetadata(reportMetadataCopy);
       setRequiresRefilter(true);
     }
@@ -1339,6 +1352,7 @@ export default function ProcessInstanceListTable({
               labelText="Include oldest open task information"
               id="with-oldest-open-task-checkbox"
               checked={withOldestOpenTask}
+              disabled={showActionsColumn}
               onChange={(value: any) => {
                 setWithOldestOpenTask(value.target.checked);
                 setRequiresRefilter(true);
