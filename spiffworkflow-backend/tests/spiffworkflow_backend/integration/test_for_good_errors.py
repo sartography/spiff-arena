@@ -93,7 +93,7 @@ class TestForGoodErrors(BaseTest):
         assert len(human_tasks) > 0, "No human tasks found for process."
         human_task = human_tasks[0]
         response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
+            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}?with_form_data=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         return response

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
   ComboBox,
-  Stack,
+  Grid,
+  Column,
   FormLabel,
   // @ts-ignore
 } from '@carbon/react';
-import { truncateString } from '../helpers';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 
@@ -53,9 +53,7 @@ export default function ProcessInstanceReportSearch({
   const reportSelectionString = (
     processInstanceReport: ProcessInstanceReport
   ) => {
-    return `${truncateString(processInstanceReport.identifier, 20)} (Id: ${
-      processInstanceReport.id
-    })`;
+    return `${processInstanceReport.identifier} (Id: ${processInstanceReport.id})`;
   };
 
   const shouldFilterProcessInstanceReport = (options: any) => {
@@ -70,24 +68,28 @@ export default function ProcessInstanceReportSearch({
 
   if (reportsAvailable()) {
     return (
-      <Stack orientation="horizontal" gap={2}>
-        <FormLabel className="with-top-margin">{titleText}</FormLabel>
-        <ComboBox
-          onChange={onChange}
-          id="process-instance-report-select"
-          data-qa="process-instance-report-selection"
-          items={processInstanceReports}
-          itemToString={(processInstanceReport: ProcessInstanceReport) => {
-            if (processInstanceReport) {
-              return reportSelectionString(processInstanceReport);
-            }
-            return null;
-          }}
-          shouldFilterItem={shouldFilterProcessInstanceReport}
-          placeholder="Choose a process instance perspective"
-          selectedItem={selectedItem}
-        />
-      </Stack>
+      <Grid fullWidth condensed>
+        <Column sm={2} md={3} lg={3}>
+          <FormLabel className="with-top-margin">{titleText}</FormLabel>
+        </Column>
+        <Column sm={2} md={5} lg={13}>
+          <ComboBox
+            onChange={onChange}
+            id="process-instance-report-select"
+            data-qa="process-instance-report-selection"
+            items={processInstanceReports}
+            itemToString={(processInstanceReport: ProcessInstanceReport) => {
+              if (processInstanceReport) {
+                return reportSelectionString(processInstanceReport);
+              }
+              return null;
+            }}
+            shouldFilterItem={shouldFilterProcessInstanceReport}
+            placeholder="Choose a process instance perspective"
+            selectedItem={selectedItem}
+          />
+        </Column>
+      </Grid>
     );
   }
   return null;
