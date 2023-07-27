@@ -45,6 +45,18 @@ class ProcessInstanceService:
     TASK_STATE_LOCKED = "locked"
 
     @staticmethod
+    def user_has_started_instance(process_model_identifier: str) -> bool:
+        started_instance = (
+            db.session.query(ProcessInstanceModel)
+            .filter(
+                ProcessInstanceModel.process_model_identifier == process_model_identifier,
+                ProcessInstanceModel.status != "not_started",
+            )
+            .first()
+        )
+        return started_instance is not None
+
+    @staticmethod
     def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
         try:
             processor = ProcessInstanceProcessor(process_instance_model)
