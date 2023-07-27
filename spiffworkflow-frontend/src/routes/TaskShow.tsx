@@ -2,15 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
-import {
-  TabList,
-  Tab,
-  Tabs,
-  Grid,
-  Column,
-  Button,
-  ButtonSet,
-} from '@carbon/react';
+import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
 
 import { useDebouncedCallback } from 'use-debounce';
 import { Form } from '../rjsf/carbon_theme';
@@ -21,7 +13,7 @@ import {
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
 } from '../helpers';
-import { ErrorForDisplay, EventDefinition, Task } from '../interfaces';
+import { BasicTask, EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
@@ -29,8 +21,8 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import { DATE_RANGE_DELIMITER } from '../config';
 
 export default function TaskShow() {
-  const [task, setTask] = useState<Task | null>(null);
-  const [userTasks] = useState(null);
+  const [basicTask, setBasicTask] = useState<BasicTask | null>(null);
+  const [taskWithTaskData, setTaskWithTaskData] = useState<Task | null>(null);
   const params = useParams();
   const navigate = useNavigate();
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
@@ -48,7 +40,7 @@ export default function TaskShow() {
 
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
-  const navigateToInterstitial = (myTask: Task) => {
+  const navigateToInterstitial = (myTask: BasicTask) => {
     navigate(
       `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         myTask.process_model_identifier
@@ -57,36 +49,34 @@ export default function TaskShow() {
   };
 
   useEffect(() => {
-    const processResult = (result: Task) => {
-      setTask(result);
+    const processBasicTaskResult = (result: BasicTask) => {
+      setBasicTask(result);
+      if (!result.can_complete) {
+        navigateToInterstitial(result);
+      }
+    };
+    const processTaskWithDataResult = (result: Task) => {
+      setTaskWithTaskData(result);
 
       // convert null back to undefined so rjsf doesn't attempt to incorrectly validate them
       const taskDataToUse = result.saved_form_data || result.data;
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setFormButtonsDisabled(false);
-      if (!result.can_complete) {
-        navigateToInterstitial(result);
-      }
     };
+
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
-      successCallback: processResult,
+      successCallback: processBasicTaskResult,
+      failureCallback: addError,
+    });
+    HttpService.makeCallToBackend({
+      path: `/tasks/${params.process_instance_id}/${params.task_id}?with_form_data=true`,
+      successCallback: processTaskWithDataResult,
       failureCallback: addError,
     });
     // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
-
-  const handleAutoSaveError = (error: ErrorForDisplay) => {
-    if (
-      error.error_code &&
-      error.error_code === 'process_instance_not_runnable'
-    ) {
-      return undefined;
-    }
-    addError(error);
-    return undefined;
-  };
 
   // Before we auto-saved form data, we remembered what data was in the form, and then created a synthetic submit event
   // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
@@ -94,7 +84,7 @@ export default function TaskShow() {
   //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
   const autoSaveTaskData = (formData: any, successCallback?: Function) => {
     // save-draft gets called when a manual task form loads but there's no data to save so don't do it
-    if (task?.typename === 'ManualTask') {
+    if (taskWithTaskData?.typename === 'ManualTask') {
       return undefined;
     }
     let successCallbackToUse = successCallback;
@@ -106,7 +96,6 @@ export default function TaskShow() {
       postBody: formData,
       httpMethod: 'POST',
       successCallback: successCallbackToUse,
-      failureCallback: handleAutoSaveError,
     });
     return undefined;
   };
@@ -192,7 +181,7 @@ export default function TaskShow() {
   };
 
   const handleSignalSubmit = (event: EventDefinition) => {
-    if (formButtonsDisabled || !task) {
+    if (formButtonsDisabled || !taskWithTaskData) {
       return;
     }
     setFormButtonsDisabled(true);
@@ -205,58 +194,6 @@ export default function TaskShow() {
       httpMethod: 'POST',
       postBody: event,
     });
-  };
-
-  const buildTaskNavigation = () => {
-    let userTasksElement;
-    let selectedTabIndex = 0;
-    if (userTasks) {
-      userTasksElement = (userTasks as any).map(function getUserTasksElement(
-        userTask: any,
-        index: number
-      ) {
-        const taskUrl = `/tasks/${params.process_instance_id}/${userTask.id}`;
-        if (userTask.id === params.task_id) {
-          selectedTabIndex = index;
-          return <Tab selected>{userTask.name_for_display}</Tab>;
-        }
-        if (userTask.state === 'COMPLETED') {
-          return (
-            <Tab
-              onClick={() => navigate(taskUrl)}
-              data-qa={`form-nav-${userTask.name}`}
-            >
-              {userTask.name_for_display}
-            </Tab>
-          );
-        }
-        if (userTask.state === 'FUTURE') {
-          return <Tab formButtonsDisabled>{userTask.name_for_display}</Tab>;
-        }
-        if (userTask.state === 'READY') {
-          return (
-            <Tab
-              onClick={() => navigate(taskUrl)}
-              data-qa={`form-nav-${userTask.name}`}
-            >
-              {userTask.name_for_display}
-            </Tab>
-          );
-        }
-        return null;
-      });
-      return (
-        <Tabs
-          title="Steps in this process instance involving people"
-          selectedIndex={selectedTabIndex}
-        >
-          <TabList aria-label="List of tabs" contained>
-            {userTasksElement}
-          </TabList>
-        </Tabs>
-      );
-    }
-    return null;
   };
 
   const formatDateString = (dateString?: string) => {
@@ -275,35 +212,58 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
-    const fieldIdentifierToCompareWith = minimumDateCheck.replace(
-      /^field:/,
-      ''
-    );
-    if (fieldIdentifierToCompareWith in formData) {
-      const dateToCompareWith = formData[fieldIdentifierToCompareWith];
-      if (dateToCompareWith) {
-        const dateStringToCompareWith = formatDateString(dateToCompareWith);
-        if (dateStringToCompareWith > formattedDateString) {
-          let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
-          if (
-            fieldIdentifierToCompareWith in jsonSchema.properties &&
-            jsonSchema.properties[fieldIdentifierToCompareWith].title
-          ) {
-            fieldToCompareWithTitle =
-              jsonSchema.properties[fieldIdentifierToCompareWith].title;
-          }
-          errors[propertyKey].addError(
-            `must be equal to or greater than '${fieldToCompareWithTitle}'`
-          );
-        }
-      } else {
-        errors[propertyKey].addError(
-          `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
-        );
-      }
-    } else {
+    // field format:
+    //    field:[field_name_to_use]
+    //
+    // if field is a range:
+    //    field:[field_name_to_use]:[start or end]
+    //
+    // defaults to "start" in all cases
+    const [_, fieldIdentifierToCompareWith, startOrEnd] =
+      minimumDateCheck.split(':');
+    if (!(fieldIdentifierToCompareWith in formData)) {
       errors[propertyKey].addError(
         `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
+      );
+      return;
+    }
+
+    const rawDateToCompareWith = formData[fieldIdentifierToCompareWith];
+    if (!rawDateToCompareWith) {
+      errors[propertyKey].addError(
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
+      );
+      return;
+    }
+
+    const [startDate, endDate] =
+      rawDateToCompareWith.split(DATE_RANGE_DELIMITER);
+    let dateToCompareWith = startDate;
+    if (startOrEnd && startOrEnd === 'end') {
+      dateToCompareWith = endDate;
+    }
+
+    if (!dateToCompareWith) {
+      const errorMessage = `was supposed to be compared against '${[
+        fieldIdentifierToCompareWith,
+        startOrEnd,
+      ].join(':')}' but that field did not have a value`;
+      errors[propertyKey].addError(errorMessage);
+      return;
+    }
+
+    const dateStringToCompareWith = formatDateString(dateToCompareWith);
+    if (dateStringToCompareWith > formattedDateString) {
+      let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+      if (
+        fieldIdentifierToCompareWith in jsonSchema.properties &&
+        jsonSchema.properties[fieldIdentifierToCompareWith].title
+      ) {
+        fieldToCompareWithTitle =
+          jsonSchema.properties[fieldIdentifierToCompareWith].title;
+      }
+      errors[propertyKey].addError(
+        `must be equal to or greater than '${fieldToCompareWithTitle}'`
       );
     }
   };
@@ -315,6 +275,7 @@ export default function TaskShow() {
     errors: any,
     jsonSchema: any
   ) => {
+    // can be either "today" or another field
     let dateString = formData[propertyKey];
     if (dateString) {
       if (typeof dateString === 'string') {
@@ -394,14 +355,14 @@ export default function TaskShow() {
   };
 
   const formElement = () => {
-    if (!task) {
+    if (!taskWithTaskData) {
       return null;
     }
 
     let formUiSchema;
-    let jsonSchema = task.form_schema;
+    let jsonSchema = taskWithTaskData.form_schema;
     let reactFragmentToHideSubmitButton = null;
-    if (task.typename === 'ManualTask') {
+    if (taskWithTaskData.typename === 'ManualTask') {
       jsonSchema = {
         type: 'object',
         required: [],
@@ -418,10 +379,10 @@ export default function TaskShow() {
           'ui:widget': 'hidden',
         },
       };
-    } else if (task.form_ui_schema) {
-      formUiSchema = task.form_ui_schema;
+    } else if (taskWithTaskData.form_ui_schema) {
+      formUiSchema = taskWithTaskData.form_ui_schema;
     }
-    if (task.state !== 'READY') {
+    if (taskWithTaskData.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {
         'ui:readonly': true,
       });
@@ -433,12 +394,12 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
-    if (task.state === 'READY') {
+    if (taskWithTaskData.state === 'READY') {
       let submitButtonText = 'Submit';
       let closeButton = null;
-      if (task.typename === 'ManualTask') {
+      if (taskWithTaskData.typename === 'ManualTask') {
         submitButtonText = 'Continue';
-      } else if (task.typename === 'UserTask') {
+      } else if (taskWithTaskData.typename === 'UserTask') {
         closeButton = (
           <Button
             id="close-button"
@@ -462,7 +423,7 @@ export default function TaskShow() {
           </Button>
           {closeButton}
           <>
-            {task.signal_buttons.map((signal) => (
+            {taskWithTaskData.signal_buttons.map((signal) => (
               <Button
                 name="signal.signal"
                 disabled={formButtonsDisabled}
@@ -520,35 +481,52 @@ export default function TaskShow() {
     );
   };
 
-  if (task) {
+  const getLoadingIcon = () => {
+    const style = { margin: '50px 0 50px 50px' };
+    return (
+      <Loading
+        description="Active loading indicator"
+        withOverlay={false}
+        style={style}
+      />
+    );
+  };
+
+  const pageElements = [];
+  if (basicTask) {
     let statusString = '';
-    if (task.state !== 'READY') {
-      statusString = ` ${task.state}`;
+    if (basicTask.state !== 'READY') {
+      statusString = ` ${basicTask.state}`;
     }
 
-    return (
-      <>
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            [
-              `Process Instance Id: ${params.process_instance_id}`,
-              `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-                task.process_model_identifier
-              )}/${params.process_instance_id}`,
-            ],
-            [`Task: ${task.name_for_display || task.id}`],
-          ]}
-        />
-        <div>{buildTaskNavigation()}</div>
-        <h1>
-          Task: {task.name_for_display} ({task.process_model_display_name})
-          {statusString}
-        </h1>
-        <InstructionsForEndUser task={task} />
-        {formElement()}
-      </>
+    pageElements.push(
+      <ProcessBreadcrumb
+        hotCrumbs={[
+          [
+            `Process Instance Id: ${params.process_instance_id}`,
+            `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+              basicTask.process_model_identifier
+            )}/${params.process_instance_id}`,
+          ],
+          [`Task: ${basicTask.name_for_display || basicTask.id}`],
+        ]}
+      />
+    );
+    pageElements.push(
+      <h1>
+        Task: {basicTask.name_for_display} (
+        {basicTask.process_model_display_name}){statusString}
+      </h1>
     );
   }
+  if (basicTask && taskData) {
+    pageElements.push(<InstructionsForEndUser task={taskWithTaskData} />);
+    pageElements.push(formElement());
+  } else {
+    pageElements.push(getLoadingIcon());
+  }
 
-  return null;
+  // typescript gets angry if we return an array of elements not in a tag
+  // eslint-disable-next-line react/jsx-no-useless-fragment
+  return <>{pageElements}</>;
 }

@@ -1703,7 +1703,7 @@ export default function ProcessInstanceListTable({
   const reportSearchComponent = () => {
     if (showReports) {
       const columns = [
-        <Column sm={2} md={4} lg={7}>
+        <Column sm={4} md={8} lg={16}>
           <ProcessInstanceReportSearch
             onChange={processInstanceReportDidChange}
             selectedItem={processInstanceReportSelection}
