@@ -510,6 +510,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/user-groups/for-current-user"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/onboarding"))
 
         permissions_to_assign.append(
             PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata")

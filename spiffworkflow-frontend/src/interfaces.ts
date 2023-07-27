@@ -10,6 +10,13 @@ export interface Secret {
   creator_user_id: string;
 }
 
+export interface Onboarding {
+  type?: string;
+  value?: string;
+  process_instance_id?: string;
+  task_id?: string;
+}
+
 export interface ProcessData {
   process_data_identifier: string;
   process_data_value: any;

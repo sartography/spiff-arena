@@ -6,6 +6,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -68,6 +69,56 @@ class TestTasksController(BaseTest):
             "building": {"floor": {"ui:widget": "hidden"}},
             "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
         }
+
+    def test_interstitial_returns_process_instance_if_suspended_or_terminated(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "my_process_group"
+        process_model_id = "dynamic_enum_select_fields"
+        bpmn_file_location = "dynamic_enum_select_fields"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            # bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+        assert process_instance_id
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+
+        process_instance.status = ProcessInstanceStatus.suspended.value
+        db.session.add(process_instance)
+        db.session.commit()
+        stream_results = _dequeued_interstitial_stream(process_instance.id)
+        results = list(stream_results)
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
+        assert len(json_results) == 1
+        assert json_results[0]["type"] == "unrunnable_instance"
+        assert json_results[0]["unrunnable_instance"]["id"] == process_instance.id
+        assert json_results[0]["unrunnable_instance"]["status"] == "suspended"
+
+        process_instance.status = ProcessInstanceStatus.terminated.value
+        db.session.add(process_instance)
+        db.session.commit()
+        stream_results = _dequeued_interstitial_stream(process_instance.id)
+        results = list(stream_results)
+        json_results = [json.loads(x[5:]) for x in results]  # type: ignore
+        assert len(json_results) == 1
+        assert json_results[0]["type"] == "unrunnable_instance"
+        assert json_results[0]["unrunnable_instance"]["id"] == process_instance.id
+        assert json_results[0]["unrunnable_instance"]["status"] == "terminated"
 
     def test_interstitial_page(
         self,

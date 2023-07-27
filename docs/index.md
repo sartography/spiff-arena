@@ -32,18 +32,24 @@ wish_list/wish_list.md
 
 ```{toctree}
 :maxdepth: 3
-:caption: Spiffworkflow
-spiffworkflow/navigating-spiffworkflow.md
-spiffworkflow/creatingbpmn.md
-spiffworkflow/examples.md
-spiffworkflow/process_instance.md
+:caption: SpiffSparkles
+spiffsparkles/find_a_process_instance.md
+spiffsparkles/navigate_to_an_active_process_instance.md
+spiffsparkles/suspend_resume_terminate.md
+spiffsparkles/complete_task_on_behalf_of_another_user.md
+spiffsparkles/assign_task_to_a_different_user.md
+spiffsparkles/process_instance.md
 ```
 
 ```{toctree}
 :maxdepth: 3
-:caption: In Depth Topics
-in_depth_topics/sub-processes_and_call_activities.md
-in_depth_topics/data_objects.md
+:caption: BPMN
+bpmn/bpmn.md
+bpmn/gateways.md
+bpmn/sub-processes_and_call_activities.md
+bpmn/data_objects.md
+bpmn/dmn.md
+
 
 ```
 
@@ -58,9 +64,8 @@ installation_integration/permission_url.md
 ```{toctree}
 :maxdepth: 3
 :caption: Appendices
-appendices/bpmn_references.md
+appendices/glossary.md
 appendices/articles.md
-glossary/glossary.md
 learn_basics/bpmn_terminology.md
 
 ```
