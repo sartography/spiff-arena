@@ -26,7 +26,7 @@ import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import { UnauthenticatedError } from '../services/HttpService';
+import HttpService, { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 
@@ -86,6 +86,13 @@ export default function NavigationBar() {
     }
     setActiveKey(newActiveKey);
   }, [location]);
+
+  useEffect(() => {
+    HttpService.makeCallToBackend({
+      path: targetUris.extensionsPath,
+      successCallback: (result: any) => console.log(result),
+    });
+  }, [targetUris.extensionsPath]);
 
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;

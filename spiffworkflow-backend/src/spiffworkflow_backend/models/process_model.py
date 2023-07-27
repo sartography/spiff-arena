@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 
+
 import marshmallow
 from marshmallow import Schema
 from marshmallow.decorators import post_load
@@ -76,6 +77,16 @@ class ProcessModelInfo:
             raise Exception(f"Found backslash in identifier: {identifier}")
 
         return identifier.replace("/", ":")
+
+    def serialized(self) -> dict[str, Any]:
+        file_objects = self.files
+        dictionary = self.__dict__
+        if file_objects is not None:
+            serialized_files = []
+            for file in file_objects:
+                serialized_files.append(file.serialized())
+            dictionary['files']  = serialized_files
+        return dictionary
 
 
 class ProcessModelInfoSchema(Schema):

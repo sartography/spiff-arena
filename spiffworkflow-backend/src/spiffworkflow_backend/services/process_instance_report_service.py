@@ -233,7 +233,7 @@ class ProcessInstanceReportService:
         cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
             process_instance_mapping = process_instance_row._mapping
-            process_instance_dict = process_instance_row[0].serialized
+            process_instance_dict = process_instance_row[0].serialized()
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[

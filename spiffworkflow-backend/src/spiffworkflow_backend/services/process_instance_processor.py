@@ -475,7 +475,7 @@ class ProcessInstanceProcessor:
                     f"The given process model was not found: {process_model_identifier}.",
                 )
             )
-        spec_files = SpecFileService.get_files(process_model_info)
+        spec_files = FileSystemService.get_files(process_model_info)
         return cls.get_spec(spec_files, process_model_info)
 
     @classmethod

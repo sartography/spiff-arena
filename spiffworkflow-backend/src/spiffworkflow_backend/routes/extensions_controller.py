@@ -108,6 +108,7 @@ def extension_list() -> flask.wrappers.Response:
         process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
         recursive=True,
         filter_runnable_as_extension=True,
+        include_files=True,
     )
     return make_response(jsonify(process_model_extensions), 200)
 

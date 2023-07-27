@@ -170,6 +170,7 @@ class ProcessModelService(FileSystemService):
         cls,
         process_group_id: str | None = None,
         recursive: bool | None = False,
+        include_files: bool | None = False,
     ) -> list[ProcessModelInfo]:
         process_models = []
         root_path = FileSystemService.root_path()
@@ -184,6 +185,12 @@ class ProcessModelService(FileSystemService):
         for file in glob(process_model_glob, recursive=True):
             process_model_relative_path = os.path.relpath(file, start=FileSystemService.root_path())
             process_model = cls.get_process_model_from_relative_path(os.path.dirname(process_model_relative_path))
+            if include_files:
+                files = FileSystemService.get_sorted_files(process_model)
+                for f in files:
+                    file_contents = FileSystemService.get_data(process_model, f.name)
+                    f.file_contents = file_contents
+                process_model.files = files
             process_models.append(process_model)
         process_models.sort()
         return process_models
@@ -195,6 +202,7 @@ class ProcessModelService(FileSystemService):
         recursive: bool | None = False,
         filter_runnable_by_user: bool | None = False,
         filter_runnable_as_extension: bool | None = False,
+        include_files: bool | None = False,
     ) -> list[ProcessModelInfo]:
         if filter_runnable_as_extension and filter_runnable_by_user:
             raise Exception(
@@ -202,7 +210,7 @@ class ProcessModelService(FileSystemService):
                 " filter_runnable_as_extension"
             )
 
-        process_models = cls.get_process_models(process_group_id, recursive)
+        process_models = cls.get_process_models(process_group_id=process_group_id, recursive=recursive, include_files=include_files)
 
         permission_to_check = "read"
         permission_base_uri = "/v1.0/process-models"
@@ -322,7 +330,7 @@ class ProcessModelService(FileSystemService):
         cat_path = cls.full_path_from_id(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, cls.PROCESS_GROUP_JSON_FILE)
-        serialized_process_group = process_group.serialized
+        serialized_process_group = process_group.serialized()
         for key in list(serialized_process_group.keys()):
             if key not in PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
                 del serialized_process_group[key]

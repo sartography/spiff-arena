@@ -27,7 +27,7 @@ def script_unit_test_create(
 
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
-    file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
+    file = FileSystemService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
         raise ApiError(
             error_code="cannot_find_file",
