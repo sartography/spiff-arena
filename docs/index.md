@@ -3,31 +3,39 @@
 ```{toctree}
 :maxdepth: 3
 :caption: Getting Started
-UsingSpiffdemo/Getting_Started.md
-learn_basics/learn_basics.md
 quick_start/quick_start.md
-UsingSpiffdemo/Basic_Tools.md
 ```
 
 ```{toctree}
-:maxdepth: 2
-:caption: Administration
-admin_guide/admin_guide.md
+:maxdepth: 3
+:caption: Building Diagrams
+UsingSpiffdemo/Using_SpiffArena.md
+learn_basics/learn_basics.md
+bpmn/bpmn.md
+UsingSpiffdemo/Displaying_Content.md
+UsingSpiffdemo/Forms.md
+bpmn/gateways.md
+UsingSpiffdemo/Script_Tasks.md
+UsingSpiffdemo/End_Events.md
+bpmn/sub-processes_and_call_activities.md
+bpmn/data_objects.md
+bpmn/dmn.md
+```
+
+```{toctree}
+:maxdepth: 3
+:caption: Debugging Diagrams
 validating_processes/bpmn_unit_tests.md
+spiffsparkles/suspend_resume_terminate.md
 ```
 
 ```{toctree}
-:maxdepth: 2
-:caption: DevOps
+:maxdepth: 3
+:caption: DevOps - Installation & Integration
+installation_integration/admin_and_permissions.md
+installation_integration/permission_url.md
 devops_guide/configure_connector_proxy.md
 devops_guide/deploy_aws_lambda.md
-```
-
-```{toctree}
-:maxdepth: 2
-:caption: Contributing
-documentation/documentation.md
-wish_list/wish_list.md
 ```
 
 ```{toctree}
@@ -43,31 +51,12 @@ spiffsparkles/process_instance.md
 
 ```{toctree}
 :maxdepth: 3
-:caption: BPMN
-bpmn/bpmn.md
-bpmn/gateways.md
-bpmn/sub-processes_and_call_activities.md
-bpmn/data_objects.md
-bpmn/dmn.md
-
-
-```
-
-```{toctree}
-:maxdepth: 3
-:caption: Installation and Integration
-installation_integration/admin_and_permissions.md
-installation_integration/permission_url.md
-
-```
-
-```{toctree}
-:maxdepth: 3
 :caption: Appendices
 appendices/glossary.md
 appendices/articles.md
 learn_basics/bpmn_terminology.md
-
+documentation/documentation.md
+wish_list/wish_list.md
 ```
 
 ## Indices and tables
