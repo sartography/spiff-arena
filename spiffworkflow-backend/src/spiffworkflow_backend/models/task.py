@@ -130,6 +130,8 @@ class Task:
         parent: str | None = None,
         event_definition: dict[str, Any] | None = None,
         error_message: str | None = None,
+        assigned_user_group_identifier: str | None = None,
+        potential_owner_usernames: str | None = None,
     ):
         self.id = id
         self.name = name
@@ -155,6 +157,8 @@ class Task:
         self.process_model_display_name = process_model_display_name
         self.form_schema = form_schema
         self.form_ui_schema = form_ui_schema
+        self.assigned_user_group_identifier = assigned_user_group_identifier
+        self.potential_owner_usernames = potential_owner_usernames
 
         self.multi_instance_type = multi_instance_type  # Some tasks have a repeat behavior.
         self.multi_instance_count = multi_instance_count  # This is the number of times the task could repeat.
@@ -199,6 +203,8 @@ class Task:
             "parent": self.parent,
             "event_definition": self.event_definition,
             "error_message": self.error_message,
+            "assigned_user_group_identifier": self.assigned_user_group_identifier,
+            "potential_owner_usernames": self.potential_owner_usernames,
         }
 
     @classmethod

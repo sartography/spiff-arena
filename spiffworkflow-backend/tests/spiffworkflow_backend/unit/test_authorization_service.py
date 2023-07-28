@@ -281,6 +281,7 @@ class TestAuthorizationService(BaseTest):
                 ("/connector-proxy/typeahead/*", "read"),
                 ("/debug/version-info", "read"),
                 ("/extensions", "read"),
+                ("/onboarding", "read"),
                 ("/process-groups", "read"),
                 ("/process-instances/find-by-id/*", "read"),
                 ("/process-instances/for-me", "create"),
