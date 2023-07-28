@@ -763,10 +763,9 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings,
         )
 
-    def slam_in_data(self, data: dict) -> None:
+    def add_data_to_bpmn_process_instance(self, data: dict) -> None:
+        # if we do not use a deep merge, then the data does not end up on the object for some reason
         self.bpmn_process_instance.data = DeepMerge.merge(self.bpmn_process_instance.data, data)
-
-        self.save()
 
     def raise_if_no_potential_owners(self, potential_owner_ids: list[int], message: str) -> None:
         if not potential_owner_ids:

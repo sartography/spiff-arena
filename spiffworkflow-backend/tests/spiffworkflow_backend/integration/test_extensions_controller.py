@@ -1,6 +1,7 @@
 import re
 
 from flask.app import Flask
+import json
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.user import UserModel
 
@@ -27,6 +28,8 @@ class TestExtensionsController(BaseTest):
             response = client.post(
                 f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
                 headers=self.logged_in_headers(with_super_admin_user),
+                content_type="application/json",
+                data=json.dumps({"extension_input": {"OUR_AWESOME_INPUT": "the awesome value"}}),
             )
 
             expected_task_data = {
@@ -35,7 +38,9 @@ class TestExtensionsController(BaseTest):
                 "person": "Kevin",
                 "validate_only": False,
                 "wonderfulness": "Very wonderful",
+                "OUR_AWESOME_INPUT": "the awesome value",
             }
+            assert response.status_code == 200
             assert response.json is not None
             assert response.json == expected_task_data
 

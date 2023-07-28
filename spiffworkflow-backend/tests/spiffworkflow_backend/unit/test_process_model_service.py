@@ -1,4 +1,5 @@
 from flask import Flask
+import re
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -45,7 +46,7 @@ class TestProcessModelService(BaseTest):
         assert len(process_models) == 1
 
         pm_string = app.json.dumps(process_models[0])
-        process_model = app.json.loads(process_model)
-        assert len(process_model['files']) == 1
-        file = process_model['files'][0]
-        assert re.match(r"hello", file['file_contents'])
+        pm_dict = app.json.loads(pm_string)
+        assert len(pm_dict['files']) == 1
+        file = pm_dict['files'][0]
+        assert re.search("hello", file['file_contents']) is not None

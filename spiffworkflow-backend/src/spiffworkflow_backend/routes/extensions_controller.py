@@ -1,5 +1,7 @@
 import flask.wrappers
 from flask import current_app
+from SpiffWorkflow.util.deep_merge import DeepMerge # type: ignore
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -18,6 +20,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 def extension_run(
     modified_process_model_identifier: str,
+    body: dict | None = None,
 ) -> flask.wrappers.Response:
     _raise_unless_extensions_api_enabled()
 
@@ -53,6 +56,8 @@ def extension_run(
         processor = ProcessInstanceProcessor(
             process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False)
         )
+        if body and "extension_input" in body:
+            processor.add_data_to_bpmn_process_instance(body['extension_input'])
         processor.do_engine_steps(save=False, execution_strategy_name="greedy")
     except (
         ApiError,
@@ -90,7 +95,7 @@ def extension_run(
 
 # backend extension ui schema for each model has something like:
 # {
-#     "top_level_navigation_items": [{
+#     "navigation_items": [{
 #         "label": "Aggregate Metadata",
 #         "route": "/aggregate_metadata"
 #         }
@@ -111,6 +116,20 @@ def extension_list() -> flask.wrappers.Response:
         include_files=True,
     )
     return make_response(jsonify(process_model_extensions), 200)
+
+
+def extension_show(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    _raise_unless_extensions_api_enabled()
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model = _get_process_model(process_model_identifier)
+    files = FileSystemService.get_sorted_files(process_model)
+    for f in files:
+        file_contents = FileSystemService.get_data(process_model, f.name)
+        f.file_contents = file_contents
+    process_model.files = files
+    return make_response(jsonify(process_model), 200)
 
 
 def _raise_unless_extensions_api_enabled() -> None:

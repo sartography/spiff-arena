@@ -403,3 +403,20 @@ export interface DataStore {
   name: string;
   type: string;
 }
+
+export interface UiSchemaNavItem {
+  label: string;
+  route: string;
+}
+export interface UiSchemaPageDefinition {
+  header: string;
+  api: string;
+  form_schema: any;
+}
+export interface UiSchemaRoute {
+  [key: string]: UiSchemaPageDefinition;
+}
+export interface ExtensionUiSchema {
+  navigation_items?: UiSchemaNavItem[];
+  routes: UiSchemaRoute;
+}

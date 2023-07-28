@@ -786,6 +786,11 @@ paths:
     get:
       operationId: spiffworkflow_backend.routes.extensions_controller.extension_list
       summary: Returns the list of available extensions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - Extensions
       responses:
@@ -804,6 +809,18 @@ paths:
         description: The unique id of an existing process model.
         schema:
           type: string
+    get:
+      operationId: spiffworkflow_backend.routes.extensions_controller.extension_show
+      summary: Returns the metadata for a given extension
+      tags:
+        - Extensions
+      responses:
+        "200":
+          description: Resulting extension metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
     post:
       operationId: spiffworkflow_backend.routes.extensions_controller.extension_run
       summary: Run an extension for a given process model
