@@ -247,6 +247,10 @@ export default function NavigationBar() {
 
     return extensionNavigationItems.map((navItem: UiSchemaNavItem) => {
       const navItemRoute = `/extensions${navItem.route}`;
+      const regexp = new RegExp(`^${navItemRoute}`);
+      if (regexp.test(location.pathname)) {
+        setActiveKey(navItemRoute);
+      }
       return (
         <HeaderMenuItem
           href={navItemRoute}

@@ -210,7 +210,9 @@ class ProcessModelService(FileSystemService):
                 " filter_runnable_as_extension"
             )
 
-        process_models = cls.get_process_models(process_group_id=process_group_id, recursive=recursive, include_files=include_files)
+        process_models = cls.get_process_models(
+            process_group_id=process_group_id, recursive=recursive, include_files=include_files
+        )
 
         permission_to_check = "read"
         permission_base_uri = "/v1.0/process-models"

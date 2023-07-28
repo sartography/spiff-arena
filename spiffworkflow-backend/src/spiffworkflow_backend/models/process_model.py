@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 
-
 import marshmallow
 from marshmallow import Schema
 from marshmallow.decorators import post_load
@@ -85,7 +84,7 @@ class ProcessModelInfo:
             serialized_files = []
             for file in file_objects:
                 serialized_files.append(file.serialized())
-            dictionary['files']  = serialized_files
+            dictionary["files"] = serialized_files
         return dictionary
 
 

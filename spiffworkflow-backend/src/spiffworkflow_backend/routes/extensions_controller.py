@@ -1,7 +1,5 @@
 import flask.wrappers
 from flask import current_app
-from SpiffWorkflow.util.deep_merge import DeepMerge # type: ignore
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -10,6 +8,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -24,9 +23,23 @@ def extension_run(
 ) -> flask.wrappers.Response:
     _raise_unless_extensions_api_enabled()
 
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = _get_process_model_identifier(modified_process_model_identifier)
 
-    process_model = _get_process_model(process_model_identifier)
+    try:
+        process_model = _get_process_model(process_model_identifier)
+    except ApiError as ex:
+        if ex.error_code == "process_model_cannot_be_found":
+            raise ApiError(
+                error_code="invalid_process_model_extension",
+                message=(
+                    f"Process Model '{process_model_identifier}' cannot be run as an extension. It must be in the"
+                    " correct Process Group:"
+                    f" {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
+                ),
+                status_code=403,
+            ) from ex
+        raise ex
+
     if process_model.primary_file_name is None:
         raise ApiError(
             error_code="process_model_missing_primary_bpmn_file",
@@ -35,16 +48,6 @@ def extension_run(
                 " bpmn file. One must be set in order to instantiate this model."
             ),
             status_code=400,
-        )
-
-    if not ProcessModelService.is_allowed_to_run_as_extension(process_model):
-        raise ApiError(
-            error_code="invalid_process_model_extension",
-            message=(
-                f"Process Model '{process_model_identifier}' cannot be run as an extension. It must be in the correct"
-                f" Process Group: {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
-            ),
-            status_code=403,
         )
 
     process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
@@ -57,7 +60,7 @@ def extension_run(
             process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False)
         )
         if body and "extension_input" in body:
-            processor.add_data_to_bpmn_process_instance(body['extension_input'])
+            processor.add_data_to_bpmn_process_instance(body["extension_input"])
         processor.do_engine_steps(save=False, execution_strategy_name="greedy")
     except (
         ApiError,
@@ -93,20 +96,6 @@ def extension_run(
 # maybe add an element for markdown as well
 
 
-# backend extension ui schema for each model has something like:
-# {
-#     "navigation_items": [{
-#         "label": "Aggregate Metadata",
-#         "route": "/aggregate_metadata"
-#         }
-#     ],
-#     "routes": {
-#         "/aggregate_metadata": {
-#             "header": "Aggregate Metdata",
-#             "api": "aggregate_medadata"
-#         }
-#     }
-# }
 def extension_list() -> flask.wrappers.Response:
     _raise_unless_extensions_api_enabled()
     process_model_extensions = ProcessModelService.get_process_models_for_api(
@@ -122,7 +111,7 @@ def extension_show(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     _raise_unless_extensions_api_enabled()
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = _get_process_model_identifier(modified_process_model_identifier)
     process_model = _get_process_model(process_model_identifier)
     files = FileSystemService.get_sorted_files(process_model)
     for f in files:
@@ -139,3 +128,20 @@ def _raise_unless_extensions_api_enabled() -> None:
             message="The extensions api is not enabled. Cannot run process models in this way.",
             status_code=403,
         )
+
+
+def _get_process_model_identifier(modified_process_model_identifier: str) -> str:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    return _add_extension_group_identifier_it_not_present(process_model_identifier)
+
+
+def _add_extension_group_identifier_it_not_present(process_model_identifier: str) -> str:
+    """Adds the extension prefix if it does not already exist on the process model identifier.
+
+    This allows for the frontend to use just process model identifier without having to know the extension group
+    or having to add it to the uischema json which would have numerous other issues. Instead let backend take care of that.
+    """
+    extension_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]
+    if process_model_identifier.startswith(f"{extension_prefix}/"):
+        return process_model_identifier
+    return f"{extension_prefix}/{process_model_identifier}"

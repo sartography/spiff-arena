@@ -423,7 +423,10 @@ export interface UiSchemaNavItem {
 export interface UiSchemaPageDefinition {
   header: string;
   api: string;
-  form_schema: any;
+
+  form_schema_filename?: any;
+  form_ui_schema_filename?: any;
+  markdown_instruction_filename?: string;
 }
 export interface UiSchemaRoute {
   [key: string]: UiSchemaPageDefinition;

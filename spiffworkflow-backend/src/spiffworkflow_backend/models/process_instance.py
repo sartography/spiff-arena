@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import cast
 
 import marshmallow
 from marshmallow import INCLUDE
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
-from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
