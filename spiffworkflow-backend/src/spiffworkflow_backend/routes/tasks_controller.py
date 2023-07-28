@@ -490,6 +490,7 @@ def _interstitial_stream(
                         return
                 # return if process instance is now complete and let the frontend redirect to show page
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
+                    yield _render_data("unrunnable_instance", process_instance)
                     return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
