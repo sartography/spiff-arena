@@ -16,7 +16,6 @@ UsingSpiffdemo/Displaying_Content.md
 UsingSpiffdemo/Forms.md
 bpmn/gateways.md
 UsingSpiffdemo/Script_Tasks.md
-UsingSpiffdemo/End_Events.md
 bpmn/sub-processes_and_call_activities.md
 bpmn/data_objects.md
 bpmn/dmn.md
@@ -26,7 +25,6 @@ bpmn/dmn.md
 :maxdepth: 3
 :caption: Debugging Diagrams
 validating_processes/bpmn_unit_tests.md
-spiffsparkles/suspend_resume_terminate.md
 ```
 
 ```{toctree}
@@ -37,7 +35,11 @@ installation_integration/permission_url.md
 devops_guide/configure_connector_proxy.md
 devops_guide/deploy_aws_lambda.md
 ```
-
+```{toctree}
+:maxdepth: 3
+:caption: Support
+spiffsparkles/suspend_resume_terminate.md
+```
 ```{toctree}
 :maxdepth: 3
 :caption: SpiffSparkles
