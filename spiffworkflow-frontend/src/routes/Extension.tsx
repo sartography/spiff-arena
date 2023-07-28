@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import { useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
+import { Editor } from '@monaco-editor/react';
 import { Form } from '../rjsf/carbon_theme';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
@@ -11,6 +12,8 @@ import {
   UiSchemaPageDefinition,
 } from '../interfaces';
 import HttpService from '../services/HttpService';
+import useAPIError from '../hooks/UseApiError';
+import { recursivelyChangeNullAndUndefined } from '../helpers';
 
 export default function Extension() {
   const { targetUris } = useUriListForPermissions();
@@ -18,11 +21,15 @@ export default function Extension() {
 
   const [_processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [formData, setFormData] = useState<any>(null);
+  const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
+  const [processedTaskData, setProcessedTaskData] = useState<any>(null);
   const [filesByName] = useState<{
     [key: string]: ProcessFile;
   }>({});
   const [uiSchemaPageDefinition, setUiSchemaPageDefinition] =
     useState<UiSchemaPageDefinition | null>(null);
+
+  const { addError, removeError } = useAPIError();
 
   useEffect(() => {
     const processExtensionResult = (pm: ProcessModel) => {
@@ -54,8 +61,37 @@ export default function Extension() {
     });
   }, [targetUris.extensionPath, params, filesByName]);
 
+  const processSubmitResult = (result: any) => {
+    setProcessedTaskData(result);
+    setFormButtonsDisabled(false);
+  };
+
   const handleFormSubmit = (formObject: any, _event: any) => {
-    console.log('formObject', formObject);
+    if (formButtonsDisabled) {
+      return;
+    }
+
+    const dataToSubmit = formObject?.formData;
+
+    setFormButtonsDisabled(true);
+    setProcessedTaskData(null);
+    removeError();
+    delete dataToSubmit.isManualTask;
+
+    // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
+    // so we convert undefined values to null recursively so that we can unset values in form fields
+    recursivelyChangeNullAndUndefined(dataToSubmit, null);
+
+    HttpService.makeCallToBackend({
+      path: targetUris.extensionPath,
+      successCallback: processSubmitResult,
+      failureCallback: (error: any) => {
+        addError(error);
+        setFormButtonsDisabled(false);
+      },
+      httpMethod: 'POST',
+      postBody: { extension_input: dataToSubmit },
+    });
   };
 
   if (uiSchemaPageDefinition) {
@@ -90,6 +126,7 @@ export default function Extension() {
             onChange={(obj: any) => {
               setFormData(obj.formData);
             }}
+            disabled={formButtonsDisabled}
             onSubmit={handleFormSubmit}
             schema={JSON.parse(formSchemaFile.file_contents)}
             uiSchema={JSON.parse(formUiSchemaFile.file_contents)}
@@ -99,8 +136,26 @@ export default function Extension() {
         );
       }
     }
-    // eslint-disable-next-line react/jsx-no-useless-fragment
-    return <>{componentsToDisplay}</>;
+    if (processedTaskData) {
+      componentsToDisplay.push(
+        <>
+          <h2 className="with-top-margin">Result:</h2>
+          <Editor
+            className="with-top-margin"
+            height="30rem"
+            width="auto"
+            defaultLanguage="json"
+            defaultValue={JSON.stringify(processedTaskData, null, 2)}
+            options={{
+              readOnly: true,
+              scrollBeyondLastLine: true,
+              minimap: { enabled: true },
+            }}
+          />
+        </>
+      );
+    }
+    return <div className="fixed-width-container">{componentsToDisplay}</div>;
   }
   return null;
 }
