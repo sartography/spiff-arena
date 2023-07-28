@@ -227,7 +227,12 @@ export default function ProcessInterstitial({
   /** In the event there is no task information and the connection closed,
    * redirect to the home page. */
   if (state === 'CLOSED' && lastTask === null && allowRedirect) {
-    navigate(`/tasks`);
+    // Favor redirecting to the process instance show page
+    if (processInstance) {
+      navigate(processInstanceShowPageUrl);
+    } else {
+      navigate(`/tasks`);
+    }
   }
 
   let displayableData = data;
