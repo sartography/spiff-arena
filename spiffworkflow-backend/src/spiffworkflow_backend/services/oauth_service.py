@@ -5,6 +5,7 @@ from typing import Dict, List, Any
 
 from flask import Flask
 from flask_oauthlib.client import OAuth
+from hashlib import sha256
 
 # TODO: get this from somewhere dynamic, admins need to edit from the UI
 # TODO: ^ in the interim, need to get client_id/secret from env? secrets?
@@ -13,7 +14,10 @@ AUTHS = {
       "airtable": {
             "consumer_key": "SPIFF_SECRET:AIRTABLE_CONSUMER_KEY",
             "consumer_secret": "SPIFF_SECRET:AIRTABLE_CONSUMER_SECRET",
-            "request_token_params": { "scope": "data.records:read schema.bases:read" },
+            "request_token_params": {
+                  "state": sha256("justtesting".encode("utf8")).hexdigest(),
+                  "scope": "data.records:read schema.bases:read",
+            },
             "base_url": "https://airtable.com/",
             "access_token_method": "POST",
             "access_token_url": "https://airtable.com/oauth2/v1/token",
@@ -40,8 +44,6 @@ class OAuthService:
                         value = SecretService.resolve_possibly_secret_value(config[k])
                         print(f"HERE: {k} -> {value}")
                         config[k] = value
-
-            print(config)
 
             app = Flask(__name__)
             oauth = OAuth(app)

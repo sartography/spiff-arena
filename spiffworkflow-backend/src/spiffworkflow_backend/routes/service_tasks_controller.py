@@ -43,7 +43,7 @@ def authentication_begin(
     if not OAuthService.supported_service(service):
         raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
     remote_app = OAuthService.remote_app(service)
-    callback = f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback/{service}/OAuth"
+    callback = f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback/{service}/oauth"
     return remote_app.authorize(callback=callback, next=request.args.get('next') or request.referrer or None)
 
 def authentication_callback(
