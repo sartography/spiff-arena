@@ -11,14 +11,14 @@ from flask_oauthlib.client import OAuth
 # TODO: also don't like the name
 AUTHS = {
       "airtable": {
-            "consumer_key": "secret:AIRTABLE_CONSUMER_ID",
+            "consumer_key": "secret:AIRTABLE_CONSUMER_KEY",
             "consumer_secret": "secret:AIRTABLE_CONSUMER_SECRET",
             "request_token_params": { "scope": "data.records:read schema.bases:read" },
             "base_url": "https://airtable.com/",
             "access_token_method": "POST",
             "access_token_url": "https://airtable.com/oauth2/v1/token",
             "authorize_url": "https://airtable.com/oauth2/v1/authorize",
-            "request_token_url": "https://airtable.com/oauth2/v1/token",
+            #"request_token_url": "https://airtable.com/oauth2/v1/token",
       },
 }
 
@@ -42,5 +42,13 @@ class OAuthService:
             app = Flask(__name__)
             oauth = OAuth(app)
             remote_app = oauth.remote_app(service, **config)
-                        
+
+            token_store = {}
+
+            print(config)
+
+            @remote_app.tokengetter
+            def get_token(token=None):
+                  return token_store.get('token')
+            
             return remote_app
