@@ -10,6 +10,13 @@ export interface Secret {
   creator_user_id: string;
 }
 
+export interface Onboarding {
+  type?: string;
+  value?: string;
+  process_instance_id?: string;
+  task_id?: string;
+}
+
 export interface ProcessData {
   process_data_identifier: string;
   process_data_value: any;
@@ -44,8 +51,8 @@ export interface SignalButton {
   event: EventDefinition;
 }
 
-// TODO: merge with ProcessInstanceTask
-export interface Task {
+// Task withouth task data and form info - just the basics
+export interface BasicTask {
   id: number;
   guid: string;
   process_instance_id: number;
@@ -53,25 +60,30 @@ export interface Task {
   bpmn_name?: string;
   bpmn_process_direct_parent_guid: string;
   bpmn_process_definition_identifier: string;
-  data: any;
   state: string;
   typename: string;
   properties_json: TaskPropertiesJson;
   task_definition_properties_json: TaskDefinitionPropertiesJson;
 
-  event_definition?: EventDefinition;
-
   process_model_display_name: string;
   process_model_identifier: string;
   name_for_display: string;
   can_complete: boolean;
+}
+
+// TODO: merge with ProcessInstanceTask
+// Currently used like TaskModel in backend
+export interface Task extends BasicTask {
+  data: any;
   form_schema: any;
   form_ui_schema: any;
   signal_buttons: SignalButton[];
 
+  event_definition?: EventDefinition;
   saved_form_data?: any;
 }
 
+// Currently used like ApiTask in backend
 export interface ProcessInstanceTask {
   id: string;
   task_id: string;

@@ -323,7 +323,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
     let lastUpdatedTimeLabel = 'Updated At';
-    let lastUpdatedTime = processInstance.updated_at_in_seconds;
+    let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
     if (processInstance.end_in_seconds) {
       lastUpdatedTimeLabel = 'Completed';
       lastUpdatedTime = processInstance.end_in_seconds;
