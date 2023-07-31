@@ -2284,8 +2284,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "bugfix/update-split-task-inputs"
-resolved_reference = "23ca808c3a4661af4e0177e9b1fb527924dd9d00"
+reference = "main"
+resolved_reference = "52d65dfc40ea97a6b89307d2e02df1da7600800f"
 
 [[package]]
 name = "sqlalchemy"
@@ -2714,4 +2714,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "ea026062464c9ae8e9236bd3faadb33b40be8e5e14b83922ab6e1a680a31d4b7"
+content-hash = "54f8f812dac1e3ce391b5e0a5b9505862cd55507eb017cfb5c58dab48614ffe5"
