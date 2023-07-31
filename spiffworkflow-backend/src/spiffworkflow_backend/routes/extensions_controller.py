@@ -65,7 +65,9 @@ def extension_run(
             process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False)
         )
         if body and "extension_input" in body:
-            processor.add_data_to_bpmn_process_instance(body["extension_input"])
+            processor.do_engine_steps(save=False, execution_strategy_name="one_at_a_time")
+            next_task = processor.next_task()
+            next_task.update_data(body['extension_input'])
         processor.do_engine_steps(save=False, execution_strategy_name="greedy")
     except (
         ApiError,

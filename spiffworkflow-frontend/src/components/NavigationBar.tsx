@@ -105,11 +105,17 @@ export default function NavigationBar() {
             (file: ProcessFile) => file.name === 'extension_uischema.json'
           );
           if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
-            const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-              extensionUiSchemaFile.file_contents
-            );
-            if (extensionUiSchema.navigation_items) {
-              return extensionUiSchema.navigation_items;
+            try {
+              const extensionUiSchema: ExtensionUiSchema = JSON.parse(
+                extensionUiSchemaFile.file_contents
+              );
+              if (extensionUiSchema.navigation_items) {
+                return extensionUiSchema.navigation_items;
+              }
+            } catch (jsonParseError: any) {
+              console.error(
+                `Unable to get navigation items for ${processModel.id}`
+              );
             }
           }
           return [] as UiSchemaNavItem[];
