@@ -9,7 +9,7 @@
 
 ## 🚀 Getting Started with SpiffArena
 
-Spiffarena is a platform that facilitates the execution of business processes. To begin using SpiffArena, you can create your demo account using spiffdemo as explained [here](https://spiff-arena.readthedocs.io/en/latest/UsingSpiffdemo/Getting_Started.html#how-to-login-to-spiffarena). 
+SpiffArena is a platform that facilitates the execution of business processes. To begin using SpiffArena, you can create your demo account using spiffdemo as explained [here](https://spiff-arena.readthedocs.io/en/latest/UsingSpiffdemo/Getting_Started.html#how-to-login-to-spiffarena). 
 
 Here, we will provide a generic overview of each section step by step, allowing you to navigate and engage with the platform more effectively.
 
@@ -249,3 +249,5 @@ A prompt will appear, allowing you to provide a name for the identifier associat
 If you want to filter by ID, go to the "Find by Id" section of the page. Enter the ID and click "Submit". The system will show you the process instance with the corresponding ID.
 
 You can now view the process instances that you filtered for and take appropriate action based on their status. This can help you manage your workflows more efficiently and keep track of the progress of various process instances.
+
+
