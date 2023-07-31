@@ -45,7 +45,11 @@ export default function App() {
                   <Route path="/admin/*" element={<AdminRoutes />} />
                   <Route path="/editor/*" element={<EditorRoutes />} />
                   <Route
-                    path="/extensions/:extension_identifier/*"
+                    path="/extensions/:process_model"
+                    element={<Extension />}
+                  />
+                  <Route
+                    path="/extensions/:process_model/:extension_route"
                     element={<Extension />}
                   />
                 </Routes>

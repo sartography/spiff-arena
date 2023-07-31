@@ -9,7 +9,7 @@ export const useUriListForPermissions = () => {
       messageInstanceListPath: '/v1.0/messages',
       dataStoreListPath: '/v1.0/data-stores',
       extensionListPath: '/v1.0/extensions',
-      extensionPath: `/v1.0/extensions/${params.extension_identifier}`,
+      extensionPath: `/v1.0/extensions/${params.process_model}`,
       processGroupListPath: '/v1.0/process-groups',
       processGroupShowPath: `/v1.0/process-groups/${params.process_group_id}`,
       processInstanceActionPath: `/v1.0/process-instances/${params.process_model_id}/${params.process_instance_id}`,

@@ -50,7 +50,11 @@ export default function Extension() {
         const extensionUiSchema: ExtensionUiSchema = JSON.parse(
           (extensionUiSchemaFile as any).file_contents
         );
-        const routeIdentifier = `/${params.extension_identifier}`;
+
+        let routeIdentifier = `/${params.process_model}`;
+        if (params.extension_route) {
+          routeIdentifier = `${routeIdentifier}/${params.extension_route}`;
+        }
         setUiSchemaPageDefinition(extensionUiSchema.routes[routeIdentifier]);
       }
     };
@@ -78,12 +82,17 @@ export default function Extension() {
     removeError();
     delete dataToSubmit.isManualTask;
 
+    let apiPath = targetUris.extensionPath;
+    if (uiSchemaPageDefinition && uiSchemaPageDefinition.api) {
+      apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.api}`;
+    }
+
     // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
     // so we convert undefined values to null recursively so that we can unset values in form fields
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
 
     HttpService.makeCallToBackend({
-      path: targetUris.extensionPath,
+      path: apiPath,
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);

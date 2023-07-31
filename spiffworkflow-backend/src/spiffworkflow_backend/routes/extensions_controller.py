@@ -90,12 +90,6 @@ def extension_run(
     return make_response(jsonify(task_data), 200)
 
 
-# actual frontend route
-# /extensions/:anything => Extensions component
-# maybe add jsonschema support when rendering the extension for primary page design
-# maybe add an element for markdown as well
-
-
 def extension_list() -> flask.wrappers.Response:
     _raise_unless_extensions_api_enabled()
     process_model_extensions = ProcessModelService.get_process_models_for_api(
