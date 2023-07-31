@@ -4,6 +4,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.secret_model import SecretModel
 
 import re
+import sentry_sdk
 
 class SecretService:
     CIPHER_ENCODING = "ascii"
