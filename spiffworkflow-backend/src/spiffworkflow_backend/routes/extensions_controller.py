@@ -5,6 +5,8 @@ from flask import jsonify
 from flask import make_response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -13,7 +15,6 @@ from spiffworkflow_backend.services.process_instance_processor import CustomBpmn
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -50,8 +51,12 @@ def extension_run(
             status_code=400,
         )
 
-    process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-        process_model_identifier, g.user
+    process_instance = ProcessInstanceModel(
+        status=ProcessInstanceStatus.not_started.value,
+        process_initiator_id=g.user.id,
+        process_model_identifier=process_model.id,
+        process_model_display_name=process_model.display_name,
+        persistence_level="none",
     )
 
     processor = None

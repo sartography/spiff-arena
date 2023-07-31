@@ -1382,11 +1382,19 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
-        with ProcessInstanceQueueService.dequeued(self.process_instance_model):
-            # TODO: ideally we just lock in the execution service, but not sure
-            # about _add_bpmn_process_definitions and if that needs to happen in
-            # the same lock like it does on main
-            self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+        if self.process_instance_model.persistence_level != "none":
+            with ProcessInstanceQueueService.dequeued(self.process_instance_model):
+                # TODO: ideally we just lock in the execution service, but not sure
+                # about _add_bpmn_process_definitions and if that needs to happen in
+                # the same lock like it does on main
+                self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+        else:
+            self._do_engine_steps(
+                exit_at,
+                save=False,
+                execution_strategy_name=execution_strategy_name,
+                execution_strategy=execution_strategy,
+            )
 
     def _do_engine_steps(
         self,

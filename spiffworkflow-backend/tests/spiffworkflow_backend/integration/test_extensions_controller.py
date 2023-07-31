@@ -109,6 +109,9 @@ class TestExtensionsController(BaseTest):
                 bpmn_file_location="script_task_with_import",
             )
 
+            # we need a process instance in the database so the scriptTask can work
+            self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+
             response = client.post(
                 f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
                 headers=self.logged_in_headers(with_super_admin_user),

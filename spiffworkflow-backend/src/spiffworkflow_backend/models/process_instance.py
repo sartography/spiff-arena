@@ -99,6 +99,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_xml_file_contents: str | None = None
     process_model_with_diagram_identifier: str | None = None
 
+    # full, none
+    persistence_level: str = "full"
+
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         return {
