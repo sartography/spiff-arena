@@ -1867,13 +1867,37 @@ paths:
           type: string
       - name: response
         in: query
-        required: true
+        required: false
         description: The response
         schema:
           type: string
       - name: token
         in: query
-        required: true
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: code
+        in: query
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: code_challenge
+        in: query
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: code_challenge_method
+        in: query
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: false
         description: The response
         schema:
           type: string
