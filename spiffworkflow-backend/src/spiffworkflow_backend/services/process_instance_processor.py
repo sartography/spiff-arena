@@ -1477,10 +1477,7 @@ class ProcessInstanceProcessor:
         if self.bpmn_process_instance.is_completed():
             for spiff_task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.ANY_MASK):
                 # Assure that we find the end event for this process_instance, and not for any sub-process_instances.
-                if (
-                    spiff_task.task_spec.__class__.__name__ == "EndEvent"
-                    and spiff_task.workflow == self.bpmn_process_instance
-                ):
+                if TaskService.is_main_process_end_event(spiff_task):
                     endtasks.append(spiff_task)
             if len(endtasks) > 0:
                 return endtasks[-1]

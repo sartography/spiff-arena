@@ -614,6 +614,17 @@ class TaskService:
         return task_draft_data
 
     @classmethod
+    def get_task_type_from_spiff_task(cls, spiff_task: SpiffTask) -> str:
+        # wrap in str so mypy doesn't lose its mind
+        return str(spiff_task.task_spec.__class__.__name__)
+
+    @classmethod
+    def is_main_process_end_event(cls, spiff_task: SpiffTask) -> bool:
+        return (
+            cls.get_task_type_from_spiff_task(spiff_task) == "EndEvent" and spiff_task.workflow.parent_workflow is None
+        )
+
+    @classmethod
     def bpmn_process_for_called_activity_or_top_level_process(cls, task_model: TaskModel) -> BpmnProcessModel:
         """Returns either the bpmn process for the call activity calling the process or the top level bpmn process.
 
