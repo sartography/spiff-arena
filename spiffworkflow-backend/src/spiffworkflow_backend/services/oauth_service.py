@@ -6,15 +6,19 @@ from typing import Dict, List, Any
 from flask import Flask
 from flask_oauthlib.client import OAuth
 from hashlib import sha256
+import base64
 
 # TODO: get this from somewhere dynamic, admins need to edit from the UI
-# TODO: ^ in the interim, need to get client_id/secret from env? secrets?
 # TODO: also don't like the name
+# TODO: build non scope request_token_params in remote_app
 AUTHS = {
       "airtable": {
             "consumer_key": "SPIFF_SECRET:AIRTABLE_CONSUMER_KEY",
             "consumer_secret": "SPIFF_SECRET:AIRTABLE_CONSUMER_SECRET",
             "request_token_params": {
+                  "code_verifier": sha256("code_verifier".encode("utf8")).hexdigest(),
+                  "code_challenge": base64.urlsafe_b64encode(sha256("code_verifier".encode("utf-8")).digest())[:43],
+                  "code_challenge_method": "S256",
                   "state": sha256("justtesting".encode("utf8")).hexdigest(),
                   "scope": "data.records:read schema.bases:read",
             },
@@ -41,9 +45,7 @@ class OAuthService:
 
             for k in ["consumer_key", "consumer_secret"]:
                   if k in config:
-                        value = SecretService.resolve_possibly_secret_value(config[k])
-                        print(f"HERE: {k} -> {value}")
-                        config[k] = value
+                        config[k] = SecretService.resolve_possibly_secret_value(config[k])
 
             app = Flask(__name__)
             oauth = OAuth(app)
