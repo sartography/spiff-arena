@@ -367,12 +367,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </dd>
           </dl>
           <dl>
-            <dt>Started By:</dt>
+            <dt>Started by:</dt>
             <dd> {processInstance.process_initiator_username}</dd>
           </dl>
           {processInstance.process_model_with_diagram_identifier ? (
             <dl>
-              <dt>Current Diagram: </dt>
+              <dt>Current diagram: </dt>
               <dd>
                 <Link
                   data-qa="go-to-current-diagram-process-model"
