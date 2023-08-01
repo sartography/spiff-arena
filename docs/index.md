@@ -30,10 +30,10 @@ Debugging_Diagrams/bpmn_unit_tests.md
 ```{toctree}
 :maxdepth: 3
 :caption: DevOps - Installation & Integration
-installation_integration/admin_and_permissions.md
-installation_integration/permission_url.md
-installation_integration/configure_connector_proxy.md
-installation_integration/deploy_aws_lambda.md
+DevOps_installation_integration/admin_and_permissions.md
+DevOps_installation_integration/permission_url.md
+DevOps_installation_integration/configure_connector_proxy.md
+DevOps_installation_integration/deploy_aws_lambda.md
 ```
 ```{toctree}
 :maxdepth: 3
