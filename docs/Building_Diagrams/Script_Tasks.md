@@ -13,7 +13,7 @@ The process begins with a Start Event, followed by a User Task named "Form." Use
 
 In the Script Task, we have created a script that collects three variables from the form and calculates a score based on certain conditions. The score is then stored in the "score" variable. Lets delve into how we configured the script tasks:
 
-![Script_Task](Images/Script_task_example.png)
+![Script_Task](images/Script_task_example.png)
 
 **Step 1**: With the script task selected, you will notice the properties tab. 
 
@@ -60,7 +60,7 @@ Now we have a configured our script task with a script and unit tests.
 
 After the Script Task, we have a Manual Task with a pre-script and instructions to display the score. 
 
-![Script_Task](Images/Pre-post_scripts.png)
+![Script_Task](images/Pre-post_scripts.png)
 
 - **Prescript** is added as an example, While you can have tasks that are dedicated scripts, it can become a bit noisy, and we want our diagrams to convey a clear sense of the business logic and rules. For this reason it is also possible to add scripts to all Task types - using Pre and Post Scripts. This manual task contains a pre-script that also calculated PI using the Leibniz’s formula. Here is the pre-script:
 

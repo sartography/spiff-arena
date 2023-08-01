@@ -43,13 +43,13 @@ ways to present content in different scenarios.
 
 ### Display Content Process Overview:
 
-![Image](Images/Display_Content.png)
+![Image](images/Display_Content.png)
 
 Here is a summary of the process:
 
 1. **Start Event and Introduction Manual Task**
 
-![Image](Images/Introduction_manual.png)
+![Image](images/Introduction_manual.png)
 
 The process begins with a Start Event, signaling the start of the 
 workflow.
@@ -58,7 +58,7 @@ It is followed by a Manual Task called "Introduction" that displays a
 welcome message or instructions for the users. The content to be 
 displayed is specified in the task's properties panel.
 
-![Image](Images/Manu_instructions_panel.png)
+![Image](images/Manu_instructions_panel.png)
 
 2. **User Task with Form**
 
@@ -70,7 +70,7 @@ The instructions panel of the User Task guides users to fill out the
 form, indicating that the entered values will be shown in the 
 subsequent Manual Task.
 
-![Image](Images/User_instructions.png)
+![Image](images/User_instructions.png)
 
 3. **Script Tasks**
 
@@ -83,11 +83,11 @@ focuses on making the colors more playful.
 Script Task 3 includes a delay with the code "time.sleep(2)" and aims 
 to increase the silliness level.
 
-![Image](Images/Script_instructions.png)
+![Image](images/Script_instructions.png)
 
 4. **Manual Task to Display Content**
 
-![Image](Images/Manual_instructions.png)
+![Image](images/Manual_instructions.png)
 
 A Manual Task will display content based on the collected data 
 and script-generated information. The instructions panel of the Manual 
@@ -96,11 +96,11 @@ data entered by the user.
 It also offers an optional Chuck Norris joke based on user preference 
 and a table of silly color names generated using Jinja templating.
 
-![Image](Images/Manual_instructionss.png)
+![Image](images/Manual_instructionss.png)
 
 5. **End Event**
 
-![Image](Images/End.png)
+![Image](images/End1.png)
 
 The process concludes with an End Event, indicating the end of the 
 workflow.
@@ -108,4 +108,4 @@ The instructions panel of the End Event suggests next steps, such as
 exploring the diagram in edit mode and completing the "Request a 
 Playground" task.
 
-![Image](Images/end_message.png)
+![Image](images/end_message.png)

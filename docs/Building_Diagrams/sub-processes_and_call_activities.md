@@ -24,7 +24,7 @@ A call process is similar to a sub-process in that it encapsulates part of a wor
 
 - **Delegation**: When different people or teams need to be responsible for the execution of tasks within a process, a call activity can be useful and can be assigned to the most appropriate person or team.
 
-- **Access Control**: If a specific segment of a process isn't meant to be available to every user, converting it into a call process can aid in establishing access control over that particular process. Additional information about this can be found in the [Admin and Permission](../installation_integration/admin_and_permissions.md) section.
+- **Access Control**: If a specific segment of a process isn't meant to be available to every user, converting it into a call process can aid in establishing access control over that particular process. Additional information about this can be found in the [Admin and Permission](../DevOps_installation_integration/admin_and_permissions.md) section.
 
 ## Sub-processes
 

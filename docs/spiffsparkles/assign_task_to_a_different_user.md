@@ -25,7 +25,7 @@ Follow steps to [navigate to the Active Process Instance.](../spiffsparkles/navi
 
 > **Step 3: Suspend the Process Instance**
 
-Follow steps to [suspend process.](../spiffsparkles/suspend_resume_terminate)
+Follow steps to [suspend process.](../Support/suspend_resume_terminate)
 
 ```{admonition} Note
 ⚠ Note: Only Admin users will be able to complete this step.
@@ -73,7 +73,7 @@ The activity needs to be reset to its previous active state to enable the change
 
 > **Step 8: "Resume" process instance.**
 
-- Follow steps to [resume process.](../spiffsparkles/suspend_resume_terminate)
+- Follow steps to [resume process.](../Support/suspend_resume_terminate)
 
 > **Step 9: Refresh page**
 
