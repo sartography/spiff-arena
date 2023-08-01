@@ -38,14 +38,13 @@ DevOps_installation_integration/deploy_aws_lambda.md
 ```{toctree}
 :maxdepth: 3
 :caption: Support
-spiffsparkles/suspend_resume_terminate.md
+Support/suspend_resume_terminate.md
 ```
 ```{toctree}
 :maxdepth: 3
 :caption: SpiffSparkles
 spiffsparkles/find_a_process_instance.md
 spiffsparkles/navigate_to_an_active_process_instance.md
-spiffsparkles/suspend_resume_terminate.md
 spiffsparkles/complete_task_on_behalf_of_another_user.md
 spiffsparkles/assign_task_to_a_different_user.md
 spiffsparkles/process_instance.md
