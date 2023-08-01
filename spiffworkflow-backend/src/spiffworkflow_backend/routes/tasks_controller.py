@@ -74,6 +74,7 @@ class ReactJsonSchemaSelectOption(TypedDict):
     enum: list[str]
 
 
+# this is currently not used by the Frontend
 def task_list_my_tasks(
     process_instance_id: int | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
@@ -445,21 +446,27 @@ def _interstitial_stream(
     tasks = get_reportable_tasks()
     while True:
         for spiff_task in tasks:
-            try:
-                instructions = render_instructions(spiff_task)
-            except Exception as e:
-                api_error = ApiError(
-                    error_code="engine_steps_error",
-                    message=f"Failed to complete an automated task. Error was: {str(e)}",
-                    status_code=400,
+            # ignore the instructions if they are on the EndEvent for the top level process
+            if not TaskService.is_main_process_end_event(spiff_task):
+                print(
+                    "TaskService.get_task_type_from_spiff_task:"
+                    f" {TaskService.get_task_type_from_spiff_task(spiff_task)}"
                 )
-                yield _render_data("error", api_error)
-                raise e
-            if instructions and spiff_task.id not in reported_ids:
-                task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-                task.properties = {"instructionsForEndUser": instructions}
-                yield _render_data("task", task)
-                reported_ids.append(spiff_task.id)
+                try:
+                    instructions = render_instructions(spiff_task)
+                except Exception as e:
+                    api_error = ApiError(
+                        error_code="engine_steps_error",
+                        message=f"Failed to complete an automated task. Error was: {str(e)}",
+                        status_code=400,
+                    )
+                    yield _render_data("error", api_error)
+                    raise e
+                if instructions and spiff_task.id not in reported_ids:
+                    task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+                    task.properties = {"instructionsForEndUser": instructions}
+                    yield _render_data("task", task)
+                    reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 # do not do any processing if the instance is not currently active
                 if process_instance.status not in ProcessInstanceModel.active_statuses():
@@ -467,6 +474,8 @@ def _interstitial_stream(
                     return
                 if execute_tasks:
                     try:
+                        # run_until_user_message does not run tasks with instructions to use one_at_a_time
+                        # to force it to run the task.
                         processor.do_engine_steps(execution_strategy_name="one_at_a_time")
                         processor.do_engine_steps(execution_strategy_name="run_until_user_message")
                         processor.save()  # Fixme - maybe find a way not to do this on every loop?
@@ -479,6 +488,10 @@ def _interstitial_stream(
                         yield _render_data("error", api_error)
                         ErrorHandlingService.handle_error(process_instance, wfe)
                         return
+                # return if process instance is now complete and let the frontend redirect to show page
+                if process_instance.status not in ProcessInstanceModel.active_statuses():
+                    yield _render_data("unrunnable_instance", process_instance)
+                    return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
         ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
