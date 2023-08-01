@@ -65,7 +65,18 @@ def process_list() -> Any:
     primary process - helpful for finding possible call activities.
     """
     references = SpecReferenceCache.query.filter_by(type="process").all()
-    return SpecReferenceSchema(many=True).dump(references)
+    process_model_identifiers = [r.process_model_id for r in references]
+    permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
+        user=g.user,
+        permission_to_check="create",
+        permission_base_uri="/v1.0/process-instances",
+        process_model_identifiers=process_model_identifiers,
+    )
+    permitted_references = []
+    for spec_reference in references:
+        if spec_reference.process_model_id in permitted_process_model_identifiers:
+            permitted_references.append(spec_reference)
+    return SpecReferenceSchema(many=True).dump(permitted_references)
 
 
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:

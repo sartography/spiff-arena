@@ -520,7 +520,7 @@ def _create_or_update_process_model_file(
 
     file = None
     try:
-        file = SpecFileService.update_file(process_model, request_file.filename, request_file_contents)
+        file = SpecFileService.update_file(process_model, request_file.filename, request_file_contents, user=g.user)
     except ProcessModelFileInvalidError as exception:
         raise (
             ApiError(

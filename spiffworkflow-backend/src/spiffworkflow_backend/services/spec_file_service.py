@@ -12,6 +12,8 @@ from spiffworkflow_backend.models.file import SpecReference
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
@@ -114,6 +116,8 @@ class SpecFileService(FileSystemService):
             sub_parsers = list(parser.process_parsers.values())
             messages = parser.messages
             correlations = parser.correlations
+            # to check permissions for call activities
+            parser.get_process_dependencies()
         elif file_type.value == FileType.dmn.value:
             parser.add_dmn_xml(cls.get_etree_from_xml_bytes(binary_data))
             sub_parsers = list(parser.dmn_parsers.values())
@@ -166,7 +170,9 @@ class SpecFileService(FileSystemService):
                 ) from exception
 
     @classmethod
-    def update_file(cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes) -> File:
+    def update_file(
+        cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes, user: UserModel | None = None
+    ) -> File:
         SpecFileService.assert_valid_file_name(file_name)
         cls.validate_bpmn_xml(file_name, binary_data)
 
@@ -174,6 +180,7 @@ class SpecFileService(FileSystemService):
         primary_process_ref = next((ref for ref in references if ref.is_primary and ref.is_executable), None)
 
         SpecFileService.clear_caches_for_file(file_name, process_model_info)
+        all_called_element_ids: set[str] = set()
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
@@ -193,7 +200,34 @@ class SpecFileService(FileSystemService):
                         process_model_info,
                         update_hash,
                     )
+
+            all_called_element_ids = all_called_element_ids | set(ref.called_element_ids)
             SpecFileService.update_caches(ref)
+
+        if user is not None:
+            called_element_refs = SpecReferenceCache.query.filter(
+                SpecReferenceCache.identifier.in_(all_called_element_ids)
+            ).all()
+            if len(called_element_refs) > 0:
+                process_model_identifiers: list[str] = [r.process_model_id for r in called_element_refs]
+                permitted_process_model_identifiers = (
+                    ProcessModelService.process_model_identifiers_with_permission_for_user(
+                        user=user,
+                        permission_to_check="create",
+                        permission_base_uri="/v1.0/process-instances",
+                        process_model_identifiers=process_model_identifiers,
+                    )
+                )
+                unpermitted_process_model_identifiers = set(process_model_identifiers) - set(
+                    permitted_process_model_identifiers
+                )
+                if len(unpermitted_process_model_identifiers):
+                    raise NotAuthorizedError(
+                        "You are not authorized to use one or more processes as a called element:"
+                        f" {','.join(unpermitted_process_model_identifiers)}"
+                    )
+
+        db.session.commit()
 
         # make sure we save the file as the last thing we do to ensure validations have run
         full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
@@ -283,7 +317,6 @@ class SpecFileService(FileSystemService):
         if process_id_lookup is None:
             process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
-            db.session.commit()
         else:
             if ref.relative_path != process_id_lookup.relative_path:
                 full_bpmn_file_path = SpecFileService.full_path_from_relative_path(process_id_lookup.relative_path)
@@ -297,7 +330,6 @@ class SpecFileService(FileSystemService):
                 else:
                     process_id_lookup.relative_path = ref.relative_path
                     db.session.add(process_id_lookup)
-                    db.session.commit()
 
     @staticmethod
     def update_process_caller_cache(ref: SpecReference) -> None:
@@ -316,7 +348,6 @@ class SpecFileService(FileSystemService):
                     process_model_identifier=ref.process_model_id,
                 )
                 db.session.add(message_triggerable_process_model)
-                db.session.commit()
             else:
                 if message_triggerable_process_model.process_model_identifier != ref.process_model_id:
                     raise ProcessModelFileInvalidError(
@@ -347,4 +378,3 @@ class SpecFileService(FileSystemService):
                         retrieval_expression=retrieval_expression,
                     )
                     db.session.add(new_cache)
-                    db.session.commit()

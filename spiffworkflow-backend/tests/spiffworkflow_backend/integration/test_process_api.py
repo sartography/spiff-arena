@@ -521,9 +521,62 @@ class TestProcessApi(BaseTest):
             "/v1.0/processes",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
+        assert isinstance(response.json, list)
         # We should get 5 back, as one of the items in the cache is a decision.
         assert len(response.json) == 5
+        simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
+        assert simple_form["display_name"] == "Process With Form"
+        assert simple_form["process_model_id"] == "test_group_one/simple_form"
+        assert simple_form["has_lanes"] is False
+        assert simple_form["is_executable"] is True
+        assert simple_form["is_primary"] is True
+
+    def test_process_list_with_restricted_access(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        load_test_spec(
+            "test_group_one/simple_form",
+            process_model_source_directory="simple_form",
+            bpmn_file_name="simple_form",
+        )
+        # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
+        assert len(SpecReferenceCache.query.all()) == 1
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
+        )
+        # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
+        assert len(SpecReferenceCache.query.all()) == 6
+
+        user_one = self.create_user_with_permission(
+            username="user_one", target_uri="/v1.0/process-groups/test_group_one:*"
+        )
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/processes", permission_names=["read"])
+        self.add_permissions_to_user(
+            user=user_one, target_uri="/v1.0/process-instances/test_group_one:*", permission_names=["create"]
+        )
+
+        # get the results
+        response = client.get(
+            "/v1.0/processes",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+
+        # This user should only have access to one process
+        assert isinstance(response.json, list)
+        assert len(response.json) == 1
         simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
         assert simple_form["display_name"] == "Process With Form"
         assert simple_form["process_model_id"] == "test_group_one/simple_form"
