@@ -436,10 +436,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return <div />;
   };
 
+  // you cannot suspend an instance that is done. except if it has status error, since
+  // you might want to perform admin actions to recover from an errored instance.
   const suspendButton = () => {
     if (
       processInstance &&
-      !ProcessInstanceClass.terminalStatuses()
+      !ProcessInstanceClass.nonErrorTerminalStatuses()
         .concat(['suspended'])
         .includes(processInstance.status)
     ) {
@@ -467,6 +469,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           iconDescription="Resume"
           hasIconOnly
           size="lg"
+        />
+      );
+    }
+    return <div />;
+  };
+
+  const deleteButton = () => {
+    if (
+      processInstance &&
+      ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
+    ) {
+      return (
+        <ButtonWithConfirmation
+          data-qa="process-instance-delete"
+          kind="ghost"
+          renderIcon={TrashCan}
+          iconDescription="Delete"
+          hasIconOnly
+          description={`Delete Process Instance: ${processInstance.id}`}
+          onConfirmation={deleteProcessInstance}
+          confirmButtonLabel="Delete"
         />
       );
     }
@@ -1135,22 +1158,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
       elements.push(resumeButton());
     }
-    if (
-      ability.can('DELETE', targetUris.processInstanceActionPath) &&
-      ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
-    ) {
-      elements.push(
-        <ButtonWithConfirmation
-          data-qa="process-instance-delete"
-          kind="ghost"
-          renderIcon={TrashCan}
-          iconDescription="Delete"
-          hasIconOnly
-          description={`Delete Process Instance: ${processInstance.id}`}
-          onConfirmation={deleteProcessInstance}
-          confirmButtonLabel="Delete"
-        />
-      );
+    if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
+      elements.push(deleteButton());
     }
     return elements;
   };
