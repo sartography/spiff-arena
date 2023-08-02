@@ -86,8 +86,8 @@ class TestDataStores(BaseTest):
         assert response.json["pagination"]["total"] == 76
         assert response.json["pagination"]["pages"] == 8
         assert response.json["results"][0] == {
-            "search_term": "Mama Said Knock You Out",
-            "year": 1990,
-            "album": "Mama Said Knock You Out",
-            "artist": "LL Cool J",
+            "search_term": "A Vulgar Display Of Power",
+            "year": 1992,
+            "album": "A Vulgar Display Of Power",
+            "artist": "Pantera",
         }
