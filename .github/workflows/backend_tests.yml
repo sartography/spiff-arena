@@ -67,8 +67,8 @@ jobs:
               session: "typeguard",
               database: "sqlite",
             }
-          # # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
-          # # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
+          # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+          # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
     env:
       FLASK_SESSION_SECRET_KEY: super_secret_key
@@ -106,9 +106,6 @@ jobs:
         run: |
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
-
-      # - name: Set SpiffWorkflow version
-      #   run: ./bin/work_around_nox_poetry_not_respecting_git_revision_in_poetry_lock
 
       - name: Install Nox
         run: |
