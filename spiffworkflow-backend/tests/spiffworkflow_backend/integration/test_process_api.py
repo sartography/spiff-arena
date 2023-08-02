@@ -590,7 +590,7 @@ class TestProcessApi(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group.serialized),
+            data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 201
         assert response.json
@@ -658,7 +658,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group.serialized),
+            data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 200
 

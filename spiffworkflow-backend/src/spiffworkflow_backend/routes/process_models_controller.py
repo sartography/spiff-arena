@@ -143,10 +143,7 @@ def process_model_update(
 def process_model_show(modified_process_model_identifier: str, include_file_references: bool = False) -> Any:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
-    files = sorted(
-        SpecFileService.get_files(process_model),
-        key=lambda f: "" if f.name == process_model.primary_file_name else f.sort_index,
-    )
+    files = FileSystemService.get_sorted_files(process_model)
     process_model.files = files
 
     if include_file_references:
@@ -277,7 +274,7 @@ def process_model_file_create(
 def process_model_file_show(modified_process_model_identifier: str, file_name: str) -> Any:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
-    files = SpecFileService.get_files(process_model, file_name)
+    files = FileSystemService.get_files(process_model, file_name)
     if len(files) == 0:
         raise ApiError(
             error_code="process_model_file_not_found",

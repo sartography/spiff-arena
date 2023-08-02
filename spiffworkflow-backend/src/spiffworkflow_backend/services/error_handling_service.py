@@ -32,6 +32,9 @@ class ErrorHandlingService:
     def _update_process_instance_in_database(
         cls, process_instance: ProcessInstanceModel, fault_or_suspend_on_exception: str
     ) -> None:
+        if process_instance.persistence_level == "none":
+            return
+
         # First, suspend or fault the instance
         if fault_or_suspend_on_exception == "suspend":
             cls._set_instance_status(
