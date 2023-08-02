@@ -88,9 +88,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Set SpiffWorkflow version
-        run: ./bin/work_around_nox_poetry_not_respecting_git_revision_in_poetry_lock
-
       - name: Upgrade pip
         run: |
           pip install --constraint=.github/workflows/constraints.txt pip
@@ -109,6 +106,9 @@ jobs:
         run: |
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
+
+      - name: Set SpiffWorkflow version
+        run: ./bin/work_around_nox_poetry_not_respecting_git_revision_in_poetry_lock
 
       - name: Install Nox
         run: |
