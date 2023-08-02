@@ -15,6 +15,9 @@ if [[ -z "${1:-}" ]]; then
   exit 1
 fi
 
+echo PWD: $(pwd)
+echo LS: $(ls)
+
 function setup_db_for_ci() {
   # Set environment variables
   export FLASK_INSTANCE_PATH="${script_dir}/../src/instance/testing"
