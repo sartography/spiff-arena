@@ -34,9 +34,7 @@ class TestProcessModelsController(BaseTest):
             bpmn_file_name="callable_process.bpmn",
         )
 
-        user_one = self.create_user_with_permission(
-            username="user_one", target_uri="/v1.0/process-groups/caller:*"
-        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/caller:*")
         self.add_permissions_to_user(
             user=user_one, target_uri="/v1.0/process-models/caller:*", permission_names=["create", "read", "update"]
         )
@@ -45,7 +43,10 @@ class TestProcessModelsController(BaseTest):
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
         data = {"file": (io.BytesIO(bpmn_file_data_bytes), process_model.primary_file_name)}
-        url = f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/{process_model.primary_file_name}?file_contents_hash={file_contents_hash}"
+        url = (
+            f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/"
+            f"{process_model.primary_file_name}?file_contents_hash={file_contents_hash}"
+        )
         response = client.put(
             url,
             data=data,
@@ -56,4 +57,6 @@ class TestProcessModelsController(BaseTest):
 
         assert response.status_code == 403
         assert response.json is not None
-        assert response.json['message'].startswith("NotAuthorizedError: You are not authorized to use one or more processes as a called element")
+        assert response.json["message"].startswith(
+            "NotAuthorizedError: You are not authorized to use one or more processes as a called element"
+        )
