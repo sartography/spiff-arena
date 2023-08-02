@@ -18,6 +18,4 @@ if grep -qE '^\[\[package\]\]' <<<"$spiffworkflow_entry"; then
 fi
 
 git_revision=$(grep -E '^resolved_reference' <<<"$spiffworkflow_entry" | awk -F '"' '{print $2}')
-
-# \1$ causes issues so attempting to properly escape the $ while still resolving git_revision properly
-perl -pi -e "s/^(SpiffWorkflow.*rev ?= ?['\"])[\w]+(['\"])/\1\\""${git_revision}""\2/" "${script_dir}/../pyproject.toml"
+perl -pi -e 's/^(SpiffWorkflow.*rev ?= ?)[^\w][\w]+([^\w])/\1"'"${git_revision}"'\2/' "${script_dir}/../pyproject.toml"
