@@ -128,6 +128,15 @@ export interface ProcessReference {
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
 
+export interface FilterOperator {
+  id: string;
+  requires_value: boolean;
+}
+
+export interface FilterOperatorMapping {
+  [key: string]: FilterOperator;
+}
+
 export interface ProcessFile {
   content_type: string;
   last_modified: string;
