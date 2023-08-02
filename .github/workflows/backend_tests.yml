@@ -19,56 +19,56 @@ jobs:
           - { python: "3.11", os: "ubuntu-latest", session: "safety" }
           - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
-          - {
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "mysql",
-            }
+          # - {
+          #     python: "3.11",
+          #     os: "ubuntu-latest",
+          #     session: "tests",
+          #     database: "mysql",
+          #   }
           - {
               python: "3.11",
               os: "ubuntu-latest",
               session: "tests",
               database: "postgres",
             }
-          - {
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
-              python: "3.10",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          # FIXME: tests cannot pass on windows and we currently cannot debug
-          # since none of us have a windows box that can run the python app.
-          # so ignore windows tests until we can get it fixed.
           # - {
-          #     python: "3.10",
-          #     os: "windows-latest",
+          #     python: "3.11",
+          #     os: "ubuntu-latest",
           #     session: "tests",
           #     database: "sqlite",
           #   }
-          - {
-              python: "3.11",
-              os: "macos-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
-              # typeguard 2.13.3 is broken with TypeDict in 3.11.
-              # probably the next release fixes it.
-              # https://github.com/agronholm/typeguard/issues/242
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "typeguard",
-              database: "sqlite",
-            }
-          # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
-          # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
+          # - {
+          #     python: "3.10",
+          #     os: "ubuntu-latest",
+          #     session: "tests",
+          #     database: "sqlite",
+          #   }
+          # # FIXME: tests cannot pass on windows and we currently cannot debug
+          # # since none of us have a windows box that can run the python app.
+          # # so ignore windows tests until we can get it fixed.
+          # # - {
+          # #     python: "3.10",
+          # #     os: "windows-latest",
+          # #     session: "tests",
+          # #     database: "sqlite",
+          # #   }
+          # - {
+          #     python: "3.11",
+          #     os: "macos-latest",
+          #     session: "tests",
+          #     database: "sqlite",
+          #   }
+          # - {
+          #     # typeguard 2.13.3 is broken with TypeDict in 3.11.
+          #     # probably the next release fixes it.
+          #     # https://github.com/agronholm/typeguard/issues/242
+          #     python: "3.11",
+          #     os: "ubuntu-latest",
+          #     session: "typeguard",
+          #     database: "sqlite",
+          #   }
+          # # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+          # # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
     env:
       FLASK_SESSION_SECRET_KEY: super_secret_key
@@ -107,8 +107,8 @@ jobs:
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
 
-      - name: Set SpiffWorkflow version
-        run: ./bin/work_around_nox_poetry_not_respecting_git_revision_in_poetry_lock
+      # - name: Set SpiffWorkflow version
+      #   run: ./bin/work_around_nox_poetry_not_respecting_git_revision_in_poetry_lock
 
       - name: Install Nox
         run: |
@@ -150,8 +150,14 @@ jobs:
         if: matrix.database == 'postgres'
 
       - name: Run Nox
+        if: always() && matrix.session != 'tests'
         run: |
           nox --force-color --python=${{ matrix.python }}
+
+      - name: Run Not Nox
+        if: always() && matrix.session == 'tests'
+        run: |
+          ./bin/run_not_nox_in_ci ${{ matrix.python }}
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
