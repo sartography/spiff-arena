@@ -144,8 +144,6 @@ def process_instance_run(
         process_instance_metadata["data"] = process_instance_data
         return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
 
-    # FIXME: this should never happen currently but it'd be ideal to always do this
-    # currently though it does not return next task so it cannnot be used to take the user to the next human task
     return make_response(jsonify(process_instance), 200)
 
 

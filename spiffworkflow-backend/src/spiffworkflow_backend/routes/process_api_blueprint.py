@@ -1,4 +1,3 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
 

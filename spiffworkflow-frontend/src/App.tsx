@@ -17,6 +17,7 @@ import ErrorDisplay from './components/ErrorDisplay';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ScrollToTop from './components/ScrollToTop';
 import EditorRoutes from './routes/EditorRoutes';
+import Extension from './routes/Extension';
 
 export default function App() {
   if (!UserService.isLoggedIn()) {
@@ -43,6 +44,14 @@ export default function App() {
                   <Route path="/tasks/*" element={<HomePageRoutes />} />
                   <Route path="/admin/*" element={<AdminRoutes />} />
                   <Route path="/editor/*" element={<EditorRoutes />} />
+                  <Route
+                    path="/extensions/:process_model"
+                    element={<Extension />}
+                  />
+                  <Route
+                    path="/extensions/:process_model/:extension_route"
+                    element={<Extension />}
+                  />
                 </Routes>
               </ErrorBoundary>
             </Content>
