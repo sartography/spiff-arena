@@ -37,6 +37,19 @@ export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
 };
 
+export const getKeyByValue = (
+  object: any,
+  value: string,
+  onAttribute?: string
+) => {
+  return Object.keys(object).find((key) => {
+    if (onAttribute) {
+      return object[key][onAttribute] === value;
+    }
+    return object[key] === value;
+  });
+};
+
 export const recursivelyChangeNullAndUndefined = (obj: any, newValue: any) => {
   if (obj === null || obj === undefined) {
     return newValue;
