@@ -25,48 +25,48 @@ jobs:
               session: "tests",
               database: "mysql",
             }
-          # - {
-          #     python: "3.11",
-          #     os: "ubuntu-latest",
-          #     session: "tests",
-          #     database: "postgres",
-          #   }
-          # - {
-          #     python: "3.11",
-          #     os: "ubuntu-latest",
-          #     session: "tests",
-          #     database: "sqlite",
-          #   }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "postgres",
+            }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.10",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          # FIXME: tests cannot pass on windows and we currently cannot debug
+          # since none of us have a windows box that can run the python app.
+          # so ignore windows tests until we can get it fixed.
           # - {
           #     python: "3.10",
-          #     os: "ubuntu-latest",
+          #     os: "windows-latest",
           #     session: "tests",
           #     database: "sqlite",
           #   }
-          # # FIXME: tests cannot pass on windows and we currently cannot debug
-          # # since none of us have a windows box that can run the python app.
-          # # so ignore windows tests until we can get it fixed.
-          # # - {
-          # #     python: "3.10",
-          # #     os: "windows-latest",
-          # #     session: "tests",
-          # #     database: "sqlite",
-          # #   }
-          # - {
-          #     python: "3.11",
-          #     os: "macos-latest",
-          #     session: "tests",
-          #     database: "sqlite",
-          #   }
-          # - {
-          #     # typeguard 2.13.3 is broken with TypeDict in 3.11.
-          #     # probably the next release fixes it.
-          #     # https://github.com/agronholm/typeguard/issues/242
-          #     python: "3.11",
-          #     os: "ubuntu-latest",
-          #     session: "typeguard",
-          #     database: "sqlite",
-          #   }
+          - {
+              python: "3.11",
+              os: "macos-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              # typeguard 2.13.3 is broken with TypeDict in 3.11.
+              # probably the next release fixes it.
+              # https://github.com/agronholm/typeguard/issues/242
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "typeguard",
+              database: "sqlite",
+            }
           # # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
           # # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
@@ -150,12 +150,12 @@ jobs:
         if: matrix.database == 'postgres'
 
       - name: Run Nox
-        if: always() && matrix.session != 'tests'
+        if: always() && matrix.session != 'typeguard' && matrix.session != 'tests'
         run: |
           nox --force-color --python=${{ matrix.python }}
 
       - name: Run Not Nox
-        if: always() && matrix.session == 'tests'
+        if: matrix.session == 'tests' || matrix.session == 'typeguard'
         run: |
           ./bin/run_not_nox_in_ci ${{ matrix.python }}
 
@@ -166,7 +166,7 @@ jobs:
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
-          path: "spiffworkflow-backend/.coverage.*"
+          path: "spiffworkflow-backend/.coverage"
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'

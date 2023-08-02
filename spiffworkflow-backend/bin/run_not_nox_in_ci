@@ -9,10 +9,16 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-python_version=${1:-}
-if [[ -z "${1:-}" ]]; then
-  >&2 echo "usage: $(basename "$0") [python_version]"
-  exit 1
+if [[ -z "${SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI:-}" ]]; then
+  export FLASK_SESSION_SECRET_KEY=super_secret_key
+  export FORCE_COLOR="1"
+  export PRE_COMMIT_COLOR="always"
+  export SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD=
+  export SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=mysql
+  export SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI='true'
+fi
+if [[ -z "${NOXSESSION:-}" ]]; then
+  export NOXSESSION=tests
 fi
 
 function setup_db_for_ci() {
@@ -40,9 +46,8 @@ function setup_db_for_ci() {
 
 poetry install
 
-setup_db_for_ci
-
 if [[ "${NOXSESSION:-}" == "tests" ]]; then
+  setup_db_for_ci
   poetry run coverage run --parallel -m pytest
 
   # Check if no arguments are provided and if any .coverage.* files exist
@@ -53,4 +58,8 @@ if [[ "${NOXSESSION:-}" == "tests" ]]; then
 
   # Run coverage with the provided arguments
   poetry run coverage report
+
+elif [[ "${NOXSESSION:-}" == "typeguard" ]]; then
+  setup_db_for_ci
+  RUN_TYPEGUARD=true poetry run pytest
 fi
