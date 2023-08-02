@@ -98,13 +98,15 @@ def extension_run(
 
 
 def extension_list() -> flask.wrappers.Response:
-    _raise_unless_extensions_api_enabled()
-    process_model_extensions = ProcessModelService.get_process_models_for_api(
-        process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
-        recursive=True,
-        filter_runnable_as_extension=True,
-        include_files=True,
-    )
+    # return an empty list if the extensions api is not enabled
+    process_model_extensions = []
+    if current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
+        process_model_extensions = ProcessModelService.get_process_models_for_api(
+            process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
+            recursive=True,
+            filter_runnable_as_extension=True,
+            include_files=True,
+        )
     return make_response(jsonify(process_model_extensions), 200)
 
 
