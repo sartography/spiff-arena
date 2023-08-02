@@ -55,8 +55,8 @@ class ProcessInstanceReportService:
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Start time", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "End time", "accessor": "end_in_seconds", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -89,9 +89,9 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+                {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -114,9 +114,9 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -138,9 +138,9 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
@@ -326,7 +326,7 @@ class ProcessInstanceReportService:
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
             {
-                "Header": "Started By",
+                "Header": "Started by",
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
@@ -339,7 +339,7 @@ class ProcessInstanceReportService:
         """Columns that are used with certain system reports."""
         return_value: list[ReportMetadataColumn] = [
             {"Header": "Task", "accessor": "task_title", "filterable": False},
-            {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+            {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
         ]
         return return_value
 
