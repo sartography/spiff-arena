@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+poetry_lock_file="${script_dir}/../poetry.lock"
+
+spiffworkflow_entry=$(sed -E '/name = "SpiffWorkflow"/,/resolved_reference/!d' "${poetry_lock_file}")
+
+if grep -qE '^\[\[package\]\]' <<<"$spiffworkflow_entry"; then
+  >&2 echo "ERROR: Could not find git revision for SpiffWorkflow in ${poetry_lock_file}"
+  exit 1
+fi
+
+git_revision=$(grep -E '^resolved_reference' <<<"$spiffworkflow_entry" | awk -F '"' '{print $2}')
+
+# \1$ causes issues so attempting to properly escape the $ while still resolving git_revision properly
+perl -pi -e "s/^(SpiffWorkflow.*rev ?= ?['\"])[\w]+(['\"])/\1\\""${git_revision}""\2/" "${script_dir}/../pyproject.toml"
