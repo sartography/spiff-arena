@@ -93,4 +93,4 @@ class TestDataStores(BaseTest):
         assert response.json["pagination"]["total"] == 76
         assert response.json["pagination"]["pages"] == 8
 
-        assert expected_item_in_response in response.json['results']
+        assert expected_item_in_response in response.json["results"]
