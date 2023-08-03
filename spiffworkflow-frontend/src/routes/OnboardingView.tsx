@@ -23,11 +23,13 @@ export default function OnboardingView() {
       onboarding.instructions.length > 0
     ) {
       return (
-        <MDEditor.Markdown
-          className="onboarding"
-          linkTarget="_blank"
-          source={onboarding.instructions}
-        />
+        <div data-color-mode="light">
+          <MDEditor.Markdown
+            className="onboarding"
+            linkTarget="_blank"
+            source={onboarding.instructions}
+          />
+        </div>
       );
       /*
       if (onboarding.type === 'default_view') {
