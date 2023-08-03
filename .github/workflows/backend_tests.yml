@@ -91,7 +91,7 @@ jobs:
 
       - name: Upgrade pip
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=../.github/workflows/constraints.txt pip
           pip --version
 
       - name: Upgrade pip in virtual environments
@@ -105,7 +105,7 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
 
       # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
@@ -200,7 +200,7 @@ jobs:
           python-version: "3.11"
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=spiffworkflow-backend/.github/workflows/constraints.txt poetry
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
       - name: Poetry Install
         run: poetry install
@@ -242,12 +242,12 @@ jobs:
 
       - name: Upgrade pip
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=../.github/workflows/constraints.txt pip
           pip --version
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
 
       - name: Download coverage data
