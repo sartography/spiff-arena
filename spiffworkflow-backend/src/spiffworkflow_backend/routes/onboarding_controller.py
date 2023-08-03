@@ -29,9 +29,11 @@ def get_onboarding() -> Response:
             task = processor.next_task()
             db.session.flush()
             if task:
-                task_model: TaskModel | None = TaskModel.query.filter_by(guid=str(task.id),
-                                                                         process_instance_id=process_instance.id).first()
-                result['task_id'] = task_model.guid
-                result['instructions'] =  JinjaService.render_instructions_for_end_user(task_model)
+                task_model: TaskModel | None = TaskModel.query.filter_by(
+                    guid=str(task.id), process_instance_id=process_instance.id
+                ).first()
+                if task_model is not None:
+                    result["task_id"] = task_model.guid
+                    result["instructions"] = JinjaService.render_instructions_for_end_user(task_model)
 
     return make_response(result, 200)

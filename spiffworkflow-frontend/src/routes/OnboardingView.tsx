@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import { Onboarding } from '../interfaces';
+import { objectIsEmpty } from '../helpers';
 
 export default function OnboardingView() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
@@ -16,7 +17,11 @@ export default function OnboardingView() {
   }, [setOnboarding]);
 
   const onboardingElement = () => {
-    if (onboarding && onboarding.instructions.length > 0) {
+    if (
+      onboarding &&
+      !objectIsEmpty(onboarding) &&
+      onboarding.instructions.length > 0
+    ) {
       return (
         <MDEditor.Markdown
           className="onboarding"
