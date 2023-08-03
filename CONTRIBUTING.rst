@@ -46,8 +46,6 @@ How to set up your development environment
 You need Python 3.10+ and the following tools:
 
 - Poetry_
-- Nox_
-- nox-poetry_
 
 Install the package with development requirements:
 
@@ -64,31 +62,24 @@ or the command-line interface:
    $ poetry run spiffworkflow-backend
 
 .. _Poetry: https://python-poetry.org/
-.. _Nox: https://nox.thea.codes/
-.. _nox-poetry: https://nox-poetry.readthedocs.io/
 
 
 How to test the project
 -----------------------
 
-Run the full test suite:
+Run the full test suite from the root of arena:
 
 .. code:: console
 
-   $ nox
+   $ ./bin/run_pyl
 
-List the available Nox sessions:
 
-.. code:: console
-
-   $ nox --list-sessions
-
-You can also run a specific Nox session.
+You can also run a specific ci session.
 For example, invoke the unit test suite like this:
 
 .. code:: console
 
-   $ nox --session=tests
+   $ ./bin/run_ci_session tests
 
 Unit tests are located in the ``tests`` directory,
 and are written using the pytest_ testing framework.
@@ -103,21 +94,13 @@ Open a `pull request`_ to submit changes to this project.
 
 Your pull request needs to meet the following guidelines for acceptance:
 
-- The Nox test suite must pass without errors and warnings.
-- Include unit tests. This project maintains 100% code coverage.
+- ./bin/run_pyl must pass without errors and warnings.
+- Include unit tests if practical.
 - If your changes add functionality, update the documentation accordingly.
-
-Feel free to submit early, though—we can always iterate on this.
-
-To run linting and code formatting checks before committing your change, you can install pre-commit as a Git hook by running the following command:
-
-.. code:: console
-
-   $ nox --session=pre-commit -- install
 
 It is recommended to open an issue before starting work on anything.
 This will allow a chance to talk it over with the owners and validate your approach.
 
-.. _pull request: https://github.com/sartography/spiffworkflow-backend/pulls
+.. _pull request: https://github.com/sartography/spiff-arena/pulls
 .. github-only
 .. _Code of Conduct: CODE_OF_CONDUCT.rst
