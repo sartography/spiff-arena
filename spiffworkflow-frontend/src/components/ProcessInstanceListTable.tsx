@@ -41,6 +41,7 @@ import {
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
+  getKeyByValue,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
@@ -67,6 +68,7 @@ import {
   User,
   ErrorForDisplay,
   PermissionsToCheck,
+  FilterOperatorMapping,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -163,6 +165,14 @@ export default function ProcessInstanceListTable({
 
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
+
+  const filterOperatorMappings: FilterOperatorMapping = {
+    Is: { id: 'equals', requires_value: true },
+    'Is Not': { id: 'not equals', requires_value: true },
+    Contains: { id: 'contains', requires_value: true },
+    'Is Empty': { id: 'is_empty', requires_value: false },
+    'Is Not Empty': { id: 'is_not_empty', requires_value: false },
+  };
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -361,6 +371,27 @@ export default function ProcessInstanceListTable({
           setProcessInstanceReportSelection(processInstanceReport);
         }
       }
+      if (additionalReportFilters) {
+        additionalReportFilters.forEach((arf: ReportFilter) => {
+          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
+            reportMetadataBodyToUse.filter_by.push(arf);
+          }
+        });
+      }
+
+      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
+      if (
+        showActionsColumn &&
+        !reportMetadataBodyToUse.filter_by.some(
+          (rf: ReportFilter) => rf.field_name === 'with_oldest_open_task'
+        )
+      ) {
+        const withOldestReportFilter = {
+          field_name: 'with_oldest_open_task',
+          field_value: true,
+        };
+        reportMetadataBodyToUse.filter_by.push(withOldestReportFilter);
+      }
 
       // a bit hacky, clear out all filters before setting them from report metadata
       // to ensure old filters are cleared out.
@@ -417,6 +448,13 @@ export default function ProcessInstanceListTable({
         setShowFilterOptions(true);
       }
 
+      if (filtersEnabled) {
+        HttpService.makeCallToBackend({
+          path: `/user-groups/for-current-user`,
+          successCallback: setUserGroups,
+        });
+      }
+
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
@@ -428,30 +466,8 @@ export default function ProcessInstanceListTable({
         // eslint-disable-next-line prefer-destructuring
         perPage = perPageOptions[1];
       }
+
       const queryParamString = `per_page=${perPage}&page=${page}`;
-      if (additionalReportFilters) {
-        additionalReportFilters.forEach((arf: ReportFilter) => {
-          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
-            reportMetadataBodyToUse.filter_by.push(arf);
-          }
-        });
-      }
-
-      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
-      if (showActionsColumn) {
-        reportMetadataBodyToUse.filter_by.push({
-          field_name: 'with_oldest_open_task',
-          field_value: true,
-        });
-      }
-
-      if (filtersEnabled) {
-        HttpService.makeCallToBackend({
-          path: `/user-groups/for-current-user`,
-          successCallback: setUserGroups,
-        });
-      }
-
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
@@ -952,6 +968,13 @@ export default function ProcessInstanceListTable({
         (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
       );
       Object.assign(reportMetadataCopy, { columns: newColumns });
+      const newFilters = reportMetadataCopy.filter_by.filter(
+        (rf: ReportFilter) => rf.field_name !== reportColumn.accessor
+      );
+      Object.assign(reportMetadataCopy, {
+        columns: newColumns,
+        filter_by: newFilters,
+      });
       setReportMetadata(reportMetadataCopy);
       setRequiresRefilter(true);
     }
@@ -961,6 +984,18 @@ export default function ProcessInstanceListTable({
     setShowReportColumnForm(false);
     setReportColumnFormMode('');
     setReportColumnToOperateOn(null);
+  };
+
+  const getFilterOperatorFromReportColumn = (
+    reportColumnForEditing: ReportColumnForEditing
+  ) => {
+    if (reportColumnForEditing.filter_operator) {
+      // eslint-disable-next-line prefer-destructuring
+      return Object.entries(filterOperatorMappings).filter(([_key, value]) => {
+        return value.id === reportColumnForEditing.filter_operator;
+      })[0][1];
+    }
+    return null;
   };
 
   const getNewFiltersFromReportForEditing = (
@@ -980,14 +1015,23 @@ export default function ProcessInstanceListTable({
       const existingReportFilter = getFilterByFromReportMetadata(
         reportColumnForEditing.accessor
       );
+      const filterOperator = getFilterOperatorFromReportColumn(
+        reportColumnForEditing
+      );
       if (existingReportFilter) {
         const existingReportFilterIndex =
           reportMetadataCopy.filter_by.indexOf(existingReportFilter);
-        if (reportColumnForEditing.filter_field_value) {
+        if (filterOperator && !filterOperator.requires_value) {
+          newReportFilter.field_value = '';
+          newReportFilters[existingReportFilterIndex] = newReportFilter;
+        } else if (reportColumnForEditing.filter_field_value) {
           newReportFilters[existingReportFilterIndex] = newReportFilter;
         } else {
           newReportFilters.splice(existingReportFilterIndex, 1);
         }
+      } else if (filterOperator && !filterOperator.requires_value) {
+        newReportFilter.field_value = '';
+        newReportFilters = newReportFilters.concat([newReportFilter]);
       } else if (reportColumnForEditing.filter_field_value) {
         newReportFilters = newReportFilters.concat([newReportFilter]);
       }
@@ -1073,6 +1117,19 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  const setReportColumnConditionOperator = (selectedItem: string) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      const filterOperator = filterOperatorMappings[selectedItem];
+      reportColumnToOperateOnCopy.filter_operator = filterOperator.id;
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+      setRequiresRefilter(true);
+    }
+  };
+
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -1120,18 +1177,40 @@ export default function ProcessInstanceListTable({
     ]);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
-        <TextInput
-          id="report-column-condition-value"
-          name="report-column-condition-value"
-          labelText="Condition Value"
-          value={
-            reportColumnToOperateOn
-              ? reportColumnToOperateOn.filter_field_value
-              : ''
-          }
-          onChange={setReportColumnConditionValue}
+        <Dropdown
+          titleText="Operator"
+          id="report-column-condition-operator"
+          items={Object.keys(filterOperatorMappings)}
+          selectedItem={getKeyByValue(
+            filterOperatorMappings,
+            reportColumnToOperateOn.filter_operator,
+            'id'
+          )}
+          onChange={(value: any) => {
+            setReportColumnConditionOperator(value.selectedItem);
+            setRequiresRefilter(true);
+          }}
         />
       );
+
+      const filterOperator = getFilterOperatorFromReportColumn(
+        reportColumnToOperateOn
+      );
+      if (filterOperator && filterOperator.requires_value) {
+        formElements.push(
+          <TextInput
+            id="report-column-condition-value"
+            name="report-column-condition-value"
+            labelText="Condition Value"
+            value={
+              reportColumnToOperateOn
+                ? reportColumnToOperateOn.filter_field_value
+                : ''
+            }
+            onChange={setReportColumnConditionValue}
+          />
+        );
+      }
     }
     formElements.push(
       <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
@@ -1273,6 +1352,7 @@ export default function ProcessInstanceListTable({
               labelText="Include oldest open task information"
               id="with-oldest-open-task-checkbox"
               checked={withOldestOpenTask}
+              disabled={showActionsColumn}
               onChange={(value: any) => {
                 setWithOldestOpenTask(value.target.checked);
                 setRequiresRefilter(true);

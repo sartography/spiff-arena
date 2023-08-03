@@ -266,7 +266,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     scripts directory available for execution.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, use_restricted_script_engine: bool = True) -> None:
         default_globals = {
             "_strptime": _strptime,
             "dateparser": dateparser,
@@ -288,7 +288,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             **JinjaHelpers.get_helper_mapping(),
         }
 
-        use_restricted_script_engine = True
         if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE") == "false":
             use_restricted_script_engine = False
 
@@ -379,7 +378,7 @@ IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, Bpm
 
 
 class ProcessInstanceProcessor:
-    _script_engine = CustomBpmnScriptEngine()
+    _default_script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
 
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(SPIFF_SPEC_CONFIG)
@@ -392,8 +391,14 @@ class ProcessInstanceProcessor:
     # __init__ calls these helpers:
     #   * get_spec, which returns a spec and any subprocesses (as IdToBpmnProcessSpecMapping dict)
     #   * __get_bpmn_process_instance, which takes spec and subprocesses and instantiates and returns a BpmnWorkflow
-    def __init__(self, process_instance_model: ProcessInstanceModel, validate_only: bool = False) -> None:
+    def __init__(
+        self,
+        process_instance_model: ProcessInstanceModel,
+        validate_only: bool = False,
+        script_engine: PythonScriptEngine | None = None,
+    ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
+        self._script_engine = script_engine or self.__class__._default_script_engine
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model, validate_only=validate_only
         )
@@ -447,7 +452,7 @@ class ProcessInstanceProcessor:
                 validate_only,
                 subprocesses=subprocesses,
             )
-            self.set_script_engine(self.bpmn_process_instance)
+            self.set_script_engine(self.bpmn_process_instance, self._script_engine)
 
         except MissingSpecError as ke:
             raise ApiError(
@@ -470,7 +475,7 @@ class ProcessInstanceProcessor:
                     f"The given process model was not found: {process_model_identifier}.",
                 )
             )
-        spec_files = SpecFileService.get_files(process_model_info)
+        spec_files = FileSystemService.get_files(process_model_info)
         return cls.get_spec(spec_files, process_model_info)
 
     @classmethod
@@ -478,15 +483,20 @@ class ProcessInstanceProcessor:
         (bpmn_process_spec, subprocesses) = cls.get_process_model_and_subprocesses(
             process_model_identifier,
         )
-        return cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        bpmn_process_instance = cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        cls.set_script_engine(bpmn_process_instance)
+        return bpmn_process_instance
 
     @staticmethod
-    def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
-        ProcessInstanceProcessor._script_engine.environment.restore_state(bpmn_process_instance)
-        bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
+    def set_script_engine(
+        bpmn_process_instance: BpmnWorkflow, script_engine: PythonScriptEngine | None = None
+    ) -> None:
+        script_engine_to_use = script_engine or ProcessInstanceProcessor._default_script_engine
+        script_engine_to_use.environment.restore_state(bpmn_process_instance)
+        bpmn_process_instance.script_engine = script_engine_to_use
 
     def preserve_script_engine_state(self) -> None:
-        ProcessInstanceProcessor._script_engine.environment.preserve_state(self.bpmn_process_instance)
+        self._script_engine.environment.preserve_state(self.bpmn_process_instance)
 
     @classmethod
     def _update_bpmn_definition_mappings(
@@ -712,7 +722,6 @@ class ProcessInstanceProcessor:
             spec,
             subprocess_specs=subprocesses,
         )
-        ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         return bpmn_process_instance
 
     @staticmethod
@@ -740,8 +749,6 @@ class ProcessInstanceProcessor:
                 raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
-
-            ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         else:
             bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(
                 spec, subprocesses
@@ -756,10 +763,9 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings,
         )
 
-    def slam_in_data(self, data: dict) -> None:
+    def add_data_to_bpmn_process_instance(self, data: dict) -> None:
+        # if we do not use a deep merge, then the data does not end up on the object for some reason
         self.bpmn_process_instance.data = DeepMerge.merge(self.bpmn_process_instance.data, data)
-
-        self.save()
 
     def raise_if_no_potential_owners(self, potential_owner_ids: list[int], message: str) -> None:
         if not potential_owner_ids:
@@ -1376,11 +1382,19 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
-        with ProcessInstanceQueueService.dequeued(self.process_instance_model):
-            # TODO: ideally we just lock in the execution service, but not sure
-            # about _add_bpmn_process_definitions and if that needs to happen in
-            # the same lock like it does on main
-            self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+        if self.process_instance_model.persistence_level != "none":
+            with ProcessInstanceQueueService.dequeued(self.process_instance_model):
+                # TODO: ideally we just lock in the execution service, but not sure
+                # about _add_bpmn_process_definitions and if that needs to happen in
+                # the same lock like it does on main
+                self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+        else:
+            self._do_engine_steps(
+                exit_at,
+                save=False,
+                execution_strategy_name=execution_strategy_name,
+                execution_strategy=execution_strategy,
+            )
 
     def _do_engine_steps(
         self,

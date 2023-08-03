@@ -94,7 +94,6 @@ class File:
         )
         return instance
 
-    @property
     def serialized(self) -> dict[str, Any]:
         dictionary = self.__dict__
         if isinstance(self.file_contents, bytes):
