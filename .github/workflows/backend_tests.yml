@@ -52,12 +52,12 @@ jobs:
           #     session: "tests",
           #     database: "sqlite",
           #   }
-          - {
-              python: "3.11",
-              os: "macos-latest",
-              session: "tests",
-              database: "sqlite",
-            }
+          # - {
+          #     python: "3.11",
+          #     os: "macos-latest",
+          #     session: "tests",
+          #     database: "sqlite",
+          #   }
           - {
               # typeguard 2.13.3 is broken with TypeDict in 3.11.
               # probably the next release fixes it.
@@ -107,11 +107,11 @@ jobs:
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
 
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-          nox --version
+      # - name: Install Nox
+      #   run: |
+      #     pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
+      #     pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+      #     nox --version
 
       # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
       # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
@@ -146,13 +146,12 @@ jobs:
         run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
         if: matrix.database == 'postgres'
 
-      - name: Run Nox
-        if: always() && matrix.session != 'typeguard' && matrix.session != 'tests'
-        run: |
-          nox --force-color --python=${{ matrix.python }}
+      # - name: Run Nox
+      #   if: always() && matrix.session != 'typeguard' && matrix.session != 'tests'
+      #   run: |
+      #     nox --force-color --python=${{ matrix.python }}
 
       - name: Run Not Nox
-        if: matrix.session == 'tests' || matrix.session == 'typeguard'
         run: |
           ./bin/run_not_nox_in_ci ${{ matrix.python }}
 
@@ -163,7 +162,7 @@ jobs:
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
-          path: "spiffworkflow-backend/.coverage"
+          path: "spiffworkflow-backend/.coverage.*"
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'
@@ -256,11 +255,11 @@ jobs:
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
 
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-          nox --version
+      # - name: Install Nox
+      #   run: |
+      #     pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
+      #     pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+      #     nox --version
 
       - name: Download coverage data
         uses: actions/download-artifact@v3.0.2
@@ -269,14 +268,18 @@ jobs:
           # this action doesn't seem to respect working-directory so include working-directory value in path
           path: spiffworkflow-backend
 
-      - name: Combine coverage data and display human readable report
-        run: |
-          find . -name \*.pyc -delete
-          nox --force-color --session=coverage
+      # - name: Combine coverage data and display human readable report
+      #   run: |
+      #     find . -name \*.pyc -delete
+      #     nox --force-color --session=coverage
+      #
+      # - name: Create coverage report
+      #   run: |
+      #     nox --force-color --session=coverage -- xml
 
-      - name: Create coverage report
+      - name: Run Not Nox
         run: |
-          nox --force-color --session=coverage -- xml
+          ./bin/run_not_nox_in_ci ${{ matrix.python }}
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.4

@@ -49,7 +49,14 @@ poetry install
 if [[ "${NOXSESSION:-}" == "tests" ]]; then
   setup_db_for_ci
   poetry run coverage run --parallel -m pytest
-
+elif [[ "${NOXSESSION:-}" == "typeguard" ]]; then
+  setup_db_for_ci
+  RUN_TYPEGUARD=true poetry run pytest
+elif [[ "${NOXSESSION:-}" == "mypy" ]]; then
+  poetry run mypy src tests
+elif [[ "${NOXSESSION:-}" == "safety" ]]; then
+  poetry run safety check --full-report --file=.nox/safety/tmp/requirements.txt
+elif [[ "${NOXSESSION:-}" == "coverage" ]]; then
   # Check if no arguments are provided and if any .coverage.* files exist
   if ls .coverage.* 1> /dev/null 2>&1; then
       # Combine the coverage data files
@@ -57,9 +64,8 @@ if [[ "${NOXSESSION:-}" == "tests" ]]; then
   fi
 
   # Run coverage with the provided arguments
-  poetry run coverage report
-
-elif [[ "${NOXSESSION:-}" == "typeguard" ]]; then
-  setup_db_for_ci
-  RUN_TYPEGUARD=true poetry run pytest
+  poetry run coverage report -- xml
+else
+  >&2 echo "ERROR: Given NOXSESSION - ${NOXSESSION:-} - is not supported"
+  exit 1
 fi
