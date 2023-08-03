@@ -141,6 +141,11 @@ jobs:
         run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
         if: matrix.database == 'postgres'
 
+      - name: Install mysqlclient lib dependencies
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install mysql pkg-config
+
       - name: Run Session
         run: |
           ./bin/run_ci_session ${{ matrix.session }}

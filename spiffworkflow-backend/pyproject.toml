@@ -53,17 +53,6 @@ Jinja2 = "^3.1.2"
 RestrictedPython = "^6.0"
 Flask-SQLAlchemy = "^3"
 
-# type hinting stuff
-# these need to be in the normal (non dev-dependencies) section
-# because if not then poetry export won't have them and nox -s mypy --pythons 3.10
-# will fail
-types-dateparser = "^1.1.4.1"
-types-Werkzeug = "^1.0.9"
-types-PyYAML = "^6.0.12"
-types-Flask = "^1.1.6"
-types-requests = "^2.28.6"
-types-pytz = "^2022.1.1"
-
 # https://github.com/dropbox/sqlalchemy-stubs/pull/251
 # someday get off github
 # sqlalchemy-stubs = "^0.4"
@@ -107,6 +96,14 @@ bandit = "1.7.2"
 # flask-sqlalchemy-stubs = "^0.2"
 pre-commit-hooks = "^4.0.1"
 Pygments = "^2.10.0"
+
+# type hinting stuff
+types-dateparser = "^1.1.4.1"
+types-Werkzeug = "^1.0.9"
+types-PyYAML = "^6.0.12"
+types-Flask = "^1.1.6"
+types-requests = "^2.28.6"
+types-pytz = "^2022.1.1"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
