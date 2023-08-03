@@ -140,9 +140,9 @@ jobs:
         run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
         if: matrix.database == 'postgres'
 
-      - name: Run Not Nox
+      - name: Run Session
         run: |
-          ./bin/run_not_nox_in_ci ${{ matrix.session }}
+          ./bin/run_ci_session ${{ matrix.session }}
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
@@ -251,9 +251,9 @@ jobs:
           # this action doesn't seem to respect working-directory so include working-directory value in path
           path: spiffworkflow-backend
 
-      - name: Run Not Nox
+      - name: Run Coverage
         run: |
-          ./bin/run_not_nox_in_ci coverage
+          ./bin/run_ci_session coverage
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.4

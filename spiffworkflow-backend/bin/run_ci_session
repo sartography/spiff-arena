@@ -8,7 +8,7 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-supported_session_types=$(grep -E '^(el)?if.*\<session_type\>.*==' $0 | sed -E 's/.*== "([^"]+)".*/\1/' | tr '\n' ' ')
+supported_session_types=$(grep -E '^(el)?if.*\<session_type\>.*==' "$0" | sed -E 's/.*== "([^"]+)".*/\1/' | tr '\n' ' ')
 
 session_type="${1:-}"
 if [[ -z "${session_type}" ]] || ! grep -qE "\<${session_type}\>" <<<"$supported_session_types"; then
