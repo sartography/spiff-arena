@@ -19,4 +19,4 @@ class TimesExecutedByUser(Script):
         if process_model_identifer is not None:
             return ProcessInstanceService.times_executed_by_user(process_model_identifer)
         else:
-            return False
+            return 0

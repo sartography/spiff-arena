@@ -52,6 +52,7 @@ export default function HomePageRoutes() {
       <OnboardingView />
       {renderTabs()}
       <Routes>
+        <Route path="/" element={<InProgressInstances />} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
         <Route path="grouped" element={<InProgressInstances />} />
