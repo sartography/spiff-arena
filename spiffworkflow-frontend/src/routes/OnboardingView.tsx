@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import InProgressInstances from './InProgressInstances';
 import { Onboarding } from '../interfaces';
@@ -18,11 +19,23 @@ export default function OnboardingView() {
   }, [setOnboarding]);
 
   const onboardingElement = () => {
-    if (onboarding) {
+    if (onboarding && onboarding.instructions.length > 0) {
+      return (
+        <MDEditor.Markdown
+          className="onboarding"
+          linkTarget="_blank"
+          source={onboarding.instructions}
+        />
+      );
+      /*
       if (onboarding.type === 'default_view') {
         if (onboarding.value === 'my_tasks') {
           return <MyTasks />;
         }
+      } else if (
+          onboarding.type === 'user_input_required'
+      ) {
+        console.log("onboarding");
       } else if (
         onboarding.type === 'user_input_required' &&
         onboarding.process_instance_id &&
@@ -32,9 +45,9 @@ export default function OnboardingView() {
           `/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`
         );
       }
+      */
     }
-
-    return <InProgressInstances />;
+    return null;
   };
 
   return onboardingElement();

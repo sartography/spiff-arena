@@ -15,6 +15,7 @@ export interface Onboarding {
   value?: string;
   process_instance_id?: string;
   task_id?: string;
+  instructions: string;
 }
 
 export interface ProcessData {
