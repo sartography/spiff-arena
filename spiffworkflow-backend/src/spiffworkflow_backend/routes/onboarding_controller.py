@@ -16,8 +16,6 @@ def get_onboarding() -> Response:
     with suppress(Exception):
         process_instance, processor = _process_instance_start("site-administration/onboarding")
 
-        # get the first ready task from the db:
-
         if processor is not None:
             if process_instance.status == "complete":
                 workflow_data = processor.bpmn_process_instance.data
