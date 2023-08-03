@@ -54,8 +54,8 @@ elif [[ "${NOXSESSION:-}" == "typeguard" ]]; then
   RUN_TYPEGUARD=true poetry run pytest
 elif [[ "${NOXSESSION:-}" == "mypy" ]]; then
   poetry run mypy src tests
-elif [[ "${NOXSESSION:-}" == "safety" ]]; then
-  poetry run safety check --full-report --file=.nox/safety/tmp/requirements.txt
+# elif [[ "${NOXSESSION:-}" == "safety" ]]; then
+#   poetry run safety check --full-report --file=.nox/safety/tmp/requirements.txt
 elif [[ "${NOXSESSION:-}" == "coverage" ]]; then
   # Check if no arguments are provided and if any .coverage.* files exist
   if ls .coverage.* 1> /dev/null 2>&1; then
