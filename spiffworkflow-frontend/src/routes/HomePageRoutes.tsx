@@ -49,9 +49,9 @@ export default function HomePageRoutes() {
 
   return (
     <div className="fixed-width-container">
+      <OnboardingView />
       {renderTabs()}
       <Routes>
-        <Route path="/" element={<OnboardingView />} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
         <Route path="grouped" element={<InProgressInstances />} />
