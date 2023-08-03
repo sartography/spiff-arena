@@ -39,10 +39,11 @@ def authentication_begin(
     service: str,
     auth_method: str,
 ) -> werkzeug.wrappers.Response:
-    verify_token(request.args.get("token"), force_run=True)
+    token = request.args.get("token")
+    verify_token(token, force_run=True)
     if not OAuthService.supported_service(service):
         raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
-    remote_app = OAuthService.remote_app(service)
+    remote_app = OAuthService.remote_app(service, token)
     callback = f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback/{service}/oauth"
     return remote_app.authorize(callback=callback, _external=True)
 
@@ -51,16 +52,11 @@ def authentication_callback(
     auth_method: str,
 ) -> werkzeug.wrappers.Response:
     if OAuthService.supported_service(service):
-        remote_app = OAuthService.remote_app(service)
-        resp = None
-        try:
-            resp = remote_app.authorized_response()
-            print(resp)
-        except Exception as e:
-            print(e.data)
-        #if resp is None:
-        #    raise ApiError("unknown_authentication_service", f"None response: {service}", status_code=400)
-        # TODO: token from state, verify code_challenge as well
+        token = OAuthService.token_from_state(request.args.get("state"))
+        verify_token(token, force_run=True)
+        remote_app = OAuthService.remote_app(service, token)
+        response = remote_app.authorized_response()
+        SecretService.update_secret(f"{service}/{auth_method}", response["access_token"], g.user.id, create_if_not_exists=True)
     else:
         verify_token(request.args.get("token"), force_run=True)
         response = request.args["response"]
