@@ -153,7 +153,7 @@ jobs:
 
       - name: Run Not Nox
         run: |
-          ./bin/run_not_nox_in_ci ${{ matrix.python }}
+          ./bin/run_not_nox_in_ci ${{ matrix.session }}
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
@@ -279,7 +279,7 @@ jobs:
 
       - name: Run Not Nox
         run: |
-          ./bin/run_not_nox_in_ci ${{ matrix.python }}
+          ./bin/run_not_nox_in_ci coverage
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.4

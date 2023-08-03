@@ -9,6 +9,12 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
+session_type="${1:-}"
+if [[ -z "${1:-}" ]]; then
+  >&2 echo "usage: $(basename "$0") [session_type]"
+  exit 1
+fi
+
 if [[ -z "${SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI:-}" ]]; then
   export FLASK_SESSION_SECRET_KEY=super_secret_key
   export FORCE_COLOR="1"
@@ -16,9 +22,6 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD=
   export SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=mysql
   export SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI='true'
-fi
-if [[ -z "${NOXSESSION:-}" ]]; then
-  export NOXSESSION=tests
 fi
 
 function setup_db_for_ci() {
@@ -46,26 +49,26 @@ function setup_db_for_ci() {
 
 poetry install
 
-if [[ "${NOXSESSION:-}" == "tests" ]]; then
+if [[ "${session_type}" == "tests" ]]; then
   setup_db_for_ci
   poetry run coverage run --parallel -m pytest
-elif [[ "${NOXSESSION:-}" == "typeguard" ]]; then
+elif [[ "${session_type}" == "typeguard" ]]; then
   setup_db_for_ci
   RUN_TYPEGUARD=true poetry run pytest
-elif [[ "${NOXSESSION:-}" == "mypy" ]]; then
+elif [[ "${session_type}" == "mypy" ]]; then
   poetry run mypy src tests
-# elif [[ "${NOXSESSION:-}" == "safety" ]]; then
-#   poetry run safety check --full-report --file=.nox/safety/tmp/requirements.txt
-elif [[ "${NOXSESSION:-}" == "coverage" ]]; then
+elif [[ "${session_type}" == "safety" ]]; then
+  poetry run safety check --full-report
+elif [[ "${session_type}" == "coverage" ]]; then
   # Check if no arguments are provided and if any .coverage.* files exist
   if ls .coverage.* 1> /dev/null 2>&1; then
       # Combine the coverage data files
       poetry run coverage combine
   fi
 
-  # Run coverage with the provided arguments
-  poetry run coverage report -- xml
+  poetry run coverage report
+  poetry run coverage xml
 else
-  >&2 echo "ERROR: Given NOXSESSION - ${NOXSESSION:-} - is not supported"
+  >&2 echo "ERROR: Given session type - ${session_type:-} - is not supported"
   exit 1
 fi
