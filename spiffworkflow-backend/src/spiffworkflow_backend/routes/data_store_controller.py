@@ -15,7 +15,7 @@ def data_store_list() -> flask.wrappers.Response:
 
     # Right now the only data store we support is type ahead
 
-    for cat in db.session.query(TypeaheadModel.category).distinct():  # type: ignore
+    for cat in db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category):  # type: ignore
         data_stores.append({"name": cat[0], "type": "typeahead"})
 
     return make_response(jsonify(data_stores), 200)
@@ -26,7 +26,9 @@ def data_store_item_list(
 ) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
     if data_store_type == "typeahead":
-        data_store_query = TypeaheadModel.query.filter_by(category=name)
+        data_store_query = TypeaheadModel.query.filter_by(category=name).order_by(
+            TypeaheadModel.category, TypeaheadModel.search_term
+        )
         data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
         results = []
         for typeahead in data.items:

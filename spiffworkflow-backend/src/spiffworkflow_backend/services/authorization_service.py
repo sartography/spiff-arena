@@ -504,6 +504,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/connector-proxy/typeahead/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/debug/version-info"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/extensions"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-groups"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-models"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes"))
@@ -547,6 +548,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/extensions/*"))
 
         # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-assign/*"))

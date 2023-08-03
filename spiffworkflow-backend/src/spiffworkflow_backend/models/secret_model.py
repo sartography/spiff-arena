@@ -20,7 +20,6 @@ class SecretModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
 
     # value is not included in the serialized output because it is sensitive
-    @property
     def serialized(self) -> dict[str, Any]:
         return {
             "id": self.id,
