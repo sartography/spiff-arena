@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
-import InProgressInstances from './InProgressInstances';
 import { Onboarding } from '../interfaces';
-import MyTasks from './MyTasks';
 
 export default function OnboardingView() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     HttpService.makeCallToBackend({
