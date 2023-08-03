@@ -24,6 +24,7 @@ jobs:
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
+              upload_coverage: true,
             }
           - {
               python: "3.11",
@@ -146,7 +147,7 @@ jobs:
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest' && matrix.database == 'mysql'
+        if: matrix.upload_coverage
         uses: "actions/upload-artifact@v3"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
