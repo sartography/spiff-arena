@@ -55,6 +55,7 @@ def authentication_callback(
         resp = None
         try:
             resp = remote_app.authorized_response()
+            print(resp)
         except Exception as e:
             print(e.data)
         #if resp is None:
