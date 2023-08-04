@@ -42,7 +42,9 @@ class JinjaService:
         if extensions and "instructionsForEndUser" in extensions:
             if extensions["instructionsForEndUser"]:
                 try:
-                    instructions = cls.render_jinja_template(extensions["instructionsForEndUser"], task_model)
+                    instructions = cls.render_jinja_template(
+                        extensions["instructionsForEndUser"], task_model.get_data(), task_model
+                    )
                     extensions["instructionsForEndUser"] = instructions
                     return instructions
                 except TaskModelError as wfe:
@@ -51,13 +53,17 @@ class JinjaService:
         return ""
 
     @classmethod
-    def render_jinja_template(cls, unprocessed_template: str, task_model: TaskModel) -> str:
+    def render_jinja_template(
+        cls, unprocessed_template: str, task_data: dict, task_model: TaskModel | None = None
+    ) -> str:
         jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
         jinja_environment.filters.update(JinjaHelpers.get_helper_mapping())
         try:
             template = jinja_environment.from_string(unprocessed_template)
-            return template.render(**(task_model.get_data()), **JinjaHelpers.get_helper_mapping())
+            return template.render(**(task_data), **JinjaHelpers.get_helper_mapping())
         except jinja2.exceptions.TemplateError as template_error:
+            if task_model is None:
+                raise template_error
             wfe = TaskModelError(str(template_error), task_model=task_model, exception=template_error)
             if isinstance(template_error, TemplateSyntaxError):
                 wfe.line_number = template_error.lineno
@@ -65,6 +71,8 @@ class JinjaService:
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from template_error
         except Exception as error:
+            if task_model is None:
+                raise error
             _type, _value, tb = exc_info()
             wfe = TaskModelError(str(error), task_model=task_model, exception=error)
             while tb:

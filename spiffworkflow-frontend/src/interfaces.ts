@@ -445,3 +445,8 @@ export interface ExtensionUiSchema {
   navigation_items?: UiSchemaNavItem[];
   routes: UiSchemaRoute;
 }
+
+export interface ExtensionPostBody {
+  extension_input: any;
+  ui_schema_page_definition?: UiSchemaPageDefinition;
+}

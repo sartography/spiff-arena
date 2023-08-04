@@ -6,6 +6,7 @@ import { Editor } from '@monaco-editor/react';
 import { Form } from '../rjsf/carbon_theme';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
+  ExtensionPostBody,
   ExtensionUiSchema,
   ProcessFile,
   ProcessModel,
@@ -15,6 +16,7 @@ import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined } from '../helpers';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
@@ -23,6 +25,7 @@ export default function Extension() {
   const [formData, setFormData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [processedTaskData, setProcessedTaskData] = useState<any>(null);
+  const [markdownToRender, setMarkdownToRender] = useState<string | null>(null);
   const [filesByName] = useState<{
     [key: string]: ProcessFile;
   }>({});
@@ -66,7 +69,10 @@ export default function Extension() {
   }, [targetUris.extensionPath, params, filesByName]);
 
   const processSubmitResult = (result: any) => {
-    setProcessedTaskData(result);
+    setProcessedTaskData(result.task_data);
+    if (result.rendered_results_markdown) {
+      setMarkdownToRender(result.rendered_results_markdown);
+    }
     setFormButtonsDisabled(false);
   };
 
@@ -82,9 +88,11 @@ export default function Extension() {
     removeError();
     delete dataToSubmit.isManualTask;
 
+    const postBody: ExtensionPostBody = { extension_input: dataToSubmit };
     let apiPath = targetUris.extensionPath;
     if (uiSchemaPageDefinition && uiSchemaPageDefinition.api) {
       apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.api}`;
+      postBody.ui_schema_page_definition = uiSchemaPageDefinition;
     }
 
     // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
@@ -99,7 +107,7 @@ export default function Extension() {
         setFormButtonsDisabled(false);
       },
       httpMethod: 'POST',
-      postBody: { extension_input: dataToSubmit },
+      postBody,
     });
   };
 
@@ -146,23 +154,35 @@ export default function Extension() {
       }
     }
     if (processedTaskData) {
-      componentsToDisplay.push(
-        <>
-          <h2 className="with-top-margin">Result:</h2>
-          <Editor
-            className="with-top-margin"
-            height="30rem"
-            width="auto"
-            defaultLanguage="json"
-            defaultValue={JSON.stringify(processedTaskData, null, 2)}
-            options={{
-              readOnly: true,
-              scrollBeyondLastLine: true,
-              minimap: { enabled: true },
-            }}
-          />
-        </>
-      );
+      if (markdownToRender) {
+        componentsToDisplay.push(
+          <div data-color-mode="light" className="with-top-margin">
+            <MDEditor.Markdown
+              className="onboarding"
+              linkTarget="_blank"
+              source={markdownToRender}
+            />
+          </div>
+        );
+      } else {
+        componentsToDisplay.push(
+          <>
+            <h2 className="with-top-margin">Result:</h2>
+            <Editor
+              className="with-top-margin"
+              height="30rem"
+              width="auto"
+              defaultLanguage="json"
+              defaultValue={JSON.stringify(processedTaskData, null, 2)}
+              options={{
+                readOnly: true,
+                scrollBeyondLastLine: true,
+                minimap: { enabled: true },
+              }}
+            />
+          </>
+        );
+      }
     }
     return <div className="fixed-width-container">{componentsToDisplay}</div>;
   }

@@ -1,3 +1,5 @@
+from typing import Any
+
 import flask.wrappers
 from flask import current_app
 from flask import g
@@ -11,11 +13,14 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
 def extension_run(
@@ -51,6 +56,10 @@ def extension_run(
             status_code=400,
         )
 
+    ui_schema_page_definition = None
+    if body and "ui_schema_page_definition" in body:
+        ui_schema_page_definition = body["ui_schema_page_definition"]
+
     process_instance = ProcessInstanceModel(
         status=ProcessInstanceStatus.not_started.value,
         process_initiator_id=g.user.id,
@@ -73,6 +82,7 @@ def extension_run(
         ApiError,
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
+        WorkflowExecutionServiceError,
     ) as e:
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
@@ -93,8 +103,16 @@ def extension_run(
     task_data = {}
     if processor is not None:
         task_data = processor.get_data()
+    result: dict[str, Any] = {"task_data": task_data}
 
-    return make_response(jsonify(task_data), 200)
+    if ui_schema_page_definition and "results_markdown_filename" in ui_schema_page_definition:
+        file_contents = SpecFileService.get_data(
+            process_model, ui_schema_page_definition["results_markdown_filename"]
+        ).decode("utf-8")
+        form_contents = JinjaService.render_jinja_template(file_contents, task_data)
+        result["rendered_results_markdown"] = form_contents
+
+    return make_response(jsonify(result), 200)
 
 
 def extension_list() -> flask.wrappers.Response:
