@@ -27,6 +27,10 @@ class OAuthService:
         return [{"id": f"{k}/OAuth", "parameters": []} for k in AUTHS.keys()]
 
     @staticmethod
+    def authentication_configuration() -> dict[str, Any]:
+        return AUTHS
+
+    @staticmethod
     def supported_service(service: str) -> bool:
         return service in AUTHS
 
