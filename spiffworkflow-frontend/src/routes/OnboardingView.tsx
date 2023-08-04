@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
-import InProgressInstances from './InProgressInstances';
 import { Onboarding } from '../interfaces';
-import MyTasks from './MyTasks';
+import { objectIsEmpty } from '../helpers';
 
 export default function OnboardingView() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     HttpService.makeCallToBackend({
@@ -18,11 +17,29 @@ export default function OnboardingView() {
   }, [setOnboarding]);
 
   const onboardingElement = () => {
-    if (onboarding) {
+    if (
+      onboarding &&
+      !objectIsEmpty(onboarding) &&
+      onboarding.instructions.length > 0
+    ) {
+      return (
+        <div data-color-mode="light">
+          <MDEditor.Markdown
+            className="onboarding"
+            linkTarget="_blank"
+            source={onboarding.instructions}
+          />
+        </div>
+      );
+      /*
       if (onboarding.type === 'default_view') {
         if (onboarding.value === 'my_tasks') {
           return <MyTasks />;
         }
+      } else if (
+          onboarding.type === 'user_input_required'
+      ) {
+        console.log("onboarding");
       } else if (
         onboarding.type === 'user_input_required' &&
         onboarding.process_instance_id &&
@@ -32,9 +49,9 @@ export default function OnboardingView() {
           `/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`
         );
       }
+      */
     }
-
-    return <InProgressInstances />;
+    return null;
   };
 
   return onboardingElement();

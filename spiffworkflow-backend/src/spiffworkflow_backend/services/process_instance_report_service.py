@@ -63,7 +63,9 @@ class ProcessInstanceReportService:
                 },
                 {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Start time", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "End time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -96,10 +98,10 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+                {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -122,10 +124,10 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -147,10 +149,10 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
@@ -243,7 +245,7 @@ class ProcessInstanceReportService:
         cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
             process_instance_mapping = process_instance_row._mapping
-            process_instance_dict = process_instance_row[0].serialized
+            process_instance_dict = process_instance_row[0].serialized()
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
@@ -341,7 +343,7 @@ class ProcessInstanceReportService:
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
             {
-                "Header": "Started By",
+                "Header": "Started by",
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
@@ -355,7 +357,7 @@ class ProcessInstanceReportService:
         """Columns that are used with certain system reports."""
         return_value: list[ReportMetadataColumn] = [
             {"Header": "Task", "accessor": "task_title", "filterable": False},
-            {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+            {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
         ]
         return return_value
 
@@ -638,7 +640,22 @@ class ProcessInstanceReportService:
             ]
             if filter_for_column:
                 isouter = False
-                conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
+                    conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "not equals":
+                    conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "contains":
+                    conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
+                elif filter_for_column["operator"] == "is_empty":
+                    # we still need to return results if the metadata value is null so make sure it's outer join
+                    isouter = True
+                    conditions.append(
+                        or_(instance_metadata_alias.value.is_(None), instance_metadata_alias.value == "")
+                    )
+                elif filter_for_column["operator"] == "is_not_empty":
+                    conditions.append(
+                        or_(instance_metadata_alias.value.is_not(None), instance_metadata_alias.value != "")
+                    )
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, and_(*conditions), isouter=isouter
             ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))

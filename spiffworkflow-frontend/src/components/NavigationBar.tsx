@@ -24,11 +24,18 @@ import { Can } from '@casl/react';
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
+import {
+  PermissionsToCheck,
+  ProcessModel,
+  ProcessFile,
+  ExtensionUiSchema,
+  UiSchemaNavItem,
+} from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import { UnauthenticatedError } from '../services/HttpService';
+import HttpService, { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
+import { slugifyString } from '../helpers';
 
 export default function NavigationBar() {
   const handleLogout = () => {
@@ -41,6 +48,9 @@ export default function NavigationBar() {
 
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
+  const [extensionNavigationItems, setExtensionNavigationItems] = useState<
+    UiSchemaNavItem[] | null
+  >(null);
 
   const { targetUris } = useUriListForPermissions();
 
@@ -86,6 +96,41 @@ export default function NavigationBar() {
     }
     setActiveKey(newActiveKey);
   }, [location]);
+
+  useEffect(() => {
+    const processExtensionResult = (processModels: ProcessModel[]) => {
+      const eni: UiSchemaNavItem[] = processModels
+        .map((processModel: ProcessModel) => {
+          const extensionUiSchemaFile = processModel.files.find(
+            (file: ProcessFile) => file.name === 'extension_uischema.json'
+          );
+          if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
+            try {
+              const extensionUiSchema: ExtensionUiSchema = JSON.parse(
+                extensionUiSchemaFile.file_contents
+              );
+              if (extensionUiSchema.navigation_items) {
+                return extensionUiSchema.navigation_items;
+              }
+            } catch (jsonParseError: any) {
+              console.error(
+                `Unable to get navigation items for ${processModel.id}`
+              );
+            }
+          }
+          return [] as UiSchemaNavItem[];
+        })
+        .flat();
+      if (eni) {
+        setExtensionNavigationItems(eni);
+      }
+    };
+
+    HttpService.makeCallToBackend({
+      path: targetUris.extensionListPath,
+      successCallback: processExtensionResult,
+    });
+  }, [targetUris.extensionListPath]);
 
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;
@@ -201,6 +246,29 @@ export default function NavigationBar() {
     );
   };
 
+  const extensionNavigationElements = () => {
+    if (!extensionNavigationItems) {
+      return null;
+    }
+
+    return extensionNavigationItems.map((navItem: UiSchemaNavItem) => {
+      const navItemRoute = `/extensions${navItem.route}`;
+      const regexp = new RegExp(`^${navItemRoute}`);
+      if (regexp.test(location.pathname)) {
+        setActiveKey(navItemRoute);
+      }
+      return (
+        <HeaderMenuItem
+          href={navItemRoute}
+          isCurrentPage={isActivePage(navItemRoute)}
+          data-qa={`extension-${slugifyString(navItem.label)}`}
+        >
+          {navItem.label}
+        </HeaderMenuItem>
+      );
+    });
+  };
+
   const headerMenuItems = () => {
     if (!UserService.isLoggedIn()) {
       return null;
@@ -240,6 +308,7 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         {configurationElement()}
+        {extensionNavigationElements()}
       </>
     );
   };

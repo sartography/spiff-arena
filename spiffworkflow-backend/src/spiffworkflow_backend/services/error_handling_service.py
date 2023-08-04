@@ -1,11 +1,9 @@
 from flask import current_app
 from flask import g
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -32,6 +30,9 @@ class ErrorHandlingService:
     def _update_process_instance_in_database(
         cls, process_instance: ProcessInstanceModel, fault_or_suspend_on_exception: str
     ) -> None:
+        if process_instance.persistence_level == "none":
+            return
+
         # First, suspend or fault the instance
         if fault_or_suspend_on_exception == "suspend":
             cls._set_instance_status(
@@ -54,6 +55,12 @@ class ErrorHandlingService:
         process_instance: ProcessInstanceModel,
     ) -> None:
         """Send a BPMN Message - which may kick off a waiting process."""
+
+        # importing here to avoid circular imports since these imports are only needed here at runtime.
+        # we were not able to figure out which specific import was causing the issue.
+        from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+        from spiffworkflow_backend.services.message_service import MessageService
+
         message_text = (
             f"There was an exception running process {process_model.id}.\nOriginal Error:\n{error.__repr__()}"
         )

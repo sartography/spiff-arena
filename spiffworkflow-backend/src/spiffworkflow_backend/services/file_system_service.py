@@ -12,6 +12,10 @@ from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
+class ProcessModelFileNotFoundError(Exception):
+    pass
+
+
 class FileSystemService:
 
     """Simple Service meant for extension that provides some useful
@@ -50,6 +54,46 @@ class FileSystemService:
                 cls.id_string_to_relative_path(id),
             )
         )
+
+    @classmethod
+    def get_files(
+        cls,
+        process_model_info: ProcessModelInfo,
+        file_name: str | None = None,
+        extension_filter: str = "",
+    ) -> list[File]:
+        """Return all files associated with a workflow specification."""
+        path = os.path.join(FileSystemService.root_path(), process_model_info.id_for_file_path())
+        files = cls._get_files(path, file_name)
+        if extension_filter != "":
+            files = list(filter(lambda file: file.name.endswith(extension_filter), files))
+        return files
+
+    @classmethod
+    def get_sorted_files(
+        cls,
+        process_model_info: ProcessModelInfo,
+    ) -> list[File]:
+        files = sorted(
+            FileSystemService.get_files(process_model_info),
+            key=lambda f: "" if f.name == process_model_info.primary_file_name else f.sort_index,
+        )
+        return files
+
+    @staticmethod
+    def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
+        full_file_path = FileSystemService.full_file_path(process_model_info, file_name)
+        if not os.path.exists(full_file_path):
+            raise ProcessModelFileNotFoundError(
+                f"No file found with name {file_name} in {process_model_info.display_name}"
+            )
+        with open(full_file_path, "rb") as f_handle:
+            spec_file_data = f_handle.read()
+        return spec_file_data
+
+    @staticmethod
+    def full_file_path(process_model: ProcessModelInfo, file_name: str) -> str:
+        return os.path.abspath(os.path.join(FileSystemService.process_model_full_path(process_model), file_name))
 
     @staticmethod
     def full_path_from_relative_path(relative_path: str) -> str:

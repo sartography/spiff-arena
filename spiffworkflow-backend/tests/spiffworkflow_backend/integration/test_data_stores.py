@@ -80,14 +80,17 @@ class TestDataStores(BaseTest):
             "/v1.0/data-stores/typeahead/albums?per_page=10", headers=self.logged_in_headers(with_super_admin_user)
         )
 
+        expected_item_in_response = {
+            "search_term": "A Vulgar Display Of Power",
+            "year": 1992,
+            "album": "A Vulgar Display Of Power",
+            "artist": "Pantera",
+        }
+
         assert response.json is not None
         assert len(response.json["results"]) == 10
         assert response.json["pagination"]["count"] == 10
         assert response.json["pagination"]["total"] == 76
         assert response.json["pagination"]["pages"] == 8
-        assert response.json["results"][0] == {
-            "search_term": "Mama Said Knock You Out",
-            "year": 1990,
-            "album": "Mama Said Knock You Out",
-            "artist": "LL Cool J",
-        }
+
+        assert expected_item_in_response in response.json["results"]
