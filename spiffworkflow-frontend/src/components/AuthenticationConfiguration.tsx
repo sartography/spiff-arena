@@ -1,7 +1,7 @@
 import Editor from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
-import HttpService from '../services/HttpService';
 import { Button } from '@carbon/react';
+import HttpService from '../services/HttpService';
 
 export default function AuthenticationConfiguration() {
   const [authConfig, setAuthConfig] = useState('');
@@ -20,7 +20,7 @@ export default function AuthenticationConfiguration() {
       path: '/authentication/configuration',
       successCallback: () => {},
       httpMethod: 'PUT',
-      postBody: { 'value': authConfig },
+      postBody: { value: authConfig },
     });
   };
 
