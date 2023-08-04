@@ -14,6 +14,7 @@ from lxml.builder import ElementMaker  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _get_required_parameter_or_raise
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTestRunner
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -27,7 +28,7 @@ def script_unit_test_create(
 
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
-    file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
+    file = FileSystemService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
         raise ApiError(
             error_code="cannot_find_file",

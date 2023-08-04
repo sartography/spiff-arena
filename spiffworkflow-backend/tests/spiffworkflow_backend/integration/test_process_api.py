@@ -590,7 +590,7 @@ class TestProcessApi(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group.serialized),
+            data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 201
         assert response.json
@@ -658,7 +658,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group.serialized),
+            data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 200
 
@@ -2770,8 +2770,8 @@ class TestProcessApi(BaseTest):
             "columns": [
                 {"Header": "ID", "accessor": "id", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
-                {"Header": "Key One", "accessor": "key1", "filterable": False},
-                {"Header": "Key Two", "accessor": "key2", "filterable": False},
+                {"Header": "Key one", "accessor": "key1", "filterable": False},
+                {"Header": "Key two", "accessor": "key2", "filterable": False},
             ],
             "order_by": ["status"],
             "filter_by": [],
@@ -2817,7 +2817,7 @@ class TestProcessApi(BaseTest):
             "columns": [
                 {"Header": "ID", "accessor": "id", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
-                {"Header": "Process Initiator", "accessor": "username", "filterable": False},
+                {"Header": "Process initiator", "accessor": "username", "filterable": False},
             ],
             "order_by": ["status"],
             "filter_by": [
@@ -2833,7 +2833,7 @@ class TestProcessApi(BaseTest):
             "columns": [
                 {"Header": "ID", "accessor": "id", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
-                {"Header": "Process Initiator", "accessor": "username", "filterable": False},
+                {"Header": "Process initiator", "accessor": "username", "filterable": False},
             ],
             "order_by": ["status"],
             "filter_by": [
@@ -2929,13 +2929,13 @@ class TestProcessApi(BaseTest):
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
             {
-                "Header": "Started By",
+                "Header": "Started by",
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
             {"Header": "Status", "accessor": "status", "filterable": False},
             {"Header": "Task", "accessor": "task_title", "filterable": False},
-            {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+            {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
             {"Header": "awesome_var", "accessor": "awesome_var", "filterable": True},
             {"Header": "invoice_number", "accessor": "invoice_number", "filterable": True},
             {"Header": "key1", "accessor": "key1", "filterable": True},
