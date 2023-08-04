@@ -40,6 +40,9 @@ def authentication_configuration() -> flask.wrappers.Response:
 
     return Response(json.dumps(config), status=200, mimetype="application/json")
 
+def authentication_configuration_update(body: dict) -> flask.wrappers.Response:
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
 
 def authentication_begin(
     service: str,

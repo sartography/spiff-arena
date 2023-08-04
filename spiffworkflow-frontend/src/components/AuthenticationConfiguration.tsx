@@ -1,6 +1,7 @@
 import Editor from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
 import HttpService from '../services/HttpService';
+import { Button } from '@carbon/react';
 
 export default function AuthenticationConfiguration() {
   const [authConfig, setAuthConfig] = useState('');
@@ -14,15 +15,25 @@ export default function AuthenticationConfiguration() {
     });
   }, []);
 
+  const saveAuthConfig = () => {
+    HttpService.makeCallToBackend({
+      path: '/authentication/configuration',
+      successCallback: () => {},
+      httpMethod: 'PUT',
+      postBody: { 'value': authConfig },
+    });
+  };
+
   return (
     <>
-      <p>Local Configuration</p>
+      <h3>Local Configuration</h3>
+      <Button onClick={() => saveAuthConfig()}>Save</Button>
       <Editor
         height={600}
         width="auto"
         defaultLanguage="json"
         defaultValue={authConfig || ''}
-        onChange={(_) => null}
+        onChange={(value) => setAuthConfig(value || '')}
       />
     </>
   );

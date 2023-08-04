@@ -1889,6 +1889,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
+    put:
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_configuration_update
+      summary: Save the authentication configuration
+      tags:
+        - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceTask"
+      responses:
+        "200":
+          description: Authentication configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /authentication_begin/{service}/{auth_method}:
     parameters:
