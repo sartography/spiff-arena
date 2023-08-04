@@ -34,6 +34,7 @@ def authentication_list() -> flask.wrappers.Response:
 
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
 
+
 def authentication_configuration() -> flask.wrappers.Response:
     config = OAuthService.authentication_configuration()
 
