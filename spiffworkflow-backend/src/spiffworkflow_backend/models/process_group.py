@@ -46,7 +46,6 @@ class ProcessGroup:
             return True
         return False
 
-    @property
     def serialized(self) -> dict:
         original_dict = dataclasses.asdict(self)
         return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}

@@ -15,6 +15,7 @@ export interface Onboarding {
   value?: string;
   process_instance_id?: string;
   task_id?: string;
+  instructions: string;
 }
 
 export interface ProcessData {
@@ -127,6 +128,15 @@ export interface ProcessReference {
 }
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
+
+export interface FilterOperator {
+  id: string;
+  requires_value: boolean;
+}
+
+export interface FilterOperatorMapping {
+  [key: string]: FilterOperator;
+}
 
 export interface ProcessFile {
   content_type: string;
@@ -414,4 +424,24 @@ export interface DataStoreRecords {
 export interface DataStore {
   name: string;
   type: string;
+}
+
+export interface UiSchemaNavItem {
+  label: string;
+  route: string;
+}
+export interface UiSchemaPageDefinition {
+  header: string;
+  api: string;
+
+  form_schema_filename?: any;
+  form_ui_schema_filename?: any;
+  markdown_instruction_filename?: string;
+}
+export interface UiSchemaRoute {
+  [key: string]: UiSchemaPageDefinition;
+}
+export interface ExtensionUiSchema {
+  navigation_items?: UiSchemaNavItem[];
+  routes: UiSchemaRoute;
 }

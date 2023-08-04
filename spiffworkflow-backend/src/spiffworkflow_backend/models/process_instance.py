@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import cast
 
 import marshmallow
 from marshmallow import INCLUDE
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
-from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
@@ -101,7 +99,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_xml_file_contents: str | None = None
     process_model_with_diagram_identifier: str | None = None
 
-    @property
+    # full, none
+    persistence_level: str = "full"
+
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         return {
@@ -122,22 +122,12 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         }
 
     def serialized_with_metadata(self) -> dict[str, Any]:
-        process_instance_attributes = self.serialized
+        process_instance_attributes = self.serialized()
         process_instance_attributes["process_metadata"] = self.process_metadata
         process_instance_attributes["process_model_with_diagram_identifier"] = (
             self.process_model_with_diagram_identifier
         )
         return process_instance_attributes
-
-    @property
-    def serialized_flat(self) -> dict:
-        """Return object in serializeable format with data merged together with top-level attributes.
-
-        Top-level attributes like process_model_identifier and status win over data attributes.
-        """
-        serialized_top_level_attributes = self.serialized
-        serialized_top_level_attributes.pop("data", None)
-        return cast(dict, DeepMerge.merge(self.data, serialized_top_level_attributes))
 
     @validates("status")
     def validate_status(self, key: str, value: Any) -> Any:

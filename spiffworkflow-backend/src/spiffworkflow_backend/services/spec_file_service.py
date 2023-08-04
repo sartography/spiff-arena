@@ -20,10 +20,6 @@ from spiffworkflow_backend.services.process_caller_service import ProcessCallerS
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
-class ProcessModelFileNotFoundError(Exception):
-    pass
-
-
 class ProcessModelFileInvalidError(Exception):
     pass
 
@@ -34,19 +30,6 @@ class SpecFileService(FileSystemService):
     syncing and versioning.
      The files are stored in a directory whose path is determined by the category and spec names.
     """
-
-    @staticmethod
-    def get_files(
-        process_model_info: ProcessModelInfo,
-        file_name: str | None = None,
-        extension_filter: str = "",
-    ) -> list[File]:
-        """Return all files associated with a workflow specification."""
-        path = os.path.join(FileSystemService.root_path(), process_model_info.id_for_file_path())
-        files = SpecFileService._get_files(path, file_name)
-        if extension_filter != "":
-            files = list(filter(lambda file: file.name.endswith(extension_filter), files))
-        return files
 
     @staticmethod
     def reference_map(references: list[SpecReference]) -> dict[str, SpecReference]:
@@ -60,7 +43,7 @@ class SpecFileService(FileSystemService):
     def get_references_for_process(
         process_model_info: ProcessModelInfo,
     ) -> list[SpecReference]:
-        files = SpecFileService.get_files(process_model_info)
+        files = FileSystemService.get_files(process_model_info)
         references = []
         for file in files:
             references.extend(SpecFileService.get_references_for_file(file, process_model_info))
@@ -233,21 +216,6 @@ class SpecFileService(FileSystemService):
         full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
         SpecFileService.write_file_data_to_system(full_file_path, binary_data)
         return SpecFileService.to_file_object(file_name, full_file_path)
-
-    @staticmethod
-    def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
-        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
-        if not os.path.exists(full_file_path):
-            raise ProcessModelFileNotFoundError(
-                f"No file found with name {file_name} in {process_model_info.display_name}"
-            )
-        with open(full_file_path, "rb") as f_handle:
-            spec_file_data = f_handle.read()
-        return spec_file_data
-
-    @staticmethod
-    def full_file_path(process_model: ProcessModelInfo, file_name: str) -> str:
-        return os.path.abspath(os.path.join(SpecFileService.process_model_full_path(process_model), file_name))
 
     @staticmethod
     def last_modified(process_model: ProcessModelInfo, file_name: str) -> datetime:

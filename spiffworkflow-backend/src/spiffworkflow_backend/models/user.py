@@ -27,12 +27,12 @@ class UserModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     username: str = db.Column(db.String(255), nullable=False, unique=True)
-    email = db.Column(db.String(255), index=True)
+    email: str | None = db.Column(db.String(255), index=True)
 
     service = db.Column(db.String(255), nullable=False, unique=False, index=True)  # not 'openid' -- google, aws
     service_id = db.Column(db.String(255), nullable=False, unique=False, index=True)
 
-    display_name = db.Column(db.String(255))
+    display_name: str | None = db.Column(db.String(255))
     tenant_specific_field_1: str | None = db.Column(db.String(255))
     tenant_specific_field_2: str | None = db.Column(db.String(255))
     tenant_specific_field_3: str | None = db.Column(db.String(255))

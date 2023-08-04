@@ -170,7 +170,6 @@ class Task:
             self.properties = {}
         self.error_message = error_message
 
-    @property
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         multi_instance_type = None

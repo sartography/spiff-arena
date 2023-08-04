@@ -244,12 +244,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self._add_parents(spiff_task.parent)
 
     def _should_update_task_model(self) -> bool:
-        """We need to figure out if we have previously save task info on this process intance.
-
-        Use the bpmn_process_id to do this.
-        """
-        # return self.process_instance.bpmn_process_id is not None
-        return True
+        """No reason to save task model stuff if the process instance isn't persistent."""
+        return self.process_instance.persistence_level != "none"
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
@@ -394,12 +390,13 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
-        with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
-            if tripped:
-                raise AssertionError(
-                    "The current thread has not obtained a lock for this process"
-                    f" instance ({self.process_instance_model.id})."
-                )
+        if self.process_instance_model.persistence_level != "none":
+            with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
+                if tripped:
+                    raise AssertionError(
+                        "The current thread has not obtained a lock for this process"
+                        f" instance ({self.process_instance_model.id})."
+                    )
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
@@ -410,8 +407,9 @@ class WorkflowExecutionService:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
 
-            self.process_bpmn_messages()
-            self.queue_waiting_receive_messages()
+            if self.process_instance_model.persistence_level != "none":
+                self.process_bpmn_messages()
+                self.queue_waiting_receive_messages()
         except WorkflowTaskException as wte:
             ProcessInstanceTmpService.add_event_to_process_instance(
                 self.process_instance_model,
@@ -426,11 +424,12 @@ class WorkflowExecutionService:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
-            self.execution_strategy.save(self.bpmn_process_instance)
-            db.session.commit()
+            if self.process_instance_model.persistence_level != "none":
+                self.execution_strategy.save(self.bpmn_process_instance)
+                db.session.commit()
 
-            if save:
-                self.process_instance_saver()
+                if save:
+                    self.process_instance_saver()
 
     def process_bpmn_messages(self) -> None:
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()

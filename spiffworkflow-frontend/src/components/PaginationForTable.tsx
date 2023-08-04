@@ -4,9 +4,6 @@ import { useSearchParams } from 'react-router-dom';
 import { Pagination } from '@carbon/react';
 import { PaginationObject } from '../interfaces';
 
-export const DEFAULT_PER_PAGE = 50;
-export const DEFAULT_PAGE = 1;
-
 type OwnProps = {
   page: number;
   perPage: number;
