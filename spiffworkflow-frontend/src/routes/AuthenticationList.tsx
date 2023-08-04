@@ -5,6 +5,7 @@ import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 import { BACKEND_BASE_URL } from '../config';
+import AuthenticationConfiguration from '../components/AuthenticationConfiguration';
 
 export default function AuthenticationList() {
   const [authenticationList, setAuthenticationList] = useState<
@@ -48,6 +49,7 @@ export default function AuthenticationList() {
                 {row.id}
               </a>
             </td>
+            <td>Connector Proxy</td>
           </tr>
         );
       });
@@ -64,6 +66,7 @@ export default function AuthenticationList() {
                 {row.id}
               </a>
             </td>
+            <td>Local Configuration</td>
           </tr>
         );
       });
@@ -72,9 +75,13 @@ export default function AuthenticationList() {
           <thead>
             <tr>
               <th>Id</th>
+              <th>Source</th>
             </tr>
           </thead>
-          <tbody>{rows}{rowsV2}</tbody>
+          <tbody>
+            {rows}
+            {rowsV2}
+          </tbody>
         </Table>
       );
     }
@@ -82,7 +89,12 @@ export default function AuthenticationList() {
   };
 
   if (authenticationList) {
-    return <>{buildTable()}</>;
+    return (
+      <>
+        {buildTable()}
+        {AuthenticationConfiguration()}
+      </>
+    );
   }
 
   return <main />;
