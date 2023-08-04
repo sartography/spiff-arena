@@ -17,6 +17,7 @@ class TestGetCurrentUser(BaseTest):
     ) -> None:
         testuser1 = self.find_or_create_user("testuser1")
         testuser1.tenant_specific_field_1 = "456"
+        testuser1.display_name = "Test User NUMBER ONE!"
         db.session.add(testuser1)
         db.session.commit()
 
@@ -35,4 +36,5 @@ class TestGetCurrentUser(BaseTest):
         )
         assert result["username"] == "testuser1"
         assert result["tenant_specific_field_1"] == "456"
+        assert result["display_name"] == "Test User NUMBER ONE!"
         json.dumps(result)

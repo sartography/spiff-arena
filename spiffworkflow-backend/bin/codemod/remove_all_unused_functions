@@ -16,7 +16,7 @@ fi
 
 list_of_unused_things="$(dead | grep -E '^[a-z].*is never read')"
 
-filename_patterns_to_ignore="(codemod|migrations/versions|conftest.py|noxfile.py)"
+filename_patterns_to_ignore="(codemod|migrations/versions|conftest.py)"
 
 while read -r line; do
   function_name="$(echo "$line" | awk '{print $1}')"

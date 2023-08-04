@@ -24,6 +24,7 @@ jobs:
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
+              upload_coverage: true,
             }
           - {
               python: "3.11",
@@ -90,7 +91,7 @@ jobs:
 
       - name: Upgrade pip
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=../.github/workflows/constraints.txt pip
           pip --version
 
       - name: Upgrade pip in virtual environments
@@ -104,14 +105,8 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
-
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-          nox --version
 
       # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
       # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
@@ -146,13 +141,18 @@ jobs:
         run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
         if: matrix.database == 'postgres'
 
-      - name: Run Nox
+      - name: Install mysqlclient lib dependencies
+        if: matrix.os == 'macos-latest'
         run: |
-          nox --force-color --python=${{ matrix.python }}
+          brew install mysql pkg-config
+
+      - name: Run Session
+        run: |
+          ./bin/run_ci_session ${{ matrix.session }}
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest' && matrix.database == 'mysql'
+        if: matrix.upload_coverage
         uses: "actions/upload-artifact@v3"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
@@ -200,7 +200,7 @@ jobs:
           python-version: "3.11"
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=spiffworkflow-backend/.github/workflows/constraints.txt poetry
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
       - name: Poetry Install
         run: poetry install
@@ -242,19 +242,13 @@ jobs:
 
       - name: Upgrade pip
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=../.github/workflows/constraints.txt pip
           pip --version
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
-
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-          nox --version
 
       - name: Download coverage data
         uses: actions/download-artifact@v3.0.2
@@ -263,14 +257,9 @@ jobs:
           # this action doesn't seem to respect working-directory so include working-directory value in path
           path: spiffworkflow-backend
 
-      - name: Combine coverage data and display human readable report
+      - name: Run Coverage
         run: |
-          find . -name \*.pyc -delete
-          nox --force-color --session=coverage
-
-      - name: Create coverage report
-        run: |
-          nox --force-color --session=coverage -- xml
+          ./bin/run_ci_session coverage
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.4

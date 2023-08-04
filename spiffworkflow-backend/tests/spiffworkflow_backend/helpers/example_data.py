@@ -49,7 +49,6 @@ class ExampleDataLoader:
         if bpmn_file_name:
             file_name_matcher = bpmn_file_name_with_extension
 
-        # we need instance_path here for nox tests
         file_glob = os.path.join(
             current_app.instance_path,
             "..",

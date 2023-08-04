@@ -58,6 +58,15 @@ class ProcessInstanceService:
         return started_instance is not None
 
     @staticmethod
+    def times_executed_by_user(process_model_identifier: str) -> int:
+        total = (
+            db.session.query(ProcessInstanceModel)
+            .filter(ProcessInstanceModel.process_model_identifier == process_model_identifier)
+            .count()
+        )
+        return total
+
+    @staticmethod
     def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
         try:
             processor = ProcessInstanceProcessor(process_instance_model)

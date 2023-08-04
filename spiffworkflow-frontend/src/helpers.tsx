@@ -6,10 +6,9 @@ import {
   DATE_FORMAT,
   TIME_FORMAT_HOURS_MINUTES,
 } from './config';
-import {
-  DEFAULT_PER_PAGE,
-  DEFAULT_PAGE,
-} from './components/PaginationForTable';
+
+export const DEFAULT_PER_PAGE = 50;
+export const DEFAULT_PAGE = 1;
 
 export const doNothing = () => {
   return undefined;

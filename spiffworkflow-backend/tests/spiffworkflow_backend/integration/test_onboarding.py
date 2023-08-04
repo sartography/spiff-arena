@@ -45,4 +45,8 @@ class TestOnboarding(BaseTest):
         )
 
         assert results.status_code == 200
-        assert results.json == {"type": "default_view", "value": "my_tasks"}
+        assert len(results.json.keys()) == 4
+        assert results.json["type"] == "default_view"
+        assert results.json["value"] == "my_tasks"
+        assert results.json["instructions"] == ""
+        assert results.json["task_id"] is not None
