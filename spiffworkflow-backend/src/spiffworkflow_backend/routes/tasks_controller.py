@@ -855,7 +855,7 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
 
     file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
     try:
-        form_contents = JinjaService.render_jinja_template(file_contents, task_model)
+        form_contents = JinjaService.render_jinja_template(file_contents, task_model.get_data(), task_model)
         try:
             # form_contents is a str
             hot_dict: dict = json.loads(form_contents)

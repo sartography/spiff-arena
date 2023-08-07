@@ -33,12 +33,14 @@ class TestExtensionsController(BaseTest):
             )
 
             expected_task_data = {
-                "Mike": "Awesome",
-                "my_var": "Hello World",
-                "person": "Kevin",
-                "validate_only": False,
-                "wonderfulness": "Very wonderful",
-                "OUR_AWESOME_INPUT": "the awesome value",
+                "task_data": {
+                    "Mike": "Awesome",
+                    "my_var": "Hello World",
+                    "person": "Kevin",
+                    "validate_only": False,
+                    "wonderfulness": "Very wonderful",
+                    "OUR_AWESOME_INPUT": "the awesome value",
+                }
             }
             assert response.status_code == 200
             assert response.json is not None
@@ -118,6 +120,8 @@ class TestExtensionsController(BaseTest):
             )
 
             assert response.json is not None
-            assert "pi_json" in response.json
-            assert "id" in response.json["pi_json"]
-            assert re.match(r"^\d+$", str(response.json["pi_json"]["id"]))
+            assert "task_data" in response.json
+            task_data = response.json["task_data"]
+            assert "pi_json" in task_data
+            assert "id" in task_data["pi_json"]
+            assert re.match(r"^\d+$", str(task_data["pi_json"]["id"]))
