@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import { useParams } from 'react-router-dom';
-import validator from '@rjsf/validator-ajv8';
 import { Editor } from '@monaco-editor/react';
-import { Form } from '../rjsf/carbon_theme';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   ExtensionPostBody,
@@ -15,6 +13,7 @@ import {
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined } from '../helpers';
+import CustomForm from '../components/CustomForm';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
@@ -137,7 +136,7 @@ export default function Extension() {
         filesByName[uiSchemaPageDefinition.form_ui_schema_filename];
       if (formSchemaFile.file_contents && formUiSchemaFile.file_contents) {
         componentsToDisplay.push(
-          <Form
+          <CustomForm
             id="form-to-submit"
             formData={formData}
             onChange={(obj: any) => {
@@ -147,8 +146,6 @@ export default function Extension() {
             onSubmit={handleFormSubmit}
             schema={JSON.parse(formSchemaFile.file_contents)}
             uiSchema={JSON.parse(formUiSchemaFile.file_contents)}
-            validator={validator}
-            omitExtraData
           />
         );
       }
