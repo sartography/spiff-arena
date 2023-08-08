@@ -16,11 +16,11 @@ class OAuthService:
         return [{"id": f"{k}/OAuth", "parameters": []} for k in cls.authentication_configuration().keys()]
 
     @staticmethod
-    def authentication_configuration() -> dict[str, Any]:
+    def authentication_configuration() -> Any:
         return ConfigurationService.configuration_for_category("oauth")
 
     @staticmethod
-    def update_authentication_configuration(config: dict[str, Any]):
+    def update_authentication_configuration(config: dict[str, Any]) -> None:
         return ConfigurationService.update_configuration_for_category("oauth", config)
 
     @classmethod
@@ -33,11 +33,11 @@ class OAuthService:
 
         for k in ["consumer_key", "consumer_secret"]:
             if k in config:
-                config[k] = SecretService.resolve_possibly_secret_value(config[k])  # type: ignore
+                config[k] = SecretService.resolve_possibly_secret_value(config[k])
 
         if token is not None:
             state = base64.urlsafe_b64encode(bytes(token, "utf-8"))
-            config["request_token_params"]["state"] = state  # type: ignore
+            config["request_token_params"]["state"] = state
 
         app = Flask(__name__)
         oauth = OAuth(app)
