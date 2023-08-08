@@ -1,10 +1,11 @@
-from spiffworkflow_backend.models.db import db
-from typing import Any
-from spiffworkflow_backend.models.configuration import ConfigurationModel
 import json
+from typing import Any
+
+from spiffworkflow_backend.models.configuration import ConfigurationModel
+from spiffworkflow_backend.models.db import db
+
 
 class ConfigurationService:
-
     @staticmethod
     def configuration_for_category(category: str) -> dict[str, Any]:
         config = db.session.query(ConfigurationModel).filter(ConfigurationModel.category == category).first()
@@ -21,6 +22,6 @@ class ConfigurationService:
             config.value = new_config["value"]
         else:
             config.value = {}
-        
+
         db.session.add(config)
         db.session.commit()

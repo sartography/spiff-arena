@@ -4,13 +4,15 @@ from typing import Any
 from flask import Flask
 from flask import session
 from flask_oauthlib.client import OAuth  # type: ignore
-from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.configuration_service import ConfigurationService
+from spiffworkflow_backend.services.secret_service import SecretService
+
 
 class OAuthService:
-
     @classmethod
-    def authentication_list(cls, ) -> list[dict[str, Any]]:
+    def authentication_list(
+        cls,
+    ) -> list[dict[str, Any]]:
         return [{"id": f"{k}/OAuth", "parameters": []} for k in cls.authentication_configuration().keys()]
 
     @staticmethod
