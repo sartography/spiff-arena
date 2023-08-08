@@ -5,38 +5,35 @@ from flask import Flask
 from flask import session
 from flask_oauthlib.client import OAuth  # type: ignore
 from spiffworkflow_backend.services.secret_service import SecretService
-
-# TODO: get this from somewhere dynamic, admins need to edit from the UI
-AUTHS = {
-    "github": {
-        "consumer_key": "SPIFF_SECRET:GITHUB_CONSUMER_KEY",
-        "consumer_secret": "SPIFF_SECRET:GITHUB_CONSUMER_SECRET",
-        "request_token_params": {"scope": "user:email"},
-        "base_url": "https://api.github.com/",
-        "request_token_url": None,
-        "access_token_method": "POST",
-        "access_token_url": "https://github.com/login/oauth/access_token",
-        "authorize_url": "https://github.com/login/oauth/authorize",
-    },
-}
-
+from spiffworkflow_backend.models.configuration import ConfigurationModel
 
 class OAuthService:
-    @staticmethod
-    def authentication_list() -> list[dict[str, Any]]:
-        return [{"id": f"{k}/OAuth", "parameters": []} for k in AUTHS.keys()]
+    @classmethod
+    def authentication_list(cls, ) -> list[dict[str, Any]]:
+        return [{"id": f"{k}/OAuth", "parameters": []} for k in cls.authentication_configuration().keys()]
 
     @staticmethod
     def authentication_configuration() -> dict[str, Any]:
-        return AUTHS
+        return {
+            "github": {
+                "consumer_key": "SPIFF_SECRET:GITHUB_CONSUMER_KEY",
+                "consumer_secret": "SPIFF_SECRET:GITHUB_CONSUMER_SECRET",
+                "request_token_params": {"scope": "user:email"},
+                "base_url": "https://api.github.com/",
+                "request_token_url": None,
+                "access_token_method": "POST",
+                "access_token_url": "https://github.com/login/oauth/access_token",
+                "authorize_url": "https://github.com/login/oauth/authorize",
+            },
+        }
 
-    @staticmethod
-    def supported_service(service: str) -> bool:
-        return service in AUTHS
+    @classmethod
+    def supported_service(cls, service: str) -> bool:
+        return service in cls.authentication_configuration()
 
-    @staticmethod
-    def remote_app(service: str, token: str | None) -> Any:
-        config = AUTHS[service].copy()
+    @classmethod
+    def remote_app(cls, service: str, token: str | None) -> Any:
+        config = cls.authentication_configuration()[service]
 
         for k in ["consumer_key", "consumer_secret"]:
             if k in config:
