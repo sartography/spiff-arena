@@ -34,6 +34,54 @@ def extension_run(
     return make_response(jsonify(result), 200)
 
 
+def extension_get_data(
+    query_params: str,
+) -> flask.wrappers.Response:
+    modified_process_model_identifier, *additional_args = query_params.split("/")
+    process_model, result = _run_extension(
+        modified_process_model_identifier, {"extension_input": {"additional_args": additional_args}}
+    )
+    response_schema = json.loads(FileSystemService.get_data(process_model, "response_schema.json"))
+    headers = response_schema.get("headers", None)
+    mimetype = response_schema.get("mimetype", None)
+    data_extraction_path = response_schema.get("data_extraction_path", "").split(".")
+    contents = _extract_data(data_extraction_path, result["task_data"])
+    response = Response(
+        str(contents),
+        mimetype=mimetype,
+        headers=headers,
+        status=200,
+    )
+    return response
+
+
+def extension_list() -> flask.wrappers.Response:
+    # return an empty list if the extensions api is not enabled
+    process_model_extensions = []
+    if current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
+        process_model_extensions = ProcessModelService.get_process_models_for_api(
+            process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
+            recursive=True,
+            filter_runnable_as_extension=True,
+            include_files=True,
+        )
+    return make_response(jsonify(process_model_extensions), 200)
+
+
+def extension_show(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    _raise_unless_extensions_api_enabled()
+    process_model_identifier = _get_process_model_identifier(modified_process_model_identifier)
+    process_model = _get_process_model(process_model_identifier)
+    files = FileSystemService.get_sorted_files(process_model)
+    for f in files:
+        file_contents = FileSystemService.get_data(process_model, f.name)
+        f.file_contents = file_contents
+    process_model.files = files
+    return make_response(jsonify(process_model), 200)
+
+
 def _extract_data(keys: list[str], data: dict) -> Any:
     if len(keys) > 0 and keys[0] in data:
         return _extract_data(keys[1:], data[keys[0]])
@@ -131,54 +179,6 @@ def _run_extension(
             result["rendered_results_markdown"] = form_contents
 
     return (process_model, result)
-
-
-def extension_get_data(
-    query_params: str,
-) -> flask.wrappers.Response:
-    modified_process_model_identifier, *additional_args = query_params.split("/")
-    process_model, result = _run_extension(
-        modified_process_model_identifier, {"extension_input": {"additional_args": additional_args}}
-    )
-    response_schema = json.loads(FileSystemService.get_data(process_model, "response_schema.json"))
-    headers = response_schema.get("headers", None)
-    mimetype = response_schema.get("mimetype", None)
-    data_extraction_path = response_schema.get("data_extraction_path", "").split(".")
-    contents = _extract_data(data_extraction_path, result["task_data"])
-    response = Response(
-        contents,
-        mimetype=mimetype,
-        headers=headers,
-        status=200,
-    )
-    return response
-
-
-def extension_list() -> flask.wrappers.Response:
-    # return an empty list if the extensions api is not enabled
-    process_model_extensions = []
-    if current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
-        process_model_extensions = ProcessModelService.get_process_models_for_api(
-            process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
-            recursive=True,
-            filter_runnable_as_extension=True,
-            include_files=True,
-        )
-    return make_response(jsonify(process_model_extensions), 200)
-
-
-def extension_show(
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    _raise_unless_extensions_api_enabled()
-    process_model_identifier = _get_process_model_identifier(modified_process_model_identifier)
-    process_model = _get_process_model(process_model_identifier)
-    files = FileSystemService.get_sorted_files(process_model)
-    for f in files:
-        file_contents = FileSystemService.get_data(process_model, f.name)
-        f.file_contents = file_contents
-    process_model.files = files
-    return make_response(jsonify(process_model), 200)
 
 
 def _raise_unless_extensions_api_enabled() -> None:
