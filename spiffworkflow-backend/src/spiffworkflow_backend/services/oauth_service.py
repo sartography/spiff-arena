@@ -5,27 +5,17 @@ from flask import Flask
 from flask import session
 from flask_oauthlib.client import OAuth  # type: ignore
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.models.configuration import ConfigurationModel
+from spiffworkflow_backend.services.configuration_service import ConfigurationService
 
 class OAuthService:
+
     @classmethod
     def authentication_list(cls, ) -> list[dict[str, Any]]:
         return [{"id": f"{k}/OAuth", "parameters": []} for k in cls.authentication_configuration().keys()]
 
     @staticmethod
     def authentication_configuration() -> dict[str, Any]:
-        return {
-            "github": {
-                "consumer_key": "SPIFF_SECRET:GITHUB_CONSUMER_KEY",
-                "consumer_secret": "SPIFF_SECRET:GITHUB_CONSUMER_SECRET",
-                "request_token_params": {"scope": "user:email"},
-                "base_url": "https://api.github.com/",
-                "request_token_url": None,
-                "access_token_method": "POST",
-                "access_token_url": "https://github.com/login/oauth/access_token",
-                "authorize_url": "https://github.com/login/oauth/authorize",
-            },
-        }
+        return ConfigurationService.configuration_for_category("oauth")
 
     @classmethod
     def supported_service(cls, service: str) -> bool:
