@@ -18,7 +18,7 @@ export default function AuthenticationConfiguration() {
   const saveAuthConfig = () => {
     HttpService.makeCallToBackend({
       path: '/authentication/configuration',
-      successCallback: () => {},
+      successCallback: () => { window.location.reload() },
       httpMethod: 'PUT',
       postBody: { value: authConfig },
     });
@@ -26,8 +26,11 @@ export default function AuthenticationConfiguration() {
 
   return (
     <>
-      <h3>Local Configuration</h3>
       <Button onClick={() => saveAuthConfig()}>Save</Button>
+      <br />
+      <br />
+      <h2>Local Configuration</h2>
+      <br />
       <Editor
         height={600}
         width="auto"

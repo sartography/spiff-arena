@@ -17,6 +17,10 @@ class OAuthService:
     def authentication_configuration() -> dict[str, Any]:
         return ConfigurationService.configuration_for_category("oauth")
 
+    @staticmethod
+    def update_authentication_configuration(config: dict[str, Any]):
+        return ConfigurationService.update_configuration_for_category("oauth", config)
+
     @classmethod
     def supported_service(cls, service: str) -> bool:
         return service in cls.authentication_configuration()

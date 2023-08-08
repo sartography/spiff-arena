@@ -42,6 +42,7 @@ def authentication_configuration() -> flask.wrappers.Response:
 
 
 def authentication_configuration_update(body: dict) -> flask.wrappers.Response:
+    OAuthService.update_authentication_configuration(body)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
