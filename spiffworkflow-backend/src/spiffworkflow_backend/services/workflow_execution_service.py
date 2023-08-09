@@ -98,8 +98,11 @@ class ExecutionStrategy:
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         tasks = [t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]
 
-        #if len(tasks) > 0:
-            #self.subprocess_spec_loader()
+        
+        if len(tasks) > 0:
+            self.subprocess_spec_loader()
+            
+            # TODO: verify the other execution strategies work still and delete to make this work like the name
             #tasks = [tasks[0]]
 
         return tasks
@@ -341,15 +344,15 @@ class ThreadedExecutionStrategy(ExecutionStrategy):
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         while True:
+            bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             num_steps = len(engine_steps)
             if num_steps == 0:
                 break
-            if num_steps == 1:
-                print(f"num steps == 1, {engine_steps[0].id}")
-                engine_steps[0].run()
-                bpmn_process_instance.refresh_waiting_tasks()
-                continue
+            if num_steps > 1:
+                # TODO: hacky work around for gateway being either ready or cancelled but never ready
+                # - check out check threshold unstructured
+                engine_steps = engine_steps[:-1]
             futures = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for spiff_task in engine_steps:
@@ -357,6 +360,7 @@ class ThreadedExecutionStrategy(ExecutionStrategy):
                     futures.append(executor.submit(self._run, spiff_task, current_app._get_current_object()))
                 for future in concurrent.futures.as_completed(futures):
                     spiff_task = future.result()
+                    spiff_task.complete()
                     self.delegate.did_complete_task(spiff_task)
                         
         self.delegate.after_engine_steps(bpmn_process_instance)
