@@ -1,9 +1,11 @@
 import base64
+import json
 from typing import Any
 
 from flask import Flask
 from flask import session
 from flask_oauthlib.client import OAuth  # type: ignore
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.services.configuration_service import ConfigurationService
 from spiffworkflow_backend.services.secret_service import SecretService
 
@@ -21,6 +23,14 @@ class OAuthService:
 
     @staticmethod
     def update_authentication_configuration(config: dict[str, Any]) -> None:
+        try:
+            _ = json.loads(config["value"])
+        except Exception as e:
+            raise ApiError(
+                error_code="invalid_authentication_configuration",
+                message=f"The authentication configuration is not valid JSON. {e}",
+            )
+
         return ConfigurationService.update_configuration_for_category("oauth", config)
 
     @classmethod
