@@ -129,7 +129,15 @@ class ProcessInstanceService:
         for cycle in cycles:
             db.session.delete(cycle)
 
+        db.session.commit()
+
         if cycle_count != 0:
+            if duration_in_seconds == 0:
+                raise ApiError(
+                    error_code="process_model_cycle_has_0_second_duration",
+                    message="Can not schedule a process model cycle with a duration in seconds of 0.",
+                )
+
             cycle = ProcessModelCycleModel(
                 process_model_identifier=process_model_identifier,
                 cycle_count=cycle_count,
@@ -137,8 +145,7 @@ class ProcessInstanceService:
                 current_cycle=0,
             )
             db.session.add(cycle)
-
-        db.session.commit()
+            db.session.commit()
 
     @classmethod
     def schedule_next_process_model_cycle(cls, process_instance_model: ProcessInstanceModel) -> None:

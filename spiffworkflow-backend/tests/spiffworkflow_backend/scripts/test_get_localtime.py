@@ -72,7 +72,7 @@ class TestGetLocaltime(BaseTest):
 
         assert spiff_task
 
-        data = ProcessInstanceProcessor._script_engine.environment.last_result()
+        data = ProcessInstanceProcessor._default_script_engine.environment.last_result()
         some_time = data["some_time"]
         localtime = data["localtime"]
         timezone = data["timezone"]

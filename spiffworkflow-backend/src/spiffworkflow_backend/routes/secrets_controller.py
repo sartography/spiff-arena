@@ -17,7 +17,7 @@ def secret_show(key: str) -> Response:
     secret = SecretService.get_secret(key)
 
     # normal serialization does not include the secret value, but this is the one endpoint where we want to return the goods
-    secret_as_dict = secret.serialized
+    secret_as_dict = secret.serialized()
     secret_as_dict["value"] = SecretService._decrypt(secret.value)
 
     return make_response(secret_as_dict, 200)
