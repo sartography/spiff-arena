@@ -29,7 +29,7 @@ class OAuthService:
             raise ApiError(
                 error_code="invalid_authentication_configuration",
                 message=f"The authentication configuration is not valid JSON. {e}",
-            )
+            ) from e
 
         return ConfigurationService.update_configuration_for_category("oauth", config)
 
