@@ -369,7 +369,7 @@ class ProcessInstanceReportService:
     def run_process_instance_report(
         cls,
         report_metadata: ReportMetadata,
-        user: UserModel,
+        user: UserModel | None = None,
         page: int = 1,
         per_page: int = 100,
     ) -> dict:
@@ -434,7 +434,7 @@ class ProcessInstanceReportService:
             not instances_with_tasks_completed_by_me
             and not user_group_identifier
             and not instances_with_tasks_waiting_for_me
-            and with_relation_to_me is True
+            and with_relation_to_me is True and user
         ):
             process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
                 HumanTaskUserModel,
@@ -459,7 +459,7 @@ class ProcessInstanceReportService:
         # ensure we only join with HumanTaskModel once
         human_task_already_joined = False
 
-        if instances_with_tasks_completed_by_me is True:
+        if instances_with_tasks_completed_by_me is True and user:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
@@ -474,7 +474,7 @@ class ProcessInstanceReportService:
 
         # this excludes some tasks you can complete, because that's the way the requirements were described.
         # if it's assigned to one of your groups, it does not get returned by this query.
-        if instances_with_tasks_waiting_for_me is True:
+        if instances_with_tasks_waiting_for_me is True and user:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
@@ -492,7 +492,7 @@ class ProcessInstanceReportService:
             human_task_already_joined = True
             restrict_human_tasks_to_user = user
 
-        if user_group_identifier is not None:
+        if user_group_identifier is not None and user:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if user_group_identifier:
                 group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
