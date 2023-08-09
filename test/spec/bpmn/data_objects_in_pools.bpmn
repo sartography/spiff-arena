@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19o7vxg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:collaboration id="Collaboration_0jmlu5k">
+    <bpmn:participant id="Participant_11j98s8" processRef="ProcessTest" />
+    <bpmn:participant id="Participant_1d4d2vr" processRef="Process_1y9rx5q" />
+  </bpmn:collaboration>
+  <bpmn:process id="ProcessTest" name="Process Test" isExecutable="true">
+    <bpmn:dataObjectReference id="pool1Do2_REF" name="Pool 1 Do 2" dataObjectRef="pool1Do2" />
+    <bpmn:dataObject id="pool1Do2" />
+    <bpmn:dataObject id="pool1Do1" />
+    <bpmn:dataObjectReference id="pool1Do2_REF" name="Pool 1 Do 2" dataObjectRef="pool1Do2" />
+    <bpmn:dataObjectReference id="pool1Do1_REF" name="Pool 1 Do 1" dataObjectRef="pool1Do1" />
+  </bpmn:process>
+  <bpmn:process id="Process_1y9rx5q">
+    <bpmn:dataObject id="Pool2do" />
+    <bpmn:dataObjectReference id="pool2Do2" name="Pool 2 Do" dataObjectRef="Pool2do" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0jmlu5k">
+      <bpmndi:BPMNShape id="Participant_11j98s8_di" bpmnElement="Participant_11j98s8" isHorizontal="true">
+        <dc:Bounds x="290" y="270" width="300" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="pool1Do2_REF_di" bpmnElement="pool1Do2_REF">
+        <dc:Bounds x="462" y="295" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="453" y="352" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="pool1Do1_REF_di" bpmnElement="pool1Do1_REF">
+        <dc:Bounds x="372" y="295" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="365" y="352" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_1d4d2vr_di" bpmnElement="Participant_1d4d2vr" isHorizontal="true">
+        <dc:Bounds x="290" y="430" width="390" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_18xfjvh_di" bpmnElement="DataObjectReference_18xfjvh">
+        <dc:Bounds x="372" y="465" width="36" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

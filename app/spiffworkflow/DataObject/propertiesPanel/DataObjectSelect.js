@@ -31,7 +31,8 @@ export function DataObjectSelect(props) {
 
   const setValue = value => {
     const businessObject = element.businessObject;
-    for (const flowElem of businessObject.$parent.flowElements) {
+    const dataObjects = findDataObjects(businessObject.$parent)
+    for (const flowElem of dataObjects) {
       if (flowElem.$type === 'bpmn:DataObject' && flowElem.id === value) {
         commandStack.execute('element.updateModdleProperties', {
           element,
