@@ -63,11 +63,23 @@ class WorkflowTaskException(WorkflowException):
     @staticmethod
     def get_task_trace(task):
         task_trace = [f"{task.task_spec.bpmn_name} ({task.workflow.spec.file})"]
-        workflow = task.workflow
-        while workflow != workflow.outer_workflow:
-            caller = workflow.name
-            workflow = workflow.outer_workflow
-            task_trace.append(f"{workflow.spec.task_specs[caller].bpmn_name} ({workflow.spec.file})")
+        top = task.workflow.top_workflow
+        parent = None if task.workflow is top else task.workflow.parent_workflow
+
+        # cap the iterations to ensure we do not infinitely loop and tie up all CPU's
+        max_iterations = 1000
+        iteration = 0
+        caller = task
+        while parent is not None:
+            if iteration > max_iterations:
+                raise WorkflowException(
+                    f"Could not find full task trace after {max_iterations} iterations.",
+                    task_spec=task.task_spec,
+                )
+            caller = parent.get_task_from_id(caller.workflow.parent_task_id)
+            task_trace.append(f"{caller.task_spec.bpmn_name} ({parent.spec.file})")
+            parent = None if caller.workflow is top else caller.workflow.parent_workflow
+            iteration += 1
         return task_trace
 
     @staticmethod

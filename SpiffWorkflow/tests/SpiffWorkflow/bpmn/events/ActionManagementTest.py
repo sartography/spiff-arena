@@ -48,7 +48,6 @@ class ActionManagementTest(BpmnWorkflowTestCase):
 
         self.do_next_named_step("Complete Work", choice="Done")
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
 
         self.assertTrue(self.workflow.is_completed())
 
@@ -74,7 +73,7 @@ class ActionManagementTest(BpmnWorkflowTestCase):
         time.sleep(self.FINISH_TIME_DELTA)
         self.workflow.refresh_waiting_tasks()
         self.workflow.do_engine_steps()
-        self.assertEqual(2, len(self.workflow.get_tasks(TaskState.WAITING)))
+        self.assertEqual(3, len(self.workflow.get_tasks(TaskState.WAITING)))
         self.assertNotEqual('Finish Time', self.workflow.get_tasks(TaskState.WAITING)[0].task_spec.bpmn_name)
 
         overdue_escalation_task = [
@@ -86,8 +85,6 @@ class ActionManagementTest(BpmnWorkflowTestCase):
 
         self.do_next_named_step("Complete Work", choice="Done")
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
-
         self.assertTrue(self.workflow.is_completed())
 
     def testRunThroughCancel(self):
