@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import concurrent.futures
 import copy
 import time
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Any
 from uuid import UUID
+from flask import Flask, current_app
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -96,9 +98,9 @@ class ExecutionStrategy:
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         tasks = [t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]
 
-        if len(tasks) > 0:
-            self.subprocess_spec_loader()
-            tasks = [tasks[0]]
+        #if len(tasks) > 0:
+            #self.subprocess_spec_loader()
+            #tasks = [tasks[0]]
 
         return tasks
 
@@ -330,6 +332,35 @@ class OneAtATimeExecutionStrategy(ExecutionStrategy):
             self.delegate.did_complete_task(spiff_task)
         self.delegate.after_engine_steps(bpmn_process_instance)
 
+class ThreadedExecutionStrategy(ExecutionStrategy):
+    """When you want to run all ready tasks at once."""
+    def _run(self, spiff_task: SpiffTask, app: Flask.app) -> None:
+        with app.app_context():
+            spiff_task.run()
+            return spiff_task
+
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        while True:
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+            num_steps = len(engine_steps)
+            if num_steps == 0:
+                break
+            if num_steps == 1:
+                print(f"num steps == 1, {engine_steps[0].id}")
+                engine_steps[0].run()
+                bpmn_process_instance.refresh_waiting_tasks()
+                continue
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for spiff_task in engine_steps:
+                    self.delegate.will_complete_task(spiff_task)
+                    futures.append(executor.submit(self._run, spiff_task, current_app._get_current_object()))
+                for future in concurrent.futures.as_completed(futures):
+                    spiff_task = future.result()
+                    self.delegate.did_complete_task(spiff_task)
+                        
+        self.delegate.after_engine_steps(bpmn_process_instance)
+
 
 class SkipOneExecutionStrategy(ExecutionStrategy):
     """When you want to to skip over the next task, rather than execute it."""
@@ -358,6 +389,7 @@ def execution_strategy_named(
         "run_until_user_message": RunUntilUserTaskOrMessageExecutionStrategy,
         "one_at_a_time": OneAtATimeExecutionStrategy,
         "skip_one": SkipOneExecutionStrategy,
+        "threaded": ThreadedExecutionStrategy,
     }[name]
 
     return cls(delegate, spec_loader)  # type: ignore
