@@ -82,8 +82,8 @@ def extension_show(
     return make_response(jsonify(process_model), 200)
 
 
-def _extract_data(keys: list[str], data: dict) -> Any:
-    if len(keys) > 0 and keys[0] in data:
+def _extract_data(keys: list[str], data: Any) -> Any:
+    if len(keys) > 0 and isinstance(data, dict) and keys[0] in data:
         return _extract_data(keys[1:], data[keys[0]])
     return data
 
