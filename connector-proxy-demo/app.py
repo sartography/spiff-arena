@@ -6,7 +6,7 @@ from flask import Flask
 app = Flask(__name__)
 app.config.from_pyfile("config.py", silent=True)
 
-if app.config["ENV"] != "production":
+if app.config.get("ENV", "development") != "production":
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 # Use the SpiffConnector Blueprint, which will auto-discover any
