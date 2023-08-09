@@ -12,6 +12,7 @@ export default function setupFileOperations(bpmnModeler) {
    * Just a quick bit of code so we can save the XML that is output.
    * Helps for debugging against other libraries (like SpiffWorkflow)
    */
+
   const btn = document.getElementById('downloadButton');
   btn.addEventListener('click', (_event) => {
     saveXML();
@@ -29,12 +30,8 @@ export default function setupFileOperations(bpmnModeler) {
    */
   const uploadBtn = document.getElementById('uploadButton');
   uploadBtn.addEventListener('click', (_event) => {
-    openFile(displayFile);
+    openFile(bpmnModeler);
   });
-
-  function displayFile(contents) {
-    bpmnModeler.importXML(contents).then(() => {});
-  }
 }
 
 function clickElem(elem) {
@@ -59,7 +56,7 @@ function clickElem(elem) {
   elem.dispatchEvent(eventMouse);
 }
 
-export function openFile(func) {
+export function openFile(bpmnModeler) {
   const readFile = function readFileCallback(e) {
     const file = e.target.files[0];
     if (!file) {
@@ -68,7 +65,7 @@ export function openFile(func) {
     const reader = new FileReader();
     reader.onload = function onloadCallback(onloadEvent) {
       const contents = onloadEvent.target.result;
-      fileInput.func(contents);
+      bpmnModeler.importXML(contents);
       document.body.removeChild(fileInput);
     };
     reader.readAsText(file);
@@ -77,7 +74,6 @@ export function openFile(func) {
   fileInput.type = 'file';
   fileInput.style.display = 'none';
   fileInput.onchange = readFile;
-  fileInput.func = func;
   document.body.appendChild(fileInput);
   clickElem(fileInput);
 }
