@@ -5,6 +5,7 @@ import {
   Form,
   Stack,
   TextInput,
+  TextArea,
   Grid,
   Column,
   Select,
@@ -291,7 +292,7 @@ export default function ProcessModelForm({
     }
 
     textInputs.push(
-      <TextInput
+      <TextArea
         id="process-model-description"
         name="description"
         labelText="Description"

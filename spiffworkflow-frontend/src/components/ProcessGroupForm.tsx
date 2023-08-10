@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
-import { Button, Form, Stack, TextInput } from '@carbon/react';
+import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
@@ -140,7 +140,7 @@ export default function ProcessGroupForm({
     }
 
     textInputs.push(
-      <TextInput
+      <TextArea
         id="process-group-description"
         name="description"
         labelText="Description"
