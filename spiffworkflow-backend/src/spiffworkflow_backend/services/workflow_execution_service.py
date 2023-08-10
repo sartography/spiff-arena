@@ -343,16 +343,16 @@ class ThreadedExecutionStrategy(ExecutionStrategy):
             return spiff_task
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        # This only works because of the GIL, and the fact that we are not actually executing
+        # code in parallel, we are just waiting for I/O in parallel.  So it can run a ton of
+        # service tasks at once - many api calls, and then get those responses back without
+        # waiting for each individual task to complete.
         while True:
             bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             num_steps = len(engine_steps)
             if num_steps == 0:
                 break
-            if num_steps > 1:
-                # TODO: hacky work around for gateway being either ready or cancelled but never ready
-                # - check out check threshold unstructured
-                engine_steps = engine_steps[:-1]
             futures = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for spiff_task in engine_steps:
@@ -360,7 +360,6 @@ class ThreadedExecutionStrategy(ExecutionStrategy):
                     futures.append(executor.submit(self._run, spiff_task, current_app._get_current_object()))
                 for future in concurrent.futures.as_completed(futures):
                     spiff_task = future.result()
-                    spiff_task.complete()
                     self.delegate.did_complete_task(spiff_task)
                         
         self.delegate.after_engine_steps(bpmn_process_instance)
