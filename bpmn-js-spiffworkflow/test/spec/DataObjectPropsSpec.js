@@ -6,9 +6,6 @@ import {
 import { BpmnPropertiesPanelModule, BpmnPropertiesProviderModule } from 'bpmn-js-properties-panel';
 import spiffModdleExtension from '../../app/spiffworkflow/moddle/spiffworkflow.json';
 import TestContainer from 'mocha-test-container-support';
-import DataObjectPropertiesProvider
-  from '../../app/spiffworkflow/DataObject/propertiesPanel/DataObjectPropertiesProvider';
-import spiffworkflow from '../../app/spiffworkflow';
 import DataObject from '../../app/spiffworkflow/DataObject';
 
 describe('Properties Panel for Data Objects', function() {
@@ -76,6 +73,19 @@ describe('Properties Panel for Data Objects', function() {
     // THEN - both the data object itself, and the label of any references are updated.
     expect(my_data_ref_1.businessObject.dataObjectRef.id).to.equal('my_nifty_new_name');
     expect(my_data_ref_1.businessObject.name).to.equal('My Nifty New Name');
+  });
+
+  it('renaming a data object creates a lable without losing the numbers', async function() {
+
+    // IF - a process is selected, and the name of a data object is changed.
+    let entry = findEntry('ProcessTest-dataObj-2-id', container);
+    let textInput = findInput('text', entry);
+    changeInput(textInput, 'MyObject1');
+    let my_data_ref_1 = await expectSelected('my_data_ref_1');
+
+    // THEN - both the data object itself, and the label of any references are updated.
+    expect(my_data_ref_1.businessObject.dataObjectRef.id).to.equal('MyObject1');
+    expect(my_data_ref_1.businessObject.name).to.equal('My Object 1');
   });
 
 });

@@ -40,7 +40,6 @@ export function SpiffExtensionSelect(props) {
   };
 
   const setValue = (value) => {
-    console.log(`Set Value called with ${ value}`);
     setExtensionValue(element, name, value, moddle, commandStack);
   };
 

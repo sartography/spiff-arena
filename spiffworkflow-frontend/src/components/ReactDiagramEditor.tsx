@@ -379,7 +379,9 @@ export default function ReactDiagramEditor({
       return (
         !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
         !taskBpmnId.match(/EndJoin/) &&
-        !taskBpmnId.match(/BoundaryEventParent/)
+        !taskBpmnId.match(/BoundaryEventParent/) &&
+        !taskBpmnId.match(/BoundaryEventJoin/) &&
+        !taskBpmnId.match(/BoundaryEventSplit/)
       );
     }
 

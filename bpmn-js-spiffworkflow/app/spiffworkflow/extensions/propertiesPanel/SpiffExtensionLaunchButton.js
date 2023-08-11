@@ -28,7 +28,6 @@ export function SpiffExtensionLaunchButton(props) {
         const { commandStack, moddle } = props;
         // Listen for a response, to update the script.
         eventBus.once(listenEvent, (response) => {
-          console.log("Calling Update!")
           setExtensionValue(element, name, response.value, moddle, commandStack);
         });
       }
