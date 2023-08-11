@@ -444,6 +444,7 @@ def _interstitial_stream(
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
     while True:
+        has_ready_tasks = False
         for spiff_task in tasks:
             # ignore the instructions if they are on the EndEvent for the top level process
             if not TaskService.is_main_process_end_event(spiff_task):
@@ -467,30 +468,33 @@ def _interstitial_stream(
                     yield _render_data("task", task)
                     reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
-                # do not do any processing if the instance is not currently active
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield _render_data("unrunnable_instance", process_instance)
-                    return
-                if execute_tasks:
-                    try:
-                        # run_until_user_message does not run tasks with instructions to use one_at_a_time
-                        # to force it to run the task.
-                        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-                        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                        processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                        processor.refresh_waiting_tasks()
+                has_ready_tasks = True
 
-                    except WorkflowTaskException as wfe:
-                        api_error = ApiError.from_workflow_exception(
-                            "engine_steps_error", "Failed to complete an automated task.", exp=wfe
-                        )
-                        yield _render_data("error", api_error)
-                        ErrorHandlingService.handle_error(process_instance, wfe)
-                        return
-                # return if process instance is now complete and let the frontend redirect to show page
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield _render_data("unrunnable_instance", process_instance)
+        if has_ready_tasks:
+            # do not do any processing if the instance is not currently active
+            if process_instance.status not in ProcessInstanceModel.active_statuses():
+                yield _render_data("unrunnable_instance", process_instance)
+                return
+            if execute_tasks:
+                try:
+                    # run_until_user_message does not run tasks with instructions so run readys first
+                    # to force it to run the task.
+                    processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                    processor.refresh_waiting_tasks()
+
+                except WorkflowTaskException as wfe:
+                    api_error = ApiError.from_workflow_exception(
+                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
+                    )
+                    yield _render_data("error", api_error)
+                    ErrorHandlingService.handle_error(process_instance, wfe)
                     return
+            # return if process instance is now complete and let the frontend redirect to show page
+            if process_instance.status not in ProcessInstanceModel.active_statuses():
+                yield _render_data("unrunnable_instance", process_instance)
+                return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
         ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)

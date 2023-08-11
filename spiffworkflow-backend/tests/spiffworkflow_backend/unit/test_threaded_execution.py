@@ -30,7 +30,7 @@ class TestThreadedExecution(BaseTest):
             process_model=process_model, user=with_super_admin_user
         )
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="threaded")
+        processor.do_engine_steps(save=True)
 
         self.assert_same_start_times(process_instance, 'ThreadTask', 4)
         assert processor.bpmn_process_instance.is_completed()
@@ -53,7 +53,7 @@ class TestThreadedExecution(BaseTest):
             process_model=process_model, user=with_super_admin_user
         )
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="threaded")
+        processor.do_engine_steps(save=True)
         self.assert_same_start_times(process_instance, 'multi', 26)
         assert processor.bpmn_process_instance.is_completed()
         upper_letters = processor.bpmn_process_instance.last_task.data['upper_letters']
