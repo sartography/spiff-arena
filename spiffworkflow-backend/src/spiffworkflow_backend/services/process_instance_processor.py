@@ -1006,11 +1006,13 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-        known_task_ids = list(map(lambda t: str(t.id), self.bpmn_process_instance.get_tasks()))
-        TaskModel.query.filter(TaskModel.process_instance_id == self.process_instance_model.id)\
-            .filter(TaskModel.guid.notin_(known_task_ids)).delete()
-        HumanTaskModel.query.filter(HumanTaskModel.process_instance_id == self.process_instance_model.id)\
-            .filter(HumanTaskModel.task_id.notin_(known_task_ids)).delete()
+        known_task_ids = [str(t.id) for t in self.bpmn_process_instance.get_tasks()]
+        TaskModel.query.filter(TaskModel.process_instance_id == self.process_instance_model.id).filter(
+            TaskModel.guid.notin_(known_task_ids)  # type: ignore
+        ).delete()
+        HumanTaskModel.query.filter(HumanTaskModel.process_instance_id == self.process_instance_model.id).filter(
+            HumanTaskModel.task_id.notin_(known_task_ids)  # type: ignore
+        ).delete()
         db.session.commit()
 
         human_tasks = HumanTaskModel.query.filter_by(

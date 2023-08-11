@@ -7,8 +7,10 @@ from abc import abstractmethod
 from collections.abc import Callable
 from typing import Any
 from uuid import UUID
-from flask import Flask, current_app, g
 
+import flask.app
+from flask import current_app
+from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
@@ -86,14 +88,20 @@ class ExecutionStrategy:
         self.subprocess_spec_loader = subprocess_spec_loader
         self.options = options
 
-    def should_break_before(self, tasks: [SpiffTask]):
+    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
         return False
 
-    def should_break_after(self, tasks: [SpiffTask]):
+    def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
-    def _run(self, spiff_task: SpiffTask, app: Flask.app, process_instance_id: int, process_model_identifier: str,
-             user: dict) -> None:
+    def _run(
+        self,
+        spiff_task: SpiffTask,
+        app: flask.app.Flask,
+        process_instance_id: Any | None,
+        process_model_identifier: Any | None,
+        user: Any | None,
+    ) -> SpiffTask:
         with app.app_context():
             app.config["THREAD_LOCAL_DATA"].process_instance_id = process_instance_id
             app.config["THREAD_LOCAL_DATA"].process_model_identifier = process_model_identifier
@@ -134,8 +142,16 @@ class ExecutionStrategy:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     for spiff_task in engine_steps:
                         self.delegate.will_complete_task(spiff_task)
-                        futures.append(executor.submit(self._run, spiff_task, current_app._get_current_object(),
-                                                       process_instance_id, process_model_identifier, user))
+                        futures.append(
+                            executor.submit(
+                                self._run,
+                                spiff_task,
+                                current_app._get_current_object(),
+                                process_instance_id,
+                                process_model_identifier,
+                                user,
+                            )
+                        )
                     for future in concurrent.futures.as_completed(futures):
                         spiff_task = future.result()
                         self.delegate.did_complete_task(spiff_task)
@@ -143,7 +159,6 @@ class ExecutionStrategy:
                 break
 
         self.delegate.after_engine_steps(bpmn_process_instance)
-
 
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.on_exception(bpmn_process_instance)
@@ -154,12 +169,11 @@ class ExecutionStrategy:
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         tasks = [t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]
 
-        
         if len(tasks) > 0:
             self.subprocess_spec_loader()
-            
+
             # TODO: verify the other execution strategies work still and delete to make this work like the name
-            #tasks = [tasks[0]]
+            # tasks = [tasks[0]]
 
         return tasks
 
@@ -313,6 +327,7 @@ class GreedyExecutionStrategy(ExecutionStrategy):
     """
     This is what the base class does by default.
     """
+
     pass
 
 
@@ -322,10 +337,10 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     Note that this will run at least one engine step if possible,
     but will stop if it hits instructions after the first task.
     """
-    def should_break_before(self, tasks: [SpiffTask]):
+
+    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
         for task in tasks:
-            if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get(
-                "instructionsForEndUser", None):
+            if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get("instructionsForEndUser", None):
                 return True
         return False
 
@@ -333,7 +348,7 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
 class RunCurrentReadyTasksExecutionStrategy(ExecutionStrategy):
     """When you want to run only one engine step at a time."""
 
-    def should_break_after(self, tasks: [SpiffTask]):
+    def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return True
 
 
@@ -365,7 +380,7 @@ def execution_strategy_named(
         "skip_one": SkipOneExecutionStrategy,
     }[name]
 
-    return cls(delegate, spec_loader)  # type: ignore
+    return cls(delegate, spec_loader)
 
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
