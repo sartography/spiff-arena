@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
+import { useLocation } from 'react-router-dom';
 import HttpService from '../services/HttpService';
 import { Onboarding } from '../interfaces';
 import { objectIsEmpty } from '../helpers';
 
 export default function OnboardingView() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
+  const location = useLocation();
 
   // const navigate = useNavigate();
 
@@ -17,6 +19,10 @@ export default function OnboardingView() {
   }, [setOnboarding]);
 
   const onboardingElement = () => {
+    if (location.pathname.match(/^\/tasks\/\d+\/\b/)) {
+      return null;
+    }
+
     if (
       onboarding &&
       !objectIsEmpty(onboarding) &&
