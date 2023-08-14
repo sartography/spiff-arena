@@ -40,6 +40,7 @@ from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import CallActivity  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -1362,7 +1363,7 @@ class ProcessInstanceProcessor:
         for task in tasks:
             if task.task_spec.description != "Call Activity":
                 continue
-            spec_to_check = task.task_spec.bpmn_id
+            spec_to_check = task.task_spec.spec
 
             if spec_to_check not in loaded_specs:
                 lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
