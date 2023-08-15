@@ -60,10 +60,14 @@ class VersionOneThree:
 
         # mostly for ExclusiveGateways
         if "cond_task_specs" in properties_json:
-            for cond_task_spec in properties_json['cond_task_specs']:
-                cond_task_spec['task_spec'] = cond_task_spec['task_spec'].replace('BoundaryEventParent', 'BoundaryEventSplit')
+            for cond_task_spec in properties_json["cond_task_specs"]:
+                cond_task_spec["task_spec"] = cond_task_spec["task_spec"].replace(
+                    "BoundaryEventParent", "BoundaryEventSplit"
+                )
         if "default_task_spec" in properties_json:
-            properties_json['default_task_spec'] = properties_json['default_task_spec'].replace('BoundaryEventParent', 'BoundaryEventSplit')
+            properties_json["default_task_spec"] = properties_json["default_task_spec"].replace(
+                "BoundaryEventParent", "BoundaryEventSplit"
+            )
 
         task_definition.properties_json = properties_json
         flag_modified(task_definition, "properties_json")  # type: ignore
