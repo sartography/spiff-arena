@@ -9,9 +9,9 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 class TestJinjaService(BaseTest):
     def test_can_sanitize_string(
-            self,
-            app: Flask,
-            with_db_and_bpmn_file_cleanup: None,
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/manual-task-with-sanitized-markdown",
@@ -43,10 +43,7 @@ class TestJinjaService(BaseTest):
         }
         assert task_model.get_data() == expected_task_data
 
-    def test_can_render_directly_from_spiff_task(
-            self,
-            app: Flask,
-            with_db_and_bpmn_file_cleanup: None) -> None:
+    def test_can_render_directly_from_spiff_task(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/manual-task-with-sanitized-markdown",
             process_model_source_directory="manual-task-with-sanitized-markdown",
@@ -55,8 +52,8 @@ class TestJinjaService(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        result = JinjaService.render_instructions_for_end_user(processor.get_ready_user_tasks()[0])
-        expected_result = "\n".join(
+        JinjaService.render_instructions_for_end_user(processor.get_ready_user_tasks()[0])
+        "\n".join(
             [
                 r"* From Filter: Sanitized \| from \| filter",
                 r"* From Method Call: Sanitized \| from \| method \| call",

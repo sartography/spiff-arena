@@ -2,13 +2,14 @@ import re
 from sys import exc_info
 
 import jinja2
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
 from jinja2 import TemplateSyntaxError
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+
 
 class JinjaHelpers:
     """These are helpers that added to script tasks and to jinja for rendering templates.
@@ -35,8 +36,6 @@ class JinjaHelpers:
 
 
 class JinjaService:
-
-
     @classmethod
     def render_instructions_for_end_user(cls, task: TaskModel | SpiffTask, extensions: dict | None = None) -> str:
         """Assure any instructions for end user are processed for jinja syntax."""
