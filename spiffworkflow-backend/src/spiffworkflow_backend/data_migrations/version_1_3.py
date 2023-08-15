@@ -59,12 +59,12 @@ class VersionOneThree:
         properties_json["name"] = task_definition.bpmn_identifier
 
         # mostly for ExclusiveGateways
-        if "cond_task_specs" in properties_json:
+        if "cond_task_specs" in properties_json and properties_json["cond_task_specs"] is not None:
             for cond_task_spec in properties_json["cond_task_specs"]:
                 cond_task_spec["task_spec"] = cond_task_spec["task_spec"].replace(
                     "BoundaryEventParent", "BoundaryEventSplit"
                 )
-        if "default_task_spec" in properties_json:
+        if "default_task_spec" in properties_json and properties_json["default_task_spec"] is not None:
             properties_json["default_task_spec"] = properties_json["default_task_spec"].replace(
                 "BoundaryEventParent", "BoundaryEventSplit"
             )
