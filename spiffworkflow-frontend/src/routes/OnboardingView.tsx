@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import HttpService from '../services/HttpService';
 import { Onboarding } from '../interfaces';
 import { objectIsEmpty } from '../helpers';
@@ -8,8 +8,7 @@ import { objectIsEmpty } from '../helpers';
 export default function OnboardingView() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
   const location = useLocation();
-
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     HttpService.makeCallToBackend({
@@ -25,6 +24,15 @@ export default function OnboardingView() {
 
     if (
       onboarding &&
+      onboarding.type === 'user_input_required' &&
+      onboarding.process_instance_id &&
+      onboarding.task_id
+    ) {
+      navigate(
+        `/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`
+      );
+    } else if (
+      onboarding &&
       !objectIsEmpty(onboarding) &&
       onboarding.instructions.length > 0
     ) {
@@ -37,25 +45,6 @@ export default function OnboardingView() {
           />
         </div>
       );
-      /*
-      if (onboarding.type === 'default_view') {
-        if (onboarding.value === 'my_tasks') {
-          return <MyTasks />;
-        }
-      } else if (
-          onboarding.type === 'user_input_required'
-      ) {
-        console.log("onboarding");
-      } else if (
-        onboarding.type === 'user_input_required' &&
-        onboarding.process_instance_id &&
-        onboarding.task_id
-      ) {
-        navigate(
-          `/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`
-        );
-      }
-      */
     }
     return null;
   };
