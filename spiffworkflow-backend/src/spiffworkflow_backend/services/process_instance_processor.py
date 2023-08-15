@@ -1374,6 +1374,8 @@ class ProcessInstanceProcessor:
                     if name not in loaded_specs:
                         self.bpmn_process_instance.subprocess_specs[name] = spec
                         loaded_specs.add(name)
+                        current_app.logger.info(f"Lazy loaded spec for '{name}'")
+
 
     def refresh_waiting_tasks(self) -> None:
         self.lazy_load_subprocess_specs()
