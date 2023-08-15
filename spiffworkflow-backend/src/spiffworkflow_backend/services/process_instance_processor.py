@@ -454,6 +454,7 @@ class ProcessInstanceProcessor:
                 validate_only,
                 subprocesses=subprocesses,
             )
+            
             self.set_script_engine(self.bpmn_process_instance, self._script_engine)
 
         except MissingSpecError as ke:
@@ -675,6 +676,7 @@ class ProcessInstanceProcessor:
                     bpmn_process_definition.bpmn_identifier,
                     bpmn_process_definition.bpmn_identifier,
                 )
+                                
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
                 spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
@@ -683,7 +685,7 @@ class ProcessInstanceProcessor:
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process, get_tasks=True)
                 spiff_bpmn_process_dict.update(single_bpmn_process_dict)
-
+            
                 bpmn_subprocesses = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id).all()
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
@@ -735,6 +737,7 @@ class ProcessInstanceProcessor:
     ) -> tuple[BpmnWorkflow, dict, dict]:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
+        
         if process_instance_model.bpmn_process_definition_id is not None:
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
@@ -1364,8 +1367,10 @@ class ProcessInstanceProcessor:
             if task.task_spec.description != "Call Activity":
                 continue
             spec_to_check = task.task_spec.spec
+            current_app.logger.info(f"----- check spec '{spec_to_check}: {loaded_specs}'")
 
             if spec_to_check not in loaded_specs:
+                current_app.logger.info(f"----> spec '{spec_to_check}' is not loaded")
                 lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
                 if lazy_subprocess_specs is None:
                     continue
