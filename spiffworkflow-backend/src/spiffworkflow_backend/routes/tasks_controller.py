@@ -879,8 +879,16 @@ def _get_spiff_task_from_process_instance(
     if processor is None:
         processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
-    spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
-
+    try:
+        spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
+    except Exception:
+        processor.lazy_load_subprocesses()
+        #processor.bpmn_process_instance.refresh_waiting_tasks()
+        # TODO: inspect the tasks/guids for 'Activity_1jetb9y'
+        for t in processor.bpmn_process_instance.get_tasks():
+            print(f"******** {t.id}: {t}")
+        spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
+        
     if spiff_task is None:
         raise (
             ApiError(

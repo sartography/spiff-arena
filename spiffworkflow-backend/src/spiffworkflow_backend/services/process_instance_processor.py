@@ -1360,7 +1360,8 @@ class ProcessInstanceProcessor:
 
         return None
 
-    def lazy_load_subprocess_specs(self) -> None:
+    # TODO: if this pans out replace callers with lazy_load_subprocesses
+    def lazy_load_subprocess_specs(self) -> set[str]:
         tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
@@ -1380,6 +1381,37 @@ class ProcessInstanceProcessor:
                         self.bpmn_process_instance.subprocess_specs[name] = spec
                         loaded_specs.add(name)
                         current_app.logger.info(f"Lazy loaded spec for '{name}'")
+        return loaded_specs
+
+    def lazy_load_subprocesses(self) -> None:
+        loaded_specs = self.lazy_load_subprocess_specs()
+        bpmn_process = self.process_instance_model.bpmn_process
+        if len(loaded_specs) == 0 or bpmn_process is None:
+            return None
+        # TODO: if this pans out refactor with _get_full_bpmn_process_dict
+        bpmn_subprocesses = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id).all()
+        bpmn_subprocess_id_to_guid_mappings = {}
+
+        print(loaded_specs)
+
+        for bpmn_subprocess in bpmn_subprocesses:
+            subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
+            if subprocess_identifier not in loaded_specs:
+                continue
+            print(f"))))))) {subprocess_identifier}")
+            subprocess_dict = self._get_bpmn_process_dict(bpmn_subprocess, get_tasks=True)
+            print(subprocess_dict)
+            print(")))))))")
+            
+            #bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
+            #single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
+            #spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess.guid] = single_bpmn_process_dict
+
+            #tasks = TaskModel.query.filter(
+            #    TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
+            #).all()
+            #print(tasks)
+            #cls._get_tasks_dict(tasks, spiff_bpmn_process_dict, bpmn_subprocess_id_to_guid_mappings)
 
 
     def refresh_waiting_tasks(self) -> None:
