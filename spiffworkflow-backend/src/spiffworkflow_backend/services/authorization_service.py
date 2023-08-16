@@ -14,13 +14,13 @@ from flask import request
 from flask import scaffold
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP, GroupModel
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER, UserModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
@@ -242,11 +242,11 @@ class AuthorizationService:
         group_identifier = f"anonymous_group_{task_guid}"
         user = UserModel.query.filter_by(username=username).first()
         if user is None:
-            user = UserService.create_user(
-                username, "spiff_anonymous_service", "spiff_anonymous_service_id"
-            )
+            user = UserService.create_user(username, "spiff_anonymous_service", "spiff_anonymous_service_id")
         GroupService.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
-        cls.add_permission_from_uri_or_macro(group_identifier, permission='all', target=f'/tasks/{process_instance_id}/{task_guid}')
+        cls.add_permission_from_uri_or_macro(
+            group_identifier, permission="all", target=f"/tasks/{process_instance_id}/{task_guid}"
+        )
         AuthorizationService.add_permission_from_uri_or_macro(group_identifier, "all", "/*")
         g.user = user
         g.token = user.encode_auth_token({"authentication_disabled": True})
