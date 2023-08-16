@@ -21,11 +21,9 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
 
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
-  # BACKEND_BASE_URL=http://localhost:7000
-  BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+  BACKEND_BASE_URL=http://localhost:7000
 fi
 if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-  # KEYCLOAK_BASE_URL=http://localhost:7002
   if grep -qE "spiffworkflow.org" <<<"$BACKEND_BASE_URL" ; then
     env_domain=$(hot_sed -E 's/.*api\.(\w+\.spiffworkflow.org).*/\1/' <<<"${BACKEND_BASE_URL}")
     KEYCLOAK_BASE_URL="https://keycloak.${env_domain}"

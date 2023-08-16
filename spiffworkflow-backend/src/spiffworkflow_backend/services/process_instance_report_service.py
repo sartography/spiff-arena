@@ -55,8 +55,8 @@ class ProcessInstanceReportService:
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Start time", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "End time", "accessor": "end_in_seconds", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -89,9 +89,9 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+                {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -114,9 +114,9 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -138,9 +138,9 @@ class ProcessInstanceReportService:
                     "filterable": False,
                 },
                 {"Header": "Task", "accessor": "task_title", "filterable": False},
-                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
@@ -233,7 +233,7 @@ class ProcessInstanceReportService:
         cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
             process_instance_mapping = process_instance_row._mapping
-            process_instance_dict = process_instance_row[0].serialized
+            process_instance_dict = process_instance_row[0].serialized()
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
@@ -244,7 +244,9 @@ class ProcessInstanceReportService:
         return results
 
     @classmethod
-    def add_human_task_fields(cls, process_instance_dicts: list[dict]) -> list[dict]:
+    def add_human_task_fields(
+        cls, process_instance_dicts: list[dict], restrict_human_tasks_to_user: UserModel | None = None
+    ) -> list[dict]:
         fields_to_return = [
             "task_id",
             "task_title",
@@ -264,6 +266,10 @@ class ProcessInstanceReportService:
                 .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
                 .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
             )
+            if restrict_human_tasks_to_user is not None:
+                human_task_query = human_task_query.filter(
+                    HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id
+                )
             potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
             human_task = (
                 human_task_query.add_columns(
@@ -320,7 +326,7 @@ class ProcessInstanceReportService:
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
             {
-                "Header": "Started By",
+                "Header": "Started by",
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
@@ -333,7 +339,7 @@ class ProcessInstanceReportService:
         """Columns that are used with certain system reports."""
         return_value: list[ReportMetadataColumn] = [
             {"Header": "Task", "accessor": "task_title", "filterable": False},
-            {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+            {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
         ]
         return return_value
 
@@ -371,6 +377,7 @@ class ProcessInstanceReportService:
         # Always join that hot user table for good performance at serialization time.
         process_instance_query = process_instance_query.options(selectinload(ProcessInstanceModel.process_initiator))
         filters = report_metadata["filter_by"]
+        restrict_human_tasks_to_user = None
 
         for value in cls.check_filter_value(filters, "process_model_identifier"):
             process_model = ProcessModelService.get_process_model(
@@ -483,6 +490,7 @@ class ProcessInstanceReportService:
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
             human_task_already_joined = True
+            restrict_human_tasks_to_user = user
 
         if user_group_identifier is not None:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
@@ -541,7 +549,22 @@ class ProcessInstanceReportService:
             ]
             if filter_for_column:
                 isouter = False
-                conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
+                    conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "not equals":
+                    conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "contains":
+                    conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
+                elif filter_for_column["operator"] == "is_empty":
+                    # we still need to return results if the metadata value is null so make sure it's outer join
+                    isouter = True
+                    conditions.append(
+                        or_(instance_metadata_alias.value.is_(None), instance_metadata_alias.value == "")
+                    )
+                elif filter_for_column["operator"] == "is_not_empty":
+                    conditions.append(
+                        or_(instance_metadata_alias.value.is_not(None), instance_metadata_alias.value != "")
+                    )
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, and_(*conditions), isouter=isouter
             ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
@@ -573,7 +596,7 @@ class ProcessInstanceReportService:
 
         for value in cls.check_filter_value(filters, "with_oldest_open_task"):
             if value is True:
-                results = cls.add_human_task_fields(results)
+                results = cls.add_human_task_fields(results, restrict_human_tasks_to_user=restrict_human_tasks_to_user)
 
         report_metadata["filter_by"] = filters
         response_json = {

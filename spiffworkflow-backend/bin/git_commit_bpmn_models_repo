@@ -44,7 +44,22 @@ function run() {
   git push --set-upstream origin "${git_branch}"
 }
 
-exec {lock_fd}>/var/lock/spiff-workflow-git-lock || failed_to_get_lock
+lock_directory="/var/lock"
+if [[ ! -d "${lock_directory}" ]]; then
+  lock_directory="/tmp"
+fi
+
+if ! command -v flock >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    # some hero made this available on mac: https://github.com/discoteq/flock
+    brew install flock
+  else
+    >&2 echo "ERROR: flock is not installed and we cannot install it."
+    exit 1
+  fi
+fi
+
+exec {lock_fd}>"${lock_directory}/spiffworkflow-git-lock" || failed_to_get_lock
 flock --timeout 60 "${lock_fd}" || failed_to_get_lock
 run
 flock -u "${lock_fd}"

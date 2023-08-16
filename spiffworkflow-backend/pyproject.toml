@@ -2,18 +2,18 @@
 name = "spiffworkflow-backend"
 version = "0.0.0"
 description = "Spiffworkflow Backend"
-authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
-license = "MIT"
+authors = ["Sartography <sartography@users.noreply.github.com>"]
+license = "LGPL-2.1"
 readme = "README.rst"
-homepage = "https://github.com/sartography/spiffworkflow-backend"
-repository = "https://github.com/sartography/spiffworkflow-backend"
-documentation = "https://spiffworkflow-backend.readthedocs.io"
+homepage = "https://spiffworkflow.org"
+repository = "https://github.com/sartography/spiff-arena"
+documentation = "https://spiff-arena.readthedocs.io"
 classifiers = [
     "Development Status :: 1 - Planning",
 ]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
+Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
@@ -30,13 +30,10 @@ flask-restful = "*"
 flask-simple-crypt = "^0.3.3"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-# SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
+# SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
-mysql-connector-python = "*"
-pytest-flask = "^1.2.0"
-pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
 
@@ -56,17 +53,6 @@ Jinja2 = "^3.1.2"
 RestrictedPython = "^6.0"
 Flask-SQLAlchemy = "^3"
 
-# type hinting stuff
-# these need to be in the normal (non dev-dependencies) section
-# because if not then poetry export won't have them and nox -s mypy --pythons 3.10
-# will fail
-types-dateparser = "^1.1.4.1"
-types-Werkzeug = "^1.0.9"
-types-PyYAML = "^6.0.12"
-types-Flask = "^1.1.6"
-types-requests = "^2.28.6"
-types-pytz = "^2022.1.1"
-
 # https://github.com/dropbox/sqlalchemy-stubs/pull/251
 # someday get off github
 # sqlalchemy-stubs = "^0.4"
@@ -84,6 +70,10 @@ sqlalchemy = "^2.0.7"
 marshmallow-sqlalchemy = "^0.29.0"
 spiff-element-units = "^0.3.0"
 
+# mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
+# https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
+mysqlclient = "^2.2.0"
+
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
 coverage = {extras = ["toml"], version = "^6.1"}
@@ -95,12 +85,25 @@ pre-commit = "^2.20.0"
 black = ">=21.10b0"
 ruff = "^0.0.270"
 
+pytest-random-order = "^1.1.0"
+pytest-flask = "^1.2.0"
+pytest-flask-sqlalchemy = "^1.1.0"
+pytest-xdist = "^3.3.1"
+
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"
 
 # flask-sqlalchemy-stubs = "^0.2"
 pre-commit-hooks = "^4.0.1"
 Pygments = "^2.10.0"
+
+# type hinting stuff
+types-dateparser = "^1.1.4.1"
+types-Werkzeug = "^1.0.9"
+types-PyYAML = "^6.0.12"
+types-Flask = "^1.1.6"
+types-requests = "^2.28.6"
+types-pytz = "^2022.1.1"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"

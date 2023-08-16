@@ -2,7 +2,7 @@
 /.idea/
 /.coverage
 .coverage.*
-/.nox/
+/coverage.xml
 /.python-version
 /.pytype/
 /dist/
@@ -20,3 +20,4 @@ node_modules
 /src/spiffworkflow_backend/config/secrets.py
 *null-ls_*
 /local_wheels/*.whl
+/some_cache_dir

@@ -1,0 +1,1861 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.10.0">
+  <bpmn:dataStore id="typeahead" name="TypeaheadDataStore" />
+  <bpmn:process id="cereals_data_store" name="Create Cereals Data Store" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0tn4ed3</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0tn4ed3" sourceRef="StartEvent_1" targetRef="Activity_0o51srq" />
+    <bpmn:endEvent id="Event_0jxoz7s">
+      <bpmn:incoming>Flow_0lz96a1</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0lz96a1" sourceRef="Activity_0o51srq" targetRef="Event_0jxoz7s" />
+    <bpmn:scriptTask id="Activity_0o51srq" name="Parse response">
+      <bpmn:extensionElements>
+        <spiffworkflow:unitTests>
+          <spiffworkflow:unitTest id="test_top3">
+            <spiffworkflow:inputJson>{
+"typeahead": {},
+  "cities_result": [
+    {
+      "id": 52,
+      "name": "Ashkāsham",
+      "state_id": 3901,
+      "state_code": "BDS",
+      "state_name": "Badakhshan",
+      "country_id": 1,
+      "country_code": "AF",
+      "country_name": "Afghanistan",
+      "latitude": "36.68333000",
+      "longitude": "71.53333000",
+      "wikiDataId": "Q4805192"
+    },
+    {
+      "id": 68,
+      "name": "Fayzabad",
+      "state_id": 3901,
+      "state_code": "BDS",
+      "state_name": "Badakhshan",
+      "country_id": 1,
+      "country_code": "AF",
+      "country_name": "Afghanistan",
+      "latitude": "37.11664000",
+      "longitude": "70.58002000",
+      "wikiDataId": "Q156558"
+    },
+    {
+      "id": 78,
+      "name": "Jurm",
+      "state_id": 3901,
+      "state_code": "BDS",
+      "state_name": "Badakhshan",
+      "country_id": 1,
+      "country_code": "AF",
+      "country_name": "Afghanistan",
+      "latitude": "36.86477000",
+      "longitude": "70.83421000",
+      "wikiDataId": "Q10308323"
+    }
+  ]
+}</spiffworkflow:inputJson>
+            <spiffworkflow:expectedOutputJson>{
+  "typeahead": {
+    "cities": [
+      {
+        "search_term": "Ashkāsham",
+        "result": {
+          "name": "Ashkāsham",
+          "country": "Afghanistan",
+          "state": "Badakhshan"
+        }
+      },
+      {
+        "search_term": "Fayzabad",
+        "result": {
+          "name": "Fayzabad",
+          "country": "Afghanistan",
+          "state": "Badakhshan"
+        }
+      },
+      {
+        "search_term": "Jurm",
+        "result": {
+          "name": "Jurm",
+          "country": "Afghanistan",
+          "state": "Badakhshan"
+        }
+      }
+    ],
+    "countries": [
+      {
+        "result": {
+          "name": "Afghanistan"
+        },
+        "search_term": "Afghanistan"
+      }
+    ],
+    "states": [
+      {
+        "result": {
+          "country": "Afghanistan",
+          "name": "Badakhshan"
+        },
+        "search_term": "Badakhshan"
+      }
+    ]
+  }
+}</spiffworkflow:expectedOutputJson>
+          </spiffworkflow:unitTest>
+        </spiffworkflow:unitTests>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0tn4ed3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0lz96a1</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_0tjuw5b">
+        <bpmn:targetRef>DataStoreReference_1oronwq</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:script>results = [
+  {
+    "name": "100% Bran",
+    "manufacturer": "Nabisco",
+    "type": "Cold",
+    "calories": 70,
+    "protein": 4,
+    "fat": 1,
+    "sodium": 130,
+    "fiber": 10,
+    "carbo": 5,
+    "sugars": 6,
+    "potass": 280,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.33,
+    "rating": 68.402973
+  },
+  {
+    "name": "100% Natural Bran",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 3,
+    "fat": 5,
+    "sodium": 15,
+    "fiber": 2,
+    "carbo": 8,
+    "sugars": 8,
+    "potass": 135,
+    "vitamins": 0,
+    "weight": 1,
+    "cups": 1,
+    "rating": 33.983679
+  },
+  {
+    "name": "All-Bran",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 70,
+    "protein": 4,
+    "fat": 1,
+    "sodium": 260,
+    "fiber": 9,
+    "carbo": 7,
+    "sugars": 5,
+    "potass": 320,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.33,
+    "rating": 59.425505
+  },
+  {
+    "name": "All-Bran with Extra Fiber",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 50,
+    "protein": 4,
+    "fat": 0,
+    "sodium": 140,
+    "fiber": 14,
+    "carbo": 8,
+    "sugars": 0,
+    "potass": 330,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.5,
+    "rating": 93.704912
+  },
+  {
+    "name": "Almond Delight",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 2,
+    "sodium": 200,
+    "fiber": 1,
+    "carbo": 14,
+    "sugars": 8,
+    "potass": -1,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 34.384843
+  },
+  {
+    "name": "Apple Cinnamon Cheerios",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 2,
+    "sodium": 180,
+    "fiber": 1.5,
+    "carbo": 10.5,
+    "sugars": 10,
+    "potass": 70,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 29.509541
+  },
+  {
+    "name": "Apple Jacks",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 125,
+    "fiber": 1,
+    "carbo": 11,
+    "sugars": 14,
+    "potass": 30,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 33.174094
+  },
+  {
+    "name": "Basic 4",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 130,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 210,
+    "fiber": 2,
+    "carbo": 18,
+    "sugars": 8,
+    "potass": 100,
+    "vitamins": 25,
+    "weight": 1.33,
+    "cups": 0.75,
+    "rating": 37.038562
+  },
+  {
+    "name": "Bran Chex",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 200,
+    "fiber": 4,
+    "carbo": 15,
+    "sugars": 6,
+    "potass": 125,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 49.120253
+  },
+  {
+    "name": "Bran Flakes",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 210,
+    "fiber": 5,
+    "carbo": 13,
+    "sugars": 5,
+    "potass": 190,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 53.313813
+  },
+  {
+    "name": "Cap'n'Crunch",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 1,
+    "fat": 2,
+    "sodium": 220,
+    "fiber": 0,
+    "carbo": 12,
+    "sugars": 12,
+    "potass": 35,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 18.042851
+  },
+  {
+    "name": "Cheerios",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 6,
+    "fat": 2,
+    "sodium": 290,
+    "fiber": 2,
+    "carbo": 17,
+    "sugars": 1,
+    "potass": 105,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1.25,
+    "rating": 50.764999
+  },
+  {
+    "name": "Cinnamon Toast Crunch",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 1,
+    "fat": 3,
+    "sodium": 210,
+    "fiber": 0,
+    "carbo": 13,
+    "sugars": 9,
+    "potass": 45,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 19.823573
+  },
+  {
+    "name": "Clusters",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 140,
+    "fiber": 2,
+    "carbo": 13,
+    "sugars": 7,
+    "potass": 105,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.5,
+    "rating": 40.400208
+  },
+  {
+    "name": "Cocoa Puffs",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 1,
+    "sodium": 180,
+    "fiber": 0,
+    "carbo": 12,
+    "sugars": 13,
+    "potass": 55,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 22.736446
+  },
+  {
+    "name": "Corn Chex",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 280,
+    "fiber": 0,
+    "carbo": 22,
+    "sugars": 3,
+    "potass": 25,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 41.445019
+  },
+  {
+    "name": "Corn Flakes",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 290,
+    "fiber": 1,
+    "carbo": 21,
+    "sugars": 2,
+    "potass": 35,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 45.863324
+  },
+  {
+    "name": "Corn Pops",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 0,
+    "sodium": 90,
+    "fiber": 1,
+    "carbo": 13,
+    "sugars": 12,
+    "potass": 20,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 35.782791
+  },
+  {
+    "name": "Count Chocula",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 1,
+    "sodium": 180,
+    "fiber": 0,
+    "carbo": 12,
+    "sugars": 13,
+    "potass": 65,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 22.396513
+  },
+  {
+    "name": "Cracklin' Oat Bran",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 3,
+    "fat": 3,
+    "sodium": 140,
+    "fiber": 4,
+    "carbo": 10,
+    "sugars": 7,
+    "potass": 160,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.5,
+    "rating": 40.448772
+  },
+  {
+    "name": "Cream of Wheat (Quick)",
+    "manufacturer": "Nabisco",
+    "type": "Hot",
+    "calories": 100,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 80,
+    "fiber": 1,
+    "carbo": 21,
+    "sugars": 0,
+    "potass": -1,
+    "vitamins": 0,
+    "weight": 1,
+    "cups": 1,
+    "rating": 64.533816
+  },
+  {
+    "name": "Crispix",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 220,
+    "fiber": 1,
+    "carbo": 21,
+    "sugars": 3,
+    "potass": 30,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 46.895644
+  },
+  {
+    "name": "Crispy Wheat &amp; Raisins",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 140,
+    "fiber": 2,
+    "carbo": 11,
+    "sugars": 10,
+    "potass": 120,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 36.176196
+  },
+  {
+    "name": "Double Chex",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 190,
+    "fiber": 1,
+    "carbo": 18,
+    "sugars": 5,
+    "potass": 80,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 44.330856
+  },
+  {
+    "name": "Froot Loops",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 125,
+    "fiber": 1,
+    "carbo": 11,
+    "sugars": 13,
+    "potass": 30,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 32.207582
+  },
+  {
+    "name": "Frosted Flakes",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 0,
+    "sodium": 200,
+    "fiber": 1,
+    "carbo": 14,
+    "sugars": 11,
+    "potass": 25,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 31.435973
+  },
+  {
+    "name": "Frosted Mini-Wheats",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 3,
+    "carbo": 14,
+    "sugars": 7,
+    "potass": 100,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.8,
+    "rating": 58.345141
+  },
+  {
+    "name": "Fruit &amp; Fibre Dates; Walnuts; and Oats",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 160,
+    "fiber": 5,
+    "carbo": 12,
+    "sugars": 10,
+    "potass": 200,
+    "vitamins": 25,
+    "weight": 1.25,
+    "cups": 0.67,
+    "rating": 40.917047
+  },
+  {
+    "name": "Fruitful Bran",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 240,
+    "fiber": 5,
+    "carbo": 14,
+    "sugars": 12,
+    "potass": 190,
+    "vitamins": 25,
+    "weight": 1.33,
+    "cups": 0.67,
+    "rating": 41.015492
+  },
+  {
+    "name": "Fruity Pebbles",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 1,
+    "sodium": 135,
+    "fiber": 0,
+    "carbo": 13,
+    "sugars": 12,
+    "potass": 25,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 28.025765
+  },
+  {
+    "name": "Golden Crisp",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 45,
+    "fiber": 0,
+    "carbo": 11,
+    "sugars": 15,
+    "potass": 40,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.88,
+    "rating": 35.252444
+  },
+  {
+    "name": "Golden Grahams",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 1,
+    "sodium": 280,
+    "fiber": 0,
+    "carbo": 15,
+    "sugars": 9,
+    "potass": 45,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 23.804043
+  },
+  {
+    "name": "Grape Nuts Flakes",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 140,
+    "fiber": 3,
+    "carbo": 15,
+    "sugars": 5,
+    "potass": 85,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.88,
+    "rating": 52.076897
+  },
+  {
+    "name": "Grape-Nuts",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 170,
+    "fiber": 3,
+    "carbo": 17,
+    "sugars": 3,
+    "potass": 90,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.25,
+    "rating": 53.371007
+  },
+  {
+    "name": "Great Grains Pecan",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 3,
+    "fat": 3,
+    "sodium": 75,
+    "fiber": 3,
+    "carbo": 13,
+    "sugars": 4,
+    "potass": 100,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.33,
+    "rating": 45.811716
+  },
+  {
+    "name": "Honey Graham Ohs",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 1,
+    "fat": 2,
+    "sodium": 220,
+    "fiber": 1,
+    "carbo": 12,
+    "sugars": 11,
+    "potass": 45,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 21.871292
+  },
+  {
+    "name": "Honey Nut Cheerios",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 250,
+    "fiber": 1.5,
+    "carbo": 11.5,
+    "sugars": 10,
+    "potass": 90,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 31.072217
+  },
+  {
+    "name": "Honey-comb",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 0,
+    "sodium": 180,
+    "fiber": 0,
+    "carbo": 14,
+    "sugars": 11,
+    "potass": 35,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1.33,
+    "rating": 28.742414
+  },
+  {
+    "name": "Just Right Crunchy  Nuggets",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 170,
+    "fiber": 1,
+    "carbo": 17,
+    "sugars": 6,
+    "potass": 60,
+    "vitamins": 100,
+    "weight": 1,
+    "cups": 1,
+    "rating": 36.523683
+  },
+  {
+    "name": "Just Right Fruit &amp; Nut",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 140,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 170,
+    "fiber": 2,
+    "carbo": 20,
+    "sugars": 9,
+    "potass": 95,
+    "vitamins": 100,
+    "weight": 1.3,
+    "cups": 0.75,
+    "rating": 36.471512
+  },
+  {
+    "name": "Kix",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 260,
+    "fiber": 0,
+    "carbo": 21,
+    "sugars": 3,
+    "potass": 40,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1.5,
+    "rating": 39.241114
+  },
+  {
+    "name": "Life",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 4,
+    "fat": 2,
+    "sodium": 150,
+    "fiber": 2,
+    "carbo": 12,
+    "sugars": 6,
+    "potass": 95,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 45.328074
+  },
+  {
+    "name": "Lucky Charms",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 180,
+    "fiber": 0,
+    "carbo": 12,
+    "sugars": 12,
+    "potass": 55,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 26.734515
+  },
+  {
+    "name": "Maypo",
+    "manufacturer": "American Home Food Products",
+    "type": "Hot",
+    "calories": 100,
+    "protein": 4,
+    "fat": 1,
+    "sodium": 0,
+    "fiber": 0,
+    "carbo": 16,
+    "sugars": 3,
+    "potass": 95,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 54.850917
+  },
+  {
+    "name": "Muesli Raisins; Dates; &amp; Almonds",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 150,
+    "protein": 4,
+    "fat": 3,
+    "sodium": 95,
+    "fiber": 3,
+    "carbo": 16,
+    "sugars": 11,
+    "potass": 170,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 37.136863
+  },
+  {
+    "name": "Muesli Raisins; Peaches; &amp; Pecans",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 150,
+    "protein": 4,
+    "fat": 3,
+    "sodium": 150,
+    "fiber": 3,
+    "carbo": 16,
+    "sugars": 11,
+    "potass": 170,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 34.139765
+  },
+  {
+    "name": "Mueslix Crispy Blend",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 160,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 150,
+    "fiber": 3,
+    "carbo": 17,
+    "sugars": 13,
+    "potass": 160,
+    "vitamins": 25,
+    "weight": 1.5,
+    "cups": 0.67,
+    "rating": 30.313351
+  },
+  {
+    "name": "Multi-Grain Cheerios",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 220,
+    "fiber": 2,
+    "carbo": 15,
+    "sugars": 6,
+    "potass": 90,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 40.105965
+  },
+  {
+    "name": "Nut&amp;Honey Crunch",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 190,
+    "fiber": 0,
+    "carbo": 15,
+    "sugars": 9,
+    "potass": 40,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 29.924285
+  },
+  {
+    "name": "Nutri-Grain Almond-Raisin",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 140,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 220,
+    "fiber": 3,
+    "carbo": 21,
+    "sugars": 7,
+    "potass": 130,
+    "vitamins": 25,
+    "weight": 1.33,
+    "cups": 0.67,
+    "rating": 40.69232
+  },
+  {
+    "name": "Nutri-grain Wheat",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 170,
+    "fiber": 3,
+    "carbo": 18,
+    "sugars": 2,
+    "potass": 90,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 59.642837
+  },
+  {
+    "name": "Oatmeal Raisin Crisp",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 130,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 170,
+    "fiber": 1.5,
+    "carbo": 13.5,
+    "sugars": 10,
+    "potass": 120,
+    "vitamins": 25,
+    "weight": 1.25,
+    "cups": 0.5,
+    "rating": 30.450843
+  },
+  {
+    "name": "Post Nat. Raisin Bran",
+    "manufacturer": "Post",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 200,
+    "fiber": 6,
+    "carbo": 11,
+    "sugars": 14,
+    "potass": 260,
+    "vitamins": 25,
+    "weight": 1.33,
+    "cups": 0.67,
+    "rating": 37.840594
+  },
+  {
+    "name": "Product 19",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 320,
+    "fiber": 1,
+    "carbo": 20,
+    "sugars": 3,
+    "potass": 45,
+    "vitamins": 100,
+    "weight": 1,
+    "cups": 1,
+    "rating": 41.50354
+  },
+  {
+    "name": "Puffed Rice",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 0,
+    "carbo": 13,
+    "sugars": 0,
+    "potass": 15,
+    "vitamins": 0,
+    "weight": 0.5,
+    "cups": 1,
+    "rating": 60.756112
+  },
+  {
+    "name": "Puffed Wheat",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 50,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 1,
+    "carbo": 10,
+    "sugars": 0,
+    "potass": 50,
+    "vitamins": 0,
+    "weight": 0.5,
+    "cups": 1,
+    "rating": 63.005645
+  },
+  {
+    "name": "Quaker Oat Squares",
+    "manufacturer": "Quaker Oats",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 4,
+    "fat": 1,
+    "sodium": 135,
+    "fiber": 2,
+    "carbo": 14,
+    "sugars": 6,
+    "potass": 110,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.5,
+    "rating": 49.511874
+  },
+  {
+    "name": "Quaker Oatmeal",
+    "manufacturer": "Quaker Oats",
+    "type": "Hot",
+    "calories": 100,
+    "protein": 5,
+    "fat": 2,
+    "sodium": 0,
+    "fiber": 2.7,
+    "carbo": -1,
+    "sugars": -1,
+    "potass": 110,
+    "vitamins": 0,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 50.828392
+  },
+  {
+    "name": "Raisin Bran",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 120,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 210,
+    "fiber": 5,
+    "carbo": 14,
+    "sugars": 12,
+    "potass": 240,
+    "vitamins": 25,
+    "weight": 1.33,
+    "cups": 0.75,
+    "rating": 39.259197
+  },
+  {
+    "name": "Raisin Nut Bran",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 2,
+    "sodium": 140,
+    "fiber": 2.5,
+    "carbo": 10.5,
+    "sugars": 8,
+    "potass": 140,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.5,
+    "rating": 39.7034
+  },
+  {
+    "name": "Raisin Squares",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 2,
+    "carbo": 15,
+    "sugars": 6,
+    "potass": 110,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.5,
+    "rating": 55.333142
+  },
+  {
+    "name": "Rice Chex",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 0,
+    "sodium": 240,
+    "fiber": 0,
+    "carbo": 23,
+    "sugars": 2,
+    "potass": 30,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1.13,
+    "rating": 41.998933
+  },
+  {
+    "name": "Rice Krispies",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 290,
+    "fiber": 0,
+    "carbo": 22,
+    "sugars": 3,
+    "potass": 35,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 40.560159
+  },
+  {
+    "name": "Shredded Wheat",
+    "manufacturer": "Nabisco",
+    "type": "Cold",
+    "calories": 80,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 3,
+    "carbo": 16,
+    "sugars": 0,
+    "potass": 95,
+    "vitamins": 0,
+    "weight": 0.83,
+    "cups": 1,
+    "rating": 68.235885
+  },
+  {
+    "name": "Shredded Wheat 'n'Bran",
+    "manufacturer": "Nabisco",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 4,
+    "carbo": 19,
+    "sugars": 0,
+    "potass": 140,
+    "vitamins": 0,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 74.472949
+  },
+  {
+    "name": "Shredded Wheat spoon size",
+    "manufacturer": "Nabisco",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 3,
+    "fat": 0,
+    "sodium": 0,
+    "fiber": 3,
+    "carbo": 20,
+    "sugars": 0,
+    "potass": 120,
+    "vitamins": 0,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 72.801787
+  },
+  {
+    "name": "Smacks",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 70,
+    "fiber": 1,
+    "carbo": 9,
+    "sugars": 15,
+    "potass": 40,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 31.230054
+  },
+  {
+    "name": "Special K",
+    "manufacturer": "Kelloggs",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 6,
+    "fat": 0,
+    "sodium": 230,
+    "fiber": 1,
+    "carbo": 16,
+    "sugars": 3,
+    "potass": 55,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 53.131324
+  },
+  {
+    "name": "Strawberry Fruit Wheats",
+    "manufacturer": "Nabisco",
+    "type": "Cold",
+    "calories": 90,
+    "protein": 2,
+    "fat": 0,
+    "sodium": 15,
+    "fiber": 3,
+    "carbo": 15,
+    "sugars": 5,
+    "potass": 90,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 59.363993
+  },
+  {
+    "name": "Total Corn Flakes",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 200,
+    "fiber": 0,
+    "carbo": 21,
+    "sugars": 3,
+    "potass": 35,
+    "vitamins": 100,
+    "weight": 1,
+    "cups": 1,
+    "rating": 38.839746
+  },
+  {
+    "name": "Total Raisin Bran",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 140,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 190,
+    "fiber": 4,
+    "carbo": 15,
+    "sugars": 14,
+    "potass": 230,
+    "vitamins": 100,
+    "weight": 1.5,
+    "cups": 1,
+    "rating": 28.592785
+  },
+  {
+    "name": "Total Whole Grain",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 200,
+    "fiber": 3,
+    "carbo": 16,
+    "sugars": 3,
+    "potass": 110,
+    "vitamins": 100,
+    "weight": 1,
+    "cups": 1,
+    "rating": 46.658844
+  },
+  {
+    "name": "Triples",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 250,
+    "fiber": 0,
+    "carbo": 21,
+    "sugars": 3,
+    "potass": 60,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 39.106174
+  },
+  {
+    "name": "Trix",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 1,
+    "fat": 1,
+    "sodium": 140,
+    "fiber": 0,
+    "carbo": 13,
+    "sugars": 12,
+    "potass": 25,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 27.753301
+  },
+  {
+    "name": "Wheat Chex",
+    "manufacturer": "Ralston Purina",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 230,
+    "fiber": 3,
+    "carbo": 17,
+    "sugars": 3,
+    "potass": 115,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.67,
+    "rating": 49.787445
+  },
+  {
+    "name": "Wheaties",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 100,
+    "protein": 3,
+    "fat": 1,
+    "sodium": 200,
+    "fiber": 3,
+    "carbo": 17,
+    "sugars": 3,
+    "potass": 110,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 1,
+    "rating": 51.592193
+  },
+  {
+    "name": "Wheaties Honey Gold",
+    "manufacturer": "General Mills",
+    "type": "Cold",
+    "calories": 110,
+    "protein": 2,
+    "fat": 1,
+    "sodium": 200,
+    "fiber": 1,
+    "carbo": 16,
+    "sugars": 8,
+    "potass": 60,
+    "vitamins": 25,
+    "weight": 1,
+    "cups": 0.75,
+    "rating": 36.187559
+  }
+]
+
+raw_albums = [
+  {
+    "album": "Mama Said Knock You Out",
+    "artist": "LL Cool J",
+    "year": 1990
+  },
+  {
+    "album": "Nowhere",
+    "artist": "Ride",
+    "year": 1990
+  },
+  {
+    "album": "People's Instinctive Paths",
+    "artist": "A Tribe Called Quest",
+    "year": 1990
+  },
+  {
+    "album": "Pills 'n' Thrills 'n' Bellyaches",
+    "artist": "Happy Mondays",
+    "year": 1990
+  },
+  {
+    "album": "Ragged Glory",
+    "artist": "Neil Young",
+    "year": 1990
+  },
+  {
+    "album": "Repeater",
+    "artist": "Fugazi",
+    "year": 1990
+  },
+  {
+    "album": "Ritual De Lo Habitual",
+    "artist": "Jane's Addiction",
+    "year": 1990
+  },
+  {
+    "album": "Rust In Peace",
+    "artist": "Megadeth",
+    "year": 1990
+  },
+  {
+    "album": "Sex Packets",
+    "artist": "Digital Underground",
+    "year": 1990
+  },
+  {
+    "album": "Shake Your Money Maker",
+    "artist": "The Black Crowes",
+    "year": 1990
+  },
+  {
+    "album": "The La's",
+    "artist": "The La's",
+    "year": 1990
+  },
+  {
+    "album": "The White Room",
+    "artist": "KLF",
+    "year": 1990
+  },
+  {
+    "album": "Violator",
+    "artist": "Depeche Mode",
+    "year": 1990
+  },
+  {
+    "album": "World Clique",
+    "artist": "Deee-Lite",
+    "year": 1990
+  },
+  {
+    "album": "Achtung Baby",
+    "artist": "U2",
+    "year": 1991
+  },
+  {
+    "album": "Apocalypse '91 … The Enemy Strikes Black",
+    "artist": "Public Enemy",
+    "year": 1991
+  },
+  {
+    "album": "Arise",
+    "artist": "Sepultura",
+    "year": 1991
+  },
+  {
+    "album": "Bandwagonesque",
+    "artist": "Teenage Fanclub",
+    "year": 1991
+  },
+  {
+    "album": "Blood Sugar Sex Magik",
+    "artist": "Red Hot Chili Peppers",
+    "year": 1991
+  },
+  {
+    "album": "Blue Lines",
+    "artist": "Massive Attack",
+    "year": 1991
+  },
+  {
+    "album": "Cypress Hill",
+    "artist": "Cypress Hill",
+    "year": 1991
+  },
+  {
+    "album": "Every Good Boy Deserves Fudge",
+    "artist": "Mudhoney",
+    "year": 1991
+  },
+  {
+    "album": "Foxbase Alpha",
+    "artist": "Saint Etienne",
+    "year": 1991
+  },
+  {
+    "album": "Haut de Gamme–Koweit Rive Gauche",
+    "artist": "Koffi Olomide",
+    "year": 1991
+  },
+  {
+    "album": "Loveless",
+    "artist": "My Bloody Valentine",
+    "year": 1991
+  },
+  {
+    "album": "Metallica",
+    "artist": "Metallica",
+    "year": 1991
+  },
+  {
+    "album": "Nevermind",
+    "artist": "Nirvana",
+    "year": 1991
+  },
+  {
+    "album": "O.G. Original Gangster",
+    "artist": "Ice-T",
+    "year": 1991
+  },
+  {
+    "album": "Peggy Suicide",
+    "artist": "Julian Cope",
+    "year": 1991
+  },
+  {
+    "album": "Rising Above Bedlam",
+    "artist": "Jah Wobble And the Invaders of the Heart",
+    "year": 1991
+  },
+  {
+    "album": "Screamadelica",
+    "artist": "Primal Scream",
+    "year": 1991
+  },
+  {
+    "album": "Spiderland",
+    "artist": "Slint",
+    "year": 1991
+  },
+  {
+    "album": "Step in the Arena",
+    "artist": "Gang Starr",
+    "year": 1991
+  },
+  {
+    "album": "The Low End Theory",
+    "artist": "A Tribe Called Quest",
+    "year": 1991
+  },
+  {
+    "album": "Woodface",
+    "artist": "Crowded House",
+    "year": 1991
+  },
+  {
+    "album": "A Vulgar Display Of Power",
+    "artist": "Pantera",
+    "year": 1992
+  },
+  {
+    "album": "Automatic for the People",
+    "artist": "REM",
+    "year": 1992
+  },
+  {
+    "album": "Bizarre Ride II The Pharcyde",
+    "artist": "The Pharcyde",
+    "year": 1992
+  },
+  {
+    "album": "Bone Machine",
+    "artist": "Tom Waits",
+    "year": 1992
+  },
+  {
+    "album": "Connected",
+    "artist": "Stereo MC's",
+    "year": 1992
+  },
+  {
+    "album": "Copper Blue",
+    "artist": "Sugar",
+    "year": 1992
+  },
+  {
+    "album": "Devotional Songs",
+    "artist": "Nusrat Fateh Ali Khan &amp; Party",
+    "year": 1992
+  },
+  {
+    "album": "Dirt",
+    "artist": "Alice in Chains",
+    "year": 1992
+  },
+  {
+    "album": "Dirty",
+    "artist": "Sonic Youth",
+    "year": 1992
+  },
+  {
+    "album": "Dry",
+    "artist": "P.J. Harvey",
+    "year": 1992
+  },
+  {
+    "album": "Henry's Dream",
+    "artist": "Nick Cave &amp; the Bad Seeds",
+    "year": 1992
+  },
+  {
+    "album": "Hiphoprisy Is The Greatest Luxury",
+    "artist": "Disposable Heroes of Hiphoprisy",
+    "year": 1992
+  },
+  {
+    "album": "Ingénue",
+    "artist": "k.d. lang",
+    "year": 1992
+  },
+  {
+    "album": "It's A Shame About Ray",
+    "artist": "The Lemonheads",
+    "year": 1992
+  },
+  {
+    "album": "Lam Toro",
+    "artist": "Baaba Maal",
+    "year": 1992
+  },
+  {
+    "album": "Lazer Guided Melodies",
+    "artist": "Spiritualized",
+    "year": 1992
+  },
+  {
+    "album": "Little Earthquakes",
+    "artist": "Tori Amos",
+    "year": 1992
+  },
+  {
+    "album": "Psalm 69",
+    "artist": "Ministry",
+    "year": 1992
+  },
+  {
+    "album": "Selected Ambient Works '85–'92",
+    "artist": "Aphex Twin",
+    "year": 1992
+  },
+  {
+    "album": "Ten",
+    "artist": "Pearl Jam",
+    "year": 1992
+  },
+  {
+    "album": "Three Years, Five Months, And Two Days In The Life Of...",
+    "artist": "Arrested Development",
+    "year": 1992
+  },
+  {
+    "album": "Your Arsenal",
+    "artist": "Morrissey",
+    "year": 1992
+  },
+  {
+    "album": "Aimee Mann",
+    "artist": "Whatever",
+    "year": 1993
+  },
+  {
+    "album": "Bubble &amp; Scrape",
+    "artist": "Sebadoh",
+    "year": 1993
+  },
+  {
+    "album": "Debut",
+    "artist": "Björk",
+    "year": 1993
+  },
+  {
+    "album": "Doggy Style",
+    "artist": "Snoop Doggy Dogg",
+    "year": 1993
+  },
+  {
+    "album": "Emergency on Planet Earth",
+    "artist": "Jamiroquai",
+    "year": 1993
+  },
+  {
+    "album": "Enter The Wu-Tang",
+    "artist": "Wu-Tang Clan",
+    "year": 1993
+  },
+  {
+    "album": "Fuzzy",
+    "artist": "Grant Lee Buffalo",
+    "year": 1993
+  },
+  {
+    "album": "Gentleman",
+    "artist": "The Afghan Whigs",
+    "year": 1993
+  },
+  {
+    "album": "Giant Steps",
+    "artist": "The Boo Radleys",
+    "year": 1993
+  },
+  {
+    "album": "In Utero",
+    "artist": "Nirvana",
+    "year": 1993
+  },
+  {
+    "album": "Modern Life is Rubbish",
+    "artist": "Blur",
+    "year": 1993
+  },
+  {
+    "album": "New Wave",
+    "artist": "Auteurs",
+    "year": 1993
+  },
+  {
+    "album": "Orbital II",
+    "artist": "Orbital",
+    "year": 1993
+  },
+  {
+    "album": "Qui Seme Le Vent Recolte Le Tempo",
+    "artist": "MC Solar",
+    "year": 1993
+  },
+  {
+    "album": "Rage Against The Machine",
+    "artist": "Rage Against The Machine",
+    "year": 1993
+  },
+  {
+    "album": "Rid Of Me",
+    "artist": "P.J. Harvey",
+    "year": 1993
+  },
+  {
+    "album": "Siamese Dream",
+    "artist": "Smashing Pumpkins",
+    "year": 1993
+  },
+  {
+    "album": "Slanted And Enchanted",
+    "artist": "Pavement",
+    "year": 1993
+  },
+  {
+    "album": "Strange Cargo III",
+    "artist": "William Orbit",
+    "year": 1993
+  }
+]
+
+
+cereals = []
+for result in results:
+    cereals.append({"search_term": result["name"], "result": result})
+
+albums = []
+for a in raw_albums:
+    albums.append({"search_term": a["album"], "result": a})
+
+typeahead = {"cereals": cereals, "albums": albums}
+
+del(cereals)
+del(results)
+del(raw_albums)
+del(albums)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:dataStoreReference id="DataStoreReference_1oronwq" name="Update &#10;Typeahead Data Store" dataStoreRef="typeahead" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="cereals_data_store">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="282" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0jxoz7s_di" bpmnElement="Event_0jxoz7s">
+        <dc:Bounds x="542" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1fwfxsn_di" bpmnElement="Activity_0o51srq">
+        <dc:Bounds x="390" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_1oronwq_di" bpmnElement="DataStoreReference_1oronwq">
+        <dc:Bounds x="415" y="245" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="400" y="302" width="81" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0tn4ed3_di" bpmnElement="Flow_0tn4ed3">
+        <di:waypoint x="318" y="117" />
+        <di:waypoint x="390" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0lz96a1_di" bpmnElement="Flow_0lz96a1">
+        <di:waypoint x="490" y="117" />
+        <di:waypoint x="542" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0tjuw5b_di" bpmnElement="DataOutputAssociation_0tjuw5b">
+        <di:waypoint x="441" y="157" />
+        <di:waypoint x="444" y="245" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

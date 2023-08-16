@@ -6,10 +6,13 @@ import {
   DATE_FORMAT,
   TIME_FORMAT_HOURS_MINUTES,
 } from './config';
-import {
-  DEFAULT_PER_PAGE,
-  DEFAULT_PAGE,
-} from './components/PaginationForTable';
+
+export const DEFAULT_PER_PAGE = 50;
+export const DEFAULT_PAGE = 1;
+
+export const doNothing = () => {
+  return undefined;
+};
 
 // https://www.30secondsofcode.org/js/s/slugify
 export const slugifyString = (str: any) => {
@@ -22,8 +25,46 @@ export const slugifyString = (str: any) => {
     .replace(/-+$/g, '');
 };
 
+export const HUMAN_TASK_TYPES = [
+  'User Task',
+  'Manual Task',
+  'UserTask',
+  'ManualTask',
+];
+
 export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
+};
+
+export const getKeyByValue = (
+  object: any,
+  value: string,
+  onAttribute?: string
+) => {
+  return Object.keys(object).find((key) => {
+    if (onAttribute) {
+      return object[key][onAttribute] === value;
+    }
+    return object[key] === value;
+  });
+};
+
+export const recursivelyChangeNullAndUndefined = (obj: any, newValue: any) => {
+  if (obj === null || obj === undefined) {
+    return newValue;
+  }
+  if (Array.isArray(obj)) {
+    obj.forEach((value: any, index: number) => {
+      // eslint-disable-next-line no-param-reassign
+      obj[index] = recursivelyChangeNullAndUndefined(value, newValue);
+    });
+  } else if (typeof obj === 'object') {
+    Object.entries(obj).forEach(([key, value]) => {
+      // eslint-disable-next-line no-param-reassign
+      obj[key] = recursivelyChangeNullAndUndefined(value, newValue);
+    });
+  }
+  return obj;
 };
 
 export const selectKeysFromSearchParams = (obj: any, keys: string[]) => {

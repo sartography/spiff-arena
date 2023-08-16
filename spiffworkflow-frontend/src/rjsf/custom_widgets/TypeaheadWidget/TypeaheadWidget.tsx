@@ -7,6 +7,7 @@ interface typeaheadArgs {
   onChange: any;
   options: any;
   value: any;
+  schema?: any;
   uiSchema?: any;
   disabled?: boolean;
   readonly?: boolean;
@@ -15,11 +16,13 @@ interface typeaheadArgs {
   label?: string;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function TypeaheadWidget({
   id,
   onChange,
   options: { category, itemFormat },
   value,
+  schema,
   uiSchema,
   disabled,
   readonly,
@@ -45,8 +48,15 @@ export default function TypeaheadWidget({
     }
   }
 
+  let labelToUse = label;
+  if (uiSchema && uiSchema['ui:title']) {
+    labelToUse = uiSchema['ui:title'];
+  } else if (schema && schema.title) {
+    labelToUse = schema.title;
+  }
+
   if (!category) {
-    errorMessageForField = `category is not set in the ui:options for this field: ${label}`;
+    errorMessageForField = `category is not set in the ui:options for this field: ${labelToUse}`;
     invalid = true;
   }
 
@@ -106,7 +116,13 @@ export default function TypeaheadWidget({
 
   if (!invalid && rawErrors && rawErrors.length > 0) {
     invalid = true;
-    [errorMessageForField] = rawErrors;
+    if ('validationErrorMessage' in schema) {
+      errorMessageForField = (schema as any).validationErrorMessage;
+    } else {
+      errorMessageForField = `${(labelToUse || '').replace(/\*$/, '')} ${
+        rawErrors[0]
+      }`;
+    }
   }
 
   return (
@@ -114,7 +130,15 @@ export default function TypeaheadWidget({
       onInputChange={typeaheadSearch}
       onChange={(event: any) => {
         setSelectedItem(event.selectedItem);
-        onChange(JSON.stringify(event.selectedItem));
+        let valueToUse = event.selectedItem;
+
+        // if the value is not truthy then do not stringify it
+        // otherwise things like null becomes "null"
+        if (valueToUse) {
+          valueToUse = JSON.stringify(valueToUse);
+        }
+
+        onChange(valueToUse);
       }}
       id={id}
       items={items}

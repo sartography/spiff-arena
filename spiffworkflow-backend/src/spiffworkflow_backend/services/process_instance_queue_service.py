@@ -4,9 +4,9 @@ from collections.abc import Generator
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -51,6 +51,7 @@ class ProcessInstanceQueueService:
     @classmethod
     def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:
         locked_by = ProcessInstanceLockService.locked_by()
+        current_time = round(time.time())
 
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id == process_instance.id,
@@ -58,6 +59,7 @@ class ProcessInstanceQueueService:
         ).update(
             {
                 "locked_by": locked_by,
+                "locked_at_in_seconds": current_time,
             }
         )
 
@@ -95,15 +97,13 @@ class ProcessInstanceQueueService:
         try:
             yield
         except Exception as ex:
-            process_instance.status = ProcessInstanceStatus.error.value
-            db.session.add(process_instance)
             # these events are handled in the WorkflowExecutionService.
             # that is, we don't need to add error_detail records here, etc.
             if not isinstance(ex, WorkflowExecutionServiceError):
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
                 )
-            db.session.commit()
+            ErrorHandlingService.handle_error(process_instance, ex)
             raise ex
         finally:
             if not reentering_lock:
@@ -115,11 +115,14 @@ class ProcessInstanceQueueService:
         status_value: str,
         locked_by: str | None,
         run_at_in_seconds_threshold: int,
+        min_age_in_seconds: int = 0,
     ) -> list[ProcessInstanceQueueModel]:
         return (
             db.session.query(ProcessInstanceQueueModel)
             .filter(
                 ProcessInstanceQueueModel.status == status_value,
+                ProcessInstanceQueueModel.updated_at_in_seconds <= round(time.time()) - min_age_in_seconds,
+                # At least a minute old.
                 ProcessInstanceQueueModel.locked_by == locked_by,
                 ProcessInstanceQueueModel.run_at_in_seconds <= run_at_in_seconds_threshold,
             )
@@ -131,8 +134,9 @@ class ProcessInstanceQueueService:
         cls,
         status_value: str,
         run_at_in_seconds_threshold: int,
+        min_age_in_seconds: int = 0,
     ) -> list[int]:
-        queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold)
+        queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold, min_age_in_seconds)
         ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status
 

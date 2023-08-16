@@ -6,6 +6,7 @@ import MyTasks from './MyTasks';
 import CompletedInstances from './CompletedInstances';
 import CreateNewInstance from './CreateNewInstance';
 import InProgressInstances from './InProgressInstances';
+import OnboardingView from './OnboardingView';
 
 export default function HomePageRoutes() {
   const location = useLocation();
@@ -47,7 +48,8 @@ export default function HomePageRoutes() {
   };
 
   return (
-    <>
+    <div className="fixed-width-container">
+      <OnboardingView />
       {renderTabs()}
       <Routes>
         <Route path="/" element={<InProgressInstances />} />
@@ -57,6 +59,6 @@ export default function HomePageRoutes() {
         <Route path="completed-instances" element={<CompletedInstances />} />
         <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>
-    </>
+    </div>
   );
 }

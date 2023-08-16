@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_ScriptWithImport" name="Script With Import" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0r3ua0i</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0r3ua0i" sourceRef="StartEvent_1" targetRef="Activity_SetInitialData" />
+    <bpmn:scriptTask id="Activity_SetInitialData" name="Set Initial Data">
+      <bpmn:incoming>Flow_0r3ua0i</bpmn:incoming>
+      <bpmn:outgoing>Flow_1vqk60p</bpmn:outgoing>
+      <bpmn:script>
+# from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+
+pi = ProcessInstanceModel.query.first()
+pi_json = { "id": pi.id }
+del(pi)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="Event_19fiqu4">
+      <bpmn:incoming>Flow_1vqk60p</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1vqk60p" sourceRef="Activity_SetInitialData" targetRef="Event_19fiqu4" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_ScriptWithImport">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0l45w13_di" bpmnElement="Activity_SetInitialData">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_19fiqu4_di" bpmnElement="Event_19fiqu4">
+        <dc:Bounds x="752" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0r3ua0i_di" bpmnElement="Flow_0r3ua0i">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vqk60p_di" bpmnElement="Flow_1vqk60p">
+        <di:waypoint x="690" y="177" />
+        <di:waypoint x="752" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

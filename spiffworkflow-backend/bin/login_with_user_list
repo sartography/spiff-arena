@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+  export KEYCLOAK_BASE_URL=http://localhost:7002
+fi
+if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
+  export BACKEND_BASE_URL=http://localhost:7000
+fi
+
+user_list="${1}"
+if [[ -z "${1:-}" ]]; then
+  >&2 echo "usage: $(basename "$0") [user_list]"
+  exit 1
+fi
+export REALM_NAME=${2-spiffworkflow}
+
+while read -r input_line; do
+  if ! grep -qE '(^#|email)' <<<"$input_line" ; then
+    username=$(awk -F '@' '{print $1}' <<<"$input_line")
+    password=$(awk -F ',' '{print $2}' <<<"$input_line")
+    "${script_dir}/login_with_user" "$username" "$password"
+  fi
+done <"$user_list"

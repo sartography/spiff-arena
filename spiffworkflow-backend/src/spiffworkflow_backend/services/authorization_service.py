@@ -42,6 +42,10 @@ class HumanTaskNotFoundError(Exception):
     pass
 
 
+class HumanTaskAlreadyCompletedError(Exception):
+    pass
+
+
 class UserDoesNotHaveAccessToTaskError(Exception):
     pass
 
@@ -71,6 +75,10 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
     },
+    {
+        "path": "/process-instances/for-me",
+        "relevant_permissions": ["read"],
+    },
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
@@ -78,6 +86,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
     {"path": "/process-model-tests", "relevant_permissions": ["create"]},
+    {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
@@ -361,11 +370,16 @@ class AuthorizationService:
         human_task = HumanTaskModel.query.filter_by(
             task_id=task_guid,
             process_instance_id=process_instance_id,
-            completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
                 f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
+            )
+
+        if human_task.completed:
+            raise HumanTaskAlreadyCompletedError(
+                f"Human task with task guid '{task_guid}' for process instance '{process_instance_id}' has already"
+                " been completed"
             )
 
         if user not in human_task.potential_owners:
@@ -508,13 +522,15 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/connector-proxy/typeahead/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/debug/version-info"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/extensions"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-groups"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-models"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes/callers"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes/callers/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/user-groups/for-current-user"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/onboarding"))
 
         permissions_to_assign.append(
             PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata")
@@ -550,8 +566,10 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/extensions/*"))
 
         # read comes from PG and PM ALL permissions as well
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-assign/*"))
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/event-error-details/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
@@ -562,6 +580,8 @@ class AuthorizationService:
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
+
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/data-stores/*"))
         return permissions_to_assign
 
     @classmethod

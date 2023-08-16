@@ -88,6 +88,10 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER
 fi
 
+# DELETE after this runs on all necessary environments
+# TODO: make a system somewhat like schema migrations (storing versions in a db table) to handle data migrations
+poetry run python ./bin/data_migrations/version_1_3.py
+
 # --worker-class is not strictly necessary, since setting threads will automatically set the worker class to gthread, but meh
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!

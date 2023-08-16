@@ -35,14 +35,14 @@ from spiffworkflow_backend.services.background_processing_service import Backgro
 class MyJSONEncoder(DefaultJSONProvider):
     def default(self, obj: Any) -> Any:
         if hasattr(obj, "serialized"):
-            return obj.serialized
+            return obj.serialized()
         elif isinstance(obj, sqlalchemy.engine.row.Row):  # type: ignore
             return_dict = {}
             row_mapping = obj._mapping
             for row_key in row_mapping.keys():
                 row_value = row_mapping[row_key]
                 if hasattr(row_value, "serialized"):
-                    return_dict.update(row_value.serialized)
+                    return_dict.update(row_value.serialized())
                 elif hasattr(row_value, "__dict__"):
                     return_dict.update(row_value.__dict__)
                 else:
@@ -91,6 +91,11 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
         BackgroundProcessingService(app).process_user_input_required_process_instances,
         "interval",
         seconds=user_input_required_polling_interval_in_seconds,
+    )
+    scheduler.add_job(
+        BackgroundProcessingService(app).remove_stale_locks,
+        "interval",
+        seconds=app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"],
     )
     scheduler.start()
 

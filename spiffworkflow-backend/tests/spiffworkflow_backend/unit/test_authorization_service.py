@@ -48,6 +48,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance:model1")
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
         self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
 
     def test_user_can_be_added_to_human_task_on_first_login(
         self,
@@ -128,6 +129,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model:*",
                     "delete",
                 ),
+                ("/process-instances/for-me/some-process-group:some-process-model:*", "read"),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model:*", "create"),
@@ -136,6 +138,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
                 ("/process-models/some-process-group:some-process-model:*", "update"),
+                ("/task-assign/some-process-group:some-process-model:*", "create"),
                 ("/task-data/some-process-group:some-process-model:*", "read"),
                 ("/task-data/some-process-group:some-process-model:*", "update"),
             ]
@@ -212,6 +215,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model/*",
                     "delete",
                 ),
+                ("/process-instances/for-me/some-process-group:some-process-model/*", "read"),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model/*", "create"),
@@ -220,6 +224,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
                 ("/process-models/some-process-group:some-process-model/*", "update"),
+                ("/task-assign/some-process-group:some-process-model/*", "create"),
                 ("/task-data/some-process-group:some-process-model/*", "read"),
                 ("/task-data/some-process-group:some-process-model/*", "update"),
             ]
@@ -275,6 +280,8 @@ class TestAuthorizationService(BaseTest):
                 ("/active-users/*", "create"),
                 ("/connector-proxy/typeahead/*", "read"),
                 ("/debug/version-info", "read"),
+                ("/extensions", "read"),
+                ("/onboarding", "read"),
                 ("/process-groups", "read"),
                 ("/process-instances/find-by-id/*", "read"),
                 ("/process-instances/for-me", "create"),
@@ -285,7 +292,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/reports/*", "update"),
                 ("/process-models", "read"),
                 ("/processes", "read"),
-                ("/processes/callers", "read"),
+                ("/processes/callers/*", "read"),
                 ("/service-tasks", "read"),
                 ("/tasks/*", "create"),
                 ("/tasks/*", "delete"),
@@ -310,7 +317,9 @@ class TestAuthorizationService(BaseTest):
             [
                 ("/authentications", "read"),
                 ("/can-run-privileged-script/*", "create"),
+                ("/data-stores/*", "read"),
                 ("/debug/*", "create"),
+                ("/extensions/*", "create"),
                 ("/event-error-details/*", "read"),
                 ("/logs/*", "read"),
                 ("/messages", "read"),
@@ -330,6 +339,7 @@ class TestAuthorizationService(BaseTest):
                 ("/secrets/*", "read"),
                 ("/secrets/*", "update"),
                 ("/send-event/*", "create"),
+                ("/task-assign/*", "create"),
                 ("/task-complete/*", "create"),
                 ("/task-data/*", "update"),
                 ("/task-data/*", "read"),

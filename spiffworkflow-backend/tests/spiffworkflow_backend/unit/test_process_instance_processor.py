@@ -11,6 +11,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -33,7 +34,7 @@ class TestProcessInstanceProcessor(BaseTest):
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = ProcessInstanceProcessor._script_engine
+        script_engine = ProcessInstanceProcessor._default_script_engine
 
         result = script_engine._evaluate("a", {"a": 1})
         assert result == 1
@@ -47,7 +48,7 @@ class TestProcessInstanceProcessor(BaseTest):
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = ProcessInstanceProcessor._script_engine
+        script_engine = ProcessInstanceProcessor._default_script_engine
         result = script_engine._evaluate("fact_service(type='norris')", {})
         assert result == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = None
@@ -464,6 +465,11 @@ class TestProcessInstanceProcessor(BaseTest):
             "stuck waiting for the call activity to complete (which was happening in a bug I'm fixing right now)"
         )
 
+        task_event = ProcessInstanceEventModel.query.filter_by(
+            task_guid=human_task_one.task_id, event_type=ProcessInstanceEventType.task_executed_manually.value
+        ).first()
+        assert task_event is not None
+
     def test_step_through_gateway(
         self,
         app: Flask,
@@ -500,6 +506,11 @@ class TestProcessInstanceProcessor(BaseTest):
         gateway_task = processor.get_task_by_bpmn_identifier("Gateway_Open", processor.bpmn_process_instance)
         assert gateway_task is not None
         assert gateway_task.state == TaskState.COMPLETED
+
+        task_event = ProcessInstanceEventModel.query.filter_by(
+            task_guid=str(gateway_task.id), event_type=ProcessInstanceEventType.task_executed_manually.value
+        ).first()
+        assert task_event is not None
 
     def test_properly_saves_tasks_when_running(
         self,

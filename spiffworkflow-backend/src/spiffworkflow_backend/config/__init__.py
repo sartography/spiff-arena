@@ -18,11 +18,16 @@ class ConfigurationError(Exception):
 
 
 def setup_database_configs(app: Flask) -> None:
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+    parallel_test_suffix = ""
+    if worker_id is not None:
+        parallel_test_suffix = f"_{worker_id}"
+
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
         if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}.sqlite3"
+                f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}{parallel_test_suffix}.sqlite3"
             )
         elif app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -33,7 +38,7 @@ def setup_database_configs(app: Flask) -> None:
             db_pswd = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD")
             if db_pswd is None:
                 db_pswd = ""
-            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://root:{db_pswd}@localhost/{database_name}"
+            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:{db_pswd}@127.0.0.1/{database_name}"
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
 
@@ -63,9 +68,9 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
     try:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
-    except ImportStringError as exception:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
-            raise ModuleNotFoundError(f"Cannot find config module: {env_config_module}") from exception
+    except ImportStringError:
+        # ignore this error
+        pass
 
 
 def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
@@ -79,6 +84,17 @@ def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
             raise ConfigurationError(
                 "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
             )
+
+
+def _check_extension_api_configs(app: Flask) -> None:
+    if (
+        app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]
+        and len(app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]) < 1
+    ):
+        raise ConfigurationError(
+            "SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED is set to true but"
+            " SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX is an empty value."
+        )
 
 
 # see the message in the ConfigurationError below for why we are checking this.
@@ -180,7 +196,12 @@ def setup_config(app: Flask) -> None:
     if app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] == "":
         app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] = None
 
+    app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] = int(
+        app.config["SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
+    )
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
+    _check_extension_api_configs(app)

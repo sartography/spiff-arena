@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -68,6 +70,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
 
     data: dict | None = None
+    saved_form_data: dict | None = None
 
     # these are here to be compatible with task api
     form_schema: dict | None = None
@@ -88,6 +91,12 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     def json_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+
+    def parent_task_model(self) -> TaskModel | None:
+        if "parent" not in self.properties_json:
+            return None
+        task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
+        return task_model
 
 
 class Task:
@@ -120,9 +129,9 @@ class Task:
         form_ui_schema: dict | None = None,
         parent: str | None = None,
         event_definition: dict[str, Any] | None = None,
-        call_activity_process_identifier: str | None = None,
-        calling_subprocess_task_id: str | None = None,
         error_message: str | None = None,
+        assigned_user_group_identifier: str | None = None,
+        potential_owner_usernames: str | None = None,
     ):
         self.id = id
         self.name = name
@@ -135,8 +144,6 @@ class Task:
         self.lane = lane
         self.parent = parent
         self.event_definition = event_definition
-        self.call_activity_process_identifier = call_activity_process_identifier
-        self.calling_subprocess_task_id = calling_subprocess_task_id
 
         self.data = data
         if self.data is None:
@@ -150,6 +157,8 @@ class Task:
         self.process_model_display_name = process_model_display_name
         self.form_schema = form_schema
         self.form_ui_schema = form_ui_schema
+        self.assigned_user_group_identifier = assigned_user_group_identifier
+        self.potential_owner_usernames = potential_owner_usernames
 
         self.multi_instance_type = multi_instance_type  # Some tasks have a repeat behavior.
         self.multi_instance_count = multi_instance_count  # This is the number of times the task could repeat.
@@ -161,7 +170,6 @@ class Task:
             self.properties = {}
         self.error_message = error_message
 
-    @property
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         multi_instance_type = None
@@ -194,9 +202,9 @@ class Task:
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
             "event_definition": self.event_definition,
-            "call_activity_process_identifier": self.call_activity_process_identifier,
-            "calling_subprocess_task_id": self.calling_subprocess_task_id,
             "error_message": self.error_message,
+            "assigned_user_group_identifier": self.assigned_user_group_identifier,
+            "potential_owner_usernames": self.potential_owner_usernames,
         }
 
     @classmethod

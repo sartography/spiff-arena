@@ -12,3 +12,27 @@ export function removeExtensionElementsIfEmpty(moddleElement) {
     moddleElement.extensionElements = null;
   }
 }
+
+/**
+ * loops up until it can find the root.
+ * @param element
+ */
+export function getRoot(businessObject, moddle) {
+  // HACK: get the root element. need a more formal way to do this
+  if (moddle) {
+    for (const elementId in moddle.ids._seed.hats) {
+      if (elementId.startsWith('Definitions_')) {
+        return moddle.ids._seed.hats[elementId];
+      }
+    }
+  } else {
+    // todo: Do we want businessObject to be a shape or moddle object?
+    if (businessObject.$type === 'bpmn:Definitions') {
+      return businessObject;
+    }
+    if (typeof businessObject.$parent !== 'undefined') {
+      return getRoot(businessObject.$parent);
+    }
+  }
+  return businessObject;
+}

@@ -24,6 +24,7 @@ from flask import current_app
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
+from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
@@ -71,6 +72,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -78,7 +80,9 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
+from spiffworkflow_backend.services.workflow_execution_service import SkipOneExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
@@ -263,7 +267,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     scripts directory available for execution.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, use_restricted_script_engine: bool = True) -> None:
         default_globals = {
             "_strptime": _strptime,
             "dateparser": dateparser,
@@ -282,9 +286,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            **JinjaHelpers.get_helper_mapping(),
         }
 
-        use_restricted_script_engine = True
         if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE") == "false":
             use_restricted_script_engine = False
 
@@ -375,7 +379,7 @@ IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, Bpm
 
 
 class ProcessInstanceProcessor:
-    _script_engine = CustomBpmnScriptEngine()
+    _default_script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
 
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(SPIFF_SPEC_CONFIG)
@@ -388,8 +392,14 @@ class ProcessInstanceProcessor:
     # __init__ calls these helpers:
     #   * get_spec, which returns a spec and any subprocesses (as IdToBpmnProcessSpecMapping dict)
     #   * __get_bpmn_process_instance, which takes spec and subprocesses and instantiates and returns a BpmnWorkflow
-    def __init__(self, process_instance_model: ProcessInstanceModel, validate_only: bool = False) -> None:
+    def __init__(
+        self,
+        process_instance_model: ProcessInstanceModel,
+        validate_only: bool = False,
+        script_engine: PythonScriptEngine | None = None,
+    ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
+        self._script_engine = script_engine or self.__class__._default_script_engine
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model, validate_only=validate_only
         )
@@ -443,7 +453,7 @@ class ProcessInstanceProcessor:
                 validate_only,
                 subprocesses=subprocesses,
             )
-            self.set_script_engine(self.bpmn_process_instance)
+            self.set_script_engine(self.bpmn_process_instance, self._script_engine)
 
         except MissingSpecError as ke:
             raise ApiError(
@@ -466,7 +476,7 @@ class ProcessInstanceProcessor:
                     f"The given process model was not found: {process_model_identifier}.",
                 )
             )
-        spec_files = SpecFileService.get_files(process_model_info)
+        spec_files = FileSystemService.get_files(process_model_info)
         return cls.get_spec(spec_files, process_model_info)
 
     @classmethod
@@ -474,15 +484,20 @@ class ProcessInstanceProcessor:
         (bpmn_process_spec, subprocesses) = cls.get_process_model_and_subprocesses(
             process_model_identifier,
         )
-        return cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        bpmn_process_instance = cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        cls.set_script_engine(bpmn_process_instance)
+        return bpmn_process_instance
 
     @staticmethod
-    def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
-        ProcessInstanceProcessor._script_engine.environment.restore_state(bpmn_process_instance)
-        bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
+    def set_script_engine(
+        bpmn_process_instance: BpmnWorkflow, script_engine: PythonScriptEngine | None = None
+    ) -> None:
+        script_engine_to_use = script_engine or ProcessInstanceProcessor._default_script_engine
+        script_engine_to_use.environment.restore_state(bpmn_process_instance)
+        bpmn_process_instance.script_engine = script_engine_to_use
 
     def preserve_script_engine_state(self) -> None:
-        ProcessInstanceProcessor._script_engine.environment.preserve_state(self.bpmn_process_instance)
+        self._script_engine.environment.preserve_state(self.bpmn_process_instance)
 
     @classmethod
     def _update_bpmn_definition_mappings(
@@ -708,7 +723,6 @@ class ProcessInstanceProcessor:
             spec,
             subprocess_specs=subprocesses,
         )
-        ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         return bpmn_process_instance
 
     @staticmethod
@@ -736,8 +750,6 @@ class ProcessInstanceProcessor:
                 raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
-
-            ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         else:
             bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(
                 spec, subprocesses
@@ -752,10 +764,9 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings,
         )
 
-    def slam_in_data(self, data: dict) -> None:
+    def add_data_to_bpmn_process_instance(self, data: dict) -> None:
+        # if we do not use a deep merge, then the data does not end up on the object for some reason
         self.bpmn_process_instance.data = DeepMerge.merge(self.bpmn_process_instance.data, data)
-
-        self.save()
 
     def raise_if_no_potential_owners(self, potential_owner_ids: list[int], message: str) -> None:
         if not potential_owner_ids:
@@ -1018,7 +1029,7 @@ class ProcessInstanceProcessor:
 
                 # in the xml, it's the id attribute. this identifies the process where the activity lives.
                 # if it's in a subprocess, it's the inner process.
-                bpmn_process_identifier = ready_or_waiting_task.workflow.name
+                bpmn_process_identifier = ready_or_waiting_task.workflow.spec.name
 
                 form_file_name = None
                 ui_form_file_name = None
@@ -1079,13 +1090,12 @@ class ProcessInstanceProcessor:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.registry.restore(event_data)
-        if payload is not None:
-            event_definition.payload = payload
-        current_app.logger.info(
-            f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}"
+        bpmn_event = BpmnEvent(
+            event_definition=event_definition,
+            payload=payload,
         )
         try:
-            self.bpmn_process_instance.catch(event_definition)
+            self.bpmn_process_instance.send_event(bpmn_event)
         except Exception as e:
             print(e)
 
@@ -1096,8 +1106,12 @@ class ProcessInstanceProcessor:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
+        if execute:
+            event_type = ProcessInstanceEventType.task_executed_manually.value
+
         start_time = time.time()
 
+        # manual actually means any human task
         if spiff_task.task_spec.manual:
             # Executing or not executing a human task results in the same state.
             current_app.logger.info(
@@ -1114,7 +1128,15 @@ class ProcessInstanceProcessor:
             self.do_engine_steps(save=True, execution_strategy_name="one_at_a_time")
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
-            self.do_engine_steps(save=True, execution_strategy_name="skip_one")
+            task_model_delegate = TaskModelSavingDelegate(
+                serializer=self._serializer,
+                process_instance=self.process_instance_model,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            )
+            execution_strategy = SkipOneExecutionStrategy(
+                task_model_delegate, self.lazy_load_subprocess_specs, {"spiff_task": spiff_task}
+            )
+            self.do_engine_steps(save=True, execution_strategy=execution_strategy)
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
@@ -1340,7 +1362,7 @@ class ProcessInstanceProcessor:
         for task in tasks:
             if task.task_spec.description != "Call Activity":
                 continue
-            spec_to_check = task.task_spec.spec
+            spec_to_check = task.task_spec.bpmn_id
 
             if spec_to_check not in loaded_specs:
                 lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
@@ -1361,18 +1383,28 @@ class ProcessInstanceProcessor:
         exit_at: None = None,
         save: bool = False,
         execution_strategy_name: str | None = None,
+        execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
-        with ProcessInstanceQueueService.dequeued(self.process_instance_model):
-            # TODO: ideally we just lock in the execution service, but not sure
-            # about _add_bpmn_process_definitions and if that needs to happen in
-            # the same lock like it does on main
-            self._do_engine_steps(exit_at, save, execution_strategy_name)
+        if self.process_instance_model.persistence_level != "none":
+            with ProcessInstanceQueueService.dequeued(self.process_instance_model):
+                # TODO: ideally we just lock in the execution service, but not sure
+                # about _add_bpmn_process_definitions and if that needs to happen in
+                # the same lock like it does on main
+                self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+        else:
+            self._do_engine_steps(
+                exit_at,
+                save=False,
+                execution_strategy_name=execution_strategy_name,
+                execution_strategy=execution_strategy,
+            )
 
     def _do_engine_steps(
         self,
         exit_at: None = None,
         save: bool = False,
         execution_strategy_name: str | None = None,
+        execution_strategy: ExecutionStrategy | None = None,
     ) -> None:
         self._add_bpmn_process_definitions()
 
@@ -1382,16 +1414,17 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
 
-        if execution_strategy_name is None:
-            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
-        if execution_strategy_name is None:
-            raise ExecutionStrategyNotConfiguredError(
-                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+        if execution_strategy is None:
+            if execution_strategy_name is None:
+                execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
+            if execution_strategy_name is None:
+                raise ExecutionStrategyNotConfiguredError(
+                    "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+                )
+            execution_strategy = execution_strategy_named(
+                execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
             )
 
-        execution_strategy = execution_strategy_named(
-            execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
-        )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
@@ -1461,10 +1494,7 @@ class ProcessInstanceProcessor:
         if self.bpmn_process_instance.is_completed():
             for spiff_task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.ANY_MASK):
                 # Assure that we find the end event for this process_instance, and not for any sub-process_instances.
-                if (
-                    spiff_task.task_spec.__class__.__name__ == "EndEvent"
-                    and spiff_task.workflow == self.bpmn_process_instance
-                ):
+                if TaskService.is_main_process_end_event(spiff_task):
                     endtasks.append(spiff_task)
             if len(endtasks) > 0:
                 return endtasks[-1]
@@ -1543,7 +1573,14 @@ class ProcessInstanceProcessor:
             )
 
         task_model.start_in_seconds = time.time()
-        self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+        task_exception = None
+        task_event = ProcessInstanceEventType.task_completed.value
+        try:
+            self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+        except Exception as ex:
+            task_exception = ex
+            task_event = ProcessInstanceEventType.task_failed.value
+
         task_model.end_in_seconds = time.time()
 
         human_task.completed_by_user_id = user.id
@@ -1561,9 +1598,10 @@ class ProcessInstanceProcessor:
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
-            ProcessInstanceEventType.task_completed.value,
+            task_event,
             task_guid=task_model.guid,
             user_id=user.id,
+            exception=task_exception,
         )
 
         # children of a multi-instance task has the attribute "triggered" set to True
@@ -1578,6 +1616,9 @@ class ProcessInstanceProcessor:
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
+
+        if task_exception is not None:
+            raise task_exception
 
     def get_data(self) -> dict[str, Any]:
         return self.bpmn_process_instance.data  # type: ignore

@@ -4,9 +4,6 @@ import { useSearchParams } from 'react-router-dom';
 import { Pagination } from '@carbon/react';
 import { PaginationObject } from '../interfaces';
 
-export const DEFAULT_PER_PAGE = 50;
-export const DEFAULT_PAGE = 1;
-
 type OwnProps = {
   page: number;
   perPage: number;
@@ -15,6 +12,7 @@ type OwnProps = {
   tableToDisplay: any;
   paginationQueryParamPrefix?: string;
   paginationClassName?: string;
+  paginationDataQATag?: string;
 };
 
 export default function PaginationForTable({
@@ -25,6 +23,7 @@ export default function PaginationForTable({
   tableToDisplay,
   paginationQueryParamPrefix,
   paginationClassName,
+  paginationDataQATag = 'pagination-options',
 }: OwnProps) {
   const PER_PAGE_OPTIONS = [2, 10, 50, 100];
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,21 +41,34 @@ export default function PaginationForTable({
   };
 
   if (pagination) {
+    const maxPages = 1000;
+    const pagesUnknown = pagination.pages > maxPages;
+    const totalItems =
+      pagination.pages < maxPages ? pagination.total : maxPages * perPage;
+    const itemText = () => {
+      const start = (page - 1) * perPage + 1;
+      return `Items ${start} to ${start + pagination.count} of ${
+        pagination.total
+      }`;
+    };
+
     return (
       <>
         {tableToDisplay}
         <Pagination
           className={paginationClassName}
-          data-qa="pagination-options"
+          data-qa={paginationDataQATag}
           backwardText="Previous page"
           forwardText="Next page"
           itemsPerPageText="Items per page:"
           page={page}
           pageNumberText="Page Number"
+          itemText={itemText}
           pageSize={perPage}
           pageSizes={perPageOptions || PER_PAGE_OPTIONS}
-          totalItems={pagination.total}
+          totalItems={totalItems}
           onChange={updateRows}
+          pagesUnknown={pagesUnknown}
         />
       </>
     );

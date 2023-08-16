@@ -23,7 +23,6 @@ import {
   TableRow,
   TimePicker,
   Tag,
-  Stack,
   Modal,
   ComboBox,
   TextInput,
@@ -42,6 +41,7 @@ import {
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
+  getKeyByValue,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
@@ -68,6 +68,7 @@ import {
   User,
   ErrorForDisplay,
   PermissionsToCheck,
+  FilterOperatorMapping,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -165,6 +166,14 @@ export default function ProcessInstanceListTable({
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
 
+  const filterOperatorMappings: FilterOperatorMapping = {
+    Is: { id: 'equals', requires_value: true },
+    'Is Not': { id: 'not equals', requires_value: true },
+    Contains: { id: 'contains', requires_value: true },
+    'Is Empty': { id: 'is_empty', requires_value: false },
+    'Is Not Empty': { id: 'is_not_empty', requires_value: false },
+  };
+
   const processInstanceListPathPrefix =
     variant === 'all'
       ? '/admin/process-instances/all'
@@ -207,7 +216,8 @@ export default function ProcessInstanceListTable({
 
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
-  const [withOldestOpenTask, setWithOldestOpenTask] = useState<boolean>(false);
+  const [withOldestOpenTask, setWithOldestOpenTask] =
+    useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
     null
@@ -361,6 +371,27 @@ export default function ProcessInstanceListTable({
           setProcessInstanceReportSelection(processInstanceReport);
         }
       }
+      if (additionalReportFilters) {
+        additionalReportFilters.forEach((arf: ReportFilter) => {
+          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
+            reportMetadataBodyToUse.filter_by.push(arf);
+          }
+        });
+      }
+
+      // If the showActionColumn is set to true, we need to include the with_oldest_open_task in the query params
+      if (
+        showActionsColumn &&
+        !reportMetadataBodyToUse.filter_by.some(
+          (rf: ReportFilter) => rf.field_name === 'with_oldest_open_task'
+        )
+      ) {
+        const withOldestReportFilter = {
+          field_name: 'with_oldest_open_task',
+          field_value: true,
+        };
+        reportMetadataBodyToUse.filter_by.push(withOldestReportFilter);
+      }
 
       // a bit hacky, clear out all filters before setting them from report metadata
       // to ensure old filters are cleared out.
@@ -417,6 +448,13 @@ export default function ProcessInstanceListTable({
         setShowFilterOptions(true);
       }
 
+      if (filtersEnabled) {
+        HttpService.makeCallToBackend({
+          path: `/user-groups/for-current-user`,
+          successCallback: setUserGroups,
+        });
+      }
+
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
@@ -428,22 +466,8 @@ export default function ProcessInstanceListTable({
         // eslint-disable-next-line prefer-destructuring
         perPage = perPageOptions[1];
       }
+
       const queryParamString = `per_page=${perPage}&page=${page}`;
-      if (additionalReportFilters) {
-        additionalReportFilters.forEach((arf: ReportFilter) => {
-          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
-            reportMetadataBodyToUse.filter_by.push(arf);
-          }
-        });
-      }
-
-      if (filtersEnabled) {
-        HttpService.makeCallToBackend({
-          path: `/user-groups/for-current-user`,
-          successCallback: setUserGroups,
-        });
-      }
-
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
@@ -466,6 +490,7 @@ export default function ProcessInstanceListTable({
       setProcessInstancesFromResult,
       stopRefreshing,
       systemReportOptions,
+      showActionsColumn,
       clearFilters,
     ]
   );
@@ -943,6 +968,13 @@ export default function ProcessInstanceListTable({
         (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
       );
       Object.assign(reportMetadataCopy, { columns: newColumns });
+      const newFilters = reportMetadataCopy.filter_by.filter(
+        (rf: ReportFilter) => rf.field_name !== reportColumn.accessor
+      );
+      Object.assign(reportMetadataCopy, {
+        columns: newColumns,
+        filter_by: newFilters,
+      });
       setReportMetadata(reportMetadataCopy);
       setRequiresRefilter(true);
     }
@@ -952,6 +984,18 @@ export default function ProcessInstanceListTable({
     setShowReportColumnForm(false);
     setReportColumnFormMode('');
     setReportColumnToOperateOn(null);
+  };
+
+  const getFilterOperatorFromReportColumn = (
+    reportColumnForEditing: ReportColumnForEditing
+  ) => {
+    if (reportColumnForEditing.filter_operator) {
+      // eslint-disable-next-line prefer-destructuring
+      return Object.entries(filterOperatorMappings).filter(([_key, value]) => {
+        return value.id === reportColumnForEditing.filter_operator;
+      })[0][1];
+    }
+    return null;
   };
 
   const getNewFiltersFromReportForEditing = (
@@ -971,14 +1015,23 @@ export default function ProcessInstanceListTable({
       const existingReportFilter = getFilterByFromReportMetadata(
         reportColumnForEditing.accessor
       );
+      const filterOperator = getFilterOperatorFromReportColumn(
+        reportColumnForEditing
+      );
       if (existingReportFilter) {
         const existingReportFilterIndex =
           reportMetadataCopy.filter_by.indexOf(existingReportFilter);
-        if (reportColumnForEditing.filter_field_value) {
+        if (filterOperator && !filterOperator.requires_value) {
+          newReportFilter.field_value = '';
+          newReportFilters[existingReportFilterIndex] = newReportFilter;
+        } else if (reportColumnForEditing.filter_field_value) {
           newReportFilters[existingReportFilterIndex] = newReportFilter;
         } else {
           newReportFilters.splice(existingReportFilterIndex, 1);
         }
+      } else if (filterOperator && !filterOperator.requires_value) {
+        newReportFilter.field_value = '';
+        newReportFilters = newReportFilters.concat([newReportFilter]);
       } else if (reportColumnForEditing.filter_field_value) {
         newReportFilters = newReportFilters.concat([newReportFilter]);
       }
@@ -1064,6 +1117,19 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  const setReportColumnConditionOperator = (selectedItem: string) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      const filterOperator = filterOperatorMappings[selectedItem];
+      reportColumnToOperateOnCopy.filter_operator = filterOperator.id;
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+      setRequiresRefilter(true);
+    }
+  };
+
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -1111,18 +1177,40 @@ export default function ProcessInstanceListTable({
     ]);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
-        <TextInput
-          id="report-column-condition-value"
-          name="report-column-condition-value"
-          labelText="Condition Value"
-          value={
-            reportColumnToOperateOn
-              ? reportColumnToOperateOn.filter_field_value
-              : ''
-          }
-          onChange={setReportColumnConditionValue}
+        <Dropdown
+          titleText="Operator"
+          id="report-column-condition-operator"
+          items={Object.keys(filterOperatorMappings)}
+          selectedItem={getKeyByValue(
+            filterOperatorMappings,
+            reportColumnToOperateOn.filter_operator,
+            'id'
+          )}
+          onChange={(value: any) => {
+            setReportColumnConditionOperator(value.selectedItem);
+            setRequiresRefilter(true);
+          }}
         />
       );
+
+      const filterOperator = getFilterOperatorFromReportColumn(
+        reportColumnToOperateOn
+      );
+      if (filterOperator && filterOperator.requires_value) {
+        formElements.push(
+          <TextInput
+            id="report-column-condition-value"
+            name="report-column-condition-value"
+            labelText="Condition Value"
+            value={
+              reportColumnToOperateOn
+                ? reportColumnToOperateOn.filter_field_value
+                : ''
+            }
+            onChange={setReportColumnConditionValue}
+          />
+        );
+      }
     }
     formElements.push(
       <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
@@ -1166,50 +1254,54 @@ export default function ProcessInstanceListTable({
           reportColumnLabel = `${reportColumnLabel}=${reportColumnForEditing.filter_field_value}`;
         }
         tags.push(
-          <Tag type={tagType} size="sm">
-            <Button
-              kind="ghost"
-              size="sm"
-              className={`button-tag-icon ${tagTypeClass}`}
-              title={`Edit ${reportColumnForEditing.accessor} column`}
-              onClick={() => {
-                setReportColumnToOperateOn(reportColumnForEditing);
-                setShowReportColumnForm(true);
-                setReportColumnFormMode('edit');
-              }}
-            >
-              {reportColumnLabel}
-            </Button>
-            <Button
-              data-qa="remove-report-column"
-              renderIcon={Close}
-              iconDescription="Remove Column"
-              className={`button-tag-icon ${tagTypeClass}`}
-              hasIconOnly
-              size="sm"
-              kind="ghost"
-              onClick={() => removeColumn(reportColumnForEditing)}
-            />
-          </Tag>
+          <Column md={2} lg={2} sm={2}>
+            <Tag type={tagType} size="sm" className="filter-tag">
+              <Button
+                kind="ghost"
+                size="sm"
+                className={`button-tag ${tagTypeClass}`}
+                title={`Edit ${reportColumnForEditing.accessor} column`}
+                onClick={() => {
+                  setReportColumnToOperateOn(reportColumnForEditing);
+                  setShowReportColumnForm(true);
+                  setReportColumnFormMode('edit');
+                }}
+              >
+                {reportColumnLabel}
+              </Button>
+              <Button
+                data-qa="remove-report-column"
+                renderIcon={Close}
+                iconDescription="Remove Column"
+                className={`button-tag-icon ${tagTypeClass}`}
+                hasIconOnly
+                size="sm"
+                kind="ghost"
+                onClick={() => removeColumn(reportColumnForEditing)}
+              />
+            </Tag>
+          </Column>
         );
       });
       return (
-        <Stack orientation="horizontal">
+        <Grid narrow fullWidth className="filter-buttons">
           {tags}
-          <Button
-            data-qa="add-column-button"
-            renderIcon={AddAlt}
-            iconDescription="Column options"
-            className="with-tiny-top-margin"
-            kind="ghost"
-            hasIconOnly
-            size="sm"
-            onClick={() => {
-              setShowReportColumnForm(true);
-              setReportColumnFormMode('new');
-            }}
-          />
-        </Stack>
+          <Column md={1} lg={1} sm={1}>
+            <Button
+              data-qa="add-column-button"
+              renderIcon={AddAlt}
+              iconDescription="Column options"
+              className="with-tiny-top-margin"
+              kind="ghost"
+              hasIconOnly
+              size="sm"
+              onClick={() => {
+                setShowReportColumnForm(true);
+                setReportColumnFormMode('new');
+              }}
+            />
+          </Column>
+        </Grid>
       );
     }
     return null;
@@ -1260,6 +1352,7 @@ export default function ProcessInstanceListTable({
               labelText="Include oldest open task information"
               id="with-oldest-open-task-checkbox"
               checked={withOldestOpenTask}
+              disabled={showActionsColumn}
               onChange={(value: any) => {
                 setWithOldestOpenTask(value.target.checked);
                 setRequiresRefilter(true);
@@ -1635,6 +1728,18 @@ export default function ProcessInstanceListTable({
           `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
         );
       };
+      let variantFromMetadata = 'all';
+      if (reportMetadata) {
+        reportMetadata.filter_by.forEach((filter: any) => {
+          if (
+            filter.field_name === 'with_relation_to_me' &&
+            filter.field_value
+          ) {
+            variantFromMetadata = 'for-me';
+          }
+        });
+      }
+
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
@@ -1642,6 +1747,7 @@ export default function ProcessInstanceListTable({
           key={processInstance.id}
           onClick={navigateToProcessInstance}
           onKeyDown={navigateToProcessInstance}
+          className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
         </tr>
@@ -1655,7 +1761,7 @@ export default function ProcessInstanceListTable({
 
     return (
       // eslint-disable-next-line react/jsx-props-no-spreading
-      <Table {...tableProps}>
+      <Table {...tableProps} className="process-instance-list">
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
@@ -1676,7 +1782,7 @@ export default function ProcessInstanceListTable({
   const reportSearchComponent = () => {
     if (showReports) {
       const columns = [
-        <Column sm={2} md={4} lg={7}>
+        <Column sm={4} md={8} lg={16}>
           <ProcessInstanceReportSearch
             onChange={processInstanceReportDidChange}
             selectedItem={processInstanceReportSelection}
@@ -1705,6 +1811,7 @@ export default function ProcessInstanceListTable({
           sm={{ span: 1, offset: 3 }}
           md={{ span: 1, offset: 7 }}
           lg={{ span: 1, offset: 15 }}
+          style={{ textAlign: 'right' }}
         >
           <Button
             data-qa="process-instance-list-link"
@@ -1720,12 +1827,12 @@ export default function ProcessInstanceListTable({
       );
     }
     return (
-      <Grid fullWidth condensed>
+      <>
         <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
           {headerElement}
         </Column>
         {filterButtonLink}
-      </Grid>
+      </>
     );
   };
 
@@ -1774,19 +1881,25 @@ export default function ProcessInstanceListTable({
   }
 
   return (
-    <>
+    <div className="process-instance-list-table">
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      {tableTitleLine()}
-      <Filters
-        filterOptions={filterOptions}
-        showFilterOptions={showFilterOptions}
-        setShowFilterOptions={setShowFilterOptions}
-        reportSearchComponent={reportSearchComponent}
-        filtersEnabled={filtersEnabled}
-      />
-      {resultsTable}
-    </>
+      <Grid fullWidth condensed>
+        {tableTitleLine()}
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          <Filters
+            filterOptions={filterOptions}
+            showFilterOptions={showFilterOptions}
+            setShowFilterOptions={setShowFilterOptions}
+            reportSearchComponent={reportSearchComponent}
+            filtersEnabled={filtersEnabled}
+          />
+        </Column>
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {resultsTable}
+        </Column>
+      </Grid>
+    </div>
   );
 }

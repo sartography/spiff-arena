@@ -10,21 +10,26 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.specs.control import _BoundaryEventParent  # type: ignore
-from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -40,6 +45,27 @@ from spiffworkflow_backend.specs.start_event import StartConfiguration
 class ProcessInstanceService:
     FILE_DATA_DIGEST_PREFIX = "spifffiledatadigest+"
     TASK_STATE_LOCKED = "locked"
+
+    @staticmethod
+    def user_has_started_instance(process_model_identifier: str) -> bool:
+        started_instance = (
+            db.session.query(ProcessInstanceModel)
+            .filter(
+                ProcessInstanceModel.process_model_identifier == process_model_identifier,
+                ProcessInstanceModel.status != "not_started",
+            )
+            .first()
+        )
+        return started_instance is not None
+
+    @staticmethod
+    def times_executed_by_user(process_model_identifier: str) -> int:
+        total = (
+            db.session.query(ProcessInstanceModel)
+            .filter(ProcessInstanceModel.process_model_identifier == process_model_identifier)
+            .count()
+        )
+        return total
 
     @staticmethod
     def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
@@ -113,7 +139,15 @@ class ProcessInstanceService:
         for cycle in cycles:
             db.session.delete(cycle)
 
+        db.session.commit()
+
         if cycle_count != 0:
+            if duration_in_seconds == 0:
+                raise ApiError(
+                    error_code="process_model_cycle_has_0_second_duration",
+                    message="Can not schedule a process model cycle with a duration in seconds of 0.",
+                )
+
             cycle = ProcessModelCycleModel(
                 process_model_identifier=process_model_identifier,
                 cycle_count=cycle_count,
@@ -121,8 +155,7 @@ class ProcessInstanceService:
                 current_cycle=0,
             )
             db.session.add(cycle)
-
-        db.session.commit()
+            db.session.commit()
 
     @classmethod
     def schedule_next_process_model_cycle(cls, process_instance_model: ProcessInstanceModel) -> None:
@@ -142,16 +175,16 @@ class ProcessInstanceService:
             db.session.commit()
 
     @classmethod
-    def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
+    def waiting_event_can_be_skipped(cls, waiting_event: PendingBpmnEvent, now_in_utc: datetime) -> bool:
         #
         # over time this function can gain more knowledge of different event types,
         # for now we are just handling Duration Timer events.
         #
         # example: {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'}
         #
-        spiff_event_type = waiting_event.get("event_type")
+        spiff_event_type = waiting_event.event_type
         if spiff_event_type == "DurationTimerEventDefinition":
-            event_value = waiting_event.get("value")
+            event_value = waiting_event.value
             if event_value is not None:
                 event_datetime = TimerEventDefinition.get_datetime(event_value)
                 return event_datetime > now_in_utc  # type: ignore
@@ -167,7 +200,7 @@ class ProcessInstanceService:
     @classmethod
     def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
         for ready_user_task in processor.bpmn_process_instance.get_ready_user_tasks():
-            if isinstance(ready_user_task.parent.task_spec, _BoundaryEventParent):
+            if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
                 return True
         return False
 
@@ -187,8 +220,10 @@ class ProcessInstanceService:
     @classmethod
     def do_waiting(cls, status_value: str) -> None:
         run_at_in_seconds_threshold = round(time.time())
+        min_age_in_seconds = 60  # to avoid conflicts with the interstitial page, we wait 60 seconds before processing
+        # min_age_in_seconds = 0  # to avoid conflicts with the interstitial page, we wait 60 seconds before processing
         process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(
-            status_value, run_at_in_seconds_threshold
+            status_value, run_at_in_seconds_threshold, min_age_in_seconds
         )
         if len(process_instance_ids_to_check) == 0:
             return
@@ -200,7 +235,7 @@ class ProcessInstanceService:
         )
         execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
         for process_instance in records:
-            current_app.logger.info(f"Processing process_instance {process_instance.id}")
+            current_app.logger.info(f"Processor {status_value}: Processing process_instance {process_instance.id}")
             try:
                 cls.run_process_instance_with_processor(
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
@@ -212,7 +247,7 @@ class ProcessInstanceService:
             except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
                 error_message = (
-                    f"Error running waiting task for process_instance {process_instance.id}"
+                    f"Error running {status_value} task for process_instance {process_instance.id}"
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
@@ -502,9 +537,9 @@ class ProcessInstanceService:
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
-        calling_subprocess_task_id: str | None = None,
     ) -> Task:
         task_type = spiff_task.task_spec.description
+        task_guid = str(spiff_task.id)
 
         props = {}
         if hasattr(spiff_task.task_spec, "extensions"):
@@ -520,19 +555,28 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_task(
-                processor.process_instance_model.id, str(spiff_task.id), g.user
-            )
+            AuthorizationService.assert_user_can_complete_task(processor.process_instance_model.id, task_guid, g.user)
             can_complete = True
+        except HumanTaskAlreadyCompletedError:
+            can_complete = False
         except HumanTaskNotFoundError:
             can_complete = False
         except UserDoesNotHaveAccessToTaskError:
             can_complete = False
 
-        if hasattr(spiff_task.task_spec, "spec"):
-            call_activity_process_identifier = spiff_task.task_spec.spec
-        else:
-            call_activity_process_identifier = None
+        # if the current user cannot complete the task then find out who can
+        assigned_user_group_identifier = None
+        potential_owner_usernames = None
+        if can_complete is False:
+            human_task = HumanTaskModel.query.filter_by(task_id=task_guid).first()
+            if human_task is not None:
+                if human_task.lane_assignment_id is not None:
+                    group = GroupModel.query.filter_by(id=human_task.lane_assignment_id).first()
+                    if group is not None:
+                        assigned_user_group_identifier = group.identifier
+                elif len(human_task.potential_owners) > 0:
+                    user_list = [u.email for u in human_task.potential_owners]
+                    potential_owner_usernames = ",".join(user_list)
 
         parent_id = None
         if spiff_task.parent:
@@ -542,9 +586,11 @@ class ProcessInstanceService:
 
         # Grab the last error message.
         error_message = None
-        for event in processor.process_instance_model.process_instance_events:
-            for detail in event.error_details:
-                error_message = detail.message
+        error_event = ProcessInstanceEventModel.query.filter_by(
+            task_guid=task_guid, event_type=ProcessInstanceEventType.task_failed.value
+        ).first()
+        if error_event:
+            error_message = error_event.error_details[-1].message
 
         task = Task(
             spiff_task.id,
@@ -561,9 +607,9 @@ class ProcessInstanceService:
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
-            call_activity_process_identifier=call_activity_process_identifier,
-            calling_subprocess_task_id=calling_subprocess_task_id,
             error_message=error_message,
+            assigned_user_group_identifier=assigned_user_group_identifier,
+            potential_owner_usernames=potential_owner_usernames,
         )
 
         return task

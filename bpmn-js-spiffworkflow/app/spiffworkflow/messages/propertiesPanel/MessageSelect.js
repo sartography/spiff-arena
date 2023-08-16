@@ -35,6 +35,9 @@ export function MessageSelect(props) {
           commandStack.execute('element.updateModdleProperties', {
             element: shapeElement,
             moddleElement: businessObject,
+            properties: {
+              messageRef: message,
+            },
           });
         } else if (
           businessObject.$type === 'bpmn:ReceiveTask' ||

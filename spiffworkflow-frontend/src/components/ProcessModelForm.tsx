@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
-  ButtonSet,
   Form,
   Stack,
   TextInput,
+  TextArea,
   Grid,
   Column,
   Select,
@@ -292,7 +292,7 @@ export default function ProcessModelForm({
     }
 
     textInputs.push(
-      <TextInput
+      <TextArea
         id="process-model-description"
         name="description"
         labelText="Description"
@@ -382,12 +382,11 @@ export default function ProcessModelForm({
   };
 
   const formButtons = () => {
-    const buttons = [
+    return (
       <Button kind="secondary" type="submit">
         Submit
-      </Button>,
-    ];
-    return <ButtonSet>{buttons}</ButtonSet>;
+      </Button>
+    );
   };
   return (
     <Form onSubmit={handleFormSubmission}>

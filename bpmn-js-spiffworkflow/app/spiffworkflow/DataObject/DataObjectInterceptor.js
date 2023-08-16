@@ -42,7 +42,10 @@ export default class DataObjectInterceptor extends CommandInterceptor {
         // when the shape is deleted, but not interested in refactoring at the moment.
         if (realParent != null) {
           const flowElements = realParent.get('flowElements');
-          flowElements.push(businessObject);
+          const existingElement = flowElements.find(i => i.id === 1);
+          if (!existingElement) {
+            flowElements.push(businessObject);
+          }
         }
       } else if (is(businessObject, 'bpmn:DataObject')) {
         // For data objects, only update the flowElements for new data objects, and set the parent so it doesn't get moved.
@@ -120,12 +123,17 @@ export default class DataObjectInterceptor extends CommandInterceptor {
       const { shape } = context;
       if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
         const dataObject = shape.businessObject.dataObjectRef;
-        let flowElements = shape.businessObject.$parent.get('flowElements');
+        let parent = shape.businessObject.$parent;
+        if (parent.processRef) {
+          // Our immediate parent may be a pool, so we need to get the process
+          parent = parent.processRef;
+        }
+        const flowElements = parent.get('flowElements');
         collectionRemove(flowElements, shape.businessObject);
-        let references = findDataObjectReferences(flowElements, dataObject.id);
+        const references = findDataObjectReferences(flowElements, dataObject.id);
         if (references.length === 0) {
-          let flowElements = dataObject.$parent.get('flowElements');
-          collectionRemove(flowElements, dataObject);
+          const dataFlowElements = dataObject.$parent.get('flowElements');
+          collectionRemove(dataFlowElements, dataObject);
         }
       }
     });

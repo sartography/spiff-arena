@@ -55,11 +55,9 @@ from spiffworkflow_backend.services.task_service import TaskService
 # )
 
 
-def process_instance_create(
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
-
+def _process_instance_create(
+    process_model_identifier: str,
+) -> ProcessInstanceModel:
     process_model = _get_process_model(process_model_identifier)
     if process_model.primary_file_name is None:
         raise ApiError(
@@ -74,6 +72,15 @@ def process_instance_create(
     process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
         process_model_identifier, g.user
     )
+    return process_instance
+
+
+def process_instance_create(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+
+    process_instance = _process_instance_create(process_model_identifier)
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
@@ -81,11 +88,9 @@ def process_instance_create(
     )
 
 
-def process_instance_run(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-) -> flask.wrappers.Response:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+def _process_instance_run(
+    process_instance: ProcessInstanceModel,
+) -> ProcessInstanceProcessor | None:
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",
@@ -121,6 +126,16 @@ def process_instance_run(
     if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
         MessageService.correlate_all_message_instances()
 
+    return processor
+
+
+def process_instance_run(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = _process_instance_run(process_instance)
+
     # for mypy
     if processor is not None:
         process_instance_api = ProcessInstanceService.processor_to_process_instance_api(processor)
@@ -129,9 +144,15 @@ def process_instance_run(
         process_instance_metadata["data"] = process_instance_data
         return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
 
-    # FIXME: this should never happen currently but it'd be ideal to always do this
-    # currently though it does not return next task so it cannnot be used to take the user to the next human task
     return make_response(jsonify(process_instance), 200)
+
+
+def _process_instance_start(
+    process_model_identifier: str,
+) -> tuple[ProcessInstanceModel, ProcessInstanceProcessor | None]:
+    process_instance = _process_instance_create(process_model_identifier)
+    processor = _process_instance_run(process_instance)
+    return process_instance, processor
 
 
 def process_instance_terminate(
@@ -435,11 +456,21 @@ def process_instance_task_list(
     bpmn_process_ids = []
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
+        if bpmn_process is None:
+            raise ApiError(
+                error_code="bpmn_process_not_found",
+                message=(
+                    f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance"
+                    f" '{process_instance.id}'"
+                ),
+                status_code=400,
+            )
+
         bpmn_processes = TaskService.bpmn_process_and_descendants([bpmn_process])
         bpmn_process_ids = [p.id for p in bpmn_processes]
 
     task_model_query = db.session.query(TaskModel).filter(
-        TaskModel.process_instance_id == process_instance.id,
+        TaskModel.process_instance_id == process_instance.id, TaskModel.state.not_in(["LIKELY", "MAYBE"])  # type: ignore
     )
 
     to_task_model: TaskModel | None = None
@@ -629,7 +660,16 @@ def send_bpmn_event(
 
 def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
     processor = ProcessInstanceProcessor(process_instance)
-    processor.send_bpmn_event(body)
+    try:
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.send_bpmn_event(body)
+    except (
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        raise e
+
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
     return make_response(jsonify(task), 200)
 
@@ -694,7 +734,11 @@ def _find_process_instance_for_me_or_raise(
         )
         .filter(
             or_(
+                # you were allowed to complete it
                 HumanTaskUserModel.id.is_not(None),
+                # or you completed it (which admins can do even if it wasn't assigned via HumanTaskUserModel)
+                HumanTaskModel.completed_by_user_id == g.user.id,
+                # or you started it
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
         )

@@ -70,7 +70,7 @@ export default function ProcessModelShow() {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelTestsPath]: ['POST'],
     [targetUris.processModelPublishPath]: ['POST'],
-    [targetUris.processInstanceListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
     [targetUris.processInstanceCreatePath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
@@ -193,7 +193,7 @@ export default function ProcessModelShow() {
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        return `/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
+        return `/editor/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
       }
       if (processModelFile.name.match(/\.(json|md)$/)) {
         return `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
@@ -526,16 +526,17 @@ export default function ProcessModelShow() {
         size="lg"
         label="Add File"
         type="inline"
+        data-qa="process-model-add-file"
         onChange={(a: any) => {
           if (a.selectedItem.text === 'New BPMN File') {
             navigate(
-              `/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`
+              `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`
             );
           } else if (a.selectedItem.text === 'Upload File') {
             setShowFileUploadModal(true);
           } else if (a.selectedItem.text === 'New DMN File') {
             navigate(
-              `/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`
+              `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`
             );
           } else if (a.selectedItem.text === 'New JSON File') {
             navigate(
@@ -696,7 +697,11 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         {processModelFilesSection()}
-        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
+        <Can
+          I="POST"
+          a={targetUris.processInstanceListForMePath}
+          ability={ability}
+        >
           <ProcessInstanceListTable
             headerElement={<h2>My Process Instances</h2>}
             filtersEnabled={false}

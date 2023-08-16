@@ -20,6 +20,7 @@ let bpmnModeler;
 try {
   bpmnModeler = new BpmnModeler({
     container: modelerEl,
+    keyboard: { bindTo: document },
     propertiesPanel: {
       parent: panelEl,
     },
@@ -40,9 +41,6 @@ try {
   }
   throw error;
 }
-
-// import XML
-bpmnModeler.importXML(diagramXML).then(() => {});
 
 /**
  * It is possible to populate certain components using API calls to
@@ -191,6 +189,23 @@ bpmnModeler.on('spiff.callactivity.search', (event) => {
   });
 });
 
+/* This restores unresolved references that camunda removes */
+
+bpmnModeler.on('import.parse.complete', event => {
+  const refs = event.references.filter(r => r.property === 'bpmn:loopDataInputRef' || r.property === 'bpmn:loopDataOutputRef');
+  const desc = bpmnModeler._moddle.registry.getEffectiveDescriptor('bpmn:ItemAwareElement');
+  refs.forEach(ref => {
+    const props = {
+      id: ref.id,
+      name: ref.id ? typeof(ref.name) === 'undefined': ref.name,
+    };
+    let elem = bpmnModeler._moddle.create(desc, props);
+    elem.$parent = ref.element;
+    ref.element.set(ref.property, elem);
+  });
+});
+
+bpmnModeler.importXML(diagramXML).then(() => {});
 
 // This handles the download and upload buttons - it isn't specific to
 // the BPMN modeler or these extensions, just a quick way to allow you to

@@ -38,11 +38,8 @@ function run_autofixers() {
     asdf reshim python
   fi
 
-  python_dirs=$(get_python_dirs)
-  # python_files=$(find $python_dirs -type f -name "*.py" ! -name '.null-ls*' ! -name '_null-ls*')
-  # Don't check things in git-ignore:
-  python_files=$(git ls-files $python_dirs | grep .py$)
-  ruff --fix $python_files
+  python_dirs="$(get_python_dirs) bin"
+  ruff --fix $python_dirs || echo ''
 }
 
 function run_pre_commmit() {
@@ -77,7 +74,7 @@ for python_project in "${python_projects[@]}"; do
     pushd "$python_project"
     poetry install
     poetry run mypy $(get_python_dirs)
-    poetry run coverage run --parallel -m pytest
+    ./bin/tests-par
     popd
   fi
 done
