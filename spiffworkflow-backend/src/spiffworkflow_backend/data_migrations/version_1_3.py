@@ -121,6 +121,9 @@ class VersionOneThree:
                 db.session.add(child_task_definition)
 
     def process_task_model(self, task_model: TaskModel, task_definition: TaskDefinitionModel) -> None:
+        if task_definition.typename != "BoundaryEventSplit":
+            return
+
         task_model.properties_json["task_spec"] = task_definition.bpmn_identifier
         flag_modified(task_model, "properties_json")  # type: ignore
         db.session.add(task_model)
