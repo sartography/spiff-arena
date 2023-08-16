@@ -219,6 +219,28 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "payloadExpression",
+      "superClass": [ "Element" ],
+      "properties": [
+        {
+          "name": "value",
+          "isBody": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "variableName",
+      "superClass": [ "Element" ],
+      "properties": [
+        {
+          "name": "value",
+          "isBody": true,
+          "type": "String"
+        }
+      ]
     }
   ]
 }

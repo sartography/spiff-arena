@@ -10,12 +10,10 @@ set -o errtrace -o errexit -o nounset -o pipefail
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-  # export KEYCLOAK_BASE_URL=http://localhost:7002
-  export KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
+  export KEYCLOAK_BASE_URL=http://localhost:7002
 fi
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
-  # export BACKEND_BASE_URL=http://localhost:7000
-  export BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+  export BACKEND_BASE_URL=http://localhost:7000
 fi
 
 user_list="${1}"

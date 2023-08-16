@@ -62,7 +62,8 @@ class ErrorHandlingService:
         from spiffworkflow_backend.services.message_service import MessageService
 
         message_text = (
-            f"There was an exception running process {process_model.id}.\nOriginal Error:\n{error.__repr__()}"
+            f"There was an exception running process model {process_model.id} for instance"
+            f" {process_instance.id}.\nOriginal Error:\n{error.__repr__()}"
         )
         message_payload = {
             "message_text": message_text,

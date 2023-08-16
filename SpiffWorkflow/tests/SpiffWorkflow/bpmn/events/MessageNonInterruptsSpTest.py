@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
-from SpiffWorkflow.bpmn.specs.event_definitions import MessageEventDefinition
+from SpiffWorkflow.bpmn.event import BpmnEvent
+from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition
 from ..BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'matth'
@@ -28,7 +29,6 @@ class MessageNonInterruptsSpTest(BpmnWorkflowTestCase):
 
         self.do_next_exclusive_step('Do Something In a Subprocess')
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
         self.save_restore()
 
         self.do_next_exclusive_step('Ack Subprocess Done')
@@ -49,11 +49,10 @@ class MessageNonInterruptsSpTest(BpmnWorkflowTestCase):
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
         self.assertEqual(2, len(self.workflow.get_tasks(TaskState.WAITING)))
 
-        self.workflow.catch(MessageEventDefinition('Test Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Test Message'), {}))
 
         self.do_next_named_step('Do Something In a Subprocess')
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
         self.save_restore()
 
         self.do_next_named_step('Ack Subprocess Done')
@@ -78,10 +77,9 @@ class MessageNonInterruptsSpTest(BpmnWorkflowTestCase):
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
         self.assertEqual(2, len(self.workflow.get_tasks(TaskState.WAITING)))
 
-        self.workflow.catch(MessageEventDefinition('Test Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Test Message'), {}))
         self.do_next_named_step('Do Something In a Subprocess')
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
         self.save_restore()
 
         self.do_next_named_step('Acknowledge SP Parallel Message')
@@ -106,7 +104,7 @@ class MessageNonInterruptsSpTest(BpmnWorkflowTestCase):
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
         self.assertEqual(2, len(self.workflow.get_tasks(TaskState.WAITING)))
 
-        self.workflow.catch(MessageEventDefinition('Test Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Test Message'), {}))
 
         self.do_next_named_step('Acknowledge SP Parallel Message')
         self.workflow.do_engine_steps()
@@ -114,7 +112,6 @@ class MessageNonInterruptsSpTest(BpmnWorkflowTestCase):
 
         self.do_next_named_step('Do Something In a Subprocess')
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
         self.save_restore()
 
         self.do_next_named_step('Ack Subprocess Done')
