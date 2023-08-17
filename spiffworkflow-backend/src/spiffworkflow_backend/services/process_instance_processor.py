@@ -782,7 +782,7 @@ class ProcessInstanceProcessor:
         potential_owner_ids = []
         lane_assignment_id = None
 
-        if "allowAnonymous" in task.task_spec.extensions and task.task_spec.extensions["allowAnonymous"] == "true":
+        if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
             anonymous_user = GroupService.get_anonymous_user()
             potential_owner_ids = [anonymous_user.id]
         elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):

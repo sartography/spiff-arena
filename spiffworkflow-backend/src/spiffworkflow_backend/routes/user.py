@@ -231,6 +231,7 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
             username=SPIFF_ANONYMOUS_USER,
             group_identifier=SPIFF_ANONYMOUS_USER,
         )
+        return redirect(redirect_url)
 
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))

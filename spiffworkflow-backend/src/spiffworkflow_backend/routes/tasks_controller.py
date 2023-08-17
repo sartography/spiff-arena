@@ -332,6 +332,7 @@ def task_show(
     task_model.typename = task_definition.typename
     task_model.can_complete = can_complete
     task_model.name_for_display = TaskService.get_name_for_display(task_definition)
+    extensions = TaskService.get_extensions_from_task_model(task_model)
 
     if with_form_data:
         task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
@@ -352,7 +353,6 @@ def task_show(
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
-        extensions = TaskService.get_extensions_from_task_model(task_model)
         task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
             process_instance_id, task_model.guid
         )
@@ -408,7 +408,8 @@ def task_show(
 
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
         JinjaService.render_instructions_for_end_user(task_model, extensions)
-        task_model.extensions = extensions
+
+    task_model.extensions = extensions
 
     return make_response(jsonify(task_model), 200)
 
@@ -722,10 +723,6 @@ def _task_submit_shared(
         db.session.delete(task_draft_data)
         db.session.commit()
 
-    if UserService.is_logged_in_as_anonymouse_user():
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        tld.user_has_logged_out = True
-
     next_human_task_assigned_to_me = (
         HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
         .order_by(asc(HumanTaskModel.id))  # type: ignore
@@ -735,6 +732,16 @@ def _task_submit_shared(
     )
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
+
+    if UserService.is_logged_in_as_anonymouse_user():
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.user_has_logged_out = True
+
+    if "guestConfirmation" in spiff_task.task_spec.extensions:
+        return make_response(
+            jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
+        )
+
     elif processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
         return make_response(jsonify(task), 200)

@@ -5,6 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
 
 import { useDebouncedCallback } from 'use-debounce';
+import MDEditor from '@uiw/react-md-editor';
 import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
@@ -21,11 +22,19 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import { DATE_RANGE_DELIMITER } from '../config';
 
 export default function TaskShow() {
+  // get a basic task which doesn't get the form data so we can load
+  // the basic form and structure of the page without waiting for form data.
+  // this was mainly to help with loading form data with large files attached to it
   const [basicTask, setBasicTask] = useState<BasicTask | null>(null);
   const [taskWithTaskData, setTaskWithTaskData] = useState<Task | null>(null);
+
   const params = useParams();
   const navigate = useNavigate();
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
+
+  const [guestConfirmationText, setGuestConfirmationText] = useState<
+    string | null
+  >(null);
 
   const [taskData, setTaskData] = useState<any>(null);
   const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
@@ -101,13 +110,18 @@ export default function TaskShow() {
   };
 
   const sendAutosaveEvent = (eventDetails?: any) => {
-    (document.getElementById('hidden-form-for-autosave') as any).dispatchEvent(
-      new CustomEvent('submit', {
-        cancelable: true,
-        bubbles: true,
-        detail: eventDetails,
-      })
+    const elementToDispath: any = document.getElementById(
+      'hidden-form-for-autosave'
     );
+    if (elementToDispath) {
+      elementToDispath.dispatchEvent(
+        new CustomEvent('submit', {
+          cancelable: true,
+          bubbles: true,
+          detail: eventDetails,
+        })
+      );
+    }
   };
 
   const addDebouncedTaskDataAutoSave = useDebouncedCallback(
@@ -124,6 +138,8 @@ export default function TaskShow() {
     removeError();
     if (result.ok) {
       navigate(`/tasks`);
+    } else if (result.guest_confirmation) {
+      setGuestConfirmationText(result.guest_confirmation);
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
@@ -499,27 +515,39 @@ export default function TaskShow() {
       statusString = ` ${basicTask.state}`;
     }
 
-    pageElements.push(
-      <ProcessBreadcrumb
-        hotCrumbs={[
-          [
-            `Process Instance Id: ${params.process_instance_id}`,
-            `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-              basicTask.process_model_identifier
-            )}/${params.process_instance_id}`,
-          ],
-          [`Task: ${basicTask.name_for_display || basicTask.id}`],
-        ]}
-      />
-    );
-    pageElements.push(
-      <h3>
-        Task: {basicTask.name_for_display} (
-        {basicTask.process_model_display_name}){statusString}
-      </h3>
-    );
+    if (
+      !('allowGuest' in basicTask.extensions) ||
+      basicTask.extensions.allowGuest !== 'true'
+    ) {
+      pageElements.push(
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            [
+              `Process Instance Id: ${params.process_instance_id}`,
+              `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+                basicTask.process_model_identifier
+              )}/${params.process_instance_id}`,
+            ],
+            [`Task: ${basicTask.name_for_display || basicTask.id}`],
+          ]}
+        />
+      );
+      pageElements.push(
+        <h3>
+          Task: {basicTask.name_for_display} (
+          {basicTask.process_model_display_name}){statusString}
+        </h3>
+      );
+    }
   }
-  if (basicTask && taskData) {
+
+  if (guestConfirmationText) {
+    pageElements.push(
+      <div data-color-mode="light">
+        <MDEditor.Markdown linkTarget="_blank" source={guestConfirmationText} />
+      </div>
+    );
+  } else if (basicTask && taskData) {
     pageElements.push(<InstructionsForEndUser task={taskWithTaskData} />);
     pageElements.push(formElement());
   } else {

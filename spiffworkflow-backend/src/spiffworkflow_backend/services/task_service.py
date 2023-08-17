@@ -273,8 +273,8 @@ class TaskService:
         task_spec = spiff_task.task_spec
         if (
             hasattr(task_spec, "extensions")
-            and "allowAnonymous" in task_spec.extensions
-            and task_spec.extensions["allowAnonymous"] == "true"
+            and "allowGuest" in task_spec.extensions
+            and task_spec.extensions["allowGuest"] == "true"
         ):
             task_model.allow_anonymous = True
 

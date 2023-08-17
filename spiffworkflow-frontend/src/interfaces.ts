@@ -70,6 +70,8 @@ export interface BasicTask {
   process_model_identifier: string;
   name_for_display: string;
   can_complete: boolean;
+
+  extensions?: any;
 }
 
 // TODO: merge with ProcessInstanceTask

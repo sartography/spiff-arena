@@ -64,6 +64,8 @@ export default function NavigationBar() {
     [targetUris.secretListPath]: ['GET'],
     [targetUris.dataStoreListPath]: ['GET'],
     [targetUris.extensionListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
+    [targetUris.processGroupListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -288,19 +290,27 @@ export default function NavigationBar() {
         <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
           Home
         </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/process-groups"
-          isCurrentPage={isActivePage('/admin/process-groups')}
-          data-qa="header-nav-processes"
+        <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
+          <HeaderMenuItem
+            href="/admin/process-groups"
+            isCurrentPage={isActivePage('/admin/process-groups')}
+            data-qa="header-nav-processes"
+          >
+            Processes
+          </HeaderMenuItem>
+        </Can>
+        <Can
+          I="GET"
+          a={targetUris.processInstanceListForMePath}
+          ability={ability}
         >
-          Processes
-        </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/process-instances"
-          isCurrentPage={isActivePage('/admin/process-instances')}
-        >
-          Process Instances
-        </HeaderMenuItem>
+          <HeaderMenuItem
+            href="/admin/process-instances"
+            isCurrentPage={isActivePage('/admin/process-instances')}
+          >
+            Process Instances
+          </HeaderMenuItem>
+        </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
           <HeaderMenuItem
             href="/admin/messages"
@@ -323,7 +333,7 @@ export default function NavigationBar() {
     );
   };
 
-  if (activeKey && ability) {
+  if (activeKey && ability && !UserService.authenticationDisabled()) {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (
