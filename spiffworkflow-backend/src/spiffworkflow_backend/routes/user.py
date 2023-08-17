@@ -1,5 +1,6 @@
 import ast
 import base64
+from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 import json
 import re
 from typing import Any
@@ -17,15 +18,13 @@ from werkzeug.wrappers import Response
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP
-from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
+from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP, GroupModel
+from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER, SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
 """
@@ -65,12 +64,6 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
 
-    api_view_function = current_app.view_functions[request.endpoint]
-    if token is None and api_view_function.__name__ in ["task_show"]:  # and something else
-        task_guid = request.path.split("/")[-1]
-        process_instance_id = int(request.path.split("/")[-2])
-        token = AuthorizationService.create_anonymous_token(process_instance_id, task_guid)
-
     if token:
         user_model = None
         decoded_token = get_decoded_token(token)
@@ -90,10 +83,10 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
                 if (
                     user_model
                     and not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
-                    and user_model.username == SPIFF_NO_AUTH_ANONYMOUS_USER
+                    and user_model.username == SPIFF_NO_AUTH_USER
                     and user_model.service_id == "spiff_anonymous_service_id"
                 ):
-                    group_model = GroupModel.query.filter_by(identifier=SPIFF_NO_AUTH_ANONYMOUS_GROUP).first()
+                    group_model = GroupModel.query.filter_by(identifier=SPIFF_NO_AUTH_GROUP).first()
                     db.session.delete(group_model)
                     db.session.delete(user_model)
                     db.session.commit()
@@ -215,21 +208,28 @@ def set_new_access_token_in_cookie(
     return response
 
 
-def login(redirect_url: str = "/") -> Response:
+# we could parse the redirect url and see if it looks like a task show page url.
+# we could also pass a query param from the frontend with the task guid and only
+# look into guest access if the query param was present. then we look to see if the
+# task is specified as guest access in the task spec (via an extension or something).
+# if so, possibly we put something in a cookie to let us know, or maybe we don't need
+# to do that because the token already has the correct restricted permisions?
+def login(redirect_url: str = "/", process_instance_id: int | None = None, task_guid: str | None = None) -> Response:
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
-        user = UserModel.query.filter_by(username=SPIFF_NO_AUTH_ANONYMOUS_USER).first()
-        if user is None:
-            user = UserService.create_user(
-                SPIFF_NO_AUTH_ANONYMOUS_USER, "spiff_anonymous_service", "spiff_anonymous_service_id"
-            )
-        GroupService.add_user_to_group_or_add_to_waiting(user.username, SPIFF_NO_AUTH_ANONYMOUS_GROUP)
-        AuthorizationService.add_permission_from_uri_or_macro(SPIFF_NO_AUTH_ANONYMOUS_GROUP, "all", "/*")
-        g.user = user
-        g.token = user.encode_auth_token({"authentication_disabled": True})
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        tld.new_access_token = g.token
-        tld.new_id_token = g.token
+        AuthorizationService.create_anonymous_token(
+            username=SPIFF_NO_AUTH_USER,
+            group_identifier=SPIFF_NO_AUTH_USER,
+            permission_target="/*",
+        )
         return redirect(redirect_url)
+
+    if process_instance_id and task_guid:
+        # TODO: check task can be completed anonymously
+        AuthorizationService.create_anonymous_token(
+            username=SPIFF_ANONYMOUS_USER,
+            group_identifier=SPIFF_ANONYMOUS_USER,
+        )
+
 
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))

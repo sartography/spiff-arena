@@ -60,6 +60,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class TaskDataSelectOption(TypedDict):
@@ -720,6 +721,10 @@ def _task_submit_shared(
     if task_draft_data is not None:
         db.session.delete(task_draft_data)
         db.session.commit()
+
+    if UserService.is_logged_in_as_anonymouse_user():
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.user_has_logged_out = True
 
     next_human_task_assigned_to_me = (
         HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)

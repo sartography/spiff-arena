@@ -63,8 +63,11 @@ export default function NavigationBar() {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.secretListPath]: ['GET'],
     [targetUris.dataStoreListPath]: ['GET'],
+    [targetUris.extensionListPath]: ['GET'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   // default to readthedocs and let someone specify an environment variable to override:
   //
@@ -97,7 +100,12 @@ export default function NavigationBar() {
     setActiveKey(newActiveKey);
   }, [location]);
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
+    if (!permissionsLoaded) {
+      return;
+    }
+
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaNavItem[] = processModels
         .map((processModel: ProcessModel) => {
@@ -126,11 +134,13 @@ export default function NavigationBar() {
       }
     };
 
-    HttpService.makeCallToBackend({
-      path: targetUris.extensionListPath,
-      successCallback: processExtensionResult,
-    });
-  }, [targetUris.extensionListPath]);
+    if (ability.can('GET', targetUris.extensionListPath)) {
+      HttpService.makeCallToBackend({
+        path: targetUris.extensionListPath,
+        successCallback: processExtensionResult,
+      });
+    }
+  }, [targetUris.extensionListPath, permissionsLoaded, ability]);
 
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;

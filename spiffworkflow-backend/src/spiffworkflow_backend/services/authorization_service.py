@@ -1,5 +1,6 @@
 import inspect
 import re
+from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 from dataclasses import dataclass
 from hashlib import sha256
 from hmac import HMAC
@@ -133,6 +134,19 @@ class AuthorizationService:
             )
 
     @classmethod
+    def create_anonymous_token(cls, username: str, group_identifier: str, permission_target: str = '', permission: str = "all") -> None:
+        user = UserModel.query.filter_by(username=username).first()
+        if user is None:
+            user = UserService.create_user(username, "spiff_anonymous_service", "spiff_anonymous_service_id")
+            GroupService.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
+            cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
+        g.user = user
+        g.token = user.encode_auth_token({"authentication_disabled": True})
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.new_access_token = g.token
+        tld.new_id_token = g.token
+
+    @classmethod
     def has_permission(cls, principals: list[PrincipalModel], permission: str, target_uri: str) -> bool:
         principal_ids = [p.id for p in principals]
         target_uri_normalized = target_uri.removeprefix(V1_API_PATH_PREFIX)
@@ -237,25 +251,6 @@ class AuthorizationService:
         return permission_assignment
 
     @classmethod
-    def create_anonymous_token(cls, process_instance_id: int, task_guid: str) -> str:
-        username = f"anonymous_{task_guid}"
-        group_identifier = f"anonymous_group_{task_guid}"
-        user = UserModel.query.filter_by(username=username).first()
-        if user is None:
-            user = UserService.create_user(username, "spiff_anonymous_service", "spiff_anonymous_service_id")
-        GroupService.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
-        cls.add_permission_from_uri_or_macro(
-            group_identifier, permission="all", target=f"/tasks/{process_instance_id}/{task_guid}"
-        )
-        AuthorizationService.add_permission_from_uri_or_macro(group_identifier, "all", "/*")
-        g.user = user
-        g.token = user.encode_auth_token({"authentication_disabled": True})
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        tld.new_access_token = g.token
-        tld.new_id_token = g.token
-        return g.token
-
-    @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         swagger_functions = ["get_json_spec"]
         authentication_exclusion_list = [
@@ -325,6 +320,14 @@ class AuthorizationService:
         api_view_function = current_app.view_functions[request.endpoint]
         if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
             return None
+
+        if api_view_function.__name__ in ["task_show", "task_submit"]:
+            task_guid = request.path.split("/")[-1]
+            process_instance_id = int(request.path.split("/")[-2])
+            task_model = TaskModel.query.filter_by(guid=task_guid, allow_anonymous=True).first()
+            if task_model is not None:
+                if task_model.process_instance_id == int(process_instance_id):
+                    return None
 
         permission_string = cls.get_permission_from_http_method(request.method)
         if permission_string:

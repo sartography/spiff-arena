@@ -17,6 +17,16 @@ paths:
         required: false
         schema:
           type: string
+      - name: process_instance_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: task_guid
+        in: query
+        required: false
+        schema:
+          type: string
     get:
       summary: redirect to open id authentication server
       operationId: spiffworkflow_backend.routes.user.login

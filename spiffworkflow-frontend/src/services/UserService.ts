@@ -29,8 +29,28 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
   );
 };
 
+const checkPathForTaskShowParams = () => {
+  // expected url pattern:
+  // /tasks/[process_instance_id]/[task_guid]
+  const pathSegments = window.location.pathname.match(
+    /^\/tasks\/(\d+)\/([0-9a-z]{8}-([0-9a-z]{4}-){3}[0-9a-z]{12})$/
+  );
+  if (pathSegments) {
+    return { process_instance_id: pathSegments[1], task_guid: pathSegments[2] };
+  }
+  return null;
+};
+
 const doLogin = () => {
-  const url = `${BACKEND_BASE_URL}/login?redirect_url=${getCurrentLocation()}`;
+  const taskShowParams = checkPathForTaskShowParams();
+  const loginParams = [`redirect_url=${getCurrentLocation()}`];
+  if (taskShowParams) {
+    loginParams.push(
+      `process_instance_id=${taskShowParams.process_instance_id}`
+    );
+    loginParams.push(`task_guid=${taskShowParams.task_guid}`);
+  }
+  const url = `${BACKEND_BASE_URL}/login?${loginParams.join('&')}`;
   window.location.href = url;
 };
 

@@ -39,8 +39,8 @@ class TestGetUrlForTaskWithBpmnIdentifier(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
         assert process_instance.status == ProcessInstanceStatus.complete.value
         assert spiff_task is not None
-        assert 'url' in spiff_task.data
+        assert "url" in spiff_task.data
 
         fe_url = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
         expected_url = f"{fe_url}/tasks/{process_instance.id}/{str(spiff_task.id)}"
-        assert spiff_task.data['url'] == expected_url
+        assert spiff_task.data["url"] == expected_url

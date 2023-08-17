@@ -269,6 +269,11 @@ class TaskService:
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
+
+        task_spec = spiff_task.task_spec
+        if hasattr(task_spec, 'extensions') and "allowAnonymous" in task_spec.extensions and task_spec.extensions['allowAnonymous'] == "true":
+            task_model.allow_anonymous = True
+
         json_data_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"
         )

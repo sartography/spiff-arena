@@ -39,8 +39,8 @@ class TestGetCurrentTaskInfo(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
         assert process_instance.status == ProcessInstanceStatus.complete.value
         assert spiff_task is not None
-        assert 'script_task_info' in spiff_task.data
-        assert  spiff_task.data['script_task_info']['id'] is not None
-        assert 'manual_task_info' in spiff_task.data
-        assert  spiff_task.data['manual_task_info']['id'] is not None
-        assert  isinstance(spiff_task.data['manual_task_info']['id'], str)
+        assert "script_task_info" in spiff_task.data
+        assert spiff_task.data["script_task_info"]["id"] is not None
+        assert "manual_task_info" in spiff_task.data
+        assert spiff_task.data["manual_task_info"]["id"] is not None
+        assert isinstance(spiff_task.data["manual_task_info"]["id"], str)

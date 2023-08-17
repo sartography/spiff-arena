@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel  # noqa: F401
 
 
-SPIFF_NO_AUTH_ANONYMOUS_GROUP = "spiff_anonymous_group"
+SPIFF_NO_AUTH_GROUP = "spiff_no_auth_group"
 
 
 class GroupNotFoundError(Exception):

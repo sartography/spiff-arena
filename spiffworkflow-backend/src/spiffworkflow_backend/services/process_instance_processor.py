@@ -1,6 +1,7 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal
+from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 import json
 import logging
 import os
@@ -780,7 +781,13 @@ class ProcessInstanceProcessor:
 
         potential_owner_ids = []
         lane_assignment_id = None
-        if re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
+
+        if "allowAnonymous" in task.task_spec.extensions and task.task_spec.extensions['allowAnonymous'] == "true":
+            anonymous_user = UserModel.query.filter_by(username=SPIFF_NO_AUTH_ANONYMOUS_USER, service="spiff_anonymous_service", service_id="spiff_anonymous_service_id").first()
+            if anonymous_user is None:
+                anonymous_user = UserService.create_user(username=SPIFF_NO_AUTH_ANONYMOUS_USER, service="spiff_anonymous_service", service_id="spiff_anonymous_service_id")
+            potential_owner_ids = [anonymous_user.id]
+        elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
             potential_owner_ids = [self.process_instance_model.process_initiator_id]
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()

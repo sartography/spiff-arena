@@ -1,4 +1,5 @@
 from typing import Any
+from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 
 from flask import current_app
 from flask import g
@@ -81,6 +82,14 @@ class UserService:
         if not UserService.has_user():
             raise ApiError("logged_out", "You are no longer logged in.", status_code=401)
         return g.user
+
+    @classmethod
+    def is_logged_in_as_anonymouse_user(cls) -> bool:
+        user = cls.current_user()
+        if user.username == SPIFF_NO_AUTH_ANONYMOUS_USER:
+            return True
+
+        return False
 
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:
