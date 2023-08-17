@@ -271,7 +271,11 @@ class TaskService:
         task_model.state = TaskStateNames[new_properties_json["state"]]
 
         task_spec = spiff_task.task_spec
-        if hasattr(task_spec, 'extensions') and "allowAnonymous" in task_spec.extensions and task_spec.extensions['allowAnonymous'] == "true":
+        if (
+            hasattr(task_spec, "extensions")
+            and "allowAnonymous" in task_spec.extensions
+            and task_spec.extensions["allowAnonymous"] == "true"
+        ):
             task_model.allow_anonymous = True
 
         json_data_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(

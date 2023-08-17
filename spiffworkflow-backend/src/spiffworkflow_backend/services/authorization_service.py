@@ -1,6 +1,5 @@
 import inspect
 import re
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 from dataclasses import dataclass
 from hashlib import sha256
 from hmac import HMAC
@@ -21,6 +20,7 @@ from spiffworkflow_backend.models.permission_assignment import PermissionAssignm
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
@@ -134,7 +134,9 @@ class AuthorizationService:
             )
 
     @classmethod
-    def create_anonymous_token(cls, username: str, group_identifier: str, permission_target: str = '', permission: str = "all") -> None:
+    def create_anonymous_token(
+        cls, username: str, group_identifier: str, permission_target: str = "", permission: str = "all"
+    ) -> None:
         user = UserModel.query.filter_by(username=username).first()
         if user is None:
             user = UserService.create_user(username, "spiff_anonymous_service", "spiff_anonymous_service_id")

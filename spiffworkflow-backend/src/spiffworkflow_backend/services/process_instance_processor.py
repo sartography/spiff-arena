@@ -1,7 +1,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import decimal
-from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 import json
 import logging
 import os
@@ -73,6 +72,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -782,10 +782,8 @@ class ProcessInstanceProcessor:
         potential_owner_ids = []
         lane_assignment_id = None
 
-        if "allowAnonymous" in task.task_spec.extensions and task.task_spec.extensions['allowAnonymous'] == "true":
-            anonymous_user = UserModel.query.filter_by(username=SPIFF_NO_AUTH_ANONYMOUS_USER, service="spiff_anonymous_service", service_id="spiff_anonymous_service_id").first()
-            if anonymous_user is None:
-                anonymous_user = UserService.create_user(username=SPIFF_NO_AUTH_ANONYMOUS_USER, service="spiff_anonymous_service", service_id="spiff_anonymous_service_id")
+        if "allowAnonymous" in task.task_spec.extensions and task.task_spec.extensions["allowAnonymous"] == "true":
+            anonymous_user = GroupService.get_anonymous_user()
             potential_owner_ids = [anonymous_user.id]
         elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
             potential_owner_ids = [self.process_instance_model.process_initiator_id]

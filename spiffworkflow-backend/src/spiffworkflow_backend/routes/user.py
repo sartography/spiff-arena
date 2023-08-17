@@ -1,6 +1,5 @@
 import ast
 import base64
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 import json
 import re
 from typing import Any
@@ -18,8 +17,11 @@ from werkzeug.wrappers import Response
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP, GroupModel
-from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER, SPIFF_NO_AUTH_USER
+from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER
+from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
@@ -229,7 +231,6 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
             username=SPIFF_ANONYMOUS_USER,
             group_identifier=SPIFF_ANONYMOUS_USER,
         )
-
 
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))

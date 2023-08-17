@@ -1,5 +1,4 @@
 from typing import Any
-from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 
 from flask import current_app
 from flask import g
@@ -9,6 +8,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
@@ -86,7 +86,7 @@ class UserService:
     @classmethod
     def is_logged_in_as_anonymouse_user(cls) -> bool:
         user = cls.current_user()
-        if user.username == SPIFF_NO_AUTH_ANONYMOUS_USER:
+        if user.username == SPIFF_ANONYMOUS_USER:
             return True
 
         return False
