@@ -358,9 +358,9 @@ class AuthorizationService:
             return True
 
         api_view_function = current_app.view_functions[request.endpoint]
-        if api_view_function.__name__ in ["task_show", "task_submit"]:
-            task_guid = request.path.split("/")[-1]
-            process_instance_id = int(request.path.split("/")[-2])
+        if api_view_function.__name__ in ["task_show", "task_submit", "task_save_draft"]:
+            process_instance_id = int(request.path.split("/")[3])
+            task_guid = request.path.split("/")[4]
             if TaskService.task_allows_guest(task_guid, process_instance_id):
                 return True
         return False
