@@ -733,7 +733,7 @@ def _task_submit_shared(
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
-    if UserService.is_logged_in_as_anonymouse_user():
+    if UserService.is_logged_in_as_gueste_user():
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.user_has_logged_out = True
 

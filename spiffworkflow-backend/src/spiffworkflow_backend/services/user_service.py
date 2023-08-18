@@ -8,7 +8,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
@@ -84,9 +84,9 @@ class UserService:
         return g.user
 
     @classmethod
-    def is_logged_in_as_anonymouse_user(cls) -> bool:
+    def is_logged_in_as_gueste_user(cls) -> bool:
         user = cls.current_user()
-        if user.username == SPIFF_ANONYMOUS_USER:
+        if user.username == SPIFF_GUEST_USER:
             return True
 
         return False

@@ -20,7 +20,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -81,12 +81,12 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
                             f"Exception in verify_token getting user from decoded internal token. {e}"
                         )
 
-                # if the user is the anonymous user and we have auth enabled then make sure we clean up the anonymouse user
+                # if the user is the guest user and we have auth enabled then make sure we clean up the gueste user
                 if (
                     user_model
                     and not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
                     and user_model.username == SPIFF_NO_AUTH_USER
-                    and user_model.service_id == "spiff_anonymous_service_id"
+                    and user_model.service_id == "spiff_guest_service_id"
                 ):
                     group_model = GroupModel.query.filter_by(identifier=SPIFF_NO_AUTH_GROUP).first()
                     db.session.delete(group_model)
@@ -218,7 +218,7 @@ def set_new_access_token_in_cookie(
 # to do that because the token already has the correct restricted permisions?
 def login(redirect_url: str = "/", process_instance_id: int | None = None, task_guid: str | None = None) -> Response:
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
-        AuthorizationService.create_anonymous_token(
+        AuthorizationService.create_guest_token(
             username=SPIFF_NO_AUTH_USER,
             group_identifier=SPIFF_NO_AUTH_USER,
             permission_target="/*",
@@ -227,10 +227,10 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
         return redirect(redirect_url)
 
     if process_instance_id and task_guid:
-        # TODO: check task can be completed anonymously
-        AuthorizationService.create_anonymous_token(
-            username=SPIFF_ANONYMOUS_USER,
-            group_identifier=SPIFF_ANONYMOUS_USER,
+        # TODO: check task can be completed guestly
+        AuthorizationService.create_guest_token(
+            username=SPIFF_GUEST_USER,
+            group_identifier=SPIFF_GUEST_USER,
             auth_token_properties={"only_guest_task_completion": True},
         )
         return redirect(redirect_url)

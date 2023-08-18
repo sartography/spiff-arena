@@ -1,7 +1,7 @@
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.user import SPIFF_ANONYMOUS_USER
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -27,14 +27,12 @@ class GroupService:
             UserService.add_waiting_group_assignment(username, group)
 
     @classmethod
-    def get_anonymous_user(cls) -> UserModel:
-        anonymous_user: UserModel | None = UserModel.query.filter_by(
-            username=SPIFF_ANONYMOUS_USER, service="spiff_anonymous_service", service_id="spiff_anonymous_service_id"
+    def get_guest_user(cls) -> UserModel:
+        guest_user: UserModel | None = UserModel.query.filter_by(
+            username=SPIFF_GUEST_USER, service="spiff_guest_service", service_id="spiff_guest_service_id"
         ).first()
-        if anonymous_user is None:
-            anonymous_user = UserService.create_user(
-                SPIFF_ANONYMOUS_USER, "spiff_anonymous_service", "spiff_anonymous_service_id"
-            )
-            GroupService.add_user_to_group_or_add_to_waiting(anonymous_user.username, SPIFF_NO_AUTH_GROUP)
+        if guest_user is None:
+            guest_user = UserService.create_user(SPIFF_GUEST_USER, "spiff_guest_service", "spiff_guest_service_id")
+            GroupService.add_user_to_group_or_add_to_waiting(guest_user.username, SPIFF_NO_AUTH_GROUP)
 
-        return anonymous_user
+        return guest_user

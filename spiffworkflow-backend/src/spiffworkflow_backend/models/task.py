@@ -56,7 +56,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
-    allow_anonymous: bool = db.Column(db.Boolean())
+    allow_guest: bool = db.Column(db.Boolean())
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
     task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False, index=True)  # type: ignore

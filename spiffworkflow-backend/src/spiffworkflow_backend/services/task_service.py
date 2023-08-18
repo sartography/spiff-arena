@@ -276,7 +276,7 @@ class TaskService:
             and "allowGuest" in task_spec.extensions
             and task_spec.extensions["allowGuest"] == "true"
         ):
-            task_model.allow_anonymous = True
+            task_model.allow_guest = True
 
         json_data_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"

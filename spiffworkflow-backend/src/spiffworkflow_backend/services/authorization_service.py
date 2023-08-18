@@ -134,7 +134,7 @@ class AuthorizationService:
             )
 
     @classmethod
-    def create_anonymous_token(
+    def create_guest_token(
         cls,
         username: str,
         group_identifier: str,
@@ -144,7 +144,7 @@ class AuthorizationService:
     ) -> None:
         user = UserModel.query.filter_by(username=username).first()
         if user is None:
-            user = UserService.create_user(username, "spiff_anonymous_service", "spiff_anonymous_service_id")
+            user = UserService.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
             GroupService.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
             if permission_target is not None:
                 cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
@@ -332,7 +332,7 @@ class AuthorizationService:
         if api_view_function.__name__ in ["task_show", "task_submit"]:
             task_guid = request.path.split("/")[-1]
             process_instance_id = int(request.path.split("/")[-2])
-            task_model = TaskModel.query.filter_by(guid=task_guid, allow_anonymous=True).first()
+            task_model = TaskModel.query.filter_by(guid=task_guid, allow_guest=True).first()
             if task_model is not None:
                 if task_model.process_instance_id == int(process_instance_id):
                     return None
