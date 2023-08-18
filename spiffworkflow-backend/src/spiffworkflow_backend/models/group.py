@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 
 SPIFF_NO_AUTH_GROUP = "spiff_no_auth_group"
+SPIFF_GUEST_GROUP = "spiff_guest_group"
 
 
 class GroupNotFoundError(Exception):

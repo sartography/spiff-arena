@@ -60,7 +60,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
-from spiffworkflow_backend.services.user_service import UserService
 
 
 class TaskDataSelectOption(TypedDict):
@@ -733,16 +732,12 @@ def _task_submit_shared(
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
-    if UserService.is_logged_in_as_gueste_user():
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        tld.user_has_logged_out = True
-
     if "guestConfirmation" in spiff_task.task_spec.extensions:
         return make_response(
             jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
         )
 
-    elif processor.next_task():
+    if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
         return make_response(jsonify(task), 200)
 

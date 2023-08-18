@@ -300,7 +300,7 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         <Can
-          I="GET"
+          I="POST"
           a={targetUris.processInstanceListForMePath}
           ability={ability}
         >

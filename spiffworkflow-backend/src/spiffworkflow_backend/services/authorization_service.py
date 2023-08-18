@@ -30,6 +30,7 @@ from spiffworkflow_backend.services.authentication_service import TokenInvalidEr
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
+from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy import or_
 from sqlalchemy import text
@@ -142,14 +143,11 @@ class AuthorizationService:
         permission: str = "all",
         auth_token_properties: dict | None = None,
     ) -> None:
-        user = UserModel.query.filter_by(username=username).first()
-        if user is None:
-            user = UserService.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
-            GroupService.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
-            if permission_target is not None:
-                cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
-        g.user = user
-        g.token = user.encode_auth_token(auth_token_properties)
+        guest_user = GroupService.find_or_create_guest_user(username=username, group_identifier=group_identifier)
+        if permission_target is not None:
+            cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
+        g.user = guest_user
+        g.token = guest_user.encode_auth_token(auth_token_properties)
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.new_access_token = g.token
         tld.new_id_token = g.token
@@ -318,24 +316,16 @@ class AuthorizationService:
         if cls.should_disable_auth_for_request():
             return None
 
-        authorization_exclusion_list = ["permissions_check"]
-
         if not hasattr(g, "user"):
             raise UserNotLoggedInError(
                 "User is not logged in. Please log in",
             )
 
-        api_view_function = current_app.view_functions[request.endpoint]
-        if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
+        if cls.request_is_excluded_from_permission_check():
             return None
 
-        if api_view_function.__name__ in ["task_show", "task_submit"]:
-            task_guid = request.path.split("/")[-1]
-            process_instance_id = int(request.path.split("/")[-2])
-            task_model = TaskModel.query.filter_by(guid=task_guid, allow_guest=True).first()
-            if task_model is not None:
-                if task_model.process_instance_id == int(process_instance_id):
-                    return None
+        if cls.request_allows_guest_access():
+            return None
 
         permission_string = cls.get_permission_from_http_method(request.method)
         if permission_string:
@@ -353,6 +343,27 @@ class AuthorizationService:
                 f" {permission_string} - {request.path}"
             ),
         )
+
+    @classmethod
+    def request_is_excluded_from_permission_check(cls) -> bool:
+        authorization_exclusion_list = ["permissions_check"]
+        api_view_function = current_app.view_functions[request.endpoint]
+        if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
+            return True
+        return False
+
+    @classmethod
+    def request_allows_guest_access(cls) -> bool:
+        if cls.request_is_excluded_from_permission_check():
+            return True
+
+        api_view_function = current_app.view_functions[request.endpoint]
+        if api_view_function.__name__ in ["task_show", "task_submit"]:
+            task_guid = request.path.split("/")[-1]
+            process_instance_id = int(request.path.split("/")[-2])
+            if TaskService.task_allows_guest(task_guid, process_instance_id):
+                return True
+        return False
 
     @staticmethod
     def decode_auth_token(auth_token: str) -> dict[str, str | None]:

@@ -722,6 +722,14 @@ class TaskService:
         return entity.bpmn_name or entity.bpmn_identifier
 
     @classmethod
+    def task_allows_guest(cls, task_guid: str, process_instance_id: int) -> bool:
+        task_model = TaskModel.query.filter_by(guid=task_guid, allow_guest=True).first()
+        if task_model is not None:
+            if task_model.process_instance_id == int(process_instance_id):
+                return True
+        return False
+
+    @classmethod
     def _task_subprocess(cls, spiff_task: SpiffTask) -> tuple[str | None, BpmnWorkflow | None]:
         top_level_workflow = spiff_task.workflow.top_workflow
         my_wf = spiff_task.workflow  # This is the workflow the spiff_task is part of
