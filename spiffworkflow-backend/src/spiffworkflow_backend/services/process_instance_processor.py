@@ -665,18 +665,40 @@ class ProcessInstanceProcessor:
             # bpmn definition tables more.
             #
 
+            subprocess_specs_for_ready_tasks = set()
             element_unit_process_dict = None
             full_process_model_hash = bpmn_process_definition.full_process_model_hash
 
             if full_process_model_hash is not None:
+                process_id = bpmn_process_definition.bpmn_identifier
+                element_id = bpmn_process_definition.bpmn_identifier
+                
+                subprocess_specs_for_ready_tasks = set([r.bpmn_identifier for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier).\
+                                                    join(TaskDefinitionModel).\
+                                                    join(TaskModel).\
+                                                    filter(TaskModel.process_instance_id == process_instance_model.id).\
+                                                    filter(TaskModel.state == "READY").all()])
+                
                 element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
                     full_process_model_hash,
-                    bpmn_process_definition.bpmn_identifier,
-                    bpmn_process_definition.bpmn_identifier,
+                    process_id,
+                    element_id
                 )
+
+            current_app.logger.info(f"------------> db specs: {process_instance_model.id}")
+            current_app.logger.info(f"------------> db specs: {subprocess_specs_for_ready_tasks}")
+                
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
-                spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
+                keys = list(spiff_bpmn_process_dict["subprocess_specs"].keys())
+                for k in keys:
+                    if k not in subprocess_specs_for_ready_tasks and k not in element_unit_process_dict["subprocess_specs"]:
+                        current_app.logger.info(f"------------> popped: {k}")
+                        spiff_bpmn_process_dict["subprocess_specs"].pop(k)
+
+                current_app.logger.info(f"------------> keys: {keys}")
+
+            current_app.logger.info(f"------------> loaded: {spiff_bpmn_process_dict['subprocess_specs']}")
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
@@ -1372,6 +1394,7 @@ class ProcessInstanceProcessor:
                 for name, spec in lazy_subprocess_specs.items():
                     if name not in loaded_specs:
                         self.bpmn_process_instance.subprocess_specs[name] = spec
+                        self.refresh_waiting_tasks()
                         loaded_specs.add(name)
 
     def refresh_waiting_tasks(self) -> None:
