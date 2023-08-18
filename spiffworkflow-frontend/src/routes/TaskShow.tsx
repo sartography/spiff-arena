@@ -20,6 +20,7 @@ import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import { DATE_RANGE_DELIMITER } from '../config';
+import UserService from '../services/UserService';
 
 export default function TaskShow() {
   // get a basic task which doesn't get the form data so we can load
@@ -50,11 +51,15 @@ export default function TaskShow() {
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
   const navigateToInterstitial = (myTask: BasicTask) => {
-    navigate(
-      `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-        myTask.process_model_identifier
-      )}/${myTask.process_instance_id}/interstitial`
-    );
+    if (UserService.onlyGuestTaskCompletion()) {
+      setGuestConfirmationText('Thank you!');
+    } else {
+      navigate(
+        `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+          myTask.process_model_identifier
+        )}/${myTask.process_instance_id}/interstitial`
+      );
+    }
   };
 
   useEffect(() => {

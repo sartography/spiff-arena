@@ -91,6 +91,15 @@ const authenticationDisabled = () => {
   return false;
 };
 
+const onlyGuestTaskCompletion = () => {
+  const idToken = getIdToken();
+  if (idToken) {
+    const idObject = jwt(idToken);
+    return (idObject as any).only_guest_task_completion;
+  }
+  return false;
+};
+
 const getPreferredUsername = () => {
   const idToken = getIdToken();
   if (idToken) {
@@ -120,6 +129,7 @@ const UserService = {
   hasRole,
   isLoggedIn,
   loginIfNeeded,
+  onlyGuestTaskCompletion,
 };
 
 export default UserService;

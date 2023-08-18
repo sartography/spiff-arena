@@ -135,15 +135,21 @@ class AuthorizationService:
 
     @classmethod
     def create_anonymous_token(
-        cls, username: str, group_identifier: str, permission_target: str = "", permission: str = "all"
+        cls,
+        username: str,
+        group_identifier: str,
+        permission_target: str | None = None,
+        permission: str = "all",
+        auth_token_properties: dict | None = None,
     ) -> None:
         user = UserModel.query.filter_by(username=username).first()
         if user is None:
             user = UserService.create_user(username, "spiff_anonymous_service", "spiff_anonymous_service_id")
             GroupService.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
-            cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
+            if permission_target is not None:
+                cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
         g.user = user
-        g.token = user.encode_auth_token({"authentication_disabled": True})
+        g.token = user.encode_auth_token(auth_token_properties)
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.new_access_token = g.token
         tld.new_id_token = g.token

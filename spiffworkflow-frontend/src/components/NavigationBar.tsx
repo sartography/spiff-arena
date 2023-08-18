@@ -333,7 +333,7 @@ export default function NavigationBar() {
     );
   };
 
-  if (activeKey && ability && !UserService.authenticationDisabled()) {
+  if (activeKey && ability && !UserService.onlyGuestTaskCompletion()) {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (

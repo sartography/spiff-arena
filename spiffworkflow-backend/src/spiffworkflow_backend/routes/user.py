@@ -222,6 +222,7 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
             username=SPIFF_NO_AUTH_USER,
             group_identifier=SPIFF_NO_AUTH_USER,
             permission_target="/*",
+            auth_token_properties={"authentication_disabled": True},
         )
         return redirect(redirect_url)
 
@@ -230,6 +231,7 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
         AuthorizationService.create_anonymous_token(
             username=SPIFF_ANONYMOUS_USER,
             group_identifier=SPIFF_ANONYMOUS_USER,
+            auth_token_properties={"only_guest_task_completion": True},
         )
         return redirect(redirect_url)
 
