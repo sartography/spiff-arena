@@ -447,10 +447,6 @@ def _interstitial_stream(
         for spiff_task in tasks:
             # ignore the instructions if they are on the EndEvent for the top level process
             if not TaskService.is_main_process_end_event(spiff_task):
-                print(
-                    "TaskService.get_task_type_from_spiff_task:"
-                    f" {TaskService.get_task_type_from_spiff_task(spiff_task)}"
-                )
                 try:
                     instructions = render_instructions(spiff_task)
                 except Exception as e:

@@ -32,6 +32,7 @@ on:
     branches:
       - main
       - feature/event-payloads-part-2
+      - feature/event-payload-migration-fix
       - spiffdemo
 
 jobs:
