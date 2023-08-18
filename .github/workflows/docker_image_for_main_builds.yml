@@ -32,6 +32,7 @@ on:
     branches:
       - main
       - spiffdemo
+      - feature/allow-markdown-in-extension-results
 
 jobs:
   create_frontend_docker_image:
