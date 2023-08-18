@@ -542,7 +542,7 @@ class AuthorizationService:
     @classmethod
     def set_support_permissions(cls) -> list[PermissionToAssign]:
         """Just like elevated permissions minus access to secrets."""
-        permissions_to_assign: list[PermissionToAssign] = []
+        permissions_to_assign = cls.set_basic_permissions()
         for process_instance_action in ["resume", "terminate", "suspend", "reset"]:
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=f"/process-instance-{process_instance_action}/*")

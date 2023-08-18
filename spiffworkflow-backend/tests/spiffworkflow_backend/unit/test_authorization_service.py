@@ -275,34 +275,7 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        expected_permissions = sorted(
-            [
-                ("/active-users/*", "create"),
-                ("/connector-proxy/typeahead/*", "read"),
-                ("/debug/version-info", "read"),
-                ("/extensions", "read"),
-                ("/onboarding", "read"),
-                ("/process-groups", "read"),
-                ("/process-instances/find-by-id/*", "read"),
-                ("/process-instances/for-me", "create"),
-                ("/process-instances/report-metadata", "read"),
-                ("/process-instances/reports/*", "create"),
-                ("/process-instances/reports/*", "delete"),
-                ("/process-instances/reports/*", "read"),
-                ("/process-instances/reports/*", "update"),
-                ("/process-models", "read"),
-                ("/processes", "read"),
-                ("/processes/callers/*", "read"),
-                ("/service-tasks", "read"),
-                ("/tasks/*", "create"),
-                ("/tasks/*", "delete"),
-                ("/tasks/*", "read"),
-                ("/tasks/*", "update"),
-                ("/user-groups/for-current-user", "read"),
-                ("/users/exists/by-username", "create"),
-                ("/users/search", "read"),
-            ]
-        )
+        expected_permissions = self._expected_basic_permissions()
         permissions_to_assign = AuthorizationService.explode_permissions("all", "BASIC")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
@@ -469,9 +442,40 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2:yo")
         self.assert_user_has_permission(user_two, "create", "/v1.0/process-groups/hey2:yo")
 
-    def _expected_support_permissions(self) -> list[tuple[str, str]]:
+    def _expected_basic_permissions(self) -> list[tuple[str, str]]:
         return sorted(
             [
+                ("/active-users/*", "create"),
+                ("/connector-proxy/typeahead/*", "read"),
+                ("/debug/version-info", "read"),
+                ("/extensions", "read"),
+                ("/onboarding", "read"),
+                ("/process-groups", "read"),
+                ("/process-instances/find-by-id/*", "read"),
+                ("/process-instances/for-me", "create"),
+                ("/process-instances/report-metadata", "read"),
+                ("/process-instances/reports/*", "create"),
+                ("/process-instances/reports/*", "delete"),
+                ("/process-instances/reports/*", "read"),
+                ("/process-instances/reports/*", "update"),
+                ("/process-models", "read"),
+                ("/processes", "read"),
+                ("/processes/callers/*", "read"),
+                ("/service-tasks", "read"),
+                ("/tasks/*", "create"),
+                ("/tasks/*", "delete"),
+                ("/tasks/*", "read"),
+                ("/tasks/*", "update"),
+                ("/user-groups/for-current-user", "read"),
+                ("/users/exists/by-username", "create"),
+                ("/users/search", "read"),
+            ]
+        )
+
+    def _expected_support_permissions(self) -> list[tuple[str, str]]:
+        return sorted(
+            self._expected_basic_permissions()
+            + [
                 ("/authentications", "read"),
                 ("/can-run-privileged-script/*", "create"),
                 ("/data-stores/*", "read"),
