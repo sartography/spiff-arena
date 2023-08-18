@@ -148,12 +148,22 @@ function getRetrievalExpressionFromCorrelationProperty(
 export function findCorrelationProperties(businessObject, moddle) {
   const root = getRoot(businessObject, moddle);
   const correlationProperties = [];
-  for (const rootElement of root.rootElements) {
-    if (rootElement.$type === 'bpmn:CorrelationProperty') {
-      correlationProperties.push(rootElement);
+  if (isIterable(root.rootElements)) {
+    for (const rootElement of root.rootElements) {
+      if (rootElement.$type === 'bpmn:CorrelationProperty') {
+        correlationProperties.push(rootElement);
+      }
     }
   }
   return correlationProperties;
+}
+
+function isIterable(obj) {
+  // checks for null and undefined
+  if (obj == null) {
+    return false;
+  }
+  return typeof obj[Symbol.iterator] === 'function';
 }
 
 export function findCorrelationKeys(businessObject, moddle) {

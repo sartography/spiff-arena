@@ -38,7 +38,7 @@ function run_autofixers() {
     asdf reshim python
   fi
 
-  python_dirs=$(get_python_dirs)
+  python_dirs="$(get_python_dirs) bin"
   ruff --fix $python_dirs || echo ''
 }
 

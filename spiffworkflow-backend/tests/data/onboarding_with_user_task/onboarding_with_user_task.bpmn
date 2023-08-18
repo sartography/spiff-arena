@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_WithForm" name="Process With Form" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0smvjir</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0smvjir" sourceRef="StartEvent_1" targetRef="Activity_SimpleForm" />
+    <bpmn:endEvent id="Event_00xci7j">
+      <bpmn:incoming>Flow_1scft9v</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:manualTask id="Activity_1cscoeg" name="DisplayInfo">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Hello {{ name }}
+Department: {{ department }}
+</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript>user_completing_task = get_last_user_completing_task("Process_WithForm", "Activity_SimpleForm")</spiffworkflow:postScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_028o7v5</bpmn:incoming>
+      <bpmn:outgoing>Flow_18ytjgo</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:userTask id="Activity_SimpleForm" name="Simple Form">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="simple_form.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="simple_form_ui.json" />
+        </spiffworkflow:properties>
+        <spiffworkflow:postScript>process_initiator_user = get_process_initiator_user()</spiffworkflow:postScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0smvjir</bpmn:incoming>
+      <bpmn:outgoing>Flow_163ufsx</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:intermediateThrowEvent id="completed_form" name="Completed Form">
+      <bpmn:incoming>Flow_163ufsx</bpmn:incoming>
+      <bpmn:outgoing>Flow_028o7v5</bpmn:outgoing>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_163ufsx" sourceRef="Activity_SimpleForm" targetRef="completed_form" />
+    <bpmn:intermediateThrowEvent id="completed_manual_task" name="Completed Manual Task">
+      <bpmn:incoming>Flow_18ytjgo</bpmn:incoming>
+      <bpmn:outgoing>Flow_1scft9v</bpmn:outgoing>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_18ytjgo" sourceRef="Activity_1cscoeg" targetRef="completed_manual_task" />
+    <bpmn:sequenceFlow id="Flow_028o7v5" sourceRef="completed_form" targetRef="Activity_1cscoeg" />
+    <bpmn:sequenceFlow id="Flow_1scft9v" sourceRef="completed_manual_task" targetRef="Event_00xci7j" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_WithForm">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0x5k4l1_di" bpmnElement="Activity_SimpleForm">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00g930h_di" bpmnElement="Activity_1cscoeg">
+        <dc:Bounds x="510" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_00xci7j_di" bpmnElement="Event_00xci7j">
+        <dc:Bounds x="722" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0pi2wuv_di" bpmnElement="completed_form">
+        <dc:Bounds x="432" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="409" y="202" width="82" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_071q0rf_di" bpmnElement="completed_manual_task">
+        <dc:Bounds x="662" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="649" y="202" width="63" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0smvjir_di" bpmnElement="Flow_0smvjir">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_163ufsx_di" bpmnElement="Flow_163ufsx">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="432" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18ytjgo_di" bpmnElement="Flow_18ytjgo">
+        <di:waypoint x="610" y="177" />
+        <di:waypoint x="662" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_028o7v5_di" bpmnElement="Flow_028o7v5">
+        <di:waypoint x="468" y="177" />
+        <di:waypoint x="510" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1scft9v_di" bpmnElement="Flow_1scft9v">
+        <di:waypoint x="698" y="177" />
+        <di:waypoint x="722" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
