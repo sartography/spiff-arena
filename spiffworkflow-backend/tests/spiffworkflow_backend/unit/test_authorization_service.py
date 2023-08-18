@@ -307,44 +307,24 @@ class TestAuthorizationService(BaseTest):
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
+    def test_explode_permissions_support(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        expected_permissions = self._expected_support_permissions()
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "SUPPORT")
+        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        assert permissions_to_assign_tuples == expected_permissions
+
     def test_explode_permissions_elevated(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        expected_permissions = sorted(
-            [
-                ("/authentications", "read"),
-                ("/can-run-privileged-script/*", "create"),
-                ("/data-stores/*", "read"),
-                ("/debug/*", "create"),
-                ("/extensions/*", "create"),
-                ("/event-error-details/*", "read"),
-                ("/logs/*", "read"),
-                ("/messages", "read"),
-                ("/messages/*", "create"),
-                ("/process-data-file-download/*", "read"),
-                ("/process-data/*", "read"),
-                ("/process-instance-reset/*", "create"),
-                ("/process-instance-resume/*", "create"),
-                ("/process-instance-suspend/*", "create"),
-                ("/process-instance-terminate/*", "create"),
-                ("/process-instances/*", "create"),
-                ("/process-instances/*", "delete"),
-                ("/process-instances/*", "read"),
-                ("/process-instances/*", "update"),
-                ("/secrets/*", "create"),
-                ("/secrets/*", "delete"),
-                ("/secrets/*", "read"),
-                ("/secrets/*", "update"),
-                ("/send-event/*", "create"),
-                ("/task-assign/*", "create"),
-                ("/task-complete/*", "create"),
-                ("/task-data/*", "update"),
-                ("/task-data/*", "read"),
-            ]
-        )
+        expected_permissions = self._expected_elevated_permissions()
         permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
@@ -488,3 +468,44 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2")
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2:yo")
         self.assert_user_has_permission(user_two, "create", "/v1.0/process-groups/hey2:yo")
+
+    def _expected_support_permissions(self) -> list[tuple[str, str]]:
+        return sorted(
+            [
+                ("/authentications", "read"),
+                ("/can-run-privileged-script/*", "create"),
+                ("/data-stores/*", "read"),
+                ("/debug/*", "create"),
+                ("/extensions/*", "create"),
+                ("/event-error-details/*", "read"),
+                ("/logs/*", "read"),
+                ("/messages", "read"),
+                ("/messages/*", "create"),
+                ("/process-data-file-download/*", "read"),
+                ("/process-data/*", "read"),
+                ("/process-instance-reset/*", "create"),
+                ("/process-instance-resume/*", "create"),
+                ("/process-instance-suspend/*", "create"),
+                ("/process-instance-terminate/*", "create"),
+                ("/process-instances/*", "create"),
+                ("/process-instances/*", "delete"),
+                ("/process-instances/*", "read"),
+                ("/process-instances/*", "update"),
+                ("/send-event/*", "create"),
+                ("/task-assign/*", "create"),
+                ("/task-complete/*", "create"),
+                ("/task-data/*", "update"),
+                ("/task-data/*", "read"),
+            ]
+        )
+
+    def _expected_elevated_permissions(self) -> list[tuple[str, str]]:
+        return sorted(
+            self._expected_support_permissions()
+            + [
+                ("/secrets/*", "create"),
+                ("/secrets/*", "delete"),
+                ("/secrets/*", "read"),
+                ("/secrets/*", "update"),
+            ]
+        )
