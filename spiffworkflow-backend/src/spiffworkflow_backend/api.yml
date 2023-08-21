@@ -1876,6 +1876,64 @@ paths:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
 
+  /authentication/configuration:
+    get:
+      tags:
+        - Authentications
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_configuration
+      summary: Gets authentication configurations
+      responses:
+        "200":
+          description: Authentication configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTask"
+    put:
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_configuration_update
+      summary: Save the authentication configuration
+      tags:
+        - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceTask"
+      responses:
+        "200":
+          description: Authentication configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /authentication_begin/{service}/{auth_method}:
+    parameters:
+      - name: service
+        in: path
+        required: true
+        description: The name of the service
+        schema:
+          type: string
+      - name: auth_method
+        in: path
+        required: true
+        description: The method
+        schema:
+          type: string
+    get:
+      tags:
+        - Authentications
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_begin
+      summary: Begin an external authentication
+      responses:
+        "200":
+          description: All authentications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTask"
+
   /authentication_callback/{service}/{auth_method}:
     parameters:
       - name: service
@@ -1892,13 +1950,37 @@ paths:
           type: string
       - name: response
         in: query
-        required: true
+        required: false
         description: The response
         schema:
           type: string
       - name: token
         in: query
-        required: true
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: code
+        in: query
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: code_challenge
+        in: query
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: code_challenge_method
+        in: query
+        required: false
+        description: The response
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: false
         description: The response
         schema:
           type: string
