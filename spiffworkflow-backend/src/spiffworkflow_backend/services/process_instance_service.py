@@ -247,7 +247,7 @@ class ProcessInstanceService:
             except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
                 error_message = (
-                    f"Error running waiting task for process_instance {process_instance.id}"
+                    f"Error running {status_value} task for process_instance {process_instance.id}"
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)

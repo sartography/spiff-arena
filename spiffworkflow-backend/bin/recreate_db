@@ -28,6 +28,9 @@ if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
   database_host=$(grep -oP "^[^:]+://.*@\K(.+?)[:/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[:\/]$//')
 fi
 
+# this will fix branching conflicts
+# poetry run flask db merge heads -m "merging two heads"
+
 tasks=""
 if [[ "${1:-}" == "clean" ]]; then
   subcommand="${2:-}"
