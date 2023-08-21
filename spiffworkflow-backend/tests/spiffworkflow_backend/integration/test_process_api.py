@@ -521,9 +521,62 @@ class TestProcessApi(BaseTest):
             "/v1.0/processes",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
+        assert isinstance(response.json, list)
         # We should get 5 back, as one of the items in the cache is a decision.
         assert len(response.json) == 5
+        simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
+        assert simple_form["display_name"] == "Process With Form"
+        assert simple_form["process_model_id"] == "test_group_one/simple_form"
+        assert simple_form["has_lanes"] is False
+        assert simple_form["is_executable"] is True
+        assert simple_form["is_primary"] is True
+
+    def test_process_list_with_restricted_access(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        load_test_spec(
+            "test_group_one/simple_form",
+            process_model_source_directory="simple_form",
+            bpmn_file_name="simple_form",
+        )
+        # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
+        assert len(SpecReferenceCache.query.all()) == 1
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
+        )
+        # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
+        assert len(SpecReferenceCache.query.all()) == 6
+
+        user_one = self.create_user_with_permission(
+            username="user_one", target_uri="/v1.0/process-groups/test_group_one:*"
+        )
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/processes", permission_names=["read"])
+        self.add_permissions_to_user(
+            user=user_one, target_uri="/v1.0/process-instances/test_group_one:*", permission_names=["create"]
+        )
+
+        # get the results
+        response = client.get(
+            "/v1.0/processes",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+
+        # This user should only have access to one process
+        assert isinstance(response.json, list)
+        assert len(response.json) == 1
         simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
         assert simple_form["display_name"] == "Process With Form"
         assert simple_form["process_model_id"] == "test_group_one/simple_form"
@@ -2794,6 +2847,57 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
+
+    def test_can_get_process_instance_list_with_report_metadata_using_different_operators(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            bpmn_file_name="save_process_instance_metadata.bpmn",
+            process_model_source_directory="save_process_instance_metadata",
+        )
+
+        process_instance_one_metadata = {"key1": "value1"}
+        process_instance_one = self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict=process_instance_one_metadata
+        )
+
+        process_instance_two_metadata = {"key2": "value2"}
+        process_instance_two = self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict=process_instance_two_metadata
+        )
+
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client, user=with_super_admin_user, process_instance=process_instance_one, operator="is_not_empty"
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="equals",
+            filter_field_value="value1",
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="contains",
+            filter_field_value="alu",
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="not_equals",
+            filter_field_value="hey",
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client, user=with_super_admin_user, process_instance=process_instance_two, operator="is_empty"
+        )
 
     def test_can_get_process_instance_list_with_report_metadata_and_process_initiator(
         self,

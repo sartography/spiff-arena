@@ -139,12 +139,12 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <tr>
             <th>Id</th>
             <th>Process</th>
-            <th>Process Instance</th>
+            <th>Process instance</th>
             <th>Name</th>
             <th>Type</th>
             <th>Details</th>
             <th>Status</th>
-            <th>Created At</th>
+            <th>Created at</th>
           </tr>
         </thead>
         <tbody>{rows}</tbody>

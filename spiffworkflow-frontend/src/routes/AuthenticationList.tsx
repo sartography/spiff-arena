@@ -4,9 +4,14 @@ import { Table } from '@carbon/react';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
+import { BACKEND_BASE_URL } from '../config';
+import AuthenticationConfiguration from '../components/AuthenticationConfiguration';
 
 export default function AuthenticationList() {
   const [authenticationList, setAuthenticationList] = useState<
+    AuthenticationItem[] | null
+  >(null);
+  const [authenticationV2List, setAuthenticationV2List] = useState<
     AuthenticationItem[] | null
   >(null);
   const [connectProxyBaseUrl, setConnectProxyBaseUrl] = useState<string | null>(
@@ -17,6 +22,7 @@ export default function AuthenticationList() {
   useEffect(() => {
     const processResult = (result: any) => {
       setAuthenticationList(result.results);
+      setAuthenticationV2List(result.resultsV2);
       setConnectProxyBaseUrl(result.connector_proxy_base_url);
       setRedirectUrl(result.redirect_url);
     };
@@ -27,7 +33,7 @@ export default function AuthenticationList() {
   }, []);
 
   const buildTable = () => {
-    if (authenticationList) {
+    if (authenticationList && authenticationV2List) {
       const rows = authenticationList.map((row) => {
         return (
           <tr key={row.id}>
@@ -43,6 +49,24 @@ export default function AuthenticationList() {
                 {row.id}
               </a>
             </td>
+            <td>Connector Proxy</td>
+          </tr>
+        );
+      });
+      const rowsV2 = authenticationV2List.map((row) => {
+        return (
+          <tr key={row.id}>
+            <td>
+              <a
+                data-qa="authentication-create-link"
+                href={`${BACKEND_BASE_URL}/authentication_begin/${
+                  row.id
+                }?token=${UserService.getAccessToken()}`}
+              >
+                {row.id}
+              </a>
+            </td>
+            <td>Local Configuration</td>
           </tr>
         );
       });
@@ -51,9 +75,13 @@ export default function AuthenticationList() {
           <thead>
             <tr>
               <th>Id</th>
+              <th>Source</th>
             </tr>
           </thead>
-          <tbody>{rows}</tbody>
+          <tbody>
+            {rows}
+            {rowsV2}
+          </tbody>
         </Table>
       );
     }
@@ -61,7 +89,12 @@ export default function AuthenticationList() {
   };
 
   if (authenticationList) {
-    return <>{buildTable()}</>;
+    return (
+      <>
+        {buildTable()}
+        {AuthenticationConfiguration()}
+      </>
+    );
   }
 
   return <main />;

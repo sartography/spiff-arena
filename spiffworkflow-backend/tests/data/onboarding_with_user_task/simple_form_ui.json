@@ -1,0 +1,11 @@
+{
+  "name": {
+    "ui:title": "Name",
+    "ui:description": "(Your name)"
+  },
+  "department": {
+    "ui:title": "Department",
+    "ui:description": "(Your department)"
+  },
+  "ui:order": ["name", "department"]
+}
