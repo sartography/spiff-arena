@@ -56,17 +56,26 @@ class JinjaService:
         return ""
 
     @classmethod
-    def render_jinja_template(cls, unprocessed_template: str, task: TaskModel | SpiffTask) -> str:
+    def render_jinja_template(
+        cls, unprocessed_template: str, task: TaskModel | SpiffTask | None = None, task_data: dict | None = None
+    ) -> str:
         jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
         jinja_environment.filters.update(JinjaHelpers.get_helper_mapping())
         try:
             template = jinja_environment.from_string(unprocessed_template)
-            if isinstance(task, TaskModel):
+            if task_data is not None:
+                data = task_data
+            elif isinstance(task, TaskModel):
                 data = task.get_data()
-            else:
+            elif task is not None:
                 data = task.data
+            else:
+                raise ValueError("No task or task data provided to render_jinja_template")
+
             return template.render(**data, **JinjaHelpers.get_helper_mapping())
         except jinja2.exceptions.TemplateError as template_error:
+            if task is None:
+                raise template_error
             if isinstance(task, TaskModel):
                 wfe = TaskModelError(str(template_error), task_model=task, exception=template_error)
             else:
@@ -77,6 +86,8 @@ class JinjaService:
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from template_error
         except Exception as error:
+            if task is None:
+                raise error
             _type, _value, tb = exc_info()
             if isinstance(task, TaskModel):
                 wfe = TaskModelError(str(error), task_model=task, exception=error)
