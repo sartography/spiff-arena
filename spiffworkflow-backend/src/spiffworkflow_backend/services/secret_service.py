@@ -1,3 +1,6 @@
+import re
+
+import sentry_sdk
 from flask import current_app
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -110,3 +113,15 @@ class SecretService:
                 message=f"Cannot delete secret with key: {key}. Resource does not exist.",
                 status_code=404,
             )
+
+    @classmethod
+    def resolve_possibly_secret_value(cls, value: str) -> str:
+        if "SPIFF_SECRET:" in value:
+            spiff_secret_match = re.match(r".*SPIFF_SECRET:(?P<variable_name>\w+).*", value)
+            if spiff_secret_match is not None:
+                spiff_variable_name = spiff_secret_match.group("variable_name")
+                secret = cls.get_secret(spiff_variable_name)
+                with sentry_sdk.start_span(op="task", description="decrypt_secret"):
+                    decrypted_value = cls._decrypt(secret.value)
+                    return re.sub(r"\bSPIFF_SECRET:\w+", decrypted_value, value)
+        return value

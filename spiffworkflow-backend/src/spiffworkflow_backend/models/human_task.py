@@ -35,8 +35,8 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     actual_owner_id: int = db.Column(ForeignKey(UserModel.id), index=True)  # type: ignore
     # actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
 
-    form_file_name: str | None = db.Column(db.String(50))
-    ui_form_file_name: str | None = db.Column(db.String(50))
+    form_file_name: str | None = db.Column(db.String(255))
+    ui_form_file_name: str | None = db.Column(db.String(255))
 
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
