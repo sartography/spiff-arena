@@ -20,6 +20,7 @@ Building_Diagrams/Script_Tasks.md
 Building_Diagrams/sub-processes_and_call_activities.md
 Building_Diagrams/data_objects.md
 Building_Diagrams/dmn.md
+Building_Diagrams/Extensions.md
 ```
 
 ```{toctree}
