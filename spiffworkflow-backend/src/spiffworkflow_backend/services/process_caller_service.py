@@ -27,7 +27,6 @@ class ProcessCallerService:
             db.session.add(
                 ProcessCallerCacheModel(process_identifier=called_process_id, calling_process_identifier=process_id)
             )
-        db.session.commit()
 
     @staticmethod
     def callers(process_ids: list[str]) -> list[str]:
