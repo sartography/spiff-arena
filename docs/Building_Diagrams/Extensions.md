@@ -12,7 +12,7 @@ Here are some of key aspects of using Extensions:
 
 -   Configuration for the extensions can be found and modified in the `extension-uischema.json` file.
 
-![Extensions](Images/Extensions_dashboard.png)
+![Extensions](images/Extensions_dashboard.png)
 
 ## Getting Started with Extensions
 
