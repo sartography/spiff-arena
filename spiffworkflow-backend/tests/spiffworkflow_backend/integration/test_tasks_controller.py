@@ -429,8 +429,8 @@ class TestTasksController(BaseTest):
         assert response.location == redirect_url
         headers_dict = dict(response.headers)
         assert "Set-Cookie" in headers_dict
-        cookie = headers_dict['Set-Cookie']
-        access_token = cookie.split(';')[0].split('=')[1]
+        cookie = headers_dict["Set-Cookie"]
+        access_token = cookie.split(";")[0].split("=")[1]
         assert access_token is not None
 
         # ensure guest user can get and complete both guest manual tasks
@@ -463,6 +463,6 @@ class TestTasksController(BaseTest):
         assert response.status_code == 403
         headers_dict = dict(response.headers)
         assert "Set-Cookie" in headers_dict
-        cookie = headers_dict['Set-Cookie']
-        access_token = cookie.split(';')[0].split('=')[1]
+        cookie = headers_dict["Set-Cookie"]
+        access_token = cookie.split(";")[0].split("=")[1]
         assert access_token == ""
