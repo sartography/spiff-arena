@@ -399,6 +399,10 @@ class AuthorizationService:
         user_attributes["service"] = user_info["iss"]
         user_attributes["service_id"] = user_info["sub"]
 
+        desired_group_identifiers = None
+        if "groups" in user_info:
+            desired_group_identifiers = user_info["groups"]
+
         for field_index, tenant_specific_field in enumerate(
             current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]
         ):
@@ -425,10 +429,25 @@ class AuthorizationService:
                 if current_value != value:
                     user_db_model_changed = True
                     setattr(user_model, key, value)
-
             if user_db_model_changed:
                 db.session.add(user_model)
                 db.session.commit()
+
+        if desired_group_identifiers is not None:
+            if not isinstance(desired_group_identifiers, list):
+                current_app.logger.error(
+                    f"Invalid groups property in token: {desired_group_identifiers}."
+                    "If groups is specified, it must be a list"
+                )
+            else:
+                for desired_group_identifier in desired_group_identifiers:
+                    GroupService.add_user_to_group(user_model, desired_group_identifier)
+                current_group_identifiers = [g.identifier for g in user_model.groups]
+                groups_to_remove_from_user = [item for item in current_group_identifiers if item not in desired_group_identifiers]
+                print(f"groups_to_remove_from_user: {groups_to_remove_from_user}")
+                print(f"desired_group_identifiers: {desired_group_identifiers}")
+                for gtrfu in groups_to_remove_from_user:
+                    GroupService.remove_user_from_group(user_model, gtrfu)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
