@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timezone
 
 from flask.app import Flask
+from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
@@ -198,39 +199,47 @@ class TestProcessInstanceService(BaseTest):
         self._check_sample_file_data_model("File", 1, models[1])
 
     def test_does_not_skip_events_it_does_not_know_about(self) -> None:
+        name = None
+        event_type = "Unknown"
+        value = "2023-04-27T20:15:10.626656+00:00"
+        pending_event = PendingBpmnEvent(name, event_type, value)
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
-                {"event_type": "Unknown", "name": None, "value": "2023-04-27T20:15:10.626656+00:00"},
+                pending_event,
                 datetime.now(timezone.utc),
             )
         )
 
     def test_does_skip_duration_timer_events_for_the_future(self) -> None:
+        name = None
+        event_type = "DurationTimerEventDefinition"
+        value = "2023-04-27T20:15:10.626656+00:00"
+        pending_event = PendingBpmnEvent(name, event_type, value)
         assert ProcessInstanceService.waiting_event_can_be_skipped(
-            {"event_type": "DurationTimerEventDefinition", "name": None, "value": "2023-04-27T20:15:10.626656+00:00"},
+            pending_event,
             datetime.fromisoformat("2023-04-26T20:15:10.626656+00:00"),
         )
 
     def test_does_not_skip_duration_timer_events_for_the_past(self) -> None:
+        name = None
+        event_type = "DurationTimerEventDefinition"
+        value = "2023-04-27T20:15:10.626656+00:00"
+        pending_event = PendingBpmnEvent(name, event_type, value)
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
-                {
-                    "event_type": "DurationTimerEventDefinition",
-                    "name": None,
-                    "value": "2023-04-27T20:15:10.626656+00:00",
-                },
+                pending_event,
                 datetime.fromisoformat("2023-04-28T20:15:10.626656+00:00"),
             )
         )
 
     def test_does_not_skip_duration_timer_events_for_now(self) -> None:
+        name = None
+        event_type = "DurationTimerEventDefinition"
+        value = "2023-04-27T20:15:10.626656+00:00"
+        pending_event = PendingBpmnEvent(name, event_type, value)
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
-                {
-                    "event_type": "DurationTimerEventDefinition",
-                    "name": None,
-                    "value": "2023-04-27T20:15:10.626656+00:00",
-                },
+                pending_event,
                 datetime.fromisoformat("2023-04-27T20:15:10.626656+00:00"),
             )
         )

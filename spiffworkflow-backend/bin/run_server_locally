@@ -9,21 +9,24 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 port="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
 
-arg="${1:-}"
-if [[ "$arg" == "acceptance" ]]; then
+proces_model_dir="${1:-}"
+if [[ "$proces_model_dir" == "acceptance" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
-elif [[ "$arg" == "localopenid" ]]; then
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
+elif [[ "$proces_model_dir" == "localopenid" ]]; then
   export SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL="http://localhost:$port/openid"
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
+else
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$proces_model_dir"
 fi
+export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_ENV=local_development
 fi
 
-SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
-export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 
 # export FLASK_SESSION_SECRET_KEY="super_secret_key"
 export FLASK_SESSION_SECRET_KEY="e7711a3ba96c46c68e084a86952de16f"

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
-from SpiffWorkflow.bpmn.specs.event_definitions import MessageEventDefinition
+from SpiffWorkflow.bpmn.event import BpmnEvent
+from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition
 from ..BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'matth'
@@ -22,15 +23,14 @@ class MessagesTest(BpmnWorkflowTestCase):
         self.workflow.do_engine_steps()
         self.assertEqual([], self.workflow.get_tasks(TaskState.READY))
         self.assertEqual(2, len(self.workflow.get_tasks(TaskState.WAITING)))
-        self.workflow.catch(MessageEventDefinition('Wrong Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Wrong Message'), {}))
         self.assertEqual([], self.workflow.get_tasks(TaskState.READY))
-        self.workflow.catch(MessageEventDefinition('Test Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Test Message'), {}))
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
 
         self.assertEqual('Test Message', self.workflow.get_tasks(TaskState.READY)[0].task_spec.bpmn_name)
 
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
         self.assertEqual(0, len(self.workflow.get_tasks(TaskState.READY | TaskState.WAITING)))
 
     def testRunThroughSaveAndRestore(self):
@@ -43,13 +43,12 @@ class MessagesTest(BpmnWorkflowTestCase):
 
         self.assertEqual([], self.workflow.get_tasks(TaskState.READY))
         self.assertEqual(2, len(self.workflow.get_tasks(TaskState.WAITING)))
-        self.workflow.catch(MessageEventDefinition('Wrong Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Wrong Message'), {}))
         self.assertEqual([], self.workflow.get_tasks(TaskState.READY))
-        self.workflow.catch(MessageEventDefinition('Test Message'))
+        self.workflow.catch(BpmnEvent(MessageEventDefinition('Test Message'), {}))
         self.assertEqual(1, len(self.workflow.get_tasks(TaskState.READY)))
 
         self.save_restore()
 
         self.workflow.do_engine_steps()
-        self.complete_subworkflow()
         self.assertEqual(0, len(self.workflow.get_tasks(TaskState.READY | TaskState.WAITING)))

@@ -36,6 +36,9 @@ export function findDataObject(process, id) {
 }
 
 export function findDataObjectReferences(children, dataObjectId) {
+  if (children == null) {
+    return [];
+  }
   return children.flatMap((child) => {
     if (child.$type == 'bpmn:DataObjectReference' && child.dataObjectRef.id == dataObjectId)
       return [child];
@@ -58,7 +61,7 @@ export function findDataObjectReferenceShapes(children, dataObjectId) {
 }
 
 export function idToHumanReadableName(id) {
-  const words = id.match(/[A-Za-z][a-z]*/g) || [id];
+  const words = id.match(/[A-Za-z][a-z]*|[0-9]+/g) || [id];
   return words.map(capitalize).join(' ');
 
   function capitalize(word) {

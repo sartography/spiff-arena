@@ -617,6 +617,24 @@ export default function ProcessModelShow() {
   };
 
   if (processModel) {
+    const processStartButton = (
+      <Stack orientation="horizontal" gap={3}>
+        <Can
+          I="POST"
+          a={targetUris.processInstanceCreatePath}
+          ability={ability}
+        >
+          <>
+            <ProcessInstanceRun
+              processModel={processModel}
+              onSuccessCallback={setProcessInstance}
+            />
+            <br />
+            <br />
+          </>
+        </Can>
+      </Stack>
+    );
     return (
       <>
         {fileUploadModal()}
@@ -682,22 +700,7 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         <p className="process-description">{processModel.description}</p>
-        <Stack orientation="horizontal" gap={3}>
-          <Can
-            I="POST"
-            a={targetUris.processInstanceCreatePath}
-            ability={ability}
-          >
-            <>
-              <ProcessInstanceRun
-                processModel={processModel}
-                onSuccessCallback={setProcessInstance}
-              />
-              <br />
-              <br />
-            </>
-          </Can>
-        </Stack>
+        {processModel.primary_file_name ? processStartButton : null}
         {processModelFilesSection()}
         <Can
           I="POST"

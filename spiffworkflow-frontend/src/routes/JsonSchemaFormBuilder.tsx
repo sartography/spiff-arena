@@ -6,6 +6,7 @@ import {
   Select,
   SelectItem,
   TextInput,
+  TextArea,
   Grid,
   Column,
   // @ts-ignore
@@ -391,7 +392,7 @@ export default function JsonSchemaFormBuilder() {
           }}
         />
         {formIdTextField()}
-        <TextInput
+        <TextArea
           id="form-description"
           name="description"
           labelText="Description"

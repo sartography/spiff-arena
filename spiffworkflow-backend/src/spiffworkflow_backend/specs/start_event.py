@@ -6,17 +6,17 @@ from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import StartEventConverter as DefaultStartEventConverter
 from SpiffWorkflow.bpmn.specs.defaults import StartEvent as DefaultStartEvent  # type: ignore
-from SpiffWorkflow.bpmn.specs.event_definitions import CycleTimerEventDefinition  # type: ignore
-from SpiffWorkflow.bpmn.specs.event_definitions import DurationTimerEventDefinition
-from SpiffWorkflow.bpmn.specs.event_definitions import NoneEventDefinition
-from SpiffWorkflow.bpmn.specs.event_definitions import TimeDateEventDefinition
-from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition
+from SpiffWorkflow.bpmn.specs.event_definitions.simple import NoneEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import CycleTimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import DurationTimerEventDefinition
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimeDateEventDefinition
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffStartEventParser  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 StartConfiguration = tuple[int, int, int]
 
-# TODO: cylce timers and repeat counts?
+# TODO: cycle timers and repeat counts?
 
 
 class StartEvent(DefaultStartEvent):  # type: ignore
