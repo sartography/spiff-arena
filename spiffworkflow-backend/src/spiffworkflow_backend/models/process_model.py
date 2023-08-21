@@ -70,6 +70,9 @@ class ProcessModelInfo:
     def id_for_file_path(self) -> str:
         return self.id.replace("/", os.sep)
 
+    def modified_process_model_identifier(self) -> str:
+        return self.modify_process_identifier_for_path_param(self.id)
+
     @classmethod
     def modify_process_identifier_for_path_param(cls, identifier: str) -> str:
         if "\\" in identifier:

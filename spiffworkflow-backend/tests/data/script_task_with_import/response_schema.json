@@ -1,0 +1,5 @@
+{
+    "headers": {"Content-disposition": "attachment; filename=metadata_export.csv"},
+    "mimetype": "text/csv",
+    "data_extraction_path": "pi_json.id"
+}

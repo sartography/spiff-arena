@@ -30,6 +30,7 @@ class DataSetupService:
                 for ref in refs:
                     try:
                         SpecFileService.update_caches(ref)
+                        db.session.commit()
                     except Exception as ex:
                         failing_process_models.append(
                             (
