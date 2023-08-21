@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.user_service import UserService
@@ -213,6 +214,7 @@ class ProcessModelService(FileSystemService):
         process_models = cls.get_process_models(
             process_group_id=process_group_id, recursive=recursive, include_files=include_files
         )
+        process_model_identifiers = [p.id for p in process_models]
 
         permission_to_check = "read"
         permission_base_uri = "/v1.0/process-models"
@@ -224,6 +226,22 @@ class ProcessModelService(FileSystemService):
             permission_to_check = "create"
             permission_base_uri = "/v1.0/extensions"
 
+        permitted_process_model_identifiers = cls.process_model_identifiers_with_permission_for_user(
+            user=user,
+            permission_to_check=permission_to_check,
+            permission_base_uri=permission_base_uri,
+            process_model_identifiers=process_model_identifiers,
+        )
+        permitted_process_models = []
+        for process_model in process_models:
+            if process_model.id in permitted_process_model_identifiers:
+                permitted_process_models.append(process_model)
+        return permitted_process_models
+
+    @classmethod
+    def process_model_identifiers_with_permission_for_user(
+        cls, user: UserModel, permission_to_check: str, permission_base_uri: str, process_model_identifiers: list[str]
+    ) -> list[str]:
         # if user has access to uri/* with that permission then there's no reason to check each one individually
         guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
         has_permission = AuthorizationService.user_has_permission(
@@ -232,18 +250,21 @@ class ProcessModelService(FileSystemService):
             target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
         )
         if has_permission:
-            return process_models
+            return process_model_identifiers
 
-        new_process_model_list = []
-        for process_model in process_models:
-            modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model.id)
+        permitted_process_model_identifiers = []
+        for process_model_identifier in process_model_identifiers:
+            modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(
+                process_model_identifier
+            )
             uri = f"{permission_base_uri}/{modified_process_model_id}"
             has_permission = AuthorizationService.user_has_permission(
                 user=user, permission=permission_to_check, target_uri=uri
             )
             if has_permission:
-                new_process_model_list.append(process_model)
-        return new_process_model_list
+                permitted_process_model_identifiers.append(process_model_identifier)
+
+        return permitted_process_model_identifiers
 
     @classmethod
     def get_parent_group_array_and_cache_it(
