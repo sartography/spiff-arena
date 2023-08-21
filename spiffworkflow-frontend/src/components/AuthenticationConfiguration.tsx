@@ -18,7 +18,9 @@ export default function AuthenticationConfiguration() {
   const saveAuthConfig = () => {
     HttpService.makeCallToBackend({
       path: '/authentication/configuration',
-      successCallback: () => { window.location.reload() },
+      successCallback: () => {
+        window.location.reload();
+      },
       httpMethod: 'PUT',
       postBody: { value: authConfig },
     });
