@@ -687,9 +687,6 @@ class ProcessInstanceProcessor:
                     full_process_model_hash, process_id, element_id
                 )
 
-            current_app.logger.info(f"------------> db specs: {process_instance_model.id}")
-            current_app.logger.info(f"------------> db specs: {subprocess_specs_for_ready_tasks}")
-
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
                 keys = list(spiff_bpmn_process_dict["subprocess_specs"].keys())
@@ -698,12 +695,7 @@ class ProcessInstanceProcessor:
                         k not in subprocess_specs_for_ready_tasks
                         and k not in element_unit_process_dict["subprocess_specs"]
                     ):
-                        current_app.logger.info(f"------------> popped: {k}")
                         spiff_bpmn_process_dict["subprocess_specs"].pop(k)
-
-                current_app.logger.info(f"------------> keys: {keys}")
-
-            current_app.logger.info(f"------------> loaded: {spiff_bpmn_process_dict['subprocess_specs']}")
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
