@@ -63,12 +63,7 @@ class ElementUnitsService:
             bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
                 cache_dir, cache_key, process_id, element_id
             )
-
-            bpmn_spec_dict = json.loads(bpmn_spec_json)  # type: ignore
-
-            current_app.logger.info(f"Found element unit @ {cache_key} :: '{process_id}' - {bpmn_spec_dict}")
-
-            return bpmn_spec_dict
+            return json.loads(bpmn_spec_json)  # type: ignore
         except Exception as e:
             current_app.logger.exception(e)
             return None
