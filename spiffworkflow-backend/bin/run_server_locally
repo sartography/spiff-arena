@@ -46,7 +46,5 @@ else
   fi
 
   # this line blocks
-  export SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED="true"
-  export SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR="src/instance/el-cache"
   SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER="${SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER}" FLASK_APP=src/spiffworkflow_backend poetry run flask run -p "$port" --host=0.0.0.0
 fi

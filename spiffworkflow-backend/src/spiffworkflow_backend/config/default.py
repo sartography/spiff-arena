@@ -183,11 +183,11 @@ SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD = environ.get("SPIFFWORKFLOW_BACKEND_DAT
 # )
 
 SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED = (
-    environ.get("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default="false") == "true"
+    environ.get("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default="true") == "true"
 )
 
 SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR = environ.get(
-    "SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default=None
+    "SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default="src/instance/element-unit-cache"
 )
 
 # adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
