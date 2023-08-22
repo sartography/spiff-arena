@@ -200,12 +200,6 @@ def set_new_access_token_in_cookie(
     return response
 
 
-# we could parse the redirect url and see if it looks like a task show page url.
-# we could also pass a query param from the frontend with the task guid and only
-# look into guest access if the query param was present. then we look to see if the
-# task is specified as guest access in the task spec (via an extension or something).
-# if so, possibly we put something in a cookie to let us know, or maybe we don't need
-# to do that because the token already has the correct restricted permisions?
 def login(redirect_url: str = "/", process_instance_id: int | None = None, task_guid: str | None = None) -> Response:
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
         AuthorizationService.create_guest_token(
