@@ -240,7 +240,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self._add_children(child_spiff_task)
 
     def _add_parents(self, spiff_task: SpiffTask) -> None:
-        if spiff_task.parent and spiff_task.parent.task_spec.name != "Root":
+        if spiff_task.parent:
             self.spiff_tasks_to_process.add(spiff_task.parent.id)
             self._add_parents(spiff_task.parent)
 
