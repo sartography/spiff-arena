@@ -41,7 +41,7 @@ class MultiInstanceType(enum.Enum):
 #   ],
 #   "last_state_change": 1677775475.18116,
 #   "state": 32,
-#   "task_spec": "Root",
+#   "task_spec": "Start",
 #   "triggered": false,
 #   "workflow_name": "Process_category_number_one_call_activity_call_activity_test_bd2e724",
 #   "internal_data": {},

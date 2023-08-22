@@ -17,6 +17,8 @@ from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -452,6 +454,52 @@ class BaseTest:
         customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")
         assert po_curr is not None
         assert customer_curr is not None
+
+    def create_process_instance_with_synthetic_metadata(
+        self, process_model: ProcessModelInfo, process_instance_metadata_dict: dict
+    ) -> ProcessInstanceModel:
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        for key, value in process_instance_metadata_dict.items():
+            process_instance_metadata = ProcessInstanceMetadataModel(
+                process_instance_id=process_instance.id,
+                key=key,
+                value=value,
+            )
+            db.session.add(process_instance_metadata)
+            db.session.commit()
+        return process_instance
+
+    def assert_report_with_process_metadata_operator_includes_instance(
+        self,
+        client: FlaskClient,
+        user: UserModel,
+        process_instance: ProcessInstanceModel,
+        operator: str,
+        filter_field_value: str = "",
+    ) -> None:
+        report_metadata: ReportMetadata = {
+            "columns": [
+                {"Header": "ID", "accessor": "id", "filterable": False},
+                {"Header": "Key one", "accessor": "key1", "filterable": False},
+                {"Header": "Key two", "accessor": "key2", "filterable": False},
+            ],
+            "order_by": ["status"],
+            "filter_by": [{"field_name": "key1", "field_value": filter_field_value, "operator": operator}],
+        }
+        process_instance_report = ProcessInstanceReportModel.create_report(
+            identifier=f"{process_instance.id}_sure",
+            report_metadata=report_metadata,
+            user=user,
+        )
+        response = self.post_to_process_instance_list(
+            client, user, report_metadata=process_instance_report.get_report_metadata()
+        )
+        assert len(response.json["results"]) == 1
+        assert response.json["results"][0]["id"] == process_instance.id
+        db.session.delete(process_instance_report)
+        db.session.commit()
 
     @contextmanager
     def app_config_mock(self, app: Flask, config_identifier: str, new_config_value: Any) -> Generator:

@@ -235,9 +235,6 @@ class TaskService:
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
-        start_task = spiff_workflow.get_tasks_from_spec_name("Start")
-        if len(start_task) > 0:
-            new_properties_json["root"] = str(start_task[0].id)
         bpmn_process.properties_json = new_properties_json
 
         bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, spiff_workflow.data)
@@ -402,12 +399,6 @@ class TaskService:
 
                 bpmn_process.direct_parent_process_id = direct_bpmn_process_parent.id
 
-        # Point the root id to the Start task instead of the Root task
-        # since we are ignoring the Root task.
-        for task_id, task_properties in tasks.items():
-            if task_properties["task_spec"] == "Start":
-                bpmn_process_dict["root"] = task_id
-
         bpmn_process.properties_json = bpmn_process_dict
 
         bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_data_dict)
@@ -437,14 +428,7 @@ class TaskService:
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
     ) -> None:
-        for task_id, task_properties in tasks.items():
-            # The Root task is added to the spec by Spiff when the bpmn process is instantiated
-            # within Spiff. We do not actually need it and it's missing from our initial
-            # bpmn process defintion so let's avoid using it. This causes issues with the hashing
-            # since it is not there when we initially take the hash and save the definition.
-            if task_properties["task_spec"] == "Root":
-                continue
-
+        for task_id, _task_properties in tasks.items():
             # we are going to avoid saving likely and maybe tasks to the db.
             # that means we need to remove them from their parents' lists of children as well.
             spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))

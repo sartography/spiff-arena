@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import validator from '@rjsf/validator-ajv8';
 
 import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
 
 import { useDebouncedCallback } from 'use-debounce';
 import MDEditor from '@uiw/react-md-editor';
-import { Form } from '../rjsf/carbon_theme';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import {
@@ -17,9 +15,6 @@ import {
 import { BasicTask, EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
-import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
-import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
-import { DATE_RANGE_DELIMITER } from '../config';
 import UserService from '../services/UserService';
 
 export default function TaskShow() {
@@ -42,11 +37,6 @@ export default function TaskShow() {
     useState<boolean>(true);
 
   const { addError, removeError } = useAPIError();
-
-  const rjsfWidgets = {
-    typeahead: TypeaheadWidget,
-    'date-range': DateRangePickerWidget,
-  };
 
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
@@ -217,157 +207,6 @@ export default function TaskShow() {
     });
   };
 
-  const formatDateString = (dateString?: string) => {
-    let dateObject = new Date();
-    if (dateString) {
-      dateObject = new Date(dateString);
-    }
-    return dateObject.toISOString().split('T')[0];
-  };
-
-  const checkFieldComparisons = (
-    formData: any,
-    propertyKey: string,
-    minimumDateCheck: string,
-    formattedDateString: string,
-    errors: any,
-    jsonSchema: any
-  ) => {
-    // field format:
-    //    field:[field_name_to_use]
-    //
-    // if field is a range:
-    //    field:[field_name_to_use]:[start or end]
-    //
-    // defaults to "start" in all cases
-    const [_, fieldIdentifierToCompareWith, startOrEnd] =
-      minimumDateCheck.split(':');
-    if (!(fieldIdentifierToCompareWith in formData)) {
-      errors[propertyKey].addError(
-        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
-      );
-      return;
-    }
-
-    const rawDateToCompareWith = formData[fieldIdentifierToCompareWith];
-    if (!rawDateToCompareWith) {
-      errors[propertyKey].addError(
-        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
-      );
-      return;
-    }
-
-    const [startDate, endDate] =
-      rawDateToCompareWith.split(DATE_RANGE_DELIMITER);
-    let dateToCompareWith = startDate;
-    if (startOrEnd && startOrEnd === 'end') {
-      dateToCompareWith = endDate;
-    }
-
-    if (!dateToCompareWith) {
-      const errorMessage = `was supposed to be compared against '${[
-        fieldIdentifierToCompareWith,
-        startOrEnd,
-      ].join(':')}' but that field did not have a value`;
-      errors[propertyKey].addError(errorMessage);
-      return;
-    }
-
-    const dateStringToCompareWith = formatDateString(dateToCompareWith);
-    if (dateStringToCompareWith > formattedDateString) {
-      let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
-      if (
-        fieldIdentifierToCompareWith in jsonSchema.properties &&
-        jsonSchema.properties[fieldIdentifierToCompareWith].title
-      ) {
-        fieldToCompareWithTitle =
-          jsonSchema.properties[fieldIdentifierToCompareWith].title;
-      }
-      errors[propertyKey].addError(
-        `must be equal to or greater than '${fieldToCompareWithTitle}'`
-      );
-    }
-  };
-
-  const checkMinimumDate = (
-    formData: any,
-    propertyKey: string,
-    propertyMetadata: any,
-    errors: any,
-    jsonSchema: any
-  ) => {
-    // can be either "today" or another field
-    let dateString = formData[propertyKey];
-    if (dateString) {
-      if (typeof dateString === 'string') {
-        // in the case of date ranges, just take the start date and check that
-        [dateString] = dateString.split(DATE_RANGE_DELIMITER);
-      }
-      const formattedDateString = formatDateString(dateString);
-      const minimumDateChecks = propertyMetadata.minimumDate.split(',');
-      minimumDateChecks.forEach((mdc: string) => {
-        if (mdc === 'today') {
-          const dateTodayString = formatDateString();
-          if (dateTodayString > formattedDateString) {
-            errors[propertyKey].addError('must be today or after');
-          }
-        } else if (mdc.startsWith('field:')) {
-          checkFieldComparisons(
-            formData,
-            propertyKey,
-            mdc,
-            formattedDateString,
-            errors,
-            jsonSchema
-          );
-        }
-      });
-    }
-  };
-
-  const getFieldsWithDateValidations = (
-    jsonSchema: any,
-    formData: any,
-    errors: any
-    // eslint-disable-next-line sonarjs/cognitive-complexity
-  ) => {
-    // if the jsonSchema has an items attribute then assume the element itself
-    // doesn't have a custom validation but it's children could so use that
-    const jsonSchemaToUse =
-      'items' in jsonSchema ? jsonSchema.items : jsonSchema;
-
-    if ('properties' in jsonSchemaToUse) {
-      Object.keys(jsonSchemaToUse.properties).forEach((propertyKey: string) => {
-        const propertyMetadata = jsonSchemaToUse.properties[propertyKey];
-        if ('minimumDate' in propertyMetadata) {
-          checkMinimumDate(
-            formData,
-            propertyKey,
-            propertyMetadata,
-            errors,
-            jsonSchemaToUse
-          );
-        }
-
-        // recurse through all nested properties as well
-        let formDataToSend = formData[propertyKey];
-        if (formDataToSend) {
-          if (formDataToSend.constructor.name !== 'Array') {
-            formDataToSend = [formDataToSend];
-          }
-          formDataToSend.forEach((item: any, index: number) => {
-            let errorsToSend = errors[propertyKey];
-            if (index in errorsToSend) {
-              errorsToSend = errorsToSend[index];
-            }
-            getFieldsWithDateValidations(propertyMetadata, item, errorsToSend);
-          });
-        }
-      });
-    }
-    return errors;
-  };
-
   const handleCloseButton = () => {
     setAutosaveOnFormChanges(false);
     setFormButtonsDisabled(true);
@@ -458,17 +297,13 @@ export default function TaskShow() {
       );
     }
 
-    const customValidate = (formData: any, errors: any) => {
-      return getFieldsWithDateValidations(jsonSchema, formData, errors);
-    };
-
     // we are using two forms here so we can have one that validates data and one that does not.
     // this allows us to autosave form data without extra attributes and without validations
     // but still requires validations when the user submits the form that they can edit.
     return (
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
-          <Form
+          <CustomForm
             id="form-to-submit"
             disabled={formButtonsDisabled}
             formData={taskData}
@@ -479,23 +314,16 @@ export default function TaskShow() {
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
-            widgets={rjsfWidgets}
-            validator={validator}
-            customValidate={customValidate}
-            omitExtraData
           >
             {reactFragmentToHideSubmitButton}
-          </Form>
-          <Form
+          </CustomForm>
+          <CustomForm
             id="hidden-form-for-autosave"
             formData={taskData}
             onSubmit={handleAutosaveFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
-            widgets={rjsfWidgets}
-            validator={validator}
             noValidate
-            omitExtraData
           />
         </Column>
       </Grid>

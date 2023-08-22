@@ -85,5 +85,8 @@ from spiffworkflow_backend.models.typeahead import (
 from spiffworkflow_backend.models.task_draft_data import (
     TaskDraftDataModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.configuration import (
+    ConfigurationModel,
+)  # noqa: F401
 
 add_listeners()

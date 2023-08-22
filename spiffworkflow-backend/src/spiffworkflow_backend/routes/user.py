@@ -60,7 +60,9 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
     if not token and "access_token" in request.cookies:
-        if request.path.startswith(f"{V1_API_PATH_PREFIX}/process-data-file-download/"):
+        if request.path.startswith(f"{V1_API_PATH_PREFIX}/process-data-file-download/") or request.path.startswith(
+            f"{V1_API_PATH_PREFIX}/extensions-get-data/"
+        ):
             token = request.cookies["access_token"]
 
     # This should never be set here but just in case
