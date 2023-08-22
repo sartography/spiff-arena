@@ -8,7 +8,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
@@ -82,14 +81,6 @@ class UserService:
         if not UserService.has_user():
             raise ApiError("logged_out", "You are no longer logged in.", status_code=401)
         return g.user
-
-    @classmethod
-    def is_logged_in_as_guest_user(cls) -> bool:
-        user = cls.current_user()
-        if user.username == SPIFF_GUEST_USER:
-            return True
-
-        return False
 
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:

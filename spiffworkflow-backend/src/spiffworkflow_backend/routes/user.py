@@ -26,7 +26,6 @@ from spiffworkflow_backend.services.authentication_service import Authentication
 from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 
 """
@@ -217,7 +216,7 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
         )
         return redirect(redirect_url)
 
-    if process_instance_id and task_guid and TaskService.task_allows_guest(task_guid, process_instance_id):
+    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
         AuthorizationService.create_guest_token(
             username=SPIFF_GUEST_USER,
             group_identifier=SPIFF_GUEST_GROUP,

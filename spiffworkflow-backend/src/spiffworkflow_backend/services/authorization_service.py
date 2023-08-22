@@ -30,7 +30,6 @@ from spiffworkflow_backend.services.authentication_service import TokenInvalidEr
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
-from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy import or_
 from sqlalchemy import text
@@ -362,7 +361,7 @@ class AuthorizationService:
         if api_view_function.__name__ in ["task_show", "task_submit", "task_save_draft"]:
             process_instance_id = int(request.path.split("/")[3])
             task_guid = request.path.split("/")[4]
-            if TaskService.task_allows_guest(task_guid, process_instance_id):
+            if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
                 return True
         return False
 

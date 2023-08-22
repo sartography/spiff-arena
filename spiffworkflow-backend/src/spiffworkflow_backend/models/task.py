@@ -56,8 +56,6 @@ class TaskModel(SpiffworkflowBaseDBModel):
     human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
-    allow_guest: bool = db.Column(db.Boolean())
-
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
     task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False, index=True)  # type: ignore
     task_definition = relationship("TaskDefinitionModel")
@@ -99,6 +97,24 @@ class TaskModel(SpiffworkflowBaseDBModel):
             return None
         task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
         return task_model
+
+    def allows_guest(self, process_instance_id: int) -> bool:
+        properties_json = self.task_definition.properties_json
+        if (
+            "extensions" in properties_json
+            and "allowGuest" in properties_json["extensions"]
+            and properties_json["extensions"]["allowGuest"] == "true"
+            and self.process_instance_id == int(process_instance_id)
+        ):
+            return True
+        return False
+
+    @classmethod
+    def task_guid_allows_guest(cls, task_guid: str, process_instance_id: int) -> bool:
+        task_model = cls.query.filter_by(guid=task_guid).first()
+        if task_model is not None and task_model.allows_guest(process_instance_id):
+            return True
+        return False
 
 
 class Task:

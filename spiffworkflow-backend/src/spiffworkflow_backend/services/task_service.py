@@ -266,15 +266,6 @@ class TaskService:
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
-
-        task_spec = spiff_task.task_spec
-        if (
-            hasattr(task_spec, "extensions")
-            and "allowGuest" in task_spec.extensions
-            and task_spec.extensions["allowGuest"] == "true"
-        ):
-            task_model.allow_guest = True
-
         json_data_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"
         )
@@ -704,14 +695,6 @@ class TaskService:
     @classmethod
     def get_name_for_display(cls, entity: TaskDefinitionModel | BpmnProcessDefinitionModel) -> str:
         return entity.bpmn_name or entity.bpmn_identifier
-
-    @classmethod
-    def task_allows_guest(cls, task_guid: str, process_instance_id: int) -> bool:
-        task_model = TaskModel.query.filter_by(guid=task_guid, allow_guest=True).first()
-        if task_model is not None:
-            if task_model.process_instance_id == int(process_instance_id):
-                return True
-        return False
 
     @classmethod
     def _task_subprocess(cls, spiff_task: SpiffTask) -> tuple[str | None, BpmnWorkflow | None]:
