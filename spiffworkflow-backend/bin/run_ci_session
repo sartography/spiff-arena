@@ -11,6 +11,7 @@ script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 supported_session_types=$(grep -E '^(el)?if.*\<session_type\>.*==' "$0" | sed -E 's/.*== "([^"]+)".*/\1/' | tr '\n' ' ')
 
 session_type="${1:-}"
+shift
 if [[ -z "${session_type}" ]] || ! grep -qE "\<${session_type}\>" <<<"$supported_session_types"; then
   if [[ -n "$session_type" ]]; then
     >&2 echo "ERROR: Given session typeis not supported - ${session_type}"
@@ -57,11 +58,11 @@ poetry install
 
 if [[ "${session_type}" == "tests" ]]; then
   setup_db_for_ci
-  poetry run coverage run --parallel -m pytest
+  poetry run coverage run --parallel -m pytest "$@"
 
 elif [[ "${session_type}" == "typeguard" ]]; then
   setup_db_for_ci
-  RUN_TYPEGUARD=true poetry run pytest
+  RUN_TYPEGUARD=true poetry run pytest "$@"
 
 elif [[ "${session_type}" == "mypy" ]]; then
   poetry run mypy src tests

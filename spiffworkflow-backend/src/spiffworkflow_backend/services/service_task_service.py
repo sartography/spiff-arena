@@ -1,5 +1,4 @@
 import json
-import re
 from typing import Any
 
 import requests
@@ -40,14 +39,7 @@ class ServiceTaskDelegate:
                 with open(full_path) as f:
                     return f.read()
 
-            if "SPIFF_SECRET:" in value:
-                spiff_secret_match = re.match(r".*SPIFF_SECRET:(?P<variable_name>\w+).*", value)
-                if spiff_secret_match is not None:
-                    spiff_variable_name = spiff_secret_match.group("variable_name")
-                    secret = SecretService.get_secret(spiff_variable_name)
-                    with sentry_sdk.start_span(op="task", description="decrypt_secret"):
-                        decrypted_value = SecretService._decrypt(secret.value)
-                        return re.sub(r"\bSPIFF_SECRET:\w+", decrypted_value, value)
+            return SecretService.resolve_possibly_secret_value(value)
 
         return value
 
