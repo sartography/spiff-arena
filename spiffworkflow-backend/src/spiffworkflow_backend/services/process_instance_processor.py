@@ -675,7 +675,7 @@ class ProcessInstanceProcessor:
 
                 subprocess_specs_for_ready_tasks = {
                     r.bpmn_identifier
-                    for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)
+                    for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
                     .join(TaskDefinitionModel)
                     .join(TaskModel)
                     .filter(TaskModel.process_instance_id == process_instance_model.id)
