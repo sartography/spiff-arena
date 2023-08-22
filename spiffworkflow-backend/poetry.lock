@@ -190,6 +190,18 @@ files = [
 ]
 
 [[package]]
+name = "cachelib"
+version = "0.10.2"
+description = "A collection of cache libraries in the same API interface."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cachelib-0.10.2-py3-none-any.whl", hash = "sha256:42d49f2fad9310dd946d7be73d46776bcd4d5fde4f49ad210cfdd447fbdfc346"},
+    {file = "cachelib-0.10.2.tar.gz", hash = "sha256:593faeee62a7c037d50fc835617a01b887503f972fb52b188ae7e50e9cb69740"},
+]
+
+[[package]]
 name = "certifi"
 version = "2023.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -828,6 +840,24 @@ Flask = ">=0.9"
 Flask-SQLAlchemy = ">=1.0"
 
 [[package]]
+name = "flask-oauthlib"
+version = "0.9.6"
+description = "OAuthlib for Flask"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "Flask-OAuthlib-0.9.6.tar.gz", hash = "sha256:5bb79c8a8e670c2eb4cb553dfc3283b6c8d1202f674934676dc173cee94fe39c"},
+    {file = "Flask_OAuthlib-0.9.6-py3-none-any.whl", hash = "sha256:a5c3b62959aa1922470a62b6ebf4273b75f1c29561a7eb4a69cde85d45a1d669"},
+]
+
+[package.dependencies]
+cachelib = "*"
+Flask = "*"
+oauthlib = ">=1.1.2,<2.0.3 || >2.0.3,<2.0.4 || >2.0.4,<2.0.5 || >2.0.5,<3.0.0"
+requests-oauthlib = ">=0.6.2,<1.2.0"
+
+[[package]]
 name = "flask-restful"
 version = "0.3.9"
 description = "Simple framework for creating REST APIs"
@@ -847,6 +877,22 @@ six = ">=1.3.0"
 
 [package.extras]
 docs = ["sphinx"]
+
+[[package]]
+name = "flask-session"
+version = "0.5.0"
+description = "Server-side session support for Flask"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "Flask-Session-0.5.0.tar.gz", hash = "sha256:190875e6aebf2953c6803d42379ef3b934bc209ef8ef006f97aecb08f5aaeb86"},
+    {file = "flask_session-0.5.0-py3-none-any.whl", hash = "sha256:1619bcbc16f04f64e90f8e0b17145ba5c9700090bb1294e889956c1282d58631"},
+]
+
+[package.dependencies]
+cachelib = "*"
+flask = ">=2.2"
 
 [[package]]
 name = "flask-simple-crypt"
@@ -1428,6 +1474,24 @@ files = [
 
 [package.dependencies]
 setuptools = "*"
+
+[[package]]
+name = "oauthlib"
+version = "2.1.0"
+description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "oauthlib-2.1.0-py2.py3-none-any.whl", hash = "sha256:d883b36b21a6ad813953803edfa563b1b579d79ca758fe950d1bc9e8b326025b"},
+    {file = "oauthlib-2.1.0.tar.gz", hash = "sha256:ac35665a61c1685c56336bda97d5eefa246f1202618a1d6f34fccb1bdd404162"},
+]
+
+[package.extras]
+rsa = ["cryptography"]
+signals = ["blinker"]
+signedtoken = ["cryptography", "pyjwt (>=1.0.0)"]
+test = ["blinker", "cryptography", "mock", "nose", "pyjwt (>=1.0.0)", "unittest2"]
 
 [[package]]
 name = "packaging"
@@ -2033,6 +2097,25 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "requests-oauthlib"
+version = "1.1.0"
+description = "OAuthlib authentication support for Requests."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = [
+    {file = "requests-oauthlib-1.1.0.tar.gz", hash = "sha256:eabd8eb700ebed81ba080c6ead96d39d6bdc39996094bd23000204f6965786b0"},
+    {file = "requests_oauthlib-1.1.0-py2.py3-none-any.whl", hash = "sha256:be76f2bb72ca5525998e81d47913e09b1ca8b7957ae89b46f787a79e68ad5e61"},
+]
+
+[package.dependencies]
+oauthlib = ">=2.1.0,<3.0.0"
+requests = ">=2.0.0"
+
+[package.extras]
+rsa = ["oauthlib[signedtoken] (>=2.1.0,<3.0.0)"]
+
+[[package]]
 name = "restrictedpython"
 version = "6.1"
 description = "RestrictedPython is a defined subset of the Python language which allows to provide a program input into a trusted environment."
@@ -2350,12 +2433,18 @@ category = "main"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:023bcc7f2454c981ec96184c0cd89ec566bbfe7093a23e468dd4c938c24ebff6"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-macosx_10_7_x86_64.whl", hash = "sha256:35d2ede30e4d2fc715882c44b19e70e7289e1bb6fdff213198ba1e5d073987d1"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:d2a9dde576144ba040ca7fb11ee5487e7c7507b8ee7f1c6c12d24066b67c24c7"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:15e6d02e5fd59c99484afec41f7f96272e38b7f933e17be9a29b2e3bd43b8396"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:49e2f6472d5eb5c90978295042e2b3d000e3b88e833fd655d3fe30a1ba7d225b"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:eed527049bded8ea25ead384547e1ea35e99fe97353c78fd4ad014c8cd2b12b8"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:63a0f60ce401641dba142a95952330bb18f6a9f77f1ff99f8ef2a392e08774b4"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:43b13dcd21f722758c5cc6e16c317680dd7011e0b9aca83fd478c28b13eb25e0"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:2625b15d2c705fe07f6e472f75142e0f036d3bd567e6e5e946f75fd96dc8396a"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-win32.whl", hash = "sha256:fe07bbe1e6e036ffb1fd78d719f5e83c160e657cf5e6eeee5938946e9b940116"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-win_amd64.whl", hash = "sha256:beacf2857ba196b39a66f481e9989513e4df607e6d2157d4c1c1e463890ca806"},
+    {file = "spiff_element_units-0.3.0.tar.gz", hash = "sha256:5c740c70adf7e0fc39c9a3a199c4f1d5d5941d61b28c90637b64df4dc3df57dd"},
 ]
-
-[package.source]
-type = "file"
-url = "local_wheels/spiff_element_units-0.3.0-cp39-abi3-manylinux_2_28_x86_64.whl"
 
 [[package]]
 name = "SpiffWorkflow"
@@ -2375,7 +2464,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "0adfc8cbaec80d36f98a4136434e960f666fcfe2"
+resolved_reference = "caca3121c79bae042ed6b66cdf226613b37916cd"
 
 [[package]]
 name = "sqlalchemy"
@@ -2829,4 +2918,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "e168ca0779840a368f9791411aa1560317bd96f9e66083b3030e3a04ca85e72d"
+content-hash = "6cbc9666f9045835a75dc38cdd9e02c0ea53c061b57162e7744572661527aa61"

@@ -971,7 +971,6 @@ class ProcessInstanceProcessor:
         if self.process_instance_model.bpmn_process_definition_id is not None:
             return None
 
-        # we may have to already process bpmn_defintions if we ever care about the Root task again
         bpmn_dict = self.serialize()
         bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
         bpmn_spec_dict = {}
