@@ -84,7 +84,7 @@ class UserService:
         return g.user
 
     @classmethod
-    def is_logged_in_as_gueste_user(cls) -> bool:
+    def is_logged_in_as_guest_user(cls) -> bool:
         user = cls.current_user()
         if user.username == SPIFF_GUEST_USER:
             return True
