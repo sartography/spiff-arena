@@ -287,11 +287,6 @@ class AuthorizationService:
 
         return None
 
-    # TODO: we can add the before_request to the blueprint
-    # directly when we switch over from connexion routes
-    # to blueprint routes
-    # @process_api_blueprint.before_request
-
     @classmethod
     def check_for_permission(cls) -> None:
         if cls.should_disable_auth_for_request():
@@ -416,7 +411,6 @@ class AuthorizationService:
             .filter(UserModel.username == user_attributes["username"])
             .first()
         )
-
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
@@ -443,11 +437,12 @@ class AuthorizationService:
                 for desired_group_identifier in desired_group_identifiers:
                     GroupService.add_user_to_group(user_model, desired_group_identifier)
                 current_group_identifiers = [g.identifier for g in user_model.groups]
-                groups_to_remove_from_user = [item for item in current_group_identifiers if item not in desired_group_identifiers]
-                print(f"groups_to_remove_from_user: {groups_to_remove_from_user}")
-                print(f"desired_group_identifiers: {desired_group_identifiers}")
+                groups_to_remove_from_user = [
+                    item for item in current_group_identifiers if item not in desired_group_identifiers
+                ]
                 for gtrfu in groups_to_remove_from_user:
-                    GroupService.remove_user_from_group(user_model, gtrfu)
+                    if gtrfu != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
+                        GroupService.remove_user_from_group(user_model, gtrfu)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because

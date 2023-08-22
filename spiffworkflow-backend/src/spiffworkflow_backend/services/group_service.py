@@ -1,8 +1,10 @@
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel, UserGroupAssignmentNotFoundError
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentNotFoundError
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import and_
 
 
 class GroupService:
@@ -28,18 +30,19 @@ class GroupService:
     @classmethod
     def add_user_to_group(cls, user: UserModel, group_identifier: str) -> None:
         group = cls.find_or_create_group(group_identifier)
-        import pdb; pdb.set_trace()
         UserService.add_user_to_group(user, group)
 
     @classmethod
     def remove_user_from_group(cls, user: UserModel, group_identifier: str) -> None:
-        user_group_assignment = UserGroupAssignmentModel.query.filter_by(user_id=user.id).join(GroupModel, GroupModel.identifier == group_identifier).first()
-        if user_group_assignment is None:
-            raise (
-                UserGroupAssignmentNotFoundError(
-                    f"User ({user.username}) is not in group ({group_identifier})"
-                )
+        user_group_assignment = (
+            UserGroupAssignmentModel.query.filter_by(user_id=user.id)
+            .join(
+                GroupModel,
+                and_(GroupModel.id == UserGroupAssignmentModel.group_id, GroupModel.identifier == group_identifier),
             )
-
+            .first()
+        )
+        if user_group_assignment is None:
+            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_identifier})"))
         db.session.delete(user_group_assignment)
         db.session.commit()
