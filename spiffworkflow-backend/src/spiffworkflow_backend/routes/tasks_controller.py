@@ -880,7 +880,7 @@ def _get_spiff_task_from_process_instance(
         processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
     spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
-        
+
     if spiff_task is None:
         raise (
             ApiError(
