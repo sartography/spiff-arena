@@ -168,7 +168,7 @@ export default function ProcessInstanceListTable({
 
   const filterOperatorMappings: FilterOperatorMapping = {
     Is: { id: 'equals', requires_value: true },
-    'Is Not': { id: 'not equals', requires_value: true },
+    'Is Not': { id: 'not_equals', requires_value: true },
     Contains: { id: 'contains', requires_value: true },
     'Is Empty': { id: 'is_empty', requires_value: false },
     'Is Not Empty': { id: 'is_not_empty', requires_value: false },
