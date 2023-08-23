@@ -635,7 +635,7 @@ class ProcessInstanceReportService:
                 instances_with_tasks_waiting_for_me=instances_with_tasks_waiting_for_me,
             )
 
-        process_instance_query = cls.add_last_milestone(process_instance_query)
+        # process_instance_query = cls.add_last_milestone(process_instance_query)
 
         instance_metadata_aliases = {}
         if report_metadata["columns"] is None or len(report_metadata["columns"]) < 1:
@@ -700,6 +700,7 @@ class ProcessInstanceReportService:
         process_instances = (
             process_instance_query.group_by(ProcessInstanceModel.id)
             .add_columns(ProcessInstanceModel.id)
+            .add_columns(ProcessInstanceModel.last_milestone_bpmn_name)
             .order_by(*order_by_query_array)
             .paginate(page=page, per_page=per_page, error_out=False)
         )

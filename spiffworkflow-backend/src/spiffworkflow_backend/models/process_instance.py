@@ -95,6 +95,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
+    last_milestone_bpmn_name: str = db.Column(db.String(255))
 
     bpmn_xml_file_contents: str | None = None
     process_model_with_diagram_identifier: str | None = None
