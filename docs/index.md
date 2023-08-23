@@ -26,6 +26,7 @@ Building_Diagrams/dmn.md
 :maxdepth: 1
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
+Debugging_Diagrams/process_error_handling.md
 ```
 
 ```{toctree}
