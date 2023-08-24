@@ -291,6 +291,10 @@ dl dd {
   margin-bottom: .5rem;
 }
 
+.with-half-rem-top-margin {
+  margin-top: .5rem;
+}
+
 .diagram-viewer-canvas {
   border:1px solid #000000;
   height:70vh;

@@ -4,6 +4,7 @@ import { Form } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
+import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 
 type OwnProps = {
   id: string;
@@ -30,8 +31,9 @@ export default function CustomForm({
   noValidate = false,
 }: OwnProps) {
   const rjsfWidgets = {
-    typeahead: TypeaheadWidget,
     'date-range': DateRangePickerWidget,
+    markdown: MarkDownFieldWidget,
+    typeahead: TypeaheadWidget,
   };
 
   const formatDateString = (dateString?: string) => {
