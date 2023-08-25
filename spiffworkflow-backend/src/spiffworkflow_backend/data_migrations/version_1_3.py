@@ -1,5 +1,6 @@
 import copy
 import json
+import time
 import uuid
 from hashlib import sha256
 
@@ -218,7 +219,10 @@ class VersionOneThree:
         task_models = TaskModel.query.filter(TaskModel.properties_json.like('%last_state_change": null%')).all()  # type: ignore
         for task_model in task_models:
             parent_task_model = task_model.parent_task_model()
-            task_model.properties_json["last_state_change"] = parent_task_model.properties_json["last_state_change"]
+            last_state_change = time.time()
+            if parent_task_model is not None:
+                last_state_change = parent_task_model.properties_json["last_state_change"]
+            task_model.properties_json["last_state_change"] = last_state_change
             task_model.properties_json["task_spec"] = task_model.task_definition.bpmn_identifier
             flag_modified(task_model, "properties_json")  # type: ignore
         db.session.bulk_save_objects(task_models)
