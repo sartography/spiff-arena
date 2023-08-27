@@ -1,6 +1,6 @@
 # Sub-Processes and Call Activities
 
-Both sub-processes and call activities are useful for simplifying and organizing complex workflows by organizing workflows within a larger process. 
+Sub-processes and call activities are both useful for simplifying and organizing complex workflows within larger processes. They have distinct purposes and are used in different scenarios.
 
 **Reasons to use Sub-Processes or Call Activities:**
 
@@ -16,21 +16,17 @@ A Call Process is similar to a Sub-Process in that it encapsulates part of a wor
 
 **When to use a Call Process:**
 
-- **Reusability** a certain set of activities is being reused in multiple main processes, it's a good idea to define it as a call process and reuse it whenever needed by calling the process.
-  
-- **Reduce Complexity:** If your main process is becoming too complex, breaking it down into smaller, more manageable call processes can make it easier to understand and maintain.
- 
-- **Version Control**: If a certain process may undergo changes over time but is used in multiple places, defining it as a call process allows you to make changes in one place and have those changes propagate to all instances where the process is used.
+- **Reusability:** When a set of activities is reused in multiple main processes, defining it as a call process allows for easy reuse by calling the process.
 
-- **Delegation**: When different people or teams need to be responsible for the execution of tasks within a process, a call activity can be useful and can be assigned to the most appropriate person or team.
+- **Reducing Complexity:** Breaking down a complex main process into smaller, manageable call processes can make it easier to understand and maintain.
 
-- **Access Control**: If a specific segment of a process isn't meant to be available to every user, converting it into a call process can aid in establishing access control over that particular process. Additional information about this can be found in the [Admin and Permission](../DevOps_installation_integration/admin_and_permissions.md) section.
+- **Version Control:** If a process may undergo changes over time but is used in multiple places, defining it as a call process allows changes to be made in one place and propagated to all instances where the process is used.
 
-## Sub-processes
+- **Delegation:** When different individuals or teams are responsible for executing tasks within a process, a call activity can be assigned to the most appropriate person or team.
 
-![active_subtask](images/active_subprocess.png) 
+- **Access Control:** If a specific segment of a process should not be available to every user, converting it into a call process helps establish access control. More information about this can be found in the [Admin and Permission](../DevOps_installation_integration/admin_and_permissions.md) section.
 
-Sub-processes are generally employed within a single process, whereas a call activity has the advantage of being reusable across multiple processes. If the conditions that warrant the use of a call activity, such as reusability, aren't necessary, a sub-process is usually the preferred option. 
+## Sub-Processes
 
 **When to use a Sub-Process:**
 

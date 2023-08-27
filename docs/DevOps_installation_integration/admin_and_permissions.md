@@ -82,8 +82,8 @@ The new Process Groups tile will be available under the Process Groups view.
 - Identifier: Enter a unique identifier for the process model.
 - Description: Provide a brief description of the process model, outlining its purpose or functionality.
 - Notification Type: Specify the type of notification related to the process model.
-- Notification Address: Enter the address or destination where the notification should be sent.
-- Metadata Extraction Path: Specify the key and path or location where metadata extraction should occur within the process model.
+- Notification Addresses: Enter the addresses or destinations where notifications should be sent in the event that a process instance encounters an error. You do not need to worry about setting these values unless you are interested in custom {ref}`process_error_handling`.
+- Metadata Extraction Path: You can provide one or more metadata extractions to uplift data from your process instances to provide quick access in searches and perspectives. Specify the key and path/location where metadata extraction should occur within the process model. For example, if you have a script task that runs the statement `great_color = "blue"`, then you would set extraction path to `great_color`. You would probably also set extraction key to `great_color`. But if you wanted to, you could just call it `color`, assuming you wanted that to be the name used in reports, etc.
 
 Make sure to accurately fill in all the required fields in the Process Model form to ensure proper configuration and functionality.
 

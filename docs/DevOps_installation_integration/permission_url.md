@@ -4,74 +4,52 @@ The permission URL, or target URI, refers to the specific endpoint or resource t
 
 - **PG:** [process_group_identifier]: Applies to the specified process group, including all sub process groups and process models.
 - **PM:** [process_model_identifier]: Applies to the specified process model.
-- **BASIC:** Provides basic access to complete tasks and use the site.
-- **ELEVATED:** Enables operations that require elevated permissions.
-- **ALL:** Grants access to all API endpoints, providing admin-like permissions.
+- **BASIC:** Allows basic access to complete tasks and use the site.
+- **SUPPORT:** BASIC permissions and add significant administrative permissions.
+- **ELEVATED:** Includes SUPPORT permissions and adds the ability to view and modify secrets. Does not include the ability to view or modify process groups and process models.
+- **ALL:** Grants access to all API endpoints, with no limitations.
 
 ```{admonition} Note
-An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, "/process-models/", allows access to all resources related to process models. 
+An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, `/process-models/*`, allows access to all resources related to process models. 
 ```
 
+This functionality is implemented in [authorization service.py](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py).
+
+(pg)=
 ## PG
 
-Process Groups permissions controls access rights granted to users or entities within that particular process model. By assigning permissions to process groups, you can determine what actions or operations users can perform within those groups. 
+Process Groups permissions controls access rights granted to users or entities within the given process group.
 
-[View GIT Repository - BASIC](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py#L557)
-
-```python
-def set_process_model_permissions(cls, target: str, permission_set: str) -> list[PermissionToAssign]:
-```
-
+(pm)=
 ## PM
 
-These permissions relates to process models. It defines the permissions and access rights assigned to users or entities specifically within a given process model.
+These permissions relate to process models, and assigns permissions and access rights to users or entities specifically within a given process model.
 
-[View GIT Repository - BASIC](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py#L574)
+## BASIC
 
-```python
-def set_process_group_permissions(cls, target: str, permission_set: str) -> list[PermissionToAssign]:
-```
+These permissions cover basic actions such as signing in to the site and completing tasks that are assigned to you.
 
-## BASIC 
+## SUPPORT
 
-These permissions cover basic actions such as creating users and process instances, checking user existence, and reading various entities like process groups, models, and tasks.
+These permissions are significant, allowing support personnel to debug process instances and take corrective action when errors occur.
+In typical scenarios, a user with SUPPORT permissions would also be assigned access to view or modify process groups and models.
+See [PG](#pg) and [PM](#pm).
 
-[View GIT Repository - BASIC](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py#L494)
+## ELEVATED
 
-```python
-def set_basic_permissions(cls) -> list[PermissionToAssign]:
-```
-
-## ELEVATED 
-
-These permissions cover basic actions such as creating users and process instances, checking user existence, and reading various entities like process groups, models, and tasks.
-
-[View GIT Repository - BASIC](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py#L494)
-
-```python
-def explode_permissions(cls, permission_set: str, target: str) -> list[PermissionToAssign]:
-```
-
+A user with elevated permissions can do anything on the site except interact with process models.
+In typical scenarios, a user with ELEVATED permissions would also be assigned access to view or modify process groups and models.
 
 ## ALL
 
-The "ALL" permission grants unrestricted access to all API endpoints. It essentially provides administrator-like permissions, allowing the user to perform any action or operation available within the system.
-
-```python
-elif target == "ALL":
-            for permission in permissions:
-                permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/*"))
-        elif target.startswith("/"):
-            for permission in permissions:
-                permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri=target))
-```
-
-
+The "ALL" permission grants unrestricted access to all API endpoints.
+It provides administrator-level permissions, allowing the user to perform any action or operation available within the system.
 
 ### ALL URLs
 
-```python
-/active-users/unregister/{last_visited_identifier}:
+% use bash syntax here to avoid syntax highlighting. otherwise it gets highlighted as if it's python
+```bash
+  /active-users/unregister/{last_visited_identifier}:
   /active-users/updates/{last_visited_identifier}:
   /authentication_callback/{service}/{auth_method}:
   /authentications:
