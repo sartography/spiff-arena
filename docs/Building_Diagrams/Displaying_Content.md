@@ -1,4 +1,5 @@
 # Displaying Content
+
 The SpiffArena platform offers powerful features for displaying 
 content  within your BPMN processes.
 Follow the steps below to effectively display content in your 
@@ -12,6 +13,7 @@ Let's dive in and learn the key aspects of displaying content within
 your workflows.
 
 ## Markdown: Formatting Content
+
 Markdown is a powerful tool for formatting and styling your content in 
 SpiffArena. With Markdown, you can easily add headings, lists, tables, 
 hyperlinks, and more to enhance the readability and visual appeal of 
@@ -41,7 +43,7 @@ workflow of the content display process model and discover various
 ways to present content in different scenarios.
 
 
-### Display Content Process Overview:
+### Display Content Process Overview
 
 ![Image](images/Display_Content.png)
 

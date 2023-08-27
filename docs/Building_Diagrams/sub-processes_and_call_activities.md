@@ -2,17 +2,17 @@
 
 Sub-processes and call activities are both useful for simplifying and organizing complex workflows within larger processes. They have distinct purposes and are used in different scenarios.
 
-**Reasons to use a Sub-Process or Call Activity:**
+**Reasons to use Sub-Processes or Call Activities:**
 
-- Consolidating tasks with common features or forming a distinct functionality, such as a Notification Gateway that constructs and sends notifications like emails.
-
-- Grouping tasks where a boundary event can efficiently be applied to the entire group, avoiding the need to assign conditions or timers individually to each task.
+- Consolidate tasks that have either common features or collaboratively form a distinct functionality. For instance, a Notification Gateway, which includes script tasks and a service task, works together to construct and send a notification like an email.
+  
+- Group tasks where a Boundary Event can be efficiently applied to the entire group. For instance, instead of individually assigning a condition or timer to each task, all tasks can be included within a sub-process or call activity, where the condition or timer inherently applies to all contained tasks.
 
 ## Call Process
 
 ![active_call_process](images/active_call_process.png)
 
-A call process encapsulates part of a workflow and can be reused across multiple processes. It functions as a stand-alone process that can be called into action by other processes. Using a call process eliminates redundancy and ensures consistent execution of process steps.
+A Call Process is similar to a Sub-Process in that it encapsulates part of a workflow, but it is designed to be reused across multiple different processes. It's essentially a stand-alone process that can be "called" into action as required by other processes. Using a Call Process can help to eliminate redundancy and ensure consistent execution of the process steps.
 
 **When to use a Call Process:**
 
@@ -28,14 +28,10 @@ A call process encapsulates part of a workflow and can be reused across multiple
 
 ## Sub-Processes
 
-![active_subtask](images/active_subprocess.png)
-
-Sub-processes are typically used within a single process and are not reusable across multiple processes like call activities. When the conditions for reusability are not necessary, a sub-process is usually the preferred option.
-
 **When to use a Sub-Process:**
 
-- **Consolidating Similar Functionalities:** When a group of tasks are closely related and work well together, but do not need to be used or replicated elsewhere in other processes.
-
-- **Not Requiring a Call Activity:** When tasks do not meet the conditions required for a call activity, a sub-process can achieve the same goal.
-
-- **Applying Conditions or Events:** When specific conditions or events, such as a timer event, need to be applied to a set of tasks that do not collectively form a reusable workflow that can be called as a separate process.
+- **Consolidate similar functionalities:** When you have a group of tasks that are closely related and work well together, but don't need to be used or replicated elsewhere in other processes. 
+  
+- **Call Activity is not required:** When these tasks don't meet the conditions needed for a call activity a sub-process can achieve the same goal.
+  
+- **Conditions or events needs to be applied:** When specific conditions or events, such as a timer event, need to be applied to a set of tasks, but these tasks do not collectively form a reusable workflow that can be called as a separate process. 
