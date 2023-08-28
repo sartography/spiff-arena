@@ -2845,7 +2845,7 @@ class TestProcessApi(BaseTest):
         assert response.json["results"][0]["id"] == process_instance.id
         assert response.json["results"][0]["key1"] == "value1"
         assert response.json["results"][0]["key2"] == "value2"
-        assert response.json["results"][0]["last_milestone_bpmn_name"] is None
+        assert response.json["results"][0]["last_milestone_bpmn_name"] == "Completed"
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
