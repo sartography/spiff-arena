@@ -1,5 +1,6 @@
 import copy
 import json
+import time
 import uuid
 from hashlib import sha256
 
@@ -36,6 +37,9 @@ class VersionOneThree:
         ).all()
         for tdwe in task_definitions_with_events:
             self.update_event_definitions(tdwe)
+
+        # TODO: remove this once this gets out to prod
+        self.update_tasks_where_last_change_is_null()
 
         db.session.commit()
         print("end VersionOneThree.run")
@@ -210,3 +214,15 @@ class VersionOneThree:
             task_definition.properties_json = properties_json
             flag_modified(task_definition, "properties_json")  # type: ignore
             db.session.add(task_definition)
+
+    def update_tasks_where_last_change_is_null(self) -> None:
+        task_models = TaskModel.query.filter(TaskModel.properties_json.like('%last_state_change": null%')).all()  # type: ignore
+        for task_model in task_models:
+            parent_task_model = task_model.parent_task_model()
+            last_state_change = time.time()
+            if parent_task_model is not None:
+                last_state_change = parent_task_model.properties_json["last_state_change"]
+            task_model.properties_json["last_state_change"] = last_state_change
+            task_model.properties_json["task_spec"] = task_model.task_definition.bpmn_identifier
+            flag_modified(task_model, "properties_json")  # type: ignore
+        db.session.bulk_save_objects(task_models)

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+gitc Building_Diagrams/sub-processes_and_call_activities.md
+python bin/gpt-proofread.py Building_Diagrams/sub-processes_and_call_activities.md
+mv Building_Diagrams/sub-processes_and_call_activities.qmd Building_Diagrams/sub-processes_and_call_activities.md
