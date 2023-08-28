@@ -919,6 +919,24 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                                 )
 
                             select_options_from_task_data = task_model.data.get(task_data_var)
+                            if select_options_from_task_data == []:
+                                raise ApiError(
+                                    error_code="invalid_form_data",
+                                    message=(
+                                        "This form depends on variables, but at least one variable was empty. The"
+                                        f" variable '{task_data_var}' must be a list with at least one element."
+                                    ),
+                                    status_code=500,
+                                )
+                            if isinstance(select_options_from_task_data, str):
+                                raise ApiError(
+                                    error_code="invalid_form_data",
+                                    message=(
+                                        "This form depends on enum variables, but at least one variable was a string."
+                                        f" The variable '{task_data_var}' must be a list with at least one element."
+                                    ),
+                                    status_code=500,
+                                )
                             if isinstance(select_options_from_task_data, list):
                                 if all("value" in d and "label" in d for d in select_options_from_task_data):
 
