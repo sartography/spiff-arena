@@ -42,6 +42,7 @@ import {
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
   getKeyByValue,
+  getLastMilestoneFromProcessInstance,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
@@ -1615,26 +1616,10 @@ export default function ProcessInstanceListTable({
     processInstance: ProcessInstance,
     value: any
   ) => {
-    let valueToUse = value;
-    if (!valueToUse) {
-      if (processInstance.status === 'not_started') {
-        valueToUse = 'Created';
-      } else if (
-        ['complete', 'error', 'terminated'].includes(processInstance.status)
-      ) {
-        valueToUse = 'Completed';
-      } else {
-        valueToUse = 'Started';
-      }
-    }
-    let truncatedValue = valueToUse;
-    const milestoneLengthLimit = 20;
-    if (truncatedValue.length > milestoneLengthLimit) {
-      truncatedValue = `${truncatedValue.substring(
-        0,
-        milestoneLengthLimit - 3
-      )}...`;
-    }
+    const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
+      processInstance,
+      value
+    );
     return <span title={valueToUse}>{truncatedValue}</span>;
   };
 

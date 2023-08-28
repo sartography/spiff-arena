@@ -107,19 +107,20 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         """Return object data in serializeable format."""
         return {
             "id": self.id,
-            "process_model_identifier": self.process_model_identifier,
-            "process_model_display_name": self.process_model_display_name,
-            "status": self.status,
-            "start_in_seconds": self.start_in_seconds,
-            "end_in_seconds": self.end_in_seconds,
-            "created_at_in_seconds": self.created_at_in_seconds,
-            "updated_at_in_seconds": self.updated_at_in_seconds,
-            "process_initiator_id": self.process_initiator_id,
-            "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
+            "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
+            "created_at_in_seconds": self.created_at_in_seconds,
+            "end_in_seconds": self.end_in_seconds,
+            "last_milestone_bpmn_name": self.last_milestone_bpmn_name,
+            "process_initiator_id": self.process_initiator_id,
             "process_initiator_username": self.process_initiator.username,
+            "process_model_display_name": self.process_model_display_name,
+            "process_model_identifier": self.process_model_identifier,
+            "start_in_seconds": self.start_in_seconds,
+            "status": self.status,
             "task_updated_at_in_seconds": self.task_updated_at_in_seconds,
+            "updated_at_in_seconds": self.updated_at_in_seconds,
         }
 
     def serialized_with_metadata(self) -> dict[str, Any]:

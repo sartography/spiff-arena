@@ -7,21 +7,17 @@ import sqlalchemy
 from flask import current_app
 from flask_sqlalchemy.query import Query
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_instance_report import ReportMetadataColumn
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -431,58 +427,6 @@ class ProcessInstanceReportService:
         return process_instance_query
 
     @classmethod
-    def add_last_milestone(cls, process_instance_query: Query) -> Query:
-        # get a subquery for the max process_instance_event that is associcated with
-        # a top-level bpmn process start and end events or is an IntermediateThrowEvent
-        max_pie_subquery = (
-            db.session.query(func.max(ProcessInstanceEventModel.id).label("max_pie_id"))  # type: ignore
-            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
-            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-            .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
-            .filter(
-                or_(
-                    and_(
-                        TaskDefinitionModel.typename.in_(["StartEvent", "EndEvent", "IntermediateThrowEvent"]),  # type: ignore
-                        TaskDefinitionModel.bpmn_name != None,  # noqa: E711
-                    ),
-                    and_(
-                        or_(
-                            BpmnProcessModel.direct_parent_process_id == None,  # noqa: E711
-                        ),
-                        TaskDefinitionModel.typename.in_(["StartEvent", "EndEvent"]),  # type: ignore
-                    ),
-                ),
-            )
-            .group_by(ProcessInstanceEventModel.process_instance_id)
-            .subquery()
-        )
-
-        # get another subquery to get the task bpmn identifier so we can use it for an outerjoin with a process_instance.
-        # this is also here since we need the join to all tables to be innerjoins but the main process instance needs them to
-        # be outerjoins. otherwise if a process instance hasn't actually run yet, it won't return in the query.
-        last_milestone_subquery = (
-            db.session.query(  # type: ignore
-                ProcessInstanceEventModel.process_instance_id.label("process_instance_id"),  # type: ignore
-                func.max(TaskDefinitionModel.bpmn_name).label("last_milestone_bpmn_name"),
-            )
-            .join(max_pie_subquery, ProcessInstanceEventModel.id == max_pie_subquery.c.max_pie_id)
-            .join(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
-            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-            .group_by(ProcessInstanceEventModel.process_instance_id)
-            .subquery()
-        )
-
-        # use an outerjoin so records still return even if the instance hasn't been started and therefore
-        # does not have any events associated with it
-        process_instance_query = process_instance_query.outerjoin(
-            last_milestone_subquery, last_milestone_subquery.c.process_instance_id == ProcessInstanceModel.id
-        ).add_columns(  # type: ignore
-            func.max(last_milestone_subquery.c.last_milestone_bpmn_name).label("last_milestone_bpmn_name")
-        )
-
-        return process_instance_query
-
-    @classmethod
     def run_process_instance_report(
         cls,
         report_metadata: ReportMetadata,
@@ -635,8 +579,6 @@ class ProcessInstanceReportService:
                 instances_with_tasks_waiting_for_me=instances_with_tasks_waiting_for_me,
             )
 
-        # process_instance_query = cls.add_last_milestone(process_instance_query)
-
         instance_metadata_aliases = {}
         if report_metadata["columns"] is None or len(report_metadata["columns"]) < 1:
             report_metadata["columns"] = cls.builtin_column_options()
@@ -700,7 +642,6 @@ class ProcessInstanceReportService:
         process_instances = (
             process_instance_query.group_by(ProcessInstanceModel.id)
             .add_columns(ProcessInstanceModel.id)
-            .add_columns(ProcessInstanceModel.last_milestone_bpmn_name)
             .order_by(*order_by_query_array)
             .paginate(page=page, per_page=per_page, error_out=False)
         )

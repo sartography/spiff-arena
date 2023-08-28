@@ -165,6 +165,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             and spiff_task.task_spec.bpmn_name is not None
         ):
             self.process_instance.last_milestone_bpmn_name = spiff_task.task_spec.bpmn_name
+        elif spiff_task.workflow.parent_task_id is None:
+            # if parent_task_id is None then this should be the top level process
+            if spiff_task.task_spec.__class__.__name__ == "EndEvent":
+                self.process_instance.last_milestone_bpmn_name = "Completed"
+            elif spiff_task.task_spec.__class__.__name__ == "StartEvent":
+                self.process_instance.last_milestone_bpmn_name = "Started"
         self.process_instance.task_updated_at_in_seconds = round(time.time())
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
