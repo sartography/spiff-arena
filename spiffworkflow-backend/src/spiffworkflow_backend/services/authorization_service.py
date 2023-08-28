@@ -552,6 +552,12 @@ class AuthorizationService:
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication/configuration"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication_begin/*"))
+        permissions_to_assign.append(
+            PermissionToAssign(permission="update", target_uri="/authentication/configuration")
+        )
+
         return permissions_to_assign
 
     @classmethod

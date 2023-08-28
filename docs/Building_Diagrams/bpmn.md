@@ -34,7 +34,7 @@ Model not only the primary process flow 'Happy Path' but also the exception hand
 **Use Lanes for Roles and Responsibilities:** 
 Utilize swimlanes (pools and lanes) to clearly define the roles and responsibilities when there are different departments or individuals involved in the process. This visual representation will help demonstrate the interactions and handoffs between role players, enhancing the understanding of their involvement throughout the process.
 
-![pools](images/pools.png) 
+![lanes](images/lanes_1.png) 
 
 **Embrace Iterative Approach:**
 Creating a perfect model in the first attempt is unlikely. Embrace an iterative approach, and be prepared for continuous improvement. Analyze what went wrong in your initial attempts and refine your model accordingly. Understand that your process model is not static. It will evolve over time, and there will always be room for improvement. Stay open to finding better ways to represent the process as you gain more insights.
