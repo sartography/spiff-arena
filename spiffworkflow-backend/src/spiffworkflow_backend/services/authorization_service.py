@@ -538,6 +538,7 @@ class AuthorizationService:
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentications"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication/configuration"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication_begin/*"))
         permissions_to_assign.append(
@@ -559,7 +560,6 @@ class AuthorizationService:
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentications"))
 
         permissions_to_assign.append(
             PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*")

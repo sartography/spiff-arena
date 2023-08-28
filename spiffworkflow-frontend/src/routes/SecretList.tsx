@@ -1,29 +1,58 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { MdDelete } from 'react-icons/md';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import { getPageInfoFromSearchParams } from '../helpers';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function SecretList() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [secrets, setSecrets] = useState([]);
   const [pagination, setPagination] = useState(null);
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.authenticationListPath]: ['GET'],
+    [targetUris.secretListPath]: ['GET'],
+  };
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   useEffect(() => {
     const setSecretsFromResult = (result: any) => {
       setSecrets(result.results);
       setPagination(result.pagination);
     };
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    HttpService.makeCallToBackend({
-      path: `/secrets?per_page=${perPage}&page=${page}`,
-      successCallback: setSecretsFromResult,
-    });
-  }, [searchParams]);
+    if (permissionsLoaded) {
+      if (
+        !ability.can('GET', targetUris.secretListPath) &&
+        ability.can('GET', targetUris.authenticationListPath)
+      ) {
+        navigate('/admin/configuration/authentications');
+      } else {
+        const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+        HttpService.makeCallToBackend({
+          path: `/secrets?per_page=${perPage}&page=${page}`,
+          successCallback: setSecretsFromResult,
+        });
+      }
+    }
+  }, [
+    searchParams,
+    permissionsLoaded,
+    ability,
+    navigate,
+    targetUris.authenticationListPath,
+    targetUris.secretListPath,
+  ]);
 
   const reloadSecrets = (_result: any) => {
     window.location.reload();
