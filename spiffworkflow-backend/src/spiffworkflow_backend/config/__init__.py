@@ -146,12 +146,6 @@ def setup_config(app: Flask) -> None:
     load_config_file(app, "spiffworkflow_backend.config.default")
 
     env_config_prefix = "spiffworkflow_backend.config."
-    if (
-        os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
-        and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
-    ):
-        load_config_file(app, f"{env_config_prefix}terraform_deployed_environment")
-
     env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
     load_config_file(app, env_config_module)
 
