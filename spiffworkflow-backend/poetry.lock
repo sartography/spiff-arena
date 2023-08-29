@@ -2427,18 +2427,18 @@ files = [
 
 [[package]]
 name = "spiff-element-units"
-version = "0.3.0"
+version = "0.3.1"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:023bcc7f2454c981ec96184c0cd89ec566bbfe7093a23e468dd4c938c24ebff6"},
+    {file = "spiff_element_units-0.3.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:17a8c4e1fd26e7c4bc70b0c5e082a80f528f98794a97eb33b31b9e62e286f9f6"},
 ]
 
 [package.source]
 type = "file"
-url = "local_wheels/spiff_element_units-0.3.0-cp39-abi3-manylinux_2_28_x86_64.whl"
+url = "local_wheels/spiff_element_units-0.3.1-cp39-abi3-manylinux_2_28_x86_64.whl"
 
 [[package]]
 name = "SpiffWorkflow"
@@ -2912,4 +2912,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "926aa6b7bd837718d1fcd41999ab17ba9763a191e0c6fa18856b103b4b5243b4"
+content-hash = "70add4c5568593c9ed1d50a5d8565874a7a9ae2c1ba0db86322dc8379a42b966"
