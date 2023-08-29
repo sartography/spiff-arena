@@ -68,7 +68,7 @@ prometheus-flask-exporter = "^0.22.3"
 
 sqlalchemy = "^2.0.7"
 marshmallow-sqlalchemy = "^0.29.0"
-spiff-element-units = {path = "local_wheels/spiff_element_units-0.3.1-cp39-abi3-manylinux_2_28_x86_64.whl"}
+spiff-element-units = "^0.3.1"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
 # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
