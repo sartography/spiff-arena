@@ -66,6 +66,11 @@ import ProcessInterstitial from '../components/ProcessInterstitial';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
 import MessageInstanceList from '../components/MessageInstanceList';
+import {
+  childrenForErrorObject,
+  errorForDisplayFromString,
+} from '../components/ErrorDisplay';
+import { Notification } from '../components/Notification';
 
 type OwnProps = {
   variant: string;
@@ -1197,6 +1202,44 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const diagramArea = (processModelId: string) => {
+    if (!processInstance) {
+      return null;
+    }
+
+    const detailsComponent = (
+      <>
+        {childrenForErrorObject(
+          errorForDisplayFromString(
+            processInstance.bpmn_xml_file_contents_retrieval_error || ''
+          )
+        )}
+      </>
+    );
+    return processInstance.bpmn_xml_file_contents_retrieval_error ? (
+      <Notification
+        title="Failed to load diagram"
+        type="error"
+        hideCloseButton
+        allowTogglingFullMessage
+      >
+        {detailsComponent}
+      </Notification>
+    ) : (
+      <>
+        <ReactDiagramEditor
+          processModelId={processModelId || ''}
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={processInstance.bpmn_xml_file_contents || ''}
+          tasks={tasks}
+          diagramType="readonly"
+          onElementClick={handleClickedDiagramTask}
+        />
+        <div id="diagram-container" />
+      </>
+    );
+  };
+
   if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
@@ -1228,17 +1271,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <Tab disabled={!canViewMsgs}>Messages</Tab>
           </TabList>
           <TabPanels>
-            <TabPanel>
-              <ReactDiagramEditor
-                processModelId={processModelId || ''}
-                diagramXML={processInstance.bpmn_xml_file_contents || ''}
-                fileName={processInstance.bpmn_xml_file_contents || ''}
-                tasks={tasks}
-                diagramType="readonly"
-                onElementClick={handleClickedDiagramTask}
-              />
-              <div id="diagram-container" />
-            </TabPanel>
+            <TabPanel>{diagramArea(processModelId)}</TabPanel>
             <TabPanel>
               <ProcessInstanceLogList
                 variant={variant}

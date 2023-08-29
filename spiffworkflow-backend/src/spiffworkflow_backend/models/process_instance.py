@@ -97,6 +97,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_version_control_identifier: str = db.Column(db.String(255))
 
     bpmn_xml_file_contents: str | None = None
+    bpmn_xml_file_contents_retrieval_error: str | None = None
     process_model_with_diagram_identifier: str | None = None
 
     # full, none
@@ -115,6 +116,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "updated_at_in_seconds": self.updated_at_in_seconds,
             "process_initiator_id": self.process_initiator_id,
             "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
+            "bpmn_xml_file_contents_retrieval_error": self.bpmn_xml_file_contents_retrieval_error,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "process_initiator_username": self.process_initiator.username,
