@@ -101,11 +101,11 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
 
 
 def should_start_scheduler(app: flask.app.Flask) -> bool:
-    if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
+    if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
         return False
 
     # do not start the scheduler twice in flask debug mode but support code reloading
-    if app.config["ENV_IDENTIFIER"] != "local_development" or os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+    if app.config["ENV_IDENTIFIER"] == "local_development" and os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         return False
 
     return True
