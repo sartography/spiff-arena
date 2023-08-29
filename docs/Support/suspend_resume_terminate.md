@@ -2,7 +2,7 @@
 
 | ⚙ How do I get there \| Menu Hierarchy |
 | -------------------------------------- |
-| Follow steps to [find a process instance](../spiffsparkles/find_a_process_instance.md)  |
+| Follow steps to find a process instance |
 
 
 ## Suspend a Process
@@ -11,7 +11,7 @@ By suspending a process instance, you temporarily halt its execution, allowing y
 
 > **Step 1: Find the Active Process Instance**
 
-- In order to locate the active process instance, have a look at these pages to [find an instance](../spiffsparkles/find_a_process_instance.md) to suspend.
+- In order to locate the active process instance, have a look at these pages to find an instance to suspend.
 
 ```{admonition} Note
 
