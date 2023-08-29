@@ -7,6 +7,8 @@ from flask.testing import FlaskClient
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -67,3 +69,19 @@ class TestAuthentication(BaseTest):
         assert len(user.groups) == 2
         group_identifiers = [g.identifier for g in user.groups]
         assert sorted(group_identifiers) == ["everybody", "group_one"]
+
+        # make sure running refresh_permissions doesn't remove the user from the group
+        group_info: list[GroupPermissionsDict] = [
+            {
+                "users": [],
+                "name": "group_one",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+            }
+        ]
+        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+        user = UserModel.query.filter_by(username=user.username).first()
+        assert len(user.groups) == 2
+        group_identifiers = [g.identifier for g in user.groups]
+        assert sorted(group_identifiers) == ["everybody", "group_one"]
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")

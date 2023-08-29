@@ -746,7 +746,10 @@ class AuthorizationService:
 
     @classmethod
     def add_permissions_from_group_permissions(
-        cls, group_permissions: list[GroupPermissionsDict], user_model: UserModel | None = None
+        cls,
+        group_permissions: list[GroupPermissionsDict],
+        user_model: UserModel | None = None,
+        group_permissions_only: bool = False,
     ) -> AddedPermissionDict:
         unique_user_group_identifiers: set[str] = set()
         user_to_group_identifiers: list[UserToGroupDict] = []
@@ -761,16 +764,17 @@ class AuthorizationService:
         for group in group_permissions:
             group_identifier = group["name"]
             GroupService.find_or_create_group(group_identifier)
-            for username in group["users"]:
-                if user_model and username != user_model.username:
-                    continue
-                user_to_group_dict: UserToGroupDict = {
-                    "username": username,
-                    "group_identifier": group_identifier,
-                }
-                user_to_group_identifiers.append(user_to_group_dict)
-                GroupService.add_user_to_group_or_add_to_waiting(username, group_identifier)
-                unique_user_group_identifiers.add(group_identifier)
+            if not group_permissions_only:
+                for username in group["users"]:
+                    if user_model and username != user_model.username:
+                        continue
+                    user_to_group_dict: UserToGroupDict = {
+                        "username": username,
+                        "group_identifier": group_identifier,
+                    }
+                    user_to_group_identifiers.append(user_to_group_dict)
+                    GroupService.add_user_to_group_or_add_to_waiting(username, group_identifier)
+                    unique_user_group_identifiers.add(group_identifier)
         for group in group_permissions:
             group_identifier = group["name"]
             if user_model and group_identifier not in unique_user_group_identifiers:
@@ -786,7 +790,7 @@ class AuthorizationService:
                     )
                     unique_user_group_identifiers.add(group_identifier)
 
-        if default_group is not None:
+        if not group_permissions_only and default_group is not None:
             if user_model:
                 cls.associate_user_with_group(user_model, default_group)
             else:
@@ -805,6 +809,7 @@ class AuthorizationService:
         added_permissions: AddedPermissionDict,
         initial_permission_assignments: list[PermissionAssignmentModel],
         initial_user_to_group_assignments: list[UserGroupAssignmentModel],
+        group_permissions_only: bool = False,
     ) -> None:
         added_permission_assignments = added_permissions["permission_assignments"]
         added_group_identifiers = added_permissions["group_identifiers"]
@@ -814,18 +819,19 @@ class AuthorizationService:
             if ipa not in added_permission_assignments:
                 db.session.delete(ipa)
 
-        for iutga in initial_user_to_group_assignments:
-            # do not remove users from the default user group
-            if (
-                current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
-                or current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] != iutga.group.identifier
-            ):
-                current_user_dict: UserToGroupDict = {
-                    "username": iutga.user.username,
-                    "group_identifier": iutga.group.identifier,
-                }
-                if current_user_dict not in added_user_to_group_identifiers:
-                    db.session.delete(iutga)
+        if not group_permissions_only:
+            for iutga in initial_user_to_group_assignments:
+                # do not remove users from the default user group
+                if (
+                    current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
+                    or current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] != iutga.group.identifier
+                ):
+                    current_user_dict: UserToGroupDict = {
+                        "username": iutga.user.username,
+                        "group_identifier": iutga.group.identifier,
+                    }
+                    if current_user_dict not in added_user_to_group_identifiers:
+                        db.session.delete(iutga)
 
         # do not remove the default user group
         added_group_identifiers.add(current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"])
@@ -835,12 +841,19 @@ class AuthorizationService:
         db.session.commit()
 
     @classmethod
-    def refresh_permissions(cls, group_permissions: list[GroupPermissionsDict]) -> None:
+    def refresh_permissions(
+        cls, group_permissions: list[GroupPermissionsDict], group_permissions_only: bool = False
+    ) -> None:
         """Adds new permission assignments and deletes old ones."""
         initial_permission_assignments = PermissionAssignmentModel.query.all()
         initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
         group_permissions = group_permissions + cls.parse_permissions_yaml_into_group_info()
-        added_permissions = cls.add_permissions_from_group_permissions(group_permissions)
+        added_permissions = cls.add_permissions_from_group_permissions(
+            group_permissions, group_permissions_only=group_permissions_only
+        )
         cls.remove_old_permissions_from_added_permissions(
-            added_permissions, initial_permission_assignments, initial_user_to_group_assignments
+            added_permissions,
+            initial_permission_assignments,
+            initial_user_to_group_assignments,
+            group_permissions_only=group_permissions_only,
         )
