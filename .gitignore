@@ -7,3 +7,4 @@ version_info.json
 .coverage*
 UNKNOWN.egg-info/
 process_models/
+.ipynb_checkpoints

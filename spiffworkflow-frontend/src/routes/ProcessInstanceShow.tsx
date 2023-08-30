@@ -419,7 +419,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl>
-                <dt>{processInstanceMetadata.key} :</dt>
+                <dt>{processInstanceMetadata.key}:</dt>
                 <dd>{processInstanceMetadata.value}</dd>
               </dl>
             )
