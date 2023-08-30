@@ -37,11 +37,11 @@ main {
 @media (min-width: 80rem) {
   .fixed-width-container {
     padding-left: 10rem;
-    padding-right: 2rem;
+    padding-right: 10rem;
   }
 }
 
-p, li, h1, h2, h3, h4, h5, h6, blockquote {
+p, li, h1, h2, h3, h4, h5, h6, blockquote, hr {
   max-width: 640px;
 }
 li.cds--accordion__item {

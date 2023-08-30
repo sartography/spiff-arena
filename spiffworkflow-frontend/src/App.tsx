@@ -34,7 +34,7 @@ export default function App() {
         <APIErrorProvider>
           <BrowserRouter>
             <NavigationBar />
-            <Content>
+            <Content className="main-site-body-centered">
               <ScrollToTop />
               <ErrorDisplay />
               <ErrorBoundary>

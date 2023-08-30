@@ -44,6 +44,7 @@ import {
   convertSecondsToFormattedDateTime,
   HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
+  truncateString,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -406,7 +407,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl>
-                <dt>{processInstanceMetadata.key}:</dt>
+                <dt title={processInstanceMetadata.key}>{truncateString(processInstanceMetadata.key, 10)}:</dt>
                 <dd>{processInstanceMetadata.value}</dd>
               </dl>
             )
