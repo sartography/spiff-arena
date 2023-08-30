@@ -35,6 +35,7 @@ on:
       - feature/event-payload-migration-fix
       - spiffdemo
       - feature/allow-markdown-in-extension-results
+      - feature/avoid-repredicting-tasks
 
 jobs:
   create_frontend_docker_image:
