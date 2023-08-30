@@ -61,8 +61,6 @@ class ProcessInstanceReportService:
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
                 {"Header": "Start time", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "End time", "accessor": "end_in_seconds", "filterable": False},
                 {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
