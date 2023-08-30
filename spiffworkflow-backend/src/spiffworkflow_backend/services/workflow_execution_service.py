@@ -218,11 +218,7 @@ class GreedyExecutionStrategy(ExecutionStrategy):
         engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
         while engine_steps:
             for spiff_task in engine_steps:
-                # import pdb; pdb.set_trace()
                 self.delegate.will_complete_task(spiff_task)
-                # if spiff_task.task_spec.name == "StartEvent_1":
-                #     import pdb; pdb.set_trace()
-                #     print("HEY")
                 spiff_task.run()
                 self.delegate.did_complete_task(spiff_task)
                 self.bpmn_process_instance.refresh_waiting_tasks()
