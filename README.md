@@ -2,25 +2,18 @@
 
 SpiffArena is a low(ish)-code software development platform for building, running, and monitoring executable diagrams.
 It is intended to support Citizen Developers and to enhance their ability to contribute to the software development process.
-Using tools that look a lot like flow-charts and spreadsheets, it is possible to capture complex rules in a way that everyone in your organization can see, understand, and directly executable.
+Using tools that look a lot like flow-charts and spreadsheets, it is possible to capture complex rules in a way that everyone in your organization can see, understand, and directly execute.
 
 Please visit the [SpiffWorkflow website](https://www.spiffworkflow.org) for a [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) to see how to run SpiffArena locally and try it out.
 There are also additional articles, videos, and tutorials about SpiffArena and its components, including SpiffWorkflow, Service Connectors, and BPMN.js extensions.
 
-## Contributing
-
-This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects.
-Feel free to ignore that and drop us a pull request.
-If you need to push back from the monorepo to one of the individual repos, here's an example command (and find other scripts we use in the `bin` directory):
-
-    git subtree push --prefix=spiffworkflow-frontend git@github.com:sartography/spiffworkflow-frontend.git add_md_file
-
 ## Backend Setup
 
-First install python and poetry, and then:
+First install python and poetry. Then:
 
     cd spiffworkflow-backend
     poetry install
+    ./bin/recreate_db clean
     ./bin/run_server_locally
 
 ## Frontend Setup
@@ -32,19 +25,22 @@ First install nodejs, ideally the version in .tool-versions (but likely other ve
     npm start
 
 ## Run tests
-    ./bin/run_pyl
 
-Requires at root:
-- .darglint
-- .flake8
-- .pre-commit-config.yaml
-- pyproject.toml
+    ./bin/run_pyl
 
 ## Run cypress automated browser tests
 
 Get the app running so you can access the frontend at http://localhost:7001 in your browser by following the frontend and backend setup steps above, and then:
 
     ./bin/run_cypress_tests_locally
+
+## Contributing
+
+This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects.
+Feel free to ignore that and drop us a pull request.
+If you need to push back from the monorepo to one of the individual repos, here's an example command (and find other scripts we use in the `bin` directory):
+
+    git subtree push --prefix=spiffworkflow-frontend git@github.com:sartography/spiffworkflow-frontend.git add_md_file
 
 ## License
 
