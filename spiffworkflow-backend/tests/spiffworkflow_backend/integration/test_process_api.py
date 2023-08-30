@@ -3039,7 +3039,7 @@ class TestProcessApi(BaseTest):
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
-            {"Header": "Last Milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
+            {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             {"Header": "Status", "accessor": "status", "filterable": False},
             {"Header": "Task", "accessor": "task_title", "filterable": False},
             {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
