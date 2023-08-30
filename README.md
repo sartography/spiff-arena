@@ -13,6 +13,7 @@ First install python and poetry. Then:
 
     cd spiffworkflow-backend
     poetry install
+    ./bin/recreate_db clean
     ./bin/run_server_locally
 
 ## Frontend Setup
