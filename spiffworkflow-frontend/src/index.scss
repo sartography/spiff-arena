@@ -27,6 +27,7 @@ main {
   overflow: visible;
 }
 
+// media min-width 99 means: do the stuff in the block if the browser width is greater than 99
 @media (min-width: 99rem) {
   .fixed-width-container {
     max-width: 99rem;
