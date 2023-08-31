@@ -48,6 +48,7 @@ import {
   REFRESH_INTERVAL_SECONDS,
   REFRESH_TIMEOUT_SECONDS,
   titleizeString,
+  truncateString,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -1267,7 +1268,7 @@ export default function ProcessInstanceListTable({
                   setReportColumnFormMode('edit');
                 }}
               >
-                {reportColumnLabel}
+                {truncateString(reportColumnLabel, 10)}
               </Button>
               <Button
                 data-qa="remove-report-column"

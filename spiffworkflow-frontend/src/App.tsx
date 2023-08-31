@@ -13,7 +13,6 @@ import AdminRoutes from './routes/AdminRoutes';
 
 import { AbilityContext } from './contexts/Can';
 import UserService from './services/UserService';
-import ErrorDisplay from './components/ErrorDisplay';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ScrollToTop from './components/ScrollToTop';
 import EditorRoutes from './routes/EditorRoutes';
@@ -27,6 +26,11 @@ export default function App() {
 
   const ability = defineAbility(() => {});
 
+  let contentClassName = 'main-site-body-centered';
+  if (window.location.pathname.startsWith('/editor/')) {
+    contentClassName = 'no-center-stuff';
+  }
+
   return (
     <div className="cds--white">
       {/* @ts-ignore */}
@@ -34,9 +38,8 @@ export default function App() {
         <APIErrorProvider>
           <BrowserRouter>
             <NavigationBar />
-            <Content className="main-site-body-centered">
+            <Content className={contentClassName}>
               <ScrollToTop />
-              <ErrorDisplay />
               <ErrorBoundary>
                 <Routes>
                   <Route path="/*" element={<HomePageRoutes />} />
