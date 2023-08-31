@@ -508,6 +508,9 @@ class TestAuthorizationService(BaseTest):
         return sorted(
             self._expected_support_permissions()
             + [
+                ("/authentication/configuration", "read"),
+                ("/authentication/configuration", "update"),
+                ("/authentication_begin/*", "read"),
                 ("/secrets/*", "create"),
                 ("/secrets/*", "delete"),
                 ("/secrets/*", "read"),
