@@ -736,6 +736,7 @@ fieldset fieldset fieldset legend.header {
   margin: auto;
   justify-content: center;
   overflow: visible;
+  /* border: 1px solid black; */
 }
 
 /*  media min-width 75 means: do the stuff in the block if the browser width is greater than 75 */
@@ -753,7 +754,6 @@ li.cds--accordion__item {
 }
 
 div.markdown {
-  max-width: 1000px;
   padding: 15px 0 15px 0;
   overflow: visible;
 }
@@ -774,14 +774,13 @@ div.markdown-collapsed {
 
 
 .cds--data-table-content {
-  /* width: fit-content; */
-  /* min-width: 100%; */
   overflow-x: scroll;
 }
 
-/* .wmde-markdown table { */
-/*   width: fit-content; */
-/* } */
+.wmde-markdown table {
+  width: fit-content;
+  overflow: scroll;
+}
 
 /* override carbon variable so we can left align accordions*/
 .cds--accordion {
