@@ -13,6 +13,7 @@ import {
   recursivelyChangeNullAndUndefined,
 } from '../helpers';
 import { BasicTask, EventDefinition, Task } from '../interfaces';
+import CustomForm from '../components/CustomForm';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import UserService from '../services/UserService';
