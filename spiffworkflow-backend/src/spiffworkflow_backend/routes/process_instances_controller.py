@@ -500,10 +500,14 @@ def process_instance_task_list(
             task_models_of_parent_bpmn_processes,
         ) = TaskService.task_models_of_parent_bpmn_processes(to_task_model)
         task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
+        if 'instance' in to_task_model.runtime_info or 'iteration' in to_task_model.runtime_info:
+            to_task_model_parent = [to_task_model.properties_json['parent']]
+        else:
+            to_task_model_parent = []
         task_model_query = task_model_query.filter(
             or_(
                 TaskModel.end_in_seconds <= to_task_model.end_in_seconds,  # type: ignore
-                TaskModel.guid.in_(task_models_of_parent_bpmn_processes_guids),  # type: ignore
+                TaskModel.guid.in_(task_models_of_parent_bpmn_processes_guids + to_task_model_parent),  # type: ignore
             )
         )
 
@@ -545,6 +549,7 @@ def process_instance_task_list(
             TaskModel.state,
             TaskModel.end_in_seconds,
             TaskModel.start_in_seconds,
+            TaskModel.runtime_info,
         )
     )
 
@@ -554,6 +559,7 @@ def process_instance_task_list(
     task_models = task_model_query.all()
     if most_recent_tasks_only:
         most_recent_tasks = {}
+        additional_tasks = []
 
         # if you have a loop and there is a subprocess, and you are going around for the second time,
         # ignore the tasks in the "first loop" subprocess
@@ -573,9 +579,13 @@ def process_instance_task_list(
                 most_recent_tasks[row_key] = task_model
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
+            elif 'instance' in task_model.runtime_info or 'iteration' in task_model.runtime_info:
+                # This handles adding all instances of a MI and iterations of loop tasks
+                additional_tasks.append(task_model)
+
         task_models = [
             task_model
-            for task_model in most_recent_tasks.values()
+            for task_model in list(most_recent_tasks.values()) + additional_tasks
             if task_model.bpmn_process_guid in relevant_subprocess_guids
         ]
 
