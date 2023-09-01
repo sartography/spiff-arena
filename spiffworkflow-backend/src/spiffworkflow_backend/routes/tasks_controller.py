@@ -139,6 +139,46 @@ def task_list_my_tasks(
     return make_response(jsonify(response_json), 200)
 
 
+def task_list_completed_by_me(process_instance_id: int, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    user_id = g.user.id
+
+    human_tasks_query = db.session.query(HumanTaskModel).filter(
+        HumanTaskModel.completed == True,  # noqa: E712
+        HumanTaskModel.completed_by_user_id == user_id,
+        HumanTaskModel.process_instance_id == process_instance_id,
+    )
+
+    human_tasks = (
+        # human_tasks_query.add_columns(
+        #     process_model_identifier_column,
+        #     process_instance_status_column,
+        #     user_username_column,
+        #     group_identifier_column,
+        #     HumanTaskModel.task_name,
+        #     HumanTaskModel.task_title,
+        #     HumanTaskModel.process_model_display_name,
+        #     HumanTaskModel.process_instance_id,
+        #     HumanTaskModel.updated_at_in_seconds,
+        #     HumanTaskModel.created_at_in_seconds,
+        #     potential_owner_usernames_from_group_concat_or_similar,
+        # )
+        human_tasks_query.order_by(desc(HumanTaskModel.id)).paginate(  # type: ignore
+            page=page, per_page=per_page, error_out=False
+        )
+    )
+
+    response_json = {
+        "results": human_tasks.items,
+        "pagination": {
+            "count": len(human_tasks.items),
+            "total": human_tasks.total,
+            "pages": human_tasks.pages,
+        },
+    }
+
+    return make_response(jsonify(response_json), 200)
+
+
 def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     return _get_tasks(page=page, per_page=per_page)
 

@@ -1226,6 +1226,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <Tab disabled={!canViewLogs}>Milestones</Tab>
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
+            <Tab disabled={!canViewMsgs}>My Forms</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -1256,6 +1257,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               />
             </TabPanel>
             <TabPanel>{getMessageDisplay()}</TabPanel>
+            <TabPanel>
+              <TaskListTable
+                apiPath={`/tasks/completed-by-me/${processInstance.id}`}
+                paginationClassName="with-large-bottom-margin"
+                textToShowIfEmpty="There are no tasks you can complete for this process instance."
+                shouldPaginateTable={false}
+                showProcessModelIdentifier={false}
+                showProcessId={false}
+                showStartedBy={false}
+                showTableDescriptionAsTooltip
+                showDateStarted={false}
+                hideIfNoTasks
+                showWaitingOn={false}
+                canCompleteAllTasks={false}
+                showViewFormDataButton
+              />
+            </TabPanel>
           </TabPanels>
         </Tabs>
       );

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-// @ts-ignore
-import { Button, Table } from '@carbon/react';
+import { Button, Table, Modal, Stack } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
+// @ts-ignore
+import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
 import {
@@ -13,15 +14,16 @@ import {
   REFRESH_TIMEOUT_SECONDS,
 } from '../helpers';
 import HttpService from '../services/HttpService';
-import { PaginationObject, ProcessInstanceTask } from '../interfaces';
+import { PaginationObject, ProcessInstanceTask, Task } from '../interfaces';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
+import CustomForm from './CustomForm';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
 type OwnProps = {
   apiPath: string;
-  tableTitle: string;
-  tableDescription: string;
+  tableTitle?: string;
+  tableDescription?: string;
   additionalParams?: string;
   paginationQueryParamPrefix?: string;
   paginationClassName?: string;
@@ -37,6 +39,8 @@ type OwnProps = {
   showLastUpdated?: boolean;
   hideIfNoTasks?: boolean;
   canCompleteAllTasks?: boolean;
+  showActionsColumn?: boolean;
+  showViewFormDataButton?: boolean;
 };
 
 export default function TaskListTable({
@@ -58,10 +62,15 @@ export default function TaskListTable({
   showLastUpdated = true,
   hideIfNoTasks = false,
   canCompleteAllTasks = false,
+  showActionsColumn = true,
+  showViewFormDataButton = false,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
+  const [formSubmissionTask, setFormSubmissionTask] = useState<Task | null>(
+    null
+  );
 
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
@@ -126,11 +135,54 @@ export default function TaskListTable({
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
 
+  const formSubmissionModal = () => {
+    if (formSubmissionTask) {
+      return (
+        <Modal
+          open={!!formSubmissionTask}
+          passiveModal
+          onRequestClose={() => setFormSubmissionTask(null)}
+          modalHeading={`${formSubmissionTask.name_for_display}
+              `}
+        >
+          <div className="indented-content explanatory-message">
+            ✅ You completed this form{' '}
+            {TimeAgo.inWords(formSubmissionTask.end_in_seconds)}
+            <div>
+              <Stack orientation="horizontal" gap={2}>
+                Guid: {formSubmissionTask.guid}
+              </Stack>
+            </div>
+          </div>
+          <hr />
+          <CustomForm
+            id={formSubmissionTask.guid}
+            formData={formSubmissionTask.data}
+            schema={formSubmissionTask.form_schema}
+            uiSchema={formSubmissionTask.form_ui_schema}
+            disabled
+          >
+            {/* this hides the submit button */}
+            {true}
+          </CustomForm>
+        </Modal>
+      );
+    }
+    return null;
+  };
+
+  const getFormSubmissionDataForTask = (
+    processInstanceTask: ProcessInstanceTask
+  ) => {
+    HttpService.makeCallToBackend({
+      path: `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}?with_form_data=true`,
+      httpMethod: 'GET',
+      successCallback: (result: Task) => setFormSubmissionTask(result),
+    });
+  };
+
   const getTableRow = (processInstanceTask: ProcessInstanceTask) => {
     const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
-    const modifiedProcessModelIdentifier = modifyProcessIdentifierForPathParam(
-      processInstanceTask.process_model_identifier
-    );
 
     const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
     let hasAccessToCompleteTask = false;
@@ -142,6 +194,10 @@ export default function TaskListTable({
     }
     const rowElements = [];
     if (showProcessId) {
+      const modifiedProcessModelIdentifier =
+        modifyProcessIdentifierForPathParam(
+          processInstanceTask.process_model_identifier
+        );
       rowElements.push(
         <td>
           <Link
@@ -155,6 +211,10 @@ export default function TaskListTable({
       );
     }
     if (showProcessModelIdentifier) {
+      const modifiedProcessModelIdentifier =
+        modifyProcessIdentifierForPathParam(
+          processInstanceTask.process_model_identifier
+        );
       rowElements.push(
         <td>
           <Link
@@ -201,9 +261,13 @@ export default function TaskListTable({
         />
       );
     }
-    rowElements.push(
-      <td>
-        {processInstanceTask.process_instance_status === 'suspended' ? null : (
+    if (showActionsColumn) {
+      const actions = [];
+      if (
+        processInstanceTask.process_instance_status in
+        ['suspended', 'completed', 'error']
+      ) {
+        actions.push(
           <Button
             variant="primary"
             href={taskUrl}
@@ -211,9 +275,20 @@ export default function TaskListTable({
           >
             Go
           </Button>
-        )}
-      </td>
-    );
+        );
+      }
+      if (showViewFormDataButton) {
+        actions.push(
+          <Button
+            variant="primary"
+            onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
+          >
+            View form
+          </Button>
+        );
+      }
+      rowElements.push(<td>{actions}</td>);
+    }
     return <tr key={processInstanceTask.id}>{rowElements}</tr>;
   };
 
@@ -238,7 +313,9 @@ export default function TaskListTable({
     if (showLastUpdated) {
       tableHeaders.push('Last Updated');
     }
-    tableHeaders = tableHeaders.concat(['Actions']);
+    if (showActionsColumn) {
+      tableHeaders = tableHeaders.concat(['Actions']);
+    }
     return tableHeaders;
   };
 
@@ -298,6 +375,9 @@ export default function TaskListTable({
   };
 
   const tableAndDescriptionElement = () => {
+    if (!tableTitle) {
+      return null;
+    }
     if (showTableDescriptionAsTooltip) {
       return <h2 title={tableDescription}>{tableTitle}</h2>;
     }
@@ -312,6 +392,7 @@ export default function TaskListTable({
   if (tasks && (tasks.length > 0 || hideIfNoTasks === false)) {
     return (
       <>
+        {formSubmissionModal()}
         {tableAndDescriptionElement()}
         {tasksComponent()}
       </>

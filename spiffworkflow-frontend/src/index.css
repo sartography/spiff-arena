@@ -683,3 +683,7 @@ hr {
 #hidden-form-for-autosave {
   display: none;
 }
+
+.my-completed-forms-header {
+  font-style: italic;
+}
