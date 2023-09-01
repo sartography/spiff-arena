@@ -1820,7 +1820,7 @@ export default function ProcessInstanceListTable({
             renderIcon={ArrowRight}
             iconDescription="View Filterable List"
             hasIconOnly
-            size="lg"
+            size="md"
             onClick={() =>
               navigate(`/admin/process-instances?report_hash=${reportHash}`)
             }
