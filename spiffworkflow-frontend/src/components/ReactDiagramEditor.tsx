@@ -79,11 +79,11 @@ type OwnProps = {
   onLaunchScriptEditor?: (..._args: any[]) => any;
   onLaunchMarkdownEditor?: (..._args: any[]) => any;
   onLaunchBpmnEditor?: (..._args: any[]) => any;
-  onLaunchJsonEditor?: (..._args: any[]) => any;
+  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
   onLaunchDmnEditor?: (..._args: any[]) => any;
   onElementClick?: (..._args: any[]) => any;
   onServiceTasksRequested?: (..._args: any[]) => any;
-  onJsonFilesRequested?: (..._args: any[]) => any;
+  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
@@ -108,11 +108,11 @@ export default function ReactDiagramEditor({
   onLaunchScriptEditor,
   onLaunchMarkdownEditor,
   onLaunchBpmnEditor,
-  onLaunchJsonEditor,
+  onLaunchJsonSchemaEditor,
   onLaunchDmnEditor,
   onElementClick,
   onServiceTasksRequested,
-  onJsonFilesRequested,
+  onJsonSchemaFilesRequested,
   onDmnFilesRequested,
   onSearchProcessModels,
   onElementsChanged,
@@ -293,8 +293,8 @@ export default function ReactDiagramEditor({
     });
 
     diagramModeler.on('spiff.file.edit', (event: any) => {
-      if (onLaunchJsonEditor) {
-        onLaunchJsonEditor(event.value);
+      if (onLaunchJsonSchemaEditor) {
+        onLaunchJsonSchemaEditor(event.value);
       }
     });
 
@@ -323,9 +323,9 @@ export default function ReactDiagramEditor({
       handleServiceTasksRequested(event);
     });
 
-    diagramModeler.on('spiff.json_files.requested', (event: any) => {
-      if (onJsonFilesRequested) {
-        onJsonFilesRequested(event);
+    diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
+      if (onJsonSchemaFilesRequested) {
+        onJsonSchemaFilesRequested(event);
       }
     });
 
@@ -335,7 +335,7 @@ export default function ReactDiagramEditor({
       }
     });
 
-    diagramModeler.on('spiff.json_files.requested', (event: any) => {
+    diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
 
@@ -351,10 +351,10 @@ export default function ReactDiagramEditor({
     onLaunchMarkdownEditor,
     onLaunchBpmnEditor,
     onLaunchDmnEditor,
-    onLaunchJsonEditor,
+    onLaunchJsonSchemaEditor,
     onElementClick,
     onServiceTasksRequested,
-    onJsonFilesRequested,
+    onJsonSchemaFilesRequested,
     onDmnFilesRequested,
     onSearchProcessModels,
     onElementsChanged,

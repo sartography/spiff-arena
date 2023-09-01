@@ -45,15 +45,18 @@ import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import { usePrompt } from '../hooks/UsePrompt';
 import ActiveUsers from '../components/ActiveUsers';
+import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
+  const isFocused = useFocusedTabStatus();
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
+  const [fileEventBus, setFileEventBus] = useState<any>(null);
   const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
@@ -361,19 +364,23 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onJsonFilesRequested = (event: any) => {
-    if (processModel) {
-      const jsonFiles = processModel.files.filter((f) => f.type === 'json');
+  const onJsonSchemaFilesRequested = (event: any, pm: ProcessModel|null = null) => {
+    setFileEventBus(event.eventBus);
+    const curProcessModel = pm || processModel;
+    const re = /.*[-.]schema.json/;
+    if (curProcessModel) {
+      const jsonFiles = curProcessModel.files.filter((f) => f.name.match(re));
       const options = jsonFiles.map((f) => {
         return { label: f.name, value: f.name };
       });
-      event.eventBus.fire('spiff.json_files.returned', { options });
+      event.eventBus.fire('spiff.json_schema_files.returned', { options });
     } else {
       console.error('There is no process Model.');
     }
   };
 
   const onDmnFilesRequested = (event: any) => {
+    setFileEventBus(event.eventBus);
     if (processModel) {
       const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
       const options: any[] = [];
@@ -387,6 +394,25 @@ export default function ProcessModelEditDiagram() {
       console.error('There is no process model.');
     }
   };
+
+  useEffect(() => {
+    const updateDiagramFiles = (pm: ProcessModel) => {
+      setProcessModel(pm);
+      onJsonSchemaFilesRequested({ eventBus: fileEventBus }, pm);
+    };
+
+    if (isFocused && fileEventBus) {
+      // Request the process model again, and manually fire off the
+      // commands to update the file lists for json and dmn files.
+      HttpService.makeCallToBackend({
+        path: `/${processModelPath}?include_file_references=true`,
+        successCallback: updateDiagramFiles,
+      });
+
+
+    }
+  }, [isFocused, fileEventBus]);
+
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -948,7 +974,7 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onLaunchJsonEditor = (fileName: string) => {
+  const onLaunchJsonSchemaEditor = (fileName: string) => {
     const path = generatePath(
       '/admin/process-models/:process_model_id/form/:file_name',
       {
@@ -1014,8 +1040,8 @@ export default function ProcessModelEditDiagram() {
         onServiceTasksRequested={onServiceTasksRequested}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchBpmnEditor={onLaunchBpmnEditor}
-        onLaunchJsonEditor={onLaunchJsonEditor}
-        onJsonFilesRequested={onJsonFilesRequested}
+        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
+        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onDmnFilesRequested={onDmnFilesRequested}
         onSearchProcessModels={onSearchProcessModels}
