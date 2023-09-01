@@ -105,6 +105,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     User[] | null
   >(null);
 
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -1197,11 +1199,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const updateSelectedTab = (newTabIndex: any) => {
+    setSelectedTabIndex(newTabIndex.selectedIndex);
+  };
+
   if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     const getTabs = () => {
       const canViewLogs = ability.can(
         'GET',
@@ -1220,59 +1227,71 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       };
 
       return (
-        <Tabs>
+        <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
           <TabList aria-label="List of tabs">
             <Tab>Diagram</Tab>
             <Tab disabled={!canViewLogs}>Milestones</Tab>
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
-            <Tab disabled={!canViewMsgs}>My Forms</Tab>
+            <Tab>My Forms</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
-              <ReactDiagramEditor
-                processModelId={processModelId || ''}
-                diagramXML={processInstance.bpmn_xml_file_contents || ''}
-                fileName={processInstance.bpmn_xml_file_contents || ''}
-                tasks={tasks}
-                diagramType="readonly"
-                onElementClick={handleClickedDiagramTask}
-              />
-              <div id="diagram-container" />
+              {selectedTabIndex === 0 ? (
+                <>
+                  <ReactDiagramEditor
+                    processModelId={processModelId || ''}
+                    diagramXML={processInstance.bpmn_xml_file_contents || ''}
+                    fileName={processInstance.bpmn_xml_file_contents || ''}
+                    tasks={tasks}
+                    diagramType="readonly"
+                    onElementClick={handleClickedDiagramTask}
+                  />
+                  <div id="diagram-container" />
+                </>
+              ) : null}
             </TabPanel>
             <TabPanel>
-              <ProcessInstanceLogList
-                variant={variant}
-                isEventsView={false}
-                processModelId={modifiedProcessModelId || ''}
-                processInstanceId={processInstance.id}
-              />
+              {selectedTabIndex === 1 ? (
+                <ProcessInstanceLogList
+                  variant={variant}
+                  isEventsView={false}
+                  processModelId={modifiedProcessModelId || ''}
+                  processInstanceId={processInstance.id}
+                />
+              ) : null}
             </TabPanel>
             <TabPanel>
-              <ProcessInstanceLogList
-                variant={variant}
-                isEventsView
-                processModelId={modifiedProcessModelId || ''}
-                processInstanceId={processInstance.id}
-              />
+              {selectedTabIndex === 2 ? (
+                <ProcessInstanceLogList
+                  variant={variant}
+                  isEventsView
+                  processModelId={modifiedProcessModelId || ''}
+                  processInstanceId={processInstance.id}
+                />
+              ) : null}
             </TabPanel>
-            <TabPanel>{getMessageDisplay()}</TabPanel>
             <TabPanel>
-              <TaskListTable
-                apiPath={`/tasks/completed-by-me/${processInstance.id}`}
-                paginationClassName="with-large-bottom-margin"
-                textToShowIfEmpty="There are no tasks you can complete for this process instance."
-                shouldPaginateTable={false}
-                showProcessModelIdentifier={false}
-                showProcessId={false}
-                showStartedBy={false}
-                showTableDescriptionAsTooltip
-                showDateStarted={false}
-                hideIfNoTasks
-                showWaitingOn={false}
-                canCompleteAllTasks={false}
-                showViewFormDataButton
-              />
+              {selectedTabIndex === 3 ? getMessageDisplay() : null}
+            </TabPanel>
+            <TabPanel>
+              {selectedTabIndex === 4 ? (
+                <TaskListTable
+                  apiPath={`/tasks/completed-by-me/${processInstance.id}`}
+                  paginationClassName="with-large-bottom-margin"
+                  textToShowIfEmpty="There are no tasks you can complete for this process instance."
+                  shouldPaginateTable={false}
+                  showProcessModelIdentifier={false}
+                  showProcessId={false}
+                  showStartedBy={false}
+                  showTableDescriptionAsTooltip
+                  showDateStarted={false}
+                  hideIfNoTasks
+                  showWaitingOn={false}
+                  canCompleteAllTasks={false}
+                  showViewFormDataButton
+                />
+              ) : null}
             </TabPanel>
           </TabPanels>
         </Tabs>
