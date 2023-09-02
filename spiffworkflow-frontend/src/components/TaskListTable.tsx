@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { Button, Table, Modal, Stack } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
 // @ts-ignore
@@ -181,34 +181,29 @@ export default function TaskListTable({
     });
   };
 
-  const getTableRow = (processInstanceTask: ProcessInstanceTask) => {
-    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
+  const processIdRowElement = (processInstanceTask: ProcessInstanceTask) => {
+    const modifiedProcessModelIdentifier = modifyProcessIdentifierForPathParam(
+      processInstanceTask.process_model_identifier
+    );
+    return (
+      <td>
+        <Link
+          data-qa="process-instance-show-link-id"
+          to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
+          title={`View process instance ${processInstanceTask.process_instance_id}`}
+        >
+          {processInstanceTask.process_instance_id}
+        </Link>
+      </td>
+    );
+  };
 
-    const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
-    let hasAccessToCompleteTask = false;
-    if (
-      canCompleteAllTasks ||
-      (processInstanceTask.potential_owner_usernames || '').match(regex)
-    ) {
-      hasAccessToCompleteTask = true;
-    }
-    const rowElements = [];
+  const dealWithProcessCells = (
+    rowElements: ReactElement[],
+    processInstanceTask: ProcessInstanceTask
+  ) => {
     if (showProcessId) {
-      const modifiedProcessModelIdentifier =
-        modifyProcessIdentifierForPathParam(
-          processInstanceTask.process_model_identifier
-        );
-      rowElements.push(
-        <td>
-          <Link
-            data-qa="process-instance-show-link-id"
-            to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
-            title={`View process instance ${processInstanceTask.process_instance_id}`}
-          >
-            {processInstanceTask.process_instance_id}
-          </Link>
-        </td>
-      );
+      rowElements.push(processIdRowElement(processInstanceTask));
     }
     if (showProcessModelIdentifier) {
       const modifiedProcessModelIdentifier =
@@ -227,12 +222,30 @@ export default function TaskListTable({
         </td>
       );
     }
+  };
+
+  const getTableRow = (processInstanceTask: ProcessInstanceTask) => {
+    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
+
+    const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
+    let hasAccessToCompleteTask = false;
+    if (
+      canCompleteAllTasks ||
+      (processInstanceTask.potential_owner_usernames || '').match(regex)
+    ) {
+      hasAccessToCompleteTask = true;
+    }
+    const rowElements: ReactElement[] = [];
+
+    dealWithProcessCells(rowElements, processInstanceTask);
 
     rowElements.push(
       <td
         title={`task id: ${processInstanceTask.name}, spiffworkflow task guid: ${processInstanceTask.id}`}
       >
-        {processInstanceTask.task_title}
+        {processInstanceTask.task_title
+          ? processInstanceTask.task_title
+          : processInstanceTask.task_name}
       </td>
     );
     if (showStartedBy) {

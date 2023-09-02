@@ -108,6 +108,7 @@ export interface ProcessInstanceTask {
   properties: any;
   state: string;
   task_title: string;
+  task_name: string;
   title: string;
   type: string;
   updated_at_in_seconds: number;
