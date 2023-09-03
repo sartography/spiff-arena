@@ -10,8 +10,23 @@
   line-height: 18px;
   letter-spacing: 0.16px;
   color: #525252;
-  margin-bottom: 1em;
+  margin-bottom: 0em;
 }
+
+.rjsf .field-description .wmde-markdown {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+
+.rjsf .field-description .wmde-markdown p {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+
 
 /* for some reason it wraps the entire form using FieldTemplate.jsx, which is where we added the rjsf-field thing (which is only intended for fields, not entire forms. hence the double rjsf-field reference, only for rjsf-fields inside rjsf-fields, so we don't get double margin after the last field */
 .rjsf .rjsf-field .rjsf-field {
@@ -28,4 +43,16 @@
 
 .rjsf .date-input {
   padding-top: 8px;
+}
+
+.rjsf .rjsf-field label {
+  font-weight: bolder;
+}
+
+.rjsf .rjsf-field .required {
+  color: #660000;
+}
+
+.rjsf #root #root__description {
+  margin-bottom: 0.5em;
 }

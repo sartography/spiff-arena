@@ -31,6 +31,7 @@ import Editor, { DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
+import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
@@ -57,6 +58,10 @@ export default function ProcessModelEditDiagram() {
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
   const [fileEventBus, setFileEventBus] = useState<any>(null);
+  const [fileElement, setFileElement] = useState<any>(null);
+  const [jsonScehmaFileName, setJsonScehmaFileName] = useState<string>('');
+  const [showJsonSchemaEditor, setShowJsonSchemaEditor] = useState(false);
+
   const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
@@ -364,7 +369,10 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onJsonSchemaFilesRequested = (event: any, pm: ProcessModel|null = null) => {
+  const onJsonSchemaFilesRequested = (
+    event: any,
+    pm: ProcessModel | null = null
+  ) => {
     setFileEventBus(event.eventBus);
     const curProcessModel = pm || processModel;
     const re = /.*[-.]schema.json/;
@@ -408,11 +416,8 @@ export default function ProcessModelEditDiagram() {
         path: `/${processModelPath}?include_file_references=true`,
         successCallback: updateDiagramFiles,
       });
-
-
     }
   }, [isFocused, fileEventBus]);
-
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -974,16 +979,42 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onLaunchJsonSchemaEditor = (fileName: string) => {
-    const path = generatePath(
-      '/admin/process-models/:process_model_id/form/:file_name',
-      {
-        process_model_id: params.process_model_id,
-        file_name: fileName,
-      }
-    );
-    window.open(path);
+  const onLaunchJsonSchemaEditor = (
+    element: any,
+    fileName: string,
+    eventBus: any
+  ) => {
+    setFileEventBus(eventBus);
+    setFileElement(element);
+    setJsonScehmaFileName(fileName);
+    setShowJsonSchemaEditor(true);
   };
+
+  const handleJsonScehmaEditorClose = () => {
+    fileEventBus.fire('spiff.jsonSchema.update', {
+      value: jsonScehmaFileName,
+    });
+    setShowJsonSchemaEditor(false);
+  };
+
+  const jsonSchemaEditor = () => {
+    return (
+      <Modal
+        open={showJsonSchemaEditor}
+        modalHeading="Edit JSON Schema"
+        primaryButtonText="Close"
+        onRequestSubmit={handleJsonScehmaEditorClose}
+        onRequestClose={handleJsonScehmaEditorClose}
+        size="lg"
+      >
+        <ReactFormBuilder
+          processModelId={params.process_model_id || ''}
+          fileName={jsonScehmaFileName}
+        />
+      </Modal>
+    );
+  };
+
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
@@ -1091,6 +1122,7 @@ export default function ProcessModelEditDiagram() {
         {newFileNameBox()}
         {scriptEditorAndTests()}
         {markdownEditor()}
+        {jsonSchemaEditor()}
         {processModelSelector()}
         <div id="diagram-container" />
       </>

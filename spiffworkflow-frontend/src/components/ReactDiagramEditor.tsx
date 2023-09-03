@@ -293,8 +293,12 @@ export default function ReactDiagramEditor({
     });
 
     diagramModeler.on('spiff.file.edit', (event: any) => {
+      const { error, element, value, eventBus } = event;
+      if (error) {
+        console.error(error);
+      }
       if (onLaunchJsonSchemaEditor) {
-        onLaunchJsonSchemaEditor(event.value);
+        onLaunchJsonSchemaEditor(element, value, eventBus);
       }
     });
 

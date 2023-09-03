@@ -451,3 +451,10 @@ export interface ExtensionPostBody {
   extension_input: any;
   ui_schema_page_definition?: UiSchemaPageDefinition;
 }
+
+export interface JsonSchemaExample {
+  name: string;
+  description: string;
+  schema: object;
+  ui: object;
+}
