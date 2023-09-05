@@ -998,6 +998,9 @@ export default function ProcessModelEditDiagram() {
   };
 
   const jsonSchemaEditor = () => {
+    if (!showJsonSchemaEditor) {
+      return null;
+    }
     return (
       <Modal
         open={showJsonSchemaEditor}
@@ -1010,6 +1013,7 @@ export default function ProcessModelEditDiagram() {
         <ReactFormBuilder
           processModelId={params.process_model_id || ''}
           fileName={jsonScehmaFileName}
+          onFileNameSet={setJsonScehmaFileName}
         />
       </Modal>
     );
