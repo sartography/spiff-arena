@@ -426,9 +426,17 @@ export interface DataStore {
   type: string;
 }
 
+export interface UiSchemaDisplayLocation {
+  header_menu_item?: boolean;
+  user_profile_item?: boolean;
+}
+export interface UiSchemaDisplayLocations {
+  [key: string]: UiSchemaDisplayLocation;
+}
 export interface UiSchemaNavItem {
   label: string;
   route: string;
+  display_locations: UiSchemaDisplayLocations;
 }
 export interface UiSchemaPageDefinition {
   header: string;

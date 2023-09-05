@@ -145,6 +145,27 @@ export default function NavigationBar() {
   const userEmail = UserService.getUserEmail();
   const username = UserService.getPreferredUsername();
 
+  const extensionNavigationElementsForDisplayLocation = (
+    displayLocation: string,
+    elementCallback: Function
+  ) => {
+    if (!extensionNavigationItems) {
+      return null;
+    }
+
+    return extensionNavigationItems.map((navItem: UiSchemaNavItem) => {
+      if (!navItem.display_locations[displayLocation]) {
+        return null;
+      }
+      return elementCallback(navItem);
+    });
+  };
+
+  const extensionUserProfileElement = (navItem: UiSchemaNavItem) => {
+    const navItemRoute = `/extensions${navItem.route}`;
+    return <a href={navItemRoute}>{navItem.label}</a>;
+  };
+
   const profileToggletip = (
     <div style={{ display: 'flex' }} id="user-profile-toggletip">
       <Toggletip isTabTip align="bottom-right">
@@ -165,6 +186,10 @@ export default function NavigationBar() {
           <a target="_blank" href={documentationUrl} rel="noreferrer">
             Documentation
           </a>
+          {extensionNavigationElementsForDisplayLocation(
+            'user_profile_item',
+            extensionUserProfileElement
+          )}
           {!UserService.authenticationDisabled() ? (
             <>
               <hr />
@@ -246,27 +271,21 @@ export default function NavigationBar() {
     );
   };
 
-  const extensionNavigationElements = () => {
-    if (!extensionNavigationItems) {
-      return null;
+  const extensionHeaderMenuItemElement = (navItem: UiSchemaNavItem) => {
+    const navItemRoute = `/extensions${navItem.route}`;
+    const regexp = new RegExp(`^${navItemRoute}`);
+    if (regexp.test(location.pathname)) {
+      setActiveKey(navItemRoute);
     }
-
-    return extensionNavigationItems.map((navItem: UiSchemaNavItem) => {
-      const navItemRoute = `/extensions${navItem.route}`;
-      const regexp = new RegExp(`^${navItemRoute}`);
-      if (regexp.test(location.pathname)) {
-        setActiveKey(navItemRoute);
-      }
-      return (
-        <HeaderMenuItem
-          href={navItemRoute}
-          isCurrentPage={isActivePage(navItemRoute)}
-          data-qa={`extension-${slugifyString(navItem.label)}`}
-        >
-          {navItem.label}
-        </HeaderMenuItem>
-      );
-    });
+    return (
+      <HeaderMenuItem
+        href={navItemRoute}
+        isCurrentPage={isActivePage(navItemRoute)}
+        data-qa={`extension-${slugifyString(navItem.label)}`}
+      >
+        {navItem.label}
+      </HeaderMenuItem>
+    );
   };
 
   const headerMenuItems = () => {
@@ -308,7 +327,10 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         {configurationElement()}
-        {extensionNavigationElements()}
+        {extensionNavigationElementsForDisplayLocation(
+          'header_menu_item',
+          extensionHeaderMenuItemElement
+        )}
       </>
     );
   };
