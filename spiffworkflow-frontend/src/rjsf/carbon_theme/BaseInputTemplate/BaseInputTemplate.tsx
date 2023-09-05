@@ -1,4 +1,3 @@
-// @ts-ignore
 import { DatePicker, DatePickerInput, TextInput } from '@carbon/react';
 import {
   getInputProps,
@@ -11,6 +10,7 @@ import {
 import { useCallback } from 'react';
 import { DATE_FORMAT_CARBON, DATE_FORMAT_FOR_DISPLAY } from '../../../config';
 import { ymdDateStringToConfiguredFormat } from '../../../helpers';
+import { getCommonAttributes } from '../../helpers';
 
 /** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
  * It is used as the template for rendering many of the <input> based widgets that differ by `type` and callbacks only.
@@ -70,28 +70,12 @@ export default function BaseInputTemplate<
     [onFocus, id]
   );
 
-  let labelToUse = label;
-  if (uiSchema && uiSchema['ui:title']) {
-    labelToUse = uiSchema['ui:title'];
-  } else if (schema && schema.title) {
-    labelToUse = schema.title;
-  }
-
-  let helperText = null;
-  if (uiSchema && uiSchema['ui:help']) {
-    helperText = uiSchema['ui:help'];
-  }
-
-  let invalid = false;
-  let errorMessageForField = null;
-  if (rawErrors && rawErrors.length > 0) {
-    invalid = true;
-    if ('validationErrorMessage' in schema) {
-      errorMessageForField = (schema as any).validationErrorMessage;
-    } else {
-      errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
-    }
-  }
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    rawErrors
+  );
 
   let component = null;
   if (type === 'date') {
@@ -118,15 +102,15 @@ export default function BaseInputTemplate<
         <DatePickerInput
           id={id}
           placeholder={DATE_FORMAT_FOR_DISPLAY}
-          helperText={helperText}
+          helperText={commonAttributes.helperText}
           type="text"
           size="md"
           value={dateValue}
           autocomplete="off"
           allowInput={false}
           onChange={_onChange}
-          invalid={invalid}
-          invalidText={errorMessageForField}
+          invalid={commonAttributes.invalid}
+          invalidText={commonAttributes.errorMessageForField}
           autoFocus={autofocus}
           disabled={disabled || readonly}
           onBlur={_onBlur}
@@ -141,9 +125,9 @@ export default function BaseInputTemplate<
         <TextInput
           id={id}
           className="text-input"
-          helperText={helperText}
-          invalid={invalid}
-          invalidText={errorMessageForField}
+          helperText={commonAttributes.helperText}
+          invalid={commonAttributes.invalid}
+          invalidText={commonAttributes.errorMessageForField}
           autoFocus={autofocus}
           disabled={disabled || readonly}
           value={value || value === 0 ? value : ''}

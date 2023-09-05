@@ -10,10 +10,12 @@ import {
   convertStringToDate,
   dateStringToYMDFormat,
 } from '../../../helpers';
+import { getCommonAttributes } from '../../helpers';
 
 interface widgetArgs {
   id: string;
   value: any;
+  label: string;
   schema?: any;
   uiSchema?: any;
   disabled?: boolean;
@@ -21,7 +23,6 @@ interface widgetArgs {
   rawErrors?: any;
   onChange?: any;
   autofocus?: any;
-  label?: string;
 }
 
 // NOTE: To properly validate that both start and end dates are specified
@@ -41,15 +42,12 @@ export default function DateRangePickerWidget({
   label,
   rawErrors = [],
 }: widgetArgs) {
-  let invalid = false;
-  let errorMessageForField = null;
-
-  let labelToUse = label;
-  if (uiSchema && uiSchema['ui:title']) {
-    labelToUse = uiSchema['ui:title'];
-  } else if (schema && schema.title) {
-    labelToUse = schema.title;
-  }
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    rawErrors
+  );
 
   const onChangeLocal = useCallback(
     (dateRange: Date[]) => {
@@ -68,22 +66,6 @@ export default function DateRangePickerWidget({
     },
     [onChange]
   );
-
-  let helperText = null;
-  if (uiSchema && uiSchema['ui:help']) {
-    helperText = uiSchema['ui:help'];
-  }
-
-  if (!invalid && rawErrors && rawErrors.length > 0) {
-    invalid = true;
-    if ('validationErrorMessage' in schema) {
-      errorMessageForField = (schema as any).validationErrorMessage;
-    } else {
-      errorMessageForField = `${(labelToUse || '').replace(/\*$/, '')} ${
-        rawErrors[0]
-      }`;
-    }
-  }
 
   let dateValue: (Date | null)[] | null = value;
   if (value) {
@@ -113,12 +95,12 @@ export default function DateRangePickerWidget({
       <DatePickerInput
         id={`${id}-start`}
         placeholder={DATE_FORMAT_FOR_DISPLAY}
-        helperText={helperText}
+        helperText={commonAttributes.helperText}
         type="text"
         size="md"
         disabled={disabled || readonly}
-        invalid={invalid}
-        invalidText={errorMessageForField}
+        invalid={commonAttributes.invalid}
+        invalidText={commonAttributes.errorMessageForField}
         autoFocus={autofocus}
         pattern={null}
       />
@@ -128,7 +110,7 @@ export default function DateRangePickerWidget({
         type="text"
         size="md"
         disabled={disabled || readonly}
-        invalid={invalid}
+        invalid={commonAttributes.invalid}
         autoFocus={autofocus}
         pattern={null}
       />
