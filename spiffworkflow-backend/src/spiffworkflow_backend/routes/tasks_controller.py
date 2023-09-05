@@ -685,7 +685,7 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    processor = ProcessInstanceProcessor(process_instance)
+    processor = ProcessInstanceProcessor(process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle)
     spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
     AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
 
