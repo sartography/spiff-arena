@@ -148,23 +148,8 @@ def task_list_completed_by_me(process_instance_id: int, page: int = 1, per_page:
         HumanTaskModel.process_instance_id == process_instance_id,
     )
 
-    human_tasks = (
-        # human_tasks_query.add_columns(
-        #     process_model_identifier_column,
-        #     process_instance_status_column,
-        #     user_username_column,
-        #     group_identifier_column,
-        #     HumanTaskModel.task_name,
-        #     HumanTaskModel.task_title,
-        #     HumanTaskModel.process_model_display_name,
-        #     HumanTaskModel.process_instance_id,
-        #     HumanTaskModel.updated_at_in_seconds,
-        #     HumanTaskModel.created_at_in_seconds,
-        #     potential_owner_usernames_from_group_concat_or_similar,
-        # )
-        human_tasks_query.order_by(desc(HumanTaskModel.id)).paginate(  # type: ignore
-            page=page, per_page=per_page, error_out=False
-        )
+    human_tasks = human_tasks_query.order_by(desc(HumanTaskModel.id)).paginate(  # type: ignore
+        page=page, per_page=per_page, error_out=False
     )
 
     response_json = {
