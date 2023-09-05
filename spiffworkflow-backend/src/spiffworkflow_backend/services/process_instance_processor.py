@@ -95,7 +95,8 @@ TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
 
-WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None] 
+WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None]
+
 
 def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
     if name not in glbls:
@@ -398,7 +399,7 @@ class ProcessInstanceProcessor:
         process_instance_model: ProcessInstanceModel,
         validate_only: bool = False,
         script_engine: PythonScriptEngine | None = None,
-        workflow_completed_handler: WorkflowCompletedHandler | None = None
+        workflow_completed_handler: WorkflowCompletedHandler | None = None,
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine

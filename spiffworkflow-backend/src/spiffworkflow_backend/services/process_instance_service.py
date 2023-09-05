@@ -259,7 +259,9 @@ class ProcessInstanceService:
     ) -> ProcessInstanceProcessor | None:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
-            processor = ProcessInstanceProcessor(process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle)
+            processor = ProcessInstanceProcessor(
+                process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
+            )
         if status_value and cls.can_optimistically_skip(processor, status_value):
             current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
             return None
