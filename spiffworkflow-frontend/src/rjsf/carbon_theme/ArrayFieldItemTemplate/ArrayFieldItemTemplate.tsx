@@ -40,12 +40,14 @@ export default function ArrayFieldItemTemplate<
   const btnStyle: CSSProperties = {
     marginBottom: '0.5em',
   };
-  const mainColumnWidthSmall = 3;
-  const mainColumnWidthMedium = 4;
-  const mainColumnWidthLarge = 7;
+  const mainColumnWidthSmall = 2;
+  const mainColumnWidthMedium = 3;
+  const mainColumnWidthLarge = 6;
   return (
     <div className={className}>
       <Grid condensed fullWidth>
+        <Column sm={1} md={1} lg={1}>
+        </Column>
         <Column
           sm={mainColumnWidthSmall}
           md={mainColumnWidthMedium}

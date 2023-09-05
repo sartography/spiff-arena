@@ -56,3 +56,18 @@
 .rjsf #root #root__description {
   margin-bottom: 0.5em;
 }
+
+.rjsf .array-item {
+  padding-top: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+}
+
+.rjsf .array-item legend {
+  display: none;
+}
+
+.rjsf .array-item  .rjsf-field {
+  margin-bottom: 0;
+}
