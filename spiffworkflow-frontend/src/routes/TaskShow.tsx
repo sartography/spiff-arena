@@ -260,7 +260,10 @@ export default function TaskShow() {
       let closeButton = null;
       if (taskWithTaskData.typename === 'ManualTask') {
         submitButtonText = 'Continue';
-      } else if (taskWithTaskData.typename === 'UserTask') {
+      } else if (
+        taskWithTaskData.typename === 'UserTask' &&
+        !UserService.onlyGuestTaskCompletion()
+      ) {
         closeButton = (
           <Button
             id="close-button"
@@ -269,7 +272,7 @@ export default function TaskShow() {
             kind="secondary"
             title="Save data as draft and close the form."
           >
-            Save and Close
+            Save and close
           </Button>
         );
       }
