@@ -41,7 +41,7 @@ from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -1435,7 +1435,7 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        return [task for task in bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK) if len(task.data) > 0]
+        return [task for task in bpmn_process_instance.get_tasks(state=TaskState.FINISHED_MASK) if len(task.data) > 0]
 
     @classmethod
     def get_task_data_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:

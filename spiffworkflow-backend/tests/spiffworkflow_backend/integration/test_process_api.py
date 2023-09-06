@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from SpiffWorkflow.task import TaskState  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_group import ProcessGroup

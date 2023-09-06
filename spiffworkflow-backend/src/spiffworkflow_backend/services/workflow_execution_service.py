@@ -13,7 +13,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefin
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -187,13 +187,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 | TaskState.ERROR
             ):
                 # these will be removed from the parent and then ignored
-                if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                if waiting_spiff_task.has_state(TaskState.PREDICTED_MASK):
                     continue
 
                 # removing elements from an array causes the loop to exit so deep copy the array first
                 waiting_children = copy.copy(waiting_spiff_task.children)
                 for waiting_child in waiting_children:
-                    if waiting_child._has_state(TaskState.PREDICTED_MASK):
+                    if waiting_child.has_state(TaskState.PREDICTED_MASK):
                         waiting_spiff_task._children.remove(waiting_child.id)
 
                 self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
@@ -210,7 +210,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             #         continue
             #
             #     # include PREDICTED_MASK tasks in list so we can remove them from the parent
-            #     if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+            #     if waiting_spiff_task.has_state(TaskState.PREDICTED_MASK):
             #         TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
             #         for cpt in waiting_spiff_task.parent.children:
             #             if cpt.id == waiting_spiff_task.id:

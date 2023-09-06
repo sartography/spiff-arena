@@ -1,4 +1,5 @@
 from __future__ import annotations
+from SpiffWorkflow.util.task import TaskState
 
 import enum
 from dataclasses import dataclass
@@ -8,7 +9,6 @@ from typing import Any
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
-from SpiffWorkflow.task import TaskStateNames  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -209,9 +209,7 @@ class Task:
 
     @classmethod
     def task_state_name_to_int(cls, task_state_name: str) -> int:
-        task_state_integers = {v: k for k, v in TaskStateNames.items()}
-        task_state_int: int = task_state_integers[task_state_name]
-        return task_state_int
+        return TaskState.get_value(task_state_name)
 
 
 class OptionSchema(Schema):

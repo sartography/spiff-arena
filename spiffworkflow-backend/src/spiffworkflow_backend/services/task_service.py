@@ -9,8 +9,7 @@ from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
-from SpiffWorkflow.task import TaskStateNames
+from SpiffWorkflow.util.task import TaskState
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -137,7 +136,7 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> None:
         for child_spiff_task in spiff_task.children:
-            if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
+            if child_spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
                 continue
             self.update_task_model_with_spiff_task(
@@ -265,7 +264,7 @@ class TaskService:
         spiff_task_data = new_properties_json.pop("data")
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
-        task_model.state = TaskStateNames[new_properties_json["state"]]
+        task_model.state = TaskState.get_name(new_properties_json["state"])
         json_data_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"
         )
@@ -423,7 +422,7 @@ class TaskService:
             # we are going to avoid saving likely and maybe tasks to the db.
             # that means we need to remove them from their parents' lists of children as well.
             spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
-            if spiff_task._has_state(TaskState.PREDICTED_MASK):
+            if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
 
