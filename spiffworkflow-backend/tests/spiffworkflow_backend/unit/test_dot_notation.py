@@ -1,6 +1,5 @@
 from flask.app import Flask
 from flask.testing import FlaskClient
-from SpiffWorkflow.util.task import TaskState
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
@@ -29,7 +28,7 @@ class TestDotNotation(BaseTest):
         processor.do_engine_steps(save=True)
         human_task = process_instance.human_tasks[0]
 
-        user_task = processor.get_tasks(state=TaskState.READY, manual=True)[0]
+        user_task = processor.get_all_ready_or_waiting_tasks()[0]
         form_data = {
             "invoice.contibutorName": "Elizabeth",
             "invoice.contributorId": 100,

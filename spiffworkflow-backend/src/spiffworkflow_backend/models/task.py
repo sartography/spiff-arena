@@ -8,7 +8,7 @@ from typing import Any
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
-from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -209,7 +209,8 @@ class Task:
 
     @classmethod
     def task_state_name_to_int(cls, task_state_name: str) -> int:
-        return TaskState.get_value(task_state_name)
+        state_value: int = TaskState.get_value(task_state_name)
+        return state_value
 
 
 class OptionSchema(Schema):

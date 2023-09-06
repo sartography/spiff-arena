@@ -42,7 +42,7 @@ from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel

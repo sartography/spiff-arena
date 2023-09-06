@@ -1,5 +1,4 @@
 from flask import Flask
-from SpiffWorkflow.util.task import TaskState
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -53,7 +52,7 @@ class TestJinjaService(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        JinjaService.render_instructions_for_end_user(processor.get_tasks(state=TaskState.READY, manual=True)[0])
+        JinjaService.render_instructions_for_end_user(processor.get_all_ready_or_waiting_tasks()[0])
         "\n".join(
             [
                 r"* From Filter: Sanitized \| from \| filter",

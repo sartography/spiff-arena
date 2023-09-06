@@ -14,7 +14,7 @@ from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.group import GroupModel
