@@ -34,14 +34,13 @@ export default function ReactFormBuilder({
   const UI_EXTENSION = '-uischema.json';
   const DATA_EXTENSION = '-exampledata.json';
 
-  const [ready, setReady] = useState<boolean>(false);
   const [fetchFailed, setFetchFailed] = useState<boolean>(false);
 
-  const [strSchema, setStrSchema] = useState<string>('{}');
+  const [strSchema, setStrSchema] = useState<string>('');
   const [debouncedStrSchema] = useDebounce(strSchema, 500);
-  const [strUI, setStrUI] = useState<string>('{}');
+  const [strUI, setStrUI] = useState<string>('');
   const [debouncedStrUI] = useDebounce(strUI, 500);
-  const [strFormData, setStrFormData] = useState<string>('{}');
+  const [strFormData, setStrFormData] = useState<string>('');
   const [debouncedFormData] = useDebounce(strFormData, 500);
 
   const [postJsonSchema, setPostJsonSchema] = useState<object>({});
@@ -69,9 +68,7 @@ export default function ReactFormBuilder({
 
       HttpService.makeCallToBackend({
         path: url,
-        successCallback: () => {
-          setReady(true);
-        },
+        successCallback: () => {},
         failureCallback: () => {}, // fixme: handle errors
         httpMethod,
         postBody: submission,
@@ -81,11 +78,15 @@ export default function ReactFormBuilder({
   );
 
   const createFiles = (base: string) => {
-    saveFile(new File([debouncedStrSchema], base + SCHEMA_EXTENSION), true);
-    saveFile(new File([debouncedStrUI], base + UI_EXTENSION), true);
-    saveFile(new File([debouncedFormData], base + DATA_EXTENSION), true);
+    saveFile(new File(['{}'], base + SCHEMA_EXTENSION), true);
+    saveFile(new File(['{}'], base + UI_EXTENSION), true);
+    saveFile(new File(['{}'], base + DATA_EXTENSION), true);
     setBaseFileName(base);
     onFileNameSet(base + SCHEMA_EXTENSION);
+  };
+
+  const isReady = () => {
+    return strSchema !== '' && strUI !== '' && strFormData !== '';
   };
 
   // Auto save schema changes
@@ -118,6 +119,14 @@ export default function ReactFormBuilder({
     let schema = {};
     let ui = {};
     let data = {};
+
+    if (
+      debouncedFormData === '' ||
+      debouncedStrSchema === '' ||
+      debouncedStrUI === ''
+    ) {
+      return;
+    }
 
     try {
       schema = JSON.parse(debouncedStrSchema);
@@ -164,7 +173,6 @@ export default function ReactFormBuilder({
 
   function setJsonSchemaFromResponseJson(result: any) {
     setStrSchema(result.file_contents);
-    setReady(true);
   }
 
   function setJsonUiFromResponseJson(result: any) {
@@ -195,7 +203,6 @@ export default function ReactFormBuilder({
         setBaseFileName(baseName(fileName));
       },
       failureCallback: () => {
-        setReady(false);
         setFetchFailed(true);
       },
     });
@@ -229,16 +236,28 @@ export default function ReactFormBuilder({
   }
 
   function updateData(newData: object) {
-    console.log('Seting data string');
     setFormData(newData);
-    setStrFormData(JSON.stringify(newData, null, 2));
+    const newDataStr = JSON.stringify(newData, null, 2);
+    if (newDataStr !== strFormData) {
+      console.log("updating strFormData");
+      setStrFormData(newDataStr);
+    }
+  }
+  function updateDataFromStr(newDataStr: string) {
+    try {
+      const newData = JSON.parse(newDataStr);
+      setFormData(newData);
+    } catch (e) {
+      /* empty */
+    }
   }
 
-  if (!ready) {
+
+  if (!isReady()) {
     if (fileName !== '' && !fetchFailed) {
-      fetchSchema();
-      fetchUI();
       fetchExampleData();
+      fetchUI();
+      fetchSchema();
       return (
         <div style={{ height: 200 }}>
           <Loading />
@@ -350,7 +369,7 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 value={strFormData}
-                onChange={(value: any) => setStrFormData(value || '{}')}
+                onChange={(value: any) => updateDataFromStr(value || '')}
               />
             </TabPanel>
             <TabPanel>

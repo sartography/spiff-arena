@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from collections import OrderedDict
 from collections.abc import Generator
 from typing import Any
 from typing import TypedDict
@@ -322,15 +323,14 @@ def prepare_form(body: dict) -> flask.wrappers.Response:
     # Run the form schema through the jinja template engine
     form_string = json.dumps(form_schema)
     form_string = JinjaService.render_jinja_template(form_string, task_data=task_data)
-    form_dict = json.loads(form_string)
-
+    form_dict = OrderedDict(json.loads(form_string))
     # Update the schema if it, for instance, uses task data to populate an options list.
     _update_form_schema_with_task_data_as_needed(form_dict, task_data)
 
     # Hide any fields that are marked as hidden in the task data.
     _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui, task_data)
 
-    return make_response(jsonify({"form_schema": form_dict, "form_ui": form_ui}), 200)
+    return make_response(json.dumps({"form_schema": form_dict, "form_ui": form_ui}), 200)
 
 
 def task_show(

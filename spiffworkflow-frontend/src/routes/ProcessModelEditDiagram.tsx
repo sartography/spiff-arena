@@ -368,23 +368,20 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onJsonSchemaFilesRequested = useCallback(
-    (event: any, pm: ProcessModel | null = null) => {
-      setFileEventBus(event.eventBus);
-      const curProcessModel = pm || processModel;
-      const re = /.*[-.]schema.json/;
-      if (curProcessModel) {
-        const jsonFiles = curProcessModel.files.filter((f) => f.name.match(re));
-        const options = jsonFiles.map((f) => {
-          return { label: f.name, value: f.name };
-        });
-        event.eventBus.fire('spiff.json_schema_files.returned', { options });
-      } else {
-        console.error('There is no process Model.');
-      }
-    },
-    [processModel]
-  );
+  const onJsonSchemaFilesRequested = (event: any) => {
+    setFileEventBus(event.eventBus);
+    const re = /.*[-.]schema.json/;
+    if (processModel) {
+      const jsonFiles = processModel.files.filter((f) => f.name.match(re));
+      const options = jsonFiles.map((f) => {
+        return { label: f.name, value: f.name };
+      });
+      event.eventBus.fire('spiff.json_schema_files.returned', { options });
+    } else {
+      console.error('There is no process Model.');
+    }
+  };
+
 
   const onDmnFilesRequested = (event: any) => {
     setFileEventBus(event.eventBus);
@@ -405,7 +402,12 @@ export default function ProcessModelEditDiagram() {
   useEffect(() => {
     const updateDiagramFiles = (pm: ProcessModel) => {
       setProcessModel(pm);
-      onJsonSchemaFilesRequested({ eventBus: fileEventBus }, pm);
+      const re = /.*[-.]schema.json/;
+      const jsonFiles = pm.files.filter((f) => f.name.match(re));
+      const options = jsonFiles.map((f) => {
+        return { label: f.name, value: f.name };
+      });
+      fileEventBus.fire('spiff.json_schema_files.returned', { options });
     };
 
     if (isFocused && fileEventBus) {
@@ -416,7 +418,7 @@ export default function ProcessModelEditDiagram() {
         successCallback: updateDiagramFiles,
       });
     }
-  }, [isFocused, fileEventBus, onJsonSchemaFilesRequested, processModelPath]);
+  }, [isFocused, fileEventBus, processModelPath]);
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
