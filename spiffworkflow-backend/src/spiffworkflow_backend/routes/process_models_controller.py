@@ -224,7 +224,7 @@ def process_model_list(
 
 
 def process_model_file_update(
-    modified_process_model_identifier: str, file_name: str, file_contents_hash: str = None
+    modified_process_model_identifier: str, file_name: str, file_contents_hash: str | None = None
 ) -> flask.wrappers.Response:
     message = f"User: {g.user.username} clicked save for"
     return _create_or_update_process_model_file(
