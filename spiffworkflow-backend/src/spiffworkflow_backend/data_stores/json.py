@@ -13,7 +13,11 @@ class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
-        raise Exception("This is a write only data store.")
+        location = "my_tmp_location" # TODO: find location from spiff task
+        model = db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).first()
+        if model is None:
+            raise Exception(f"Invalid reference to data store '{self.bpmn_id}'.")
+        my_task.data[self.bpmn_id] = model.data
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
@@ -29,16 +33,6 @@ class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
         db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
-
-    def _get_model(self, category: str, item: dict[str, Any]) -> JSONDataStoreModel | None:
-        now = round(time())
-        return TypeaheadModel(
-            category=category,
-            search_term=item["search_term"],
-            result=item["result"],
-            created_at_in_seconds=now,
-            updated_at_in_seconds=now,
-        )
 
     @staticmethod
     def register_converter(spec_config: dict[str, Any]) -> None:
