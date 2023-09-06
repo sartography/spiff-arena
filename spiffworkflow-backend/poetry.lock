@@ -2363,7 +2363,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "improvement/flexible-task-iteration"
-resolved_reference = "dcac12ad7ab0076c866e1daf3e39c3529d569cca"
+resolved_reference = "e17e3d728358ee0b097867988dd980fb883f320c"
 
 [[package]]
 name = "sqlalchemy"
