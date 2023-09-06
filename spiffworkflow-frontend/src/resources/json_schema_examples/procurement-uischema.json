@@ -1,0 +1,81 @@
+{
+  "ndr_details": {
+    "core_contributor": {
+      "ui:widget": "typeahead",
+      "ui:options": {
+        "category": "core_contributors",
+        "itemFormat": "{first_name} {last_name}"
+      },
+      "ui:help": "Select an alternate Core Contributor if this request for goods and services is for someone else"
+    },
+    "project": {
+      "ui:autofocus": true,
+      "ui:help": "Project name for which the request is being raised"
+    },
+    "purpose": {
+      "ui:widget": "textarea",
+      "ui:placeholder": "Describe the service/product you need to purchase and the reasons for it",
+      "ui:help": "Up to 250 characters"
+    },
+    "criticality": {
+      "ui:help": "Indicate the request's criticality for the project"
+    },
+    "period": {
+      "ui:widget": "date",
+      "ui:help": "Specify the preferred delivery date for this service/product"
+    },
+    "vendor": {
+      "ui:placeholder": "Vendor Name",
+      "ui:help": "Provide the full legal name of the potential vendor capable of delivering the service/product"
+    },
+    "payment_method": {
+      "ui:help": "Specify the expected payment method for this service/product"
+    },
+    "item": {
+      "items": {
+        "sub_category": {
+          "ui:autofocus": true
+        },
+        "item_name": {
+          "ui:placeholder": "E.g. the name of the service/product, which app module, version, serial number, etc.",
+          "ui:help": "Up to 100 symbols"
+        },
+        "item_url": {
+          "ui:placeholder": "E.g. https://www.example.url/",
+          "ui:help": "Provide the URL for the selected goods/services"
+        },
+        "qty": {
+          "ui:help": "Specify the quantity of the requested service/product"
+        },
+        "currency_type": {
+          "ui:placeholder": "Fiat or Crypto"
+        },
+        "unit_price": {
+          "ui:placeholder": "Price in fiat or crypto, incl. taxes",
+          "ui:help": "Use a period (full stop) to indicate the decimal separator, e.g. 12.45 (fiat) or 12.4513 (crypto)"
+        },
+        "ui:order": [
+          "sub_category",
+          "item_name",
+          "item_url",
+          "qty",
+          "currency_type",
+          "currency",
+          "unit_price"
+        ]
+      }
+    },
+    "ui:order": [
+      "requestor",
+      "core_contributor",
+      "project",
+      "category",
+      "purpose",
+      "criticality",
+      "period",
+      "vendor",
+      "payment_method",
+      "item"
+    ]
+  }
+}

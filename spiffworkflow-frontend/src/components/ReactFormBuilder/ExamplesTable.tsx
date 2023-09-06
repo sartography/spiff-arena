@@ -15,6 +15,7 @@ examples.push({
   description: 'A simple registration form',
   schema: require('../../resources/json_schema_examples/registration-schema.json'), // eslint-disable-line global-require
   ui: require('../../resources/json_schema_examples/registration-uischema.json'), // eslint-disable-line global-require
+  data: require('../../resources/json_schema_examples/registration-exampledata.json'), // eslint-disable-line global-require
 });
 // @ts-ignore
 examples.push({
@@ -22,6 +23,14 @@ examples.push({
   description: 'Allow adding multiple entries to a single form.',
   schema: require('../../resources/json_schema_examples/nested-schema.json'), // eslint-disable-line global-require
   ui: require('../../resources/json_schema_examples/nested-uischema.json'), // eslint-disable-line global-require
+  data: require('../../resources/json_schema_examples/nested-exampledata.json'), // eslint-disable-line global-require
+});
+examples.push({
+  name: 'Request',
+  description: 'Populate dropdowns with existing Task Data',
+  schema: require('../../resources/json_schema_examples/procurement-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/procurement-uischema.json'), // eslint-disable-line global-require
+  data: require('../../resources/json_schema_examples/procurement-exampledata.json'), // eslint-disable-line global-require
 });
 
 type OwnProps = {
@@ -30,7 +39,7 @@ type OwnProps = {
 
 export default function ExamplesTable({ onSelect }: OwnProps) {
   function selectExample(index: number) {
-    onSelect(examples[index].schema, examples[index].ui);
+    onSelect(examples[index].schema, examples[index].ui, examples[index].data);
   }
 
   // Render the form in another div
@@ -53,7 +62,7 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
   });
 
   return (
-    <Table size='lg'>
+    <Table size="lg">
       <TableHead>
         <TableRow>
           <TableHeader key="name" title="Name">

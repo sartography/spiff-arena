@@ -2046,6 +2046,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/Task"
 
+  /tasks/prepare_form:
+    post:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.prepare_form
+      summary: Pre-processes a form schema, ui schema, and data data, useful for previewing a form
+      requestBody:
+        content:
+          application/json:
+            schema:
+               $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: Returns the same data structure provided, but after some replacements.
+          content:
+            application/json:
+              schema:
+                 $ref: "#/components/schemas/Task"
+
+
   /tasks/{process_instance_id}/{task_guid}:
     parameters:
       - name: task_guid

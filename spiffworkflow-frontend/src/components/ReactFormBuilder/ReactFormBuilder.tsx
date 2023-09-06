@@ -13,11 +13,11 @@ import {
   Button,
   Loading,
 } from '@carbon/react';
-import validator from '@rjsf/validator-ajv8';
 import { useDebounce } from 'use-debounce';
-import { Form } from '../../rjsf/carbon_theme';
 import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
+import CustomForm from '../CustomForm';
+import ErrorBoundary from '../ErrorBoundary';
 
 type OwnProps = {
   processModelId: string;
@@ -32,6 +32,7 @@ export default function ReactFormBuilder({
 }: OwnProps) {
   const SCHEMA_EXTENSION = '-schema.json';
   const UI_EXTENSION = '-uischema.json';
+  const DATA_EXTENSION = '-exampledata.json';
 
   const [ready, setReady] = useState<boolean>(false);
   const [fetchFailed, setFetchFailed] = useState<boolean>(false);
@@ -40,11 +41,14 @@ export default function ReactFormBuilder({
   const [debouncedStrSchema] = useDebounce(strSchema, 500);
   const [strUI, setStrUI] = useState<string>('{}');
   const [debouncedStrUI] = useDebounce(strUI, 500);
-  const [jsonSchema, setJsonSchema] = useState<object>({});
-  const [jsonUI, setJsonUI] = useState<object>({});
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [formData, setFormData] = useState<object>({});
   const [strFormData, setStrFormData] = useState<string>('{}');
+  const [debouncedFormData] = useDebounce(strFormData, 500);
+
+  const [postJsonSchema, setPostJsonSchema] = useState<object>({});
+  const [postJsonUI, setPostJsonUI] = useState<object>({});
+  const [formData, setFormData] = useState<object>({});
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
@@ -76,34 +80,83 @@ export default function ReactFormBuilder({
     [processModelId]
   );
 
-  const getSchemaFile = (base: string): File => {
-    return new File([debouncedStrSchema], base + SCHEMA_EXTENSION);
-  };
-
-  const getUIFile = (base: string): File => {
-    return new File([debouncedStrUI], base + UI_EXTENSION);
-  };
-
   const createFiles = (base: string) => {
-    saveFile(getSchemaFile(base), true);
-    saveFile(getUIFile(base), true);
+    saveFile(new File([debouncedStrSchema], base + SCHEMA_EXTENSION), true);
+    saveFile(new File([debouncedStrUI], base + UI_EXTENSION), true);
+    saveFile(new File([debouncedFormData], base + DATA_EXTENSION), true);
     setBaseFileName(base);
-    onFileNameSet(getSchemaFile(base).name);
+    onFileNameSet(base + SCHEMA_EXTENSION);
   };
 
   // Auto save schema changes
   useEffect(() => {
     if (baseFileName !== '') {
-      saveFile(getSchemaFile(baseFileName));
+      saveFile(new File([debouncedStrSchema], baseFileName + SCHEMA_EXTENSION));
     }
   }, [debouncedStrSchema, baseFileName, saveFile]);
 
   // Auto save ui changes
   useEffect(() => {
     if (baseFileName !== '') {
-      saveFile(getUIFile(baseFileName));
+      saveFile(new File([debouncedStrUI], baseFileName + UI_EXTENSION));
     }
   }, [debouncedStrUI, baseFileName, saveFile]);
+
+  // Auto save example data changes
+  useEffect(() => {
+    if (baseFileName !== '') {
+      saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
+    }
+  }, [debouncedFormData, baseFileName, saveFile]);
+
+  useEffect(() => {
+    /**
+     * we need to run the schema and ui through a backend call before rendering the form
+     * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
+     */
+    const url: string = '/tasks/prepare_form';
+    let schema = {};
+    let ui = {};
+    let data = {};
+
+    try {
+      schema = JSON.parse(debouncedStrSchema);
+    } catch (e) {
+      setErrorMessage('Please check the Json Schema for errors.');
+      return;
+    }
+    try {
+      ui = JSON.parse(debouncedStrUI);
+    } catch (e) {
+      setErrorMessage('Please check the UI Settings for errors.');
+      return;
+    }
+    try {
+      data = JSON.parse(debouncedFormData);
+    } catch (e) {
+      setErrorMessage('Please check the Task Data for errors.');
+      return;
+    }
+    setErrorMessage('');
+
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: (response: any) => {
+        setPostJsonSchema(response.form_schema);
+        setPostJsonUI(response.form_ui);
+        setErrorMessage('');
+      },
+      failureCallback: (error: any) => {
+        setErrorMessage(error.message);
+      }, // fixme: handle errors
+      httpMethod: 'POST',
+      postBody: {
+        form_schema: schema,
+        form_ui: ui,
+        task_data: data,
+      },
+    });
+  }, [debouncedStrSchema, debouncedStrUI, debouncedFormData]);
 
   const handleTabChange = (evt: any) => {
     setSelectedIndex(evt.selectedIndex);
@@ -111,25 +164,21 @@ export default function ReactFormBuilder({
 
   function setJsonSchemaFromResponseJson(result: any) {
     setStrSchema(result.file_contents);
-    try {
-      setJsonSchema(JSON.parse(result.file_contents));
-      setReady(true);
-    } catch (e) {
-      // todo: show error message
-      console.log('Error parsing JSON:', e);
-    }
-    3;
+    setReady(true);
   }
 
   function setJsonUiFromResponseJson(result: any) {
     setStrUI(result.file_contents);
+  }
+
+  function setDataFromResponseJson(result: any) {
+    setStrFormData(result.file_contents);
     try {
-      setJsonUI(JSON.parse(result.file_contents));
+      setFormData(JSON.parse(result.file_contents));
     } catch (e) {
       // todo: show error message
       console.log('Error parsing JSON:', e);
     }
-    console.log('Json UI:', result.file_contents);
   }
 
   function baseName(myFileName: string): string {
@@ -141,7 +190,10 @@ export default function ReactFormBuilder({
       path: `/process-models/${processModelId}/files/${baseName(
         fileName
       )}${SCHEMA_EXTENSION}`,
-      successCallback: setJsonSchemaFromResponseJson,
+      successCallback: (response: any) => {
+        setJsonSchemaFromResponseJson(response);
+        setBaseFileName(baseName(fileName));
+      },
       failureCallback: () => {
         setReady(false);
         setFetchFailed(true);
@@ -159,39 +211,21 @@ export default function ReactFormBuilder({
     });
   }
 
-  function update(schema: object, ui: object) {
-    setJsonSchema(schema);
-    setJsonUI(ui);
+  function fetchExampleData() {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${processModelId}/files/${baseName(
+        fileName
+      )}${DATA_EXTENSION}`,
+      successCallback: setDataFromResponseJson,
+      failureCallback: () => {},
+    });
+  }
+
+  function update(schema: object, ui: object, data: object) {
+    setFormData(data);
     setStrSchema(JSON.stringify(schema, null, 2));
     setStrUI(JSON.stringify(ui, null, 2));
-  }
-
-  function updateSchemaString(newSchema: string) {
-    setStrSchema(newSchema);
-    try {
-      setJsonSchema(JSON.parse(newSchema));
-    } catch (e) {
-      // todo: show error message
-    }
-  }
-
-  function updateUIString(newUI: string) {
-    setStrUI(newUI);
-    try {
-      setJsonUI(JSON.parse(newUI));
-    } catch (e) {
-      // todo: show error message
-    }
-  }
-
-  function updateDataString(newData: string) {
-    console.log('Seting data string');
-    setStrFormData(newData);
-    try {
-      setFormData(JSON.parse(newData));
-    } catch (e) {
-      // todo: show error message
-    }
+    setStrFormData(JSON.stringify(data, null, 2));
   }
 
   function updateData(newData: object) {
@@ -204,6 +238,7 @@ export default function ReactFormBuilder({
     if (fileName !== '' && !fetchFailed) {
       fetchSchema();
       fetchUI();
+      fetchExampleData();
       return (
         <div style={{ height: 200 }}>
           <Loading />
@@ -237,6 +272,10 @@ export default function ReactFormBuilder({
               {newFileName}
               {UI_EXTENSION} (for additional UI form settings)
             </li>
+            <li>
+              {newFileName}
+              {DATA_EXTENSION} (for example data to test the form
+            </li>
           </ul>
           <Button
             className="react-json-schema-form-submit-button"
@@ -266,7 +305,7 @@ export default function ReactFormBuilder({
               <p>
                 The Json Schema describes the structure of the data you want to
                 collect, and what validation rules should be applied to each
-                field.&nbps;
+                field.
                 <a
                   target="new"
                   href="https://json-schema.org/learn/getting-started-step-by-step"
@@ -279,7 +318,7 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 value={strSchema}
-                onChange={(value) => updateSchemaString(value || '')}
+                onChange={(value) => setStrSchema(value || '')}
               />
             </TabPanel>
             <TabPanel>
@@ -298,7 +337,7 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 value={strUI}
-                onChange={(value) => updateUIString(value || '')}
+                onChange={(value) => setStrUI(value || '')}
               />
             </TabPanel>
             <TabPanel>
@@ -311,10 +350,14 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 value={strFormData}
-                onChange={(value: any) => updateDataString(value || '{}')}
+                onChange={(value: any) => setStrFormData(value || '{}')}
               />
             </TabPanel>
             <TabPanel>
+              <p>
+                If you are looking for a place to start, try loading these
+                examples and changing them to meet your needs.
+              </p>
               <ExamplesTable onSelect={update} />
             </TabPanel>
           </TabPanels>
@@ -322,6 +365,17 @@ export default function ReactFormBuilder({
       </Column>
       <Column sm={4} md={5} lg={8}>
         <h2>Form Preview</h2>
+        <div>{errorMessage}</div>
+        <ErrorBoundary>
+          <CustomForm
+            id="custom_form"
+            formData={formData}
+            onChange={(e: any) => updateData(e.formData)}
+            schema={postJsonSchema}
+            uiSchema={postJsonUI}
+          />
+        </ErrorBoundary>
+        {/*
         <Form
           formData={formData}
           onChange={(e) => updateData(e.formData)}
@@ -329,6 +383,7 @@ export default function ReactFormBuilder({
           uiSchema={jsonUI}
           validator={validator}
         />
+        */}
       </Column>
     </Grid>
   );

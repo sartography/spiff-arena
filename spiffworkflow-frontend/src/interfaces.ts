@@ -457,4 +457,5 @@ export interface JsonSchemaExample {
   description: string;
   schema: object;
   ui: object;
+  data: object;
 }

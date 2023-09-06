@@ -58,7 +58,6 @@ export default function ProcessModelEditDiagram() {
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
   const [fileEventBus, setFileEventBus] = useState<any>(null);
-  const [fileElement, setFileElement] = useState<any>(null);
   const [jsonScehmaFileName, setJsonScehmaFileName] = useState<string>('');
   const [showJsonSchemaEditor, setShowJsonSchemaEditor] = useState(false);
 
@@ -369,23 +368,23 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onJsonSchemaFilesRequested = (
-    event: any,
-    pm: ProcessModel | null = null
-  ) => {
-    setFileEventBus(event.eventBus);
-    const curProcessModel = pm || processModel;
-    const re = /.*[-.]schema.json/;
-    if (curProcessModel) {
-      const jsonFiles = curProcessModel.files.filter((f) => f.name.match(re));
-      const options = jsonFiles.map((f) => {
-        return { label: f.name, value: f.name };
-      });
-      event.eventBus.fire('spiff.json_schema_files.returned', { options });
-    } else {
-      console.error('There is no process Model.');
-    }
-  };
+  const onJsonSchemaFilesRequested = useCallback(
+    (event: any, pm: ProcessModel | null = null) => {
+      setFileEventBus(event.eventBus);
+      const curProcessModel = pm || processModel;
+      const re = /.*[-.]schema.json/;
+      if (curProcessModel) {
+        const jsonFiles = curProcessModel.files.filter((f) => f.name.match(re));
+        const options = jsonFiles.map((f) => {
+          return { label: f.name, value: f.name };
+        });
+        event.eventBus.fire('spiff.json_schema_files.returned', { options });
+      } else {
+        console.error('There is no process Model.');
+      }
+    },
+    [processModel]
+  );
 
   const onDmnFilesRequested = (event: any) => {
     setFileEventBus(event.eventBus);
@@ -417,7 +416,7 @@ export default function ProcessModelEditDiagram() {
         successCallback: updateDiagramFiles,
       });
     }
-  }, [isFocused, fileEventBus]);
+  }, [isFocused, fileEventBus, onJsonSchemaFilesRequested, processModelPath]);
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -985,7 +984,6 @@ export default function ProcessModelEditDiagram() {
     eventBus: any
   ) => {
     setFileEventBus(eventBus);
-    setFileElement(element);
     setJsonScehmaFileName(fileName);
     setShowJsonSchemaEditor(true);
   };
