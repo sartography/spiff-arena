@@ -10,7 +10,7 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 class WorkflowService:
     @classmethod
     def future_start_events(cls, workflow: BpmnWorkflow) -> list[SpiffTask]:
-        return [t for t in workflow.get_tasks(TaskState.FUTURE) if isinstance(t.task_spec, StartEvent)]
+        return [t for t in workflow.get_tasks(state=TaskState.FUTURE) if isinstance(t.task_spec, StartEvent)]
 
     @classmethod
     def next_start_event_configuration(cls, workflow: BpmnWorkflow, now_in_utc: datetime) -> StartConfiguration | None:

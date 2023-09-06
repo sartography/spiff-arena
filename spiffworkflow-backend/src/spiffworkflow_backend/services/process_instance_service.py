@@ -14,6 +14,7 @@ from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.task import TaskState
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.group import GroupModel
@@ -199,7 +200,7 @@ class ProcessInstanceService:
 
     @classmethod
     def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
-        for ready_user_task in processor.bpmn_process_instance.get_ready_user_tasks():
+        for ready_user_task in processor.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True):
             if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
                 return True
         return False

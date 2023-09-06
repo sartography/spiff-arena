@@ -1,5 +1,4 @@
 from __future__ import annotations
-from SpiffWorkflow.util.task import TaskState
 
 import enum
 from dataclasses import dataclass
@@ -9,6 +8,7 @@ from typing import Any
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
+from SpiffWorkflow.util.task import TaskState
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 

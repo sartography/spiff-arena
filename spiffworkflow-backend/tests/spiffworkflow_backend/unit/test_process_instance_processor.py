@@ -500,7 +500,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert gateway_task is not None
         assert gateway_task.state == TaskState.READY
 
-        gateway_task = processor.bpmn_process_instance.get_tasks(TaskState.READY)[0]
+        gateway_task = processor.bpmn_process_instance.get_tasks(state=TaskState.READY)[0]
         processor.manual_complete_task(str(gateway_task.id), execute=True, user=process_instance.process_initiator)
         processor.save()
         processor = ProcessInstanceProcessor(process_instance)

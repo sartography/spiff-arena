@@ -95,7 +95,7 @@ class ExecutionStrategy:
         self.delegate.save(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        tasks = [t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]
+        tasks = [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
 
         if len(tasks) > 0:
             self.subprocess_spec_loader()
@@ -177,7 +177,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # excludes COMPLETED. the others were required to get PP1 to go to completion.
             # process FUTURE tasks because Boundary events are not processed otherwise.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                TaskState.WAITING
+                state=TaskState.WAITING
                 | TaskState.CANCELLED
                 | TaskState.READY
                 | TaskState.MAYBE

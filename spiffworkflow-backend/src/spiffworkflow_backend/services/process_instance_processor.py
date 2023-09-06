@@ -41,8 +41,8 @@ from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.util.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from SpiffWorkflow.util.task import TaskState
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -1312,14 +1312,14 @@ class ProcessInstanceProcessor:
     def status_of(bpmn_process_instance: BpmnWorkflow) -> ProcessInstanceStatus:
         if bpmn_process_instance.is_completed():
             return ProcessInstanceStatus.complete
-        user_tasks = bpmn_process_instance.get_ready_user_tasks()
+        user_tasks = bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)
 
         # workflow.waiting_events (includes timers, and timers have a when firing property)
 
         # if the process instance has status "waiting" it will get picked up
         # by background processing. when that happens it can potentially overwrite
         # human tasks which is bad because we cache them with the previous id's.
-        # waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
+        # waiting_tasks = bpmn_process_instance.get_tasks(state=TaskState.WAITING)
         # waiting_tasks = bpmn_process_instance.get_waiting()
         # if len(waiting_tasks) > 0:
         #     return ProcessInstanceStatus.waiting
@@ -1356,7 +1356,7 @@ class ProcessInstanceProcessor:
         return None
 
     def lazy_load_subprocess_specs(self) -> None:
-        tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
+        tasks = self.bpmn_process_instance.get_tasks(state=TaskState.DEFINITE_MASK)
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
             if task.task_spec.description != "Call Activity":
@@ -1477,7 +1477,7 @@ class ProcessInstanceProcessor:
         return self._serializer.workflow_to_dict(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
-        return self.bpmn_process_instance.get_ready_user_tasks()  # type: ignore
+        return self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)  # type: ignore
 
     def next_task(self) -> SpiffTask:
         """Returns the next task that should be completed even if there are parallel tasks and multiple options are available.
@@ -1503,11 +1503,11 @@ class ProcessInstanceProcessor:
         # a parallel gateway with multiple tasks, so prefer ones that share a parent.
 
         # Get a list of all ready tasks
-        ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
+        ready_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.READY)
 
         if len(ready_tasks) == 0:
             # If no ready tasks exist, check for a waiting task.
-            waiting_tasks = self.bpmn_process_instance.get_tasks(TaskState.WAITING)
+            waiting_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING)
             if len(waiting_tasks) > 0:
                 return waiting_tasks[0]
 
@@ -1544,7 +1544,7 @@ class ProcessInstanceProcessor:
         return next_task_to_return
 
     def completed_user_tasks(self) -> list[SpiffTask]:
-        user_tasks = self.bpmn_process_instance.get_tasks(TaskState.COMPLETED)
+        user_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.COMPLETED)
         user_tasks.reverse()
         user_tasks = list(
             filter(
@@ -1647,11 +1647,11 @@ class ProcessInstanceProcessor:
         return self.process_instance_model.id
 
     def get_ready_user_tasks(self) -> list[SpiffTask]:
-        return self.bpmn_process_instance.get_ready_user_tasks()  # type: ignore
+        return self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)  # type: ignore
 
     def get_current_user_tasks(self) -> list[SpiffTask]:
         """Return a list of all user tasks that are READY or COMPLETE and are parallel to the READY Task."""
-        ready_tasks = self.bpmn_process_instance.get_ready_user_tasks()
+        ready_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)
         additional_tasks = []
         if len(ready_tasks) > 0:
             for child in ready_tasks[0].parent.children:
@@ -1660,19 +1660,19 @@ class ProcessInstanceProcessor:
         return ready_tasks + additional_tasks  # type: ignore
 
     def get_all_user_tasks(self) -> list[SpiffTask]:
-        all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+        all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
         return [t for t in all_tasks if t.task_spec.manual]
 
     def get_all_completed_tasks(self) -> list[SpiffTask]:
-        all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+        all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
         return [t for t in all_tasks if t.task_spec.manual and t.state in [TaskState.COMPLETED, TaskState.CANCELLED]]
 
     def get_all_waiting_tasks(self) -> list[SpiffTask]:
-        all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+        all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
         return [t for t in all_tasks if t.state in [TaskState.WAITING]]
 
     def get_all_ready_or_waiting_tasks(self) -> list[SpiffTask]:
-        all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+        all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
         return [t for t in all_tasks if t.state in [TaskState.WAITING, TaskState.READY]]
 
     def get_task_by_guid(self, task_guid: str) -> SpiffTask | None:
@@ -1682,7 +1682,7 @@ class ProcessInstanceProcessor:
     def get_task_by_bpmn_identifier(
         cls, bpmn_task_identifier: str, bpmn_process_instance: BpmnWorkflow
     ) -> SpiffTask | None:
-        all_tasks = bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+        all_tasks = bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
         for task in all_tasks:
             if task.task_spec.name == bpmn_task_identifier:
                 return task

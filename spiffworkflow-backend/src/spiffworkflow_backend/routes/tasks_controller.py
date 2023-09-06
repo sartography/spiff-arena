@@ -426,7 +426,7 @@ def _interstitial_stream(
 ) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
-            TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
+            state=TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
 
     def render_instructions(spiff_task: SpiffTask) -> str:
@@ -533,7 +533,7 @@ def _interstitial_stream(
 
 
 def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
-    return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
+    return len([t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual])
 
 
 def _dequeued_interstitial_stream(

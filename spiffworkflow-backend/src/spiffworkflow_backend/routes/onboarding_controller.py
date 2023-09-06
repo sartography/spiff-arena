@@ -3,6 +3,7 @@
 from flask import make_response
 from flask.wrappers import Response
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.util.task import TaskState
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -28,7 +29,7 @@ def get_onboarding() -> Response:
                 # Delete the process instance, we don't need to keep this around if no users tasks were created.
                 db.session.delete(process_instance)
                 db.session.flush()  # Clear it out BEFORE returning.
-            elif len(bpmn_process.get_ready_user_tasks()) > 0:
+            elif len(bpmn_process.get_tasks(state=TaskState.READY, manual=True)) > 0:
                 process_instance.persistence_level = "full"
                 processor.save()
                 result = {
