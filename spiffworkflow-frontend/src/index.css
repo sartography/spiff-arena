@@ -231,6 +231,11 @@ dl dt {
   color: #161616;
 }
 
+dl.metadata-display dt {
+  width: 7rem;
+  word-wrap: break-word;
+}
+
 dl dd {
   display: inline-block;
   padding-left: 1rem;

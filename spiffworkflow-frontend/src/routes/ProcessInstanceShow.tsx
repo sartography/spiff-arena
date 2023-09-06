@@ -406,9 +406,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Column sm={4} md={4} lg={8}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
-              <dl>
+              <dl className="metadata-display">
                 <dt title={processInstanceMetadata.key}>
-                  {truncateString(processInstanceMetadata.key, 10)}:
+                  {truncateString(processInstanceMetadata.key, 50)}:
                 </dt>
                 <dd>{processInstanceMetadata.value}</dd>
               </dl>
