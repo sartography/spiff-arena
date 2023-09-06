@@ -82,6 +82,9 @@ from spiffworkflow_backend.models.process_model_cycle import (
 from spiffworkflow_backend.models.typeahead import (
     TypeaheadModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.json_data_store import (
+    JSONDataStoreModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.task_draft_data import (
     TaskDraftDataModel,
 )  # noqa: F401
