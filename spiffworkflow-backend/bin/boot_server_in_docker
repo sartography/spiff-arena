@@ -7,6 +7,9 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+# example command:
+# SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite SPIFFWORKFLOW_BACKEND_ENV=local_docker SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=true FLASK_DEBUG=0 FLASK_SESSION_SECRET_KEY=HEY SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${HOME}/projects/github/sartography/sample-process-models/" ./bin/boot_server_in_docker
+
 # run migrations
 export FLASK_APP=/app/src/spiffworkflow_backend
 
