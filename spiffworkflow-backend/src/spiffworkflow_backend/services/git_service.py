@@ -8,6 +8,7 @@ from flask import current_app
 from flask import g
 from spiffworkflow_backend.config import ConfigurationError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 
@@ -188,6 +189,7 @@ class GitService:
 
         with FileSystemService.cd(current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]):
             cls.run_shell_command(["git", "pull", "--rebase"])
+        DataSetupService.save_all_process_models()
         return True
 
     @classmethod
