@@ -426,17 +426,14 @@ export interface DataStore {
   type: string;
 }
 
-export interface UiSchemaDisplayLocation {
-  header_menu_item?: boolean;
-  user_profile_item?: boolean;
+export enum UiSchemaDisplayLocation {
+  header_menu_item = 'header_menu_item',
+  user_profile_item = 'user_profile_item',
 }
-export interface UiSchemaDisplayLocations {
-  [key: string]: UiSchemaDisplayLocation;
-}
-export interface UiSchemaNavItem {
+export interface UiSchemaUxElement {
   label: string;
   route: string;
-  display_locations: UiSchemaDisplayLocations;
+  display_location: UiSchemaDisplayLocation;
 }
 export interface UiSchemaPageDefinition {
   header: string;
@@ -451,7 +448,7 @@ export interface UiSchemaRoute {
   [key: string]: UiSchemaPageDefinition;
 }
 export interface ExtensionUiSchema {
-  navigation_items?: UiSchemaNavItem[];
+  ux_elements?: UiSchemaUxElement[];
   routes: UiSchemaRoute;
 }
 
