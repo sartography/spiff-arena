@@ -194,7 +194,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 waiting_children = copy.copy(waiting_spiff_task.children)
                 for waiting_child in waiting_children:
                     if waiting_child._has_state(TaskState.PREDICTED_MASK):
-                        waiting_spiff_task.children.remove(waiting_child)
+                        waiting_spiff_task._children.remove(waiting_child.id)
 
                 self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
