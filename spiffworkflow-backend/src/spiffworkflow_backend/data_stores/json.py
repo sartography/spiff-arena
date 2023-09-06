@@ -5,7 +5,7 @@ from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.typeahead import TypeaheadModel
+from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 
 
 class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
@@ -17,15 +17,20 @@ class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
-        typeahead_data_by_category = my_task.data[self.bpmn_id]
-        for category, items in typeahead_data_by_category.items():
-            db.session.query(TypeaheadModel).filter_by(category=category).delete()
-            objects = [self._make_object(category, item) for item in items]
-            db.session.bulk_save_objects(objects)
+        location = "my_tmp_location" # TODO: find location from spiff task
+        data = my_task.data[self.bpmn_id]
+        model = JSONDataStoreModel(
+            name=self.bpmn_id,
+            location=location,
+            data=data,
+        )
+
+        db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).delete()
+        db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
 
-    def _make_object(self, category: str, item: dict[str, Any]) -> TypeaheadModel:
+    def _get_model(self, category: str, item: dict[str, Any]) -> JSONDataStoreModel | None:
         now = round(time())
         return TypeaheadModel(
             category=category,
