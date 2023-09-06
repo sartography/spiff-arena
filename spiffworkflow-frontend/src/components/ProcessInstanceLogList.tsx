@@ -81,7 +81,7 @@ export default function ProcessInstanceLogList({
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${processModelId}`;
   }
-  const taskNameHeader = isEventsView ? 'Task Name' : 'Milestone';
+  const taskNameHeader = isEventsView ? 'Task name' : 'Milestone';
   const tableType = isEventsView ? 'events' : 'milestones';
   const paginationQueryParamPrefix = `log-list-${tableType}`;
 
@@ -320,7 +320,7 @@ export default function ProcessInstanceLogList({
       tableHeaders.push(
         <>
           <th>Id</th>
-          <th>Bpmn Process</th>
+          <th>Bpmn process</th>
           <th>{taskNameHeader}</th>
         </>
       );
@@ -328,16 +328,16 @@ export default function ProcessInstanceLogList({
       tableHeaders.push(
         <>
           <th>{taskNameHeader}</th>
-          <th>Bpmn Process</th>
+          <th>Bpmn process</th>
         </>
       );
     }
     if (isEventsView) {
       tableHeaders.push(
         <>
-          <th>Task Identifier</th>
-          <th>Task Type</th>
-          <th>Event Type</th>
+          <th>Task identifier</th>
+          <th>Task type</th>
+          <th>Event type</th>
           <th>User</th>
         </>
       );
@@ -423,7 +423,7 @@ export default function ProcessInstanceLogList({
               }}
               shouldFilterItem={shouldFilterStringItem}
               placeholder="Choose a task bpmn identifier"
-              titleText="Task Identifier"
+              titleText="Task identifier"
               selectedItem={searchParams.get('bpmn_identifier')}
             />
           </Column>
@@ -440,7 +440,7 @@ export default function ProcessInstanceLogList({
               }}
               shouldFilterItem={shouldFilterStringItem}
               placeholder="Choose a task type"
-              titleText="Task Type"
+              titleText="Task type"
               selectedItem={searchParams.get('task_type')}
             />
           </Column>
@@ -457,7 +457,7 @@ export default function ProcessInstanceLogList({
               }}
               shouldFilterItem={shouldFilterStringItem}
               placeholder="Choose an event type"
-              titleText="Event Type"
+              titleText="Event type"
               selectedItem={searchParams.get('event_type')}
             />
           </Column>

@@ -14,7 +14,7 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
     if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
+      >&2 echo "ERROR: Could not find a process model repo. Last tried: ${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}. Please set SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR to the absolute path of the git repo where you want to store process models. This could be an empty git repo, or if you want you could clone https://github.com/sartography/sample-process-models.git so that spiff-arena and sample-process-models are in the same directory."
       exit 1
     fi
   fi

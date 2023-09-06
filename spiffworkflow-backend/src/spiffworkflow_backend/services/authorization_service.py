@@ -242,6 +242,7 @@ class AuthorizationService:
         authentication_exclusion_list = [
             "status",
             "test_raise_error",
+            "authentication_begin",
             "authentication_callback",
             "github_webhook_receive",
         ]
@@ -529,7 +530,26 @@ class AuthorizationService:
 
     @classmethod
     def set_elevated_permissions(cls) -> list[PermissionToAssign]:
-        permissions_to_assign: list[PermissionToAssign] = []
+        """This is basically /* without write access to Process Groups and Process Models.
+
+        Useful for admin-like permissions on readonly environments like a production environment.
+        """
+        permissions_to_assign = cls.set_support_permissions()
+        for permission in ["create", "read", "update", "delete"]:
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
+
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication/configuration"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication_begin/*"))
+        permissions_to_assign.append(
+            PermissionToAssign(permission="update", target_uri="/authentication/configuration")
+        )
+
+        return permissions_to_assign
+
+    @classmethod
+    def set_support_permissions(cls) -> list[PermissionToAssign]:
+        """Just like elevated permissions minus access to secrets."""
+        permissions_to_assign = cls.set_basic_permissions()
         for process_instance_action in ["resume", "terminate", "suspend", "reset"]:
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=f"/process-instance-{process_instance_action}/*")
@@ -548,6 +568,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/extensions/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/extensions-get-data/*"))
 
         # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-assign/*"))
@@ -560,7 +581,6 @@ class AuthorizationService:
 
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
-            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
 
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/data-stores/*"))
         return permissions_to_assign
@@ -612,6 +632,8 @@ class AuthorizationService:
                 * Basic access to complete tasks and use the site
             ELEVATED
                 * Operations that require elevated permissions
+            SUPPORT
+                * Like elevated minus access to secrets
 
         Permission Macros:
             all
@@ -636,6 +658,8 @@ class AuthorizationService:
             permissions_to_assign += cls.set_basic_permissions()
         elif target.startswith("ELEVATED"):
             permissions_to_assign += cls.set_elevated_permissions()
+        elif target.startswith("SUPPORT"):
+            permissions_to_assign += cls.set_support_permissions()
         elif target == "ALL":
             for permission in permissions:
                 permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/*"))
