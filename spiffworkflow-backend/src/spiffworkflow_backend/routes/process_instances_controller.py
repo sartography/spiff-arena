@@ -500,8 +500,8 @@ def process_instance_task_list(
             task_models_of_parent_bpmn_processes,
         ) = TaskService.task_models_of_parent_bpmn_processes(to_task_model)
         task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
-        if 'instance' in to_task_model.runtime_info or 'iteration' in to_task_model.runtime_info:
-            to_task_model_parent = [to_task_model.properties_json['parent']]
+        if "instance" in to_task_model.runtime_info or "iteration" in to_task_model.runtime_info:
+            to_task_model_parent = [to_task_model.properties_json["parent"]]
         else:
             to_task_model_parent = []
         task_model_query = task_model_query.filter(
@@ -579,7 +579,7 @@ def process_instance_task_list(
                 most_recent_tasks[row_key] = task_model
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
-            elif 'instance' in task_model.runtime_info or 'iteration' in task_model.runtime_info:
+            elif "instance" in task_model.runtime_info or "iteration" in task_model.runtime_info:
                 # This handles adding all instances of a MI and iterations of loop tasks
                 additional_tasks.append(task_model)
 
