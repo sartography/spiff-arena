@@ -35,38 +35,59 @@ export default function Extension() {
   const { addError, removeError } = useAPIError();
 
   useEffect(() => {
-    const processExtensionResult = (pm: ProcessModel) => {
-      setProcessModel(pm);
-      let extensionUiSchemaFile: ProcessFile | null = null;
-      pm.files.forEach((file: ProcessFile) => {
-        filesByName[file.name] = file;
-        if (file.name === 'extension_uischema.json') {
-          extensionUiSchemaFile = file;
+    const processExtensionResult = (processModels: ProcessModel[]) => {
+      processModels.forEach((pm: ProcessModel) => {
+        let extensionUiSchemaFile: ProcessFile | null = null;
+        pm.files.forEach((file: ProcessFile) => {
+          filesByName[file.name] = file;
+          if (file.name === 'extension_uischema.json') {
+            extensionUiSchemaFile = file;
+          }
+        });
+
+        // typescript is really confused by extensionUiSchemaFile so force it since we are properly checking
+        if (
+          extensionUiSchemaFile &&
+          (extensionUiSchemaFile as ProcessFile).file_contents
+        ) {
+          const extensionUiSchema: ExtensionUiSchema = JSON.parse(
+            (extensionUiSchemaFile as any).file_contents
+          );
+
+          const pageIdentifier = `/${params.page_identifier}`;
+          if (
+            extensionUiSchema.pages &&
+            Object.keys(extensionUiSchema.pages).includes(pageIdentifier)
+          ) {
+            const pageDefinition = extensionUiSchema.pages[pageIdentifier];
+            setUiSchemaPageDefinition(pageDefinition);
+            setProcessModel(pm);
+
+            const postBody: ExtensionPostBody = { extension_input: {} };
+            postBody.ui_schema_action = pageDefinition.on_load;
+            if (pageDefinition.on_load) {
+              HttpService.makeCallToBackend({
+                path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
+                successCallback: (result: any) => setFormData(result.task_data),
+                httpMethod: 'POST',
+                postBody,
+              });
+            }
+          }
         }
       });
-
-      // typescript is really confused by extensionUiSchemaFile so force it since we are properly checking
-      if (
-        extensionUiSchemaFile &&
-        (extensionUiSchemaFile as ProcessFile).file_contents
-      ) {
-        const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-          (extensionUiSchemaFile as any).file_contents
-        );
-
-        let routeIdentifier = `/${params.process_model}`;
-        if (params.extension_route) {
-          routeIdentifier = `${routeIdentifier}/${params.extension_route}`;
-        }
-        setUiSchemaPageDefinition(extensionUiSchema.routes[routeIdentifier]);
-      }
     };
 
     HttpService.makeCallToBackend({
-      path: targetUris.extensionPath,
+      path: targetUris.extensionListPath,
       successCallback: processExtensionResult,
     });
-  }, [targetUris.extensionPath, params, filesByName]);
+  }, [
+    targetUris.extensionListPath,
+    targetUris.extensionPath,
+    params,
+    filesByName,
+  ]);
 
   const processSubmitResult = (result: any) => {
     setProcessedTaskData(result.task_data);
@@ -110,15 +131,15 @@ export default function Extension() {
       if (!isValid) {
         return;
       }
-      const url = `${BACKEND_BASE_URL}/extensions-get-data/${params.process_model}/${optionString}`;
+      const url = `${BACKEND_BASE_URL}/extensions-get-data/${params.page_identifier}/${optionString}`;
       window.location.href = url;
       setFormButtonsDisabled(false);
     } else {
       const postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
-      if (uiSchemaPageDefinition && uiSchemaPageDefinition.api) {
-        apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.api}`;
-        postBody.ui_schema_page_definition = uiSchemaPageDefinition;
+      if (uiSchemaPageDefinition && uiSchemaPageDefinition.on_form_submit) {
+        apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+        postBody.ui_schema_action = uiSchemaPageDefinition.on_form_submit;
       }
 
       // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
@@ -139,6 +160,7 @@ export default function Extension() {
   };
 
   if (uiSchemaPageDefinition) {
+    console.log('uiSchemaPageDefinition', uiSchemaPageDefinition);
     const componentsToDisplay = [<h1>{uiSchemaPageDefinition.header}</h1>];
 
     if (uiSchemaPageDefinition.markdown_instruction_filename) {

@@ -162,8 +162,8 @@ export default function NavigationBar() {
   };
 
   const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
-    const navItemRoute = `/extensions${uxElement.route}`;
-    return <a href={navItemRoute}>{uxElement.label}</a>;
+    const navItemPage = `/extensions${uxElement.page}`;
+    return <a href={navItemPage}>{uxElement.label}</a>;
   };
 
   const profileToggletip = (
@@ -272,15 +272,15 @@ export default function NavigationBar() {
   };
 
   const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
-    const navItemRoute = `/extensions${uxElement.route}`;
-    const regexp = new RegExp(`^${navItemRoute}$`);
+    const navItemPage = `/extensions${uxElement.page}`;
+    const regexp = new RegExp(`^${navItemPage}$`);
     if (regexp.test(location.pathname)) {
-      setActiveKey(navItemRoute);
+      setActiveKey(navItemPage);
     }
     return (
       <HeaderMenuItem
-        href={navItemRoute}
-        isCurrentPage={isActivePage(navItemRoute)}
+        href={navItemPage}
+        isCurrentPage={isActivePage(navItemPage)}
         data-qa={`extension-${slugifyString(uxElement.label)}`}
       >
         {uxElement.label}
