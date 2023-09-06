@@ -346,6 +346,10 @@ export const getBpmnProcessIdentifiers = (rootBpmnElement: any) => {
   return childProcesses;
 };
 
+export const setPageTitle = (items: Array<string>) => {
+  document.title = ['SpiffWorkflow'].concat(items).join(' - ');
+};
+
 export const isInteger = (str: string | number) => {
   return /^\d+$/.test(str.toString());
 };

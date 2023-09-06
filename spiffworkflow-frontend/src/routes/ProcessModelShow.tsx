@@ -35,6 +35,7 @@ import useAPIError from '../hooks/UseApiError';
 import {
   getGroupFromModifiedModelId,
   modifyProcessIdentifierForPathParam,
+  setPageTitle,
 } from '../helpers';
 import {
   PermissionsToCheck,
@@ -98,6 +99,7 @@ export default function ProcessModelShow() {
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
       setReloadModel(false);
+      setPageTitle([result.display_name]);
     };
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}`,
