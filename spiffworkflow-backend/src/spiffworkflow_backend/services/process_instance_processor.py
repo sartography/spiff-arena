@@ -43,6 +43,7 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -1062,7 +1063,7 @@ class ProcessInstanceProcessor:
                         task_name=ready_or_waiting_task.task_spec.bpmn_id,
                         task_title=ready_or_waiting_task.task_spec.bpmn_name,
                         task_type=ready_or_waiting_task.task_spec.__class__.__name__,
-                        task_status=ready_or_waiting_task.get_state_name(),
+                        task_status=TaskState.get_name(ready_or_waiting_task.state),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                     )
                     db.session.add(human_task)
@@ -1491,7 +1492,7 @@ class ProcessInstanceProcessor:
 
         endtasks = []
         if self.bpmn_process_instance.is_completed():
-            for spiff_task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.ANY_MASK):
+            for spiff_task in TaskIterator(self.bpmn_process_instance.task_tree, TaskState.ANY_MASK):
                 # Assure that we find the end event for this process_instance, and not for any sub-process_instances.
                 if TaskService.is_main_process_end_event(spiff_task):
                     endtasks.append(spiff_task)
@@ -1513,7 +1514,7 @@ class ProcessInstanceProcessor:
 
             # If there are no ready tasks, and not waiting tasks, return the latest error.
             error_task = None
-            for task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.ERROR):
+            for task in TaskIterator(self.bpmn_process_instance.task_tree, TaskState.ERROR):
                 error_task = task
             return error_task
 
@@ -1528,7 +1529,7 @@ class ProcessInstanceProcessor:
         last_user_task = completed_user_tasks[0]
         if len(ready_tasks) > 0:
             for task in ready_tasks:
-                if task._is_descendant_of(last_user_task):
+                if task.is_descendant_of(last_user_task):
                     return task
             for task in ready_tasks:
                 if self.bpmn_process_instance.last_task and task.parent == last_user_task.parent:
@@ -1539,7 +1540,7 @@ class ProcessInstanceProcessor:
         # If there are no ready tasks, but the thing isn't complete yet, find the first non-complete task
         # and return that
         next_task_to_return = None
-        for task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.NOT_FINISHED_MASK):
+        for task in TaskIterator(self.bpmn_process_instance.task_tree, TaskState.NOT_FINISHED_MASK):
             next_task_to_return = task
         return next_task_to_return
 
@@ -1584,7 +1585,7 @@ class ProcessInstanceProcessor:
 
         human_task.completed_by_user_id = user.id
         human_task.completed = True
-        human_task.task_status = spiff_task.get_state_name()
+        human_task.task_status = TaskState.get_name(spiff_task.state)
         db.session.add(human_task)
 
         task_service = TaskService(

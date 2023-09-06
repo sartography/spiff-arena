@@ -1616,7 +1616,7 @@ class TestProcessApi(BaseTest):
         assert len(ready_tasks) == 1
         ready_task = ready_tasks[0]
 
-        # check all_tasks here to ensure we actually deleted items when cancelling the instance
+        # check all_tasks here to ensure we actually deleted item when cancelling the instance
         all_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id).all()
         assert len(all_tasks) == 8
 

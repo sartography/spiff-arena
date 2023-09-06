@@ -598,7 +598,7 @@ class ProcessInstanceService:
             spiff_task.task_spec.bpmn_id,
             spiff_task.task_spec.bpmn_name,
             task_type,
-            spiff_task.get_state_name(),
+            TaskState.get_name(spiff_task.state),
             can_complete=can_complete,
             lane=lane,
             process_identifier=spiff_task.task_spec._wf_spec.name,
