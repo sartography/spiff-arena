@@ -2362,8 +2362,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "improvement/task-and-spec-relations"
-resolved_reference = "a15dd1710b6b515725647069ff6a0ab0a259ac72"
+reference = "main"
+resolved_reference = "179d62c179a3e19e8b5d5c00fe12c26a7b329e70"
 
 [[package]]
 name = "sqlalchemy"
@@ -2792,4 +2792,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "da226cf1646fcb00da345f148bbfdd6b14491e849508376389e3ca3db59ab3b0"
+content-hash = "6cbc9666f9045835a75dc38cdd9e02c0ea53c061b57162e7744572661527aa61"
