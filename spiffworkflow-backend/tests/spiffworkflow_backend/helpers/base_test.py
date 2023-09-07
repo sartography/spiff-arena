@@ -503,6 +503,13 @@ class BaseTest:
         db.session.delete(process_instance_report)
         db.session.commit()
 
+    def complete_next_manual_task(self, processor: ProcessInstanceProcessor) -> None:
+        user_task = processor.get_ready_user_tasks()[0]
+        human_task = processor.process_instance_model.human_tasks[0]
+        ProcessInstanceService.complete_form_task(
+            processor, user_task, {}, processor.process_instance_model.process_initiator, human_task
+        )
+
     @contextmanager
     def app_config_mock(self, app: Flask, config_identifier: str, new_config_value: Any) -> Generator:
         initial_value = app.config[config_identifier]

@@ -1,6 +1,7 @@
 // @ts-ignore
 import { Table } from '@carbon/react';
 import { useEffect, useState } from 'react';
+import ErrorDisplay from '../components/ErrorDisplay';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { ObjectWithStringKeysAndValues } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -57,6 +58,7 @@ export default function About() {
 
   return (
     <div>
+      <ErrorDisplay />
       <h1>About</h1>
       {versionInfoFromDict('Frontend version information', frontendVersionInfo)}
       {versionInfoFromDict('Backend version information', backendVersionInfo)}

@@ -11,14 +11,17 @@ export default function OnboardingView() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (location.pathname.match(/^\/tasks\/\d+\//)) {
+      return;
+    }
     HttpService.makeCallToBackend({
       path: `/onboarding`,
       successCallback: setOnboarding,
     });
-  }, [setOnboarding]);
+  }, [setOnboarding, location.pathname]);
 
   const onboardingElement = () => {
-    if (location.pathname.match(/^\/tasks\/\d+\/\b/)) {
+    if (location.pathname.match(/^\/tasks\/\d+\//)) {
       return null;
     }
 

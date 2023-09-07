@@ -203,7 +203,9 @@ def task_data_update(
             if json_data_dict is not None:
                 JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
                 ProcessInstanceTmpService.add_event_to_process_instance(
-                    process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
+                    process_instance,
+                    ProcessInstanceEventType.task_data_edited.value,
+                    task_guid=task_guid,
                 )
             try:
                 db.session.commit()
@@ -331,6 +333,7 @@ def task_show(
     task_model.typename = task_definition.typename
     task_model.can_complete = can_complete
     task_model.name_for_display = TaskService.get_name_for_display(task_definition)
+    extensions = TaskService.get_extensions_from_task_model(task_model)
 
     if with_form_data:
         task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
@@ -351,7 +354,6 @@ def task_show(
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
-        extensions = TaskService.get_extensions_from_task_model(task_model)
         task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
             process_instance_id, task_model.guid
         )
@@ -407,7 +409,8 @@ def task_show(
 
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
         JinjaService.render_instructions_for_end_user(task_model, extensions)
-        task_model.extensions = extensions
+
+    task_model.extensions = extensions
 
     return make_response(jsonify(task_model), 200)
 
@@ -444,6 +447,7 @@ def _interstitial_stream(
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
     while True:
+        has_ready_tasks = False
         for spiff_task in tasks:
             # ignore the instructions if they are on the EndEvent for the top level process
             if not TaskService.is_main_process_end_event(spiff_task):
@@ -463,30 +467,33 @@ def _interstitial_stream(
                     yield _render_data("task", task)
                     reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
-                # do not do any processing if the instance is not currently active
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield _render_data("unrunnable_instance", process_instance)
-                    return
-                if execute_tasks:
-                    try:
-                        # run_until_user_message does not run tasks with instructions to use one_at_a_time
-                        # to force it to run the task.
-                        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-                        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                        processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                        processor.refresh_waiting_tasks()
+                has_ready_tasks = True
 
-                    except WorkflowTaskException as wfe:
-                        api_error = ApiError.from_workflow_exception(
-                            "engine_steps_error", "Failed to complete an automated task.", exp=wfe
-                        )
-                        yield _render_data("error", api_error)
-                        ErrorHandlingService.handle_error(process_instance, wfe)
-                        return
-                # return if process instance is now complete and let the frontend redirect to show page
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield _render_data("unrunnable_instance", process_instance)
+        if has_ready_tasks:
+            # do not do any processing if the instance is not currently active
+            if process_instance.status not in ProcessInstanceModel.active_statuses():
+                yield _render_data("unrunnable_instance", process_instance)
+                return
+            if execute_tasks:
+                try:
+                    # run_until_user_message does not run tasks with instructions so run readys first
+                    # to force it to run the task.
+                    processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                    processor.refresh_waiting_tasks()
+
+                except WorkflowTaskException as wfe:
+                    api_error = ApiError.from_workflow_exception(
+                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
+                    )
+                    yield _render_data("error", api_error)
+                    ErrorHandlingService.handle_error(process_instance, wfe)
                     return
+            # return if process instance is now complete and let the frontend redirect to show page
+            if process_instance.status not in ProcessInstanceModel.active_statuses():
+                yield _render_data("unrunnable_instance", process_instance)
+                return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
         ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
@@ -730,7 +737,13 @@ def _task_submit_shared(
     )
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-    elif processor.next_task():
+
+    if "guestConfirmation" in spiff_task.task_spec.extensions:
+        return make_response(
+            jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
+        )
+
+    if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
         return make_response(jsonify(task), 200)
 
@@ -919,6 +932,24 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                                 )
 
                             select_options_from_task_data = task_model.data.get(task_data_var)
+                            if select_options_from_task_data == []:
+                                raise ApiError(
+                                    error_code="invalid_form_data",
+                                    message=(
+                                        "This form depends on variables, but at least one variable was empty. The"
+                                        f" variable '{task_data_var}' must be a list with at least one element."
+                                    ),
+                                    status_code=500,
+                                )
+                            if isinstance(select_options_from_task_data, str):
+                                raise ApiError(
+                                    error_code="invalid_form_data",
+                                    message=(
+                                        "This form depends on enum variables, but at least one variable was a string."
+                                        f" The variable '{task_data_var}' must be a list with at least one element."
+                                    ),
+                                    status_code=500,
+                                )
                             if isinstance(select_options_from_task_data, list):
                                 if all("value" in d and "label" in d for d in select_options_from_task_data):
 

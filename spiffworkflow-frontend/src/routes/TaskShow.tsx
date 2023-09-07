@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
 
 import { useDebouncedCallback } from 'use-debounce';
+import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import {
@@ -11,32 +12,52 @@ import {
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
 } from '../helpers';
-import { BasicTask, EventDefinition, Task } from '../interfaces';
+import {
+  BasicTask,
+  ErrorForDisplay,
+  EventDefinition,
+  Task,
+} from '../interfaces';
+import CustomForm from '../components/CustomForm';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
-import CustomForm from '../components/CustomForm';
+import UserService from '../services/UserService';
 
 export default function TaskShow() {
+  // get a basic task which doesn't get the form data so we can load
+  // the basic form and structure of the page without waiting for form data.
+  // this was mainly to help with loading form data with large files attached to it
   const [basicTask, setBasicTask] = useState<BasicTask | null>(null);
   const [taskWithTaskData, setTaskWithTaskData] = useState<Task | null>(null);
+
   const params = useParams();
   const navigate = useNavigate();
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
 
+  const [guestConfirmationText, setGuestConfirmationText] = useState<
+    string | null
+  >(null);
+
   const [taskData, setTaskData] = useState<any>(null);
   const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
     useState<boolean>(true);
+  const [atLeastOneTaskFetchHasError, setAtLeastOneTaskFetchHasError] =
+    useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
 
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
   const navigateToInterstitial = (myTask: BasicTask) => {
-    navigate(
-      `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-        myTask.process_model_identifier
-      )}/${myTask.process_instance_id}/interstitial`
-    );
+    if (UserService.onlyGuestTaskCompletion()) {
+      setGuestConfirmationText('Thank you!');
+    } else {
+      navigate(
+        `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+          myTask.process_model_identifier
+        )}/${myTask.process_instance_id}/interstitial`
+      );
+    }
   };
 
   useEffect(() => {
@@ -54,16 +75,20 @@ export default function TaskShow() {
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setFormButtonsDisabled(false);
     };
+    const handleTaskFetchError = (error: ErrorForDisplay) => {
+      setAtLeastOneTaskFetchHasError(true);
+      addError(error);
+    };
 
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: processBasicTaskResult,
-      failureCallback: addError,
+      failureCallback: handleTaskFetchError,
     });
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}?with_form_data=true`,
       successCallback: processTaskWithDataResult,
-      failureCallback: addError,
+      failureCallback: handleTaskFetchError,
     });
     // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,13 +117,18 @@ export default function TaskShow() {
   };
 
   const sendAutosaveEvent = (eventDetails?: any) => {
-    (document.getElementById('hidden-form-for-autosave') as any).dispatchEvent(
-      new CustomEvent('submit', {
-        cancelable: true,
-        bubbles: true,
-        detail: eventDetails,
-      })
+    const elementToDispath: any = document.getElementById(
+      'hidden-form-for-autosave'
     );
+    if (elementToDispath) {
+      elementToDispath.dispatchEvent(
+        new CustomEvent('submit', {
+          cancelable: true,
+          bubbles: true,
+          detail: eventDetails,
+        })
+      );
+    }
   };
 
   const addDebouncedTaskDataAutoSave = useDebouncedCallback(
@@ -115,6 +145,8 @@ export default function TaskShow() {
     removeError();
     if (result.ok) {
       navigate(`/tasks`);
+    } else if (result.guest_confirmation) {
+      setGuestConfirmationText(result.guest_confirmation);
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
@@ -239,7 +271,10 @@ export default function TaskShow() {
       let closeButton = null;
       if (taskWithTaskData.typename === 'ManualTask') {
         submitButtonText = 'Continue';
-      } else if (taskWithTaskData.typename === 'UserTask') {
+      } else if (
+        taskWithTaskData.typename === 'UserTask' &&
+        !UserService.onlyGuestTaskCompletion()
+      ) {
         closeButton = (
           <Button
             id="close-button"
@@ -248,7 +283,7 @@ export default function TaskShow() {
             kind="secondary"
             title="Save data as draft and close the form."
           >
-            Save and Close
+            Save and close
           </Button>
         );
       }
@@ -281,7 +316,7 @@ export default function TaskShow() {
     // this allows us to autosave form data without extra attributes and without validations
     // but still requires validations when the user submits the form that they can edit.
     return (
-      <Grid fullWidth condensed>
+      <Grid fullWidth condensed className="megacondensed">
         <Column sm={4} md={5} lg={8}>
           <CustomForm
             id="form-to-submit"
@@ -328,30 +363,42 @@ export default function TaskShow() {
       statusString = ` ${basicTask.state}`;
     }
 
-    pageElements.push(
-      <ProcessBreadcrumb
-        hotCrumbs={[
-          [
-            `Process Instance Id: ${params.process_instance_id}`,
-            `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-              basicTask.process_model_identifier
-            )}/${params.process_instance_id}`,
-          ],
-          [`Task: ${basicTask.name_for_display || basicTask.id}`],
-        ]}
-      />
-    );
-    pageElements.push(
-      <h3>
-        Task: {basicTask.name_for_display} (
-        {basicTask.process_model_display_name}){statusString}
-      </h3>
-    );
+    if (
+      !('allowGuest' in basicTask.extensions) ||
+      basicTask.extensions.allowGuest !== 'true'
+    ) {
+      pageElements.push(
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            [
+              `Process Instance Id: ${params.process_instance_id}`,
+              `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+                basicTask.process_model_identifier
+              )}/${params.process_instance_id}`,
+            ],
+            [`Task: ${basicTask.name_for_display || basicTask.id}`],
+          ]}
+        />
+      );
+      pageElements.push(
+        <h3>
+          Task: {basicTask.name_for_display} (
+          {basicTask.process_model_display_name}){statusString}
+        </h3>
+      );
+    }
   }
-  if (basicTask && taskData) {
+
+  if (guestConfirmationText) {
+    pageElements.push(
+      <div data-color-mode="light">
+        <MDEditor.Markdown linkTarget="_blank" source={guestConfirmationText} />
+      </div>
+    );
+  } else if (basicTask && taskData) {
     pageElements.push(<InstructionsForEndUser task={taskWithTaskData} />);
     pageElements.push(formElement());
-  } else {
+  } else if (!atLeastOneTaskFetchHasError) {
     pageElements.push(getLoadingIcon());
   }
 
