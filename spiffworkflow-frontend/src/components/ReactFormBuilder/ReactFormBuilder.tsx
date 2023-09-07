@@ -399,15 +399,6 @@ export default function ReactFormBuilder({
             uiSchema={postJsonUI}
           />
         </ErrorBoundary>
-        {/*
-        <Form
-          formData={formData}
-          onChange={(e) => updateData(e.formData)}
-          schema={jsonSchema}
-          uiSchema={jsonUI}
-          validator={validator}
-        />
-        */}
       </Column>
     </Grid>
   );
