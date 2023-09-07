@@ -123,7 +123,7 @@ jobs:
         uses: cypress-io/github-action@v5
         with:
           working-directory: ./spiffworkflow-frontend
-          browser: chrome
+          browser: chromium
           # just run one test to make sure we didn't completely break it
           spec: cypress/e2e/process_groups.cy.js
         env:

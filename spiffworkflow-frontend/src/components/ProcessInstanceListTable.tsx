@@ -42,6 +42,7 @@ import {
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
   getKeyByValue,
+  getLastMilestoneFromProcessInstance,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
@@ -1603,7 +1604,7 @@ export default function ProcessInstanceListTable({
     }
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
-  const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
+  const formatProcessInstanceId = (_row: ProcessInstance, id: number) => {
     return <span data-qa="paginated-entity-id">{id}</span>;
   };
   const formatProcessModelIdentifier = (_row: any, identifier: any) => {
@@ -1611,6 +1612,16 @@ export default function ProcessInstanceListTable({
   };
   const formatProcessModelDisplayName = (_row: any, identifier: any) => {
     return <span>{identifier}</span>;
+  };
+  const formatLastMilestone = (
+    processInstance: ProcessInstance,
+    value: any
+  ) => {
+    const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
+      processInstance,
+      value
+    );
+    return <span title={valueToUse}>{truncatedValue}</span>;
   };
 
   const formatSecondsForDisplay = (_row: any, seconds: any) => {
@@ -1630,6 +1641,7 @@ export default function ProcessInstanceListTable({
       end_in_seconds: formatSecondsForDisplay,
       updated_at_in_seconds: formatSecondsForDisplay,
       task_updated_at_in_seconds: formatSecondsForDisplay,
+      last_milestone_bpmn_name: formatLastMilestone,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter =
