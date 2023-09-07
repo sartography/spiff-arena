@@ -5,23 +5,31 @@ from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 
+def _process_model_location_for_task(x, spiff_task: SpiffTask) -> str | None:
+    spiff_task_guid = str(spiff_task.id)
+    task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+    task_model_count = TaskModel.query.count()
+    if task_model is not None:
+        return task_model.process_model_identifier
+    return f"{x} {task_model_count}: {spiff_task_guid}"
 
 class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
     """JSONDataStore."""
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
-        location = "my_tmp_location" # TODO: find location from spiff task
+        location = _process_model_location_for_task("get", my_task)
         model = db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).first()
         if model is None:
-            raise Exception(f"Invalid reference to data store '{self.bpmn_id}'.")
+            raise Exception(f"Invalid reference to data store '{self.bpmn_id}' @ '{location}'.")
         my_task.data[self.bpmn_id] = model.data
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
-        location = "my_tmp_location" # TODO: find location from spiff task
+        location = _process_model_location_for_task("set", my_task)
         data = my_task.data[self.bpmn_id]
         model = JSONDataStoreModel(
             name=self.bpmn_id,
