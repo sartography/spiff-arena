@@ -2096,7 +2096,7 @@ paths:
       tags:
         - Tasks
       operationId: spiffworkflow_backend.routes.tasks_controller.prepare_form
-      summary: Pre-processes a form schema, ui schema, and data data, useful for previewing a form
+      summary: Pre-processes a form schema, ui schema, and data, useful for previewing a form
       requestBody:
         content:
           application/json:
