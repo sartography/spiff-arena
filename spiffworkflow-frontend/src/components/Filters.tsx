@@ -50,7 +50,7 @@ export default function Filters({
               renderIcon={Filter}
               iconDescription="Filter Options"
               hasIconOnly
-              size="lg"
+              size="md"
               onClick={toggleShowFilterOptions}
             />
           </Column>

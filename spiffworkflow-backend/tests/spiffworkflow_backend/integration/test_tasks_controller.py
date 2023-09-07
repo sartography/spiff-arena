@@ -2,11 +2,14 @@ import json
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -31,7 +34,6 @@ class TestTasksController(BaseTest):
             with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
-            # bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
 
@@ -52,6 +54,17 @@ class TestTasksController(BaseTest):
         human_tasks = (
             db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
         )
+
+        {
+            r.bpmn_identifier
+            for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
+            .join(TaskDefinitionModel)
+            .join(TaskModel)
+            .filter(TaskModel.process_instance_id == process_instance_id)
+            .filter(TaskModel.state == "READY")
+            .distinct()
+        }
+
         assert len(human_tasks) == 1
         human_task = human_tasks[0]
         response = client.get(
@@ -387,3 +400,83 @@ class TestTasksController(BaseTest):
         assert response.json is not None
         assert response.json["saved_form_data"] is None
         assert response.json["data"]["HEY"] == draft_data["HEY"]
+
+    def test_can_complete_complete_a_guest_task(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "my_process_group"
+        process_model_id = "test-allow-guest"
+        bpmn_file_location = "test-allow-guest"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert "next_task" in response.json
+        task_guid = response.json["next_task"]["id"]
+        assert task_guid is not None
+
+        # log in a guest user to complete the tasks
+        redirect_url = "/test-redirect-dne"
+        response = client.get(
+            f"/v1.0/login?process_instance_id={process_instance_id}&task_guid={task_guid}&redirect_url={redirect_url}",
+        )
+        assert response.status_code == 302
+        assert response.location == redirect_url
+        headers_dict = dict(response.headers)
+        assert "Set-Cookie" in headers_dict
+        cookie = headers_dict["Set-Cookie"]
+        access_token = cookie.split(";")[0].split("=")[1]
+        assert access_token is not None
+
+        # ensure guest user can get and complete both guest manual tasks
+        response = client.get(
+            f"/v1.0/tasks/{process_instance_id}/{task_guid}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == 200
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_guid}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        task_guid = response.json["id"]
+        assert task_guid is not None
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_guid}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert "guest_confirmation" in response.json
+
+        # ensure user gets logged out when they try to go anywhere else
+        response = client.get(
+            "/v1.0/tasks",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == 403
+        headers_dict = dict(response.headers)
+        assert "Set-Cookie" in headers_dict
+        cookie = headers_dict["Set-Cookie"]
+        access_token = cookie.split(";")[0].split("=")[1]
+        assert access_token == ""

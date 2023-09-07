@@ -79,7 +79,7 @@ export default function InstructionsForEndUser({
   }
 
   return (
-    <div style={{ margin: '20px 0 20px 0' }}>
+    <div>
       <div className={className}>
         {/*
           https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)

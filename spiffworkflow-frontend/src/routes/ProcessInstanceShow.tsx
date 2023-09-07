@@ -42,8 +42,10 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  getLastMilestoneFromProcessInstance,
   HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
+  truncateString,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -66,6 +68,11 @@ import ProcessInterstitial from '../components/ProcessInterstitial';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
 import MessageInstanceList from '../components/MessageInstanceList';
+import {
+  childrenForErrorObject,
+  errorForDisplayFromString,
+} from '../components/ErrorDisplay';
+import { Notification } from '../components/Notification';
 
 type OwnProps = {
   variant: string;
@@ -324,7 +331,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!processInstance) {
       return null;
     }
-    let lastUpdatedTimeLabel = 'Updated at';
+    let lastUpdatedTimeLabel = 'Updated';
     let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
     if (processInstance.end_in_seconds) {
       lastUpdatedTimeLabel = 'Completed';
@@ -353,8 +360,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       statusColor = 'red';
     }
 
+    const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
+      getLastMilestoneFromProcessInstance(
+        processInstance,
+        processInstance.last_milestone_bpmn_name
+      );
+
     return (
-      <Grid condensed fullWidth>
+      <Grid condensed fullWidth className="megacondensed">
         <Column sm={4} md={4} lg={5}>
           <dl>
             <dt>Status:</dt>
@@ -362,7 +375,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <Tag
                 type={statusColor}
                 size="sm"
-                className="span-tag process-instance-status"
+                className="tag-within-dl process-instance-status"
               >
                 {processInstance.status} {statusIcon}
               </Tag>
@@ -397,6 +410,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </dl>
           {lastUpdatedTimeTag}
           <dl>
+            <dt>Last milestone:</dt>
+            <dd title={lastMilestoneFullValue}>
+              {lastMilestoneTruncatedValue}
+            </dd>
+          </dl>
+          <dl>
             <dt>Revision:</dt>
             <dd>
               {processInstance.bpmn_version_control_identifier} (
@@ -407,8 +426,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Column sm={4} md={4} lg={8}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
-              <dl>
-                <dt>{processInstanceMetadata.key}:</dt>
+              <dl className="metadata-display">
+                <dt title={processInstanceMetadata.key}>
+                  {truncateString(processInstanceMetadata.key, 50)}:
+                </dt>
                 <dd>{processInstanceMetadata.value}</dd>
               </dl>
             )
@@ -1199,6 +1220,44 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const diagramArea = (processModelId: string) => {
+    if (!processInstance) {
+      return null;
+    }
+
+    const detailsComponent = (
+      <>
+        {childrenForErrorObject(
+          errorForDisplayFromString(
+            processInstance.bpmn_xml_file_contents_retrieval_error || ''
+          )
+        )}
+      </>
+    );
+    return processInstance.bpmn_xml_file_contents_retrieval_error ? (
+      <Notification
+        title="Failed to load diagram"
+        type="error"
+        hideCloseButton
+        allowTogglingFullMessage
+      >
+        {detailsComponent}
+      </Notification>
+    ) : (
+      <>
+        <ReactDiagramEditor
+          processModelId={processModelId || ''}
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={processInstance.bpmn_xml_file_contents || ''}
+          tasks={tasks}
+          diagramType="readonly"
+          onElementClick={handleClickedDiagramTask}
+        />
+        <div id="diagram-container" />
+      </>
+    );
+  };
+
   const updateSelectedTab = (newTabIndex: any) => {
     setSelectedTabIndex(newTabIndex.selectedIndex);
   };
@@ -1238,17 +1297,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <TabPanels>
             <TabPanel>
               {selectedTabIndex === 0 ? (
-                <>
-                  <ReactDiagramEditor
-                    processModelId={processModelId || ''}
-                    diagramXML={processInstance.bpmn_xml_file_contents || ''}
-                    fileName={processInstance.bpmn_xml_file_contents || ''}
-                    tasks={tasks}
-                    diagramType="readonly"
-                    onElementClick={handleClickedDiagramTask}
-                  />
-                  <div id="diagram-container" />
-                </>
+                <TabPanel>{diagramArea(processModelId)}</TabPanel>
               ) : null}
             </TabPanel>
             <TabPanel>
@@ -1311,6 +1360,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
+        {viewMostRecentStateComponent()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Instance Id: {processInstance.id}
@@ -1318,6 +1370,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {buttonIcons()}
         </Stack>
         {getInfoTag()}
+        <br />
         <ProcessInterstitial
           processInstanceId={processInstance.id}
           processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
@@ -1326,31 +1379,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           collapsableInstructions
           executeTasks={false}
         />
-        <Grid condensed fullWidth>
-          <Column md={6} lg={8} sm={4}>
-            <TaskListTable
-              apiPath="/tasks"
-              additionalParams={`process_instance_id=${processInstance.id}`}
-              tableTitle="Tasks I can complete"
-              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
-              paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty="There are no tasks you can complete for this process instance."
-              shouldPaginateTable={false}
-              showProcessModelIdentifier={false}
-              showProcessId={false}
-              showStartedBy={false}
-              showTableDescriptionAsTooltip
-              showDateStarted={false}
-              showLastUpdated={false}
-              hideIfNoTasks
-              canCompleteAllTasks
-            />
-          </Column>
-        </Grid>
-        {taskUpdateDisplayArea()}
-        {processDataDisplayArea()}
         <br />
-        {viewMostRecentStateComponent()}
+        <TaskListTable
+          apiPath="/tasks"
+          additionalParams={`process_instance_id=${processInstance.id}`}
+          tableTitle="Tasks I can complete"
+          tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+          paginationClassName="with-large-bottom-margin"
+          textToShowIfEmpty="There are no tasks you can complete for this process instance."
+          shouldPaginateTable={false}
+          showProcessModelIdentifier={false}
+          showProcessId={false}
+          showStartedBy={false}
+          showTableDescriptionAsTooltip
+          showDateStarted={false}
+          showLastUpdated={false}
+          hideIfNoTasks
+          canCompleteAllTasks
+        />
         {getTabs()}
       </>
     );

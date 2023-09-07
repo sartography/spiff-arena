@@ -16,16 +16,16 @@ from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP
-from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
+from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
+from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
+from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
 """
@@ -82,19 +82,8 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
                             f"Exception in verify_token getting user from decoded internal token. {e}"
                         )
 
-                # if the user is the anonymous user and we have auth enabled then make sure we clean up the anonymouse user
-                if (
-                    user_model
-                    and not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
-                    and user_model.username == SPIFF_NO_AUTH_ANONYMOUS_USER
-                    and user_model.service_id == "spiff_anonymous_service_id"
-                ):
-                    group_model = GroupModel.query.filter_by(identifier=SPIFF_NO_AUTH_ANONYMOUS_GROUP).first()
-                    db.session.delete(group_model)
-                    db.session.delete(user_model)
-                    db.session.commit()
-                    tld = current_app.config["THREAD_LOCAL_DATA"]
-                    tld.user_has_logged_out = True
+                # if the user is forced logged out then stop processing the token
+                if _force_logout_user_if_necessary(user_model):
                     return None
 
             elif "iss" in decoded_token.keys():
@@ -211,20 +200,22 @@ def set_new_access_token_in_cookie(
     return response
 
 
-def login(redirect_url: str = "/") -> Response:
+def login(redirect_url: str = "/", process_instance_id: int | None = None, task_guid: str | None = None) -> Response:
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
-        user = UserModel.query.filter_by(username=SPIFF_NO_AUTH_ANONYMOUS_USER).first()
-        if user is None:
-            user = UserService.create_user(
-                SPIFF_NO_AUTH_ANONYMOUS_USER, "spiff_anonymous_service", "spiff_anonymous_service_id"
-            )
-        GroupService.add_user_to_group_or_add_to_waiting(user.username, SPIFF_NO_AUTH_ANONYMOUS_GROUP)
-        AuthorizationService.add_permission_from_uri_or_macro(SPIFF_NO_AUTH_ANONYMOUS_GROUP, "all", "/*")
-        g.user = user
-        g.token = user.encode_auth_token({"authentication_disabled": True})
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        tld.new_access_token = g.token
-        tld.new_id_token = g.token
+        AuthorizationService.create_guest_token(
+            username=SPIFF_NO_AUTH_USER,
+            group_identifier=SPIFF_NO_AUTH_GROUP,
+            permission_target="/*",
+            auth_token_properties={"authentication_disabled": True},
+        )
+        return redirect(redirect_url)
+
+    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
+        AuthorizationService.create_guest_token(
+            username=SPIFF_GUEST_USER,
+            group_identifier=SPIFF_GUEST_GROUP,
+            auth_token_properties={"only_guest_task_completion": True},
+        )
         return redirect(redirect_url)
 
     state = AuthenticationService.generate_state(redirect_url)
@@ -375,3 +366,25 @@ def _clear_auth_tokens_from_thread_local_data() -> None:
         delattr(tld, "new_id_token")
     if hasattr(tld, "user_has_logged_out"):
         delattr(tld, "user_has_logged_out")
+
+
+def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool:
+    """Logs out a guest user if certain criteria gets met.
+
+    * if the user is a no auth guest and we have auth enabled
+    * if the user is a guest and goes somewhere else that does not allow guests
+    """
+    if user_model is not None:
+        if (
+            not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
+            and user_model.username == SPIFF_NO_AUTH_USER
+            and user_model.service_id == "spiff_guest_service_id"
+        ) or (
+            user_model.username == SPIFF_GUEST_USER
+            and user_model.service_id == "spiff_guest_service_id"
+            and not AuthorizationService.request_allows_guest_access()
+        ):
+            tld = current_app.config["THREAD_LOCAL_DATA"]
+            tld.user_has_logged_out = True
+            return True
+    return False
