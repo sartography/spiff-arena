@@ -783,12 +783,12 @@ div.markdown-collapsed {
 
 
 .cds--data-table-content {
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 .wmde-markdown table {
   width: fit-content;
-  overflow: scroll;
+  overflow: auto;
 }
 
 /* override carbon variable so we can left align accordions*/
