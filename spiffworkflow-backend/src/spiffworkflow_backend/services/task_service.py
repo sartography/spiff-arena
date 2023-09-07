@@ -276,6 +276,7 @@ class TaskService:
             self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
         if python_env_dict is not None:
             self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
+        task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
     def find_or_create_task_model_from_spiff_task(
         self,
