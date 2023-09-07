@@ -172,15 +172,11 @@ describe('process-instances', () => {
   });
 
   it('can filter', () => {
-    cy.getBySel('process-instance-list-link').click();
-    cy.contains('My Process Instances');
-    cy.get('.process-instance-list-row-variant-for-me');
-    cy.assertAtLeastOneItemInPaginatedResults();
-
-    cy.getBySel('process-instance-list-all').click();
+    cy.visit('/admin/process-instances/all');
     cy.contains('All Process Instances');
     cy.get('.process-instance-list-row-variant-all');
     cy.assertAtLeastOneItemInPaginatedResults();
+    cy.getBySel('filter-section-expand-toggle').click();
 
     const statusSelect = '#process-instance-status-select';
     PROCESS_STATUSES.forEach((processStatus) => {
