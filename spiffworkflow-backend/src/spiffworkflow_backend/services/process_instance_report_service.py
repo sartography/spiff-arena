@@ -553,12 +553,29 @@ class ProcessInstanceReportService:
                 HumanTaskModel,
                 and_(
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
-                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
                     HumanTaskModel.completed.is_(False),  # type: ignore
                 ),
             ).join(
                 HumanTaskUserModel,
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
+            )
+
+            user_group_assignment_for_lane_assignment = aliased(UserGroupAssignmentModel)
+            process_instance_query = process_instance_query.outerjoin(
+                user_group_assignment_for_lane_assignment,
+                and_(
+                    user_group_assignment_for_lane_assignment.group_id == HumanTaskModel.lane_assignment_id,
+                    user_group_assignment_for_lane_assignment.user_id == user.id,
+                ),
+            ).filter(
+                # it should show up in your "Waiting for me" list IF:
+                #   1) task is not assigned to a group OR
+                #   2) you are not in the group
+                # In the case of number 2, it probably means you were added to the task individually by an admin
+                or_(
+                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    user_group_assignment_for_lane_assignment.group_id.is_(None),
+                )
             )
             human_task_already_joined = True
             restrict_human_tasks_to_user = user

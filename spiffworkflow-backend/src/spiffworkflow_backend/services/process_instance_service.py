@@ -239,8 +239,6 @@ class ProcessInstanceService:
                 cls.run_process_instance_with_processor(
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
-                if process_instance.status == "complete":
-                    cls.schedule_next_process_model_cycle(process_instance)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
@@ -260,7 +258,9 @@ class ProcessInstanceService:
     ) -> ProcessInstanceProcessor | None:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
-            processor = ProcessInstanceProcessor(process_instance)
+            processor = ProcessInstanceProcessor(
+                process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
+            )
         if status_value and cls.can_optimistically_skip(processor, status_value):
             current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
             return None
