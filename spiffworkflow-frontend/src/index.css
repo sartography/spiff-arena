@@ -196,7 +196,7 @@ dl {
 dl dt {
   display: inline-block;
   font-weight: 600;
-  min-width: 5rem;
+  min-width: 6rem;
   color: #161616;
 }
 
