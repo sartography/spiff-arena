@@ -680,21 +680,23 @@ export default function ProcessModelShow() {
               confirmButtonLabel="Delete"
             />
           </Can>
-          <Can
-            I="POST"
-            a={targetUris.processModelPublishPath}
-            ability={ability}
-          >
-            <Button
-              kind="ghost"
-              data-qa="publish-process-model-button"
-              renderIcon={Upload}
-              iconDescription="Publish Changes"
-              hasIconOnly
-              onClick={publishProcessModel}
-              disabled={publishDisabled}
-            />
-          </Can>
+          {!processModel.actions || processModel.actions.publish ? (
+            <Can
+              I="POST"
+              a={targetUris.processModelPublishPath}
+              ability={ability}
+            >
+              <Button
+                kind="ghost"
+                data-qa="publish-process-model-button"
+                renderIcon={Upload}
+                iconDescription="Publish Changes"
+                hasIconOnly
+                onClick={publishProcessModel}
+                disabled={publishDisabled}
+              />
+            </Can>
+          ) : null}
           <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
             {hasTestCaseFiles ? (
               <ProcessModelTestRun titleText="Run all BPMN unit tests for this process model" />

@@ -157,6 +157,14 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
         current_git_revision = ""
 
     process_model.bpmn_version_control_identifier = current_git_revision
+
+    available_actions = {}
+    if GitService.check_for_publish_configs(raise_on_missing=False):
+        available_actions = {
+            "publish": {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}
+        }
+    process_model.actions = available_actions
+
     return make_response(jsonify(process_model), 200)
 
 
