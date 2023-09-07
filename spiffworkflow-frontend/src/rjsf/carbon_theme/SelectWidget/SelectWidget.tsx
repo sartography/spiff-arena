@@ -1,5 +1,6 @@
 import { Select, SelectItem } from '@carbon/react';
 import { WidgetProps, processSelectValue } from '@rjsf/utils';
+import { getCommonAttributes } from '../../helpers';
 
 function SelectWidget({
   schema,
@@ -35,30 +36,12 @@ function SelectWidget({
   }: React.FocusEvent<HTMLInputElement>) =>
     onFocus(id, processSelectValue(schema, value, options));
 
-  let labelToUse = label;
-  if (uiSchema && uiSchema['ui:title']) {
-    labelToUse = uiSchema['ui:title'];
-  } else if (schema && schema.title) {
-    labelToUse = schema.title;
-  }
-  let helperText = null;
-  if (uiSchema && uiSchema['ui:help']) {
-    helperText = uiSchema['ui:help'];
-  }
-  if (required) {
-    labelToUse = `${labelToUse}*`;
-  }
-
-  let invalid = false;
-  let errorMessageForField = null;
-  if (rawErrors && rawErrors.length > 0) {
-    invalid = true;
-    if ('validationErrorMessage' in schema) {
-      errorMessageForField = (schema as any).validationErrorMessage;
-    } else {
-      errorMessageForField = rawErrors[0];
-    }
-  }
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    rawErrors
+  );
 
   // ok. so in safari, the select widget showed the first option, whereas in chrome it forced you to select an option.
   // this change causes causes safari to act a little bit more like chrome, but it's different because we are actually adding
@@ -99,7 +82,7 @@ function SelectWidget({
       name={id}
       labelText=""
       select
-      helperText={helperText}
+      helperText={commonAttributes.helperText}
       value={typeof value === 'undefined' ? emptyValue : value}
       disabled={disabled || readonly}
       autoFocus={autofocus}
@@ -107,8 +90,8 @@ function SelectWidget({
       onChange={_onChange}
       onBlur={_onBlur}
       onFocus={_onFocus}
-      invalid={invalid}
-      invalidText={errorMessageForField}
+      invalid={commonAttributes.invalid}
+      invalidText={commonAttributes.errorMessageForField}
       InputLabelProps={{
         shrink: true,
       }}
@@ -116,7 +99,7 @@ function SelectWidget({
         multiple: typeof multiple === 'undefined' ? false : multiple,
       }}
     >
-      {(enumOptions as any).map(({ value, label }: any, i: number) => {
+      {(enumOptions as any).map(({ value, label }: any, _i: number) => {
         const disabled: any =
           enumDisabled && (enumDisabled as any).indexOf(value) != -1;
         return <SelectItem text={label} value={value} disabled={disabled} />;
