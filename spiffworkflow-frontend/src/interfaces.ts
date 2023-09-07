@@ -445,32 +445,6 @@ export interface DataStore {
   type: string;
 }
 
-export interface UiSchemaNavItem {
-  label: string;
-  route: string;
-}
-export interface UiSchemaPageDefinition {
-  header: string;
-  api: string;
-
-  form_schema_filename?: any;
-  form_ui_schema_filename?: any;
-  markdown_instruction_filename?: string;
-  navigate_to_on_form_submit?: string;
-}
-export interface UiSchemaRoute {
-  [key: string]: UiSchemaPageDefinition;
-}
-export interface ExtensionUiSchema {
-  navigation_items?: UiSchemaNavItem[];
-  routes: UiSchemaRoute;
-}
-
-export interface ExtensionPostBody {
-  extension_input: any;
-  ui_schema_page_definition?: UiSchemaPageDefinition;
-}
-
 export interface JsonSchemaExample {
   schema: any;
   ui: any;
