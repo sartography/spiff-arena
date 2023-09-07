@@ -1,7 +1,12 @@
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentNotFoundError
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import and_
 
 
 class GroupService:
@@ -16,10 +21,43 @@ class GroupService:
         return group
 
     @classmethod
-    def add_user_to_group_or_add_to_waiting(cls, username: str, group_identifier: str) -> None:
+    def add_user_to_group_or_add_to_waiting(cls, username: str | UserModel, group_identifier: str) -> None:
         group = cls.find_or_create_group(group_identifier)
         user = UserModel.query.filter_by(username=username).first()
         if user:
             UserService.add_user_to_group(user, group)
         else:
             UserService.add_waiting_group_assignment(username, group)
+
+    @classmethod
+    def add_user_to_group(cls, user: UserModel, group_identifier: str) -> None:
+        group = cls.find_or_create_group(group_identifier)
+        UserService.add_user_to_group(user, group)
+
+    @classmethod
+    def remove_user_from_group(cls, user: UserModel, group_identifier: str) -> None:
+        user_group_assignment = (
+            UserGroupAssignmentModel.query.filter_by(user_id=user.id)
+            .join(
+                GroupModel,
+                and_(GroupModel.id == UserGroupAssignmentModel.group_id, GroupModel.identifier == group_identifier),
+            )
+            .first()
+        )
+        if user_group_assignment is None:
+            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_identifier})"))
+        db.session.delete(user_group_assignment)
+        db.session.commit()
+
+    @classmethod
+    def find_or_create_guest_user(
+        cls, username: str = SPIFF_GUEST_USER, group_identifier: str = SPIFF_GUEST_GROUP
+    ) -> UserModel:
+        guest_user: UserModel | None = UserModel.query.filter_by(
+            username=username, service="spiff_guest_service", service_id="spiff_guest_service_id"
+        ).first()
+        if guest_user is None:
+            guest_user = UserService.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
+            GroupService.add_user_to_group_or_add_to_waiting(guest_user.username, group_identifier)
+
+        return guest_user

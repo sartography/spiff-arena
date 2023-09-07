@@ -8,7 +8,7 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 mysql -uroot spiffworkflow_backend_local_development -e '
-  SELECT td.bpmn_identifier FROM process_instance p
+  SELECT td.bpmn_identifier, p.id FROM process_instance p
 
   JOIN process_instance_event pie ON pie.process_instance_id = p.id
   JOIN task t ON t.guid = pie.task_guid
@@ -27,6 +27,6 @@ mysql -uroot spiffworkflow_backend_local_development -e '
     GROUP BY pie.process_instance_id
   ) AS max_pie ON max_pie.max_pie_id = pie.id
 
-  WHERE pie.process_instance_id = 27
+  # WHERE pie.process_instance_id = 27
   ;
 '

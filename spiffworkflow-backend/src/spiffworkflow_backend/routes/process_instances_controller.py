@@ -123,7 +123,7 @@ def _process_instance_run(
             ) from e
         raise e
 
-    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
+    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
         MessageService.correlate_all_message_instances()
 
     return processor
@@ -703,16 +703,20 @@ def _get_process_instance(
             name_of_file_with_diagram = process_model_with_diagram.primary_file_name
 
     if process_model_with_diagram and name_of_file_with_diagram:
+        bpmn_xml_file_contents = None
         if process_instance.bpmn_version_control_identifier == current_version_control_revision:
             bpmn_xml_file_contents = SpecFileService.get_data(
                 process_model_with_diagram, name_of_file_with_diagram
             ).decode("utf-8")
         else:
-            bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                process_model_with_diagram,
-                process_instance.bpmn_version_control_identifier,
-                file_name=name_of_file_with_diagram,
-            )
+            try:
+                bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
+                    process_model_with_diagram,
+                    process_instance.bpmn_version_control_identifier,
+                    file_name=name_of_file_with_diagram,
+                )
+            except GitCommandError as ex:
+                process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
     process_instance_as_dict = process_instance.serialized_with_metadata()

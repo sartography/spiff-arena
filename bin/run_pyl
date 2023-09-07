@@ -39,6 +39,7 @@ function run_autofixers() {
   fi
 
   python_dirs="$(get_python_dirs) bin"
+  # shellcheck disable=2086
   ruff --fix $python_dirs || echo ''
 }
 

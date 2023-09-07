@@ -208,6 +208,7 @@ export default function TaskListTable({
             variant="primary"
             href={taskUrl}
             disabled={!hasAccessToCompleteTask}
+            size="sm"
           >
             Go
           </Button>
