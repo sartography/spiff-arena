@@ -65,8 +65,8 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
     python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
-    runtime_info: dict = db.Column(db.JSON)
 
+    runtime_info: dict | None = db.Column(db.JSON)
     start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
 
