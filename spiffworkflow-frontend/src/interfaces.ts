@@ -71,6 +71,8 @@ export interface BasicTask {
   name_for_display: string;
   can_complete: boolean;
 
+  start_in_seconds: number;
+  end_in_seconds: number;
   extensions?: any;
 }
 
@@ -106,7 +108,6 @@ export interface ProcessInstanceTask {
   process_model_identifier: string;
   properties: any;
   state: string;
-  task_title: string;
   title: string;
   type: string;
   updated_at_in_seconds: number;
@@ -114,6 +115,10 @@ export interface ProcessInstanceTask {
   potential_owner_usernames?: string;
   assigned_user_group_identifier?: string;
   error_message?: string;
+
+  // these are actually from HumanTaskModel on the backend
+  task_title?: string;
+  task_name?: string;
 }
 
 export interface ProcessReference {

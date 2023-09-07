@@ -730,6 +730,10 @@ hr {
   display: none;
 }
 
+.my-completed-forms-header {
+  font-style: italic;
+}
+
 fieldset legend.header {
   margin-bottom: 32px;
 }
