@@ -133,28 +133,25 @@ export default function ProcessInstanceRun({
     });
   };
 
-  // if checkPermissions is false then assume the page using this component has already checked the permissions
-  if (checkPermissions) {
-    return (
-      <Can I="POST" a={processInstanceCreatePath} ability={ability}>
-        <Button
-          data-qa="start-process-instance"
-          onClick={processInstanceCreateAndRun}
-          className={className}
-          disabled={disableStartButton}
-        >
-          Start
-        </Button>
-      </Can>
-    );
-  }
-  return (
+  const startButton = (
     <Button
+      data-qa="start-process-instance"
       onClick={processInstanceCreateAndRun}
       className={className}
       disabled={disableStartButton}
+      size="md"
     >
       Start
     </Button>
   );
+
+  // if checkPermissions is false then assume the page using this component has already checked the permissions
+  if (checkPermissions) {
+    return (
+      <Can I="POST" a={processInstanceCreatePath} ability={ability}>
+        {startButton}
+      </Can>
+    );
+  }
+  return startButton;
 }

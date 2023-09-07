@@ -834,12 +834,14 @@ export default function ProcessModelEditDiagram() {
         onRequestClose={handleMarkdownEditorClose}
         size="lg"
       >
-        <MDEditor
-          height={500}
-          highlightEnable={false}
-          value={markdownText}
-          onChange={setMarkdownText}
-        />
+        <div data-color-mode="light">
+          <MDEditor
+            height={500}
+            highlightEnable={false}
+            value={markdownText}
+            onChange={setMarkdownText}
+          />
+        </div>
       </Modal>
     );
   };

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_TestLastMilestoneCallActivity" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0vc53yr</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0vc53yr" sourceRef="StartEvent_1" targetRef="in_call_activity" />
+    <bpmn:intermediateThrowEvent id="in_call_activity" name="In Call Activity">
+      <bpmn:incoming>Flow_0vc53yr</bpmn:incoming>
+      <bpmn:outgoing>Flow_1o2uee3</bpmn:outgoing>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_1o2uee3" sourceRef="in_call_activity" targetRef="milestone_in_call_activity" />
+    <bpmn:manualTask id="milestone_in_call_activity">
+      <bpmn:incoming>Flow_1o2uee3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0jcfams</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="Event_00alhkl" name="Done with call activity">
+      <bpmn:incoming>Flow_0jcfams</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0jcfams" sourceRef="milestone_in_call_activity" targetRef="Event_00alhkl" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_TestLastMilestoneCallActivity">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0q7znrl_di" bpmnElement="in_call_activity">
+        <dc:Bounds x="272" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="256" y="202" width="69" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0vu3k30_di" bpmnElement="milestone_in_call_activity">
+        <dc:Bounds x="350" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_00alhkl_di" bpmnElement="Event_00alhkl">
+        <dc:Bounds x="492" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="476" y="202" width="69" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0vc53yr_di" bpmnElement="Flow_0vc53yr">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="272" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1o2uee3_di" bpmnElement="Flow_1o2uee3">
+        <di:waypoint x="308" y="177" />
+        <di:waypoint x="350" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0jcfams_di" bpmnElement="Flow_0jcfams">
+        <di:waypoint x="450" y="177" />
+        <di:waypoint x="492" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

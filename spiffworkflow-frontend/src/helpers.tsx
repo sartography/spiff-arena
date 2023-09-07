@@ -6,6 +6,7 @@ import {
   DATE_FORMAT,
   TIME_FORMAT_HOURS_MINUTES,
 } from './config';
+import { ProcessInstance } from './interfaces';
 
 export const DEFAULT_PER_PAGE = 50;
 export const DEFAULT_PAGE = 1;
@@ -365,3 +366,30 @@ const FOUR_HOURS_IN_SECONDS = SECONDS_IN_HOUR * 4;
 
 export const REFRESH_INTERVAL_SECONDS = 5;
 export const REFRESH_TIMEOUT_SECONDS = FOUR_HOURS_IN_SECONDS;
+
+export const getLastMilestoneFromProcessInstance = (
+  processInstance: ProcessInstance,
+  value: any
+) => {
+  let valueToUse = value;
+  if (!valueToUse) {
+    if (processInstance.status === 'not_started') {
+      valueToUse = 'Created';
+    } else if (
+      ['complete', 'error', 'terminated'].includes(processInstance.status)
+    ) {
+      valueToUse = 'Completed';
+    } else {
+      valueToUse = 'Started';
+    }
+  }
+  let truncatedValue = valueToUse;
+  const milestoneLengthLimit = 20;
+  if (truncatedValue.length > milestoneLengthLimit) {
+    truncatedValue = `${truncatedValue.substring(
+      0,
+      milestoneLengthLimit - 3
+    )}...`;
+  }
+  return [valueToUse, truncatedValue];
+};
