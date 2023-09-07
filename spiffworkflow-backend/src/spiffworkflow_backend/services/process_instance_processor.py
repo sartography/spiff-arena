@@ -72,6 +72,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -665,18 +666,37 @@ class ProcessInstanceProcessor:
             # bpmn definition tables more.
             #
 
+            subprocess_specs_for_ready_tasks = set()
             element_unit_process_dict = None
             full_process_model_hash = bpmn_process_definition.full_process_model_hash
 
             if full_process_model_hash is not None:
+                process_id = bpmn_process_definition.bpmn_identifier
+                element_id = bpmn_process_definition.bpmn_identifier
+
+                subprocess_specs_for_ready_tasks = {
+                    r.bpmn_identifier
+                    for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
+                    .join(TaskDefinitionModel)
+                    .join(TaskModel)
+                    .filter(TaskModel.process_instance_id == process_instance_model.id)
+                    .filter(TaskModel.state == "READY")
+                    .all()
+                }
+
                 element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
-                    full_process_model_hash,
-                    bpmn_process_definition.bpmn_identifier,
-                    bpmn_process_definition.bpmn_identifier,
+                    full_process_model_hash, process_id, element_id
                 )
+
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
-                spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
+                keys = list(spiff_bpmn_process_dict["subprocess_specs"].keys())
+                for k in keys:
+                    if (
+                        k not in subprocess_specs_for_ready_tasks
+                        and k not in element_unit_process_dict["subprocess_specs"]
+                    ):
+                        spiff_bpmn_process_dict["subprocess_specs"].pop(k)
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
@@ -780,7 +800,11 @@ class ProcessInstanceProcessor:
 
         potential_owner_ids = []
         lane_assignment_id = None
-        if re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
+
+        if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
+            guest_user = GroupService.find_or_create_guest_user()
+            potential_owner_ids = [guest_user.id]
+        elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
             potential_owner_ids = [self.process_instance_model.process_initiator_id]
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
@@ -1005,6 +1029,15 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+        known_task_ids = [str(t.id) for t in self.bpmn_process_instance.get_tasks()]
+        TaskModel.query.filter(TaskModel.process_instance_id == self.process_instance_model.id).filter(
+            TaskModel.guid.notin_(known_task_ids)  # type: ignore
+        ).delete()
+        HumanTaskModel.query.filter(HumanTaskModel.process_instance_id == self.process_instance_model.id).filter(
+            HumanTaskModel.task_id.notin_(known_task_ids)  # type: ignore
+        ).delete()
+        db.session.commit()
+
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
@@ -1124,7 +1157,7 @@ class ProcessInstanceProcessor:
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
                 f" instance {self.process_instance_model.id}"
             )
-            self.do_engine_steps(save=True, execution_strategy_name="one_at_a_time")
+            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
             task_model_delegate = TaskModelSavingDelegate(
@@ -1361,7 +1394,7 @@ class ProcessInstanceProcessor:
         for task in tasks:
             if task.task_spec.description != "Call Activity":
                 continue
-            spec_to_check = task.task_spec.bpmn_id
+            spec_to_check = task.task_spec.spec
 
             if spec_to_check not in loaded_specs:
                 lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
@@ -1371,6 +1404,7 @@ class ProcessInstanceProcessor:
                 for name, spec in lazy_subprocess_specs.items():
                     if name not in loaded_specs:
                         self.bpmn_process_instance.subprocess_specs[name] = spec
+                        self.refresh_waiting_tasks()
                         loaded_specs.add(name)
 
     def refresh_waiting_tasks(self) -> None:

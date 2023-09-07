@@ -7,6 +7,7 @@
 
 .megacondensed {
   padding-left: 0px;
+  margin-left: 0px;
 }
 
 /* defaults to 3rem, which isn't long sufficient for "elizabeth" */
@@ -61,8 +62,9 @@ h3 {
   color: #161616;
 }
 
-.span-tag {
+.tag-within-dl {
   color: black;
+  margin-left: -3px;
 }
 
 .cds--btn.button-white-background {
@@ -119,6 +121,34 @@ h3 {
   color: #0062fe;
   background-color: white;
   padding-left: 0;
+}
+
+/* make the colors black to make it easier to read */
+.cds--btn--tertiary {
+  color: black;
+  border-color: black;
+}
+.cds--btn--tertiary:visited {
+  color: black;
+  border-color: black;
+}
+/* make the colors a little lighter black on hover
+ * so they match our normal scheme better
+ */
+.cds--btn--tertiary:focus {
+  color: white;
+  border-color: #393939;
+  background-color: #393939;
+}
+.cds--btn--tertiary:hover {
+  color: white;
+  border-color: #474747;
+  background-color: #474747;
+}
+.cds--btn--tertiary:visited:hover {
+  color: white;
+  border-color: #474747;
+  background-color: #474747;
 }
 
 .cds--header__global .cds--btn--primary.button-link {
@@ -189,15 +219,21 @@ h1.with-icons {
 dl {
   display: block;
   grid-template-columns: 35% 65%;
-  font-size: .8rem;
+  font-size: 14px;
   line-height: 1.2rem;
+  padding-top: 9px;
 }
 
 dl dt {
   display: inline-block;
   font-weight: 600;
-  min-width: 5rem;
+  min-width: 6rem;
   color: #161616;
+}
+
+dl.metadata-display dt {
+  width: 7rem;
+  word-wrap: break-word;
 }
 
 dl dd {
@@ -347,7 +383,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 
 .cds--tile.tile-process-group {
   padding: 0px;
-  margin: 12px;
+  margin: 12px 24px 12px 0px;
   width: 320px;
   height: 264px;
   background: #F4F4F4;
@@ -404,6 +440,12 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   max-width: 20rem;
 }
 
+/* carbon wants padding on all sides. our UI person wanted everything leaning against the left wall. */
+.cds--tab-content {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .clear-left {
   clear: left;
 }
@@ -427,8 +469,11 @@ td.actions-cell {
 
 .no-results-message {
   font-style: italic;
-  margin-left: 2rem;
   font-size: 14px;
+}
+
+th.table-header-right-align .cds--data-table, th.table-header-right-align .cds--table-header-label{
+  text-align: right;
 }
 
 .data-table-description {
@@ -447,6 +492,7 @@ td.actions-cell {
 .filter-icon {
   text-align: right;
   padding-bottom: 10px;
+  margin-right: 0px;
 }
 
 .cds--btn--ghost:not([disabled]).red-icon svg {
@@ -682,4 +728,86 @@ hr {
 
 #hidden-form-for-autosave {
   display: none;
+}
+
+fieldset legend.header {
+  margin-bottom: 32px;
+}
+fieldset fieldset fieldset legend.header {
+  margin-bottom: 16px;
+}
+
+.fixed-width-container {
+  margin: auto;
+  justify-content: center;
+  overflow: visible;
+  /* border: 1px solid black; */
+}
+
+/*  media min-width 75 means: do the stuff in the block if the browser width is greater than 75 */
+@media (min-width: 75rem) {
+  .fixed-width-container {
+    max-width: 75rem;
+  }
+}
+
+p, li, h1, h2, h3, h4, h5, h6, blockquote, hr {
+  max-width: 640px;
+}
+li.cds--accordion__item {
+  max-width: 100%;
+}
+
+div.markdown {
+  padding: 15px 0 15px 0;
+  overflow: visible;
+}
+
+div.markdown-collapsed {
+  max-height: 200px;
+  overflow: hidden;
+
+  --mask: linear-gradient(to bottom,
+          rgba(0,0,0, 1) 0,   rgba(0,0,0, 1) 40%,
+          rgba(0,0,0, 0) 95%, rgba(0,0,0, 0) 0
+  ) 100% 50% / 100% 100% repeat-x;
+
+  font: 2em/1.6em Arial;
+  -webkit-mask: var(--mask);
+  mask: var(--mask);
+}
+
+
+.cds--data-table-content {
+  overflow-x: scroll;
+}
+
+.wmde-markdown table {
+  width: fit-content;
+  overflow: scroll;
+}
+
+/* override carbon variable so we can left align accordions*/
+.cds--accordion {
+  --cds-layout-density-padding-inline-local: 0px;
+}
+.megacondensed-button .cds--btn {
+  --cds-layout-density-padding-inline-local: 0px;
+}
+
+.wmde-markdown ol {
+  list-style: decimal;
+}
+
+.wmde-markdown ul {
+  list-style: disc;
+}
+
+div.cds--tag svg {
+  vertical-align: middle;
+  display: inline-block;
+}
+
+div.onboarding {
+  margin-bottom: 2rem;
 }

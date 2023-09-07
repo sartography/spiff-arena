@@ -14,6 +14,7 @@ import {
   ExtensionUiSchema,
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
@@ -253,7 +254,12 @@ export default function Extension() {
         );
       }
     }
-    return <div className="fixed-width-container">{componentsToDisplay}</div>;
+    return (
+      <div className="fixed-width-container">
+        <ErrorDisplay />
+        {componentsToDisplay}
+      </div>
+    );
   }
   return null;
 }
