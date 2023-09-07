@@ -13,7 +13,8 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 
-SPIFF_NO_AUTH_ANONYMOUS_USER = "spiff_anonymous_user"
+SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
+SPIFF_GUEST_USER = "spiff_guest_user"
 
 
 class UserNotFoundError(Exception):
