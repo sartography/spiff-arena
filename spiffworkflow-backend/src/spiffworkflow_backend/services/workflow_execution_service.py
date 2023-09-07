@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import copy
 import time
 from abc import abstractmethod
@@ -7,6 +8,9 @@ from collections.abc import Callable
 from typing import Any
 from uuid import UUID
 
+import flask.app
+from flask import current_app
+from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
@@ -84,9 +88,77 @@ class ExecutionStrategy:
         self.subprocess_spec_loader = subprocess_spec_loader
         self.options = options
 
-    @abstractmethod
+    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
+        return False
+
+    def should_break_after(self, tasks: list[SpiffTask]) -> bool:
+        return False
+
+    def _run(
+        self,
+        spiff_task: SpiffTask,
+        app: flask.app.Flask,
+        process_instance_id: Any | None,
+        process_model_identifier: Any | None,
+        user: Any | None,
+    ) -> SpiffTask:
+        with app.app_context():
+            app.config["THREAD_LOCAL_DATA"].process_instance_id = process_instance_id
+            app.config["THREAD_LOCAL_DATA"].process_model_identifier = process_model_identifier
+            g.user = user
+            spiff_task.run()
+            return spiff_task
+
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        pass
+        # Note
+        while True:
+            bpmn_process_instance.refresh_waiting_tasks()
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+            if self.should_break_before(engine_steps):
+                break
+            num_steps = len(engine_steps)
+            if num_steps == 0:
+                break
+            elif num_steps == 1:
+                spiff_task = engine_steps[0]
+                self.delegate.will_complete_task(spiff_task)
+                spiff_task.run()
+                self.delegate.did_complete_task(spiff_task)
+            elif num_steps > 1:
+                # This only works because of the GIL, and the fact that we are not actually executing
+                # code in parallel, we are just waiting for I/O in parallel.  So it can run a ton of
+                # service tasks at once - many api calls, and then get those responses back without
+                # waiting for each individual task to complete.
+                futures = []
+                process_instance_id = None
+                process_model_identifier = None
+                if hasattr(current_app.config["THREAD_LOCAL_DATA"], "process_instance_id"):
+                    process_instance_id = current_app.config["THREAD_LOCAL_DATA"].process_instance_id
+                    process_model_identifier = current_app.config["THREAD_LOCAL_DATA"].process_model_identifier
+                user = None
+                if hasattr(g, "user"):
+                    user = g.user
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    for spiff_task in engine_steps:
+                        self.delegate.will_complete_task(spiff_task)
+                        futures.append(
+                            executor.submit(
+                                self._run,
+                                spiff_task,
+                                current_app._get_current_object(),
+                                process_instance_id,
+                                process_model_identifier,
+                                user,
+                            )
+                        )
+                    for future in concurrent.futures.as_completed(futures):
+                        spiff_task = future.result()
+                        self.delegate.did_complete_task(spiff_task)
+            if self.should_break_after(engine_steps):
+                break
+
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.on_exception(bpmn_process_instance)
@@ -99,7 +171,9 @@ class ExecutionStrategy:
 
         if len(tasks) > 0:
             self.subprocess_spec_loader()
-            tasks = [tasks[0]]
+
+            # TODO: verify the other execution strategies work still and delete to make this work like the name
+            # tasks = [tasks[0]]
 
         return tasks
 
@@ -137,8 +211,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
             self.spiff_task_timestamps[spiff_task.id] = {"start_in_seconds": time.time(), "end_in_seconds": None}
-            spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
-
             self.current_task_start_in_seconds = time.time()
 
         if self.secondary_engine_step_delegate:
@@ -153,13 +225,18 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
 
-            # # NOTE: used with process-spiff-tasks-list
-            # self.spiff_task_timestamps[spiff_task.id]['end_in_seconds'] = time.time()
-            # self.spiff_tasks_to_process.add(spiff_task.id)
-            # self._add_children(spiff_task)
-            # # self._add_parents(spiff_task)
-
             self.last_completed_spiff_task = spiff_task
+        if (
+            spiff_task.task_spec.__class__.__name__ in ["StartEvent", "EndEvent", "IntermediateThrowEvent"]
+            and spiff_task.task_spec.bpmn_name is not None
+        ):
+            self.process_instance.last_milestone_bpmn_name = spiff_task.task_spec.bpmn_name
+        elif spiff_task.workflow.parent_task_id is None:
+            # if parent_task_id is None then this should be the top level process
+            if spiff_task.task_spec.__class__.__name__ == "EndEvent":
+                self.process_instance.last_milestone_bpmn_name = "Completed"
+            elif spiff_task.task_spec.__class__.__name__ == "StartEvent":
+                self.process_instance.last_milestone_bpmn_name = "Started"
         self.process_instance.task_updated_at_in_seconds = round(time.time())
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
@@ -176,6 +253,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
             # excludes COMPLETED. the others were required to get PP1 to go to completion.
             # process FUTURE tasks because Boundary events are not processed otherwise.
+            #
+            # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
+            # but it didn't quite work in all cases, so we deleted it. you can find it in commit
+            # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
                 TaskState.WAITING
                 | TaskState.CANCELLED
@@ -198,51 +279,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
                 self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
-            # # NOTE: process-spiff-tasks-list: this would be the ideal way to handle all tasks
-            # # but we're missing something with it yet
-            # #
-            # # adding from line here until we are ready to go with this
-            # from SpiffWorkflow.exceptions import TaskNotFoundException
-            # for spiff_task_uuid in self.spiff_tasks_to_process:
-            #     try:
-            #         waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_uuid)
-            #     except TaskNotFoundException:
-            #         continue
-            #
-            #     # include PREDICTED_MASK tasks in list so we can remove them from the parent
-            #     if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
-            #         TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
-            #         for cpt in waiting_spiff_task.parent.children:
-            #             if cpt.id == waiting_spiff_task.id:
-            #                 waiting_spiff_task.parent.children.remove(cpt)
-            #         continue
-            #     # if waiting_spiff_task.state == TaskState.FUTURE:
-            #     #     continue
-            #     start_and_end_times = None
-            #     if waiting_spiff_task.id in self.spiff_task_timestamps:
-            #         start_and_end_times = self.spiff_task_timestamps[waiting_spiff_task.id]
-            #     self.task_service.update_task_model_with_spiff_task(waiting_spiff_task, start_and_end_times=start_and_end_times)
-            #
-            # if self.last_completed_spiff_task is not None:
-            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
-
-            # # NOTE: process-children-of-last-task: this does not work with escalation boundary events
-            # if self.last_completed_spiff_task is not None:
-            #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
-            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
-
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.after_engine_steps(bpmn_process_instance)
-
-    def _add_children(self, spiff_task: SpiffTask) -> None:
-        for child_spiff_task in spiff_task.children:
-            self.spiff_tasks_to_process.add(child_spiff_task.id)
-            self._add_children(child_spiff_task)
-
-    def _add_parents(self, spiff_task: SpiffTask) -> None:
-        if spiff_task.parent:
-            self.spiff_tasks_to_process.add(spiff_task.parent.id)
-            self._add_parents(spiff_task.parent)
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""
@@ -250,47 +288,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
-    """The common execution strategy. This will greedily run all engine steps without stopping."""
-
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        self.bpmn_process_instance = bpmn_process_instance
-        self.run_until_user_input_required(exit_at)
-        self.delegate.after_engine_steps(bpmn_process_instance)
-
-    def run_until_user_input_required(self, exit_at: None = None) -> None:
-        """Keeps running tasks until there are no non-human READY tasks.
-
-        spiff.refresh_waiting_tasks is the thing that pushes some waiting tasks to READY.
-        """
-        engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
-        while engine_steps:
-            for spiff_task in engine_steps:
-                self.delegate.will_complete_task(spiff_task)
-                spiff_task.run()
-                self.delegate.did_complete_task(spiff_task)
-                self.bpmn_process_instance.refresh_waiting_tasks()
-            engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
-
-
-class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
-    """For illustration purposes, not currently integrated.
-
-    Would allow the `run` from the UI to execute until a service task then
-    return (to an interstitial page). The background processor would then take over.
+    """
+    This is what the base class does by default.
     """
 
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        while engine_steps:
-            for spiff_task in engine_steps:
-                if spiff_task.task_spec.description == "Service Task":
-                    return
-                self.delegate.will_complete_task(spiff_task)
-                spiff_task.run()
-                self.delegate.did_complete_task(spiff_task)
-                bpmn_process_instance.refresh_waiting_tasks()
-            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        self.delegate.after_engine_steps(bpmn_process_instance)
+    pass
 
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
@@ -300,40 +302,22 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     but will stop if it hits instructions after the first task.
     """
 
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        should_continue = True
-        bpmn_process_instance.refresh_waiting_tasks()
-        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        while engine_steps and should_continue:
-            for task in engine_steps:
-                if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get(
-                    "instructionsForEndUser", None
-                ):
-                    should_continue = False
-                    break
-                self.delegate.will_complete_task(task)
-                task.run()
-                self.delegate.did_complete_task(task)
-            bpmn_process_instance.refresh_waiting_tasks()
-            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        self.delegate.after_engine_steps(bpmn_process_instance)
+    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
+        for task in tasks:
+            if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get("instructionsForEndUser", None):
+                return True
+        return False
 
 
-class OneAtATimeExecutionStrategy(ExecutionStrategy):
+class RunCurrentReadyTasksExecutionStrategy(ExecutionStrategy):
     """When you want to run only one engine step at a time."""
 
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        if len(engine_steps) > 0:
-            spiff_task = engine_steps[0]
-            self.delegate.will_complete_task(spiff_task)
-            spiff_task.run()
-            self.delegate.did_complete_task(spiff_task)
-        self.delegate.after_engine_steps(bpmn_process_instance)
+    def should_break_after(self, tasks: list[SpiffTask]) -> bool:
+        return True
 
 
 class SkipOneExecutionStrategy(ExecutionStrategy):
-    """When you want to to skip over the next task, rather than execute it."""
+    """When you want to skip over the next task, rather than execute it."""
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         spiff_task = None
@@ -355,13 +339,12 @@ def execution_strategy_named(
 ) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
-        "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
         "run_until_user_message": RunUntilUserTaskOrMessageExecutionStrategy,
-        "one_at_a_time": OneAtATimeExecutionStrategy,
+        "run_current_ready_tasks": RunCurrentReadyTasksExecutionStrategy,
         "skip_one": SkipOneExecutionStrategy,
     }[name]
 
-    return cls(delegate, spec_loader)  # type: ignore
+    return cls(delegate, spec_loader)
 
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
@@ -398,7 +381,6 @@ class WorkflowExecutionService:
                         "The current thread has not obtained a lock for this process"
                         f" instance ({self.process_instance_model.id})."
                     )
-
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 

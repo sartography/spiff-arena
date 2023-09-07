@@ -15,6 +15,7 @@ import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
@@ -209,7 +210,12 @@ export default function Extension() {
         );
       }
     }
-    return <div className="fixed-width-container">{componentsToDisplay}</div>;
+    return (
+      <div className="fixed-width-container">
+        <ErrorDisplay />
+        {componentsToDisplay}
+      </div>
+    );
   }
   return null;
 }

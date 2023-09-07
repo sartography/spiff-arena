@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_b32b5ju" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_13c96f7</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_13c96f7" sourceRef="StartEvent_1" targetRef="Activity_0r556tq" />
+    <bpmn:endEvent id="Event_0enwpgk">
+      <bpmn:incoming>Flow_0pe3a6u</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0pe3a6u" sourceRef="Activity_1xzxbmc" targetRef="Event_0enwpgk" />
+    <bpmn:scriptTask id="Activity_1xzxbmc" name="multi">
+      <bpmn:incoming>Flow_043nok3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0pe3a6u</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics>
+        <bpmn:loopDataInputRef>letters</bpmn:loopDataInputRef>
+        <bpmn:loopDataOutputRef>upper_letters</bpmn:loopDataOutputRef>
+        <bpmn:inputDataItem id="letter" name="letter" />
+        <bpmn:outputDataItem id="upper_letter" name="upper_letter" />
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:script>upper_letter = letter.upper()
+time.sleep(0.1)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_043nok3" sourceRef="Activity_0r556tq" targetRef="Activity_1xzxbmc" />
+    <bpmn:scriptTask id="Activity_0r556tq" name="set letters">
+      <bpmn:incoming>Flow_13c96f7</bpmn:incoming>
+      <bpmn:outgoing>Flow_043nok3</bpmn:outgoing>
+      <bpmn:script>letters  = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']</bpmn:script>
+    </bpmn:scriptTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_b32b5ju">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="-138" y="62" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0enwpgk_di" bpmnElement="Event_0enwpgk">
+        <dc:Bounds x="252" y="62" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_11mwjni_di" bpmnElement="Activity_1xzxbmc">
+        <dc:Bounds x="100" y="40" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03vd1bk_di" bpmnElement="Activity_0r556tq">
+        <dc:Bounds x="-70" y="40" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_13c96f7_di" bpmnElement="Flow_13c96f7">
+        <di:waypoint x="-102" y="80" />
+        <di:waypoint x="-70" y="80" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0pe3a6u_di" bpmnElement="Flow_0pe3a6u">
+        <di:waypoint x="200" y="80" />
+        <di:waypoint x="252" y="80" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_043nok3_di" bpmnElement="Flow_043nok3">
+        <di:waypoint x="30" y="80" />
+        <di:waypoint x="100" y="80" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

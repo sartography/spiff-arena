@@ -33,7 +33,11 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
-import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
+import {
+  makeid,
+  modifyProcessIdentifierForPathParam,
+  setPageTitle,
+} from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
   ProcessFile,
@@ -177,6 +181,9 @@ export default function ProcessModelEditDiagram() {
         path: `/processes/callers/${bpmnProcessIds.join(',')}`,
         successCallback: setCallers,
       });
+    }
+    if (processModel && processModelFile) {
+      setPageTitle([processModel.display_name, processModelFile.name]);
     }
   }, [processModel, processModelFile]);
 
@@ -834,12 +841,14 @@ export default function ProcessModelEditDiagram() {
         onRequestClose={handleMarkdownEditorClose}
         size="lg"
       >
-        <MDEditor
-          height={500}
-          highlightEnable={false}
-          value={markdownText}
-          onChange={setMarkdownText}
-        />
+        <div data-color-mode="light">
+          <MDEditor
+            height={500}
+            highlightEnable={false}
+            value={markdownText}
+            onChange={setMarkdownText}
+          />
+        </div>
       </Modal>
     );
   };

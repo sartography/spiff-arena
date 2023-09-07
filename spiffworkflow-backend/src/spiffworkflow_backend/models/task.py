@@ -99,6 +99,27 @@ class TaskModel(SpiffworkflowBaseDBModel):
         task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
         return task_model
 
+    # this will redirect to login if the task does not allow guest access.
+    # so if you already completed the task, and you are not signed in, you will get sent to a login page.
+    def allows_guest(self, process_instance_id: int) -> bool:
+        properties_json = self.task_definition.properties_json
+        if (
+            "extensions" in properties_json
+            and "allowGuest" in properties_json["extensions"]
+            and properties_json["extensions"]["allowGuest"] == "true"
+            and self.process_instance_id == int(process_instance_id)
+            and self.state != "COMPLETED"
+        ):
+            return True
+        return False
+
+    @classmethod
+    def task_guid_allows_guest(cls, task_guid: str, process_instance_id: int) -> bool:
+        task_model = cls.query.filter_by(guid=task_guid).first()
+        if task_model is not None and task_model.allows_guest(process_instance_id):
+            return True
+        return False
+
 
 class Task:
     HUMAN_TASK_TYPES = ["User Task", "Manual Task"]

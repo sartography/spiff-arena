@@ -34,6 +34,12 @@ Get the app running so you can access the frontend at http://localhost:7001 in y
 
     ./bin/run_cypress_tests_locally
 
+## Docker
+
+For full instructions, see [Running SpiffWorkflow Locally with Docker](https://www.spiffworkflow.org/posts/articles/get_started_docker/).
+
+The `docker-compose.yml` file is for running a full-fledged instance of spiff-arena while `editor.docker-compose.yml` provides BPMN graphical editor capability to libraries and projects that depend on SpiffWorkflow but have no built-in BPMN edit capabilities.
+
 ## Contributing
 
 This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects.
