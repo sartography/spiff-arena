@@ -65,6 +65,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
     python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    runtime_info: dict = db.Column(db.JSON)
 
     start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
@@ -140,6 +141,7 @@ class Task:
         multi_instance_index: str = "",
         process_identifier: str = "",
         properties: dict | None = None,
+        runtime_info: dict | None = None,
         process_instance_id: int | None = None,
         process_instance_status: str | None = None,
         process_model_display_name: str | None = None,
@@ -297,6 +299,7 @@ class TaskSchema(Schema):
             "form_schema",
             "form_ui_schema",
             "event_definition",
+            "runtime_info",
         ]
 
     multi_instance_type = EnumField(MultiInstanceType)

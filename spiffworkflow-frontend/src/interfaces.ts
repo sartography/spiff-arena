@@ -86,6 +86,7 @@ export interface Task extends BasicTask {
 
   event_definition?: EventDefinition;
   saved_form_data?: any;
+  runtime_info?: any;
 }
 
 // Currently used like ApiTask in backend
