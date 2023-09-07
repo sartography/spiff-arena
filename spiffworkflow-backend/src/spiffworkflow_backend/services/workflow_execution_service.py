@@ -211,8 +211,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
             self.spiff_task_timestamps[spiff_task.id] = {"start_in_seconds": time.time(), "end_in_seconds": None}
-            spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
-
             self.current_task_start_in_seconds = time.time()
 
         if self.secondary_engine_step_delegate:
@@ -226,12 +224,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
-
-            # # NOTE: used with process-spiff-tasks-list
-            # self.spiff_task_timestamps[spiff_task.id]['end_in_seconds'] = time.time()
-            # self.spiff_tasks_to_process.add(spiff_task.id)
-            # self._add_children(spiff_task)
-            # # self._add_parents(spiff_task)
 
             self.last_completed_spiff_task = spiff_task
         if (
@@ -261,6 +253,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
             # excludes COMPLETED. the others were required to get PP1 to go to completion.
             # process FUTURE tasks because Boundary events are not processed otherwise.
+            #
+            # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
+            # but it didn't quite work in all cases, so we deleted it. you can find it in commit
+            # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
                 TaskState.WAITING
                 | TaskState.CANCELLED
@@ -283,51 +279,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
                 self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
-            # # NOTE: process-spiff-tasks-list: this would be the ideal way to handle all tasks
-            # # but we're missing something with it yet
-            # #
-            # # adding from line here until we are ready to go with this
-            # from SpiffWorkflow.exceptions import TaskNotFoundException
-            # for spiff_task_uuid in self.spiff_tasks_to_process:
-            #     try:
-            #         waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_uuid)
-            #     except TaskNotFoundException:
-            #         continue
-            #
-            #     # include PREDICTED_MASK tasks in list so we can remove them from the parent
-            #     if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
-            #         TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
-            #         for cpt in waiting_spiff_task.parent.children:
-            #             if cpt.id == waiting_spiff_task.id:
-            #                 waiting_spiff_task.parent.children.remove(cpt)
-            #         continue
-            #     # if waiting_spiff_task.state == TaskState.FUTURE:
-            #     #     continue
-            #     start_and_end_times = None
-            #     if waiting_spiff_task.id in self.spiff_task_timestamps:
-            #         start_and_end_times = self.spiff_task_timestamps[waiting_spiff_task.id]
-            #     self.task_service.update_task_model_with_spiff_task(waiting_spiff_task, start_and_end_times=start_and_end_times)
-            #
-            # if self.last_completed_spiff_task is not None:
-            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
-
-            # # NOTE: process-children-of-last-task: this does not work with escalation boundary events
-            # if self.last_completed_spiff_task is not None:
-            #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
-            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
-
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.after_engine_steps(bpmn_process_instance)
-
-    def _add_children(self, spiff_task: SpiffTask) -> None:
-        for child_spiff_task in spiff_task.children:
-            self.spiff_tasks_to_process.add(child_spiff_task.id)
-            self._add_children(child_spiff_task)
-
-    def _add_parents(self, spiff_task: SpiffTask) -> None:
-        if spiff_task.parent:
-            self.spiff_tasks_to_process.add(spiff_task.parent.id)
-            self._add_parents(spiff_task.parent)
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""
