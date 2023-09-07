@@ -11,6 +11,7 @@ import {
   doNothing,
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
+  setPageTitle,
 } from '../helpers';
 import {
   BasicTask,
@@ -63,6 +64,7 @@ export default function TaskShow() {
   useEffect(() => {
     const processBasicTaskResult = (result: BasicTask) => {
       setBasicTask(result);
+      setPageTitle([result.name_for_display]);
       if (!result.can_complete) {
         navigateToInterstitial(result);
       }

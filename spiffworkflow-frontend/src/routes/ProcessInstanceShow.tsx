@@ -47,6 +47,7 @@ import {
   modifyProcessIdentifierForPathParam,
   truncateString,
   unModifyProcessIdentifierForPathParam,
+  setPageTitle,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -161,6 +162,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     addError(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (processInstance) {
+      setPageTitle([
+        processInstance.process_model_display_name,
+        `Process Instance ${processInstance.id}`,
+      ]);
+    }
+    return undefined;
+  }, [processInstance]);
 
   useEffect(() => {
     if (!permissionsLoaded) {
