@@ -98,6 +98,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     last_milestone_bpmn_name: str = db.Column(db.String(255))
 
     bpmn_xml_file_contents: str | None = None
+    bpmn_xml_file_contents_retrieval_error: str | None = None
     process_model_with_diagram_identifier: str | None = None
 
     # full, none
@@ -109,6 +110,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "id": self.id,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
+            "bpmn_xml_file_contents_retrieval_error": self.bpmn_xml_file_contents_retrieval_error,
             "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "created_at_in_seconds": self.created_at_in_seconds,
             "end_in_seconds": self.end_in_seconds,
