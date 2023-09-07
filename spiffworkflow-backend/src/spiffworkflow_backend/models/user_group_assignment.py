@@ -7,6 +7,10 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
 
 
+class UserGroupAssignmentNotFoundError(Exception):
+    pass
+
+
 class UserGroupAssignmentModel(SpiffworkflowBaseDBModel):
     __tablename__ = "user_group_assignment"
     __table_args__ = (db.UniqueConstraint("user_id", "group_id", name="user_group_assignment_unique"),)

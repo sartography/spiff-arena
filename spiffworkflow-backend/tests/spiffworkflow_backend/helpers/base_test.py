@@ -55,8 +55,10 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> dict[str, str]:
-        return {"Authorization": "Bearer " + user.encode_auth_token()}
+    def logged_in_headers(
+        user: UserModel, _redirect_url: str = "http://some/frontend/url", extra_token_payload: dict | None = None
+    ) -> dict[str, str]:
+        return {"Authorization": "Bearer " + user.encode_auth_token(extra_token_payload)}
 
     def create_group_and_model_with_bpmn(
         self,

@@ -75,17 +75,6 @@ class UserModel(SpiffworkflowBaseDBModel):
             algorithm="HS256",
         )
 
-    # @classmethod
-    # def from_open_id_user_info(cls, user_info: dict) -> Any:
-    #     """From_open_id_user_info."""
-    #     instance = cls()
-    #     instance.service = "keycloak"
-    #     instance.service_id = user_info["sub"]
-    #     instance.name = user_info["preferred_username"]
-    #     instance.username = user_info["sub"]
-    #
-    #     return instance
-
     def as_dict(self) -> dict[str, Any]:
         # dump the user using our json encoder and then load it back up as a dict
         # to remove unwanted field types
