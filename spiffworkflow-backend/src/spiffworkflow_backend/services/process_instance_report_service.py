@@ -5,6 +5,7 @@ from typing import Any
 
 import sqlalchemy
 from flask import current_app
+from flask_sqlalchemy.query import Query
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
@@ -16,6 +17,7 @@ from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_instance_report import ReportMetadataColumn
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -61,6 +63,7 @@ class ProcessInstanceReportService:
                 },
                 {"Header": "Start time", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "End time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -96,6 +99,7 @@ class ProcessInstanceReportService:
                 {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -121,6 +125,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -145,6 +150,7 @@ class ProcessInstanceReportService:
                 {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
@@ -244,6 +250,11 @@ class ProcessInstanceReportService:
                         metadata_column["accessor"]
                     ]
 
+            if "last_milestone_bpmn_name" in process_instance_mapping:
+                process_instance_dict["last_milestone_bpmn_name"] = process_instance_mapping[
+                    "last_milestone_bpmn_name"
+                ]
+
             results.append(process_instance_dict)
         return results
 
@@ -315,7 +326,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def non_metadata_columns(cls) -> list[str]:
-        return cls.process_instance_stock_columns() + ["process_initiator_username"]
+        return cls.process_instance_stock_columns() + ["process_initiator_username", "last_milestone_bpmn_name"]
 
     @classmethod
     def builtin_column_options(cls) -> list[ReportMetadataColumn]:
@@ -334,6 +345,7 @@ class ProcessInstanceReportService:
                 "accessor": "process_initiator_username",
                 "filterable": False,
             },
+            {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             {"Header": "Status", "accessor": "status", "filterable": False},
         ]
         return return_value
@@ -368,6 +380,49 @@ class ProcessInstanceReportService:
                 filter_found = True
         if filter_found is False:
             filters.append(new_filter)
+
+    @classmethod
+    def filter_by_user_group_identifier(
+        cls,
+        process_instance_query: Query,
+        user_group_identifier: str,
+        user: UserModel,
+        human_task_already_joined: bool | None = False,
+        process_status: str | None = None,
+        instances_with_tasks_waiting_for_me: bool | None = False,
+    ) -> Query:
+        group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
+        if user_group_identifier:
+            group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
+
+        if human_task_already_joined is False:
+            process_instance_query = process_instance_query.join(HumanTaskModel)  # type: ignore
+        if process_status is not None:
+            non_active_statuses = [
+                s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
+            ]
+            if len(non_active_statuses) == 0:
+                process_instance_query = process_instance_query.filter(
+                    HumanTaskModel.completed.is_(False)  # type: ignore
+                )
+                # Check to make sure the task is not only available for the group but the user as well
+                if instances_with_tasks_waiting_for_me is not True:
+                    human_task_user_alias = aliased(HumanTaskUserModel)
+                    process_instance_query = process_instance_query.join(  # type: ignore
+                        human_task_user_alias,
+                        and_(
+                            human_task_user_alias.human_task_id == HumanTaskModel.id,
+                            human_task_user_alias.user_id == user.id,
+                        ),
+                    )
+
+        process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))  # type: ignore
+        process_instance_query = process_instance_query.join(  # type: ignore
+            UserGroupAssignmentModel,
+            UserGroupAssignmentModel.group_id == GroupModel.id,
+        )
+        process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
+        return process_instance_query
 
     @classmethod
     def run_process_instance_report(
@@ -498,12 +553,29 @@ class ProcessInstanceReportService:
                 HumanTaskModel,
                 and_(
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
-                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
                     HumanTaskModel.completed.is_(False),  # type: ignore
                 ),
             ).join(
                 HumanTaskUserModel,
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
+            )
+
+            user_group_assignment_for_lane_assignment = aliased(UserGroupAssignmentModel)
+            process_instance_query = process_instance_query.outerjoin(
+                user_group_assignment_for_lane_assignment,
+                and_(
+                    user_group_assignment_for_lane_assignment.group_id == HumanTaskModel.lane_assignment_id,
+                    user_group_assignment_for_lane_assignment.user_id == user.id,
+                ),
+            ).filter(
+                # it should show up in your "Waiting for me" list IF:
+                #   1) task is not assigned to a group OR
+                #   2) you are not in the group
+                # In the case of number 2, it probably means you were added to the task individually by an admin
+                or_(
+                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    user_group_assignment_for_lane_assignment.group_id.is_(None),
+                )
             )
             human_task_already_joined = True
             restrict_human_tasks_to_user = user
@@ -513,38 +585,14 @@ class ProcessInstanceReportService:
                 raise ProcessInstanceReportCannotBeRunError(
                     "A user must be specified to run report with a group identifier."
                 )
-            group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
-            if user_group_identifier:
-                group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
-
-            if human_task_already_joined is False:
-                process_instance_query = process_instance_query.join(HumanTaskModel)
-            if process_status is not None:
-                non_active_statuses = [
-                    s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
-                ]
-                if len(non_active_statuses) == 0:
-                    process_instance_query = process_instance_query.filter(
-                        HumanTaskModel.completed.is_(False)  # type: ignore
-                    )
-
-                    # Check to make sure the task is not only available for the group but the user as well
-                    if instances_with_tasks_waiting_for_me is not True:
-                        human_task_user_alias = aliased(HumanTaskUserModel)
-                        process_instance_query = process_instance_query.join(
-                            human_task_user_alias,
-                            and_(
-                                human_task_user_alias.human_task_id == HumanTaskModel.id,
-                                human_task_user_alias.user_id == user.id,
-                            ),
-                        )
-
-            process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
-            process_instance_query = process_instance_query.join(
-                UserGroupAssignmentModel,
-                UserGroupAssignmentModel.group_id == GroupModel.id,
+            process_instance_query = cls.filter_by_user_group_identifier(
+                process_instance_query=process_instance_query,
+                user_group_identifier=user_group_identifier,
+                user=user,
+                human_task_already_joined=human_task_already_joined,
+                process_status=process_status,
+                instances_with_tasks_waiting_for_me=instances_with_tasks_waiting_for_me,
             )
-            process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
 
         instance_metadata_aliases = {}
         if report_metadata["columns"] is None or len(report_metadata["columns"]) < 1:

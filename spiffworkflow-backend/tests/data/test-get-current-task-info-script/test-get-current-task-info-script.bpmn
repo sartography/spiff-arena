@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_vfh8kgr" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1jnpyt6</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1jnpyt6" sourceRef="StartEvent_1" targetRef="get_task_info" />
+    <bpmn:endEvent id="Event_1py5403">
+      <bpmn:incoming>Flow_0gcbbpt</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1hi0iix" sourceRef="get_task_info" targetRef="manual_task" />
+    <bpmn:scriptTask id="get_task_info">
+      <bpmn:incoming>Flow_1jnpyt6</bpmn:incoming>
+      <bpmn:outgoing>Flow_1hi0iix</bpmn:outgoing>
+      <bpmn:script>script_task_info = get_current_task_info()</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_0gcbbpt" sourceRef="manual_task" targetRef="Event_1py5403" />
+    <bpmn:manualTask id="manual_task">
+      <bpmn:extensionElements>
+        <spiffworkflow:postScript />
+        <spiffworkflow:preScript>manual_task_info = get_current_task_info()</spiffworkflow:preScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1hi0iix</bpmn:incoming>
+      <bpmn:outgoing>Flow_0gcbbpt</bpmn:outgoing>
+    </bpmn:manualTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_vfh8kgr">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18p9gvm_di" bpmnElement="get_task_info">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1py5403_di" bpmnElement="Event_1py5403">
+        <dc:Bounds x="592" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0n1z5ct_di" bpmnElement="manual_task">
+        <dc:Bounds x="420" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1jnpyt6_di" bpmnElement="Flow_1jnpyt6">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hi0iix_di" bpmnElement="Flow_1hi0iix">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="420" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gcbbpt_di" bpmnElement="Flow_0gcbbpt">
+        <di:waypoint x="520" y="177" />
+        <di:waypoint x="592" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

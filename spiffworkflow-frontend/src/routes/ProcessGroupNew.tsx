@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import ProcessGroupForm from '../components/ProcessGroupForm';
 import { ProcessGroup, HotCrumbItem } from '../interfaces';
+import { setPageTitle } from '../helpers';
 
 export default function ProcessGroupNew() {
   const searchParams = new URLSearchParams(document.location.search);
@@ -11,6 +12,7 @@ export default function ProcessGroupNew() {
     display_name: '',
     description: '',
   });
+  setPageTitle(['New Process Group']);
 
   const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/admin']];
   if (parentGroupId) {

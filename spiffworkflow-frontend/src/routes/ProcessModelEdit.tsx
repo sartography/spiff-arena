@@ -5,6 +5,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ProcessModelForm from '../components/ProcessModelForm';
 import { ProcessModel } from '../interfaces';
+import { setPageTitle } from '../helpers';
 
 export default function ProcessModelEdit() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function ProcessModelEdit() {
   }, [processModelPath]);
 
   if (processModel) {
+    setPageTitle([`Editing ${processModel.display_name}`]);
     return (
       <>
         <ProcessBreadcrumb
