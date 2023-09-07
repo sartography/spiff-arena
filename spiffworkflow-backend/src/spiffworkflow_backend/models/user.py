@@ -13,7 +13,8 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 
-SPIFF_NO_AUTH_ANONYMOUS_USER = "spiff_anonymous_user"
+SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
+SPIFF_GUEST_USER = "spiff_guest_user"
 
 
 class UserNotFoundError(Exception):
@@ -73,17 +74,6 @@ class UserModel(SpiffworkflowBaseDBModel):
             secret_key,
             algorithm="HS256",
         )
-
-    # @classmethod
-    # def from_open_id_user_info(cls, user_info: dict) -> Any:
-    #     """From_open_id_user_info."""
-    #     instance = cls()
-    #     instance.service = "keycloak"
-    #     instance.service_id = user_info["sub"]
-    #     instance.name = user_info["preferred_username"]
-    #     instance.username = user_info["sub"]
-    #
-    #     return instance
 
     def as_dict(self) -> dict[str, Any]:
         # dump the user using our json encoder and then load it back up as a dict

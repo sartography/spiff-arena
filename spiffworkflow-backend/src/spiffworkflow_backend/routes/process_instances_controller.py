@@ -123,7 +123,7 @@ def _process_instance_run(
             ) from e
         raise e
 
-    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
+    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
         MessageService.correlate_all_message_instances()
 
     return processor

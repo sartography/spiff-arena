@@ -55,8 +55,10 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> dict[str, str]:
-        return {"Authorization": "Bearer " + user.encode_auth_token()}
+    def logged_in_headers(
+        user: UserModel, _redirect_url: str = "http://some/frontend/url", extra_token_payload: dict | None = None
+    ) -> dict[str, str]:
+        return {"Authorization": "Bearer " + user.encode_auth_token(extra_token_payload)}
 
     def create_group_and_model_with_bpmn(
         self,
@@ -500,6 +502,13 @@ class BaseTest:
         assert response.json["results"][0]["id"] == process_instance.id
         db.session.delete(process_instance_report)
         db.session.commit()
+
+    def complete_next_manual_task(self, processor: ProcessInstanceProcessor) -> None:
+        user_task = processor.get_ready_user_tasks()[0]
+        human_task = processor.process_instance_model.human_tasks[0]
+        ProcessInstanceService.complete_form_task(
+            processor, user_task, {}, processor.process_instance_model.process_initiator, human_task
+        )
 
     @contextmanager
     def app_config_mock(self, app: Flask, config_identifier: str, new_config_value: Any) -> Generator:

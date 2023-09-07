@@ -42,12 +42,14 @@ import {
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
   getKeyByValue,
+  getLastMilestoneFromProcessInstance,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
   REFRESH_INTERVAL_SECONDS,
   REFRESH_TIMEOUT_SECONDS,
   titleizeString,
+  truncateString,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -1267,7 +1269,7 @@ export default function ProcessInstanceListTable({
                   setReportColumnFormMode('edit');
                 }}
               >
-                {reportColumnLabel}
+                {truncateString(reportColumnLabel, 10)}
               </Button>
               <Button
                 data-qa="remove-report-column"
@@ -1602,7 +1604,7 @@ export default function ProcessInstanceListTable({
     }
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
-  const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
+  const formatProcessInstanceId = (_row: ProcessInstance, id: number) => {
     return <span data-qa="paginated-entity-id">{id}</span>;
   };
   const formatProcessModelIdentifier = (_row: any, identifier: any) => {
@@ -1610,6 +1612,16 @@ export default function ProcessInstanceListTable({
   };
   const formatProcessModelDisplayName = (_row: any, identifier: any) => {
     return <span>{identifier}</span>;
+  };
+  const formatLastMilestone = (
+    processInstance: ProcessInstance,
+    value: any
+  ) => {
+    const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
+      processInstance,
+      value
+    );
+    return <span title={valueToUse}>{truncatedValue}</span>;
   };
 
   const formatSecondsForDisplay = (_row: any, seconds: any) => {
@@ -1629,6 +1641,7 @@ export default function ProcessInstanceListTable({
       end_in_seconds: formatSecondsForDisplay,
       updated_at_in_seconds: formatSecondsForDisplay,
       task_updated_at_in_seconds: formatSecondsForDisplay,
+      last_milestone_bpmn_name: formatLastMilestone,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter =
@@ -1701,6 +1714,7 @@ export default function ProcessInstanceListTable({
               kind="secondary"
               href={taskShowUrl}
               style={{ width: '60px' }}
+              size="sm"
             >
               Go
             </Button>
@@ -1818,7 +1832,7 @@ export default function ProcessInstanceListTable({
             renderIcon={ArrowRight}
             iconDescription="View Filterable List"
             hasIconOnly
-            size="lg"
+            size="md"
             onClick={() =>
               navigate(`/admin/process-instances?report_hash=${reportHash}`)
             }
@@ -1828,7 +1842,12 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
-        <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
+        <Column
+          sm={{ span: 3 }}
+          md={{ span: 7 }}
+          lg={{ span: 15 }}
+          style={{ height: '48px' }}
+        >
           {headerElement}
         </Column>
         {filterButtonLink}
@@ -1885,7 +1904,7 @@ export default function ProcessInstanceListTable({
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      <Grid fullWidth condensed>
+      <Grid fullWidth condensed className="megacondensed">
         {tableTitleLine()}
         <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters

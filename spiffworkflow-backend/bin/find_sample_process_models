@@ -10,21 +10,18 @@ set -o errtrace -o errexit -o nounset -o pipefail
 if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
+  sibling_to_arena_root="${script_dir}/../../../sample-process-models"
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$sibling_to_arena_root"
   if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-    SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
+    sibling_to_backend_root="${script_dir}/../../sample-process-models"
+    SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$sibling_to_backend_root"
     if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-      >&2 echo "ERROR: Could not find a process model repo. Last tried: ${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}. Please set SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR to the absolute path of the git repo where you want to store process models. This could be an empty git repo, or if you want you could clone https://github.com/sartography/sample-process-models.git so that spiff-arena and sample-process-models are in the same directory."
-      exit 1
+      SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$sibling_to_arena_root"
+      process_model_clone_url="https://github.com/sartography/sample-process-models.git"
+      >&2 echo "could not find process model dir. cloning ${process_model_clone_url} to ${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
+      git clone "$process_model_clone_url" "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
     fi
   fi
-
-  pushd "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" >/dev/null 2>&1
-  if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then
-    >&2 echo "ERROR: please do not use the main branch of sample-process-models. use dev"
-    exit 1
-  fi
-  popd >/dev/null 2>&1
 fi
 
 realpath "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
