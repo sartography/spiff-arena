@@ -203,7 +203,9 @@ def task_data_update(
             if json_data_dict is not None:
                 JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
                 ProcessInstanceTmpService.add_event_to_process_instance(
-                    process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
+                    process_instance,
+                    ProcessInstanceEventType.task_data_edited.value,
+                    task_guid=task_guid,
                 )
             try:
                 db.session.commit()

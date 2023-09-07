@@ -42,6 +42,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  getLastMilestoneFromProcessInstance,
   HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
@@ -322,7 +323,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!processInstance) {
       return null;
     }
-    let lastUpdatedTimeLabel = 'Updated at';
+    let lastUpdatedTimeLabel = 'Updated';
     let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
     if (processInstance.end_in_seconds) {
       lastUpdatedTimeLabel = 'Completed';
@@ -350,6 +351,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       statusIcon = <Warning />;
       statusColor = 'red';
     }
+
+    const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
+      getLastMilestoneFromProcessInstance(
+        processInstance,
+        processInstance.last_milestone_bpmn_name
+      );
 
     return (
       <Grid condensed fullWidth>
@@ -394,6 +401,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </dd>
           </dl>
           {lastUpdatedTimeTag}
+          <dl>
+            <dt>Last milestone:</dt>
+            <dd title={lastMilestoneFullValue}>
+              {lastMilestoneTruncatedValue}
+            </dd>
+          </dl>
           <dl>
             <dt>Revision:</dt>
             <dd>

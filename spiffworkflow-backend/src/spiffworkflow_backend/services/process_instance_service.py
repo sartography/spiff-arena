@@ -221,7 +221,6 @@ class ProcessInstanceService:
     def do_waiting(cls, status_value: str) -> None:
         run_at_in_seconds_threshold = round(time.time())
         min_age_in_seconds = 60  # to avoid conflicts with the interstitial page, we wait 60 seconds before processing
-        # min_age_in_seconds = 0  # to avoid conflicts with the interstitial page, we wait 60 seconds before processing
         process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(
             status_value, run_at_in_seconds_threshold, min_age_in_seconds
         )
