@@ -120,7 +120,7 @@ class TestTasksController(BaseTest):
 
         self.logged_in_headers(with_super_admin_user)
         response = client.post(
-            "/v1.0/tasks/prepare_form",
+            "/v1.0/tasks/prepare-form",
             headers=self.logged_in_headers(with_super_admin_user),
             data=json.dumps(data),
             content_type="application/json",
