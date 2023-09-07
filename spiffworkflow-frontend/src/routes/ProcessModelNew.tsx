@@ -3,7 +3,10 @@ import { useParams } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import { ProcessModel } from '../interfaces';
 import ProcessModelForm from '../components/ProcessModelForm';
-import { unModifyProcessIdentifierForPathParam } from '../helpers';
+import {
+  unModifyProcessIdentifierForPathParam,
+  setPageTitle,
+} from '../helpers';
 
 export default function ProcessModelNew() {
   const params = useParams();
@@ -15,6 +18,7 @@ export default function ProcessModelNew() {
     primary_process_id: '',
     files: [],
   });
+  setPageTitle(['Add New Process Model']);
 
   return (
     <>
