@@ -117,7 +117,7 @@ export default function ReactFormBuilder({
      * we need to run the schema and ui through a backend call before rendering the form
      * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
      */
-    const url: string = '/tasks/prepare_form';
+    const url: string = '/tasks/prepare-form';
     let schema = {};
     let ui = {};
     let data = {};
