@@ -24,7 +24,12 @@ export default function Extension() {
   const [formData, setFormData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [processedTaskData, setProcessedTaskData] = useState<any>(null);
-  const [markdownToRender, setMarkdownToRender] = useState<string | null>(null);
+  const [markdownToRenderOnSubmit, setMarkdownToRenderOnSubmit] = useState<
+    string | null
+  >(null);
+  const [markdownToRenderOnLoad, setMarkdownToRenderOnLoad] = useState<
+    string | null
+  >(null);
   const [filesByName] = useState<{
     [key: string]: ProcessFile;
   }>({});
@@ -34,6 +39,13 @@ export default function Extension() {
   const { addError, removeError } = useAPIError();
 
   useEffect(() => {
+    const processLoadResult = (result: any) => {
+      setFormData(result.task_data);
+      if (result.rendered_results_markdown) {
+        setMarkdownToRenderOnLoad(result.rendered_results_markdown);
+      }
+    };
+
     const setConfigsIfDesiredSchemaFile = (
       extensionUiSchemaFile: ProcessFile | null,
       pm: ProcessModel
@@ -60,7 +72,7 @@ export default function Extension() {
           if (pageDefinition.on_load) {
             HttpService.makeCallToBackend({
               path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
-              successCallback: (result: any) => setFormData(result.task_data),
+              successCallback: processLoadResult,
               httpMethod: 'POST',
               postBody,
             });
@@ -95,7 +107,7 @@ export default function Extension() {
   const processSubmitResult = (result: any) => {
     setProcessedTaskData(result.task_data);
     if (result.rendered_results_markdown) {
-      setMarkdownToRender(result.rendered_results_markdown);
+      setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
     }
     setFormButtonsDisabled(false);
   };
@@ -164,21 +176,29 @@ export default function Extension() {
 
   if (uiSchemaPageDefinition) {
     const componentsToDisplay = [<h1>{uiSchemaPageDefinition.header}</h1>];
+    const markdownContentsToRender = [];
 
     if (uiSchemaPageDefinition.markdown_instruction_filename) {
       const markdownFile =
         filesByName[uiSchemaPageDefinition.markdown_instruction_filename];
 
       if (markdownFile.file_contents) {
-        componentsToDisplay.push(
-          <div data-color-mode="light">
-            <MDEditor.Markdown
-              linkTarget="_blank"
-              source={markdownFile.file_contents}
-            />
-          </div>
-        );
+        markdownContentsToRender.push(markdownFile.file_contents);
       }
+    }
+    if (markdownToRenderOnLoad) {
+      markdownContentsToRender.push(markdownToRenderOnLoad);
+    }
+
+    if (markdownContentsToRender.length > 0) {
+      componentsToDisplay.push(
+        <div data-color-mode="light">
+          <MDEditor.Markdown
+            linkTarget="_blank"
+            source={markdownContentsToRender.join('\n')}
+          />
+        </div>
+      );
     }
 
     if (uiSchemaPageDefinition.form_schema_filename) {
@@ -203,13 +223,13 @@ export default function Extension() {
       }
     }
     if (processedTaskData) {
-      if (markdownToRender) {
+      if (markdownToRenderOnSubmit) {
         componentsToDisplay.push(
           <div data-color-mode="light" className="with-top-margin">
             <MDEditor.Markdown
               className="onboarding"
               linkTarget="_blank"
-              source={markdownToRender}
+              source={markdownToRenderOnSubmit}
             />
           </div>
         );
