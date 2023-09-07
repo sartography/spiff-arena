@@ -35,6 +35,12 @@ const updateBpmnPythonScript = (pythonScript, elementId = 'process_script') => {
   cy.contains('Save').click();
 };
 
+// NOTE: anytime the status dropdown box is clicked on, click off of it
+// by going to a completely different element like the page header.
+const clickOnHeaderToMakeSureMultiSelectComponentStateIsStable = () => {
+  cy.contains('All Process Instances').click();
+};
+
 // const updateBpmnPythonScriptWithMonaco = (
 //   pythonScript,
 //   elementId = 'process_script'
@@ -181,7 +187,7 @@ describe('process-instances', () => {
       if (!['all', 'waiting'].includes(processStatus)) {
         cy.get(statusSelect).click();
         cy.get(statusSelect).contains(titleizeString(processStatus)).click();
-        cy.get(statusSelect).click();
+        clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
         cy.getBySel('filter-button').click();
 
         // make sure that there is 1 status item selected in the multiselect
@@ -194,10 +200,12 @@ describe('process-instances', () => {
         cy.wait(1000);
 
         // there should really only be one, but in CI there are sometimes more
+        clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
         cy.get('div[aria-label="Clear all selected items"]:first').click();
         cy.get('div[aria-label="Clear all selected items"]').should(
           'not.exist'
         );
+        clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
       }
     });
 
