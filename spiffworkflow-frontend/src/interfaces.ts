@@ -3,6 +3,14 @@ export interface User {
   username: string;
 }
 
+export interface ApiAction {
+  path: string;
+  method: string;
+}
+export interface ApiActions {
+  [key: string]: ApiAction;
+}
+
 export interface Secret {
   id: number;
   key: string;
@@ -265,6 +273,7 @@ export interface ProcessModel {
   fault_or_suspend_on_exception?: string;
   exception_notification_addresses?: string[];
   bpmn_version_control_identifier?: string;
+  actions?: ApiActions;
 }
 
 export interface ProcessGroup {
