@@ -1005,6 +1005,15 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+        known_task_ids = [str(t.id) for t in self.bpmn_process_instance.get_tasks()]
+        TaskModel.query.filter(TaskModel.process_instance_id == self.process_instance_model.id).filter(
+            TaskModel.guid.notin_(known_task_ids)  # type: ignore
+        ).delete()
+        HumanTaskModel.query.filter(HumanTaskModel.process_instance_id == self.process_instance_model.id).filter(
+            HumanTaskModel.task_id.notin_(known_task_ids)  # type: ignore
+        ).delete()
+        db.session.commit()
+
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
@@ -1124,7 +1133,7 @@ class ProcessInstanceProcessor:
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
                 f" instance {self.process_instance_model.id}"
             )
-            self.do_engine_steps(save=True, execution_strategy_name="one_at_a_time")
+            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
             task_model_delegate = TaskModelSavingDelegate(
