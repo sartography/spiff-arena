@@ -162,17 +162,27 @@ class AuthenticationService:
         overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
         if iss != cls.server_url():
+            current_app.logger.error(
+                f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url()}'"
+            )
             valid = False
         # aud could be an array or a string
         elif len(overlapping_aud_values) < 1:
+            current_app.logger.error(
+                f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id()}'"
+            )
             valid = False
         elif azp and azp not in (
             cls.client_id(),
             "account",
         ):
+            current_app.logger.error(f"TOKEN INVALID because azp '{azp}' does not match client id '{cls.client_id()}'")
             valid = False
         # make sure issued at time is not in the future
         elif now + iat_clock_skew_leeway < iat:
+            current_app.logger.error(
+                f"TOKEN INVALID because iat '{iat}' is in the future relative to server now '{now}'"
+            )
             valid = False
 
         if valid and now > decoded_token["exp"]:

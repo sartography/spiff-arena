@@ -305,7 +305,7 @@ export default function TaskShow() {
     // this allows us to autosave form data without extra attributes and without validations
     // but still requires validations when the user submits the form that they can edit.
     return (
-      <Grid fullWidth condensed>
+      <Grid fullWidth condensed className="megacondensed">
         <Column sm={4} md={5} lg={8}>
           <CustomForm
             id="form-to-submit"

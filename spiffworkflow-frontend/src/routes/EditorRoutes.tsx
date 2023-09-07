@@ -11,7 +11,7 @@ export default function EditorRoutes() {
 
   if (UserService.hasRole(['admin'])) {
     return (
-      <div className="full-width-container">
+      <div className="full-width-container no-center-stuff">
         <Routes>
           <Route
             path="process-models/:process_model_id/files"

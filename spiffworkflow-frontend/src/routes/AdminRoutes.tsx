@@ -22,6 +22,7 @@ import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
 import MessageListPage from './MessageListPage';
 import DataStorePage from './DataStorePage';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -31,6 +32,7 @@ export default function AdminRoutes() {
   if (UserService.hasRole(['admin'])) {
     return (
       <div className="fixed-width-container">
+        <ErrorDisplay />
         <Routes>
           <Route path="/" element={<ProcessGroupList />} />
           <Route path="process-groups" element={<ProcessGroupList />} />
