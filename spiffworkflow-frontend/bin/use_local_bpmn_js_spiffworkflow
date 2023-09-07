@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+frontend_dir="${script_dir}/.."
+bpmn_js_dir="${frontend_dir}/../../bpmn-js-spiffworkflow"
+
+if [[ ! -d "$bpmn_js_dir" ]]; then
+  >&2 echo "ERROR: Could not find a bpmn-js-spiffworkflow dir at '$bpmn_js_dir'. Please clone it from https://github.com/sartography/bpmn-js-spiffworkflow.git."
+  exit 1
+fi
+
+rm -rf "${frontend_dir}/node_modules"
+
+pushd "$frontend_dir"
+npm i
+rm -rf "${bpmn_js_dir}/node_modules"
+npm link "$bpmn_js_dir"
+popd

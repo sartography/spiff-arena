@@ -20,6 +20,7 @@ from spiffworkflow_backend.models.permission_assignment import PermissionAssignm
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
@@ -131,6 +132,24 @@ class AuthorizationService:
             raise TokenInvalidError(
                 "unauthorized",
             )
+
+    @classmethod
+    def create_guest_token(
+        cls,
+        username: str,
+        group_identifier: str,
+        permission_target: str | None = None,
+        permission: str = "all",
+        auth_token_properties: dict | None = None,
+    ) -> None:
+        guest_user = GroupService.find_or_create_guest_user(username=username, group_identifier=group_identifier)
+        if permission_target is not None:
+            cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
+        g.user = guest_user
+        g.token = guest_user.encode_auth_token(auth_token_properties)
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.new_access_token = g.token
+        tld.new_id_token = g.token
 
     @classmethod
     def has_permission(cls, principals: list[PrincipalModel], permission: str, target_uri: str) -> bool:
@@ -297,15 +316,15 @@ class AuthorizationService:
         if cls.should_disable_auth_for_request():
             return None
 
-        authorization_exclusion_list = ["permissions_check"]
-
         if not hasattr(g, "user"):
             raise UserNotLoggedInError(
                 "User is not logged in. Please log in",
             )
 
-        api_view_function = current_app.view_functions[request.endpoint]
-        if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
+        if cls.request_is_excluded_from_permission_check():
+            return None
+
+        if cls.request_allows_guest_access():
             return None
 
         permission_string = cls.get_permission_from_http_method(request.method)
@@ -324,6 +343,27 @@ class AuthorizationService:
                 f" {permission_string} - {request.path}"
             ),
         )
+
+    @classmethod
+    def request_is_excluded_from_permission_check(cls) -> bool:
+        authorization_exclusion_list = ["permissions_check"]
+        api_view_function = current_app.view_functions[request.endpoint]
+        if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
+            return True
+        return False
+
+    @classmethod
+    def request_allows_guest_access(cls) -> bool:
+        if cls.request_is_excluded_from_permission_check():
+            return True
+
+        api_view_function = current_app.view_functions[request.endpoint]
+        if api_view_function.__name__ in ["task_show", "task_submit", "task_save_draft"]:
+            process_instance_id = int(request.path.split("/")[3])
+            task_guid = request.path.split("/")[4]
+            if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
+                return True
+        return False
 
     @staticmethod
     def decode_auth_token(auth_token: str) -> dict[str, str | None]:
@@ -538,6 +578,7 @@ class AuthorizationService:
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentications"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication/configuration"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication_begin/*"))
         permissions_to_assign.append(
@@ -559,7 +600,6 @@ class AuthorizationService:
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentications"))
 
         permissions_to_assign.append(
             PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*")

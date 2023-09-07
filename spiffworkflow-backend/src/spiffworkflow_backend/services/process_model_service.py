@@ -279,7 +279,11 @@ class ProcessModelService(FileSystemService):
                 full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)  # type: ignore
             parent_group = process_group_cache.get(full_group_id_path, None)
             if parent_group is None:
-                parent_group = ProcessModelService.get_process_group(full_group_id_path)
+                try:
+                    parent_group = ProcessModelService.get_process_group(full_group_id_path)
+                except ProcessEntityNotFoundError:
+                    # if parent_group can no longer be found then do not add it to the cache
+                    parent_group = None
 
             if parent_group:
                 if full_group_id_path not in process_group_cache:

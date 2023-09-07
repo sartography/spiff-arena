@@ -24,6 +24,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
       if ('entityToExplode' in crumb) {
         const { entityToExplode, entityType } = crumb;
         if (entityType === 'process-model-id') {
+          console.log('crumb', crumb);
           HttpService.makeCallToBackend({
             path: `/process-models/${modifyProcessIdentifierForPathParam(
               entityToExplode as string
