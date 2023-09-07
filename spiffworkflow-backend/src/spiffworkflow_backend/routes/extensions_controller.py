@@ -138,7 +138,9 @@ def _run_extension(
             persistence_level=persistence_level,
         )
     else:
-        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(process_model_identifier, g.user)
+        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model_identifier, g.user
+        )
 
     processor = None
     try:

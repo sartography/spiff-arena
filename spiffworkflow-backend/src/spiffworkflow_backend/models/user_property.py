@@ -1,11 +1,12 @@
 from __future__ import annotations
-from spiffworkflow_backend.models.user import UserModel
-from sqlalchemy import ForeignKey
 
 from dataclasses import dataclass
 
+from sqlalchemy import ForeignKey
+
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.user import UserModel
 
 
 @dataclass

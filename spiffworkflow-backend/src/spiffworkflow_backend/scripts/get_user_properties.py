@@ -1,12 +1,9 @@
 from typing import Any
-import json
-from spiffworkflow_backend.models.db import db
 
-from flask import current_app
 from flask import g
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.user_property import UserPropertyModel
-from spiffworkflow_backend.scripts.script import InvalidArgsGivenToScript, Script
+from spiffworkflow_backend.scripts.script import Script
 
 
 class GetUserProperties(Script):

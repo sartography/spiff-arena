@@ -3,18 +3,17 @@ import MDEditor from '@uiw/react-md-editor';
 import { useParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import {
-  ExtensionPostBody,
-  ExtensionUiSchema,
-  ProcessFile,
-  ProcessModel,
-  UiSchemaPageDefinition,
-} from '../interfaces';
+import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
+import {
+  ExtensionPostBody,
+  ExtensionUiSchema,
+  UiSchemaPageDefinition,
+} from '../extension_ui_schema_interfaces';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
@@ -35,6 +34,40 @@ export default function Extension() {
   const { addError, removeError } = useAPIError();
 
   useEffect(() => {
+    const setConfigsIfDesiredSchemaFile = (
+      extensionUiSchemaFile: ProcessFile | null,
+      pm: ProcessModel
+    ) => {
+      if (
+        extensionUiSchemaFile &&
+        (extensionUiSchemaFile as ProcessFile).file_contents
+      ) {
+        const extensionUiSchema: ExtensionUiSchema = JSON.parse(
+          (extensionUiSchemaFile as any).file_contents
+        );
+
+        const pageIdentifier = `/${params.page_identifier}`;
+        if (
+          extensionUiSchema.pages &&
+          Object.keys(extensionUiSchema.pages).includes(pageIdentifier)
+        ) {
+          const pageDefinition = extensionUiSchema.pages[pageIdentifier];
+          setUiSchemaPageDefinition(pageDefinition);
+          setProcessModel(pm);
+
+          const postBody: ExtensionPostBody = { extension_input: {} };
+          postBody.ui_schema_action = pageDefinition.on_load;
+          if (pageDefinition.on_load) {
+            HttpService.makeCallToBackend({
+              path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
+              successCallback: (result: any) => setFormData(result.task_data),
+              httpMethod: 'POST',
+              postBody,
+            });
+          }
+        }
+      }
+    };
     const processExtensionResult = (processModels: ProcessModel[]) => {
       processModels.forEach((pm: ProcessModel) => {
         let extensionUiSchemaFile: ProcessFile | null = null;
@@ -44,37 +77,7 @@ export default function Extension() {
             extensionUiSchemaFile = file;
           }
         });
-
-        // typescript is really confused by extensionUiSchemaFile so force it since we are properly checking
-        if (
-          extensionUiSchemaFile &&
-          (extensionUiSchemaFile as ProcessFile).file_contents
-        ) {
-          const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-            (extensionUiSchemaFile as any).file_contents
-          );
-
-          const pageIdentifier = `/${params.page_identifier}`;
-          if (
-            extensionUiSchema.pages &&
-            Object.keys(extensionUiSchema.pages).includes(pageIdentifier)
-          ) {
-            const pageDefinition = extensionUiSchema.pages[pageIdentifier];
-            setUiSchemaPageDefinition(pageDefinition);
-            setProcessModel(pm);
-
-            const postBody: ExtensionPostBody = { extension_input: {} };
-            postBody.ui_schema_action = pageDefinition.on_load;
-            if (pageDefinition.on_load) {
-              HttpService.makeCallToBackend({
-                path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
-                successCallback: (result: any) => setFormData(result.task_data),
-                httpMethod: 'POST',
-                postBody,
-              });
-            }
-          }
-        }
+        setConfigsIfDesiredSchemaFile(extensionUiSchemaFile, pm);
       });
     };
 
@@ -160,7 +163,6 @@ export default function Extension() {
   };
 
   if (uiSchemaPageDefinition) {
-    console.log('uiSchemaPageDefinition', uiSchemaPageDefinition);
     const componentsToDisplay = [<h1>{uiSchemaPageDefinition.header}</h1>];
 
     if (uiSchemaPageDefinition.markdown_instruction_filename) {

@@ -31,7 +31,7 @@ class ProcessModelIdentifierMissingError(Exception):
     pass
 
 
-class InvalidArgsGivenToScript(Exception):
+class InvalidArgsGivenToScriptError(Exception):
     pass
 
 

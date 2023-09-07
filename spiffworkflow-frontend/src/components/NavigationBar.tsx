@@ -24,13 +24,11 @@ import { Can } from '@casl/react';
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck, ProcessModel, ProcessFile } from '../interfaces';
 import {
-  PermissionsToCheck,
-  ProcessModel,
-  ProcessFile,
   ExtensionUiSchema,
   UiSchemaUxElement,
-} from '../interfaces';
+} from '../extension_ui_schema_interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import HttpService, { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
