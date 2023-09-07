@@ -7,7 +7,6 @@ import {
   TrashCan,
   Upload,
   View,
-  // @ts-ignore
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -25,7 +24,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -346,7 +344,7 @@ export default function ProcessModelShow() {
       let actionsTableCell = null;
       if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
         actionsTableCell = (
-          <TableCell key={`${processModelFile.name}-cell`}>
+          <TableCell key={`${processModelFile.name}-cell`} align="right">
             {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
           </TableCell>
         );
@@ -378,16 +376,20 @@ export default function ProcessModelShow() {
       return constructedTag;
     });
 
-    const headers = ['Name', 'Actions'];
     return (
       <Table size="lg" useZebraStyles={false}>
         <TableHead>
           <TableRow>
-            {headers.map((header) => (
-              <TableHeader id={header} key={header}>
-                {header}
-              </TableHeader>
-            ))}
+            <TableHeader id="Name" key="Name">
+              Name
+            </TableHeader>
+            <TableHeader
+              id="Actions"
+              key="Actions"
+              className="table-header-right-align"
+            >
+              Actions
+            </TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>{tags}</TableBody>
@@ -525,7 +527,7 @@ export default function ProcessModelShow() {
         titleText=""
         size="lg"
         label="Add File"
-        type="inline"
+        type="default"
         data-qa="process-model-add-file"
         onChange={(a: any) => {
           if (a.selectedItem.text === 'New BPMN File') {
@@ -564,7 +566,7 @@ export default function ProcessModelShow() {
         className="megacondensed process-model-files-section"
       >
         <Column md={8} lg={14} sm={4}>
-          <Accordion align="end" open>
+          <Accordion align="end" open className="megacondensed-button">
             <AccordionItem
               open
               data-qa="files-accordion"

@@ -49,6 +49,7 @@ import {
   REFRESH_INTERVAL_SECONDS,
   REFRESH_TIMEOUT_SECONDS,
   titleizeString,
+  truncateString,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -1268,7 +1269,7 @@ export default function ProcessInstanceListTable({
                   setReportColumnFormMode('edit');
                 }}
               >
-                {reportColumnLabel}
+                {truncateString(reportColumnLabel, 10)}
               </Button>
               <Button
                 data-qa="remove-report-column"
@@ -1713,6 +1714,7 @@ export default function ProcessInstanceListTable({
               kind="secondary"
               href={taskShowUrl}
               style={{ width: '60px' }}
+              size="sm"
             >
               Go
             </Button>
@@ -1830,7 +1832,7 @@ export default function ProcessInstanceListTable({
             renderIcon={ArrowRight}
             iconDescription="View Filterable List"
             hasIconOnly
-            size="lg"
+            size="md"
             onClick={() =>
               navigate(`/admin/process-instances?report_hash=${reportHash}`)
             }
@@ -1840,7 +1842,12 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
-        <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
+        <Column
+          sm={{ span: 3 }}
+          md={{ span: 7 }}
+          lg={{ span: 15 }}
+          style={{ height: '48px' }}
+        >
           {headerElement}
         </Column>
         {filterButtonLink}
@@ -1897,7 +1904,7 @@ export default function ProcessInstanceListTable({
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      <Grid fullWidth condensed>
+      <Grid fullWidth condensed className="megacondensed">
         {tableTitleLine()}
         <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters

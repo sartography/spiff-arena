@@ -7,6 +7,7 @@ import CompletedInstances from './CompletedInstances';
 import CreateNewInstance from './CreateNewInstance';
 import InProgressInstances from './InProgressInstances';
 import OnboardingView from './OnboardingView';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 export default function HomePageRoutes() {
   const location = useLocation();
@@ -49,6 +50,7 @@ export default function HomePageRoutes() {
 
   return (
     <div className="fixed-width-container">
+      <ErrorDisplay />
       <OnboardingView />
       {renderTabs()}
       <Routes>
