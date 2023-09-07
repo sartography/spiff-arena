@@ -382,7 +382,6 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-
   const onDmnFilesRequested = (event: any) => {
     setFileEventBus(event.eventBus);
     if (processModel) {

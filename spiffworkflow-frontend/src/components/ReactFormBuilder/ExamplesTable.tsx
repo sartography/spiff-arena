@@ -11,26 +11,49 @@ import { JsonSchemaExample } from '../../interfaces';
 
 const examples: JsonSchemaExample[] = [];
 examples.push({
-  name: 'Registration',
-  description: 'A simple registration form',
-  schema: require('../../resources/json_schema_examples/registration-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/registration-uischema.json'), // eslint-disable-line global-require
-  data: require('../../resources/json_schema_examples/registration-exampledata.json'), // eslint-disable-line global-require
+  schema: require('../../resources/json_schema_examples/text-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/text-uischema.json'), // eslint-disable-line global-require
+  data: {},
 });
-// @ts-ignore
 examples.push({
-  name: 'Nested',
-  description: 'Allow adding multiple entries to a single form.',
+  schema: require('../../resources/json_schema_examples/textarea-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/textarea-uischema.json'), // eslint-disable-line global-require
+  data: {},
+});
+examples.push({
+  schema: require('../../resources/json_schema_examples/checkbox-schema.json'), // eslint-disable-line global-require
+  ui: {},
+  data: {},
+});
+examples.push({
+  schema: require('../../resources/json_schema_examples/date-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/date-uischema.json'), // eslint-disable-line global-require
+  data: {},
+});
+examples.push({
+  schema: require('../../resources/json_schema_examples/dropdown-schema.json'), // eslint-disable-line global-require
+  ui: {},
+  data: require('../../resources/json_schema_examples/dropdown-exampledata.json'), // eslint-disable-line global-require
+});
+examples.push({
+  schema: require('../../resources/json_schema_examples/multiple-choice-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/multiple-choice-uischema.json'), // eslint-disable-line global-require
+  data: {},
+});
+examples.push({
+  schema: require('../../resources/json_schema_examples/password-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/password-uischema.json'), // eslint-disable-line global-require
+  data: {},
+});
+examples.push({
   schema: require('../../resources/json_schema_examples/nested-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/nested-uischema.json'), // eslint-disable-line global-require
-  data: require('../../resources/json_schema_examples/nested-exampledata.json'), // eslint-disable-line global-require
+  ui: {},
+  data: {},
 });
 examples.push({
-  name: 'Request',
-  description: 'Populate dropdowns with existing Task Data',
-  schema: require('../../resources/json_schema_examples/procurement-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/procurement-uischema.json'), // eslint-disable-line global-require
-  data: require('../../resources/json_schema_examples/procurement-exampledata.json'), // eslint-disable-line global-require
+  schema: require('../../resources/json_schema_examples/typeahead-schema.json'), // eslint-disable-line global-require
+  ui: require('../../resources/json_schema_examples/typeahead-uischema.json'), // eslint-disable-line global-require
+  data: {},
 });
 
 type OwnProps = {
@@ -46,8 +69,8 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
   const rows: object[] = examples.map((example, index) => {
     return (
       <tr>
-        <td>{example.name}</td>
-        <td>{example.description}</td>
+        <td>{example.schema.title}</td>
+        <td>{example.schema.description}</td>
         <td>
           <Button
             kind="secondary"
@@ -72,7 +95,7 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
             Description
           </TableHeader>
           <TableHeader key="load" title="Load">
-            Load
+            Insert
           </TableHeader>
         </TableRow>
       </TableHead>

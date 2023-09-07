@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import merge from 'lodash/merge';
 
 import {
   Column,
@@ -228,18 +230,21 @@ export default function ReactFormBuilder({
     });
   }
 
-  function update(schema: object, ui: object, data: object) {
-    setFormData(data);
-    setStrSchema(JSON.stringify(schema, null, 2));
-    setStrUI(JSON.stringify(ui, null, 2));
-    setStrFormData(JSON.stringify(data, null, 2));
+  function insertFields(schema: any, ui: any, data: any) {
+    setFormData(merge(formData, data));
+    setStrFormData(JSON.stringify(formData, null, 2));
+
+    const tempSchema = merge(JSON.parse(strSchema), schema);
+    setStrSchema(JSON.stringify(tempSchema, null, 2));
+
+    const tempUI = merge(JSON.parse(strUI), ui);
+    setStrUI(JSON.stringify(tempUI, null, 2));
   }
 
   function updateData(newData: object) {
     setFormData(newData);
     const newDataStr = JSON.stringify(newData, null, 2);
     if (newDataStr !== strFormData) {
-      console.log("updating strFormData");
       setStrFormData(newDataStr);
     }
   }
@@ -251,7 +256,6 @@ export default function ReactFormBuilder({
       /* empty */
     }
   }
-
 
   if (!isReady()) {
     if (fileName !== '' && !fetchFailed) {
@@ -374,10 +378,11 @@ export default function ReactFormBuilder({
             </TabPanel>
             <TabPanel>
               <p>
-                If you are looking for a place to start, try loading these
-                examples and changing them to meet your needs.
+                If you are looking for a place to start, try adding these
+                example fields to your form and changing them to meet your
+                needs.
               </p>
-              <ExamplesTable onSelect={update} />
+              <ExamplesTable onSelect={insertFields} />
             </TabPanel>
           </TabPanels>
         </Tabs>

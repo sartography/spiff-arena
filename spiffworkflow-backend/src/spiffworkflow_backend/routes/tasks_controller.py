@@ -330,7 +330,7 @@ def prepare_form(body: dict) -> flask.wrappers.Response:
     # Hide any fields that are marked as hidden in the task data.
     _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui, task_data)
 
-    return make_response(json.dumps({"form_schema": form_dict, "form_ui": form_ui}), 200)
+    return make_response(jsonify({"form_schema": form_dict, "form_ui": form_ui}), 200)
 
 
 def task_show(
@@ -429,8 +429,7 @@ def task_show(
                 process_model_with_form,
             )
 
-            if task_model.data:
-                _update_form_schema_with_task_data_as_needed(form_dict, task_model.data)
+            _update_form_schema_with_task_data_as_needed(form_dict, task_model.data)
 
             if form_dict:
                 task_model.form_schema = form_dict
@@ -963,6 +962,7 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict)
                                 )
 
                             select_options_from_task_data = task_data.get(task_data_var)
+                            in_dict[k] = []
                             if isinstance(select_options_from_task_data, list):
                                 if all("value" in d and "label" in d for d in select_options_from_task_data):
 

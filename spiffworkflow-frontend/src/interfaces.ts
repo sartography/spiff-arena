@@ -453,9 +453,7 @@ export interface ExtensionPostBody {
 }
 
 export interface JsonSchemaExample {
-  name: string;
-  description: string;
-  schema: object;
-  ui: object;
-  data: object;
+  schema: any;
+  ui: any;
+  data: any;
 }
