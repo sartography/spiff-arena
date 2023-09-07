@@ -168,6 +168,7 @@ export interface ProcessInstance {
   end_in_seconds: number | null;
   process_initiator_username: string;
   bpmn_xml_file_contents?: string;
+  bpmn_xml_file_contents_retrieval_error?: string;
   created_at_in_seconds: number;
   updated_at_in_seconds: number;
   bpmn_version_control_identifier: string;
