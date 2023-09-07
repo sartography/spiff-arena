@@ -12,7 +12,12 @@ import {
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
 } from '../helpers';
-import { BasicTask, EventDefinition, Task } from '../interfaces';
+import {
+  BasicTask,
+  ErrorForDisplay,
+  EventDefinition,
+  Task,
+} from '../interfaces';
 import CustomForm from '../components/CustomForm';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
@@ -36,6 +41,8 @@ export default function TaskShow() {
   const [taskData, setTaskData] = useState<any>(null);
   const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
     useState<boolean>(true);
+  const [atLeastOneTaskFetchHasError, setAtLeastOneTaskFetchHasError] =
+    useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
 
@@ -68,16 +75,20 @@ export default function TaskShow() {
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setFormButtonsDisabled(false);
     };
+    const handleTaskFetchError = (error: ErrorForDisplay) => {
+      setAtLeastOneTaskFetchHasError(true);
+      addError(error);
+    };
 
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: processBasicTaskResult,
-      failureCallback: addError,
+      failureCallback: handleTaskFetchError,
     });
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}?with_form_data=true`,
       successCallback: processTaskWithDataResult,
-      failureCallback: addError,
+      failureCallback: handleTaskFetchError,
     });
     // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -387,7 +398,7 @@ export default function TaskShow() {
   } else if (basicTask && taskData) {
     pageElements.push(<InstructionsForEndUser task={taskWithTaskData} />);
     pageElements.push(formElement());
-  } else {
+  } else if (!atLeastOneTaskFetchHasError) {
     pageElements.push(getLoadingIcon());
   }
 
