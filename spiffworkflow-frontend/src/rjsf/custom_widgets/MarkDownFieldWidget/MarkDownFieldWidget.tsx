@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable unused-imports/no-unused-vars */
 import MDEditor from '@uiw/react-md-editor';
 import React, { useCallback } from 'react';
 
@@ -14,11 +16,6 @@ interface widgetArgs {
   label?: string;
 }
 
-// NOTE: To properly validate that both start and end dates are specified
-// use this pattern in schemaJson for that field:
-// "pattern": "\\d{4}-\\d{2}-\\d{2}:::\\d{4}-\\d{2}-\\d{2}"
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function MarkDownFieldWidget({
   id,
   value,
