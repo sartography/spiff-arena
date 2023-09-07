@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import { useParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
@@ -39,18 +39,15 @@ export default function Extension() {
 
   const { addError, removeError } = useAPIError();
 
-  useEffect(() => {
-    const processLoadResult = (result: any) => {
-      setFormData(result.task_data);
-      if (result.rendered_results_markdown) {
-        setMarkdownToRenderOnLoad(result.rendered_results_markdown);
-      }
-    };
+  const setConfigsIfDesiredSchemaFile = useCallback(
+    (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
+      const processLoadResult = (result: any) => {
+        setFormData(result.task_data);
+        if (result.rendered_results_markdown) {
+          setMarkdownToRenderOnLoad(result.rendered_results_markdown);
+        }
+      };
 
-    const setConfigsIfDesiredSchemaFile = (
-      extensionUiSchemaFile: ProcessFile | null,
-      pm: ProcessModel
-    ) => {
       if (
         extensionUiSchemaFile &&
         (extensionUiSchemaFile as ProcessFile).file_contents
@@ -80,7 +77,11 @@ export default function Extension() {
           }
         }
       }
-    };
+    },
+    [targetUris.extensionListPath, params]
+  );
+
+  useEffect(() => {
     const processExtensionResult = (processModels: ProcessModel[]) => {
       processModels.forEach((pm: ProcessModel) => {
         let extensionUiSchemaFile: ProcessFile | null = null;
@@ -99,10 +100,11 @@ export default function Extension() {
       successCallback: processExtensionResult,
     });
   }, [
+    filesByName,
+    params,
+    setConfigsIfDesiredSchemaFile,
     targetUris.extensionListPath,
     targetUris.extensionPath,
-    params,
-    filesByName,
   ]);
 
   const processSubmitResult = (result: any) => {
@@ -193,7 +195,7 @@ export default function Extension() {
 
     if (markdownContentsToRender.length > 0) {
       componentsToDisplay.push(
-        <div data-color-mode="light">
+        <div data-color-mode="light" className="with-bottom-margin">
           <MDEditor.Markdown
             linkTarget="_blank"
             source={markdownContentsToRender.join('\n')}
