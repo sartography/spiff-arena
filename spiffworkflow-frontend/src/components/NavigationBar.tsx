@@ -63,8 +63,13 @@ export default function NavigationBar() {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.secretListPath]: ['GET'],
     [targetUris.dataStoreListPath]: ['GET'],
+    [targetUris.extensionListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
+    [targetUris.processGroupListPath]: ['GET'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   // default to readthedocs and let someone specify an environment variable to override:
   //
@@ -97,7 +102,12 @@ export default function NavigationBar() {
     setActiveKey(newActiveKey);
   }, [location]);
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
+    if (!permissionsLoaded) {
+      return;
+    }
+
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaNavItem[] = processModels
         .map((processModel: ProcessModel) => {
@@ -126,11 +136,13 @@ export default function NavigationBar() {
       }
     };
 
-    HttpService.makeCallToBackend({
-      path: targetUris.extensionListPath,
-      successCallback: processExtensionResult,
-    });
-  }, [targetUris.extensionListPath]);
+    if (ability.can('GET', targetUris.extensionListPath)) {
+      HttpService.makeCallToBackend({
+        path: targetUris.extensionListPath,
+        successCallback: processExtensionResult,
+      });
+    }
+  }, [targetUris.extensionListPath, permissionsLoaded, ability]);
 
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;
@@ -278,19 +290,27 @@ export default function NavigationBar() {
         <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
           Home
         </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/process-groups"
-          isCurrentPage={isActivePage('/admin/process-groups')}
-          data-qa="header-nav-processes"
+        <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
+          <HeaderMenuItem
+            href="/admin/process-groups"
+            isCurrentPage={isActivePage('/admin/process-groups')}
+            data-qa="header-nav-processes"
+          >
+            Processes
+          </HeaderMenuItem>
+        </Can>
+        <Can
+          I="POST"
+          a={targetUris.processInstanceListForMePath}
+          ability={ability}
         >
-          Processes
-        </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/process-instances"
-          isCurrentPage={isActivePage('/admin/process-instances')}
-        >
-          Process Instances
-        </HeaderMenuItem>
+          <HeaderMenuItem
+            href="/admin/process-instances"
+            isCurrentPage={isActivePage('/admin/process-instances')}
+          >
+            Process Instances
+          </HeaderMenuItem>
+        </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
           <HeaderMenuItem
             href="/admin/messages"
@@ -313,7 +333,7 @@ export default function NavigationBar() {
     );
   };
 
-  if (activeKey && ability) {
+  if (activeKey && ability && !UserService.onlyGuestTaskCompletion()) {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (
