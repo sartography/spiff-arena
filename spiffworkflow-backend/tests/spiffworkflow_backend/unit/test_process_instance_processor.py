@@ -359,6 +359,7 @@ class TestProcessInstanceProcessor(BaseTest):
         task_model_to_reset_to = all_task_models_matching_top_level_subprocess_script[0]
         assert task_model_to_reset_to is not None
         assert len(process_instance.human_tasks) == 3, "expected 3 human tasks before reset"
+        processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
         assert len(process_instance.human_tasks) == 2, "still expected 2 human tasks after reset"
 

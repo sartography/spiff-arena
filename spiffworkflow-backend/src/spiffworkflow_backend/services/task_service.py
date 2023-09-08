@@ -373,7 +373,12 @@ class TaskService:
             if top_level_process is not None:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent = top_level_process
-                for subprocess_guid, subprocess in subprocesses.items():
+
+                # calling list(subprocesses) to make a copy of the keys so we can change subprocesses while iterating
+                # changing subprocesses happens when running parallel tests
+                # for reasons we do not understand. https://stackoverflow.com/a/11941855/6090676
+                for subprocess_guid in list(subprocesses):
+                    subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
                         direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
                             guid=str(subprocess_guid)
