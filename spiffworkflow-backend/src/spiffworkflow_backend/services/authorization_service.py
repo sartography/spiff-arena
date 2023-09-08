@@ -1,5 +1,6 @@
 import inspect
 import re
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from dataclasses import dataclass
 from hashlib import sha256
 from hmac import HMAC
@@ -14,7 +15,7 @@ from flask import request
 from flask import scaffold
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP, GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
@@ -836,7 +837,7 @@ class AuthorizationService:
             if user_model:
                 cls.associate_user_with_group(user_model, default_group)
             else:
-                for user in UserModel.query.all():
+                for user in UserModel.query.filter(UserModel.username.not_in([SPIFF_GUEST_USER])).all():  # type: ignore
                     cls.associate_user_with_group(user, default_group)
 
         return {
@@ -865,8 +866,9 @@ class AuthorizationService:
             for iutga in initial_user_to_group_assignments:
                 # do not remove users from the default user group
                 if (
-                    current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
+                    (current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
                     or current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] != iutga.group.identifier
+                    ) and (iutga.group.identifier != SPIFF_GUEST_GROUP and iutga.user.username != SPIFF_GUEST_USER)
                 ):
                     current_user_dict: UserToGroupDict = {
                         "username": iutga.user.username,
@@ -877,6 +879,7 @@ class AuthorizationService:
 
         # do not remove the default user group
         added_group_identifiers.add(current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"])
+        added_group_identifiers.add(SPIFF_GUEST_GROUP)
         groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()
         for gtd in groups_to_delete:
             db.session.delete(gtd)
