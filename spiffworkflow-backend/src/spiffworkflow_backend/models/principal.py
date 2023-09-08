@@ -7,6 +7,7 @@ from sqlalchemy.schema import CheckConstraint
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.user import UserModel
 
 
@@ -26,8 +27,10 @@ class PrincipalModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, unique=True)  # type: ignore
     group_id = db.Column(ForeignKey(GroupModel.id), nullable=True, unique=True)
+    service_account_id = db.Column(ForeignKey(ServiceAccountModel.id), nullable=True, unique=True)  # type: ignore
 
     user = relationship("UserModel", viewonly=True)
     group = relationship("GroupModel", viewonly=True)
+    service_account = relationship("ServiceAccountModel", viewonly=True)
 
     permission_assignments = relationship("PermissionAssignmentModel", cascade="delete")  # type: ignore
