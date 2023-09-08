@@ -1,0 +1,9 @@
+{
+  "city": {
+    "ui:widget": "typeahead",
+    "ui:options": {
+      "category": "cities",
+      "itemFormat": "{name} ({state}, {country})"
+    }
+  }
+}

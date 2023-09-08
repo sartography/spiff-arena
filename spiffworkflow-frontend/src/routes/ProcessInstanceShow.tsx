@@ -23,9 +23,12 @@ import {
   Warning,
 } from '@carbon/icons-react';
 import {
+  Accordion,
+  AccordionItem,
   Grid,
   Column,
   Button,
+  ButtonSet,
   Tag,
   Modal,
   Dropdown,
@@ -42,9 +45,12 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  getLastMilestoneFromProcessInstance,
   HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
+  truncateString,
   unModifyProcessIdentifierForPathParam,
+  setPageTitle,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -66,6 +72,11 @@ import ProcessInterstitial from '../components/ProcessInterstitial';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
 import MessageInstanceList from '../components/MessageInstanceList';
+import {
+  childrenForErrorObject,
+  errorForDisplayFromString,
+} from '../components/ErrorDisplay';
+import { Notification } from '../components/Notification';
 
 type OwnProps = {
   variant: string;
@@ -104,6 +115,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [additionalPotentialOwners, setAdditionalPotentialOwners] = useState<
     User[] | null
   >(null);
+
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
 
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
@@ -152,6 +165,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     addError(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (processInstance) {
+      setPageTitle([
+        processInstance.process_model_display_name,
+        `Process Instance ${processInstance.id}`,
+      ]);
+    }
+    return undefined;
+  }, [processInstance]);
 
   useEffect(() => {
     if (!permissionsLoaded) {
@@ -322,7 +345,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!processInstance) {
       return null;
     }
-    let lastUpdatedTimeLabel = 'Updated at';
+    let lastUpdatedTimeLabel = 'Updated';
     let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
     if (processInstance.end_in_seconds) {
       lastUpdatedTimeLabel = 'Completed';
@@ -351,8 +374,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       statusColor = 'red';
     }
 
+    const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
+      getLastMilestoneFromProcessInstance(
+        processInstance,
+        processInstance.last_milestone_bpmn_name
+      );
+
     return (
-      <Grid condensed fullWidth>
+      <Grid condensed fullWidth className="megacondensed">
         <Column sm={4} md={4} lg={5}>
           <dl>
             <dt>Status:</dt>
@@ -360,7 +389,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <Tag
                 type={statusColor}
                 size="sm"
-                className="span-tag process-instance-status"
+                className="tag-within-dl process-instance-status"
               >
                 {processInstance.status} {statusIcon}
               </Tag>
@@ -395,6 +424,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </dl>
           {lastUpdatedTimeTag}
           <dl>
+            <dt>Last milestone:</dt>
+            <dd title={lastMilestoneFullValue}>
+              {lastMilestoneTruncatedValue}
+            </dd>
+          </dl>
+          <dl>
             <dt>Revision:</dt>
             <dd>
               {processInstance.bpmn_version_control_identifier} (
@@ -405,8 +440,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Column sm={4} md={4} lg={8}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
-              <dl>
-                <dt>{processInstanceMetadata.key}:</dt>
+              <dl className="metadata-display">
+                <dt title={processInstanceMetadata.key}>
+                  {truncateString(processInstanceMetadata.key, 50)}:
+                </dt>
                 <dd>{processInstanceMetadata.value}</dd>
               </dl>
             )
@@ -974,7 +1011,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               height={`${heightInEm}rem`}
               width="auto"
               defaultLanguage="json"
-              defaultValue={taskDataToDisplay}
+              value={taskDataToDisplay}
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
               }}
@@ -1068,6 +1105,98 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
+  const switchToTask = (taskId: string) => {
+    if (tasks) {
+      const task = tasks.find((t: Task) => t.guid === taskId);
+      if (task) {
+        setTaskToDisplay(task);
+        initializeTaskDataToDisplay(task);
+      }
+    }
+  };
+
+  const multiInstanceSelector = () => {
+    if (!taskToDisplay) {
+      return null;
+    }
+
+    const clickAction = (item: any) => {
+      return () => {
+        switchToTask(taskToDisplay.runtime_info.instance_map[item]);
+      };
+    };
+    const createButtonSet = (instances: string[]) => {
+      return (
+        <ButtonSet stacked>
+          {instances.map((v: any) => (
+            <Button kind="ghost" onClick={clickAction(v)}>
+              {v}
+            </Button>
+          ))}
+        </ButtonSet>
+      );
+    };
+
+    if (
+      taskToDisplay.typename === 'ParallelMultiInstanceTask' ||
+      taskToDisplay.typename === 'SequentialMultiInstanceTask'
+    ) {
+      let completedInstances = null;
+      if (taskToDisplay.runtime_info.completed.length > 0) {
+        completedInstances = createButtonSet(
+          taskToDisplay.runtime_info.completed
+        );
+      }
+      let runningInstances = null;
+      if (taskToDisplay.runtime_info.running.length > 0) {
+        runningInstances = createButtonSet(taskToDisplay.runtime_info.running);
+      }
+      let futureInstances = null;
+      if (taskToDisplay.runtime_info.future.length > 0) {
+        futureInstances = createButtonSet(taskToDisplay.runtime_info.future);
+      }
+
+      return (
+        <Accordion>
+          <AccordionItem title="Completed instances">
+            {completedInstances}
+          </AccordionItem>
+          <AccordionItem title="Running instances">
+            {runningInstances}
+          </AccordionItem>
+          <AccordionItem title="Future instances">
+            {futureInstances}
+          </AccordionItem>
+        </Accordion>
+      );
+    }
+    if (taskToDisplay.typename === 'StandardLoopTask') {
+      const buttons = [];
+      for (
+        let i = 0;
+        i < taskToDisplay.runtime_info.iterations_completed;
+        i += 1
+      )
+        buttons.push(
+          <Button kind="ghost" onClick={clickAction(i)}>
+            {i}
+          </Button>
+        );
+      let text = 'Loop iterations';
+      if (
+        typeof taskToDisplay.runtime_info.iterations_remaining !== 'undefined'
+      )
+        text += ` (${taskToDisplay.runtime_info.iterations_remaining} remaining)`;
+      return (
+        <div>
+          <div>{text}</div>
+          <div>{buttons}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const taskUpdateDisplayArea = () => {
     if (!taskToDisplay) {
       return null;
@@ -1097,6 +1226,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = addPotentialOwners;
       dangerous = true;
+    }
+
+    if (typeof taskToUse.runtime_info.instance !== 'undefined') {
+      secondaryButtonText = 'Return to MultiInstance Task';
+      onSecondarySubmit = () => {
+        switchToTask(taskToUse.properties_json.parent);
+      };
+    } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
+      secondaryButtonText = 'Return to Loop Task';
+      onSecondarySubmit = () => {
+        switchToTask(taskToUse.properties_json.parent);
+      };
     }
 
     return (
@@ -1140,6 +1281,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </div>
         ) : null}
         {taskActionDetails()}
+        {multiInstanceSelector()}
       </Modal>
     );
   };
@@ -1197,11 +1339,54 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const diagramArea = (processModelId: string) => {
+    if (!processInstance) {
+      return null;
+    }
+
+    const detailsComponent = (
+      <>
+        {childrenForErrorObject(
+          errorForDisplayFromString(
+            processInstance.bpmn_xml_file_contents_retrieval_error || ''
+          )
+        )}
+      </>
+    );
+    return processInstance.bpmn_xml_file_contents_retrieval_error ? (
+      <Notification
+        title="Failed to load diagram"
+        type="error"
+        hideCloseButton
+        allowTogglingFullMessage
+      >
+        {detailsComponent}
+      </Notification>
+    ) : (
+      <>
+        <ReactDiagramEditor
+          processModelId={processModelId || ''}
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={processInstance.bpmn_xml_file_contents || ''}
+          tasks={tasks}
+          diagramType="readonly"
+          onElementClick={handleClickedDiagramTask}
+        />
+        <div id="diagram-container" />
+      </>
+    );
+  };
+
+  const updateSelectedTab = (newTabIndex: any) => {
+    setSelectedTabIndex(newTabIndex.selectedIndex);
+  };
+
   if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     const getTabs = () => {
       const canViewLogs = ability.can(
         'GET',
@@ -1220,42 +1405,62 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       };
 
       return (
-        <Tabs>
+        <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
           <TabList aria-label="List of tabs">
             <Tab>Diagram</Tab>
             <Tab disabled={!canViewLogs}>Milestones</Tab>
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
+            <Tab>My Forms</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
-              <ReactDiagramEditor
-                processModelId={processModelId || ''}
-                diagramXML={processInstance.bpmn_xml_file_contents || ''}
-                fileName={processInstance.bpmn_xml_file_contents || ''}
-                tasks={tasks}
-                diagramType="readonly"
-                onElementClick={handleClickedDiagramTask}
-              />
-              <div id="diagram-container" />
+              {selectedTabIndex === 0 ? (
+                <TabPanel>{diagramArea(processModelId)}</TabPanel>
+              ) : null}
             </TabPanel>
             <TabPanel>
-              <ProcessInstanceLogList
-                variant={variant}
-                isEventsView={false}
-                processModelId={modifiedProcessModelId || ''}
-                processInstanceId={processInstance.id}
-              />
+              {selectedTabIndex === 1 ? (
+                <ProcessInstanceLogList
+                  variant={variant}
+                  isEventsView={false}
+                  processModelId={modifiedProcessModelId || ''}
+                  processInstanceId={processInstance.id}
+                />
+              ) : null}
             </TabPanel>
             <TabPanel>
-              <ProcessInstanceLogList
-                variant={variant}
-                isEventsView
-                processModelId={modifiedProcessModelId || ''}
-                processInstanceId={processInstance.id}
-              />
+              {selectedTabIndex === 2 ? (
+                <ProcessInstanceLogList
+                  variant={variant}
+                  isEventsView
+                  processModelId={modifiedProcessModelId || ''}
+                  processInstanceId={processInstance.id}
+                />
+              ) : null}
             </TabPanel>
-            <TabPanel>{getMessageDisplay()}</TabPanel>
+            <TabPanel>
+              {selectedTabIndex === 3 ? getMessageDisplay() : null}
+            </TabPanel>
+            <TabPanel>
+              {selectedTabIndex === 4 ? (
+                <TaskListTable
+                  apiPath={`/tasks/completed-by-me/${processInstance.id}`}
+                  paginationClassName="with-large-bottom-margin"
+                  textToShowIfEmpty="There are no tasks you can complete for this process instance."
+                  shouldPaginateTable={false}
+                  showProcessModelIdentifier={false}
+                  showProcessId={false}
+                  showStartedBy={false}
+                  showTableDescriptionAsTooltip
+                  showDateStarted={false}
+                  hideIfNoTasks
+                  showWaitingOn={false}
+                  canCompleteAllTasks={false}
+                  showViewFormDataButton
+                />
+              ) : null}
+            </TabPanel>
           </TabPanels>
         </Tabs>
       );
@@ -1274,6 +1479,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
+        {viewMostRecentStateComponent()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Instance Id: {processInstance.id}
@@ -1281,6 +1489,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {buttonIcons()}
         </Stack>
         {getInfoTag()}
+        <br />
         <ProcessInterstitial
           processInstanceId={processInstance.id}
           processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
@@ -1289,31 +1498,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           collapsableInstructions
           executeTasks={false}
         />
-        <Grid condensed fullWidth>
-          <Column md={6} lg={8} sm={4}>
-            <TaskListTable
-              apiPath="/tasks"
-              additionalParams={`process_instance_id=${processInstance.id}`}
-              tableTitle="Tasks I can complete"
-              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
-              paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty="There are no tasks you can complete for this process instance."
-              shouldPaginateTable={false}
-              showProcessModelIdentifier={false}
-              showProcessId={false}
-              showStartedBy={false}
-              showTableDescriptionAsTooltip
-              showDateStarted={false}
-              showLastUpdated={false}
-              hideIfNoTasks
-              canCompleteAllTasks
-            />
-          </Column>
-        </Grid>
-        {taskUpdateDisplayArea()}
-        {processDataDisplayArea()}
         <br />
-        {viewMostRecentStateComponent()}
+        <TaskListTable
+          apiPath="/tasks"
+          additionalParams={`process_instance_id=${processInstance.id}`}
+          tableTitle="Tasks I can complete"
+          tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+          paginationClassName="with-large-bottom-margin"
+          textToShowIfEmpty="There are no tasks you can complete for this process instance."
+          shouldPaginateTable={false}
+          showProcessModelIdentifier={false}
+          showProcessId={false}
+          showStartedBy={false}
+          showTableDescriptionAsTooltip
+          showDateStarted={false}
+          showLastUpdated={false}
+          hideIfNoTasks
+          canCompleteAllTasks
+        />
         {getTabs()}
       </>
     );

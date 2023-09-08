@@ -31,9 +31,14 @@ import Editor, { DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
+import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
-import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
+import {
+  makeid,
+  modifyProcessIdentifierForPathParam,
+  setPageTitle,
+} from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
   ProcessFile,
@@ -45,15 +50,21 @@ import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import { usePrompt } from '../hooks/UsePrompt';
 import ActiveUsers from '../components/ActiveUsers';
+import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
+  const isFocused = useFocusedTabStatus();
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
+  const [fileEventBus, setFileEventBus] = useState<any>(null);
+  const [jsonScehmaFileName, setJsonScehmaFileName] = useState<string>('');
+  const [showJsonSchemaEditor, setShowJsonSchemaEditor] = useState(false);
+
   const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
@@ -177,6 +188,9 @@ export default function ProcessModelEditDiagram() {
         path: `/processes/callers/${bpmnProcessIds.join(',')}`,
         successCallback: setCallers,
       });
+    }
+    if (processModel && processModelFile) {
+      setPageTitle([processModel.display_name, processModelFile.name]);
     }
   }, [processModel, processModelFile]);
 
@@ -361,19 +375,22 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onJsonFilesRequested = (event: any) => {
+  const onJsonSchemaFilesRequested = (event: any) => {
+    setFileEventBus(event.eventBus);
+    const re = /.*[-.]schema.json/;
     if (processModel) {
-      const jsonFiles = processModel.files.filter((f) => f.type === 'json');
+      const jsonFiles = processModel.files.filter((f) => f.name.match(re));
       const options = jsonFiles.map((f) => {
         return { label: f.name, value: f.name };
       });
-      event.eventBus.fire('spiff.json_files.returned', { options });
+      event.eventBus.fire('spiff.json_schema_files.returned', { options });
     } else {
       console.error('There is no process Model.');
     }
   };
 
   const onDmnFilesRequested = (event: any) => {
+    setFileEventBus(event.eventBus);
     if (processModel) {
       const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
       const options: any[] = [];
@@ -387,6 +404,27 @@ export default function ProcessModelEditDiagram() {
       console.error('There is no process model.');
     }
   };
+
+  useEffect(() => {
+    const updateDiagramFiles = (pm: ProcessModel) => {
+      setProcessModel(pm);
+      const re = /.*[-.]schema.json/;
+      const jsonFiles = pm.files.filter((f) => f.name.match(re));
+      const options = jsonFiles.map((f) => {
+        return { label: f.name, value: f.name };
+      });
+      fileEventBus.fire('spiff.json_schema_files.returned', { options });
+    };
+
+    if (isFocused && fileEventBus) {
+      // Request the process model again, and manually fire off the
+      // commands to update the file lists for json and dmn files.
+      HttpService.makeCallToBackend({
+        path: `/${processModelPath}?include_file_references=true`,
+        successCallback: updateDiagramFiles,
+      });
+    }
+  }, [isFocused, fileEventBus, processModelPath]);
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -834,12 +872,14 @@ export default function ProcessModelEditDiagram() {
         onRequestClose={handleMarkdownEditorClose}
         size="lg"
       >
-        <MDEditor
-          height={500}
-          highlightEnable={false}
-          value={markdownText}
-          onChange={setMarkdownText}
-        />
+        <div data-color-mode="light">
+          <MDEditor
+            height={500}
+            highlightEnable={false}
+            value={markdownText}
+            onChange={setMarkdownText}
+          />
+        </div>
       </Modal>
     );
   };
@@ -948,16 +988,45 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
-  const onLaunchJsonEditor = (fileName: string) => {
-    const path = generatePath(
-      '/admin/process-models/:process_model_id/form/:file_name',
-      {
-        process_model_id: params.process_model_id,
-        file_name: fileName,
-      }
-    );
-    window.open(path);
+  const onLaunchJsonSchemaEditor = (
+    element: any,
+    fileName: string,
+    eventBus: any
+  ) => {
+    setFileEventBus(eventBus);
+    setJsonScehmaFileName(fileName);
+    setShowJsonSchemaEditor(true);
   };
+
+  const handleJsonScehmaEditorClose = () => {
+    fileEventBus.fire('spiff.jsonSchema.update', {
+      value: jsonScehmaFileName,
+    });
+    setShowJsonSchemaEditor(false);
+  };
+
+  const jsonSchemaEditor = () => {
+    if (!showJsonSchemaEditor) {
+      return null;
+    }
+    return (
+      <Modal
+        open={showJsonSchemaEditor}
+        modalHeading="Edit JSON Schema"
+        primaryButtonText="Close"
+        onRequestSubmit={handleJsonScehmaEditorClose}
+        onRequestClose={handleJsonScehmaEditorClose}
+        size="lg"
+      >
+        <ReactFormBuilder
+          processModelId={params.process_model_id || ''}
+          fileName={jsonScehmaFileName}
+          onFileNameSet={setJsonScehmaFileName}
+        />
+      </Modal>
+    );
+  };
+
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
@@ -1014,8 +1083,8 @@ export default function ProcessModelEditDiagram() {
         onServiceTasksRequested={onServiceTasksRequested}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchBpmnEditor={onLaunchBpmnEditor}
-        onLaunchJsonEditor={onLaunchJsonEditor}
-        onJsonFilesRequested={onJsonFilesRequested}
+        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
+        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onDmnFilesRequested={onDmnFilesRequested}
         onSearchProcessModels={onSearchProcessModels}
@@ -1065,6 +1134,7 @@ export default function ProcessModelEditDiagram() {
         {newFileNameBox()}
         {scriptEditorAndTests()}
         {markdownEditor()}
+        {jsonSchemaEditor()}
         {processModelSelector()}
         <div id="diagram-container" />
       </>
