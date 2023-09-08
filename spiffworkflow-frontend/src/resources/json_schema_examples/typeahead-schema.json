@@ -1,0 +1,12 @@
+{
+  "title": "Auto Complete",
+  "description": "Connect a field to a data store to auto-complete entered values.",
+  "type": "object",
+  "properties": {
+    "city": {
+      "type": "string",
+      "format": "date",
+      "title": "Select a city"
+    }
+  }
+}

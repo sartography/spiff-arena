@@ -83,6 +83,58 @@ class TestTasksController(BaseTest):
             "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
         }
 
+    def test_prepare_schema(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        task_data = {
+            "title": "Title injected with jinja syntax",
+            "foods": [
+                {"value": "apples", "label": "apples"},
+                {"value": "oranges", "label": "oranges"},
+                {"value": "bananas", "label": "bananas"},
+            ],
+            "form_ui_hidden_fields": ["DontShowMe"],
+        }
+        form_schema = {
+            "title": "{{title}}",
+            "type": "object",
+            "properties": {
+                "favoriteFood": {
+                    "type": "string",
+                    "title": "Favorite Food",
+                    "anyOf": ["options_from_task_data_var:foods"],
+                },
+                "DontShowMe": {
+                    "type": "string",
+                    "title": "Don't Show Me",
+                },
+            },
+        }
+        form_ui: dict = {}
+
+        data = {"form_schema": form_schema, "form_ui": form_ui, "task_data": task_data}
+
+        self.logged_in_headers(with_super_admin_user)
+        response = client.post(
+            "/v1.0/tasks/prepare-form",
+            headers=self.logged_in_headers(with_super_admin_user),
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["form_schema"]["properties"]["favoriteFood"]["anyOf"] == [
+            {"enum": ["apples"], "title": "apples", "type": "string"},
+            {"enum": ["oranges"], "title": "oranges", "type": "string"},
+            {"enum": ["bananas"], "title": "bananas", "type": "string"},
+        ]
+        assert response.json["form_schema"]["title"] == task_data["title"]
+        assert response.json["form_ui"] == {"DontShowMe": {"ui:widget": "hidden"}}
+
     def test_interstitial_returns_process_instance_if_suspended_or_terminated(
         self,
         app: Flask,

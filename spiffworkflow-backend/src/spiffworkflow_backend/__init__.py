@@ -184,6 +184,10 @@ def create_app() -> flask.app.Flask:
     app.before_request(AuthorizationService.check_for_permission)
     app.after_request(set_new_access_token_in_cookie)
 
+    # The default is true, but we want to preserve the order of keys in the json
+    # This is particularly helpful for forms that are generated from json schemas.
+    app.json.sort_keys = False
+
     return app  # type: ignore
 
 

@@ -445,3 +445,9 @@ export interface DataStore {
   name: string;
   type: string;
 }
+
+export interface JsonSchemaExample {
+  schema: any;
+  ui: any;
+  data: any;
+}

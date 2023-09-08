@@ -1,0 +1,11 @@
+{
+  "title": "Text Area",
+  "description": "A larger resizable area to enter longer text. (field name will be 'bio')",
+  "type": "object",
+  "properties": {
+    "bio": {
+      "type": "string",
+      "title": "Bio"
+    }
+  }
+}
