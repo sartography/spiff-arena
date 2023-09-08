@@ -29,59 +29,61 @@ class TestAuthentication(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        user = self.find_or_create_user("testing@e.com")
-        user.email = "testing@e.com"
-        user.service = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"]
-        db.session.add(user)
-        db.session.commit()
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+            user = self.find_or_create_user("testing@e.com")
+            user.email = "testing@e.com"
+            user.service = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"]
+            db.session.add(user)
+            db.session.commit()
 
-        access_token = user.encode_auth_token(
-            {
-                "groups": ["group_one", "group_two"],
-                "iss": app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"],
-                "aud": "spiffworkflow-backend",
-                "iat": round(time.time()),
-                "exp": round(time.time()) + 1000,
-            }
-        )
-        response = client.post(
-            f"/v1.0/login_with_access_token?access_token={access_token}",
-        )
-        assert response.status_code == 200
-        assert len(user.groups) == 3
-        group_identifiers = [g.identifier for g in user.groups]
-        assert sorted(group_identifiers) == ["everybody", "group_one", "group_two"]
+            access_token = user.encode_auth_token(
+                {
+                    "groups": ["group_one", "group_two"],
+                    "iss": app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"],
+                    "aud": "spiffworkflow-backend",
+                    "iat": round(time.time()),
+                    "exp": round(time.time()) + 1000,
+                }
+            )
+            response = None
+            response = client.post(
+                f"/v1.0/login_with_access_token?access_token={access_token}",
+            )
+            assert response.status_code == 200
+            assert len(user.groups) == 3
+            group_identifiers = [g.identifier for g in user.groups]
+            assert sorted(group_identifiers) == ["everybody", "group_one", "group_two"]
 
-        access_token = user.encode_auth_token(
-            {
-                "groups": ["group_one"],
-                "iss": app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"],
-                "aud": "spiffworkflow-backend",
-                "iat": round(time.time()),
-                "exp": round(time.time()) + 1000,
-            }
-        )
-        response = client.post(
-            f"/v1.0/login_with_access_token?access_token={access_token}",
-        )
-        assert response.status_code == 200
-        user = UserModel.query.filter_by(username=user.username).first()
-        assert len(user.groups) == 2
-        group_identifiers = [g.identifier for g in user.groups]
-        assert sorted(group_identifiers) == ["everybody", "group_one"]
+            access_token = user.encode_auth_token(
+                {
+                    "groups": ["group_one"],
+                    "iss": app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"],
+                    "aud": "spiffworkflow-backend",
+                    "iat": round(time.time()),
+                    "exp": round(time.time()) + 1000,
+                }
+            )
+            response = client.post(
+                f"/v1.0/login_with_access_token?access_token={access_token}",
+            )
+            assert response.status_code == 200
+            user = UserModel.query.filter_by(username=user.username).first()
+            assert len(user.groups) == 2
+            group_identifiers = [g.identifier for g in user.groups]
+            assert sorted(group_identifiers) == ["everybody", "group_one"]
 
-        # make sure running refresh_permissions doesn't remove the user from the group
-        group_info: list[GroupPermissionsDict] = [
-            {
-                "users": [],
-                "name": "group_one",
-                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
-            }
-        ]
-        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
-        user = UserModel.query.filter_by(username=user.username).first()
-        assert len(user.groups) == 2
-        group_identifiers = [g.identifier for g in user.groups]
-        assert sorted(group_identifiers) == ["everybody", "group_one"]
-        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
-        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
+            # make sure running refresh_permissions doesn't remove the user from the group
+            group_info: list[GroupPermissionsDict] = [
+                {
+                    "users": [],
+                    "name": "group_one",
+                    "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+                }
+            ]
+            AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+            user = UserModel.query.filter_by(username=user.username).first()
+            assert len(user.groups) == 2
+            group_identifiers = [g.identifier for g in user.groups]
+            assert sorted(group_identifiers) == ["everybody", "group_one"]
+            self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+            self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")

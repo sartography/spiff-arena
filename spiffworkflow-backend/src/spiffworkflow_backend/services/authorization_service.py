@@ -435,8 +435,10 @@ class AuthorizationService:
         user_attributes["service_id"] = user_info["sub"]
 
         desired_group_identifiers = None
-        if "groups" in user_info:
-            desired_group_identifiers = user_info["groups"]
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS"]:
+            if "groups" in user_info:
+                desired_group_identifiers = user_info["groups"]
 
         for field_index, tenant_specific_field in enumerate(
             current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]
