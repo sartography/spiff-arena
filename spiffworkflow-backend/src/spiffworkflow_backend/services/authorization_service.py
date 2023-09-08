@@ -1,6 +1,5 @@
 import inspect
 import re
-from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from dataclasses import dataclass
 from hashlib import sha256
 from hmac import HMAC
@@ -15,13 +14,15 @@ from flask import request
 from flask import scaffold
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP, GroupModel
+from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
@@ -866,10 +867,9 @@ class AuthorizationService:
             for iutga in initial_user_to_group_assignments:
                 # do not remove users from the default user group
                 if (
-                    (current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
+                    current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
                     or current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] != iutga.group.identifier
-                    ) and (iutga.group.identifier != SPIFF_GUEST_GROUP and iutga.user.username != SPIFF_GUEST_USER)
-                ):
+                ) and (iutga.group.identifier != SPIFF_GUEST_GROUP and iutga.user.username != SPIFF_GUEST_USER):
                     current_user_dict: UserToGroupDict = {
                         "username": iutga.user.username,
                         "group_identifier": iutga.group.identifier,
