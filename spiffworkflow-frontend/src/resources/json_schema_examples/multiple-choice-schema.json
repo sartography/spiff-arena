@@ -1,0 +1,21 @@
+{
+  "title": "Multiple Choice List",
+  "description": "Build a multiple choice list with a predefined list of options",
+  "type": "object",
+  "properties": {
+    "multipleChoicesList": {
+      "type": "array",
+      "title": "A multiple choices list",
+      "items": {
+        "type": "string",
+        "enum": [
+          "foo",
+          "bar",
+          "fuzz",
+          "qux"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}
