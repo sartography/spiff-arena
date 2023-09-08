@@ -128,6 +128,7 @@ export interface ProcessInstanceTask {
   // these are actually from HumanTaskModel on the backend
   task_title?: string;
   task_name?: string;
+  completed?: boolean;
 }
 
 export interface ProcessReference {
