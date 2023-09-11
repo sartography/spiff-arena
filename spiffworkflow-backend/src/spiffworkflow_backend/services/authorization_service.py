@@ -603,6 +603,8 @@ class AuthorizationService:
             PermissionToAssign(permission="update", target_uri="/authentication/configuration")
         )
 
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/service-accounts"))
+
         return permissions_to_assign
 
     @classmethod

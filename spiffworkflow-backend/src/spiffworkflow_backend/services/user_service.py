@@ -170,3 +170,27 @@ class UserService:
             human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
             db.session.add(human_task_user)
             db.session.commit()
+
+    @classmethod
+    def get_permission_targets_for_user(cls, user: UserModel, check_groups: bool = True) -> set[tuple[str, str, str]]:
+        unique_permission_assignments = set()
+        for permission_assignment in user.principal.permission_assignments:
+            unique_permission_assignments.add(
+                (
+                    permission_assignment.permission_target_id,
+                    permission_assignment.permission,
+                    permission_assignment.grant_type,
+                )
+            )
+
+        if check_groups:
+            for group in g.user.groups:
+                for permission_assignment in group.principal.permission_assignments:
+                    unique_permission_assignments.add(
+                        (
+                            permission_assignment.permission_target_id,
+                            permission_assignment.permission,
+                            permission_assignment.grant_type,
+                        )
+                    )
+        return unique_permission_assignments

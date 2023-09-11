@@ -2610,21 +2610,21 @@ paths:
   /service-accounts:
     post:
       operationId: spiffworkflow_backend.routes.service_accounts_controller.service_account_create
-      summary: Create a service account for the curren tuser.
+      summary: Create a service account for the current user.
       tags:
-        - Process Models
+        - Service Accounts
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessModel"
+              $ref: "#/components/schemas/ServiceAccountRequest"
       responses:
         "201":
           description: service account created successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OkTrue"
+                $ref: "#/components/schemas/ServiceAccountApiKey"
 
 
 components:
@@ -3460,5 +3460,16 @@ components:
           type: string
           nullable: false
         fiilterable:
+          type: string
+          nullable: false
+
+    ServiceAccountRequest:
+      properties:
+        name:
+          type: string
+          nullable: false
+    ServiceAccountApiKey:
+      properties:
+        api_key:
           type: string
           nullable: false

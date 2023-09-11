@@ -1,15 +1,14 @@
 from __future__ import annotations
+
 import uuid
-from sqlalchemy import ForeignKey
-
 from dataclasses import dataclass
-from typing import Any
 
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.group import UserModel
+
 
 @dataclass
 class ServiceAccountModel(SpiffworkflowBaseDBModel):
@@ -18,7 +17,7 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(255), nullable=False, unique=False, index=True)
-    created_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
+    created_by_user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)
 
     api_key: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
 
