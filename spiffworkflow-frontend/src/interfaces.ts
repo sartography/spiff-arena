@@ -3,6 +3,14 @@ export interface User {
   username: string;
 }
 
+export interface ApiAction {
+  path: string;
+  method: string;
+}
+export interface ApiActions {
+  [key: string]: ApiAction;
+}
+
 export interface Secret {
   id: number;
   key: string;
@@ -86,6 +94,7 @@ export interface Task extends BasicTask {
 
   event_definition?: EventDefinition;
   saved_form_data?: any;
+  runtime_info?: any;
 }
 
 // Currently used like ApiTask in backend
@@ -119,6 +128,7 @@ export interface ProcessInstanceTask {
   // these are actually from HumanTaskModel on the backend
   task_title?: string;
   task_name?: string;
+  completed?: boolean;
 }
 
 export interface ProcessReference {
@@ -264,6 +274,7 @@ export interface ProcessModel {
   fault_or_suspend_on_exception?: string;
   exception_notification_addresses?: string[];
   bpmn_version_control_identifier?: string;
+  actions?: ApiActions;
 }
 
 export interface ProcessGroup {
@@ -435,28 +446,8 @@ export interface DataStore {
   type: string;
 }
 
-export interface UiSchemaNavItem {
-  label: string;
-  route: string;
-}
-export interface UiSchemaPageDefinition {
-  header: string;
-  api: string;
-
-  form_schema_filename?: any;
-  form_ui_schema_filename?: any;
-  markdown_instruction_filename?: string;
-  navigate_to_on_form_submit?: string;
-}
-export interface UiSchemaRoute {
-  [key: string]: UiSchemaPageDefinition;
-}
-export interface ExtensionUiSchema {
-  navigation_items?: UiSchemaNavItem[];
-  routes: UiSchemaRoute;
-}
-
-export interface ExtensionPostBody {
-  extension_input: any;
-  ui_schema_page_definition?: UiSchemaPageDefinition;
+export interface JsonSchemaExample {
+  schema: any;
+  ui: any;
+  data: any;
 }

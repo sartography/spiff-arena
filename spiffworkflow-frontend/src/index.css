@@ -6,8 +6,8 @@
 }
 
 .megacondensed {
-  padding-left: 0px;
-  margin-left: 0px;
+  padding-left: 0;
+  margin-left: 0;
 }
 
 /* defaults to 3rem, which isn't long sufficient for "elizabeth" */
@@ -31,7 +31,7 @@
 }
 
 .cds--loading__stroke {
-  stroke: gray;
+  stroke: rgb(128, 128, 128);
 }
 
 /* make this a little less prominent so the actual human beings completing tasks stand out */
@@ -709,7 +709,7 @@ hr {
 
 .modal-dropdown {
   height: 20rem;
-  width: "auto";
+  width: auto;
 }
 
 .task-data-details-header {
@@ -728,6 +728,11 @@ hr {
 
 #hidden-form-for-autosave {
   display: none;
+}
+
+div.json-schema {
+  display: flex;
+  flex-direction: column;
 }
 
 .my-completed-forms-header {
@@ -783,12 +788,12 @@ div.markdown-collapsed {
 
 
 .cds--data-table-content {
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 .wmde-markdown table {
   width: fit-content;
-  overflow: scroll;
+  overflow: auto;
 }
 
 /* override carbon variable so we can left align accordions*/

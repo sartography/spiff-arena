@@ -11,6 +11,7 @@ import AuthenticationList from './AuthenticationList';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import { setPageTitle } from '../helpers';
 
 export default function Configuration() {
   const location = useLocation();
@@ -29,6 +30,7 @@ export default function Configuration() {
 
   useEffect(() => {
     removeError();
+    setPageTitle(['Configuration']);
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {
       newSelectedTabIndex = 1;

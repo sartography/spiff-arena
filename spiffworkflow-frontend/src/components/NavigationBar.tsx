@@ -24,13 +24,11 @@ import { Can } from '@casl/react';
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck, ProcessModel, ProcessFile } from '../interfaces';
 import {
-  PermissionsToCheck,
-  ProcessModel,
-  ProcessFile,
   ExtensionUiSchema,
-  UiSchemaNavItem,
-} from '../interfaces';
+  UiSchemaUxElement,
+} from '../extension_ui_schema_interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import HttpService, { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
@@ -49,7 +47,7 @@ export default function NavigationBar() {
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
   const [extensionNavigationItems, setExtensionNavigationItems] = useState<
-    UiSchemaNavItem[] | null
+    UiSchemaUxElement[] | null
   >(null);
 
   const { targetUris } = useUriListForPermissions();
@@ -109,7 +107,7 @@ export default function NavigationBar() {
     }
 
     const processExtensionResult = (processModels: ProcessModel[]) => {
-      const eni: UiSchemaNavItem[] = processModels
+      const eni: UiSchemaUxElement[] = processModels
         .map((processModel: ProcessModel) => {
           const extensionUiSchemaFile = processModel.files.find(
             (file: ProcessFile) => file.name === 'extension_uischema.json'
@@ -119,8 +117,8 @@ export default function NavigationBar() {
               const extensionUiSchema: ExtensionUiSchema = JSON.parse(
                 extensionUiSchemaFile.file_contents
               );
-              if (extensionUiSchema.navigation_items) {
-                return extensionUiSchema.navigation_items;
+              if (extensionUiSchema.ux_elements) {
+                return extensionUiSchema.ux_elements;
               }
             } catch (jsonParseError: any) {
               console.error(
@@ -128,7 +126,7 @@ export default function NavigationBar() {
               );
             }
           }
-          return [] as UiSchemaNavItem[];
+          return [] as UiSchemaUxElement[];
         })
         .flat();
       if (eni) {
@@ -157,6 +155,27 @@ export default function NavigationBar() {
   const userEmail = UserService.getUserEmail();
   const username = UserService.getPreferredUsername();
 
+  const extensionNavigationElementsForDisplayLocation = (
+    displayLocation: string,
+    elementCallback: Function
+  ) => {
+    if (!extensionNavigationItems) {
+      return null;
+    }
+
+    return extensionNavigationItems.map((uxElement: UiSchemaUxElement) => {
+      if (uxElement.display_location === displayLocation) {
+        return elementCallback(uxElement);
+      }
+      return null;
+    });
+  };
+
+  const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
+    const navItemPage = `/extensions${uxElement.page}`;
+    return <a href={navItemPage}>{uxElement.label}</a>;
+  };
+
   const profileToggletip = (
     <div style={{ display: 'flex' }} id="user-profile-toggletip">
       <Toggletip isTabTip align="bottom-right">
@@ -177,6 +196,10 @@ export default function NavigationBar() {
           <a target="_blank" href={documentationUrl} rel="noreferrer">
             Documentation
           </a>
+          {extensionNavigationElementsForDisplayLocation(
+            'user_profile_item',
+            extensionUserProfileElement
+          )}
           {!UserService.authenticationDisabled() ? (
             <>
               <hr />
@@ -258,27 +281,21 @@ export default function NavigationBar() {
     );
   };
 
-  const extensionNavigationElements = () => {
-    if (!extensionNavigationItems) {
-      return null;
+  const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
+    const navItemPage = `/extensions${uxElement.page}`;
+    const regexp = new RegExp(`^${navItemPage}$`);
+    if (regexp.test(location.pathname)) {
+      setActiveKey(navItemPage);
     }
-
-    return extensionNavigationItems.map((navItem: UiSchemaNavItem) => {
-      const navItemRoute = `/extensions${navItem.route}`;
-      const regexp = new RegExp(`^${navItemRoute}`);
-      if (regexp.test(location.pathname)) {
-        setActiveKey(navItemRoute);
-      }
-      return (
-        <HeaderMenuItem
-          href={navItemRoute}
-          isCurrentPage={isActivePage(navItemRoute)}
-          data-qa={`extension-${slugifyString(navItem.label)}`}
-        >
-          {navItem.label}
-        </HeaderMenuItem>
-      );
-    });
+    return (
+      <HeaderMenuItem
+        href={navItemPage}
+        isCurrentPage={isActivePage(navItemPage)}
+        data-qa={`extension-${slugifyString(uxElement.label)}`}
+      >
+        {uxElement.label}
+      </HeaderMenuItem>
+    );
   };
 
   const headerMenuItems = () => {
@@ -328,7 +345,10 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         {configurationElement()}
-        {extensionNavigationElements()}
+        {extensionNavigationElementsForDisplayLocation(
+          'header_menu_item',
+          extensionHeaderMenuItemElement
+        )}
       </>
     );
   };

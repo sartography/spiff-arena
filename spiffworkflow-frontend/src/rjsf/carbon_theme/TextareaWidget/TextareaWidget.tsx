@@ -7,6 +7,7 @@ import {
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
+import { getCommonAttributes } from '../../helpers';
 
 /** The `TextareaWidget` is a widget for rendering input fields as textarea.
  *
@@ -51,34 +52,19 @@ function TextareaWidget<
     [id, onFocus]
   );
 
-  let labelToUse = label;
-  if (uiSchema && uiSchema['ui:title']) {
-    labelToUse = uiSchema['ui:title'];
-  } else if (schema && schema.title) {
-    labelToUse = schema.title;
-  }
-  if (required) {
-    labelToUse = `${labelToUse}*`;
-  }
-
-  let helperText = null;
-  if (uiSchema && uiSchema['ui:help']) {
-    helperText = uiSchema['ui:help'];
-  }
-
-  let invalid = false;
-  let errorMessageForField = null;
-  if (rawErrors && rawErrors.length > 0) {
-    invalid = true;
-    errorMessageForField = rawErrors[0];
-  }
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    rawErrors
+  );
 
   return (
     <TextArea
       id={id}
       name={id}
       className="text-input"
-      helperText={helperText}
+      helperText={commonAttributes.helperText}
       value={value || ''}
       labelText=""
       placeholder={placeholder}
@@ -90,8 +76,8 @@ function TextareaWidget<
       onBlur={handleBlur}
       onFocus={handleFocus}
       onChange={handleChange}
-      invalid={invalid}
-      invalidText={errorMessageForField}
+      invalid={commonAttributes.invalid}
+      invalidText={commonAttributes.errorMessageForField}
     />
   );
 }

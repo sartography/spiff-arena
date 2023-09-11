@@ -23,9 +23,12 @@ import {
   Warning,
 } from '@carbon/icons-react';
 import {
+  Accordion,
+  AccordionItem,
   Grid,
   Column,
   Button,
+  ButtonSet,
   Tag,
   Modal,
   Dropdown,
@@ -47,6 +50,7 @@ import {
   modifyProcessIdentifierForPathParam,
   truncateString,
   unModifyProcessIdentifierForPathParam,
+  setPageTitle,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -161,6 +165,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     addError(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (processInstance) {
+      setPageTitle([
+        processInstance.process_model_display_name,
+        `Process Instance ${processInstance.id}`,
+      ]);
+    }
+    return undefined;
+  }, [processInstance]);
 
   useEffect(() => {
     if (!permissionsLoaded) {
@@ -997,7 +1011,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               height={`${heightInEm}rem`}
               width="auto"
               defaultLanguage="json"
-              defaultValue={taskDataToDisplay}
+              value={taskDataToDisplay}
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
               }}
@@ -1091,6 +1105,98 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
+  const switchToTask = (taskId: string) => {
+    if (tasks) {
+      const task = tasks.find((t: Task) => t.guid === taskId);
+      if (task) {
+        setTaskToDisplay(task);
+        initializeTaskDataToDisplay(task);
+      }
+    }
+  };
+
+  const multiInstanceSelector = () => {
+    if (!taskToDisplay) {
+      return null;
+    }
+
+    const clickAction = (item: any) => {
+      return () => {
+        switchToTask(taskToDisplay.runtime_info.instance_map[item]);
+      };
+    };
+    const createButtonSet = (instances: string[]) => {
+      return (
+        <ButtonSet stacked>
+          {instances.map((v: any) => (
+            <Button kind="ghost" onClick={clickAction(v)}>
+              {v}
+            </Button>
+          ))}
+        </ButtonSet>
+      );
+    };
+
+    if (
+      taskToDisplay.typename === 'ParallelMultiInstanceTask' ||
+      taskToDisplay.typename === 'SequentialMultiInstanceTask'
+    ) {
+      let completedInstances = null;
+      if (taskToDisplay.runtime_info.completed.length > 0) {
+        completedInstances = createButtonSet(
+          taskToDisplay.runtime_info.completed
+        );
+      }
+      let runningInstances = null;
+      if (taskToDisplay.runtime_info.running.length > 0) {
+        runningInstances = createButtonSet(taskToDisplay.runtime_info.running);
+      }
+      let futureInstances = null;
+      if (taskToDisplay.runtime_info.future.length > 0) {
+        futureInstances = createButtonSet(taskToDisplay.runtime_info.future);
+      }
+
+      return (
+        <Accordion>
+          <AccordionItem title="Completed instances">
+            {completedInstances}
+          </AccordionItem>
+          <AccordionItem title="Running instances">
+            {runningInstances}
+          </AccordionItem>
+          <AccordionItem title="Future instances">
+            {futureInstances}
+          </AccordionItem>
+        </Accordion>
+      );
+    }
+    if (taskToDisplay.typename === 'StandardLoopTask') {
+      const buttons = [];
+      for (
+        let i = 0;
+        i < taskToDisplay.runtime_info.iterations_completed;
+        i += 1
+      )
+        buttons.push(
+          <Button kind="ghost" onClick={clickAction(i)}>
+            {i}
+          </Button>
+        );
+      let text = 'Loop iterations';
+      if (
+        typeof taskToDisplay.runtime_info.iterations_remaining !== 'undefined'
+      )
+        text += ` (${taskToDisplay.runtime_info.iterations_remaining} remaining)`;
+      return (
+        <div>
+          <div>{text}</div>
+          <div>{buttons}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const taskUpdateDisplayArea = () => {
     if (!taskToDisplay) {
       return null;
@@ -1120,6 +1226,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = addPotentialOwners;
       dangerous = true;
+    }
+
+    if (typeof taskToUse.runtime_info.instance !== 'undefined') {
+      secondaryButtonText = 'Return to MultiInstance Task';
+      onSecondarySubmit = () => {
+        switchToTask(taskToUse.properties_json.parent);
+      };
+    } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
+      secondaryButtonText = 'Return to Loop Task';
+      onSecondarySubmit = () => {
+        switchToTask(taskToUse.properties_json.parent);
+      };
     }
 
     return (
@@ -1163,6 +1281,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </div>
         ) : null}
         {taskActionDetails()}
+        {multiInstanceSelector()}
       </Modal>
     );
   };

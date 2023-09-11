@@ -91,5 +91,8 @@ from spiffworkflow_backend.models.task_draft_data import (
 from spiffworkflow_backend.models.configuration import (
     ConfigurationModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.user_property import (
+    UserPropertyModel,
+)  # noqa: F401
 
 add_listeners()

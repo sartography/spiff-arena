@@ -5,6 +5,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ProcessGroupForm from '../components/ProcessGroupForm';
 import { ProcessGroup } from '../interfaces';
+import { setPageTitle } from '../helpers';
 
 export default function ProcessGroupEdit() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function ProcessGroupEdit() {
   }, [params]);
 
   if (processGroup) {
+    setPageTitle([`Editing ${processGroup.display_name}`]);
     return (
       <>
         <ProcessBreadcrumb

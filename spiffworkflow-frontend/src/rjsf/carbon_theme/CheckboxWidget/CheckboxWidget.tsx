@@ -1,7 +1,7 @@
 import React from 'react';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import { schemaRequiresTrueValue, WidgetProps } from '@rjsf/utils';
+import { Checkbox } from '@carbon/react';
+import { WidgetProps } from '@rjsf/utils';
+import { getCommonAttributes } from '../../helpers';
 
 function CheckboxWidget(props: WidgetProps) {
   const {
@@ -15,13 +15,19 @@ function CheckboxWidget(props: WidgetProps) {
     onChange,
     onBlur,
     onFocus,
+    uiSchema,
+    rawErrors,
+    required,
   } = props;
-  // Because an unchecked checkbox will cause html5 validation to fail, only add
-  // the "required" attribute if the field value must be "true", due to the
-  // "const" or "enum" keywords
-  const required = schemaRequiresTrueValue(schema);
-
-  const _onChange = (_: any, checked: boolean) => onChange(checked);
+  const _onChange = (_: any, newValue: any) => {
+    // if this field is required and it is not checked then change the value to undefined
+    // otherwise rjsf will not flag this field as invalid
+    if (required && !newValue.checked) {
+      onChange(undefined);
+    } else {
+      onChange(newValue.checked);
+    }
+  };
   const _onBlur = ({
     target: { value },
   }: React.FocusEvent<HTMLButtonElement>) => onBlur(id, value);
@@ -29,22 +35,32 @@ function CheckboxWidget(props: WidgetProps) {
     target: { value },
   }: React.FocusEvent<HTMLButtonElement>) => onFocus(id, value);
 
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    rawErrors
+  );
+
   return (
-    <FormControlLabel
-      control={
-        <Checkbox
-          id={id}
-          name={id}
-          checked={typeof value === 'undefined' ? false : Boolean(value)}
-          required={required}
-          disabled={disabled || readonly}
-          autoFocus={autofocus}
-          onChange={_onChange}
-          onBlur={_onBlur}
-          onFocus={_onFocus}
-        />
+    <Checkbox
+      id={id}
+      name={id}
+      checked={typeof value === 'undefined' ? false : Boolean(value)}
+      disabled={disabled || readonly}
+      title={commonAttributes.tooltipText}
+      autoFocus={autofocus}
+      invalid={commonAttributes.invalid}
+      invalidText={commonAttributes.errorMessageForField}
+      helperText={commonAttributes.helperText}
+      labelText={
+        required
+          ? commonAttributes.labelWithRequiredIndicator
+          : commonAttributes.label
       }
-      label={label || ''}
+      onChange={_onChange}
+      onBlur={_onBlur}
+      onFocus={_onFocus}
     />
   );
 }

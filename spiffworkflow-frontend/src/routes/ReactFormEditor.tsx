@@ -9,8 +9,8 @@ import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import { modifyProcessIdentifierForPathParam } from '../helpers';
-import { ProcessFile, PermissionsToCheck } from '../interfaces';
+import { modifyProcessIdentifierForPathParam, setPageTitle } from '../helpers';
+import { ProcessFile, PermissionsToCheck, ProcessModel } from '../interfaces';
 import { Notification } from '../components/Notification';
 import useAPIError from '../hooks/UseApiError';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -38,6 +38,7 @@ export default function ReactFormEditor() {
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
 
+  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
     null
   );
@@ -80,6 +81,11 @@ export default function ReactFormEditor() {
       setProcessModelFileContents(result.file_contents);
     };
 
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedProcessModelId}?include_file_references=true`,
+      successCallback: setProcessModel,
+    });
+
     if (params.file_name) {
       HttpService.makeCallToBackend({
         path: `/process-models/${modifiedProcessModelId}/files/${params.file_name}`,
@@ -87,6 +93,12 @@ export default function ReactFormEditor() {
       });
     }
   }, [params, modifiedProcessModelId]);
+
+  useEffect(() => {
+    if (processModelFile && processModel) {
+      setPageTitle([processModel.display_name, processModelFile.name]);
+    }
+  }, [processModel, processModelFile]);
 
   const navigateToProcessModelFile = (file: ProcessFile) => {
     setDisplaySaveFileMessage(true);

@@ -277,8 +277,11 @@ export default function TaskListTable({
     if (showActionsColumn) {
       const actions = [];
       if (
-        processInstanceTask.process_instance_status in
-        ['suspended', 'completed', 'error']
+        !(
+          processInstanceTask.process_instance_status in
+          ['suspended', 'completed', 'error']
+        ) &&
+        !processInstanceTask.completed
       ) {
         actions.push(
           <Button
