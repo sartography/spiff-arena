@@ -17,10 +17,12 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(255), nullable=False, unique=False, index=True)
+    user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)
     created_by_user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)
 
     api_key: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
 
+    user = relationship("UserModel", uselist=False, cascade="delete")  # type: ignore
     principal = relationship("PrincipalModel", uselist=False, cascade="delete")  # type: ignore
 
     updated_at_in_seconds: int = db.Column(db.Integer)

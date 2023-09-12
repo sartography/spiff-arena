@@ -22,15 +22,13 @@ class MissingPrincipalError(DataValidityError):
 @dataclass
 class PrincipalModel(SpiffworkflowBaseDBModel):
     __tablename__ = "principal"
-    __table_args__ = (CheckConstraint("NOT(user_id IS NULL AND group_id IS NULL AND service_account_id IS NULL)"),)
+    __table_args__ = (CheckConstraint("NOT(user_id IS NULL AND group_id IS NULL)"),)
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, unique=True)  # type: ignore
     group_id = db.Column(ForeignKey(GroupModel.id), nullable=True, unique=True)
-    service_account_id = db.Column(ForeignKey(ServiceAccountModel.id), nullable=True, unique=True)  # type: ignore
 
     user = relationship("UserModel", viewonly=True)
     group = relationship("GroupModel", viewonly=True)
-    service_account = relationship("ServiceAccountModel", viewonly=True)
 
     permission_assignments = relationship("PermissionAssignmentModel", cascade="delete")  # type: ignore
