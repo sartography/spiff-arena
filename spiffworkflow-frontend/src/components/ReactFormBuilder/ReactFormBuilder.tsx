@@ -64,16 +64,15 @@ export default function ReactFormBuilder({
   const schemaEditorRef = useRef(null);
   const uiEditorRef = useRef(null);
   const dataEditorRef = useRef(null);
-  function handleSchemaEditorDidMount(editor: any, monaco: any) {
+  function handleSchemaEditorDidMount(editor: any) {
     schemaEditorRef.current = editor;
   }
-  function handleUiEditorDidMount(editor: any, monaco: any) {
+  function handleUiEditorDidMount(editor: any) {
     uiEditorRef.current = editor;
   }
-  function handleDataEditorDidMount(editor: any, monaco: any) {
+  function handleDataEditorDidMount(editor: any) {
     dataEditorRef.current = editor;
   }
-
 
   const saveFile = useCallback(
     (file: File, create: boolean = false) => {
@@ -143,7 +142,7 @@ export default function ReactFormBuilder({
 
   useEffect(() => {
     /**
-     * we need to run the schema and ui through a backend call before rendering the form
+     * we need to run the schema and ui through a backend call before rendering the form,
      * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
      */
     const url: string = '/tasks/prepare-form';
@@ -246,8 +245,6 @@ export default function ReactFormBuilder({
       /* empty */
     }
   }
-
-
 
   function setJsonSchemaFromResponseJson(result: any) {
     setStrSchema(result.file_contents);
