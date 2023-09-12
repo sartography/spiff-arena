@@ -12,6 +12,7 @@ from flask import jsonify
 from flask import make_response
 from flask import redirect
 from flask import request
+from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -54,23 +55,27 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
     if not force_run and AuthorizationService.should_disable_auth_for_request():
         return None
 
-    token = _find_token_from_headers(token)
+    token_info = _find_token_from_headers(token)
 
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
 
     user_model = None
-    if token:
-        user_model = _get_user_model_from_token(token)
+    if token_info["token"] is not None:
+        # import pdb; pdb.set_trace()
+        user_model = _get_user_model_from_token(token_info["token"])
+    elif token_info["api_key"] is not None:
+        user_model = _get_user_model_from_api_key(token_info["api_key"])
 
     if user_model:
         g.user = user_model
 
     # If the user is valid, store the token for this session
-    if g.user and token:
-        # This is an id token, so we don't have a refresh token yet
-        g.token = token
-        get_scope(token)
+    if g.user:
+        if token_info["token"]:
+            # This is an id token, so we don't have a refresh token yet
+            g.token = token_info["token"]
+            get_scope(token_info["token"])
         return None
 
     raise ApiError(error_code="invalid_token", message="Cannot validate token.", status_code=401)
@@ -99,25 +104,13 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
     return redirect(login_redirect_url)
 
 
-def parse_id_token(token: str) -> Any:
-    """Parse the id token."""
-    parts = token.split(".")
-    if len(parts) != 3:
-        raise Exception("Incorrect id token format")
-
-    payload = parts[1]
-    padded = payload + "=" * (4 - len(payload) % 4)
-    decoded = base64.b64decode(padded)
-    return json.loads(decoded)
-
-
 def login_return(code: str, state: str, session_state: str = "") -> Response | None:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
     auth_token_object = AuthenticationService().get_auth_token_object(code)
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
-        user_info = parse_id_token(id_token)
+        user_info = _parse_id_token(id_token)
 
         if AuthenticationService.validate_id_or_access_token(id_token):
             if user_info and "error" not in user_info:
@@ -149,7 +142,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
 
 # FIXME: share more code with login_return and maybe attempt to get a refresh token
 def login_with_access_token(access_token: str) -> Response:
-    user_info = parse_id_token(access_token)
+    user_info = _parse_id_token(access_token)
 
     if AuthenticationService.validate_id_or_access_token(access_token):
         if user_info and "error" not in user_info:
@@ -270,7 +263,8 @@ def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool
     return False
 
 
-def _find_token_from_headers(token: str | None) -> str | None:
+def _find_token_from_headers(token: str | None) -> dict[str, str | None]:
+    api_key = None
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
@@ -280,7 +274,18 @@ def _find_token_from_headers(token: str | None) -> str | None:
         ):
             token = request.cookies["access_token"]
 
-    return token
+    if not token and "X-API-KEY" in request.headers:
+        api_key = request.headers["X-API-KEY"]
+
+    token_info = { "token": token, "api_key": api_key}
+    return token_info
+
+
+def _get_user_model_from_api_key(api_key: str) -> UserModel | None:
+    service_account = ServiceAccountModel.query.filter_by(api_key=api_key).first()
+    if service_account is not None:
+        user_model = UserModel.query.filter_by(id=service_account.created_by_user_id).first()
+        return user_model
 
 
 def _get_user_model_from_token(token: str) -> UserModel | None:
@@ -397,3 +402,15 @@ def _get_decoded_token(token: str) -> dict | None:
                 error_code="unknown_token",
                 message="Unknown token type in get_decoded_token",
             )
+
+
+def _parse_id_token(token: str) -> Any:
+    """Parse the id token."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise Exception("Incorrect id token format")
+
+    payload = parts[1]
+    padded = payload + "=" * (4 - len(payload) % 4)
+    decoded = base64.b64decode(padded)
+    return json.loads(decoded)
