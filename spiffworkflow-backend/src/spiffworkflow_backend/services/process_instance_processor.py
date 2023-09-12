@@ -418,9 +418,7 @@ class ProcessInstanceProcessor:
         tld.process_instance_id = process_instance_model.id
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        tld.process_model_identifier = (
-            f"{process_instance_model.process_model_identifier}"
-        )
+        tld.process_model_identifier = f"{process_instance_model.process_model_identifier}"
 
         self.process_instance_model = process_instance_model
         bpmn_process_spec = None

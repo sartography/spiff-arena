@@ -1,19 +1,19 @@
-from time import time
 from typing import Any
 
+from flask import current_app
 from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
-from flask import current_app
+
 
 def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     tld = current_app.config.get("THREAD_LOCAL_DATA")
     if tld and hasattr(tld, "process_model_identifier"):
-        return tld.process_model_identifier
+        return tld.process_model_identifier  # type: ignore
     return None
+
 
 class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
     """JSONDataStore."""

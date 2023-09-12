@@ -376,7 +376,7 @@ class WorkflowExecutionService:
                     )
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
-            
+
             # TODO: implicit re-entrant locks here `with_dequeued`
             self.execution_strategy.spiff_run(self.bpmn_process_instance, exit_at)
 
