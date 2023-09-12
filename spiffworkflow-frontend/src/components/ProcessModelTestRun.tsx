@@ -12,11 +12,13 @@ import {
 type OwnProps = {
   processModelFile?: ProcessFile;
   titleText: string;
+  classNameForModal?: string;
 };
 
 export default function ProcessModelTestRun({
   processModelFile,
   titleText,
+  classNameForModal,
 }: OwnProps) {
   const [testCaseResults, setTestCaseResults] =
     useState<TestCaseResults | null>(null);
@@ -142,10 +144,11 @@ export default function ProcessModelTestRun({
         open={showTestCaseResultsModal}
         data-qa="test-case-results-modal"
         modalHeading={modalHeading}
-        modalLabel="Test Case Rsults"
+        modalLabel="Test Case Results"
         primaryButtonText="OK"
         onRequestSubmit={() => setShowTestCaseResultsModal(false)}
         onRequestClose={() => setShowTestCaseResultsModal(false)}
+        className={classNameForModal}
       >
         {testCaseFormattedResultTag()}
       </Modal>
