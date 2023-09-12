@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import concurrent.futures
-import copy
 import time
 from abc import abstractmethod
 from collections.abc import Callable
@@ -242,7 +241,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
     def save(self, bpmn_process_instance: BpmnWorkflow, _commit: bool = True) -> None:
-
         # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
         # excludes COMPLETED. the others were required to get PP1 to go to completion.
         # process FUTURE tasks because Boundary events are not processed otherwise.
