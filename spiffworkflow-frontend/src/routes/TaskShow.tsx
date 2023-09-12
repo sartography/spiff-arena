@@ -147,8 +147,12 @@ export default function TaskShow() {
     removeError();
     if (result.ok) {
       navigate(`/tasks`);
-    } else if (result.guest_confirmation) {
-      setGuestConfirmationText(result.guest_confirmation);
+    } else if ('guest_confirmation' in result) {
+      if (result.guest_confirmation) {
+        setGuestConfirmationText(result.guest_confirmation);
+      } else {
+        setGuestConfirmationText('Form submitted successfully');
+      }
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);

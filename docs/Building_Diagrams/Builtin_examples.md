@@ -1,24 +1,5 @@
-# Using SpiffArena
-Sartography (the company developing SpiffWorkflow and SpiffArena) is providing users a platform to explore workflow concepts through a collection of examples, diagrams, and workflows. Users can interact with pre-built models, make modifications, and visualize process flows.
 
-## How to Login to SpiffArena
-
-```{image} ./images/Login.png
-:alt: Login Screen
-:class: bg-primary mb-1
-:width: 230px
-:align: right 
-``` 
-To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (Currently spiffdemo.org).  
-
-On the login screen, you will find the option to log in using Single Sign-On.  Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.  
-
-
-```{admonition} Note: 
-Stay tuned as we expand our sign-on options beyond Gmail.
-More ways to access SpiffArena are coming your way!
-```
-## Exploring the Examples
+# Built-in Examples Overview
 
 When logging into the dashboard, it is crucial to familiarize yourself with the functions it offers and how the underlying engine operates.
 In the demo website, we will explore two examples: the Minimal Example and the Essential Example, to provide a clear understanding of the process.
@@ -27,14 +8,14 @@ In the demo website, we will explore two examples: the Minimal Example and the E
 
   
 
-###  Minimal Example
+##  Minimal Example
 
 Let's begin with the Minimal Example, which serves as a "Hello World" process—a simple executable BPMN Diagram designed to demonstrate basic functionality.
 Rather than immediately starting the process, we will first examine its structure.
 
 ![](https://lh3.googleusercontent.com/MBj52gja_U5V4R7AQ1yMTwG3GoexCPLG-7Xwe40xURIOUYqJhGmQRapPln37QM9ylLiy17Oq0B1BHvsRQWVpAzd9ztt2AUs9XG26HUOORNXpgJNOGEt4DXG-_wh6YK7X4ms52W2O5yzOgdlIJ48dMOA)
 
-#### Access the Process Directory
+### Access the Process Directory
 
 Clicking on the process name will open the directory dedicated to the Minimal Example process.
 From here, you can start the process if desired, but for the purpose of this example, we will proceed with an explanation of its components and functionality.
@@ -54,7 +35,7 @@ The BPMN editor provides a visual representation of the process workflow.
 
   
 
-#### Understand the Process Workflow
+### Understand the Process Workflow
 
   
 
@@ -155,7 +136,8 @@ To view and edit the instructions, click on the editor, and a window will open d
 
 ![](https://lh4.googleusercontent.com/wWNqTB2EU4W0Hgz_u2l7PiEqbGVRuZMjtbgGUrckAPP9aD2TRGFvZgVkRXWcx-CV5JsSzWYDsZuXCkTpvmyfdUmFm13bTZ5o5OOf7ykBMoJ-vGBPcxQojSpE9leMn97zZDbEdJmZPgnrChQk6tbjUc8)
 
-3. ##### End Task
+
+3. **End Task**
     
 
 The next process in the workflow is an end task.
@@ -185,10 +167,10 @@ Instructions
 ![](https://lh5.googleusercontent.com/lcGDq-colYTa0zRq5yObuN6D5aW2wH-PheyYFMPJ9D77lZ_-fQlUrtFHNwKmCod4v1JYrWnblJEzW5VkVFM_I_Q1d8fhiWC98DPK4ZDctI7Jbqf11DdXSJAUVvZ2C2ubv-3FKXzVkbgGY8Fnk0irSdo)
 
 
-###  Essential Example
+##  Essential Example
 Now that we have explored the minimal example, let's delve into a more comprehensive BPMN model known as the Essential Example. This example serves as a stepping stone towards a deeper understanding of BPMN, as it incorporates a variety of fundamental concepts that work harmoniously together.
 
-#### **Access the Process Directory**
+### **Access the Process Directory**
 Clicking on the process name will open the directory dedicated to the Essential Example process. Here are the four files in the Process:
 
 **BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard. 
@@ -209,7 +191,7 @@ Here's what a DMN table looks like:
 **UI Schema**: A file that defines the layout, structure, and behavior of user interfaces, facilitating the development of intuitive and interactive user experiences.
 ![Image](images/UI-Schema.png)
 
-#### **Process Workflow**
+### **Process Workflow**
 In this BPMN diagram example, the process is outlined step by step: The process initiates with a start event, serving as the entry point for the workflow.
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.

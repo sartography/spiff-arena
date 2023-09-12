@@ -2,7 +2,6 @@ import React from 'react';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
-import FormLabel from '@mui/material/FormLabel';
 import { WidgetProps } from '@rjsf/utils';
 
 const selectValue = (value: any, selected: any, all: any) => {
@@ -54,36 +53,34 @@ function CheckboxesWidget({
   }: React.FocusEvent<HTMLButtonElement>) => onFocus(id, value);
 
   return (
-    <>
-      <FormGroup id={id} row={!!inline}>
-        {Array.isArray(enumOptions) &&
-          enumOptions.map((option, index: number) => {
-            const checked = value.indexOf(option.value) !== -1;
-            const itemDisabled =
-              Array.isArray(enumDisabled) &&
-              enumDisabled.indexOf(option.value) !== -1;
-            const checkbox = (
-              <Checkbox
-                id={`${id}-${option.value}`}
-                name={id}
-                checked={checked}
-                disabled={disabled || itemDisabled || readonly}
-                autoFocus={autofocus && index === 0}
-                onChange={_onChange(option)}
-                onBlur={_onBlur}
-                onFocus={_onFocus}
-              />
-            );
-            return (
-              <FormControlLabel
-                control={checkbox}
-                key={option.value}
-                label={option.label}
-              />
-            );
-          })}
-      </FormGroup>
-    </>
+    <FormGroup id={id} row={!!inline}>
+      {Array.isArray(enumOptions) &&
+        enumOptions.map((option, index: number) => {
+          const checked = value.indexOf(option.value) !== -1;
+          const itemDisabled =
+            Array.isArray(enumDisabled) &&
+            enumDisabled.indexOf(option.value) !== -1;
+          const checkbox = (
+            <Checkbox
+              id={`${id}-${option.value}`}
+              name={id}
+              checked={checked}
+              disabled={disabled || itemDisabled || readonly}
+              autoFocus={autofocus && index === 0}
+              onChange={_onChange(option)}
+              onBlur={_onBlur}
+              onFocus={_onFocus}
+            />
+          );
+          return (
+            <FormControlLabel
+              control={checkbox}
+              key={option.value}
+              label={option.label}
+            />
+          );
+        })}
+    </FormGroup>
   );
 }
 

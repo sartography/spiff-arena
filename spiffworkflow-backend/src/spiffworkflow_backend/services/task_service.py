@@ -259,7 +259,18 @@ class TaskService:
         This will NOT update start_in_seconds or end_in_seconds.
         It also returns the relating json_data object so they can be imported later.
         """
+
         new_properties_json = self.serializer.task_to_dict(spiff_task)
+
+        # Only save links to children that are definite - we don't currently store predicted
+        # children in the database.  They are filtered out in other places in the code, so we
+        # must remove references to them here.
+        modified_children = []
+        for child in spiff_task.children:
+            if not child._has_state(TaskState.PREDICTED_MASK):
+                modified_children.append(str(child.id))
+        new_properties_json["children"] = modified_children
+
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
         spiff_task_data = new_properties_json.pop("data")

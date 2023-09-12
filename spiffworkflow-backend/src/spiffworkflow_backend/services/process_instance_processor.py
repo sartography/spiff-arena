@@ -1730,6 +1730,11 @@ class ProcessInstanceProcessor:
                 return task
         return None
 
+    # for debugging, get the full json representation into a file on disk
+    def dump_to_disk(self, filename: str = "process.json") -> None:
+        with open(filename, "w") as f:
+            f.write(json.dumps(self.serialize(), indent=2))
+
     def remove_spiff_tasks_for_termination(self) -> None:
         start_time = time.time()
         deleted_tasks = self.bpmn_process_instance.cancel() or []

@@ -284,6 +284,7 @@ class AuthorizationService:
             and api_view_function.__name__.startswith("login")
             or api_view_function.__name__.startswith("logout")
             or api_view_function.__name__.startswith("prom")
+            or api_view_function.__name__ == "url_info"
             or api_view_function.__name__.startswith("metric")
             or api_view_function.__name__.startswith("console_ui_")
             or api_view_function.__name__ in authentication_exclusion_list
