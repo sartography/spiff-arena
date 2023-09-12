@@ -36,16 +36,18 @@ class TestServiceAccountsController(BaseTest):
 
         # ci and local set different permissions for the admin user so figure out dynamically
         admin_permissions = sorted(UserService.get_permission_targets_for_user(with_super_admin_user))
-        service_account_permissions = sorted(UserService.get_permission_targets_for_user(service_account, check_groups=False))
+        service_account_permissions = sorted(
+            UserService.get_permission_targets_for_user(service_account, check_groups=False)
+        )
         assert admin_permissions == service_account_permissions
 
-        # # ensure service account can actually access the api
-        # response = client.post(
-        #     "/v1.0/service-accounts",
-        #     content_type="application/json",
-        #     data=json.dumps({"name": "heyhey"}),
-        #     headers=self.logged_in_headers(service_account),
-        # )
-        # assert response.status_code == 201
-        # assert response.json is not None
-        # assert response.json["ok"] is True
+        # ensure service account can actually access the api
+        response = client.post(
+            "/v1.0/service-accounts",
+            content_type="application/json",
+            data=json.dumps({"name": "heyhey"}),
+            headers=self.logged_in_headers(service_account),
+        )
+        assert response.status_code == 201
+        assert response.json is not None
+        assert response.json["ok"] is True
