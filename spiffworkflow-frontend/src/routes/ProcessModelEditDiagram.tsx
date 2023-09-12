@@ -432,7 +432,7 @@ export default function ProcessModelEditDiagram() {
       const unitTestModdleElements = extensionElements
         .get('values')
         .filter(function getInstanceOfType(e: any) {
-          return e.$instanceOf('spiffworkflow:unitTests');
+          return e.$instanceOf('spiffworkflow:UnitTests');
         })[0];
       if (unitTestModdleElements) {
         return unitTestModdleElements.unitTests;
@@ -782,7 +782,7 @@ export default function ProcessModelEditDiagram() {
                   width="auto"
                   defaultLanguage="json"
                   options={Object.assign(jsonEditorOptions(), {})}
-                  value={inputJson}
+                  defaultValue={inputJson}
                   onChange={handleEditorScriptTestUnitInputChange}
                 />
               </div>
@@ -795,7 +795,7 @@ export default function ProcessModelEditDiagram() {
                   width="auto"
                   defaultLanguage="json"
                   options={Object.assign(jsonEditorOptions(), {})}
-                  value={outputJson}
+                  defaultValue={outputJson}
                   onChange={handleEditorScriptTestUnitOutputChange}
                 />
               </div>
@@ -807,19 +807,25 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
   const scriptEditor = () => {
+    if (!showScriptEditor) {
+      return null;
+    }
     return (
       <Editor
         height={500}
         width="auto"
         options={generalEditorOptions()}
         defaultLanguage="python"
-        value={scriptText}
+        defaultValue={scriptText}
         onChange={handleEditorScriptChange}
         onMount={handleEditorDidMount}
       />
     );
   };
   const scriptEditorAndTests = () => {
+    if (!showScriptEditor) {
+      return null;
+    }
     let scriptName = '';
     if (scriptElement) {
       scriptName = (scriptElement as any).di.bpmnElement.name;
