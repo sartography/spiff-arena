@@ -40,7 +40,7 @@ def upgrade():
         batch_op.create_foreign_key("principal_service_account_fk", 'service_account', ['service_account_id'], ['id'])
 
         # manually added
-        batch_op.drop_constraint('principal_chk_2', type_='check')
+        # batch_op.drop_constraint('principal_chk_1', type_='check')
         batch_op.create_check_constraint('principal_chk_2', 'NOT(user_id IS NULL AND group_id IS NULL AND service_account_id IS NULL)')
 
     # ### end Alembic commands ###
