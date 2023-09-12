@@ -12,13 +12,13 @@ from flask import jsonify
 from flask import make_response
 from flask import redirect
 from flask import request
-from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
+from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
@@ -277,7 +277,7 @@ def _find_token_from_headers(token: str | None) -> dict[str, str | None]:
     if not token and "X-API-KEY" in request.headers:
         api_key = request.headers["X-API-KEY"]
 
-    token_info = { "token": token, "api_key": api_key}
+    token_info = {"token": token, "api_key": api_key}
     return token_info
 
 

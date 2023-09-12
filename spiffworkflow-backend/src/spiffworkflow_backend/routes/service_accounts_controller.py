@@ -1,5 +1,4 @@
 from typing import Any
-from spiffworkflow_backend.models.user import UserModel
 
 import flask.wrappers
 from flask import g
@@ -9,6 +8,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -31,7 +31,7 @@ def service_account_create(body: dict[str, Any]) -> flask.wrappers.Response:
 
 def _create_service_account(name: str, created_by_user_id: int) -> ServiceAccountModel:
     api_key = ServiceAccountModel.generate_api_key()
-    username=f"{name}_{created_by_user_id}"
+    username = f"{name}_{created_by_user_id}"
     user = UserModel(
         username=username,
         email=f"{username}@spiff.service.account.example.com",
@@ -47,7 +47,7 @@ def _create_service_account(name: str, created_by_user_id: int) -> ServiceAccoun
 
 
 def _associated_service_account_with_permissions(user: UserModel) -> None:
-    principal = UserService.create_principal(user.id, "service_account_id")
+    principal = UserService.create_principal(user.id)
     user_permissions = sorted(UserService.get_permission_targets_for_user(g.user))
 
     permission_objects = []

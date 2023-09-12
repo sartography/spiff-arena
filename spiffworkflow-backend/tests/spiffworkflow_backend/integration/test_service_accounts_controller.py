@@ -37,7 +37,7 @@ class TestServiceAccountsController(BaseTest):
         # ci and local set different permissions for the admin user so figure out dynamically
         admin_permissions = sorted(UserService.get_permission_targets_for_user(with_super_admin_user))
         service_account_permissions = sorted(
-            UserService.get_permission_targets_for_user(service_account, check_groups=False)
+            UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
         )
         assert admin_permissions == service_account_permissions
 
