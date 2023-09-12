@@ -24,18 +24,19 @@ import { Can } from '@casl/react';
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessModel, ProcessFile } from '../interfaces';
-import {
-  ExtensionUiSchema,
-  UiSchemaUxElement,
-} from '../extension_ui_schema_interfaces';
+import { PermissionsToCheck } from '../interfaces';
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import HttpService, { UnauthenticatedError } from '../services/HttpService';
+import { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { slugifyString } from '../helpers';
 
-export default function NavigationBar() {
+type OwnProps = {
+  extensionNavigationItems?: UiSchemaUxElement[] | null;
+};
+
+export default function NavigationBar({ extensionNavigationItems }: OwnProps) {
   const handleLogout = () => {
     UserService.doLogout();
   };
@@ -46,9 +47,9 @@ export default function NavigationBar() {
 
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
-  const [extensionNavigationItems, setExtensionNavigationItems] = useState<
-    UiSchemaUxElement[] | null
-  >(null);
+  // const [extensionNavigationItems, setExtensionNavigationItems] = useState<
+  //   UiSchemaUxElement[] | null
+  // >(null);
 
   const { targetUris } = useUriListForPermissions();
 
@@ -100,47 +101,47 @@ export default function NavigationBar() {
     setActiveKey(newActiveKey);
   }, [location]);
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
-  useEffect(() => {
-    if (!permissionsLoaded) {
-      return;
-    }
-
-    const processExtensionResult = (processModels: ProcessModel[]) => {
-      const eni: UiSchemaUxElement[] = processModels
-        .map((processModel: ProcessModel) => {
-          const extensionUiSchemaFile = processModel.files.find(
-            (file: ProcessFile) => file.name === 'extension_uischema.json'
-          );
-          if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
-            try {
-              const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-                extensionUiSchemaFile.file_contents
-              );
-              if (extensionUiSchema.ux_elements) {
-                return extensionUiSchema.ux_elements;
-              }
-            } catch (jsonParseError: any) {
-              console.error(
-                `Unable to get navigation items for ${processModel.id}`
-              );
-            }
-          }
-          return [] as UiSchemaUxElement[];
-        })
-        .flat();
-      if (eni) {
-        setExtensionNavigationItems(eni);
-      }
-    };
-
-    if (ability.can('GET', targetUris.extensionListPath)) {
-      HttpService.makeCallToBackend({
-        path: targetUris.extensionListPath,
-        successCallback: processExtensionResult,
-      });
-    }
-  }, [targetUris.extensionListPath, permissionsLoaded, ability]);
+  // // eslint-disable-next-line sonarjs/cognitive-complexity
+  // useEffect(() => {
+  //   if (!permissionsLoaded) {
+  //     return;
+  //   }
+  //
+  //   const processExtensionResult = (processModels: ProcessModel[]) => {
+  //     const eni: UiSchemaUxElement[] = processModels
+  //       .map((processModel: ProcessModel) => {
+  //         const extensionUiSchemaFile = processModel.files.find(
+  //           (file: ProcessFile) => file.name === 'extension_uischema.json'
+  //         );
+  //         if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
+  //           try {
+  //             const extensionUiSchema: ExtensionUiSchema = JSON.parse(
+  //               extensionUiSchemaFile.file_contents
+  //             );
+  //             if (extensionUiSchema.ux_elements) {
+  //               return extensionUiSchema.ux_elements;
+  //             }
+  //           } catch (jsonParseError: any) {
+  //             console.error(
+  //               `Unable to get navigation items for ${processModel.id}`
+  //             );
+  //           }
+  //         }
+  //         return [] as UiSchemaUxElement[];
+  //       })
+  //       .flat();
+  //     if (eni) {
+  //       setExtensionNavigationItems(eni);
+  //     }
+  //   };
+  //
+  //   if (ability.can('GET', targetUris.extensionListPath)) {
+  //     HttpService.makeCallToBackend({
+  //       path: targetUris.extensionListPath,
+  //       successCallback: processExtensionResult,
+  //     });
+  //   }
+  // }, [targetUris.extensionListPath, permissionsLoaded, ability]);
 
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;
