@@ -303,6 +303,7 @@ export default function ProcessModelShow() {
               onDeleteFile(processModelFile.name);
             }}
             confirmButtonLabel="Delete"
+            classNameForModal="modal-within-table-cell"
           />
         </Can>
       );
@@ -327,6 +328,7 @@ export default function ProcessModelShow() {
           <ProcessModelTestRun
             processModelFile={processModelFile}
             titleText="Run BPMN unit tests defined in this file"
+            classNameForModal="modal-within-table-cell"
           />
         </Can>
       );
