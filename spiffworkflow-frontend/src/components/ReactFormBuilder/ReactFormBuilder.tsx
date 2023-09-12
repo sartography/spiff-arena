@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import merge from 'lodash/merge';
@@ -37,6 +37,7 @@ export default function ReactFormBuilder({
   const DATA_EXTENSION = '-exampledata.json';
 
   const [fetchFailed, setFetchFailed] = useState<boolean>(false);
+  const [ready, setReady] = useState<boolean>(false);
 
   const [strSchema, setStrSchema] = useState<string>('');
   const [debouncedStrSchema] = useDebounce(strSchema, 500);
@@ -54,6 +55,24 @@ export default function ReactFormBuilder({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
+
+  /**
+   * This section gives us direct pointers to the monoco editors so that
+   * we can update their values.  Using state variables directly on the monoco editor
+   * causes the cursor to jump to the bottom if two letters are pressed simultaneously.
+   */
+  const schemaEditorRef = useRef(null);
+  const uiEditorRef = useRef(null);
+  const dataEditorRef = useRef(null);
+  function handleSchemaEditorDidMount(editor: any) {
+    schemaEditorRef.current = editor;
+  }
+  function handleUiEditorDidMount(editor: any) {
+    uiEditorRef.current = editor;
+  }
+  function handleDataEditorDidMount(editor: any) {
+    dataEditorRef.current = editor;
+  }
 
   const saveFile = useCallback(
     (file: File, create: boolean = false) => {
@@ -88,7 +107,16 @@ export default function ReactFormBuilder({
   };
 
   const isReady = () => {
-    return strSchema !== '' && strUI !== '' && strFormData !== '';
+    // Use a ready flag so that we still allow people to completely delete
+    // the schema, ui or data if they want to clear it out.
+    if (ready) {
+      return true;
+    }
+    if (strSchema !== '' && strUI !== '' && strFormData !== '') {
+      setReady(true);
+      return true;
+    }
+    return false;
   };
 
   // Auto save schema changes
@@ -114,7 +142,7 @@ export default function ReactFormBuilder({
 
   useEffect(() => {
     /**
-     * we need to run the schema and ui through a backend call before rendering the form
+     * we need to run the schema and ui through a backend call before rendering the form,
      * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
      */
     const url: string = '/tasks/prepare-form';
@@ -172,6 +200,51 @@ export default function ReactFormBuilder({
   const handleTabChange = (evt: any) => {
     setSelectedIndex(evt.selectedIndex);
   };
+
+  const updateStrSchema = (value: string) => {
+    if (schemaEditorRef && schemaEditorRef.current) {
+      // @ts-ignore
+      schemaEditorRef.current.setValue(value);
+    }
+  };
+
+  const updateStrUi = (value: string) => {
+    if (uiEditorRef && uiEditorRef.current) {
+      // @ts-ignore
+      uiEditorRef.current.setValue(value);
+    }
+  };
+
+  const updateStrData = (value: string) => {
+    // Only update the data if it is different from what is already there, this prevents
+    // cursor from jumping to the top each time you type a letter.
+    if (
+      dataEditorRef &&
+      dataEditorRef.current &&
+      // @ts-ignore
+      value !== dataEditorRef.current.getValue()
+    ) {
+      // @ts-ignore
+      dataEditorRef.current.setValue(value);
+    }
+  };
+
+  function updateData(newData: object) {
+    setFormData(newData);
+    const newDataStr = JSON.stringify(newData, null, 2);
+    if (newDataStr !== strFormData) {
+      updateStrData(newDataStr);
+    }
+  }
+
+  function updateDataFromStr(newDataStr: string) {
+    try {
+      const newData = JSON.parse(newDataStr);
+      setFormData(newData);
+    } catch (e) {
+      /* empty */
+    }
+  }
 
   function setJsonSchemaFromResponseJson(result: any) {
     setStrSchema(result.file_contents);
@@ -232,29 +305,13 @@ export default function ReactFormBuilder({
 
   function insertFields(schema: any, ui: any, data: any) {
     setFormData(merge(formData, data));
-    setStrFormData(JSON.stringify(formData, null, 2));
+    updateStrData(JSON.stringify(formData, null, 2));
 
     const tempSchema = merge(JSON.parse(strSchema), schema);
-    setStrSchema(JSON.stringify(tempSchema, null, 2));
+    updateStrSchema(JSON.stringify(tempSchema, null, 2));
 
     const tempUI = merge(JSON.parse(strUI), ui);
-    setStrUI(JSON.stringify(tempUI, null, 2));
-  }
-
-  function updateData(newData: object) {
-    setFormData(newData);
-    const newDataStr = JSON.stringify(newData, null, 2);
-    if (newDataStr !== strFormData) {
-      setStrFormData(newDataStr);
-    }
-  }
-  function updateDataFromStr(newDataStr: string) {
-    try {
-      const newData = JSON.parse(newDataStr);
-      setFormData(newData);
-    } catch (e) {
-      /* empty */
-    }
+    updateStrUi(JSON.stringify(tempUI, null, 2));
   }
 
   if (!isReady()) {
@@ -340,8 +397,9 @@ export default function ReactFormBuilder({
                 height={600}
                 width="auto"
                 defaultLanguage="json"
-                value={strSchema}
+                defaultValue={strSchema}
                 onChange={(value) => setStrSchema(value || '')}
+                onMount={handleSchemaEditorDidMount}
               />
             </TabPanel>
             <TabPanel>
@@ -359,8 +417,9 @@ export default function ReactFormBuilder({
                 height={600}
                 width="auto"
                 defaultLanguage="json"
-                value={strUI}
+                defaultValue={strUI}
                 onChange={(value) => setStrUI(value || '')}
+                onMount={handleUiEditorDidMount}
               />
             </TabPanel>
             <TabPanel>
@@ -372,8 +431,9 @@ export default function ReactFormBuilder({
                 height={600}
                 width="auto"
                 defaultLanguage="json"
-                value={strFormData}
+                defaultValue={strFormData}
                 onChange={(value: any) => updateDataFromStr(value || '')}
+                onMount={handleDataEditorDidMount}
               />
             </TabPanel>
             <TabPanel>

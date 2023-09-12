@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import concurrent.futures
-import copy
 import time
 from abc import abstractmethod
 from collections.abc import Callable
@@ -242,6 +241,28 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
     def save(self, bpmn_process_instance: BpmnWorkflow, _commit: bool = True) -> None:
+        # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
+        # excludes COMPLETED. the others were required to get PP1 to go to completion.
+        # process FUTURE tasks because Boundary events are not processed otherwise.
+        #
+        # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
+        # but it didn't quite work in all cases, so we deleted it. you can find it in commit
+        # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
+        for waiting_spiff_task in bpmn_process_instance.get_tasks(
+            TaskState.WAITING
+            | TaskState.CANCELLED
+            | TaskState.READY
+            | TaskState.MAYBE
+            | TaskState.LIKELY
+            | TaskState.FUTURE
+            | TaskState.STARTED
+            | TaskState.ERROR
+        ):
+            # these will be removed from the parent and then ignored
+            if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                continue
+            self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+
         self.task_service.save_objects_to_database()
 
         if self.secondary_engine_step_delegate:
@@ -249,35 +270,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         db.session.commit()
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        if self._should_update_task_model():
-            # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
-            # excludes COMPLETED. the others were required to get PP1 to go to completion.
-            # process FUTURE tasks because Boundary events are not processed otherwise.
-            #
-            # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
-            # but it didn't quite work in all cases, so we deleted it. you can find it in commit
-            # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
-            for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                TaskState.WAITING
-                | TaskState.CANCELLED
-                | TaskState.READY
-                | TaskState.MAYBE
-                | TaskState.LIKELY
-                | TaskState.FUTURE
-                | TaskState.STARTED
-                | TaskState.ERROR
-            ):
-                # these will be removed from the parent and then ignored
-                if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
-                    continue
-
-                # removing elements from an array causes the loop to exit so deep copy the array first
-                waiting_children = copy.copy(waiting_spiff_task.children)
-                for waiting_child in waiting_children:
-                    if waiting_child._has_state(TaskState.PREDICTED_MASK):
-                        waiting_spiff_task._children.remove(waiting_child.id)
-
-                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+        pass
 
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.after_engine_steps(bpmn_process_instance)
