@@ -807,7 +807,12 @@ def _task_submit_shared(
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
-    if "guestConfirmation" in spiff_task.task_spec.extensions:
+    spiff_task_extensions = spiff_task.task_spec.extensions
+    if (
+        "allowGuest" in spiff_task_extensions
+        and spiff_task_extensions["allowGuest"] == "true"
+        and "guestConfirmation" in spiff_task.task_spec.extensions
+    ):
         return make_response(
             jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
         )
