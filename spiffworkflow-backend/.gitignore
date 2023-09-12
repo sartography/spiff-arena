@@ -21,3 +21,4 @@ node_modules
 *null-ls_*
 /local_wheels/*.whl
 /some_cache_dir
+/process.json
