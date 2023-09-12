@@ -573,6 +573,14 @@ svg.notification-icon {
   background-color:	#80ee90;
 }
 
+/* reset to initial modal css and avoid table specific css */
+.modal-within-table-cell .cds--modal-container {
+  text-align: left;
+}
+.modal-within-table-cell .cds--modal-container button {
+  padding-left: 15px;
+}
+
 /* Errors and notifications  */
 .error_info .error_title {
   display: inline-block;
