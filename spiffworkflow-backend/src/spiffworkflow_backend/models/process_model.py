@@ -53,6 +53,8 @@ class ProcessModelInfo:
     # TODO: delete these once they no no longer mentioned in current process_model.json files
     display_order: int | None = 0
 
+    actions: dict | None = None
+
     def __post_init__(self) -> None:
         self.sort_index = self.id
 

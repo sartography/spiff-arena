@@ -19,6 +19,7 @@ import {
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
+  setPageTitle,
 } from '../helpers';
 import {
   PaginationObject,
@@ -59,6 +60,7 @@ export default function ProcessGroupShow() {
     };
     const processResult = (result: any) => {
       setProcessGroup(result);
+      setPageTitle([result.display_name]);
       const unmodifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
         (params as any).process_group_id
       );

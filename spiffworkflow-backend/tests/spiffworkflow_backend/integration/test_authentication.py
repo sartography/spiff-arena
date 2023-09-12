@@ -1,7 +1,14 @@
 import ast
 import base64
+import time
 
+from flask.app import Flask
+from flask.testing import FlaskClient
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -16,153 +23,67 @@ class TestAuthentication(BaseTest):
         assert "redirect_url" in state_dict.keys()
         assert state_dict["redirect_url"] == redirect_url
 
-    # def test_get_login_redirect_url(self):
-    #     redirect_url = "http://example.com/"
-    #     state = AuthenticationService.generate_state(redirect_url)
-    #     with current_app.app_context():
-    #         login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))
-    #         print("test_get_login_redirect_url")
-    #     print("test_get_login_redirect_url")
+    def test_properly_adds_user_to_groups_from_token_on_login(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+            user = self.find_or_create_user("testing@e.com")
+            user.email = "testing@e.com"
+            user.service = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"]
+            db.session.add(user)
+            db.session.commit()
 
-    # def test_get_token_script(self, app: Flask) -> None:
-    #     """Test_get_token_script."""
-    #     print("Test Get Token Script")
-    #
-    #     (
-    #         keycloak_server_url,
-    #         keycloak_client_id,
-    #         keycloak_realm_name,
-    #         keycloak_client_secret_key,
-    #     ) = self.get_keycloak_constants(app)
-    #     keycloak_user = "ciuser1"
-    #     keycloak_pass = "ciuser1"  # noqa: S105
-    #
-    #     print(f"Test Get Token Script: keycloak_server_url: {keycloak_server_url}")
-    #     print(f"Test Get Token Script: keycloak_client_id: {keycloak_client_id}")
-    #     print(f"Test Get Token Script: keycloak_realm_name: {keycloak_realm_name}")
-    #     print(
-    #         f"Test Get Token Script: keycloak_client_secret_key: {keycloak_client_secret_key}"
-    #     )
-    #
-    #     frontend_client_id = "spiffworkflow-frontend"
-    #
-    #     print(f"Test Get Token Script: frontend_client_id: {frontend_client_id}")
-    #
-    #     # Get frontend token
-    #     request_url = f"{keycloak_server_url}/realms/{keycloak_realm_name}/protocol/openid-connect/token"
-    #     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    #     post_data = {
-    #         "grant_type": "password",
-    #         "username": keycloak_user,
-    #         "password": keycloak_pass,
-    #         "client_id": frontend_client_id,
-    #     }
-    #     print(f"Test Get Token Script: request_url: {request_url}")
-    #     print(f"Test Get Token Script: headers: {headers}")
-    #     print(f"Test Get Token Script: post_data: {post_data}")
-    #
-    #     frontend_response = requests.post(
-    #         request_url, headers=headers, json=post_data, data=post_data
-    #     )
-    #     frontend_token = json.loads(frontend_response.text)
-    #
-    #     print(f"Test Get Token Script: frontend_response: {frontend_response}")
-    #     print(f"Test Get Token Script: frontend_token: {frontend_token}")
-    #
-    #     # assert isinstance(frontend_token, dict)
-    #     # assert isinstance(frontend_token["access_token"], str)
-    #     # assert isinstance(frontend_token["refresh_token"], str)
-    #     # assert frontend_token["expires_in"] == 300
-    #     # assert frontend_token["refresh_expires_in"] == 1800
-    #     # assert frontend_token["token_type"] == "Bearer"
-    #
-    #     # Get backend token
-    #     backend_basic_auth_string = f"{keycloak_client_id}:{keycloak_client_secret_key}"
-    #     backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-    #     backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
-    #
-    #     request_url = f"{keycloak_server_url}/realms/{keycloak_realm_name}/protocol/openid-connect/token"
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
-    #     }
-    #     data = {
-    #         "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-    #         "client_id": keycloak_client_id,
-    #         "subject_token": frontend_token["access_token"],
-    #         "audience": keycloak_client_id,
-    #     }
-    #     print(f"Test Get Token Script: request_url: {request_url}")
-    #     print(f"Test Get Token Script: headers: {headers}")
-    #     print(f"Test Get Token Script: data: {data}")
-    #
-    #     backend_response = requests.post(request_url, headers=headers, data=data)
-    #     json_data = json.loads(backend_response.text)
-    #     backend_token = json_data["access_token"]
-    #     print(f"Test Get Token Script: backend_response: {backend_response}")
-    #     print(f"Test Get Token Script: backend_token: {backend_token}")
-    #
-    #     if backend_token:
-    #         # Getting resource set
-    #         auth_bearer_string = f"Bearer {backend_token}"
-    #         headers = {
-    #             "Content-Type": "application/json",
-    #             "Authorization": auth_bearer_string,
-    #         }
-    #
-    #         # uri_to_test_against = "%2Fprocess-models"
-    #         uri_to_test_against = "/status"
-    #         request_url = (
-    #             f"{keycloak_server_url}/realms/{keycloak_realm_name}/authz/protection/resource_set?"
-    #             + f"matchingUri=true&deep=true&max=-1&exactName=false&uri={uri_to_test_against}"
-    #         )
-    #         # f"uri={uri_to_test_against}"
-    #         print(f"Test Get Token Script: request_url: {request_url}")
-    #         print(f"Test Get Token Script: headers: {headers}")
-    #
-    #         resource_result = requests.get(request_url, headers=headers)
-    #         print(f"Test Get Token Script: resource_result: {resource_result}")
-    #
-    #         json_data = json.loads(resource_result.text)
-    #         resource_id_name_pairs = []
-    #         for result in json_data:
-    #             if "_id" in result and result["_id"]:
-    #                 pair_key = result["_id"]
-    #                 if "name" in result and result["name"]:
-    #                     pair_value = result["name"]
-    #                     # pair = {{result['_id']}: {}}
-    #                 else:
-    #                     pair_value = "no_name"
-    #                     # pair = {{result['_id']}: }
-    #                 pair = [pair_key, pair_value]
-    #                 resource_id_name_pairs.append(pair)
-    #         print(
-    #             f"Test Get Token Script: resource_id_name_pairs: {resource_id_name_pairs}"
-    #         )
-    #
-    #         # Getting Permissions
-    #         for resource_id_name_pair in resource_id_name_pairs:
-    #             resource_id = resource_id_name_pair[0]
-    #             resource_id_name_pair[1]
-    #
-    #             headers = {
-    #                 "Content-Type": "application/x-www-form-urlencoded",
-    #                 "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
-    #             }
-    #
-    #             post_data = {
-    #                 "audience": keycloak_client_id,
-    #                 "permission": resource_id,
-    #                 "subject_token": backend_token,
-    #                 "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-    #             }
-    #             print(f"Test Get Token Script: headers: {headers}")
-    #             print(f"Test Get Token Script: post_data: {post_data}")
-    #             print(f"Test Get Token Script: request_url: {request_url}")
-    #
-    #             permission_result = requests.post(
-    #                 request_url, headers=headers, data=post_data
-    #             )
-    #             print(f"Test Get Token Script: permission_result: {permission_result}")
-    #
-    #     print("test_get_token_script")
+            access_token = user.encode_auth_token(
+                {
+                    "groups": ["group_one", "group_two"],
+                    "iss": app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"],
+                    "aud": "spiffworkflow-backend",
+                    "iat": round(time.time()),
+                    "exp": round(time.time()) + 1000,
+                }
+            )
+            response = None
+            response = client.post(
+                f"/v1.0/login_with_access_token?access_token={access_token}",
+            )
+            assert response.status_code == 200
+            assert len(user.groups) == 3
+            group_identifiers = [g.identifier for g in user.groups]
+            assert sorted(group_identifiers) == ["everybody", "group_one", "group_two"]
+
+            access_token = user.encode_auth_token(
+                {
+                    "groups": ["group_one"],
+                    "iss": app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"],
+                    "aud": "spiffworkflow-backend",
+                    "iat": round(time.time()),
+                    "exp": round(time.time()) + 1000,
+                }
+            )
+            response = client.post(
+                f"/v1.0/login_with_access_token?access_token={access_token}",
+            )
+            assert response.status_code == 200
+            user = UserModel.query.filter_by(username=user.username).first()
+            assert len(user.groups) == 2
+            group_identifiers = [g.identifier for g in user.groups]
+            assert sorted(group_identifiers) == ["everybody", "group_one"]
+
+            # make sure running refresh_permissions doesn't remove the user from the group
+            group_info: list[GroupPermissionsDict] = [
+                {
+                    "users": [],
+                    "name": "group_one",
+                    "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+                }
+            ]
+            AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+            user = UserModel.query.filter_by(username=user.username).first()
+            assert len(user.groups) == 2
+            group_identifiers = [g.identifier for g in user.groups]
+            assert sorted(group_identifiers) == ["everybody", "group_one"]
+            self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+            self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")

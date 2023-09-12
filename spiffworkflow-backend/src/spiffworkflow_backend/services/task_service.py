@@ -259,7 +259,18 @@ class TaskService:
         This will NOT update start_in_seconds or end_in_seconds.
         It also returns the relating json_data object so they can be imported later.
         """
+
         new_properties_json = self.serializer.task_to_dict(spiff_task)
+
+        # Only save links to children that are definite - we don't currently store predicted
+        # children in the database.  They are filtered out in other places in the code, so we
+        # must remove references to them here.
+        modified_children = []
+        for child in spiff_task.children:
+            if not child._has_state(TaskState.PREDICTED_MASK):
+                modified_children.append(str(child.id))
+        new_properties_json["children"] = modified_children
+
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
         spiff_task_data = new_properties_json.pop("data")
@@ -276,6 +287,7 @@ class TaskService:
             self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
         if python_env_dict is not None:
             self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
+        task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
     def find_or_create_task_model_from_spiff_task(
         self,
@@ -372,7 +384,12 @@ class TaskService:
             if top_level_process is not None:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent = top_level_process
-                for subprocess_guid, subprocess in subprocesses.items():
+
+                # calling list(subprocesses) to make a copy of the keys so we can change subprocesses while iterating
+                # changing subprocesses happens when running parallel tests
+                # for reasons we do not understand. https://stackoverflow.com/a/11941855/6090676
+                for subprocess_guid in list(subprocesses):
+                    subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
                         direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
                             guid=str(subprocess_guid)

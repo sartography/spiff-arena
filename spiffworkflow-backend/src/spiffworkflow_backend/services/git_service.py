@@ -8,6 +8,7 @@ from flask import current_app
 from flask import g
 from spiffworkflow_backend.config import ConfigurationError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 
@@ -83,26 +84,35 @@ class GitService:
         return cls.run_shell_command_to_get_stdout(shell_command)
 
     @classmethod
-    def check_for_basic_configs(cls) -> None:
+    def check_for_basic_configs(cls, raise_on_missing: bool = True) -> bool:
         if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
-            raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. "
-                "This is required for publishing process models"
-            )
+            if raise_on_missing:
+                raise MissingGitConfigsError(
+                    "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. "
+                    "This is required for publishing process models"
+                )
+            return False
+        return True
 
     @classmethod
-    def check_for_publish_configs(cls) -> None:
-        cls.check_for_basic_configs()
+    def check_for_publish_configs(cls, raise_on_missing: bool = True) -> bool:
+        if not cls.check_for_basic_configs(raise_on_missing=raise_on_missing):
+            return False
         if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"] is None:
-            raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
-                "This is required for publishing process models"
-            )
+            if raise_on_missing:
+                raise MissingGitConfigsError(
+                    "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
+                    "This is required for publishing process models"
+                )
+            return False
         if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"] is None:
-            raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL."
-                " This is required for publishing process models"
-            )
+            if raise_on_missing:
+                raise MissingGitConfigsError(
+                    "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL."
+                    " This is required for publishing process models"
+                )
+            return False
+        return True
 
     @classmethod
     def run_shell_command_as_boolean(cls, command: list[str]) -> bool:
@@ -188,6 +198,7 @@ class GitService:
 
         with FileSystemService.cd(current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]):
             cls.run_shell_command(["git", "pull", "--rebase"])
+        DataSetupService.save_all_process_models()
         return True
 
     @classmethod
