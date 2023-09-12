@@ -7,11 +7,16 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
+from flask import current_app
 
 def _process_model_location_for_task(x, spiff_task: SpiffTask) -> str | None:
     spiff_task_guid = str(spiff_task.id)
     task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
-    task_model_count = TaskModel.query.count()
+    task_models = TaskModel.query.all()
+    task_model_count = 0
+    for tm in task_models:
+        current_app.logger.info(f"-----> {tm.process_instance_id}: {tm.guid}")
+        task_model_count += 1
     if task_model is not None:
         return task_model.process_model_identifier
     return f"{x} {task_model_count}: {spiff_task_guid}"
