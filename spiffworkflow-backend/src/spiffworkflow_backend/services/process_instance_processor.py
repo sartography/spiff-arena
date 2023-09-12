@@ -418,7 +418,7 @@ class ProcessInstanceProcessor:
         tld.process_instance_id = process_instance_model.id
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
+        tld.process_model_identifier = (
             f"{process_instance_model.process_model_identifier}"
         )
 

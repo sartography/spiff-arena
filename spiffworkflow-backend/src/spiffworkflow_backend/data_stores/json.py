@@ -9,32 +9,30 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from flask import current_app
 
-def _process_model_location_for_task(x, spiff_task: SpiffTask) -> str | None:
-    spiff_task_guid = str(spiff_task.id)
-    task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
-    task_models = TaskModel.query.all()
-    task_model_count = 0
-    for tm in task_models:
-        current_app.logger.info(f"-----> {tm.process_instance_id}: {tm.guid}")
-        task_model_count += 1
-    if task_model is not None:
-        return task_model.process_model_identifier
-    return f"{x} {task_model_count}: {spiff_task_guid}"
+def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
+    tld = current_app.config.get("THREAD_LOCAL_DATA")
+    if tld and hasattr(tld, "process_model_identifier"):
+        return tld.process_model_identifier
+    return None
 
 class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
     """JSONDataStore."""
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
-        location = _process_model_location_for_task("get", my_task)
-        model = db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).first()
+        model: JSONDataStoreModel | None = None
+        location = _process_model_location_for_task(my_task)
+        if location is not None:
+            model = db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).first()
         if model is None:
-            raise Exception(f"Invalid reference to data store '{self.bpmn_id}' @ '{location}'.")
+            raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
         my_task.data[self.bpmn_id] = model.data
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
-        location = _process_model_location_for_task("set", my_task)
+        location = _process_model_location_for_task(my_task)
+        if location is None:
+            raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
         data = my_task.data[self.bpmn_id]
         model = JSONDataStoreModel(
             name=self.bpmn_id,

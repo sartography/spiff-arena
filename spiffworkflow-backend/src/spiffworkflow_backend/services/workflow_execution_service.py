@@ -376,10 +376,7 @@ class WorkflowExecutionService:
                     )
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
-            if self.process_instance_model.persistence_level != "none":
-                self.execution_strategy.save(self.bpmn_process_instance)
-                db.session.commit()
-
+            
             # TODO: implicit re-entrant locks here `with_dequeued`
             self.execution_strategy.spiff_run(self.bpmn_process_instance, exit_at)
 
