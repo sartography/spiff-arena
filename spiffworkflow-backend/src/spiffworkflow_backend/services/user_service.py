@@ -184,7 +184,7 @@ class UserService:
             )
 
         if check_groups:
-            for group in g.user.groups:
+            for group in user.groups:
                 for permission_assignment in group.principal.permission_assignments:
                     unique_permission_assignments.add(
                         (
