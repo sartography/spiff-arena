@@ -21,6 +21,9 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
     __tablename__ = "service_account"
     __table_args__ = (db.UniqueConstraint("name", "created_by_user_id", name="service_account_uniq"),)
 
+    # datetime.datetime.fromtimestamp(ts_epoch).strftime('%Y-%m-%d %H:%M:%S')
+    # datetime.strptime(trvl_details["travel_end_date"], '%Y-%m-%d')
+
     id: int = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(255), nullable=False, unique=False, index=True)
     user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)

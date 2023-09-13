@@ -101,10 +101,11 @@ def _run_extension(
         process_model = _get_process_model(process_model_identifier)
     except ApiError as ex:
         if ex.error_code == "process_model_cannot_be_found":
+            # if process_model_identifier.startswith(current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"])
             raise ApiError(
                 error_code="invalid_process_model_extension",
                 message=(
-                    f"Process Model '{process_model_identifier}' cannot be run as an extension. It must be in the"
+                    f"Process Model '{process_model_identifier}' could not be found as an extension. It must be in the"
                     " correct Process Group:"
                     f" {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
                 ),
@@ -166,12 +167,13 @@ def _run_extension(
         # we need to recurse through all last tasks if the last task is a call activity or subprocess.
         if processor is not None:
             task = processor.bpmn_process_instance.last_task
-            raise ApiError.from_task(
-                error_code="unknown_exception",
-                message=f"An unknown error occurred. Original error: {e}",
-                status_code=400,
-                task=task,
-            ) from e
+            if task is not None:
+                raise ApiError.from_task(
+                    error_code="unknown_exception",
+                    message=f"An unknown error occurred. Original error: {e}",
+                    status_code=400,
+                    task=task,
+                ) from e
         raise e
 
     task_data = {}

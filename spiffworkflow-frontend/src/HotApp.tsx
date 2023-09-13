@@ -21,7 +21,7 @@ import {
 import HttpService from './services/HttpService';
 
 export default function HotApp() {
-  const [extensionNavigationItems, setExtensionNavigationItems] = useState<
+  const [extensionUxElements, setExtensionNavigationItems] = useState<
     UiSchemaUxElement[] | null
   >(null);
 
@@ -36,6 +36,8 @@ export default function HotApp() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
   );
+
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     if (!permissionsLoaded) {
       return;
@@ -79,7 +81,7 @@ export default function HotApp() {
 
   return (
     <>
-      <NavigationBar extensionNavigationItems={extensionNavigationItems} />
+      <NavigationBar extensionUxElements={extensionUxElements} />
       <Content className={contentClassName}>
         <ScrollToTop />
         <ErrorBoundary>
@@ -87,7 +89,12 @@ export default function HotApp() {
             <Route path="/*" element={<HomePageRoutes />} />
             <Route path="/about" element={<About />} />
             <Route path="/tasks/*" element={<HomePageRoutes />} />
-            <Route path="/admin/*" element={<AdminRoutes />} />
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoutes extensionUxElements={extensionUxElements} />
+              }
+            />
             <Route path="/editor/*" element={<EditorRoutes />} />
             <Route
               path="/extensions/:page_identifier"

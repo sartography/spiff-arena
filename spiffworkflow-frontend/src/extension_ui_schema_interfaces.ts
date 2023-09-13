@@ -20,6 +20,8 @@ export interface UiSchemaAction {
   persistence_level?: UiSchemaPersistenceLevel;
   navigate_to_on_form_submit?: string;
   results_markdown_filename?: string;
+
+  full_api_path?: boolean;
 }
 
 export interface UiSchemaPageDefinition {

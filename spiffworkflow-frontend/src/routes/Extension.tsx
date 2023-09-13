@@ -78,7 +78,7 @@ export default function Extension() {
         }
       }
     },
-    [targetUris.extensionListPath, params]
+    [targetUris.extensionListPath, params.page_identifier]
   );
 
   useEffect(() => {
@@ -101,7 +101,6 @@ export default function Extension() {
     });
   }, [
     filesByName,
-    params,
     setConfigsIfDesiredSchemaFile,
     targetUris.extensionListPath,
     targetUris.extensionPath,
@@ -115,6 +114,7 @@ export default function Extension() {
     setFormButtonsDisabled(false);
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const handleFormSubmit = (formObject: any, _event: any) => {
     if (formButtonsDisabled) {
       return;
@@ -153,10 +153,15 @@ export default function Extension() {
       window.location.href = url;
       setFormButtonsDisabled(false);
     } else {
-      const postBody: ExtensionPostBody = { extension_input: dataToSubmit };
+      let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
       if (uiSchemaPageDefinition && uiSchemaPageDefinition.on_form_submit) {
-        apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+        if (uiSchemaPageDefinition.on_form_submit.full_api_path) {
+          apiPath = `/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+          postBody = dataToSubmit;
+        } else {
+          apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+        }
         postBody.ui_schema_action = uiSchemaPageDefinition.on_form_submit;
       }
 
