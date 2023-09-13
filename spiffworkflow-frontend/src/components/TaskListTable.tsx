@@ -17,6 +17,7 @@ import HttpService from '../services/HttpService';
 import { PaginationObject, ProcessInstanceTask, Task } from '../interfaces';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 import CustomForm from './CustomForm';
+import InstructionsForEndUser from './InstructionsForEndUser';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
@@ -137,6 +138,29 @@ export default function TaskListTable({
 
   const formSubmissionModal = () => {
     if (formSubmissionTask) {
+      // TODO: move this and the code from TaskShow to new component to handle instructions and manual tasks
+      let formUiSchema;
+      let jsonSchema = formSubmissionTask.form_schema;
+      if (formSubmissionTask.typename === 'ManualTask') {
+        jsonSchema = {
+          type: 'object',
+          required: [],
+          properties: {
+            isManualTask: {
+              type: 'boolean',
+              title: 'Is ManualTask',
+              default: true,
+            },
+          },
+        };
+        formUiSchema = {
+          isManualTask: {
+            'ui:widget': 'hidden',
+          },
+        };
+      } else if (formSubmissionTask.form_ui_schema) {
+        formUiSchema = formSubmissionTask.form_ui_schema;
+      }
       return (
         <Modal
           open={!!formSubmissionTask}
@@ -155,11 +179,12 @@ export default function TaskListTable({
             </div>
           </div>
           <hr />
+          <InstructionsForEndUser task={formSubmissionTask} />
           <CustomForm
             id={formSubmissionTask.guid}
             formData={formSubmissionTask.data}
-            schema={formSubmissionTask.form_schema}
-            uiSchema={formSubmissionTask.form_ui_schema}
+            schema={jsonSchema}
+            uiSchema={formUiSchema}
             disabled
           >
             {/* this hides the submit button */}
