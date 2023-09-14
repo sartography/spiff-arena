@@ -10,7 +10,8 @@ from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-
+import json
+from typing import Any
 
 class ProcessModelFileNotFoundError(Exception):
     pass
@@ -103,6 +104,27 @@ class FileSystemService:
     def file_exists_at_relative_path(cls, relative_path: str, file_name: str) -> bool:
         full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
         return os.path.isfile(full_path)
+
+    @classmethod
+    def contents_of_file_at_relative_path(cls, relative_path: str, file_name: str) -> str:
+        full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
+        with open(full_path) as f:
+            return f.read()
+
+    @classmethod
+    def contents_of_json_file_at_relative_path(cls, relative_path: str, file_name: str) -> Any:
+        contents = cls.contents_of_file_at_relative_path(relative_path, file_name)
+        return json.loads(contents)
+
+    @classmethod
+    def write_to_file_at_relative_path(cls, relative_path: str, file_name: str, contents: str) -> None:
+        full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
+        with open(full_path, "w") as f:
+            f.write(contents)
+
+    @classmethod
+    def write_to_json_file_at_relative_path(cls, relative_path: str, file_name: str, contents: Any) -> None:
+        cls.write_to_file_at_relative_path(relative_path, file_name, json.dumps(contents, indent=4, sort_keys=True))
     
     @staticmethod
     def process_model_relative_path(process_model: ProcessModelInfo) -> str:
