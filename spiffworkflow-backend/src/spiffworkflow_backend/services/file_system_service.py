@@ -1,7 +1,9 @@
+import json
 import os
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Any
 
 import pytz
 from flask import current_app
@@ -10,8 +12,7 @@ from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-import json
-from typing import Any
+
 
 class ProcessModelFileNotFoundError(Exception):
     pass
@@ -125,7 +126,7 @@ class FileSystemService:
     @classmethod
     def write_to_json_file_at_relative_path(cls, relative_path: str, file_name: str, contents: Any) -> None:
         cls.write_to_file_at_relative_path(relative_path, file_name, json.dumps(contents, indent=4, sort_keys=True))
-    
+
     @staticmethod
     def process_model_relative_path(process_model: ProcessModelInfo) -> str:
         """Get the file path to a process model relative to SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR.
