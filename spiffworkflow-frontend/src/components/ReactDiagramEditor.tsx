@@ -54,6 +54,7 @@ import TouchModule from 'diagram-js/lib/navigation/touch';
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
+import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -724,10 +725,53 @@ export default function ReactDiagramEditor({
     return null;
   };
 
+  const diagramControlButtons = () => {
+    return (
+      <div className="diagram-control-buttons">
+        <Button
+          kind="ghost"
+          renderIcon={ZoomIn}
+          iconDescription="Zoom In"
+          hasIconOnly
+          onClick={() => {
+            if (diagramModelerState) {
+              (diagramModelerState as any).get('zoomScroll').stepZoom(1);
+            }
+          }}
+        />
+        <Button
+          kind="ghost"
+          renderIcon={ZoomOut}
+          iconDescription="Zoom Out"
+          hasIconOnly
+          onClick={() => {
+            if (diagramModelerState) {
+              (diagramModelerState as any).get('zoomScroll').stepZoom(-1);
+            }
+          }}
+        />
+        <Button
+          kind="ghost"
+          renderIcon={ZoomFit}
+          iconDescription="Zoom Fit"
+          hasIconOnly
+          onClick={() => {
+            if (diagramModelerState) {
+              (diagramModelerState as any)
+                .get('canvas')
+                .zoom(FitViewport, 'auto');
+            }
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
     <>
       {userActionOptions()}
       {showReferences()}
+      {diagramControlButtons()}
     </>
   );
 }
