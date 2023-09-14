@@ -125,9 +125,11 @@ def _run_extension(
 
     ui_schema_action = None
     persistence_level = "none"
+    process_id_to_run = None
     if body and "ui_schema_action" in body:
         ui_schema_action = body["ui_schema_action"]
         persistence_level = ui_schema_action.get("persistence_level", "none")
+        process_id_to_run = ui_schema_action.get("process_id_to_run", None)
 
     process_instance = None
     if persistence_level == "none":
@@ -146,7 +148,7 @@ def _run_extension(
     processor = None
     try:
         processor = ProcessInstanceProcessor(
-            process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False)
+            process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False), process_id_to_run=process_id_to_run
         )
         if body and "extension_input" in body:
             processor.do_engine_steps(save=False, execution_strategy_name="run_current_ready_tasks")
