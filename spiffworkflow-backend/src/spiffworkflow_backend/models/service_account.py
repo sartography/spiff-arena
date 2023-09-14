@@ -44,7 +44,7 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
         return str(uuid.uuid4())
 
     @classmethod
-    def encrypt_api_key(cls, unencrypted_api_key: str) -> str:
+    def hash_api_key(cls, unencrypted_api_key: str) -> str:
         return sha256(unencrypted_api_key.encode("utf8")).hexdigest()
 
     @classmethod

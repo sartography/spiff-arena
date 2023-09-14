@@ -11,7 +11,7 @@ class ServiceAccountService:
     @classmethod
     def create_service_account(cls, name: str, service_account_creator: UserModel) -> ServiceAccountModel:
         api_key = ServiceAccountModel.generate_api_key()
-        api_key_hash = ServiceAccountModel.encrypt_api_key(api_key)
+        api_key_hash = ServiceAccountModel.hash_api_key(api_key)
         username = ServiceAccountModel.generate_username_for_related_user(name, service_account_creator.id)
         service_account_user = UserModel(
             username=username,

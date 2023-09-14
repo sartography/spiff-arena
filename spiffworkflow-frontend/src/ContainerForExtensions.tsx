@@ -20,7 +20,7 @@ import {
 } from './extension_ui_schema_interfaces';
 import HttpService from './services/HttpService';
 
-export default function HotApp() {
+export default function ContainerForExtensions() {
   const [extensionUxElements, setExtensionNavigationItems] = useState<
     UiSchemaUxElement[] | null
   >(null);

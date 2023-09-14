@@ -50,9 +50,21 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     uxElementIndex: number
   ) => {
     const navItemPage = `/admin/configuration/extension${uxElement.page}`;
-    if (navItemPage === location.pathname) {
-      setSelectedTabIndex(uxElementIndex + 2);
+
+    let pagesToCheck = [uxElement.page];
+    if (
+      uxElement.location_specific_configs &&
+      uxElement.location_specific_configs.highlight_on_tabs
+    ) {
+      pagesToCheck = uxElement.location_specific_configs.highlight_on_tabs;
     }
+
+    pagesToCheck.forEach((pageToCheck: string) => {
+      const pageToCheckNavItem = `/admin/configuration/extension${pageToCheck}`;
+      if (pageToCheckNavItem === location.pathname) {
+        setSelectedTabIndex(uxElementIndex + 2);
+      }
+    });
     return <Tab onClick={() => navigate(navItemPage)}>{uxElement.label}</Tab>;
   };
 

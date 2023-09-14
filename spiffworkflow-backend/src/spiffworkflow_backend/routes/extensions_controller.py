@@ -148,7 +148,9 @@ def _run_extension(
     processor = None
     try:
         processor = ProcessInstanceProcessor(
-            process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False), process_id_to_run=process_id_to_run
+            process_instance,
+            script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
+            process_id_to_run=process_id_to_run,
         )
         if body and "extension_input" in body:
             processor.do_engine_steps(save=False, execution_strategy_name="run_current_ready_tasks")

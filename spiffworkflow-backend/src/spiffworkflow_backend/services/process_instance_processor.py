@@ -409,11 +409,16 @@ class ProcessInstanceProcessor:
         self._script_engine = script_engine or self.__class__._default_script_engine
         self._workflow_completed_handler = workflow_completed_handler
         self.setup_processor_with_process_instance(
-            process_instance_model=process_instance_model, validate_only=validate_only, process_id_to_run=process_id_to_run
+            process_instance_model=process_instance_model,
+            validate_only=validate_only,
+            process_id_to_run=process_id_to_run,
         )
 
     def setup_processor_with_process_instance(
-        self, process_instance_model: ProcessInstanceModel, validate_only: bool = False, process_id_to_run: str | None = None
+        self,
+        process_instance_model: ProcessInstanceModel,
+        validate_only: bool = False,
+        process_id_to_run: str | None = None,
     ) -> None:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.process_instance_id = process_instance_model.id
@@ -472,7 +477,8 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def get_process_model_and_subprocesses(
-        cls, process_model_identifier: str,
+        cls,
+        process_model_identifier: str,
         process_id_to_run: str | None = None,
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         process_model_info = ProcessModelService.get_process_model(process_model_identifier)
@@ -1305,7 +1311,8 @@ class ProcessInstanceProcessor:
 
     @staticmethod
     def get_spec(
-        files: list[File], process_model_info: ProcessModelInfo,
+        files: list[File],
+        process_model_info: ProcessModelInfo,
         process_id_to_run: str | None = None,
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided."""

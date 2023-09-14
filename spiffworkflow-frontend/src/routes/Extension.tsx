@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Button } from '@carbon/react';
 import MDEditor from '@uiw/react-md-editor';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { ProcessFile, ProcessModel } from '../interfaces';
@@ -20,6 +21,7 @@ import ErrorDisplay from '../components/ErrorDisplay';
 export default function Extension() {
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
+  const [searchParams] = useSearchParams();
 
   const [_processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [formData, setFormData] = useState<any>(null);
@@ -40,6 +42,7 @@ export default function Extension() {
   const { addError, removeError } = useAPIError();
 
   const setConfigsIfDesiredSchemaFile = useCallback(
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
       const processLoadResult = (result: any) => {
         setFormData(result.task_data);
@@ -64,10 +67,23 @@ export default function Extension() {
           const pageDefinition = extensionUiSchema.pages[pageIdentifier];
           setUiSchemaPageDefinition(pageDefinition);
           setProcessModel(pm);
+          pm.files.forEach((file: ProcessFile) => {
+            filesByName[file.name] = file;
+          });
 
-          const postBody: ExtensionPostBody = { extension_input: {} };
-          postBody.ui_schema_action = pageDefinition.on_load;
           if (pageDefinition.on_load) {
+            const postBody: ExtensionPostBody = { extension_input: {} };
+            if (pageDefinition.on_load.search_params_to_inject) {
+              pageDefinition.on_load.search_params_to_inject.forEach(
+                (searchParam: string) => {
+                  if (searchParams.get(searchParam) !== undefined) {
+                    postBody.extension_input[searchParam] =
+                      searchParams.get(searchParam);
+                  }
+                }
+              );
+            }
+            postBody.ui_schema_action = pageDefinition.on_load;
             HttpService.makeCallToBackend({
               path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
               successCallback: processLoadResult,
@@ -78,7 +94,12 @@ export default function Extension() {
         }
       }
     },
-    [targetUris.extensionListPath, params.page_identifier]
+    [
+      targetUris.extensionListPath,
+      params.page_identifier,
+      searchParams,
+      filesByName,
+    ]
   );
 
   useEffect(() => {
@@ -86,7 +107,6 @@ export default function Extension() {
       processModels.forEach((pm: ProcessModel) => {
         let extensionUiSchemaFile: ProcessFile | null = null;
         pm.files.forEach((file: ProcessFile) => {
-          filesByName[file.name] = file;
           if (file.name === 'extension_uischema.json') {
             extensionUiSchemaFile = file;
           }
@@ -100,18 +120,52 @@ export default function Extension() {
       successCallback: processExtensionResult,
     });
   }, [
-    filesByName,
     setConfigsIfDesiredSchemaFile,
     targetUris.extensionListPath,
     targetUris.extensionPath,
   ]);
 
-  const processSubmitResult = (result: any) => {
-    setProcessedTaskData(result.task_data);
-    if (result.rendered_results_markdown) {
-      setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
+  const interpolateNavigationString = (
+    navigationString: string,
+    baseData: any
+  ) => {
+    let isValid = true;
+    const data = { backend_base_url: BACKEND_BASE_URL, ...baseData };
+    const optionString = navigationString.replace(/{(\w+)}/g, (_, k) => {
+      const value = data[k];
+      if (value === undefined) {
+        isValid = false;
+        addError({
+          message: `Could not find a value for ${k} in form data.`,
+        });
+      }
+      return value;
+    });
+    if (!isValid) {
+      return null;
     }
-    setFormButtonsDisabled(false);
+    return optionString;
+  };
+
+  const processSubmitResult = (result: any) => {
+    if (
+      uiSchemaPageDefinition &&
+      uiSchemaPageDefinition.navigate_to_on_form_submit
+    ) {
+      const optionString = interpolateNavigationString(
+        uiSchemaPageDefinition.navigate_to_on_form_submit,
+        result.task_data
+      );
+      if (optionString !== null) {
+        window.location.href = optionString;
+      }
+    } else {
+      setProcessedTaskData(result.task_data);
+      if (result.rendered_results_markdown) {
+        setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
+      }
+      setFormButtonsDisabled(false);
+    }
   };
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -129,29 +183,19 @@ export default function Extension() {
 
     if (
       uiSchemaPageDefinition &&
-      uiSchemaPageDefinition.navigate_to_on_form_submit
+      uiSchemaPageDefinition.navigate_instead_of_post_to_api
     ) {
-      let isValid = true;
-      const optionString =
-        uiSchemaPageDefinition.navigate_to_on_form_submit.replace(
-          /{(\w+)}/g,
-          (_, k) => {
-            const value = dataToSubmit[k];
-            if (value === undefined) {
-              isValid = false;
-              addError({
-                message: `Could not find a value for ${k} in form data.`,
-              });
-            }
-            return value;
-          }
+      let optionString: string | null = '';
+      if (uiSchemaPageDefinition.navigate_to_on_form_submit) {
+        optionString = interpolateNavigationString(
+          uiSchemaPageDefinition.navigate_to_on_form_submit,
+          dataToSubmit
         );
-      if (!isValid) {
-        return;
+        if (optionString !== null) {
+          window.location.href = optionString;
+          setFormButtonsDisabled(false);
+        }
       }
-      const url = `${BACKEND_BASE_URL}/extensions-get-data/${params.page_identifier}/${optionString}`;
-      window.location.href = url;
-      setFormButtonsDisabled(false);
     } else {
       let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
@@ -198,22 +242,29 @@ export default function Extension() {
       markdownContentsToRender.push(markdownToRenderOnLoad);
     }
 
+    let mdEditorLinkTarget: string | undefined = '_blank';
+    if (uiSchemaPageDefinition.open_links_in_new_tab === false) {
+      mdEditorLinkTarget = undefined;
+    }
+
     if (markdownContentsToRender.length > 0) {
       componentsToDisplay.push(
         <div data-color-mode="light" className="with-bottom-margin">
           <MDEditor.Markdown
-            linkTarget="_blank"
+            linkTarget={mdEditorLinkTarget}
             source={markdownContentsToRender.join('\n')}
           />
         </div>
       );
     }
 
-    if (uiSchemaPageDefinition.form_schema_filename) {
-      const formSchemaFile =
-        filesByName[uiSchemaPageDefinition.form_schema_filename];
+    const uiSchemaForm = uiSchemaPageDefinition.form;
+    if (uiSchemaForm) {
+      const formSchemaFile = filesByName[uiSchemaForm.form_schema_filename];
       const formUiSchemaFile =
-        filesByName[uiSchemaPageDefinition.form_ui_schema_filename];
+        filesByName[uiSchemaForm.form_ui_schema_filename];
+      const submitButtonText =
+        uiSchemaForm.form_submit_button_label || 'Submit';
       if (formSchemaFile.file_contents && formUiSchemaFile.file_contents) {
         componentsToDisplay.push(
           <CustomForm
@@ -226,7 +277,15 @@ export default function Extension() {
             onSubmit={handleFormSubmit}
             schema={JSON.parse(formSchemaFile.file_contents)}
             uiSchema={JSON.parse(formUiSchemaFile.file_contents)}
-          />
+          >
+            <Button
+              type="submit"
+              id="submit-button"
+              disabled={formButtonsDisabled}
+            >
+              {submitButtonText}
+            </Button>
+          </CustomForm>
         );
       }
     }
