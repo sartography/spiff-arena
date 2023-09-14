@@ -1,4 +1,5 @@
 from __future__ import annotations
+from hashlib import sha256
 
 import uuid
 from dataclasses import dataclass
@@ -19,23 +20,28 @@ SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE_ID_PREFIX = "service_account_"
 @dataclass
 class ServiceAccountModel(SpiffworkflowBaseDBModel):
     __tablename__ = "service_account"
+    __allow_unmapped__ = True
     __table_args__ = (db.UniqueConstraint("name", "created_by_user_id", name="service_account_uniq"),)
-
-    # datetime.datetime.fromtimestamp(ts_epoch).strftime('%Y-%m-%d %H:%M:%S')
-    # datetime.strptime(trvl_details["travel_end_date"], '%Y-%m-%d')
 
     id: int = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(255), nullable=False, unique=False, index=True)
     user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)
     created_by_user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)
 
-    api_key: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    api_key_hash: str = db.Column(db.String(255), nullable=False, unique=True, index=True)
 
     user = relationship("UserModel", uselist=False, cascade="delete", foreign_keys=[user_id])  # type: ignore
 
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
+    # only to used when the service account first created to tell the user what the key is
+    api_key: str | None = None
+
     @classmethod
     def generate_api_key(cls) -> str:
         return str(uuid.uuid4())
+
+    @classmethod
+    def encrypt_api_key(cls, unencrypted_api_key: str) -> str:
+        return sha256(unencrypted_api_key.encode("utf8")).hexdigest()

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 3004c4a0e617
-Revises: 844cee572018
-Create Date: 2023-09-12 14:48:52.189482
+Revision ID: 9d5b6c5c31a5
+Revises: 55bbdeb6b635
+Create Date: 2023-09-14 08:49:53.619192
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3004c4a0e617'
-down_revision = '844cee572018'
+revision = '9d5b6c5c31a5'
+down_revision = '55bbdeb6b635'
 branch_labels = None
 depends_on = None
 
@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_by_user_id', sa.Integer(), nullable=False),
-    sa.Column('api_key', sa.String(length=36), nullable=False),
+    sa.Column('api_key_hash', sa.String(length=255), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_user_id'], ['user.id'], ),
@@ -32,7 +32,7 @@ def upgrade():
     sa.UniqueConstraint('name', 'created_by_user_id', name='service_account_uniq')
     )
     with op.batch_alter_table('service_account', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_service_account_api_key'), ['api_key'], unique=True)
+        batch_op.create_index(batch_op.f('ix_service_account_api_key_hash'), ['api_key_hash'], unique=True)
         batch_op.create_index(batch_op.f('ix_service_account_created_by_user_id'), ['created_by_user_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_service_account_name'), ['name'], unique=False)
         batch_op.create_index(batch_op.f('ix_service_account_user_id'), ['user_id'], unique=False)
@@ -46,7 +46,7 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_service_account_user_id'))
         batch_op.drop_index(batch_op.f('ix_service_account_name'))
         batch_op.drop_index(batch_op.f('ix_service_account_created_by_user_id'))
-        batch_op.drop_index(batch_op.f('ix_service_account_api_key'))
+        batch_op.drop_index(batch_op.f('ix_service_account_api_key_hash'))
 
     op.drop_table('service_account')
     # ### end Alembic commands ###

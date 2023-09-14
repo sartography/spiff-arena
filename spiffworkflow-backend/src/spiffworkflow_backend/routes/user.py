@@ -282,7 +282,8 @@ def _find_token_from_headers(token: str | None) -> dict[str, str | None]:
 
 
 def _get_user_model_from_api_key(api_key: str) -> UserModel | None:
-    service_account = ServiceAccountModel.query.filter_by(api_key=api_key).first()
+    api_key_hash = ServiceAccountModel.encrypt_api_key(api_key)
+    service_account = ServiceAccountModel.query.filter_by(api_key_hash=api_key_hash).first()
     user_model = None
     if service_account is not None:
         user_model = UserModel.query.filter_by(id=service_account.user_id).first()

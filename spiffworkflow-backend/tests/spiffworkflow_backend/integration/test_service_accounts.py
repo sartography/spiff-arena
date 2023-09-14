@@ -1,15 +1,16 @@
 import json
 
 from flask.app import Flask
-from flask.testing import FlaskClient
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
+from flask.testing import FlaskClient
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.service_account_service import ServiceAccountService
 from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
-class TestServiceAccountsController(BaseTest):
+class TestServiceAccounts(BaseTest):
     def test_can_create_a_service_account(
         self,
         app: Flask,
@@ -18,21 +19,12 @@ class TestServiceAccountsController(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         api_key_name = "heyhey"
-        response = client.post(
-            "/v1.0/service-accounts",
-            content_type="application/json",
-            data=json.dumps({"name": api_key_name}),
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["api_key"] is not None
+        service_account = ServiceAccountService.create_service_account(api_key_name, with_super_admin_user)
 
-        api_key = response.json["api_key"]
-        service_account = ServiceAccountModel.query.filter_by(api_key=api_key).first()
         assert service_account is not None
         assert service_account.created_by_user_id == with_super_admin_user.id
         assert service_account.name == api_key_name
+        assert service_account.api_key is not None
 
         # ci and local set different permissions for the admin user so figure out dynamically
         admin_permissions = sorted(UserService.get_permission_targets_for_user(with_super_admin_user))
@@ -42,12 +34,16 @@ class TestServiceAccountsController(BaseTest):
         assert admin_permissions == service_account_permissions
 
         # ensure service account can actually access the api
+        post_body = {
+            "key": "secret_key",
+            "value": "hey_value",
+        }
         response = client.post(
-            "/v1.0/service-accounts",
+            "/v1.0/secrets",
             content_type="application/json",
-            data=json.dumps({"name": "heyhey1"}),
             headers={"X-API-KEY": service_account.api_key},
+            data=json.dumps(post_body),
         )
         assert response.status_code == 201
         assert response.json is not None
-        assert response.json["api_key"] is not None
+        assert response.json["key"] == post_body["key"]

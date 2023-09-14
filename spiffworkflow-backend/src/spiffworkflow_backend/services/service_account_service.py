@@ -1,4 +1,5 @@
 from spiffworkflow_backend.models.db import db
+from hashlib import sha256
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE_ID_PREFIX
@@ -11,6 +12,7 @@ class ServiceAccountService:
     @classmethod
     def create_service_account(cls, name: str, service_account_creator: UserModel) -> ServiceAccountModel:
         api_key = ServiceAccountModel.generate_api_key()
+        api_key_hash = ServiceAccountModel.encrypt_api_key(api_key)
         username = f"{name}_{service_account_creator.id}"
         service_account_user = UserModel(
             username=username,
@@ -20,11 +22,12 @@ class ServiceAccountService:
         )
         db.session.add(service_account_user)
         service_account = ServiceAccountModel(
-            name=name, created_by_user_id=service_account_creator.id, api_key=api_key, user=service_account_user
+            name=name, created_by_user_id=service_account_creator.id, api_key_hash=api_key_hash, user=service_account_user
         )
         db.session.add(service_account)
         ServiceAccountModel.commit_with_rollback_on_exception()
         cls.associated_service_account_with_permissions(service_account_user, service_account_creator)
+        service_account.api_key = api_key
         return service_account
 
     @classmethod
