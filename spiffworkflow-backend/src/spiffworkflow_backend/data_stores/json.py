@@ -6,6 +6,7 @@ from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # typ
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 
 def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
@@ -14,6 +15,8 @@ def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
         return tld.process_model_identifier  # type: ignore
     return None
 
+def _data_store_exists_at_location(location: str, name: str) -> bool:
+    return FileSystemService.file_exists_at_relative_path(location, f"{name}.json")
 
 class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
     """JSONDataStore."""
@@ -22,7 +25,7 @@ class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
         """get."""
         model: JSONDataStoreModel | None = None
         location = _process_model_location_for_task(my_task)
-        if location is not None:
+        if location is not None and _data_store_exists_at_location(location, self.bpmn_id):
             model = db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).first()
         if model is None:
             raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
@@ -31,7 +34,7 @@ class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
     def set(self, my_task: SpiffTask) -> None:
         """set."""
         location = _process_model_location_for_task(my_task)
-        if location is None:
+        if location is None or not _data_store_exists_at_location(location, self.bpmn_id):
             raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
         data = my_task.data[self.bpmn_id]
         model = JSONDataStoreModel(

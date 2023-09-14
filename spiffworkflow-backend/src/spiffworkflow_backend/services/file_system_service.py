@@ -99,6 +99,11 @@ class FileSystemService:
     def full_path_from_relative_path(relative_path: str) -> str:
         return os.path.join(FileSystemService.root_path(), relative_path)
 
+    @classmethod
+    def file_exists_at_relative_path(cls, relative_path: str, file_name: str) -> bool:
+        full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
+        return os.path.isfile(full_path)
+    
     @staticmethod
     def process_model_relative_path(process_model: ProcessModelInfo) -> str:
         """Get the file path to a process model relative to SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR.
