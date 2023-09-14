@@ -1,8 +1,9 @@
 from __future__ import annotations
-from hashlib import sha256
 
+import time
 import uuid
 from dataclasses import dataclass
+from hashlib import sha256
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -45,3 +46,10 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
     @classmethod
     def encrypt_api_key(cls, unencrypted_api_key: str) -> str:
         return sha256(unencrypted_api_key.encode("utf8")).hexdigest()
+
+    @classmethod
+    def generate_username_for_related_user(cls, service_account_name: str, created_by_user_id: int) -> str:
+        # add fuzz to username so a user can delete and recreate an api_key with the same name
+        # also make the username readable so we know where it came from even after the service account is deleted
+        creation_time_for_fuzz = time.time()
+        return f"{service_account_name}_{created_by_user_id}_{creation_time_for_fuzz}"

@@ -1,7 +1,6 @@
 import json
 
 from flask.app import Flask
-from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.service_account_service import ServiceAccountService
