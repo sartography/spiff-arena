@@ -9,8 +9,6 @@ import {
   View,
 } from '@carbon/icons-react';
 import {
-  Accordion,
-  AccordionItem,
   Button,
   Column,
   Dropdown,
@@ -31,7 +29,6 @@ import {
   TabPanel,
 } from '@carbon/react';
 import { Can } from '@casl/react';
-import MDEditor from '@uiw/react-md-editor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
@@ -54,6 +51,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
+import MarkdownDisplayForFile from '../components/MarkdownDisplayForFile';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -106,11 +104,15 @@ export default function ProcessModelShow() {
       setProcessModel(result);
       setReloadModel(false);
       setPageTitle([result.display_name]);
+
+      let newTabIndex = 1;
       result.files.forEach((file: ProcessFile) => {
         if (file.name === 'README.md') {
           setReadmeFile(file);
+          newTabIndex = 0;
         }
       });
+      setSelectedTabIndex(newTabIndex);
     };
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}`,
@@ -575,58 +577,34 @@ export default function ProcessModelShow() {
     );
   };
 
-  const processModelFilesSection = () => {
-    return (
-      <Grid
-        condensed
-        fullWidth
-        className="megacondensed process-model-files-section"
-      >
-        <Column md={8} lg={14} sm={4}>
-          <Accordion align="end" open className="megacondensed-button">
-            <AccordionItem
-              open
-              data-qa="files-accordion"
-              title={
-                <Stack orientation="horizontal">
-                  <span>
-                    <Button size="sm" kind="ghost">
-                      Files
-                      {processModel &&
-                        processModel.bpmn_version_control_identifier &&
-                        ` (revision ${processModel.bpmn_version_control_identifier})`}
-                    </Button>
-                  </span>
-                </Stack>
-              }
-            >
-              <Can
-                I="POST"
-                a={targetUris.processModelFileCreatePath}
-                ability={ability}
-              >
-                {addFileComponent()}
-                <br />
-              </Can>
-              {processModelFileList()}
-            </AccordionItem>
-          </Accordion>
-        </Column>
-      </Grid>
-    );
-  };
-
-  const updateSelectedTab = (newTabIndex: any) => {
-    setSelectedTabIndex(newTabIndex.selectedIndex);
-  };
-
   const readmeFileArea = () => {
     if (readmeFile) {
       return (
-        <div data-color-mode="light" className="with-bottom-margin">
-          <MDEditor.Markdown
-            linkTarget="_blank"
-            source={readmeFile.file_contents}
+        <div className="readme-container">
+          <Grid condensed fullWidth className="megacondensed">
+            <Column md={7} lg={15} sm={3}>
+              <p className="with-icons">{readmeFile.name}</p>
+            </Column>
+            <Column md={1} lg={1} sm={1}>
+              <Can
+                I="GET"
+                a={targetUris.processModelFileCreatePath}
+                ability={ability}
+              >
+                <Button
+                  kind="ghost"
+                  data-qa="process-model-readme-file-edit"
+                  renderIcon={Edit}
+                  iconDescription="Edit README.md"
+                  hasIconOnly
+                  href={`/admin/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
+                />
+              </Can>
+            </Column>
+          </Grid>
+          <hr />
+          <MarkdownDisplayForFile
+            apiPath={`/process-models/${modifiedProcessModelId}/files/${readmeFile.name}`}
           />
         </div>
       );
@@ -642,14 +620,18 @@ export default function ProcessModelShow() {
           <Button
             className="with-top-margin"
             data-qa="process-model-readme-file-create"
-            href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
+            href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
             size="md"
           >
-            Make one
+            Add README.md
           </Button>
         </Can>
       </>
     );
+  };
+
+  const updateSelectedTab = (newTabIndex: any) => {
+    setSelectedTabIndex(newTabIndex.selectedIndex);
   };
 
   const tabArea = () => {
@@ -688,26 +670,28 @@ export default function ProcessModelShow() {
             </Grid>
           </TabPanel>
           <TabPanel>
-            <Can
-              I="POST"
-              a={targetUris.processInstanceListForMePath}
-              ability={ability}
-            >
-              <ProcessInstanceListTable
-                filtersEnabled={false}
-                showLinkToReport
-                variant="for-me"
-                additionalReportFilters={[
-                  {
-                    field_name: 'process_model_identifier',
-                    field_value: processModel.id,
-                  },
-                ]}
-                perPageOptions={[2, 5, 25]}
-                showReports={false}
-              />
-              <span data-qa="process-model-show-permissions-loaded" />
-            </Can>
+            {selectedTabIndex !== 2 ? null : (
+              <Can
+                I="POST"
+                a={targetUris.processInstanceListForMePath}
+                ability={ability}
+              >
+                <ProcessInstanceListTable
+                  filtersEnabled={false}
+                  showLinkToReport
+                  variant="for-me"
+                  additionalReportFilters={[
+                    {
+                      field_name: 'process_model_identifier',
+                      field_value: processModel.id,
+                    },
+                  ]}
+                  perPageOptions={[2, 5, 25]}
+                  showReports={false}
+                />
+                <span data-qa="process-model-show-permissions-loaded" />
+              </Can>
+            )}
           </TabPanel>
         </TabPanels>
       </Tabs>
@@ -777,9 +761,7 @@ export default function ProcessModelShow() {
               iconDescription="Edit Process Model"
               hasIconOnly
               href={`/admin/process-models/${modifiedProcessModelId}/edit`}
-            >
-              Edit process model
-            </Button>
+            />
           </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
