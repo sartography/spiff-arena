@@ -48,9 +48,6 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
-  // const [extensionUxElements, setExtensionNavigationItems] = useState<
-  //   UiSchemaUxElement[] | null
-  // >(null);
 
   const { targetUris } = useUriListForPermissions();
 
