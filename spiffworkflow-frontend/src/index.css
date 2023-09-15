@@ -484,11 +484,6 @@ th.table-header-right-align .cds--data-table, th.table-header-right-align .cds--
   margin-bottom: 1rem;
 }
 
-/* top and bottom margin since this is sort of the middle of three sections on the process model show page */
-.process-model-files-section {
-  margin: 2rem 0;
-}
-
 .filter-icon {
   text-align: right;
   padding-bottom: 10px;

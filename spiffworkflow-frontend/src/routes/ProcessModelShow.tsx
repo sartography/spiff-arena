@@ -24,8 +24,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tabs,
+  Tab,
+  TabList,
+  TabPanels,
+  TabPanel,
 } from '@carbon/react';
 import { Can } from '@casl/react';
+import MDEditor from '@uiw/react-md-editor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
@@ -52,6 +58,7 @@ import ProcessModelTestRun from '../components/ProcessModelTestRun';
 export default function ProcessModelShow() {
   const params = useParams();
   const { addError, removeError } = useAPIError();
+  const navigate = useNavigate();
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processInstance, setProcessInstance] =
@@ -62,7 +69,8 @@ export default function ProcessModelShow() {
     useState<boolean>(false);
   const [processModelPublished, setProcessModelPublished] = useState<any>(null);
   const [publishDisabled, setPublishDisabled] = useState<boolean>(false);
-  const navigate = useNavigate();
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [readmeFile, setReadmeFile] = useState<ProcessFile | null>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -98,6 +106,11 @@ export default function ProcessModelShow() {
       setProcessModel(result);
       setReloadModel(false);
       setPageTitle([result.display_name]);
+      result.files.forEach((file: ProcessFile) => {
+        if (file.name === 'README.md') {
+          setReadmeFile(file);
+        }
+      });
     };
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}`,
@@ -603,6 +616,104 @@ export default function ProcessModelShow() {
     );
   };
 
+  const updateSelectedTab = (newTabIndex: any) => {
+    setSelectedTabIndex(newTabIndex.selectedIndex);
+  };
+
+  const readmeFileArea = () => {
+    if (readmeFile) {
+      return (
+        <div data-color-mode="light" className="with-bottom-margin">
+          <MDEditor.Markdown
+            linkTarget="_blank"
+            source={readmeFile.file_contents}
+          />
+        </div>
+      );
+    }
+    return (
+      <>
+        <p>No README file found</p>
+        <Can
+          I="POST"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
+        >
+          <Button
+            className="with-top-margin"
+            data-qa="process-model-readme-file-create"
+            href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
+            size="md"
+          >
+            Make one
+          </Button>
+        </Can>
+      </>
+    );
+  };
+
+  const tabArea = () => {
+    if (!processModel) {
+      return null;
+    }
+
+    return (
+      <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
+        <TabList aria-label="List of tabs">
+          <Tab>About</Tab>
+          <Tab>Files</Tab>
+          <Tab>My Process instances</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel>{readmeFileArea()}</TabPanel>
+          <TabPanel>
+            <Grid condensed fullWidth className="megacondensed">
+              <Column md={4} lg={8} sm={4}>
+                <Can
+                  I="POST"
+                  a={targetUris.processModelFileCreatePath}
+                  ability={ability}
+                >
+                  <div className="with-bottom-margin">
+                    Files
+                    {processModel &&
+                      processModel.bpmn_version_control_identifier &&
+                      ` (revision ${processModel.bpmn_version_control_identifier})`}
+                  </div>
+                  {addFileComponent()}
+                  <br />
+                </Can>
+                {processModelFileList()}
+              </Column>
+            </Grid>
+          </TabPanel>
+          <TabPanel>
+            <Can
+              I="POST"
+              a={targetUris.processInstanceListForMePath}
+              ability={ability}
+            >
+              <ProcessInstanceListTable
+                filtersEnabled={false}
+                showLinkToReport
+                variant="for-me"
+                additionalReportFilters={[
+                  {
+                    field_name: 'process_model_identifier',
+                    field_value: processModel.id,
+                  },
+                ]}
+                perPageOptions={[2, 5, 25]}
+                showReports={false}
+              />
+              <span data-qa="process-model-show-permissions-loaded" />
+            </Can>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    );
+  };
+
   const processModelPublishMessage = () => {
     if (processModelPublished) {
       const prUrl: string = processModelPublished.pr_url;
@@ -707,28 +818,7 @@ export default function ProcessModelShow() {
         </Stack>
         <p className="process-description">{processModel.description}</p>
         {processModel.primary_file_name ? processStartButton : null}
-        {processModelFilesSection()}
-        <Can
-          I="POST"
-          a={targetUris.processInstanceListForMePath}
-          ability={ability}
-        >
-          <ProcessInstanceListTable
-            headerElement={<h2>My Process Instances</h2>}
-            filtersEnabled={false}
-            showLinkToReport
-            variant="for-me"
-            additionalReportFilters={[
-              {
-                field_name: 'process_model_identifier',
-                field_value: processModel.id,
-              },
-            ]}
-            perPageOptions={[2, 5, 25]}
-            showReports={false}
-          />
-          <span data-qa="process-model-show-permissions-loaded" />
-        </Can>
+        <div className="with-top-margin">{tabArea()}</div>
       </>
     );
   }

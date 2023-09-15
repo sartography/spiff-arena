@@ -1840,6 +1840,9 @@ export default function ProcessInstanceListTable({
         </Column>
       );
     }
+    if (!headerElement && !filterButtonLink) {
+      return null;
+    }
     return (
       <>
         <Column
