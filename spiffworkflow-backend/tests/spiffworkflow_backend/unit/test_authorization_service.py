@@ -515,5 +515,6 @@ class TestAuthorizationService(BaseTest):
                 ("/secrets/*", "delete"),
                 ("/secrets/*", "read"),
                 ("/secrets/*", "update"),
+                ("/service-accounts", "create"),
             ]
         )

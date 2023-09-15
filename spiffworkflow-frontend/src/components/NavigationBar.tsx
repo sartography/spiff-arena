@@ -24,18 +24,20 @@ import { Can } from '@casl/react';
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessModel, ProcessFile } from '../interfaces';
-import {
-  ExtensionUiSchema,
-  UiSchemaUxElement,
-} from '../extension_ui_schema_interfaces';
+import { PermissionsToCheck } from '../interfaces';
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import HttpService, { UnauthenticatedError } from '../services/HttpService';
+import { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { slugifyString } from '../helpers';
+import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 
-export default function NavigationBar() {
+type OwnProps = {
+  extensionUxElements?: UiSchemaUxElement[] | null;
+};
+
+export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const handleLogout = () => {
     UserService.doLogout();
   };
@@ -46,9 +48,6 @@ export default function NavigationBar() {
 
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
-  const [extensionNavigationItems, setExtensionNavigationItems] = useState<
-    UiSchemaUxElement[] | null
-  >(null);
 
   const { targetUris } = useUriListForPermissions();
 
@@ -65,9 +64,7 @@ export default function NavigationBar() {
     [targetUris.processInstanceListForMePath]: ['POST'],
     [targetUris.processGroupListPath]: ['GET'],
   };
-  const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
-  );
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   // default to readthedocs and let someone specify an environment variable to override:
   //
@@ -100,48 +97,6 @@ export default function NavigationBar() {
     setActiveKey(newActiveKey);
   }, [location]);
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
-  useEffect(() => {
-    if (!permissionsLoaded) {
-      return;
-    }
-
-    const processExtensionResult = (processModels: ProcessModel[]) => {
-      const eni: UiSchemaUxElement[] = processModels
-        .map((processModel: ProcessModel) => {
-          const extensionUiSchemaFile = processModel.files.find(
-            (file: ProcessFile) => file.name === 'extension_uischema.json'
-          );
-          if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
-            try {
-              const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-                extensionUiSchemaFile.file_contents
-              );
-              if (extensionUiSchema.ux_elements) {
-                return extensionUiSchema.ux_elements;
-              }
-            } catch (jsonParseError: any) {
-              console.error(
-                `Unable to get navigation items for ${processModel.id}`
-              );
-            }
-          }
-          return [] as UiSchemaUxElement[];
-        })
-        .flat();
-      if (eni) {
-        setExtensionNavigationItems(eni);
-      }
-    };
-
-    if (ability.can('GET', targetUris.extensionListPath)) {
-      HttpService.makeCallToBackend({
-        path: targetUris.extensionListPath,
-        successCallback: processExtensionResult,
-      });
-    }
-  }, [targetUris.extensionListPath, permissionsLoaded, ability]);
-
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;
   };
@@ -154,22 +109,6 @@ export default function NavigationBar() {
 
   const userEmail = UserService.getUserEmail();
   const username = UserService.getPreferredUsername();
-
-  const extensionNavigationElementsForDisplayLocation = (
-    displayLocation: string,
-    elementCallback: Function
-  ) => {
-    if (!extensionNavigationItems) {
-      return null;
-    }
-
-    return extensionNavigationItems.map((uxElement: UiSchemaUxElement) => {
-      if (uxElement.display_location === displayLocation) {
-        return elementCallback(uxElement);
-      }
-      return null;
-    });
-  };
 
   const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
@@ -196,10 +135,11 @@ export default function NavigationBar() {
           <a target="_blank" href={documentationUrl} rel="noreferrer">
             Documentation
           </a>
-          {extensionNavigationElementsForDisplayLocation(
-            'user_profile_item',
-            extensionUserProfileElement
-          )}
+          <ExtensionUxElementForDisplay
+            displayLocation="user_profile_item"
+            elementCallback={extensionUserProfileElement}
+            extensionUxElements={extensionUxElements}
+          />
           {!UserService.authenticationDisabled() ? (
             <>
               <hr />
@@ -345,10 +285,11 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         {configurationElement()}
-        {extensionNavigationElementsForDisplayLocation(
-          'header_menu_item',
-          extensionHeaderMenuItemElement
-        )}
+        <ExtensionUxElementForDisplay
+          displayLocation="header_menu_item"
+          elementCallback={extensionHeaderMenuItemElement}
+          extensionUxElements={extensionUxElements}
+        />
       </>
     );
   };

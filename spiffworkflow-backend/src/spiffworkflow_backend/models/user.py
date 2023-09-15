@@ -4,9 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import jwt
-import marshmallow
 from flask import current_app
-from marshmallow import Schema
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -81,14 +79,3 @@ class UserModel(SpiffworkflowBaseDBModel):
         user_as_json_string = current_app.json.dumps(self)
         user_dict: dict[str, Any] = current_app.json.loads(user_as_json_string)
         return user_dict
-
-
-class UserModelSchema(Schema):
-    class Meta:
-        model = UserModel
-        # load_instance = True
-        # include_relationships = False
-        # exclude = ("UserGroupAssignment",)
-
-    id = marshmallow.fields.String(required=True)
-    username = marshmallow.fields.String(required=True)
