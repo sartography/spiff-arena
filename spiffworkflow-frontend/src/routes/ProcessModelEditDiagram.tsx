@@ -1035,8 +1035,9 @@ export default function ProcessModelEditDiagram() {
 
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
+    let path = '';
     if (file) {
-      const path = generatePath(
+      path = generatePath(
         '/editor/process-models/:process_model_id/files/:file_name',
         {
           process_model_id: params.process_model_id,
@@ -1044,7 +1045,15 @@ export default function ProcessModelEditDiagram() {
         }
       );
       window.open(path);
+    } else {
+      path = generatePath(
+        '/editor/process-models/:process_model_id/files?file_type=dmn',
+        {
+          process_model_id: params.process_model_id,
+        }
+      );
     }
+    window.open(path);
   };
 
   const isDmn = () => {

@@ -190,6 +190,7 @@ export default function ReactDiagramEditor({
           spiffworkflow,
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
+          ZoomScrollModule,
         ],
         moddleExtensions: {
           spiffworkflow: spiffModdleExtension,
@@ -208,6 +209,7 @@ export default function ReactDiagramEditor({
           additionalModules: [
             DmnPropertiesPanelModule,
             DmnPropertiesProviderModule,
+            ZoomScrollModule,
           ],
         },
       });
@@ -725,6 +727,28 @@ export default function ReactDiagramEditor({
     return null;
   };
 
+  const zoom = (amount: number) => {
+    if (diagramModelerState) {
+      let modeler = diagramModelerState as any;
+      if (diagramType === 'dmn') {
+        modeler = (diagramModelerState as any).getActiveViewer();
+      }
+      try {
+        if (amount === 0) {
+          const canvas = (modeler as any).get('canvas');
+          canvas.zoom(FitViewport, 'auto');
+        } else {
+          modeler.get('zoomScroll').stepZoom(amount);
+        }
+      } catch (e) {
+        console.log(
+          'zoom failed, certain modes in DMN do not support zooming.',
+          e
+        );
+      }
+    }
+  };
+
   const diagramControlButtons = () => {
     return (
       <div className="diagram-control-buttons">
@@ -734,9 +758,7 @@ export default function ReactDiagramEditor({
           iconDescription="Zoom In"
           hasIconOnly
           onClick={() => {
-            if (diagramModelerState) {
-              (diagramModelerState as any).get('zoomScroll').stepZoom(1);
-            }
+            zoom(1);
           }}
         />
         <Button
@@ -745,9 +767,7 @@ export default function ReactDiagramEditor({
           iconDescription="Zoom Out"
           hasIconOnly
           onClick={() => {
-            if (diagramModelerState) {
-              (diagramModelerState as any).get('zoomScroll').stepZoom(-1);
-            }
+            zoom(-1);
           }}
         />
         <Button
@@ -756,11 +776,7 @@ export default function ReactDiagramEditor({
           iconDescription="Zoom Fit"
           hasIconOnly
           onClick={() => {
-            if (diagramModelerState) {
-              (diagramModelerState as any)
-                .get('canvas')
-                .zoom(FitViewport, 'auto');
-            }
+            zoom(0);
           }}
         />
       </div>
