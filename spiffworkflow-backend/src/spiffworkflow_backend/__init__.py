@@ -25,7 +25,7 @@ from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
-from spiffworkflow_backend.routes.user import set_new_access_token_in_cookie
+from spiffworkflow_backend.routes.user import _set_new_access_token_in_cookie
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -182,7 +182,7 @@ def create_app() -> flask.app.Flask:
 
     app.before_request(verify_token)
     app.before_request(AuthorizationService.check_for_permission)
-    app.after_request(set_new_access_token_in_cookie)
+    app.after_request(_set_new_access_token_in_cookie)
 
     # The default is true, but we want to preserve the order of keys in the json
     # This is particularly helpful for forms that are generated from json schemas.
