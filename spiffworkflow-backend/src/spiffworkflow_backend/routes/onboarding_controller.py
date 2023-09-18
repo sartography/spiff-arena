@@ -6,6 +6,7 @@ from flask.wrappers import Response
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -28,7 +29,7 @@ def get_onboarding() -> Response:
             persistence_level=persistence_level,
         )
         processor = ProcessInstanceProcessor(process_instance)
-    except ApiError:
+    except ProcessEntityNotFoundError:
         # The process doesn't exist, so bail out without an error
         return make_response(result, 200)
     try:
@@ -37,12 +38,10 @@ def get_onboarding() -> Response:
         if bpmn_process.is_completed():
             workflow_data = bpmn_process.data
             result = workflow_data.get("onboarding", {})
-
-        if result == {} or len(bpmn_process.get_ready_user_tasks()) > 0:
-            task = processor.next_task()
-            if task:
-                result["task_id"] = task.id
-                result["instructions"] = JinjaService.render_instructions_for_end_user(task)
+        task = processor.next_task()
+        if task:
+            result["task_id"] = task.id
+            result["instructions"] = JinjaService.render_instructions_for_end_user(task)
     except WorkflowException as e:
         raise ApiError.from_workflow_exception("onboard_failed", "Error building onboarding message", e) from e
     except Exception as e:
