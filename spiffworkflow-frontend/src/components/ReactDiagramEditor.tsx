@@ -54,6 +54,7 @@ import TouchModule from 'diagram-js/lib/navigation/touch';
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
+import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -189,6 +190,7 @@ export default function ReactDiagramEditor({
           spiffworkflow,
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
+          ZoomScrollModule,
         ],
         moddleExtensions: {
           spiffworkflow: spiffModdleExtension,
@@ -207,6 +209,7 @@ export default function ReactDiagramEditor({
           additionalModules: [
             DmnPropertiesPanelModule,
             DmnPropertiesProviderModule,
+            ZoomScrollModule,
           ],
         },
       });
@@ -724,10 +727,67 @@ export default function ReactDiagramEditor({
     return null;
   };
 
+  const zoom = (amount: number) => {
+    if (diagramModelerState) {
+      let modeler = diagramModelerState as any;
+      if (diagramType === 'dmn') {
+        modeler = (diagramModelerState as any).getActiveViewer();
+      }
+      try {
+        if (amount === 0) {
+          const canvas = (modeler as any).get('canvas');
+          canvas.zoom(FitViewport, 'auto');
+        } else {
+          modeler.get('zoomScroll').stepZoom(amount);
+        }
+      } catch (e) {
+        console.log(
+          'zoom failed, certain modes in DMN do not support zooming.',
+          e
+        );
+      }
+    }
+  };
+
+  const diagramControlButtons = () => {
+    return (
+      <div className="diagram-control-buttons">
+        <Button
+          kind="ghost"
+          renderIcon={ZoomIn}
+          iconDescription="Zoom In"
+          hasIconOnly
+          onClick={() => {
+            zoom(1);
+          }}
+        />
+        <Button
+          kind="ghost"
+          renderIcon={ZoomOut}
+          iconDescription="Zoom Out"
+          hasIconOnly
+          onClick={() => {
+            zoom(-1);
+          }}
+        />
+        <Button
+          kind="ghost"
+          renderIcon={ZoomFit}
+          iconDescription="Zoom Fit"
+          hasIconOnly
+          onClick={() => {
+            zoom(0);
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
     <>
       {userActionOptions()}
       {showReferences()}
+      {diagramControlButtons()}
     </>
   );
 }

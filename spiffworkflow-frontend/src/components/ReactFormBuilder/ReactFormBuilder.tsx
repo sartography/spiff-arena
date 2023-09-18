@@ -90,7 +90,9 @@ export default function ReactFormBuilder({
       HttpService.makeCallToBackend({
         path: url,
         successCallback: () => {},
-        failureCallback: () => {}, // fixme: handle errors
+        failureCallback: (e: any) => {
+          setErrorMessage(`Failed to save file: '${fileName}'. ${e.message}`);
+        },
         httpMethod,
         postBody: submission,
       });
@@ -112,7 +114,11 @@ export default function ReactFormBuilder({
     if (ready) {
       return true;
     }
-    if (strSchema !== '' && strUI !== '' && strFormData !== '') {
+    if (
+      debouncedStrSchema !== '' &&
+      debouncedStrUI !== '' &&
+      debouncedFormData !== ''
+    ) {
       setReady(true);
       return true;
     }
@@ -121,24 +127,24 @@ export default function ReactFormBuilder({
 
   // Auto save schema changes
   useEffect(() => {
-    if (baseFileName !== '') {
+    if (baseFileName !== '' && ready) {
       saveFile(new File([debouncedStrSchema], baseFileName + SCHEMA_EXTENSION));
     }
-  }, [debouncedStrSchema, baseFileName, saveFile]);
+  }, [debouncedStrSchema, baseFileName, saveFile, ready]);
 
   // Auto save ui changes
   useEffect(() => {
-    if (baseFileName !== '') {
+    if (baseFileName !== '' && ready) {
       saveFile(new File([debouncedStrUI], baseFileName + UI_EXTENSION));
     }
-  }, [debouncedStrUI, baseFileName, saveFile]);
+  }, [debouncedStrUI, baseFileName, saveFile, ready]);
 
   // Auto save example data changes
   useEffect(() => {
     if (baseFileName !== '') {
       saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
     }
-  }, [debouncedFormData, baseFileName, saveFile]);
+  }, [debouncedFormData, baseFileName, saveFile, ready]);
 
   useEffect(() => {
     /**
@@ -173,7 +179,7 @@ export default function ReactFormBuilder({
     try {
       data = JSON.parse(debouncedFormData);
     } catch (e) {
-      setErrorMessage('Please check the Task Data for errors.');
+      setErrorMessage('Please check the Data View for errors.');
       return;
     }
     setErrorMessage('');
@@ -224,6 +230,7 @@ export default function ReactFormBuilder({
       // @ts-ignore
       value !== dataEditorRef.current.getValue()
     ) {
+      setStrFormData(value);
       // @ts-ignore
       dataEditorRef.current.setValue(value);
     }
@@ -289,7 +296,9 @@ export default function ReactFormBuilder({
         fileName
       )}${UI_EXTENSION}`,
       successCallback: setJsonUiFromResponseJson,
-      failureCallback: () => {},
+      failureCallback: () => {
+        setJsonUiFromResponseJson({ file_contents: '{}' });
+      },
     });
   }
 
@@ -299,7 +308,9 @@ export default function ReactFormBuilder({
         fileName
       )}${DATA_EXTENSION}`,
       successCallback: setDataFromResponseJson,
-      failureCallback: () => {},
+      failureCallback: () => {
+        setDataFromResponseJson({ file_contents: '{}' });
+      },
     });
   }
 
@@ -449,7 +460,7 @@ export default function ReactFormBuilder({
       </Column>
       <Column sm={4} md={5} lg={8}>
         <h2>Form Preview</h2>
-        <div>{errorMessage}</div>
+        <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary>
           <CustomForm
             id="custom_form"
