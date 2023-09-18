@@ -42,6 +42,13 @@ function CheckboxWidget(props: WidgetProps) {
     rawErrors
   );
 
+  // if the default value is false then set the value to undefined
+  // so it will fail validation. in practice, there is no other
+  // way that this prop could have the value false. it has to be the default.
+  if (value === false) {
+    onChange(undefined);
+  }
+
   // if the parent rjsf schema is not of type "object", then rjsf sends "root" through as the id.
   // this creates issues with the carbon checkbox where it will not accept any clicks to the checkbox
   // so add fuzz to the id to ensure it is unique.

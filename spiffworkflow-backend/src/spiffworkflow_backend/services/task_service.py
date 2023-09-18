@@ -385,6 +385,7 @@ class TaskService:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent = top_level_process
 
+                # BpmnWorkflows do not know their own guid so we have to cycle through subprocesses to find the guid that matches
                 # calling list(subprocesses) to make a copy of the keys so we can change subprocesses while iterating
                 # changing subprocesses happens when running parallel tests
                 # for reasons we do not understand. https://stackoverflow.com/a/11941855/6090676

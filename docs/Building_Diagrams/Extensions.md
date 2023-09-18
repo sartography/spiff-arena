@@ -83,7 +83,7 @@ An entirely new feature application feature with frontend and backend components
 
 ![Extension](images/Agregate_metadata.png)
 
-# Use Cases
+## Use Cases
 
 If your organization has specific needs not catered to by the standard SpiffArena features, you can use extensions to add those features.  
 
