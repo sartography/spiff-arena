@@ -17,9 +17,19 @@ class TestJSONFileDataStore(BaseTest):
     ) -> None:
         process_model = load_test_spec(
             process_model_id="tests/data/json_file_data_store",
-            bpmn_file_name="load.bpmn",
             process_model_source_directory="json_file_data_store",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps()
+
+        assert "x" in processor.bpmn_process_instance.data
+
+        result = processor.bpmn_process_instance.data["x"]
+
+        assert result == {
+            "company": "Some Job",
+            "contact": "Sue Smith",
+            "email": "sue@email.ai",
+            "notes": "Decision Maker\nDoes'nt answer emails.",
+        }
