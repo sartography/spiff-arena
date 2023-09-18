@@ -1138,7 +1138,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const multiInstanceSelector = () => {
-    if (!taskToDisplay) {
+    if (!taskToDisplay || !taskToDisplay.runtime_info) {
       return null;
     }
 
@@ -1249,17 +1249,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       onRequestSubmit = addPotentialOwners;
       dangerous = true;
     }
-
-    if (typeof taskToUse.runtime_info.instance !== 'undefined') {
-      secondaryButtonText = 'Return to MultiInstance Task';
-      onSecondarySubmit = () => {
-        switchToTask(taskToUse.properties_json.parent);
-      };
-    } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
-      secondaryButtonText = 'Return to Loop Task';
-      onSecondarySubmit = () => {
-        switchToTask(taskToUse.properties_json.parent);
-      };
+    if (taskToUse.runtime_info) {
+      if (typeof taskToUse.runtime_info.instance !== 'undefined') {
+        secondaryButtonText = 'Return to MultiInstance Task';
+        onSecondarySubmit = () => {
+          switchToTask(taskToUse.properties_json.parent);
+        };
+      } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
+        secondaryButtonText = 'Return to Loop Task';
+        onSecondarySubmit = () => {
+          switchToTask(taskToUse.properties_json.parent);
+        };
+      }
     }
 
     return (
