@@ -258,9 +258,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             | TaskState.STARTED
             | TaskState.ERROR
         ):
-            # these will be removed from the parent and then ignored
-            if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
-                continue
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
         self.task_service.save_objects_to_database()

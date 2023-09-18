@@ -9,7 +9,6 @@ from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.task import TaskStateNames
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
@@ -137,9 +136,6 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> None:
         for child_spiff_task in spiff_task.children:
-            if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
-                self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
-                continue
             self.update_task_model_with_spiff_task(
                 spiff_task=child_spiff_task,
             )
@@ -209,8 +205,10 @@ class TaskService:
             task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
         # let failed tasks raise and we will log the event then
-        if task_model.state == "COMPLETED":
+        if task_model.state in ["COMPLETED", "CANCELLED"]:
             event_type = ProcessInstanceEventType.task_completed.value
+            if task_model.state == "CANCELLED":
+                event_type = ProcessInstanceEventType.task_cancelled.value
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
             (
                 process_instance_event,
@@ -261,15 +259,6 @@ class TaskService:
         """
 
         new_properties_json = self.serializer.task_to_dict(spiff_task)
-
-        # Only save links to children that are definite - we don't currently store predicted
-        # children in the database.  They are filtered out in other places in the code, so we
-        # must remove references to them here.
-        modified_children = []
-        for child in spiff_task.children:
-            if not child._has_state(TaskState.PREDICTED_MASK):
-                modified_children.append(str(child.id))
-        new_properties_json["children"] = modified_children
 
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
@@ -441,9 +430,6 @@ class TaskService:
             # we are going to avoid saving likely and maybe tasks to the db.
             # that means we need to remove them from their parents' lists of children as well.
             spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
-            if spiff_task._has_state(TaskState.PREDICTED_MASK):
-                self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
-                continue
 
             task_model = TaskModel.query.filter_by(guid=task_id).first()
             if task_model is None:
