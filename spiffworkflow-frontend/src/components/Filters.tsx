@@ -1,11 +1,5 @@
-// @ts-ignore
 import { Filter } from '@carbon/icons-react';
-import {
-  Button,
-  Grid,
-  Column,
-  // @ts-ignore
-} from '@carbon/react';
+import { Button, Grid, Column } from '@carbon/react';
 
 type OwnProps = {
   showFilterOptions: boolean;

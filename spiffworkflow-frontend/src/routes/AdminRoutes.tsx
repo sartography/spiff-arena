@@ -23,8 +23,13 @@ import ProcessInterstitialPage from './ProcessInterstitialPage';
 import MessageListPage from './MessageListPage';
 import DataStorePage from './DataStorePage';
 import ErrorDisplay from '../components/ErrorDisplay';
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 
-export default function AdminRoutes() {
+type OwnProps = {
+  extensionUxElements?: UiSchemaUxElement[] | null;
+};
+
+export default function AdminRoutes({ extensionUxElements }: OwnProps) {
   const location = useLocation();
 
   useEffect(() => {}, [location]);
@@ -118,7 +123,12 @@ export default function AdminRoutes() {
             path="process-instances/all"
             element={<ProcessInstanceList variant="all" />}
           />
-          <Route path="configuration/*" element={<Configuration />} />
+          <Route
+            path="configuration/*"
+            element={
+              <Configuration extensionUxElements={extensionUxElements} />
+            }
+          />
           <Route
             path="process-models/:process_model_id/form-builder"
             element={<JsonSchemaFormBuilder />}

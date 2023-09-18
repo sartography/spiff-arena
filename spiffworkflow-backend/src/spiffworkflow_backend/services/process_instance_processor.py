@@ -43,6 +43,7 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -91,6 +92,7 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
+JSONDataStore.register_converter(SPIFF_SPEC_CONFIG)
 TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
@@ -401,24 +403,28 @@ class ProcessInstanceProcessor:
         validate_only: bool = False,
         script_engine: PythonScriptEngine | None = None,
         workflow_completed_handler: WorkflowCompletedHandler | None = None,
+        process_id_to_run: str | None = None,
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine
         self._workflow_completed_handler = workflow_completed_handler
         self.setup_processor_with_process_instance(
-            process_instance_model=process_instance_model, validate_only=validate_only
+            process_instance_model=process_instance_model,
+            validate_only=validate_only,
+            process_id_to_run=process_id_to_run,
         )
 
     def setup_processor_with_process_instance(
-        self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
+        self,
+        process_instance_model: ProcessInstanceModel,
+        validate_only: bool = False,
+        process_id_to_run: str | None = None,
     ) -> None:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.process_instance_id = process_instance_model.id
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
-            f"{process_instance_model.process_model_identifier}"
-        )
+        tld.process_model_identifier = f"{process_instance_model.process_model_identifier}"
 
         self.process_instance_model = process_instance_model
         bpmn_process_spec = None
@@ -441,7 +447,7 @@ class ProcessInstanceProcessor:
                 bpmn_process_spec,
                 subprocesses,
             ) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
-                process_instance_model.process_model_identifier
+                process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
             )
 
         self.process_model_identifier = process_instance_model.process_model_identifier
@@ -471,7 +477,9 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def get_process_model_and_subprocesses(
-        cls, process_model_identifier: str
+        cls,
+        process_model_identifier: str,
+        process_id_to_run: str | None = None,
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         process_model_info = ProcessModelService.get_process_model(process_model_identifier)
         if process_model_info is None:
@@ -482,7 +490,7 @@ class ProcessInstanceProcessor:
                 )
             )
         spec_files = FileSystemService.get_files(process_model_info)
-        return cls.get_spec(spec_files, process_model_info)
+        return cls.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
 
     @classmethod
     def get_bpmn_process_instance_from_process_model(cls, process_model_identifier: str) -> BpmnWorkflow:
@@ -1303,10 +1311,14 @@ class ProcessInstanceProcessor:
 
     @staticmethod
     def get_spec(
-        files: list[File], process_model_info: ProcessModelInfo
+        files: list[File],
+        process_model_info: ProcessModelInfo,
+        process_id_to_run: str | None = None,
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided."""
         parser = ProcessInstanceProcessor.get_parser()
+
+        process_id = process_id_to_run or process_model_info.primary_process_id
 
         for file in files:
             data = SpecFileService.get_data(process_model_info, file.name)
@@ -1322,7 +1334,7 @@ class ProcessInstanceProcessor:
                     error_code="invalid_xml",
                     message=f"'{file.name}' is not a valid xml file." + str(xse),
                 ) from xse
-        if process_model_info.primary_process_id is None or process_model_info.primary_process_id == "":
+        if process_id is None or process_id == "":
             raise (
                 ApiError(
                     error_code="no_primary_bpmn_error",
@@ -1332,10 +1344,10 @@ class ProcessInstanceProcessor:
         ProcessInstanceProcessor.update_spiff_parser_with_all_process_dependency_files(parser)
 
         try:
-            bpmn_process_spec = parser.get_spec(process_model_info.primary_process_id)
+            bpmn_process_spec = parser.get_spec(process_id)
 
             # returns a dict of {process_id: bpmn_process_spec}, otherwise known as an IdToBpmnProcessSpecMapping
-            subprocesses = parser.get_subprocess_specs(process_model_info.primary_process_id)
+            subprocesses = parser.get_subprocess_specs(process_id)
         except ValidationException as ve:
             raise ApiError(
                 error_code="process_instance_validation_error",

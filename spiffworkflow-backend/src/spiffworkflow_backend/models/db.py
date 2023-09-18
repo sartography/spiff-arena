@@ -14,6 +14,11 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
+# NOTE: ensure all db models are added to src/spiffworkflow_backend/load_database_models.py so that:
+# 1) they will be loaded in time for add_listeners. otherwise they may not auto-update created_at and updated_at times
+# 2) database migration code picks them up when migrations are automatically generated
+
+
 class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
     __abstract__ = True
 

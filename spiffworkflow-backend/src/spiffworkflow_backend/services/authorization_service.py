@@ -21,6 +21,7 @@ from spiffworkflow_backend.models.permission_assignment import PermissionAssignm
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
@@ -33,6 +34,7 @@ from spiffworkflow_backend.services.authentication_service import TokenNotProvid
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy import text
 
@@ -604,6 +606,8 @@ class AuthorizationService:
             PermissionToAssign(permission="update", target_uri="/authentication/configuration")
         )
 
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/service-accounts"))
+
         return permissions_to_assign
 
     @classmethod
@@ -891,7 +895,15 @@ class AuthorizationService:
         cls, group_permissions: list[GroupPermissionsDict], group_permissions_only: bool = False
     ) -> None:
         """Adds new permission assignments and deletes old ones."""
-        initial_permission_assignments = PermissionAssignmentModel.query.all()
+        initial_permission_assignments = (
+            PermissionAssignmentModel.query.outerjoin(
+                PrincipalModel,
+                and_(PrincipalModel.id == PermissionAssignmentModel.principal_id, PrincipalModel.user_id.is_not(None)),
+            )
+            .outerjoin(UserModel, UserModel.id == PrincipalModel.user_id)
+            .filter(or_(UserModel.id.is_(None), UserModel.service != SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE))  # type: ignore
+            .all()
+        )
         initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
         group_permissions = group_permissions + cls.parse_permissions_yaml_into_group_info()
         added_permissions = cls.add_permissions_from_group_permissions(

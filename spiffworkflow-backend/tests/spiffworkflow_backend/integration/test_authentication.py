@@ -9,6 +9,8 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
+from spiffworkflow_backend.services.service_account_service import ServiceAccountService
+from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -87,3 +89,30 @@ class TestAuthentication(BaseTest):
             assert sorted(group_identifiers) == ["everybody", "group_one"]
             self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
             self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
+
+    def test_does_not_remove_permissions_from_service_accounts_on_refresh(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        service_account = ServiceAccountService.create_service_account("sa_api_key", with_super_admin_user)
+        service_account_permissions_before = sorted(
+            UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
+        )
+
+        # make sure running refresh_permissions doesn't remove the user from the group
+        group_info: list[GroupPermissionsDict] = [
+            {
+                "users": [],
+                "name": "group_one",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+            }
+        ]
+        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+
+        service_account_permissions_after = sorted(
+            UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
+        )
+        assert service_account_permissions_before == service_account_permissions_after

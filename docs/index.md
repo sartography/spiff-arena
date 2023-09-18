@@ -59,9 +59,3 @@ appendices/bpmn_terminology.md
 documentation/documentation.md
 wish_list/wish_list.md
 ```
-
-## Indices and tables
-
-* [](genindex)
-* [](modindex)
-* [](search)

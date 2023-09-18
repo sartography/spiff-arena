@@ -85,7 +85,7 @@ type OwnProps = {
 export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const eventsThatNeedPayload = ['MessageEventDefinition'];
 
@@ -166,20 +166,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (processInstance) {
-      setPageTitle([
-        processInstance.process_model_display_name,
-        `Process Instance ${processInstance.id}`,
-      ]);
-    }
-    return undefined;
-  }, [processInstance]);
-
-  useEffect(() => {
-    if (!permissionsLoaded) {
-      return undefined;
-    }
+  const getActionableTaskList = useCallback(() => {
     const processTaskFailure = (result: any) => {
       setTasksCallHadError(true);
       handleAddErrorInUseEffect(result);
@@ -195,19 +182,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
       setTasks(results);
     };
-    let queryParams = '';
-    const processIdentifier = searchParams.get('process_identifier');
-    if (processIdentifier) {
-      queryParams = `?process_identifier=${processIdentifier}`;
-    }
-    let apiPath = '/process-instances/for-me';
-    if (variant === 'all') {
-      apiPath = '/process-instances';
-    }
-    HttpService.makeCallToBackend({
-      path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
-      successCallback: setProcessInstance,
-    });
     let taskParams = '?most_recent_tasks_only=true';
     if (typeof params.to_task_guid !== 'undefined') {
       taskParams = `${taskParams}&to_task_guid=${params.to_task_guid}`;
@@ -229,18 +203,66 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     } else {
       setTasksCallHadError(true);
     }
-    return undefined;
   }, [
-    targetUris,
-    params,
-    modifiedProcessModelId,
-    permissionsLoaded,
     ability,
+    handleAddErrorInUseEffect,
+    params.to_task_guid,
     searchParams,
     taskListPath,
-    variant,
-    handleAddErrorInUseEffect,
   ]);
+
+  const getProcessInstance = useCallback(() => {
+    let queryParams = '';
+    const processIdentifier = searchParams.get('process_identifier');
+    if (processIdentifier) {
+      queryParams = `?process_identifier=${processIdentifier}`;
+    }
+    let apiPath = '/process-instances/for-me';
+    if (variant === 'all') {
+      apiPath = '/process-instances';
+    }
+    HttpService.makeCallToBackend({
+      path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
+      successCallback: setProcessInstance,
+    });
+  }, [params, modifiedProcessModelId, searchParams, variant]);
+
+  useEffect(() => {
+    if (processInstance) {
+      setPageTitle([
+        processInstance.process_model_display_name,
+        `Process Instance ${processInstance.id}`,
+      ]);
+    }
+    return undefined;
+  }, [processInstance]);
+
+  useEffect(() => {
+    if (!permissionsLoaded) {
+      return undefined;
+    }
+    getProcessInstance();
+    getActionableTaskList();
+
+    if (searchParams.get('tab')) {
+      setSelectedTabIndex(parseInt(searchParams.get('tab') || '0', 10));
+    }
+    return undefined;
+  }, [
+    permissionsLoaded,
+    getActionableTaskList,
+    getProcessInstance,
+    searchParams,
+  ]);
+
+  const updateSearchParams = (value: string, key: string) => {
+    if (value !== undefined) {
+      searchParams.set(key, value);
+    } else {
+      searchParams.delete(key);
+    }
+    setSearchParams(searchParams);
+  };
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
@@ -1378,7 +1400,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const updateSelectedTab = (newTabIndex: any) => {
-    setSelectedTabIndex(newTabIndex.selectedIndex);
+    // this causes the process instance and task list to render again as well
+    // it'd be nice if we could find a way to avoid that
+    updateSearchParams(newTabIndex.selectedIndex, 'tab');
   };
 
   if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {

@@ -342,7 +342,7 @@ export default function ReactFormBuilder({
             }}
             size="sm"
           />
-          <p>The changes you make here will be automatically saved saved to:</p>
+          <p>The changes you make here will be automatically saved to:</p>
           <ul>
             <li>
               {newFileName}
