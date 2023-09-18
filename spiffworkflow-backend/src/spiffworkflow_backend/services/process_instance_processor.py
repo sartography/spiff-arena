@@ -44,6 +44,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from spiffworkflow_backend.data_stores.json import JSONDataStore
+from spiffworkflow_backend.data_stores.json import JSONFileDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -93,6 +94,7 @@ from sqlalchemy import and_
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
 JSONDataStore.register_converter(SPIFF_SPEC_CONFIG)
+JSONFileDataStore.register_converter(SPIFF_SPEC_CONFIG)
 TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:dataStore id="contacts_datastore" name="JSONFileDataStore" />
+  <bpmn:process id="Process_fil0r1s" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_15zp7wu</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_15zp7wu" sourceRef="StartEvent_1" targetRef="Activity_1xf8a34" />
+    <bpmn:endEvent id="Event_1qwgen4">
+      <bpmn:incoming>Flow_0citdoo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_114y4md" sourceRef="Activity_1xf8a34" targetRef="Activity_0t6yb39" />
+    <bpmn:scriptTask id="Activity_1xf8a34">
+      <bpmn:incoming>Flow_15zp7wu</bpmn:incoming>
+      <bpmn:outgoing>Flow_114y4md</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_0qt31ab">
+        <bpmn:targetRef>DataStoreReference_1b40zg5</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:script>contacts_datastore = [
+    {"contact": "Joe Bob", "company": "Some Job", "email": "joebob@email.ai"},
+    {"contact": "Sue Smith", "company": "Some Job", "email": "sue@email.ai", "notes": "Decision Maker\nDoes'nt answer emails."},
+    {"contact": "Some Person", "company": "Another Job", "email": "person@test.com"},
+    {"contact": "Them Person", "company": "Them Company", "email": "them@test.com"},
+]</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:dataStoreReference id="DataStoreReference_1b40zg5" name="Load Contacts" dataStoreRef="contacts_datastore" />
+    <bpmn:sequenceFlow id="Flow_0citdoo" sourceRef="Activity_0t6yb39" targetRef="Event_1qwgen4" />
+    <bpmn:scriptTask id="Activity_0t6yb39">
+      <bpmn:incoming>Flow_114y4md</bpmn:incoming>
+      <bpmn:outgoing>Flow_0citdoo</bpmn:outgoing>
+      <bpmn:property id="Property_1pbyq4i" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_0b9m2aj">
+        <bpmn:sourceRef>DataStoreReference_1nsdav3</bpmn:sourceRef>
+        <bpmn:targetRef>Property_1pbyq4i</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+      <bpmn:script>x = contacts_datastore[1]</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:dataStoreReference id="DataStoreReference_1nsdav3" name="Read Contacts" dataStoreRef="contacts_datastore" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_fil0r1s">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="-428" y="-38" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1qwgen4_di" bpmnElement="Event_1qwgen4">
+        <dc:Bounds x="82" y="-38" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0y1vdup_di" bpmnElement="Activity_1xf8a34">
+        <dc:Bounds x="-220" y="-60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_1b40zg5_di" bpmnElement="DataStoreReference_1b40zg5">
+        <dc:Bounds x="-195" y="145" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1e8abt4_di" bpmnElement="Activity_0t6yb39">
+        <dc:Bounds x="-70" y="-60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_1nsdav3_di" bpmnElement="DataStoreReference_1nsdav3">
+        <dc:Bounds x="-45" y="145" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="-57" y="202" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_15zp7wu_di" bpmnElement="Flow_15zp7wu">
+        <di:waypoint x="-392" y="-20" />
+        <di:waypoint x="-220" y="-20" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_114y4md_di" bpmnElement="Flow_114y4md">
+        <di:waypoint x="-120" y="-20" />
+        <di:waypoint x="-70" y="-20" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0qt31ab_di" bpmnElement="DataOutputAssociation_0qt31ab">
+        <di:waypoint x="-169" y="20" />
+        <di:waypoint x="-166" y="145" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0citdoo_di" bpmnElement="Flow_0citdoo">
+        <di:waypoint x="30" y="-20" />
+        <di:waypoint x="82" y="-20" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_0b9m2aj_di" bpmnElement="DataInputAssociation_0b9m2aj">
+        <di:waypoint x="-20" y="145" />
+        <di:waypoint x="-20" y="20" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
