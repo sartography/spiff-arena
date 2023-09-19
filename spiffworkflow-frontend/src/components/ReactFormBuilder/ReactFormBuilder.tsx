@@ -16,10 +16,35 @@ import {
   Loading,
 } from '@carbon/react';
 import { useDebounce } from 'use-debounce';
+import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
 import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
 import CustomForm from '../CustomForm';
-import ErrorBoundary from '../ErrorBoundary';
+import { Notification } from '../Notification';
+
+type ErrorProps = {
+  error: Error;
+};
+
+function FormErrorFallback({ error }: ErrorProps) {
+  // This is displayed if the ErrorBoundary catches an error when rendering the form.
+  const { resetBoundary } = useErrorBoundary();
+
+  return (
+    <Notification
+      title="Failed to render form. "
+      onClose={() => resetBoundary()}
+      type="error"
+    >
+      <p>
+        The form could not be built with the current schema, UI and data. Please
+        try to correct the issue and try again.
+      </p>
+      <p>{error.message}</p>
+      <Button onClick={resetBoundary}>Try again</Button>
+    </Notification>
+  );
+}
 
 type OwnProps = {
   processModelId: string;
@@ -246,6 +271,7 @@ export default function ReactFormBuilder({
 
   function updateDataFromStr(newDataStr: string) {
     try {
+      setStrFormData(newDataStr);
       const newData = JSON.parse(newDataStr);
       setFormData(newData);
     } catch (e) {
@@ -461,7 +487,7 @@ export default function ReactFormBuilder({
       <Column sm={4} md={5} lg={8}>
         <h2>Form Preview</h2>
         <div className="error_info_small">{errorMessage}</div>
-        <ErrorBoundary>
+        <ErrorBoundary FallbackComponent={FormErrorFallback}>
           <CustomForm
             id="custom_form"
             formData={formData}
