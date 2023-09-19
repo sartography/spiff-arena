@@ -97,7 +97,7 @@ export default function ReactFormBuilder({
         postBody: submission,
       });
     },
-    [processModelId]
+    [processModelId, fileName]
   );
 
   const createFiles = (base: string) => {
