@@ -16,6 +16,7 @@ interface widgetArgs {
   label?: string;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function MarkDownFieldWidget({
   id,
   value,
@@ -40,9 +41,11 @@ export default function MarkDownFieldWidget({
 
   const onChangeLocal = useCallback(
     (newValue: any) => {
-      onChange(newValue);
+      if (!disabled && !readonly) {
+        onChange(newValue);
+      }
     },
-    [onChange]
+    [onChange, disabled, readonly]
   );
 
   let helperText = null;
@@ -61,12 +64,34 @@ export default function MarkDownFieldWidget({
     }
   }
 
+  // cds-- items come from carbon and how it displays helper text and errors.
+  // carbon also removes helper text when error so doing that here as well.
+  // TODO: highlight the MDEditor in some way - we are only showing red text atm.
   return (
-    <MDEditor
-      height={500}
-      highlightEnable={false}
-      value={value}
-      onChange={onChangeLocal}
-    />
+    <div className="with-half-rem-top-margin">
+      <div
+        className="cds--text-input__field-wrapper"
+        data-invalid={invalid}
+        style={{ display: 'inline' }}
+      >
+        <div data-color-mode="light" id={id}>
+          <MDEditor
+            height={500}
+            highlightEnable={false}
+            value={value}
+            onChange={onChangeLocal}
+            autoFocus={autofocus}
+          />
+        </div>
+      </div>
+      <div id={`${id}-error-msg`} className="cds--form-requirement">
+        {errorMessageForField}
+      </div>
+      {invalid ? null : (
+        <div id="root-helper-text" className="cds--form__helper-text">
+          {helperText}
+        </div>
+      )}
+    </div>
   );
 }

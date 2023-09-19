@@ -31,9 +31,9 @@ export default function CustomForm({
   noValidate = false,
 }: OwnProps) {
   const rjsfWidgets = {
-    typeahead: TypeaheadWidget,
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
+    typeahead: TypeaheadWidget,
   };
 
   const formatDateString = (dateString?: string) => {
