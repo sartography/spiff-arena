@@ -6,7 +6,6 @@ import NavigationBar from './components/NavigationBar';
 
 import HomePageRoutes from './routes/HomePageRoutes';
 import About from './routes/About';
-import AdminRoutes from './routes/AdminRoutes';
 
 import ScrollToTop from './components/ScrollToTop';
 import EditorRoutes from './routes/EditorRoutes';
@@ -87,13 +86,17 @@ export default function ContainerForExtensions() {
         <ScrollToTop />
         <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
           <Routes>
-            <Route path="/*" element={<HomePageRoutes />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/tasks/*" element={<HomePageRoutes />} />
             <Route
-              path="/admin/*"
+              path="/*"
               element={
-                <AdminRoutes extensionUxElements={extensionUxElements} />
+                <HomePageRoutes extensionUxElements={extensionUxElements} />
+              }
+            />
+            <Route path="/about" element={<About />} />
+            <Route
+              path="/tasks/*"
+              element={
+                <HomePageRoutes extensionUxElements={extensionUxElements} />
               }
             />
             <Route path="/editor/*" element={<EditorRoutes />} />
