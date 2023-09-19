@@ -17,6 +17,16 @@ paths:
         required: false
         schema:
           type: string
+      - name: process_instance_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: task_guid
+        in: query
+        required: false
+        schema:
+          type: string
     get:
       summary: redirect to open id authentication server
       operationId: spiffworkflow_backend.routes.user.login
@@ -157,6 +167,20 @@ paths:
       responses:
         "500":
           description: The server raises a test error as expected.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /debug/url-info:
+    get:
+      operationId: spiffworkflow_backend.routes.debug_controller.url_info
+      summary: Returns information about the url of the application
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns url info
           content:
             application/json:
               schema:
@@ -1603,6 +1627,41 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /tasks/completed-by-me/{process_instance_id}:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_completed_by_me
+      summary: returns the list of tasks for that the current user has completed
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
   /users/search:
     parameters:
       - name: username_prefix
@@ -2045,6 +2104,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Task"
+
+  /tasks/prepare-form:
+    post:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.prepare_form
+      summary: Pre-processes a form schema, ui schema, and data, useful for previewing a form
+      requestBody:
+        content:
+          application/json:
+            schema:
+               $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: Returns the same data structure provided, but after some replacements.
+          content:
+            application/json:
+              schema:
+                 $ref: "#/components/schemas/Task"
+
 
   /tasks/{process_instance_id}/{task_guid}:
     parameters:
@@ -3376,5 +3455,16 @@ components:
           type: string
           nullable: false
         fiilterable:
+          type: string
+          nullable: false
+
+    ServiceAccountRequest:
+      properties:
+        name:
+          type: string
+          nullable: false
+    ServiceAccountApiKey:
+      properties:
+        api_key:
           type: string
           nullable: false

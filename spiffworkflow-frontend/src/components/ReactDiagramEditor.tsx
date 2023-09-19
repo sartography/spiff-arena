@@ -54,6 +54,7 @@ import TouchModule from 'diagram-js/lib/navigation/touch';
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
+import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -79,11 +80,11 @@ type OwnProps = {
   onLaunchScriptEditor?: (..._args: any[]) => any;
   onLaunchMarkdownEditor?: (..._args: any[]) => any;
   onLaunchBpmnEditor?: (..._args: any[]) => any;
-  onLaunchJsonEditor?: (..._args: any[]) => any;
+  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
   onLaunchDmnEditor?: (..._args: any[]) => any;
   onElementClick?: (..._args: any[]) => any;
   onServiceTasksRequested?: (..._args: any[]) => any;
-  onJsonFilesRequested?: (..._args: any[]) => any;
+  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
@@ -108,11 +109,11 @@ export default function ReactDiagramEditor({
   onLaunchScriptEditor,
   onLaunchMarkdownEditor,
   onLaunchBpmnEditor,
-  onLaunchJsonEditor,
+  onLaunchJsonSchemaEditor,
   onLaunchDmnEditor,
   onElementClick,
   onServiceTasksRequested,
-  onJsonFilesRequested,
+  onJsonSchemaFilesRequested,
   onDmnFilesRequested,
   onSearchProcessModels,
   onElementsChanged,
@@ -189,6 +190,7 @@ export default function ReactDiagramEditor({
           spiffworkflow,
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
+          ZoomScrollModule,
         ],
         moddleExtensions: {
           spiffworkflow: spiffModdleExtension,
@@ -207,6 +209,7 @@ export default function ReactDiagramEditor({
           additionalModules: [
             DmnPropertiesPanelModule,
             DmnPropertiesProviderModule,
+            ZoomScrollModule,
           ],
         },
       });
@@ -293,8 +296,12 @@ export default function ReactDiagramEditor({
     });
 
     diagramModeler.on('spiff.file.edit', (event: any) => {
-      if (onLaunchJsonEditor) {
-        onLaunchJsonEditor(event.value);
+      const { error, element, value, eventBus } = event;
+      if (error) {
+        console.error(error);
+      }
+      if (onLaunchJsonSchemaEditor) {
+        onLaunchJsonSchemaEditor(element, value, eventBus);
       }
     });
 
@@ -323,9 +330,9 @@ export default function ReactDiagramEditor({
       handleServiceTasksRequested(event);
     });
 
-    diagramModeler.on('spiff.json_files.requested', (event: any) => {
-      if (onJsonFilesRequested) {
-        onJsonFilesRequested(event);
+    diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
+      if (onJsonSchemaFilesRequested) {
+        onJsonSchemaFilesRequested(event);
       }
     });
 
@@ -335,7 +342,7 @@ export default function ReactDiagramEditor({
       }
     });
 
-    diagramModeler.on('spiff.json_files.requested', (event: any) => {
+    diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
 
@@ -351,10 +358,10 @@ export default function ReactDiagramEditor({
     onLaunchMarkdownEditor,
     onLaunchBpmnEditor,
     onLaunchDmnEditor,
-    onLaunchJsonEditor,
+    onLaunchJsonSchemaEditor,
     onElementClick,
     onServiceTasksRequested,
-    onJsonFilesRequested,
+    onJsonSchemaFilesRequested,
     onDmnFilesRequested,
     onSearchProcessModels,
     onElementsChanged,
@@ -720,10 +727,67 @@ export default function ReactDiagramEditor({
     return null;
   };
 
+  const zoom = (amount: number) => {
+    if (diagramModelerState) {
+      let modeler = diagramModelerState as any;
+      if (diagramType === 'dmn') {
+        modeler = (diagramModelerState as any).getActiveViewer();
+      }
+      try {
+        if (amount === 0) {
+          const canvas = (modeler as any).get('canvas');
+          canvas.zoom(FitViewport, 'auto');
+        } else {
+          modeler.get('zoomScroll').stepZoom(amount);
+        }
+      } catch (e) {
+        console.log(
+          'zoom failed, certain modes in DMN do not support zooming.',
+          e
+        );
+      }
+    }
+  };
+
+  const diagramControlButtons = () => {
+    return (
+      <div className="diagram-control-buttons">
+        <Button
+          kind="ghost"
+          renderIcon={ZoomIn}
+          iconDescription="Zoom In"
+          hasIconOnly
+          onClick={() => {
+            zoom(1);
+          }}
+        />
+        <Button
+          kind="ghost"
+          renderIcon={ZoomOut}
+          iconDescription="Zoom Out"
+          hasIconOnly
+          onClick={() => {
+            zoom(-1);
+          }}
+        />
+        <Button
+          kind="ghost"
+          renderIcon={ZoomFit}
+          iconDescription="Zoom Fit"
+          hasIconOnly
+          onClick={() => {
+            zoom(0);
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
     <>
       {userActionOptions()}
       {showReferences()}
+      {diagramControlButtons()}
     </>
   );
 }

@@ -58,13 +58,16 @@ class TestOnboarding(BaseTest):
         # Assure no residual process model is left behind if it executes and completes without additinal user tasks
         assert len(ProcessInstanceModel.query.all()) == 0
 
-    def test_persists_if_user_task_encountered(
+    def skip_test_persists_if_user_task_encountered(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
+        """We are moving towards replacing the onboarding with Extensions
+        so disabling this test, and the ability to start a person off on
+        a workflow instantly on arrival."""
         self.set_up_onboarding(client, with_super_admin_user, "onboarding_with_user_task")
         results = client.get(
             "/v1.0/onboarding",

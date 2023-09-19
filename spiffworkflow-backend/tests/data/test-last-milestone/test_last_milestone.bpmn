@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_caw9m9m" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_088o54g</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_088o54g" sourceRef="StartEvent_1" targetRef="milestone_started" />
+    <bpmn:endEvent id="Event_12t9aet">
+      <bpmn:incoming>Flow_062tiay</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_06ih0jm" sourceRef="milestone_started" targetRef="call_activity" />
+    <bpmn:manualTask id="milestone_started">
+      <bpmn:incoming>Flow_088o54g</bpmn:incoming>
+      <bpmn:outgoing>Flow_06ih0jm</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0c0z9vd" sourceRef="call_activity" targetRef="milestone_done_with_call_activity" />
+    <bpmn:callActivity id="call_activity" calledElement="Process_TestLastMilestoneCallActivity">
+      <bpmn:incoming>Flow_06ih0jm</bpmn:incoming>
+      <bpmn:outgoing>Flow_0c0z9vd</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:sequenceFlow id="Flow_062tiay" sourceRef="milestone_done_with_call_activity" targetRef="Event_12t9aet" />
+    <bpmn:manualTask id="milestone_done_with_call_activity">
+      <bpmn:incoming>Flow_0c0z9vd</bpmn:incoming>
+      <bpmn:outgoing>Flow_062tiay</bpmn:outgoing>
+    </bpmn:manualTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_caw9m9m">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ef2bzh_di" bpmnElement="milestone_started">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02y238p_di" bpmnElement="call_activity">
+        <dc:Bounds x="420" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_12t9aet_di" bpmnElement="Event_12t9aet">
+        <dc:Bounds x="672" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10b7ooz_di" bpmnElement="milestone_done_with_call_activity">
+        <dc:Bounds x="540" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_088o54g_di" bpmnElement="Flow_088o54g">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06ih0jm_di" bpmnElement="Flow_06ih0jm">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="420" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0c0z9vd_di" bpmnElement="Flow_0c0z9vd">
+        <di:waypoint x="520" y="177" />
+        <di:waypoint x="540" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_062tiay_di" bpmnElement="Flow_062tiay">
+        <di:waypoint x="640" y="177" />
+        <di:waypoint x="672" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

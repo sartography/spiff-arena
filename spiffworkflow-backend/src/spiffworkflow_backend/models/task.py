@@ -66,6 +66,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
     python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
+    runtime_info: dict | None = db.Column(db.JSON)
     start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
 
@@ -98,6 +99,27 @@ class TaskModel(SpiffworkflowBaseDBModel):
         task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
         return task_model
 
+    # this will redirect to login if the task does not allow guest access.
+    # so if you already completed the task, and you are not signed in, you will get sent to a login page.
+    def allows_guest(self, process_instance_id: int) -> bool:
+        properties_json = self.task_definition.properties_json
+        if (
+            "extensions" in properties_json
+            and "allowGuest" in properties_json["extensions"]
+            and properties_json["extensions"]["allowGuest"] == "true"
+            and self.process_instance_id == int(process_instance_id)
+            and self.state != "COMPLETED"
+        ):
+            return True
+        return False
+
+    @classmethod
+    def task_guid_allows_guest(cls, task_guid: str, process_instance_id: int) -> bool:
+        task_model = cls.query.filter_by(guid=task_guid).first()
+        if task_model is not None and task_model.allows_guest(process_instance_id):
+            return True
+        return False
+
 
 class Task:
     HUMAN_TASK_TYPES = ["User Task", "Manual Task"]
@@ -119,6 +141,7 @@ class Task:
         multi_instance_index: str = "",
         process_identifier: str = "",
         properties: dict | None = None,
+        runtime_info: dict | None = None,
         process_instance_id: int | None = None,
         process_instance_status: str | None = None,
         process_model_display_name: str | None = None,
@@ -275,6 +298,7 @@ class TaskSchema(Schema):
             "form_schema",
             "form_ui_schema",
             "event_definition",
+            "runtime_info",
         ]
 
     multi_instance_type = EnumField(MultiInstanceType)

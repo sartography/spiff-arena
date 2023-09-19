@@ -4,7 +4,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
-import { getProcessModelFullIdentifierFromSearchParams } from '../helpers';
+import {
+  getProcessModelFullIdentifierFromSearchParams,
+  setPageTitle,
+} from '../helpers';
 import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
 
 type OwnProps = {
@@ -13,6 +16,7 @@ type OwnProps = {
 
 export default function ProcessInstanceList({ variant }: OwnProps) {
   const [searchParams] = useSearchParams();
+  setPageTitle(['Process Instances']);
 
   const processInstanceBreadcrumbElement = () => {
     const processModelFullIdentifier =

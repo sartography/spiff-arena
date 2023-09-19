@@ -7,6 +7,8 @@ import {
   TestCaseErrorDetails,
 } from '../interfaces';
 
+const defaultMessageClassName = 'failure-string';
+
 function errorDetailDisplay(
   errorObject: any,
   propertyName: string,
@@ -24,13 +26,21 @@ function errorDetailDisplay(
   return null;
 }
 
+export const errorForDisplayFromString = (errorMessage: string) => {
+  const errorForDisplay: ErrorForDisplay = {
+    message: errorMessage,
+    messageClassName: defaultMessageClassName,
+  };
+  return errorForDisplay;
+};
+
 export const errorForDisplayFromProcessInstanceErrorDetail = (
   processInstanceEvent: ProcessInstanceLogEntry,
   processInstanceErrorEventDetail: ProcessInstanceEventErrorDetail
 ) => {
   const errorForDisplay: ErrorForDisplay = {
     message: processInstanceErrorEventDetail.message,
-    messageClassName: 'failure-string',
+    messageClassName: defaultMessageClassName,
     task_name: processInstanceEvent.task_definition_name,
     task_id: processInstanceEvent.task_definition_identifier,
     line_number: processInstanceErrorEventDetail.task_line_number,
@@ -46,7 +56,7 @@ export const errorForDisplayFromTestCaseErrorDetails = (
 ) => {
   const errorForDisplay: ErrorForDisplay = {
     message: testCaseErrorDetails.error_messages.join('\n'),
-    messageClassName: 'failure-string',
+    messageClassName: defaultMessageClassName,
     task_name: testCaseErrorDetails.task_bpmn_name,
     task_id: testCaseErrorDetails.task_bpmn_identifier,
     line_number: testCaseErrorDetails.task_line_number,

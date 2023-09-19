@@ -1,31 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Button } from '@carbon/react';
 import MDEditor from '@uiw/react-md-editor';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import {
-  ExtensionPostBody,
-  ExtensionUiSchema,
-  ProcessFile,
-  ProcessModel,
-  UiSchemaPageDefinition,
-} from '../interfaces';
+import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
+import {
+  ExtensionPostBody,
+  ExtensionUiSchema,
+  UiSchemaPageDefinition,
+} from '../extension_ui_schema_interfaces';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
+  const [searchParams] = useSearchParams();
 
   const [_processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [formData, setFormData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [processedTaskData, setProcessedTaskData] = useState<any>(null);
-  const [markdownToRender, setMarkdownToRender] = useState<string | null>(null);
+  const [markdownToRenderOnSubmit, setMarkdownToRenderOnSubmit] = useState<
+    string | null
+  >(null);
+  const [markdownToRenderOnLoad, setMarkdownToRenderOnLoad] = useState<
+    string | null
+  >(null);
   const [filesByName] = useState<{
     [key: string]: ProcessFile;
   }>({});
@@ -34,18 +41,16 @@ export default function Extension() {
 
   const { addError, removeError } = useAPIError();
 
-  useEffect(() => {
-    const processExtensionResult = (pm: ProcessModel) => {
-      setProcessModel(pm);
-      let extensionUiSchemaFile: ProcessFile | null = null;
-      pm.files.forEach((file: ProcessFile) => {
-        filesByName[file.name] = file;
-        if (file.name === 'extension_uischema.json') {
-          extensionUiSchemaFile = file;
+  const setConfigsIfDesiredSchemaFile = useCallback(
+    // eslint-disable-next-line sonarjs/cognitive-complexity
+    (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
+      const processLoadResult = (result: any) => {
+        setFormData(result.task_data);
+        if (result.rendered_results_markdown) {
+          setMarkdownToRenderOnLoad(result.rendered_results_markdown);
         }
-      });
+      };
 
-      // typescript is really confused by extensionUiSchemaFile so force it since we are properly checking
       if (
         extensionUiSchemaFile &&
         (extensionUiSchemaFile as ProcessFile).file_contents
@@ -54,28 +59,116 @@ export default function Extension() {
           (extensionUiSchemaFile as any).file_contents
         );
 
-        let routeIdentifier = `/${params.process_model}`;
-        if (params.extension_route) {
-          routeIdentifier = `${routeIdentifier}/${params.extension_route}`;
+        const pageIdentifier = `/${params.page_identifier}`;
+        if (
+          extensionUiSchema.pages &&
+          Object.keys(extensionUiSchema.pages).includes(pageIdentifier)
+        ) {
+          const pageDefinition = extensionUiSchema.pages[pageIdentifier];
+          setUiSchemaPageDefinition(pageDefinition);
+          setProcessModel(pm);
+          pm.files.forEach((file: ProcessFile) => {
+            filesByName[file.name] = file;
+          });
+
+          if (pageDefinition.on_load) {
+            const postBody: ExtensionPostBody = { extension_input: {} };
+            if (pageDefinition.on_load.search_params_to_inject) {
+              pageDefinition.on_load.search_params_to_inject.forEach(
+                (searchParam: string) => {
+                  if (searchParams.get(searchParam) !== undefined) {
+                    postBody.extension_input[searchParam] =
+                      searchParams.get(searchParam);
+                  }
+                }
+              );
+            }
+            postBody.ui_schema_action = pageDefinition.on_load;
+            HttpService.makeCallToBackend({
+              path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
+              successCallback: processLoadResult,
+              httpMethod: 'POST',
+              postBody,
+            });
+          }
         }
-        setUiSchemaPageDefinition(extensionUiSchema.routes[routeIdentifier]);
       }
+    },
+    [
+      targetUris.extensionListPath,
+      params.page_identifier,
+      searchParams,
+      filesByName,
+    ]
+  );
+
+  useEffect(() => {
+    const processExtensionResult = (processModels: ProcessModel[]) => {
+      processModels.forEach((pm: ProcessModel) => {
+        let extensionUiSchemaFile: ProcessFile | null = null;
+        pm.files.forEach((file: ProcessFile) => {
+          if (file.name === 'extension_uischema.json') {
+            extensionUiSchemaFile = file;
+          }
+        });
+        setConfigsIfDesiredSchemaFile(extensionUiSchemaFile, pm);
+      });
     };
 
     HttpService.makeCallToBackend({
-      path: targetUris.extensionPath,
+      path: targetUris.extensionListPath,
       successCallback: processExtensionResult,
     });
-  }, [targetUris.extensionPath, params, filesByName]);
+  }, [
+    setConfigsIfDesiredSchemaFile,
+    targetUris.extensionListPath,
+    targetUris.extensionPath,
+  ]);
 
-  const processSubmitResult = (result: any) => {
-    setProcessedTaskData(result.task_data);
-    if (result.rendered_results_markdown) {
-      setMarkdownToRender(result.rendered_results_markdown);
+  const interpolateNavigationString = (
+    navigationString: string,
+    baseData: any
+  ) => {
+    let isValid = true;
+    const data = { backend_base_url: BACKEND_BASE_URL, ...baseData };
+    const optionString = navigationString.replace(/{(\w+)}/g, (_, k) => {
+      const value = data[k];
+      if (value === undefined) {
+        isValid = false;
+        addError({
+          message: `Could not find a value for ${k} in form data.`,
+        });
+      }
+      return value;
+    });
+    if (!isValid) {
+      return null;
     }
-    setFormButtonsDisabled(false);
+    return optionString;
   };
 
+  const processSubmitResult = (result: any) => {
+    if (
+      uiSchemaPageDefinition &&
+      uiSchemaPageDefinition.navigate_to_on_form_submit
+    ) {
+      const optionString = interpolateNavigationString(
+        uiSchemaPageDefinition.navigate_to_on_form_submit,
+        result.task_data
+      );
+      if (optionString !== null) {
+        window.location.href = optionString;
+      }
+    } else {
+      setProcessedTaskData(result.task_data);
+      if (result.rendered_results_markdown) {
+        setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
+      }
+      setFormButtonsDisabled(false);
+    }
+  };
+
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const handleFormSubmit = (formObject: any, _event: any) => {
     if (formButtonsDisabled) {
       return;
@@ -90,35 +183,30 @@ export default function Extension() {
 
     if (
       uiSchemaPageDefinition &&
-      uiSchemaPageDefinition.navigate_to_on_form_submit
+      uiSchemaPageDefinition.navigate_instead_of_post_to_api
     ) {
-      let isValid = true;
-      const optionString =
-        uiSchemaPageDefinition.navigate_to_on_form_submit.replace(
-          /{(\w+)}/g,
-          (_, k) => {
-            const value = dataToSubmit[k];
-            if (value === undefined) {
-              isValid = false;
-              addError({
-                message: `Could not find a value for ${k} in form data.`,
-              });
-            }
-            return value;
-          }
+      let optionString: string | null = '';
+      if (uiSchemaPageDefinition.navigate_to_on_form_submit) {
+        optionString = interpolateNavigationString(
+          uiSchemaPageDefinition.navigate_to_on_form_submit,
+          dataToSubmit
         );
-      if (!isValid) {
-        return;
+        if (optionString !== null) {
+          window.location.href = optionString;
+          setFormButtonsDisabled(false);
+        }
       }
-      const url = `${BACKEND_BASE_URL}/extensions-get-data/${params.process_model}/${optionString}`;
-      window.location.href = url;
-      setFormButtonsDisabled(false);
     } else {
-      const postBody: ExtensionPostBody = { extension_input: dataToSubmit };
+      let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
-      if (uiSchemaPageDefinition && uiSchemaPageDefinition.api) {
-        apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.api}`;
-        postBody.ui_schema_page_definition = uiSchemaPageDefinition;
+      if (uiSchemaPageDefinition && uiSchemaPageDefinition.on_form_submit) {
+        if (uiSchemaPageDefinition.on_form_submit.full_api_path) {
+          apiPath = `/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+          postBody = dataToSubmit;
+        } else {
+          apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+        }
+        postBody.ui_schema_action = uiSchemaPageDefinition.on_form_submit;
       }
 
       // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
@@ -140,28 +228,43 @@ export default function Extension() {
 
   if (uiSchemaPageDefinition) {
     const componentsToDisplay = [<h1>{uiSchemaPageDefinition.header}</h1>];
+    const markdownContentsToRender = [];
 
     if (uiSchemaPageDefinition.markdown_instruction_filename) {
       const markdownFile =
         filesByName[uiSchemaPageDefinition.markdown_instruction_filename];
 
       if (markdownFile.file_contents) {
-        componentsToDisplay.push(
-          <div data-color-mode="light">
-            <MDEditor.Markdown
-              linkTarget="_blank"
-              source={markdownFile.file_contents}
-            />
-          </div>
-        );
+        markdownContentsToRender.push(markdownFile.file_contents);
       }
     }
+    if (markdownToRenderOnLoad) {
+      markdownContentsToRender.push(markdownToRenderOnLoad);
+    }
 
-    if (uiSchemaPageDefinition.form_schema_filename) {
-      const formSchemaFile =
-        filesByName[uiSchemaPageDefinition.form_schema_filename];
+    let mdEditorLinkTarget: string | undefined = '_blank';
+    if (uiSchemaPageDefinition.open_links_in_new_tab === false) {
+      mdEditorLinkTarget = undefined;
+    }
+
+    if (markdownContentsToRender.length > 0) {
+      componentsToDisplay.push(
+        <div data-color-mode="light" className="with-bottom-margin">
+          <MDEditor.Markdown
+            linkTarget={mdEditorLinkTarget}
+            source={markdownContentsToRender.join('\n')}
+          />
+        </div>
+      );
+    }
+
+    const uiSchemaForm = uiSchemaPageDefinition.form;
+    if (uiSchemaForm) {
+      const formSchemaFile = filesByName[uiSchemaForm.form_schema_filename];
       const formUiSchemaFile =
-        filesByName[uiSchemaPageDefinition.form_ui_schema_filename];
+        filesByName[uiSchemaForm.form_ui_schema_filename];
+      const submitButtonText =
+        uiSchemaForm.form_submit_button_label || 'Submit';
       if (formSchemaFile.file_contents && formUiSchemaFile.file_contents) {
         componentsToDisplay.push(
           <CustomForm
@@ -174,18 +277,26 @@ export default function Extension() {
             onSubmit={handleFormSubmit}
             schema={JSON.parse(formSchemaFile.file_contents)}
             uiSchema={JSON.parse(formUiSchemaFile.file_contents)}
-          />
+          >
+            <Button
+              type="submit"
+              id="submit-button"
+              disabled={formButtonsDisabled}
+            >
+              {submitButtonText}
+            </Button>
+          </CustomForm>
         );
       }
     }
     if (processedTaskData) {
-      if (markdownToRender) {
+      if (markdownToRenderOnSubmit) {
         componentsToDisplay.push(
           <div data-color-mode="light" className="with-top-margin">
             <MDEditor.Markdown
               className="onboarding"
               linkTarget="_blank"
-              source={markdownToRender}
+              source={markdownToRenderOnSubmit}
             />
           </div>
         );
@@ -209,7 +320,12 @@ export default function Extension() {
         );
       }
     }
-    return <div className="fixed-width-container">{componentsToDisplay}</div>;
+    return (
+      <div className="fixed-width-container">
+        <ErrorDisplay />
+        {componentsToDisplay}
+      </div>
+    );
   }
   return null;
 }

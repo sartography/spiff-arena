@@ -7,7 +7,7 @@ import {
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import { modifyProcessIdentifierForPathParam } from '../helpers';
+import { modifyProcessIdentifierForPathParam, setPageTitle } from '../helpers';
 import { CarbonComboBoxSelection, PermissionsToCheck } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -42,6 +42,7 @@ export default function ProcessGroupList() {
       path: `/process-models?per_page=1000&recursive=true&include_parent_groups=true`,
       successCallback: processResultForProcessModels,
     });
+    setPageTitle(['Process Groups']);
   }, [searchParams]);
 
   const processModelSearchArea = () => {

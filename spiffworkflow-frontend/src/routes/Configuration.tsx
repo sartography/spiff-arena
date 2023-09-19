@@ -11,8 +11,16 @@ import AuthenticationList from './AuthenticationList';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import { setPageTitle } from '../helpers';
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
+import ExtensionUxElementForDisplay from '../components/ExtensionUxElementForDisplay';
+import Extension from './Extension';
 
-export default function Configuration() {
+type OwnProps = {
+  extensionUxElements?: UiSchemaUxElement[] | null;
+};
+
+export default function Configuration({ extensionUxElements }: OwnProps) {
   const location = useLocation();
   const { removeError } = useAPIError();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
@@ -29,12 +37,36 @@ export default function Configuration() {
 
   useEffect(() => {
     removeError();
+    setPageTitle(['Configuration']);
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, removeError]);
+
+  const configurationExtensionTab = (
+    uxElement: UiSchemaUxElement,
+    uxElementIndex: number
+  ) => {
+    const navItemPage = `/admin/configuration/extension${uxElement.page}`;
+
+    let pagesToCheck = [uxElement.page];
+    if (
+      uxElement.location_specific_configs &&
+      uxElement.location_specific_configs.highlight_on_tabs
+    ) {
+      pagesToCheck = uxElement.location_specific_configs.highlight_on_tabs;
+    }
+
+    pagesToCheck.forEach((pageToCheck: string) => {
+      const pageToCheckNavItem = `/admin/configuration/extension${pageToCheck}`;
+      if (pageToCheckNavItem === location.pathname) {
+        setSelectedTabIndex(uxElementIndex + 2);
+      }
+    });
+    return <Tab onClick={() => navigate(navItemPage)}>{uxElement.label}</Tab>;
+  };
 
   // wow, if you do not check to see if the permissions are loaded, then in safari,
   // you will get {null} inside the <TabList> which totally explodes carbon (in safari!).
@@ -59,6 +91,11 @@ export default function Configuration() {
               Authentications
             </Tab>
           </Can>
+          <ExtensionUxElementForDisplay
+            displayLocation="configuration_tab_item"
+            elementCallback={configurationExtensionTab}
+            extensionUxElements={extensionUxElements}
+          />
         </TabList>
       </Tabs>
       <br />
@@ -68,6 +105,7 @@ export default function Configuration() {
         <Route path="secrets/new" element={<SecretNew />} />
         <Route path="secrets/:key" element={<SecretShow />} />
         <Route path="authentications" element={<AuthenticationList />} />
+        <Route path="extension/:page_identifier" element={<Extension />} />;
       </Routes>
     </>
   );

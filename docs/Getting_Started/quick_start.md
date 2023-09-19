@@ -9,16 +9,35 @@
 
 ## 🚀 Getting Started with SpiffArena
 
-SpiffArena is a platform that facilitates the execution of business processes. To begin using SpiffArena, you can create your demo account using spiffdemo as explained [here](https://spiff-arena.readthedocs.io/en/latest/UsingSpiffdemo/Getting_Started.html#how-to-login-to-spiffarena). 
+Sartography (the company developing SpiffWorkflow and SpiffArena) is providing users a platform to explore workflow concepts through a collection of examples, diagrams, and workflows. Users can interact with pre-built models, make modifications, and visualize process flows.
 
-Here, we will provide a generic overview of each section step by step, allowing you to navigate and engage with the platform more effectively.
+## How to Login to SpiffArena
+
+```{image} ./images/Login.png
+:alt: Login Screen
+:class: bg-primary mb-1
+:width: 230px
+:align: right 
+``` 
+To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (Currently spiffdemo.org).  
+
+On the login screen, you will find the option to log in using Single Sign-On.  Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.  
+
+
+```{admonition} Note: 
+Stay tuned as we expand our sign-on options beyond Gmail.
+More ways to access SpiffArena are coming your way!
+```
+
+## How to Navigate through SpiffArena
+
+In this section, we will navigate through the platform and provide a generic overview of each section step by step, allowing you to understand and engage with the platform more effectively.
 
 ### Step 1: Explore the Home section
 
 Once you are signed in, you can start exploring the home page. The home page has three tab sections: **In Progress**, **Completed** and **Start New**.  
 
 ![Untitled](images/Untitled_2.png)
-
 
 
 - The "In Progress" section provides an overview of all ongoing process instances, including those initiated by you, those awaiting your action, or those awaiting action from a team you are a member of (Optional).
@@ -142,6 +161,8 @@ Click on the process instance you want to view. This will take you to the proces
 
 By following these steps, you can easily view the steps of the process you initiated and keep track of progress.
 
+
+
 ---
 
 ## 🏷️How to view the Process-defined metadata for a process instance
@@ -204,6 +225,10 @@ Once you are signed in, navigate to the "Process Instances" section. Within the 
 
 ![Untitled](images/Untitled_19.png)
 
+If you are on a homepage, you can navigate to the table you wish to filter. Look for the black funnel icon in the top right-hand corner above the table and click on the Icon: By clicking on the filter icon, you'll be taken to a full-screen process view.
+
+![Filter Icon](images/Filter_icon.png)
+
 ### Step 2: Click on Filter option
 
 To filter the list, click on the "Filter" option. This will expand the filter section where you will be able to provide details about the process instance. This allows you to enter various details, including the process model, start date, end date, and time. To refine your search, you can enter multiple filter parameters.
@@ -249,5 +274,22 @@ A prompt will appear, allowing you to provide a name for the identifier associat
 If you want to filter by ID, go to the "Find by Id" section of the page. Enter the ID and click "Submit". The system will show you the process instance with the corresponding ID.
 
 You can now view the process instances that you filtered for and take appropriate action based on their status. This can help you manage your workflows more efficiently and keep track of the progress of various process instances.
+
+
+
+## How to check Milestones and Events
+
+### Milestones
+A milestone is a specific point in a process that signifies a significant event or state. It provides a high-level overview of the progress made in the process.
+
+In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, start, or end) but give it a name, it becomes a milestone. Essentially, a milestone is an event that hasn't been set to something specific.
+
+
+### Events
+Events provide a detailed log of everything that happens in a process. They record every task and its execution time.
+
+![Events](images/Events.png)
+
+The events tab provides a detailed log of all the tasks and their execution times. It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
 
 

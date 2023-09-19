@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from collections import OrderedDict
 from collections.abc import Generator
 from typing import Any
 from typing import TypedDict
@@ -91,7 +92,10 @@ def task_list_my_tasks(
             process_initiator_user,
             process_initiator_user.id == ProcessInstanceModel.process_initiator_id,
         )
-        .join(HumanTaskUserModel, HumanTaskUserModel.human_task_id == HumanTaskModel.id)
+        .join(
+            HumanTaskUserModel,
+            HumanTaskUserModel.human_task_id == HumanTaskModel.id,
+        )
         .filter(HumanTaskUserModel.user_id == principal.user_id)
         .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
@@ -126,6 +130,31 @@ def task_list_my_tasks(
         func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
         potential_owner_usernames_from_group_concat_or_similar,
     ).paginate(page=page, per_page=per_page, error_out=False)
+
+    response_json = {
+        "results": human_tasks.items,
+        "pagination": {
+            "count": len(human_tasks.items),
+            "total": human_tasks.total,
+            "pages": human_tasks.pages,
+        },
+    }
+
+    return make_response(jsonify(response_json), 200)
+
+
+def task_list_completed_by_me(process_instance_id: int, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    user_id = g.user.id
+
+    human_tasks_query = db.session.query(HumanTaskModel).filter(
+        HumanTaskModel.completed == True,  # noqa: E712
+        HumanTaskModel.completed_by_user_id == user_id,
+        HumanTaskModel.process_instance_id == process_instance_id,
+    )
+
+    human_tasks = human_tasks_query.order_by(desc(HumanTaskModel.id)).paginate(  # type: ignore
+        page=page, per_page=per_page, error_out=False
+    )
 
     response_json = {
         "results": human_tasks.items,
@@ -203,7 +232,9 @@ def task_data_update(
             if json_data_dict is not None:
                 JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
                 ProcessInstanceTmpService.add_event_to_process_instance(
-                    process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
+                    process_instance,
+                    ProcessInstanceEventType.task_data_edited.value,
+                    task_guid=task_guid,
                 )
             try:
                 db.session.commit()
@@ -300,8 +331,37 @@ def task_assign(
     return make_response(jsonify({"ok": True}), 200)
 
 
+def prepare_form(body: dict) -> flask.wrappers.Response:
+    """Does the backend processing of the form schema as it would be done for task_show, including
+    running the form schema through a jinja rendering, hiding fields, and populating lists of options."""
+
+    if "form_schema" not in body:
+        raise ApiError(
+            "missing_form_schema",
+            "The form schema is missing from the request body.",
+        )
+
+    form_schema = body["form_schema"]
+    form_ui = body.get("form_ui", {})
+    task_data = body.get("task_data", {})
+
+    # Run the form schema through the jinja template engine
+    form_string = json.dumps(form_schema)
+    form_string = JinjaService.render_jinja_template(form_string, task_data=task_data)
+    form_dict = OrderedDict(json.loads(form_string))
+    # Update the schema if it, for instance, uses task data to populate an options list.
+    _update_form_schema_with_task_data_as_needed(form_dict, task_data)
+
+    # Hide any fields that are marked as hidden in the task data.
+    _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui, task_data)
+
+    return make_response(jsonify({"form_schema": form_dict, "form_ui": form_ui}), 200)
+
+
 def task_show(
-    process_instance_id: int, task_guid: str = "next", with_form_data: bool = False
+    process_instance_id: int,
+    task_guid: str = "next",
+    with_form_data: bool = False,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
@@ -323,7 +383,11 @@ def task_show(
     try:
         AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
-    except (HumanTaskNotFoundError, UserDoesNotHaveAccessToTaskError, HumanTaskAlreadyCompletedError):
+    except (
+        HumanTaskNotFoundError,
+        UserDoesNotHaveAccessToTaskError,
+        HumanTaskAlreadyCompletedError,
+    ):
         can_complete = False
 
     task_model.process_model_display_name = process_model.display_name
@@ -331,6 +395,7 @@ def task_show(
     task_model.typename = task_definition.typename
     task_model.can_complete = can_complete
     task_model.name_for_display = TaskService.get_name_for_display(task_definition)
+    extensions = TaskService.get_extensions_from_task_model(task_model)
 
     if with_form_data:
         task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
@@ -351,7 +416,6 @@ def task_show(
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
-        extensions = TaskService.get_extensions_from_task_model(task_model)
         task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
             process_instance_id, task_model.guid
         )
@@ -390,8 +454,7 @@ def task_show(
                 process_model_with_form,
             )
 
-            if task_model.data:
-                _update_form_schema_with_task_data_as_needed(form_dict, task_model)
+            _update_form_schema_with_task_data_as_needed(form_dict, task_model.data)
 
             if form_dict:
                 task_model.form_schema = form_dict
@@ -404,10 +467,12 @@ def task_show(
                 )
                 if ui_form_contents:
                     task_model.form_ui_schema = ui_form_contents
-
-            _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
+            else:
+                task_model.form_ui_schema = {}
+            _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model.form_ui_schema, task_model.data)
         JinjaService.render_instructions_for_end_user(task_model, extensions)
-        task_model.extensions = extensions
+
+    task_model.extensions = extensions
 
     return make_response(jsonify(task_model), 200)
 
@@ -422,7 +487,9 @@ def task_submit(
 
 
 def _interstitial_stream(
-    process_instance: ProcessInstanceModel, execute_tasks: bool = True, is_locked: bool = False
+    process_instance: ProcessInstanceModel,
+    execute_tasks: bool = True,
+    is_locked: bool = False,
 ) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
@@ -444,6 +511,7 @@ def _interstitial_stream(
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
     while True:
+        has_ready_tasks = False
         for spiff_task in tasks:
             # ignore the instructions if they are on the EndEvent for the top level process
             if not TaskService.is_main_process_end_event(spiff_task):
@@ -463,30 +531,33 @@ def _interstitial_stream(
                     yield _render_data("task", task)
                     reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
-                # do not do any processing if the instance is not currently active
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield _render_data("unrunnable_instance", process_instance)
-                    return
-                if execute_tasks:
-                    try:
-                        # run_until_user_message does not run tasks with instructions to use one_at_a_time
-                        # to force it to run the task.
-                        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-                        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                        processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                        processor.refresh_waiting_tasks()
+                has_ready_tasks = True
 
-                    except WorkflowTaskException as wfe:
-                        api_error = ApiError.from_workflow_exception(
-                            "engine_steps_error", "Failed to complete an automated task.", exp=wfe
-                        )
-                        yield _render_data("error", api_error)
-                        ErrorHandlingService.handle_error(process_instance, wfe)
-                        return
-                # return if process instance is now complete and let the frontend redirect to show page
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield _render_data("unrunnable_instance", process_instance)
+        if has_ready_tasks:
+            # do not do any processing if the instance is not currently active
+            if process_instance.status not in ProcessInstanceModel.active_statuses():
+                yield _render_data("unrunnable_instance", process_instance)
+                return
+            if execute_tasks:
+                try:
+                    # run_until_user_message does not run tasks with instructions so run readys first
+                    # to force it to run the task.
+                    processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                    processor.refresh_waiting_tasks()
+
+                except WorkflowTaskException as wfe:
+                    api_error = ApiError.from_workflow_exception(
+                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
+                    )
+                    yield _render_data("error", api_error)
+                    ErrorHandlingService.handle_error(process_instance, wfe)
                     return
+            # return if process instance is now complete and let the frontend redirect to show page
+            if process_instance.status not in ProcessInstanceModel.active_statuses():
+                yield _render_data("unrunnable_instance", process_instance)
+                return
 
         # path used by the interstitial page while executing tasks - ie the background processor is not executing them
         ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
@@ -509,7 +580,10 @@ def _interstitial_stream(
             processor = ProcessInstanceProcessor(process_instance)
 
             # if process instance is done or blocked by a human task, then break out
-            if is_locked and process_instance.status not in ["not_started", "waiting"]:
+            if is_locked and process_instance.status not in [
+                "not_started",
+                "waiting",
+            ]:
                 break
 
         tasks = get_reportable_tasks()
@@ -685,7 +759,9 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    processor = ProcessInstanceProcessor(process_instance)
+    processor = ProcessInstanceProcessor(
+        process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+    )
     spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
     AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
 
@@ -730,7 +806,18 @@ def _task_submit_shared(
     )
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-    elif processor.next_task():
+
+    spiff_task_extensions = spiff_task.task_spec.extensions
+    if (
+        "allowGuest" in spiff_task_extensions
+        and spiff_task_extensions["allowGuest"] == "true"
+        and "guestConfirmation" in spiff_task.task_spec.extensions
+    ):
+        return make_response(
+            jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
+        )
+
+    if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
         return make_response(jsonify(task), 200)
 
@@ -893,10 +980,7 @@ def _get_spiff_task_from_process_instance(
 
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
-def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: TaskModel) -> None:
-    if task_model.data is None:
-        return None
-
+def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict) -> None:
     for k, value in in_dict.items():
         if "anyOf" == k:
             # value will look like the array on the right of "anyOf": ["options_from_task_data_var:awesome_options"]
@@ -907,7 +991,7 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                         if first_element_in_value_list.startswith("options_from_task_data_var:"):
                             task_data_var = first_element_in_value_list.replace("options_from_task_data_var:", "")
 
-                            if task_data_var not in task_model.data:
+                            if task_data_var not in task_data:
                                 message = (
                                     "Error building form. Attempting to create a selection list with options from"
                                     f" variable '{task_data_var}' but it doesn't exist in the Task Data."
@@ -918,7 +1002,25 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                                     status_code=500,
                                 )
 
-                            select_options_from_task_data = task_model.data.get(task_data_var)
+                            select_options_from_task_data = task_data.get(task_data_var)
+                            if select_options_from_task_data == []:
+                                raise ApiError(
+                                    error_code="invalid_form_data",
+                                    message=(
+                                        "This form depends on variables, but at least one variable was empty. The"
+                                        f" variable '{task_data_var}' must be a list with at least one element."
+                                    ),
+                                    status_code=500,
+                                )
+                            if isinstance(select_options_from_task_data, str):
+                                raise ApiError(
+                                    error_code="invalid_form_data",
+                                    message=(
+                                        "This form depends on enum variables, but at least one variable was a string."
+                                        f" The variable '{task_data_var}' must be a list with at least one element."
+                                    ),
+                                    status_code=500,
+                                )
                             if isinstance(select_options_from_task_data, list):
                                 if all("value" in d and "label" in d for d in select_options_from_task_data):
 
@@ -932,16 +1034,19 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
                                         }
 
                                     options_for_react_json_schema_form = list(
-                                        map(map_function, select_options_from_task_data)
+                                        map(
+                                            map_function,
+                                            select_options_from_task_data,
+                                        )
                                     )
 
                                     in_dict[k] = options_for_react_json_schema_form
         elif isinstance(value, dict):
-            _update_form_schema_with_task_data_as_needed(value, task_model)
+            _update_form_schema_with_task_data_as_needed(value, task_data)
         elif isinstance(value, list):
             for o in value:
                 if isinstance(o, dict):
-                    _update_form_schema_with_task_data_as_needed(o, task_model)
+                    _update_form_schema_with_task_data_as_needed(o, task_data)
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
@@ -965,7 +1070,9 @@ def _find_human_task_or_raise(
 ) -> HumanTaskModel:
     if only_tasks_that_can_be_completed:
         human_task_query = HumanTaskModel.query.filter_by(
-            process_instance_id=process_instance_id, task_id=task_guid, completed=False
+            process_instance_id=process_instance_id,
+            task_id=task_guid,
+            completed=False,
         )
     else:
         human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_guid)
@@ -985,15 +1092,14 @@ def _find_human_task_or_raise(
     return human_task
 
 
-def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model: TaskModel) -> None:
-    if task_model.form_ui_schema is None:
-        task_model.form_ui_schema = {}
-
-    if task_model.data and "form_ui_hidden_fields" in task_model.data:
-        hidden_fields = task_model.data["form_ui_hidden_fields"]
+def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui_schema: dict | None, task_data: dict) -> None:
+    if form_ui_schema is None:
+        return
+    if task_data and "form_ui_hidden_fields" in task_data:
+        hidden_fields = task_data["form_ui_hidden_fields"]
         for hidden_field in hidden_fields:
             hidden_field_parts = hidden_field.split(".")
-            relevant_depth_of_ui_schema = task_model.form_ui_schema
+            relevant_depth_of_ui_schema = form_ui_schema
             for ii, hidden_field_part in enumerate(hidden_field_parts):
                 if hidden_field_part not in relevant_depth_of_ui_schema:
                     relevant_depth_of_ui_schema[hidden_field_part] = {}

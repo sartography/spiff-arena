@@ -21,6 +21,7 @@ from spiffworkflow_backend.services.process_instance_processor import CustomBpmn
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -100,10 +101,11 @@ def _run_extension(
         process_model = _get_process_model(process_model_identifier)
     except ApiError as ex:
         if ex.error_code == "process_model_cannot_be_found":
+            # if process_model_identifier.startswith(current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"])
             raise ApiError(
                 error_code="invalid_process_model_extension",
                 message=(
-                    f"Process Model '{process_model_identifier}' cannot be run as an extension. It must be in the"
+                    f"Process Model '{process_model_identifier}' could not be found as an extension. It must be in the"
                     " correct Process Group:"
                     f" {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
                 ),
@@ -121,25 +123,37 @@ def _run_extension(
             status_code=400,
         )
 
-    ui_schema_page_definition = None
-    if body and "ui_schema_page_definition" in body:
-        ui_schema_page_definition = body["ui_schema_page_definition"]
+    ui_schema_action = None
+    persistence_level = "none"
+    process_id_to_run = None
+    if body and "ui_schema_action" in body:
+        ui_schema_action = body["ui_schema_action"]
+        persistence_level = ui_schema_action.get("persistence_level", "none")
+        process_id_to_run = ui_schema_action.get("process_id_to_run", None)
 
-    process_instance = ProcessInstanceModel(
-        status=ProcessInstanceStatus.not_started.value,
-        process_initiator_id=g.user.id,
-        process_model_identifier=process_model.id,
-        process_model_display_name=process_model.display_name,
-        persistence_level="none",
-    )
+    process_instance = None
+    if persistence_level == "none":
+        process_instance = ProcessInstanceModel(
+            status=ProcessInstanceStatus.not_started.value,
+            process_initiator_id=g.user.id,
+            process_model_identifier=process_model.id,
+            process_model_display_name=process_model.display_name,
+            persistence_level=persistence_level,
+        )
+    else:
+        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model_identifier, g.user
+        )
 
     processor = None
     try:
         processor = ProcessInstanceProcessor(
-            process_instance, script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False)
+            process_instance,
+            script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
+            process_id_to_run=process_id_to_run,
         )
         if body and "extension_input" in body:
-            processor.do_engine_steps(save=False, execution_strategy_name="one_at_a_time")
+            processor.do_engine_steps(save=False, execution_strategy_name="run_current_ready_tasks")
             next_task = processor.next_task()
             next_task.update_data(body["extension_input"])
         processor.do_engine_steps(save=False, execution_strategy_name="greedy")
@@ -157,12 +171,13 @@ def _run_extension(
         # we need to recurse through all last tasks if the last task is a call activity or subprocess.
         if processor is not None:
             task = processor.bpmn_process_instance.last_task
-            raise ApiError.from_task(
-                error_code="unknown_exception",
-                message=f"An unknown error occurred. Original error: {e}",
-                status_code=400,
-                task=task,
-            ) from e
+            if task is not None:
+                raise ApiError.from_task(
+                    error_code="unknown_exception",
+                    message=f"An unknown error occurred. Original error: {e}",
+                    status_code=400,
+                    task=task,
+                ) from e
         raise e
 
     task_data = {}
@@ -170,10 +185,10 @@ def _run_extension(
         task_data = processor.get_data()
     result: dict[str, Any] = {"task_data": task_data}
 
-    if ui_schema_page_definition:
-        if "results_markdown_filename" in ui_schema_page_definition:
+    if ui_schema_action:
+        if "results_markdown_filename" in ui_schema_action:
             file_contents = SpecFileService.get_data(
-                process_model, ui_schema_page_definition["results_markdown_filename"]
+                process_model, ui_schema_action["results_markdown_filename"]
             ).decode("utf-8")
             form_contents = JinjaService.render_jinja_template(file_contents, task_data=task_data)
             result["rendered_results_markdown"] = form_contents

@@ -82,11 +82,20 @@ from spiffworkflow_backend.models.process_model_cycle import (
 from spiffworkflow_backend.models.typeahead import (
     TypeaheadModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.json_data_store import (
+    JSONDataStoreModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.task_draft_data import (
     TaskDraftDataModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.configuration import (
     ConfigurationModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.user_property import (
+    UserPropertyModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.service_account import (
+    ServiceAccountModel,
 )  # noqa: F401
 
 add_listeners()

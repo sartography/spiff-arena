@@ -21,6 +21,7 @@ import {
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
+  ObjectWithStringKeysAndValues,
   PermissionsToCheck,
   ProcessInstanceEventErrorDetail,
   ProcessInstanceLogEntry,
@@ -46,7 +47,9 @@ export default function ProcessInstanceLogList({
   processInstanceId,
 }: OwnProps) {
   const [clearAll, setClearAll] = useState<boolean>(false);
-  const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
+  const [processInstanceLogs, setProcessInstanceLogs] = useState<
+    ProcessInstanceLogEntry[]
+  >([]);
   const [pagination, setPagination] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -69,8 +72,6 @@ export default function ProcessInstanceLogList({
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
   const randomNumberBetween0and1 = Math.random();
 
-  searchParams.set('events', isEventsView ? 'true' : 'false');
-
   let shouldDisplayClearButton = false;
   if (randomNumberBetween0and1 < 0.05) {
     // 5% chance of being here
@@ -85,20 +86,29 @@ export default function ProcessInstanceLogList({
   const tableType = isEventsView ? 'events' : 'milestones';
   const paginationQueryParamPrefix = `log-list-${tableType}`;
 
-  const updateSearchParams = (value: string, key: string) => {
-    if (value) {
-      searchParams.set(key, value);
-    } else {
-      searchParams.delete(key);
-    }
+  const updateSearchParams = (newValues: ObjectWithStringKeysAndValues) => {
+    Object.keys(newValues).forEach((key: string) => {
+      const value = newValues[key];
+      if (value === undefined || value === null) {
+        searchParams.delete(key);
+      } else {
+        searchParams.set(key, value);
+      }
+    });
     setSearchParams(searchParams);
+  };
+
+  const updateFilterValue = (value: string, key: string) => {
+    const newValues: ObjectWithStringKeysAndValues = {};
+    newValues[`${paginationQueryParamPrefix}_page`] = '1';
+    newValues[key] = value;
+    updateSearchParams(newValues);
   };
 
   useEffect(() => {
     // Clear out any previous results to avoid a "flicker" effect where columns
     // are updated above the incorrect data.
     setProcessInstanceLogs([]);
-    // setPagination(null);
 
     const setProcessInstanceLogListFromResult = (result: any) => {
       setProcessInstanceLogs(result.results);
@@ -106,7 +116,6 @@ export default function ProcessInstanceLogList({
     };
 
     const searchParamsToInclude = [
-      'events',
       'bpmn_name',
       'bpmn_identifier',
       'task_type',
@@ -124,10 +133,12 @@ export default function ProcessInstanceLogList({
       paginationQueryParamPrefix
     );
 
+    const eventsQueryParam = isEventsView ? 'true' : 'false';
+
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
         pickedSearchParams
-      )}&page=${page}&per_page=${perPage}`,
+      )}&page=${page}&per_page=${perPage}&events=${eventsQueryParam}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
 
@@ -391,7 +402,7 @@ export default function ProcessInstanceLogList({
       <Column md={4}>
         <ComboBox
           onChange={(value: any) => {
-            updateSearchParams(value.selectedItem, 'bpmn_name');
+            updateFilterValue(value.selectedItem, 'bpmn_name');
           }}
           id="task-name-filter"
           data-qa="task-type-select"
@@ -413,7 +424,7 @@ export default function ProcessInstanceLogList({
           <Column md={4}>
             <ComboBox
               onChange={(value: any) => {
-                updateSearchParams(value.selectedItem, 'bpmn_identifier');
+                updateFilterValue(value.selectedItem, 'bpmn_identifier');
               }}
               id="task-identifier-filter"
               data-qa="task-type-select"
@@ -430,7 +441,7 @@ export default function ProcessInstanceLogList({
           <Column md={4}>
             <ComboBox
               onChange={(value: any) => {
-                updateSearchParams(value.selectedItem, 'task_type');
+                updateFilterValue(value.selectedItem, 'task_type');
               }}
               id="task-type-select"
               data-qa="task-type-select"
@@ -447,7 +458,7 @@ export default function ProcessInstanceLogList({
           <Column md={4}>
             <ComboBox
               onChange={(value: any) => {
-                updateSearchParams(value.selectedItem, 'event_type');
+                updateFilterValue(value.selectedItem, 'event_type');
               }}
               id="event-type-select"
               data-qa="event-type-select"
@@ -496,7 +507,12 @@ export default function ProcessInstanceLogList({
     );
   };
 
-  const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+  const { page, perPage } = getPageInfoFromSearchParams(
+    searchParams,
+    undefined,
+    undefined,
+    paginationQueryParamPrefix
+  );
   if (clearAll) {
     return <p>Page cleared 👍</p>;
   }

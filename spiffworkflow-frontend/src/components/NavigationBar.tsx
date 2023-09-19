@@ -24,20 +24,20 @@ import { Can } from '@casl/react';
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import {
-  PermissionsToCheck,
-  ProcessModel,
-  ProcessFile,
-  ExtensionUiSchema,
-  UiSchemaNavItem,
-} from '../interfaces';
+import { PermissionsToCheck } from '../interfaces';
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import HttpService, { UnauthenticatedError } from '../services/HttpService';
+import { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { slugifyString } from '../helpers';
+import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 
-export default function NavigationBar() {
+type OwnProps = {
+  extensionUxElements?: UiSchemaUxElement[] | null;
+};
+
+export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const handleLogout = () => {
     UserService.doLogout();
   };
@@ -48,9 +48,6 @@ export default function NavigationBar() {
 
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
-  const [extensionNavigationItems, setExtensionNavigationItems] = useState<
-    UiSchemaNavItem[] | null
-  >(null);
 
   const { targetUris } = useUriListForPermissions();
 
@@ -63,6 +60,9 @@ export default function NavigationBar() {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.secretListPath]: ['GET'],
     [targetUris.dataStoreListPath]: ['GET'],
+    [targetUris.extensionListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
+    [targetUris.processGroupListPath]: ['GET'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
@@ -97,41 +97,6 @@ export default function NavigationBar() {
     setActiveKey(newActiveKey);
   }, [location]);
 
-  useEffect(() => {
-    const processExtensionResult = (processModels: ProcessModel[]) => {
-      const eni: UiSchemaNavItem[] = processModels
-        .map((processModel: ProcessModel) => {
-          const extensionUiSchemaFile = processModel.files.find(
-            (file: ProcessFile) => file.name === 'extension_uischema.json'
-          );
-          if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
-            try {
-              const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-                extensionUiSchemaFile.file_contents
-              );
-              if (extensionUiSchema.navigation_items) {
-                return extensionUiSchema.navigation_items;
-              }
-            } catch (jsonParseError: any) {
-              console.error(
-                `Unable to get navigation items for ${processModel.id}`
-              );
-            }
-          }
-          return [] as UiSchemaNavItem[];
-        })
-        .flat();
-      if (eni) {
-        setExtensionNavigationItems(eni);
-      }
-    };
-
-    HttpService.makeCallToBackend({
-      path: targetUris.extensionListPath,
-      successCallback: processExtensionResult,
-    });
-  }, [targetUris.extensionListPath]);
-
   const isActivePage = (menuItemPath: string) => {
     return activeKey === menuItemPath;
   };
@@ -144,6 +109,11 @@ export default function NavigationBar() {
 
   const userEmail = UserService.getUserEmail();
   const username = UserService.getPreferredUsername();
+
+  const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
+    const navItemPage = `/extensions${uxElement.page}`;
+    return <a href={navItemPage}>{uxElement.label}</a>;
+  };
 
   const profileToggletip = (
     <div style={{ display: 'flex' }} id="user-profile-toggletip">
@@ -165,6 +135,11 @@ export default function NavigationBar() {
           <a target="_blank" href={documentationUrl} rel="noreferrer">
             Documentation
           </a>
+          <ExtensionUxElementForDisplay
+            displayLocation="user_profile_item"
+            elementCallback={extensionUserProfileElement}
+            extensionUxElements={extensionUxElements}
+          />
           {!UserService.authenticationDisabled() ? (
             <>
               <hr />
@@ -246,27 +221,21 @@ export default function NavigationBar() {
     );
   };
 
-  const extensionNavigationElements = () => {
-    if (!extensionNavigationItems) {
-      return null;
+  const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
+    const navItemPage = `/extensions${uxElement.page}`;
+    const regexp = new RegExp(`^${navItemPage}$`);
+    if (regexp.test(location.pathname)) {
+      setActiveKey(navItemPage);
     }
-
-    return extensionNavigationItems.map((navItem: UiSchemaNavItem) => {
-      const navItemRoute = `/extensions${navItem.route}`;
-      const regexp = new RegExp(`^${navItemRoute}`);
-      if (regexp.test(location.pathname)) {
-        setActiveKey(navItemRoute);
-      }
-      return (
-        <HeaderMenuItem
-          href={navItemRoute}
-          isCurrentPage={isActivePage(navItemRoute)}
-          data-qa={`extension-${slugifyString(navItem.label)}`}
-        >
-          {navItem.label}
-        </HeaderMenuItem>
-      );
-    });
+    return (
+      <HeaderMenuItem
+        href={navItemPage}
+        isCurrentPage={isActivePage(navItemPage)}
+        data-qa={`extension-${slugifyString(uxElement.label)}`}
+      >
+        {uxElement.label}
+      </HeaderMenuItem>
+    );
   };
 
   const headerMenuItems = () => {
@@ -278,19 +247,27 @@ export default function NavigationBar() {
         <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
           Home
         </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/process-groups"
-          isCurrentPage={isActivePage('/admin/process-groups')}
-          data-qa="header-nav-processes"
+        <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
+          <HeaderMenuItem
+            href="/admin/process-groups"
+            isCurrentPage={isActivePage('/admin/process-groups')}
+            data-qa="header-nav-processes"
+          >
+            Processes
+          </HeaderMenuItem>
+        </Can>
+        <Can
+          I="POST"
+          a={targetUris.processInstanceListForMePath}
+          ability={ability}
         >
-          Processes
-        </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/process-instances"
-          isCurrentPage={isActivePage('/admin/process-instances')}
-        >
-          Process Instances
-        </HeaderMenuItem>
+          <HeaderMenuItem
+            href="/admin/process-instances"
+            isCurrentPage={isActivePage('/admin/process-instances')}
+          >
+            Process Instances
+          </HeaderMenuItem>
+        </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
           <HeaderMenuItem
             href="/admin/messages"
@@ -308,12 +285,16 @@ export default function NavigationBar() {
           </HeaderMenuItem>
         </Can>
         {configurationElement()}
-        {extensionNavigationElements()}
+        <ExtensionUxElementForDisplay
+          displayLocation="header_menu_item"
+          elementCallback={extensionHeaderMenuItemElement}
+          extensionUxElements={extensionUxElements}
+        />
       </>
     );
   };
 
-  if (activeKey && ability) {
+  if (activeKey && ability && !UserService.onlyGuestTaskCompletion()) {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (

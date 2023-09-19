@@ -208,8 +208,10 @@ class TaskService:
             task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
         # let failed tasks raise and we will log the event then
-        if task_model.state == "COMPLETED":
+        if task_model.state in ["COMPLETED", "CANCELLED"]:
             event_type = ProcessInstanceEventType.task_completed.value
+            if task_model.state == "CANCELLED":
+                event_type = ProcessInstanceEventType.task_cancelled.value
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
             (
                 process_instance_event,
@@ -258,7 +260,9 @@ class TaskService:
         This will NOT update start_in_seconds or end_in_seconds.
         It also returns the relating json_data object so they can be imported later.
         """
+
         new_properties_json = self.serializer.task_to_dict(spiff_task)
+
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
         spiff_task_data = new_properties_json.pop("data")
@@ -275,6 +279,7 @@ class TaskService:
             self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
         if python_env_dict is not None:
             self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
+        task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
     def find_or_create_task_model_from_spiff_task(
         self,
@@ -371,7 +376,13 @@ class TaskService:
             if top_level_process is not None:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent = top_level_process
-                for subprocess_guid, subprocess in subprocesses.items():
+
+                # BpmnWorkflows do not know their own guid so we have to cycle through subprocesses to find the guid that matches
+                # calling list(subprocesses) to make a copy of the keys so we can change subprocesses while iterating
+                # changing subprocesses happens when running parallel tests
+                # for reasons we do not understand. https://stackoverflow.com/a/11941855/6090676
+                for subprocess_guid in list(subprocesses):
+                    subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
                         direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
                             guid=str(subprocess_guid)

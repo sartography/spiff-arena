@@ -13,6 +13,7 @@ type OwnProps = {
   renderIcon?: boolean;
   iconDescription?: string | null;
   hasIconOnly?: boolean;
+  classNameForModal?: string;
 };
 
 export default function ButtonWithConfirmation({
@@ -26,6 +27,7 @@ export default function ButtonWithConfirmation({
   renderIcon = false,
   iconDescription = null,
   hasIconOnly = false,
+  classNameForModal,
 }: OwnProps) {
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);
 
@@ -54,6 +56,7 @@ export default function ButtonWithConfirmation({
         onSecondarySubmit={handleConfirmationPromptCancel}
         onRequestSubmit={handleConfirmation}
         onRequestClose={handleConfirmationPromptCancel}
+        className={classNameForModal}
       />
     );
   };

@@ -4,6 +4,7 @@ import { Form } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
+import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 
 type OwnProps = {
   id: string;
@@ -30,8 +31,9 @@ export default function CustomForm({
   noValidate = false,
 }: OwnProps) {
   const rjsfWidgets = {
-    typeahead: TypeaheadWidget,
     'date-range': DateRangePickerWidget,
+    markdown: MarkDownFieldWidget,
+    typeahead: TypeaheadWidget,
   };
 
   const formatDateString = (dateString?: string) => {
@@ -142,7 +144,29 @@ export default function CustomForm({
     }
   };
 
-  const getFieldsWithDateValidations = (
+  // a required boolean field (checkbox) with default value of false
+  // will not automatically fail validation. only undefined values will
+  // trigger the validation by default so force it. this is to support things
+  // like "I have read the EULA" type checkbox on a form.
+  const checkBooleanField = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    jsonSchema: any
+  ) => {
+    if (
+      jsonSchema.required &&
+      jsonSchema.required.includes(propertyKey) &&
+      formDataToCheck[propertyKey] !== true
+    ) {
+      // keep this error the same as the default message
+      errors[propertyKey].addError(
+        `must have required property '${propertyKey}'`
+      );
+    }
+  };
+
+  const checkFieldsWithCustomValidations = (
     jsonSchema: any,
     formDataToCheck: any,
     errors: any
@@ -166,6 +190,15 @@ export default function CustomForm({
           );
         }
 
+        if (propertyMetadata.type === 'boolean') {
+          checkBooleanField(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse
+          );
+        }
+
         // recurse through all nested properties as well
         let formDataToSend = formDataToCheck[propertyKey];
         if (formDataToSend) {
@@ -177,7 +210,11 @@ export default function CustomForm({
             if (index in errorsToSend) {
               errorsToSend = errorsToSend[index];
             }
-            getFieldsWithDateValidations(propertyMetadata, item, errorsToSend);
+            checkFieldsWithCustomValidations(
+              propertyMetadata,
+              item,
+              errorsToSend
+            );
           });
         }
       });
@@ -186,7 +223,7 @@ export default function CustomForm({
   };
 
   const customValidate = (formDataToCheck: any, errors: any) => {
-    return getFieldsWithDateValidations(schema, formDataToCheck, errors);
+    return checkFieldsWithCustomValidations(schema, formDataToCheck, errors);
   };
 
   return (
