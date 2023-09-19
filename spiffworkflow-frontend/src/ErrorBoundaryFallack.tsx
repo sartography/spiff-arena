@@ -1,7 +1,7 @@
-import { Content } from '@carbon/react';
+import { Button, Content } from '@carbon/react';
 import { Routes, Route } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
 import NavigationBar from './components/NavigationBar';
 
 import HomePageRoutes from './routes/HomePageRoutes';
@@ -19,7 +19,31 @@ import {
   UiSchemaUxElement,
 } from './extension_ui_schema_interfaces';
 import HttpService from './services/HttpService';
-import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
+import { Notification } from './components/Notification';
+
+type ErrorProps = {
+  error: Error;
+};
+
+export function ErrorBoundaryFallback({ error }: ErrorProps) {
+  // This is displayed if the ErrorBoundary catches an error when rendering the form.
+  const { resetBoundary } = useErrorBoundary();
+
+  return (
+    <Notification
+      title="Something Went Wrong. "
+      onClose={() => resetBoundary()}
+      type="error"
+    >
+      <p>
+        We encountered an unexpected error. Please try again. If the problem
+        persists, please contact your administrator.
+      </p>
+      <p>{error.message}</p>
+      <Button onClick={resetBoundary}>Try again</Button>
+    </Notification>
+  );
+}
 
 export default function ContainerForExtensions() {
   const [extensionUxElements, setExtensionNavigationItems] = useState<
@@ -85,7 +109,7 @@ export default function ContainerForExtensions() {
       <NavigationBar extensionUxElements={extensionUxElements} />
       <Content className={contentClassName}>
         <ScrollToTop />
-        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+        <ErrorBoundary fallback={<h1>Something went wrong.</h1>}>
           <Routes>
             <Route path="/*" element={<HomePageRoutes />} />
             <Route path="/about" element={<About />} />
