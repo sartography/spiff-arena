@@ -188,9 +188,7 @@ export default function ProcessGroupShow() {
               a={targetUris.processModelCreatePath}
               ability={ability}
             >
-              <Button
-                href={`/process-models/${modifiedProcessGroupId}/new`}
-              >
+              <Button href={`/process-models/${modifiedProcessGroupId}/new`}>
                 Add a process model
               </Button>
             </Can>

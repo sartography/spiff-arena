@@ -21,6 +21,7 @@ import {
   StopOutline,
   TrashCan,
   Warning,
+  Link as LinkIcon,
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -475,6 +476,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const copyProcessInstanceShortLink = () => {
+    if (processInstance) {
+      const piShortLink = `${window.location.origin}/i/${processInstance.id}`;
+      navigator.clipboard.writeText(piShortLink);
+    }
+  };
+
   const terminateButton = () => {
     if (
       processInstance &&
@@ -516,6 +524,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
     return <div />;
+  };
+
+  const copyProcessInstanceShortLinkButton = () => {
+    return (
+      <Button
+        onClick={copyProcessInstanceShortLink}
+        kind="ghost"
+        renderIcon={LinkIcon}
+        iconDescription="Copy Short Link"
+        hasIconOnly
+        size="lg"
+      />
+    );
   };
 
   const resumeButton = () => {
@@ -1314,6 +1335,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
     const elements = [];
+    elements.push(copyProcessInstanceShortLinkButton());
     if (ability.can('POST', `${targetUris.processInstanceTerminatePath}`)) {
       elements.push(terminateButton());
     }

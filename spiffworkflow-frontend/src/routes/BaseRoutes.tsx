@@ -8,6 +8,7 @@ import ProcessGroupRoutes from './ProcessGroupRoutes';
 import ProcessModelRoutes from './ProcessModelRoutes';
 import ProcessInstanceRoutes from './ProcessInstanceRoutes';
 import ErrorDisplay from '../components/ErrorDisplay';
+import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -23,6 +24,10 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
         <Route path="process-groups/*" element={<ProcessGroupRoutes />} />
         <Route path="process-models/*" element={<ProcessModelRoutes />} />
         <Route path="process-instances/*" element={<ProcessInstanceRoutes />} />
+        <Route
+          path="i/:process_instance_id"
+          element={<ProcessInstanceShortLink />}
+        />
         <Route
           path="configuration/*"
           element={<Configuration extensionUxElements={extensionUxElements} />}

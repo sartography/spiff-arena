@@ -204,9 +204,7 @@ export default function ProcessModelShow() {
 
   const navigateToProcessModels = (_result: any) => {
     navigate(
-      `/process-groups/${getGroupFromModifiedModelId(
-        modifiedProcessModelId
-      )}`
+      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`
     );
   };
 
