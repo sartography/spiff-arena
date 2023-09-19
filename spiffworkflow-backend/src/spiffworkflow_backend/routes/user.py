@@ -62,7 +62,6 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
 
     user_model = None
     if token_info["token"] is not None:
-        # import pdb; pdb.set_trace()
         user_model = _get_user_model_from_token(token_info["token"])
     elif token_info["api_key"] is not None:
         user_model = _get_user_model_from_api_key(token_info["api_key"])
@@ -71,7 +70,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
         g.user = user_model
 
     # If the user is valid, store the token for this session
-    if g.user:
+    if hasattr(g, "user") and g.user:
         if token_info["token"]:
             # This is an id token, so we don't have a refresh token yet
             g.token = token_info["token"]
