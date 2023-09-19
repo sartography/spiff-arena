@@ -444,13 +444,13 @@ class TestProcessInstanceProcessor(BaseTest):
 
 #        processor = ProcessInstanceProcessor(process_instance)
         for i in range(0, 10):
-#            process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+            process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
             processor.do_engine_steps(save=True)
-#            human_task_one = process_instance.active_human_tasks[0]
-#            spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-            spiff_manual_task = processor.bpmn_process_instance.get_tasks(state=TaskState.READY)[0]
-            spiff_manual_task.run()
-#            ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, with_super_admin_user, human_task_one)
+            human_task_one = process_instance.active_human_tasks[0]
+            spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+#            spiff_manual_task = processor.bpmn_process_instance.get_tasks(state=TaskState.READY)[0]
+#            spiff_manual_task.run()
+            ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, with_super_admin_user, human_task_one)
 
 
 
