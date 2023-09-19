@@ -115,7 +115,7 @@ export default function ContainerForExtensions() {
             <Route path="/about" element={<About />} />
             <Route path="/tasks/*" element={<HomePageRoutes />} />
             <Route
-              path="/admin/*"
+              path="/*"
               element={
                 <AdminRoutes extensionUxElements={extensionUxElements} />
               }

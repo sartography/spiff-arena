@@ -151,12 +151,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
-      `/admin/process-instances?process_model_identifier=${unModifiedProcessModelId}`
+      `/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
 
-  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  const processInstanceShowPageBaseUrlAllVariant = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  const processInstanceShowPageBaseUrlAllVariant = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
   }
@@ -427,7 +427,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <dd>
                 <Link
                   data-qa="go-to-current-diagram-process-model"
-                  to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  to={`/process-models/${modifyProcessIdentifierForPathParam(
                     processInstance.process_model_with_diagram_identifier || ''
                   )}`}
                 >

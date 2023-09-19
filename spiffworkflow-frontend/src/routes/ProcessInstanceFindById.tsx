@@ -16,7 +16,7 @@ export default function ProcessInstanceFindById() {
 
   const handleProcessInstanceNavigation = (result: any) => {
     const processInstance: ProcessInstance = result.process_instance;
-    let path = '/admin/process-instances/';
+    let path = '/process-instances/';
     if (result.uri_type === 'for-me') {
       path += 'for-me/';
     }

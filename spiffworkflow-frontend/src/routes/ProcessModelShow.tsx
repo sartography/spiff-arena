@@ -113,7 +113,7 @@ export default function ProcessModelShow() {
           onClose={() => setProcessInstance(null)}
         >
           <Link
-            to={`/admin/process-instances/for-me/${modifiedProcessModelId}/${processInstance.id}`}
+            to={`/process-instances/for-me/${modifiedProcessModelId}/${processInstance.id}`}
             data-qa="process-instance-show-link"
           >
             view
@@ -196,7 +196,7 @@ export default function ProcessModelShow() {
         return `/editor/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
       }
       if (processModelFile.name.match(/\.(json|md)$/)) {
-        return `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
+        return `/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
       }
     }
     return null;
@@ -204,7 +204,7 @@ export default function ProcessModelShow() {
 
   const navigateToProcessModels = (_result: any) => {
     navigate(
-      `/admin/process-groups/${getGroupFromModifiedModelId(
+      `/process-groups/${getGroupFromModifiedModelId(
         modifiedProcessModelId
       )}`
     );
@@ -546,11 +546,11 @@ export default function ProcessModelShow() {
             );
           } else if (a.selectedItem.text === 'New JSON File') {
             navigate(
-              `/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`
+              `/process-models/${modifiedProcessModelId}/form?file_ext=json`
             );
           } else if (a.selectedItem.text === 'New Markdown File') {
             navigate(
-              `/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`
+              `/process-models/${modifiedProcessModelId}/form?file_ext=md`
             );
           } else {
             console.log('a.selectedItem.text', a.selectedItem.text);
@@ -665,7 +665,7 @@ export default function ProcessModelShow() {
               renderIcon={Edit}
               iconDescription="Edit Process Model"
               hasIconOnly
-              href={`/admin/process-models/${modifiedProcessModelId}/edit`}
+              href={`/process-models/${modifiedProcessModelId}/edit`}
             >
               Edit process model
             </Button>

@@ -23,11 +23,11 @@ export default function ProcessInstanceReportEdit() {
   const [filterBy, setFilterBy] = useState('');
 
   const navigateToProcessInstanceReport = (_result: any) => {
-    navigate(`/admin/process-instances/reports/${params.report_identifier}`);
+    navigate(`/process-instances/reports/${params.report_identifier}`);
   };
 
   const navigateToProcessInstanceReports = (_result: any) => {
-    navigate(`/admin/process-instances/reports`);
+    navigate(`/process-instances/reports`);
   };
 
   useEffect(() => {

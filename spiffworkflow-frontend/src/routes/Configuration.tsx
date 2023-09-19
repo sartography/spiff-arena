@@ -49,7 +49,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     uxElement: UiSchemaUxElement,
     uxElementIndex: number
   ) => {
-    const navItemPage = `/admin/configuration/extension${uxElement.page}`;
+    const navItemPage = `/configuration/extension${uxElement.page}`;
 
     let pagesToCheck = [uxElement.page];
     if (
@@ -60,7 +60,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     }
 
     pagesToCheck.forEach((pageToCheck: string) => {
-      const pageToCheckNavItem = `/admin/configuration/extension${pageToCheck}`;
+      const pageToCheckNavItem = `/configuration/extension${pageToCheck}`;
       if (pageToCheckNavItem === location.pathname) {
         setSelectedTabIndex(uxElementIndex + 2);
       }
@@ -80,13 +80,13 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
       <Tabs selectedIndex={selectedTabIndex}>
         <TabList aria-label="List of tabs">
           <Can I="GET" a={targetUris.secretListPath} ability={ability}>
-            <Tab onClick={() => navigate('/admin/configuration/secrets')}>
+            <Tab onClick={() => navigate('/configuration/secrets')}>
               Secrets
             </Tab>
           </Can>
           <Can I="GET" a={targetUris.authenticationListPath} ability={ability}>
             <Tab
-              onClick={() => navigate('/admin/configuration/authentications')}
+              onClick={() => navigate('/configuration/authentications')}
             >
               Authentications
             </Tab>

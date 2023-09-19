@@ -86,7 +86,7 @@ export default function ProcessGroupShow() {
   //       <tr key={row.id}>
   //         <td>
   //           <Link
-  //             to={`/admin/process-models/${modifiedProcessModelId}`}
+  //             to={`/process-models/${modifiedProcessModelId}`}
   //             data-qa="process-model-show-link"
   //           >
   //             {row.id}
@@ -113,7 +113,7 @@ export default function ProcessGroupShow() {
   // };
 
   const navigateToProcessGroups = (_result: any) => {
-    navigate(`/admin/process-groups`);
+    navigate(`/process-groups`);
   };
 
   const deleteProcessGroup = () => {
@@ -155,7 +155,7 @@ export default function ProcessGroupShow() {
               renderIcon={Edit}
               iconDescription="Edit Process Group"
               hasIconOnly
-              href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
+              href={`/process-groups/${modifiedProcessGroupId}/edit`}
             >
               Edit process group
             </Button>
@@ -178,7 +178,7 @@ export default function ProcessGroupShow() {
           <Stack orientation="horizontal" gap={3}>
             <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
               <Button
-                href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
+                href={`/process-groups/new?parentGroupId=${processGroup.id}`}
               >
                 Add a process group
               </Button>
@@ -189,7 +189,7 @@ export default function ProcessGroupShow() {
               ability={ability}
             >
               <Button
-                href={`/admin/process-models/${modifiedProcessGroupId}/new`}
+                href={`/process-models/${modifiedProcessGroupId}/new`}
               >
                 Add a process model
               </Button>

@@ -266,7 +266,7 @@ export default function ProcessModelEditDiagram() {
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/admin/process-models/${modifiedProcessModelId}`);
+      navigate(`/process-models/${modifiedProcessModelId}`);
     };
     HttpService.makeCallToBackend({
       path: url,

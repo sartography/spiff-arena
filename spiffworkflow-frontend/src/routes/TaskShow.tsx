@@ -54,7 +54,7 @@ export default function TaskShow() {
       setGuestConfirmationText('Thank you!');
     } else {
       navigate(
-        `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+        `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
           myTask.process_model_identifier
         )}/${myTask.process_instance_id}/interstitial`
       );
@@ -378,7 +378,7 @@ export default function TaskShow() {
           hotCrumbs={[
             [
               `Process Instance Id: ${params.process_instance_id}`,
-              `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+              `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
                 basicTask.process_model_identifier
               )}/${params.process_instance_id}`,
             ],

@@ -100,7 +100,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         instanceLink = (
           <Link
             data-qa="process-instance-show-link"
-            to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
+            to={`/process-instances/${modifyProcessIdentifierForPathParam(
               row.process_model_identifier
             )}/${row.process_instance_id}`}
           >
@@ -167,7 +167,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             },
             [
               `Process Instance: ${searchParams.get('process_instance_id')}`,
-              `/admin/process-instances/${searchParams.get(
+              `/process-instances/${searchParams.get(
                 'process_model_id'
               )}/${searchParams.get('process_instance_id')}`,
             ],

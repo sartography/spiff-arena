@@ -108,7 +108,7 @@ export default function ReactFormEditor() {
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${fileExtension}`;
       navigate(
-        `/admin/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`
+        `/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`
       );
     }
   };
@@ -157,7 +157,7 @@ export default function ReactFormEditor() {
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/admin/process-models/${modifiedProcessModelId}`);
+      navigate(`/process-models/${modifiedProcessModelId}`);
     };
 
     HttpService.makeCallToBackend({
@@ -281,7 +281,7 @@ export default function ReactFormEditor() {
               <Button
                 onClick={() =>
                   navigate(
-                    `/admin/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
+                    `/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
                   )
                 }
                 variant="danger"
