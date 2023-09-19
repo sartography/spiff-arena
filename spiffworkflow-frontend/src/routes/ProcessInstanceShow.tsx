@@ -40,6 +40,7 @@ import {
   TabList,
   TabPanels,
   TabPanel,
+  ToastNotification,
 } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
@@ -118,6 +119,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   >(null);
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
+    useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
@@ -480,6 +483,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (processInstance) {
       const piShortLink = `${window.location.origin}/i/${processInstance.id}`;
       navigator.clipboard.writeText(piShortLink);
+      setCopiedShortLinkToClipboard(true);
     }
   };
 
@@ -532,7 +536,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         onClick={copyProcessInstanceShortLink}
         kind="ghost"
         renderIcon={LinkIcon}
-        iconDescription="Copy Short Link"
+        iconDescription="Copy short link for sharing"
         hasIconOnly
         size="lg"
       />
@@ -1347,6 +1351,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
       elements.push(deleteButton());
+    }
+    let toast = null;
+    if (copiedShortLinkToClipboard) {
+      toast = (
+        <ToastNotification
+          aria-label="Copied link to clipboard"
+          onClose={() => setCopiedShortLinkToClipboard(false)}
+          kind="success"
+          title="Copied link to clipboard"
+          timeout={3000}
+          hideCloseButton
+        />
+      );
+      elements.push(toast);
     }
     return elements;
   };
