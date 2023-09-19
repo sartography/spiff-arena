@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import concurrent.futures
+import random
 import time
 from abc import abstractmethod
 from collections.abc import Callable
@@ -102,6 +103,7 @@ class ExecutionStrategy:
         user: Any | None,
     ) -> SpiffTask:
         with app.app_context():
+            time.sleep(random.random() * 0.2)
             app.config["THREAD_LOCAL_DATA"].process_instance_id = process_instance_id
             app.config["THREAD_LOCAL_DATA"].process_model_identifier = process_model_identifier
             g.user = user
@@ -139,6 +141,7 @@ class ExecutionStrategy:
                     user = g.user
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
+                    engine_steps.reverse()
                     for spiff_task in engine_steps:
                         self.delegate.will_complete_task(spiff_task)
                         futures.append(
@@ -248,7 +251,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
         # but it didn't quite work in all cases, so we deleted it. you can find it in commit
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
-        for waiting_spiff_task in bpmn_process_instance.get_tasks(
+        for waiting_spiff_task in bpmn_process_instance.get_tasks(state=
             TaskState.WAITING
             | TaskState.CANCELLED
             | TaskState.READY

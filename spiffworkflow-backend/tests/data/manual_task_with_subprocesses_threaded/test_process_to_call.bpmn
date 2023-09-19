@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="test_process_to_call" name="Test Process To Call" isExecutable="true">
+    <bpmn:endEvent id="Event_03zsjvn">
+      <bpmn:incoming>Flow_089aeua</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="Event_0pp84tn">
+      <bpmn:outgoing>Flow_1qsx5et</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="test_process_to_call_subprocess">
+      <bpmn:incoming>Flow_1qsx5et</bpmn:incoming>
+      <bpmn:outgoing>Flow_0zedtvv</bpmn:outgoing>
+      <bpmn:startEvent id="StartEvent_1">
+        <bpmn:outgoing>Flow_0bkk554</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:scriptTask id="test_process_to_call_subprocess_script" name="Test Process To Call Subprocess Script">
+        <bpmn:incoming>Flow_1cnuh2a</bpmn:incoming>
+        <bpmn:outgoing>Flow_17hgw9g</bpmn:outgoing>
+        <bpmn:script>set_in_test_process_to_call_subprocess_script = 1</bpmn:script>
+      </bpmn:scriptTask>
+      <bpmn:endEvent id="Event_1nn875f">
+        <bpmn:incoming>Flow_17hgw9g</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_17hgw9g" sourceRef="test_process_to_call_subprocess_script" targetRef="Event_1nn875f" />
+      <bpmn:sequenceFlow id="Flow_0bkk554" sourceRef="StartEvent_1" targetRef="test_process_to_call_subprocess_subprocess" />
+      <bpmn:sequenceFlow id="Flow_1cnuh2a" sourceRef="test_process_to_call_subprocess_subprocess" targetRef="test_process_to_call_subprocess_script" />
+      <bpmn:subProcess id="test_process_to_call_subprocess_subprocess">
+        <bpmn:incoming>Flow_0bkk554</bpmn:incoming>
+        <bpmn:outgoing>Flow_1cnuh2a</bpmn:outgoing>
+        <bpmn:startEvent id="Event_17bk1sd">
+          <bpmn:outgoing>Flow_1nri60d</bpmn:outgoing>
+        </bpmn:startEvent>
+        <bpmn:sequenceFlow id="Flow_1nri60d" sourceRef="Event_17bk1sd" targetRef="test_process_to_call_subprocess_subprocess_script" />
+        <bpmn:endEvent id="Event_1sec2vg">
+          <bpmn:incoming>Flow_1bfzrzu</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_1bfzrzu" sourceRef="test_process_to_call_subprocess_subprocess_script" targetRef="Event_1sec2vg" />
+        <bpmn:scriptTask id="test_process_to_call_subprocess_subprocess_script" name="Test Process To Call Subprocess Subprocess Script">
+          <bpmn:incoming>Flow_1nri60d</bpmn:incoming>
+          <bpmn:outgoing>Flow_1bfzrzu</bpmn:outgoing>
+          <bpmn:script>set_in_test_process_to_call_subprocess_subprocess_script = 1</bpmn:script>
+        </bpmn:scriptTask>
+      </bpmn:subProcess>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1qsx5et" sourceRef="Event_0pp84tn" targetRef="test_process_to_call_subprocess" />
+    <bpmn:sequenceFlow id="Flow_0zedtvv" sourceRef="test_process_to_call_subprocess" targetRef="test_process_to_call_script" />
+    <bpmn:sequenceFlow id="Flow_089aeua" sourceRef="test_process_to_call_script" targetRef="Event_03zsjvn" />
+    <bpmn:scriptTask id="test_process_to_call_script" name="Test Process To Call Script">
+      <bpmn:incoming>Flow_0zedtvv</bpmn:incoming>
+      <bpmn:outgoing>Flow_089aeua</bpmn:outgoing>
+      <bpmn:script>set_in_test_process_to_call_script = 1</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:boundaryEvent id="our_boundary_event" name="our_boundary_event" attachedToRef="test_process_to_call_script">
+      <bpmn:escalationEventDefinition id="EscalationEventDefinition_0t7834v" escalationRef="Escalation_18qf8th" errorRef="[object Object]" />
+    </bpmn:boundaryEvent>
+  </bpmn:process>
+  <bpmn:escalation id="Escalation_18qf8th" name="Our Escalation" errorCode="26">
+    <bpmn:extensionElements>
+      <spiffworkflow:variableName>the_var</spiffworkflow:variableName>
+    </bpmn:extensionElements>
+  </bpmn:escalation>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="test_process_to_call">
+      <bpmndi:BPMNShape id="Event_03zsjvn_di" bpmnElement="Event_03zsjvn">
+        <dc:Bounds x="612" y="132" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0pp84tn_di" bpmnElement="Event_0pp84tn">
+        <dc:Bounds x="162.33333333333334" y="132" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_14ywg4w_di" bpmnElement="test_process_to_call_subprocess" isExpanded="false">
+        <dc:Bounds x="270" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17algy3_di" bpmnElement="test_process_to_call_script">
+        <dc:Bounds x="450" y="110" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0bjx9wm_di" bpmnElement="our_boundary_event">
+        <dc:Bounds x="502" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="477" y="215" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1qsx5et_di" bpmnElement="Flow_1qsx5et">
+        <di:waypoint x="198" y="150" />
+        <di:waypoint x="270" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zedtvv_di" bpmnElement="Flow_0zedtvv">
+        <di:waypoint x="370" y="150" />
+        <di:waypoint x="450" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_089aeua_di" bpmnElement="Flow_089aeua">
+        <di:waypoint x="550" y="150" />
+        <di:waypoint x="612" y="150" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1ikntvh">
+    <bpmndi:BPMNPlane id="BPMNPlane_18euprj" bpmnElement="test_process_to_call_subprocess">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="180" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_059upl6_di" bpmnElement="test_process_to_call_subprocess_script">
+        <dc:Bounds x="420" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1nn875f_di" bpmnElement="Event_1nn875f">
+        <dc:Bounds x="562" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0hixo7p_di" bpmnElement="test_process_to_call_subprocess_subprocess">
+        <dc:Bounds x="270" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_17hgw9g_di" bpmnElement="Flow_17hgw9g">
+        <di:waypoint x="520" y="200" />
+        <di:waypoint x="562" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bkk554_di" bpmnElement="Flow_0bkk554">
+        <di:waypoint x="216" y="200" />
+        <di:waypoint x="270" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cnuh2a_di" bpmnElement="Flow_1cnuh2a">
+        <di:waypoint x="370" y="200" />
+        <di:waypoint x="420" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_0x7adrd">
+    <bpmndi:BPMNPlane id="BPMNPlane_17ay7ws" bpmnElement="test_process_to_call_subprocess_subprocess">
+      <bpmndi:BPMNShape id="Event_17bk1sd_di" bpmnElement="Event_17bk1sd">
+        <dc:Bounds x="262" y="172" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1sec2vg_di" bpmnElement="Event_1sec2vg">
+        <dc:Bounds x="502" y="172" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1kjd6i3_di" bpmnElement="test_process_to_call_subprocess_subprocess_script">
+        <dc:Bounds x="350" y="150" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1nri60d_di" bpmnElement="Flow_1nri60d">
+        <di:waypoint x="298" y="190" />
+        <di:waypoint x="350" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1bfzrzu_di" bpmnElement="Flow_1bfzrzu">
+        <di:waypoint x="450" y="190" />
+        <di:waypoint x="502" y="190" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

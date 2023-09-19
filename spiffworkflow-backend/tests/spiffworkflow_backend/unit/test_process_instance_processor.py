@@ -416,6 +416,44 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert process_instance.status == "complete"
 
+
+    # Similar to the test above, but introduces a number of parallel processes with call activities and sub-processes within them.
+    def test_properly_reset_after_parallel_execution(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user,
+    ) -> None:
+        self.create_process_group("test_group", "test_group")
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task_with_subprocesses_threaded",
+            process_model_source_directory="manual_task_with_subprocesses_threaded",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, with_super_admin_user, human_task_one)
+
+        # make sure sqlalchemy session matches current db state
+#        db.session.expire_all()
+
+#        processor = ProcessInstanceProcessor(process_instance)
+        for i in range(0, 10):
+#            process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+            processor.do_engine_steps(save=True)
+#            human_task_one = process_instance.active_human_tasks[0]
+#            spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+            spiff_manual_task = processor.bpmn_process_instance.get_tasks(state=TaskState.READY)[0]
+            spiff_manual_task.run()
+#            ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, with_super_admin_user, human_task_one)
+
+
+
     def test_properly_resets_process_on_tasks_with_boundary_events(
         self,
         app: Flask,

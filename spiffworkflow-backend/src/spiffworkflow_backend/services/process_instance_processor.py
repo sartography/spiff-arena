@@ -793,7 +793,7 @@ class ProcessInstanceProcessor:
             bpmn_process_instance.data[ProcessInstanceProcessor.VALIDATION_PROCESS_KEY] = validate_only
 
         # run _predict to ensure tasks are predicted to add back in LIKELY and MAYBE tasks
-        bpmn_process_instance._predict()
+        # bpmn_process_instance._predict()
         return (
             bpmn_process_instance,
             full_bpmn_process_dict,
@@ -1046,16 +1046,6 @@ class ProcessInstanceProcessor:
 
         db.session.add(self.process_instance_model)
         db.session.commit()
-
-        known_task_ids = [str(t.id) for t in self.bpmn_process_instance.get_tasks()]
-        TaskModel.query.filter(TaskModel.process_instance_id == self.process_instance_model.id).filter(
-            TaskModel.guid.notin_(known_task_ids)  # type: ignore
-        ).delete()
-        HumanTaskModel.query.filter(HumanTaskModel.process_instance_id == self.process_instance_model.id).filter(
-            HumanTaskModel.task_id.notin_(known_task_ids)  # type: ignore
-        ).delete()
-        db.session.commit()
-
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
