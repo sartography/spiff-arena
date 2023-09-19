@@ -39,7 +39,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     removeError();
     setPageTitle(['Configuration']);
     let newSelectedTabIndex = 0;
-    if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {
+    if (location.pathname.match(/^\/configuration\/authentications\b/)) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
@@ -85,9 +85,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
             </Tab>
           </Can>
           <Can I="GET" a={targetUris.authenticationListPath} ability={ability}>
-            <Tab
-              onClick={() => navigate('/configuration/authentications')}
-            >
+            <Tab onClick={() => navigate('/configuration/authentications')}>
               Authentications
             </Tab>
           </Can>

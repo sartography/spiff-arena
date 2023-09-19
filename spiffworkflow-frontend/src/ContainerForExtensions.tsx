@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import NavigationBar from './components/NavigationBar';
 
-import HomePageRoutes from './routes/HomePageRoutes';
 import About from './routes/About';
 
 import ScrollToTop from './components/ScrollToTop';
@@ -19,6 +18,7 @@ import {
 } from './extension_ui_schema_interfaces';
 import HttpService from './services/HttpService';
 import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
+import BaseRoutes from './routes/BaseRoutes';
 
 export default function ContainerForExtensions() {
   const [extensionUxElements, setExtensionNavigationItems] = useState<
@@ -88,17 +88,9 @@ export default function ContainerForExtensions() {
           <Routes>
             <Route
               path="/*"
-              element={
-                <HomePageRoutes extensionUxElements={extensionUxElements} />
-              }
+              element={<BaseRoutes extensionUxElements={extensionUxElements} />}
             />
             <Route path="/about" element={<About />} />
-            <Route
-              path="/tasks/*"
-              element={
-                <HomePageRoutes extensionUxElements={extensionUxElements} />
-              }
-            />
             <Route path="/editor/*" element={<EditorRoutes />} />
             <Route
               path="/extensions/:page_identifier"

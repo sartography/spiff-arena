@@ -77,17 +77,15 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   useEffect(() => {
     let newActiveKey = '/process-groups';
-    if (location.pathname.match(/^\/admin\/messages\b/)) {
+    if (location.pathname.match(/^\/messages\b/)) {
       newActiveKey = '/messages';
-    } else if (
-      location.pathname.match(/^\/admin\/process-instances\/reports\b/)
-    ) {
+    } else if (location.pathname.match(/^\/process-instances\/reports\b/)) {
       newActiveKey = '/process-instances/reports';
-    } else if (location.pathname.match(/^\/admin\/process-instances\b/)) {
+    } else if (location.pathname.match(/^\/process-instances\b/)) {
       newActiveKey = '/process-instances';
-    } else if (location.pathname.match(/^\/admin\/configuration\b/)) {
+    } else if (location.pathname.match(/^\/configuration\b/)) {
       newActiveKey = '/configuration';
-    } else if (location.pathname.match(/^\/admin\/data-stores\b/)) {
+    } else if (location.pathname.match(/^\/data-stores\b/)) {
       newActiveKey = '/data-stores';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
