@@ -792,8 +792,6 @@ class ProcessInstanceProcessor:
             )
             bpmn_process_instance.data[ProcessInstanceProcessor.VALIDATION_PROCESS_KEY] = validate_only
 
-        # run _predict to ensure tasks are predicted to add back in LIKELY and MAYBE tasks
-        # bpmn_process_instance._predict()
         return (
             bpmn_process_instance,
             full_bpmn_process_dict,
