@@ -179,7 +179,7 @@ export default function TaskListTable({
             </div>
           </div>
           <hr />
-          <InstructionsForEndUser task={formSubmissionTask} />
+          <InstructionsForEndUser task={formSubmissionTask} allowCollapse />
           <CustomForm
             id={formSubmissionTask.guid}
             formData={formSubmissionTask.data}
@@ -325,7 +325,7 @@ export default function TaskListTable({
             variant="primary"
             onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
           >
-            View form
+            View task
           </Button>
         );
       }

@@ -1475,7 +1475,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <Tab disabled={!canViewLogs}>Milestones</Tab>
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
-            <Tab>My Forms</Tab>
+            <Tab>My completed tasks</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -1511,14 +1511,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <TaskListTable
                   apiPath={`/tasks/completed-by-me/${processInstance.id}`}
                   paginationClassName="with-large-bottom-margin"
-                  textToShowIfEmpty="There are no tasks you can complete for this process instance."
+                  textToShowIfEmpty="There are no tasks you completed for this process instance."
                   shouldPaginateTable={false}
                   showProcessModelIdentifier={false}
                   showProcessId={false}
                   showStartedBy={false}
                   showTableDescriptionAsTooltip
                   showDateStarted={false}
-                  hideIfNoTasks
                   showWaitingOn={false}
                   canCompleteAllTasks={false}
                   showViewFormDataButton
