@@ -4,8 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import NavigationBar from './components/NavigationBar';
 
-import About from './routes/About';
-
 import ScrollToTop from './components/ScrollToTop';
 import EditorRoutes from './routes/EditorRoutes';
 import Extension from './routes/Extension';
@@ -90,7 +88,6 @@ export default function ContainerForExtensions() {
               path="/*"
               element={<BaseRoutes extensionUxElements={extensionUxElements} />}
             />
-            <Route path="/about" element={<About />} />
             <Route path="/editor/*" element={<EditorRoutes />} />
             <Route
               path="/extensions/:page_identifier"
