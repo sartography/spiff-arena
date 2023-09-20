@@ -40,7 +40,6 @@ import {
   TabList,
   TabPanels,
   TabPanel,
-  ToastNotification,
 } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
@@ -1355,13 +1354,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     let toast = null;
     if (copiedShortLinkToClipboard) {
       toast = (
-        <ToastNotification
-          aria-label="Copied link to clipboard"
+        <Notification
           onClose={() => setCopiedShortLinkToClipboard(false)}
-          kind="success"
+          type="success"
           title="Copied link to clipboard"
           timeout={3000}
           hideCloseButton
+          withBottomMargin={false}
         />
       );
       elements.push(toast);
