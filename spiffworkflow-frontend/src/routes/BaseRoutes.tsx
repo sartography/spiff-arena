@@ -10,6 +10,7 @@ import ProcessInstanceRoutes from './ProcessInstanceRoutes';
 import ErrorDisplay from '../components/ErrorDisplay';
 import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 import About from './About';
+import Page404 from './Page404';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -36,6 +37,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
         <Route path="messages" element={<MessageListPage />} />
         <Route path="data-stores" element={<DataStorePage />} />
         <Route path="about" element={<About />} />
+        <Route path="/*" element={<Page404 />} />
       </Routes>
     </div>
   );
