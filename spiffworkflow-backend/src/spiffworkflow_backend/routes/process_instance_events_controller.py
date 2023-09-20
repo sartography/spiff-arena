@@ -1,3 +1,5 @@
+from operator import or_
+
 import flask.wrappers
 from flask import jsonify
 from flask import make_response
@@ -38,10 +40,22 @@ def log_list(
         )
     )
     if not events:
+        # NOTE: we could also consider a "is_milestone" column on the process_instance_event table,
+        # populating this value in task_service, and move setting the last_milestone on process instances
+        # to the same location in task_service
         log_query = log_query.filter(
             and_(
                 TaskModel.state.in_(["COMPLETED"]),  # type: ignore
-                TaskDefinitionModel.typename.in_(["IntermediateThrowEvent"]),  # type: ignore
+                or_(
+                    TaskDefinitionModel.typename.in_(["IntermediateThrowEvent"]),  # type: ignore
+                    and_(
+                        TaskDefinitionModel.typename.in_(["StartEvent", "EndEvent"]),  # type: ignore
+                        or_(
+                            TaskDefinitionModel.bpmn_name.is_not(None),  # type: ignore
+                            BpmnProcessDefinitionModel.full_process_model_hash.is_not(None),  # type: ignore
+                        ),
+                    ),
+                ),
             )
         )
 
