@@ -595,7 +595,7 @@ export default function ProcessModelShow() {
                   renderIcon={Edit}
                   iconDescription="Edit README.md"
                   hasIconOnly
-                  href={`/admin/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
+                  href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
                 />
               </Can>
             </Column>
@@ -618,7 +618,7 @@ export default function ProcessModelShow() {
           <Button
             className="with-top-margin"
             data-qa="process-model-readme-file-create"
-            href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
+            href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
             size="md"
           >
             Add README.md
@@ -738,7 +738,7 @@ export default function ProcessModelShow() {
         {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',

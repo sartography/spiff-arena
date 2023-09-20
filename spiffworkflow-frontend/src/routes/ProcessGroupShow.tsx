@@ -137,7 +137,7 @@ export default function ProcessGroupShow() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processGroup,
               entityType: 'process-group',

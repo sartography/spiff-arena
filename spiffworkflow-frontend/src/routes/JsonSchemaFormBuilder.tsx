@@ -359,7 +359,7 @@ export default function JsonSchemaFormBuilder() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: params.process_model_id || '',
               entityType: 'process-model-id',
