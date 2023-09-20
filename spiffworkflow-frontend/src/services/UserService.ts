@@ -115,10 +115,6 @@ const loginIfNeeded = () => {
   }
 };
 
-const hasRole = (_roles: string[]): boolean => {
-  return isLoggedIn();
-};
-
 const UserService = {
   authenticationDisabled,
   doLogin,
@@ -126,7 +122,6 @@ const UserService = {
   getAccessToken,
   getPreferredUsername,
   getUserEmail,
-  hasRole,
   isLoggedIn,
   loginIfNeeded,
   onlyGuestTaskCompletion,

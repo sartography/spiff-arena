@@ -214,7 +214,7 @@ export default function TaskListTable({
       <td>
         <Link
           data-qa="process-instance-show-link-id"
-          to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
+          to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
           title={`View process instance ${processInstanceTask.process_instance_id}`}
         >
           {processInstanceTask.process_instance_id}
@@ -239,7 +239,7 @@ export default function TaskListTable({
         <td>
           <Link
             data-qa="process-model-show-link"
-            to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+            to={`/process-models/${modifiedProcessModelIdentifier}`}
             title={processInstanceTask.process_model_identifier}
           >
             {processInstanceTask.process_model_display_name}

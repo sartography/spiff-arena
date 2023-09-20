@@ -42,7 +42,7 @@ export default function ProcessModelForm({
     if ('id' in result) {
       const modifiedProcessModelPathFromResult =
         modifyProcessIdentifierForPathParam(result.id);
-      navigate(`/admin/process-models/${modifiedProcessModelPathFromResult}`);
+      navigate(`/process-models/${modifiedProcessModelPathFromResult}`);
     }
   };
 

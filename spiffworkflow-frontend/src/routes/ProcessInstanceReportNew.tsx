@@ -12,7 +12,7 @@ export default function ProcessInstanceReportNew() {
   const [filterBy, setFilterBy] = useState('');
 
   const navigateToNewProcessInstance = (_result: any) => {
-    navigate(`/admin/process-instances/reports/${identifier}`);
+    navigate(`/process-instances/reports/${identifier}`);
   };
 
   const addProcessInstanceReport = (event: any) => {

@@ -632,7 +632,7 @@ export default function ReactDiagramEditor({
             <li>
               <Link
                 size="lg"
-                href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                href={`/process-models/${modifyProcessIdentifierForPathParam(
                   ref.process_model_id
                 )}`}
               >
@@ -704,7 +704,7 @@ export default function ReactDiagramEditor({
               <Button
                 onClick={() => {
                   navigate(
-                    `/admin/process-models/${processModelId}/form/${fileName}`
+                    `/process-models/${processModelId}/form/${fileName}`
                   );
                 }}
               >

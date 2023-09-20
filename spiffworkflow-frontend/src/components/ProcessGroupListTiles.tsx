@@ -56,7 +56,7 @@ export default function ProcessGroupListTiles({
           <ClickableTile
             id={`process-group-tile-${row.id}`}
             className="tile-process-group"
-            href={`/admin/process-groups/${modifyProcessIdentifierForPathParam(
+            href={`/process-groups/${modifyProcessIdentifierForPathParam(
               row.id
             )}`}
           >

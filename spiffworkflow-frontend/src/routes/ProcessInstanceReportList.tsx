@@ -31,7 +31,7 @@ export default function ProcessInstanceReportList() {
       return (
         <tr key={(row as any).id}>
           <td>
-            <Link to={`/admin/process-instances?report_id=${rowToUse.id}`}>
+            <Link to={`/process-instances?report_id=${rowToUse.id}`}>
               {rowToUse.identifier}
             </Link>
           </td>
@@ -54,7 +54,7 @@ export default function ProcessInstanceReportList() {
     <>
       <h1>Process Instance Perspectives</h1>
       <Can I="POST" a={targetUris.processInstanceListPath} ability={ability}>
-        <Button href="/admin/process-instances/reports/new">
+        <Button href="/process-instances/reports/new">
           Add a process instance perspective
         </Button>
       </Can>
