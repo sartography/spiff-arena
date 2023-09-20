@@ -19,7 +19,7 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/admin'],
+          ['Process Groups', '/process-groups'],
           {
             entityToExplode: String(params.process_model_id),
             entityType: 'process-model-id',

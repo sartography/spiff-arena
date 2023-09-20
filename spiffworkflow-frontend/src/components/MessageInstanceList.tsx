@@ -159,7 +159,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       breadcrumbElement = (
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: searchParams.get('process_model_id') || '',
               entityType: 'process-model-id',

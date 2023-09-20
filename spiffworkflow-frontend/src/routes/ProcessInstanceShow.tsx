@@ -1534,7 +1534,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processModelId,
               entityType: 'process-model-id',
