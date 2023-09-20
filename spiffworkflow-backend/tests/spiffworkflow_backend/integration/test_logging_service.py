@@ -116,8 +116,8 @@ class TestLoggingService(BaseTest):
         assert log_response.status_code == 200
         assert log_response.json
         logs: list = log_response.json["results"]
-        assert len(logs) == 2
+        assert len(logs) == 4
 
         for log in logs:
             assert log["process_instance_id"] == process_instance.id
-            assert log["bpmn_task_type"] == "IntermediateThrowEvent"
+            assert log["bpmn_task_type"] in ["StartEvent", "EndEvent", "IntermediateThrowEvent"]

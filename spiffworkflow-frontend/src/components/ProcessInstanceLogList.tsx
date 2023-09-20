@@ -259,7 +259,15 @@ export default function ProcessInstanceLogList({
 
   const getTableRow = (logEntry: ProcessInstanceLogEntry) => {
     const tableRow = [];
-    const taskNameCell = <td>{logEntry.task_definition_name}</td>;
+    let taskName = logEntry.task_definition_name;
+    if (!taskName && !isEventsView) {
+      if (logEntry.bpmn_task_type === 'StartEvent') {
+        taskName = 'Started';
+      } else if (logEntry.bpmn_task_type === 'EndEvent') {
+        taskName = 'Completed';
+      }
+    }
+    const taskNameCell = <td>{taskName}</td>;
     const bpmnProcessCell = (
       <td>
         {logEntry.bpmn_process_definition_name ||
