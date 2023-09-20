@@ -416,7 +416,6 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert process_instance.status == "complete"
 
-
     def test_properly_resets_process_on_tasks_with_boundary_events(
         self,
         app: Flask,
