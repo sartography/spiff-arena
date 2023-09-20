@@ -4,7 +4,6 @@ from flask import g
 from flask import make_response
 from flask.wrappers import Response
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
-from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
