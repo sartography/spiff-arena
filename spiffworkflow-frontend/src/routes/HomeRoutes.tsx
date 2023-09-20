@@ -7,9 +7,8 @@ import CompletedInstances from './CompletedInstances';
 import CreateNewInstance from './CreateNewInstance';
 import InProgressInstances from './InProgressInstances';
 import OnboardingView from './OnboardingView';
-import ErrorDisplay from '../components/ErrorDisplay';
 
-export default function HomePageRoutes() {
+export default function HomeRoutes() {
   const location = useLocation();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
@@ -49,8 +48,7 @@ export default function HomePageRoutes() {
   };
 
   return (
-    <div className="fixed-width-container">
-      <ErrorDisplay />
+    <>
       <OnboardingView />
       {renderTabs()}
       <Routes>
@@ -61,6 +59,6 @@ export default function HomePageRoutes() {
         <Route path="completed-instances" element={<CompletedInstances />} />
         <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>
-    </div>
+    </>
   );
 }

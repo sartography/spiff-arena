@@ -11,7 +11,7 @@ export function FormatProcessModelDisplayName(
   } = instanceObject;
   return (
     <Link
-      to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+      to={`/process-models/${modifyProcessIdentifierForPathParam(
         processModelIdentifier
       )}`}
       title={processModelIdentifier}

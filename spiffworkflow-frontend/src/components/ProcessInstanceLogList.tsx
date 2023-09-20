@@ -78,9 +78,9 @@ export default function ProcessInstanceLogList({
     shouldDisplayClearButton = true;
   }
 
-  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${processModelId}`;
+  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${processModelId}`;
   if (variant === 'all') {
-    processInstanceShowPageBaseUrl = `/admin/process-instances/${processModelId}`;
+    processInstanceShowPageBaseUrl = `/process-instances/${processModelId}`;
   }
   const taskNameHeader = isEventsView ? 'Task name' : 'Milestone';
   const tableType = isEventsView ? 'events' : 'milestones';

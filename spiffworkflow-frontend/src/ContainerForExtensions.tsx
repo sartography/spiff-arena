@@ -4,10 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import NavigationBar from './components/NavigationBar';
 
-import HomePageRoutes from './routes/HomePageRoutes';
-import About from './routes/About';
-import AdminRoutes from './routes/AdminRoutes';
-
 import ScrollToTop from './components/ScrollToTop';
 import EditorRoutes from './routes/EditorRoutes';
 import Extension from './routes/Extension';
@@ -20,8 +16,11 @@ import {
 } from './extension_ui_schema_interfaces';
 import HttpService from './services/HttpService';
 import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
+import BaseRoutes from './routes/BaseRoutes';
+import BackendIsDown from './routes/BackendIsDown';
 
 export default function ContainerForExtensions() {
+  const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
   const [extensionUxElements, setExtensionNavigationItems] = useState<
     UiSchemaUxElement[] | null
   >(null);
@@ -40,10 +39,6 @@ export default function ContainerForExtensions() {
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
-    if (!permissionsLoaded) {
-      return;
-    }
-
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaUxElement[] = processModels
         .map((processModel: ProcessModel) => {
@@ -72,13 +67,57 @@ export default function ContainerForExtensions() {
       }
     };
 
-    if (ability.can('GET', targetUris.extensionListPath)) {
-      HttpService.makeCallToBackend({
-        path: targetUris.extensionListPath,
-        successCallback: processExtensionResult,
-      });
+    const getExtensions = () => {
+      if (!permissionsLoaded) {
+        return;
+      }
+      setBackendIsUp(true);
+      if (ability.can('GET', targetUris.extensionListPath)) {
+        HttpService.makeCallToBackend({
+          path: targetUris.extensionListPath,
+          successCallback: processExtensionResult,
+        });
+      }
+    };
+
+    HttpService.makeCallToBackend({
+      path: targetUris.statusPath,
+      successCallback: getExtensions,
+      failureCallback: () => setBackendIsUp(false),
+    });
+  }, [
+    targetUris.extensionListPath,
+    targetUris.statusPath,
+    permissionsLoaded,
+    ability,
+  ]);
+
+  const routeComponents = () => {
+    return (
+      <Routes>
+        <Route
+          path="/*"
+          element={<BaseRoutes extensionUxElements={extensionUxElements} />}
+        />
+        <Route path="/editor/*" element={<EditorRoutes />} />
+        <Route path="/extensions/:page_identifier" element={<Extension />} />
+      </Routes>
+    );
+  };
+
+  const backendIsDownPage = () => {
+    return <BackendIsDown />;
+  };
+
+  const innerComponents = () => {
+    if (backendIsUp === null) {
+      return null;
     }
-  }, [targetUris.extensionListPath, permissionsLoaded, ability]);
+    if (backendIsUp) {
+      return routeComponents();
+    }
+    return backendIsDownPage();
+  };
 
   return (
     <>
@@ -86,22 +125,7 @@ export default function ContainerForExtensions() {
       <Content className={contentClassName}>
         <ScrollToTop />
         <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-          <Routes>
-            <Route path="/*" element={<HomePageRoutes />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/tasks/*" element={<HomePageRoutes />} />
-            <Route
-              path="/admin/*"
-              element={
-                <AdminRoutes extensionUxElements={extensionUxElements} />
-              }
-            />
-            <Route path="/editor/*" element={<EditorRoutes />} />
-            <Route
-              path="/extensions/:page_identifier"
-              element={<Extension />}
-            />
-          </Routes>
+          {innerComponents()}
         </ErrorBoundary>
       </Content>
     </>

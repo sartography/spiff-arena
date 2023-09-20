@@ -61,7 +61,7 @@ export default function MyTasks() {
           onClose={() => setProcessInstance(null)}
         >
           <Link
-            to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
+            to={`/process-instances/${modifyProcessIdentifierForPathParam(
               processInstance.process_model_identifier
             )}/${processInstance.id}`}
             data-qa="process-instance-show-link"
@@ -91,7 +91,7 @@ export default function MyTasks() {
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              to={`/process-models/${modifiedProcessModelIdentifier}`}
             >
               {rowToUse.process_model_display_name}
             </Link>
@@ -99,7 +99,7 @@ export default function MyTasks() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-instances/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
+              to={`/process-instances/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
             >
               {rowToUse.process_instance_id}
             </Link>
@@ -158,7 +158,7 @@ export default function MyTasks() {
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelId}`}
+              to={`/process-models/${modifiedProcessModelId}`}
             >
               {row.processModelDisplayName}
             </Link>

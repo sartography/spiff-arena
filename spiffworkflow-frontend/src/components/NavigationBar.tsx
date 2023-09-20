@@ -76,19 +76,17 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const versionInfo = appVersionInfo();
 
   useEffect(() => {
-    let newActiveKey = '/admin/process-groups';
-    if (location.pathname.match(/^\/admin\/messages\b/)) {
-      newActiveKey = '/admin/messages';
-    } else if (
-      location.pathname.match(/^\/admin\/process-instances\/reports\b/)
-    ) {
-      newActiveKey = '/admin/process-instances/reports';
-    } else if (location.pathname.match(/^\/admin\/process-instances\b/)) {
-      newActiveKey = '/admin/process-instances';
-    } else if (location.pathname.match(/^\/admin\/configuration\b/)) {
-      newActiveKey = '/admin/configuration';
-    } else if (location.pathname.match(/^\/admin\/data-stores\b/)) {
-      newActiveKey = '/admin/data-stores';
+    let newActiveKey = '/process-groups';
+    if (location.pathname.match(/^\/messages\b/)) {
+      newActiveKey = '/messages';
+    } else if (location.pathname.match(/^\/process-instances\/reports\b/)) {
+      newActiveKey = '/process-instances/reports';
+    } else if (location.pathname.match(/^\/process-instances\b/)) {
+      newActiveKey = '/process-instances';
+    } else if (location.pathname.match(/^\/configuration\b/)) {
+      newActiveKey = '/configuration';
+    } else if (location.pathname.match(/^\/data-stores\b/)) {
+      newActiveKey = '/data-stores';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
     } else if (location.pathname.match(/^\/tasks\b/)) {
@@ -205,8 +203,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                 if (secretAllowed || authenticationAllowed) {
                   return (
                     <HeaderMenuItem
-                      href="/admin/configuration"
-                      isCurrentPage={isActivePage('/admin/configuration')}
+                      href="/configuration"
+                      isCurrentPage={isActivePage('/configuration')}
                     >
                       Configuration
                     </HeaderMenuItem>
@@ -249,8 +247,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         </HeaderMenuItem>
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
           <HeaderMenuItem
-            href="/admin/process-groups"
-            isCurrentPage={isActivePage('/admin/process-groups')}
+            href="/process-groups"
+            isCurrentPage={isActivePage('/process-groups')}
             data-qa="header-nav-processes"
           >
             Processes
@@ -262,24 +260,24 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           ability={ability}
         >
           <HeaderMenuItem
-            href="/admin/process-instances"
-            isCurrentPage={isActivePage('/admin/process-instances')}
+            href="/process-instances"
+            isCurrentPage={isActivePage('/process-instances')}
           >
             Process Instances
           </HeaderMenuItem>
         </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
           <HeaderMenuItem
-            href="/admin/messages"
-            isCurrentPage={isActivePage('/admin/messages')}
+            href="/messages"
+            isCurrentPage={isActivePage('/messages')}
           >
             Messages
           </HeaderMenuItem>
         </Can>
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
           <HeaderMenuItem
-            href="/admin/data-stores"
-            isCurrentPage={isActivePage('/admin/data-stores')}
+            href="/data-stores"
+            isCurrentPage={isActivePage('/data-stores')}
           >
             Data Stores
           </HeaderMenuItem>
