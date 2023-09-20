@@ -216,6 +216,14 @@ h1.with-icons {
   margin-top: 5px;
 }
 
+.with-icons {
+  margin-top: 10px;
+}
+
+.readme-container {
+  max-width: 640px;
+}
+
 dl {
   display: block;
   grid-template-columns: 35% 65%;
@@ -486,11 +494,6 @@ th.table-header-right-align .cds--data-table, th.table-header-right-align .cds--
   letter-spacing: 0.16px;
   color: #525252;
   margin-bottom: 1rem;
-}
-
-/* top and bottom margin since this is sort of the middle of three sections on the process model show page */
-.process-model-files-section {
-  margin: 2rem 0;
 }
 
 .filter-icon {
