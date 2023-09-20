@@ -840,3 +840,12 @@ div.cds--tag svg {
 div.onboarding {
   margin-bottom: 2rem;
 }
+
+.cds--text-input:disabled,
+.cds--text-area:disabled,
+.cds--date-picker__input:disabled,
+.cds--select-input:disabled,
+.cds--select-input:hover:disabled {
+  --cds-text-disabled: rgba(22, 22, 22, .5);
+  background-color: #ffffff
+}
