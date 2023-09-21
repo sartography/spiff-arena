@@ -10,7 +10,7 @@ from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 
 
@@ -126,7 +126,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             spiff_task.run()
 
     def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
-        ready_tasks = list(bpmn_process_instance.get_tasks(TaskState.READY))
+        ready_tasks = list(bpmn_process_instance.get_tasks(state=TaskState.READY))
         if len(ready_tasks) > 0:
             return ready_tasks[0]
         return None

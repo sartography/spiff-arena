@@ -16,7 +16,10 @@ test('renders hotCrumbs', () => {
   render(
     <BrowserRouter>
       <ProcessBreadcrumb
-        hotCrumbs={[['Process Groups', '/process-groups'], [`Process Group: hey`]]}
+        hotCrumbs={[
+          ['Process Groups', '/process-groups'],
+          [`Process Group: hey`],
+        ]}
       />
     </BrowserRouter>
   );

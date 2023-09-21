@@ -70,11 +70,19 @@ if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "spiffworkflo
   run_pre_commmit || run_pre_commmit
 fi
 
+function clear_log_file() {
+  unit_testing_log_file="./log/unit_testing.log"
+  if [[ -f "$unit_testing_log_file" ]]; then
+    > "$unit_testing_log_file"
+  fi
+}
+
 for python_project in "${python_projects[@]}"; do
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
     pushd "$python_project"
     poetry install
     poetry run mypy $(get_python_dirs)
+    clear_log_file
     ./bin/tests-par
     popd
   fi
