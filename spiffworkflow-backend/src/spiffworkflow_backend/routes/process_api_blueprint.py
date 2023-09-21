@@ -81,7 +81,9 @@ def process_list() -> Any:
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
     callers = ProcessCallerService.callers(bpmn_process_identifiers)
     references = (
-        ReferenceCacheModel.query.filter_by(type="process").filter(ReferenceCacheModel.identifier.in_(callers)).all()
+        ReferenceCacheModel.query.filter_by(type="process")
+        .filter(ReferenceCacheModel.identifier.in_(callers))  # type: ignore
+        .all()
     )
     return ReferenceSchema(many=True).dump(references)
 

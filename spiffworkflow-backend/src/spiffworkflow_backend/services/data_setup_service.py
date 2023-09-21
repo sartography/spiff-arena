@@ -34,7 +34,7 @@ class DataSetupService:
                     except Exception as ex:
                         failing_process_models.append(
                             (
-                                f"{ref.process_model_id}/{ref.file_name}",
+                                f"{ref.relative_location}/{ref.file_name}",
                                 str(ex),
                             )
                         )

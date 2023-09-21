@@ -188,7 +188,7 @@ class SpecFileService(FileSystemService):
 
         if user is not None:
             called_element_refs = ReferenceCacheModel.query.filter(
-                ReferenceCacheModel.identifier.in_(all_called_element_ids)
+                ReferenceCacheModel.identifier.in_(all_called_element_ids)  # type: ignore
             ).all()
             if len(called_element_refs) > 0:
                 process_model_identifiers: list[str] = [r.relative_location for r in called_element_refs]
