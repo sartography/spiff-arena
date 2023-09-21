@@ -642,7 +642,7 @@ export default function ProcessModelShow() {
         <TabList aria-label="List of tabs">
           <Tab>About</Tab>
           <Tab>Files</Tab>
-          <Tab>My Process instances</Tab>
+          <Tab>My process instances</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>{readmeFileArea()}</TabPanel>

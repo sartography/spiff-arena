@@ -841,11 +841,18 @@ div.onboarding {
   margin-bottom: 2rem;
 }
 
-.cds--text-input:disabled,
-.cds--text-area:disabled,
-.cds--date-picker__input:disabled,
-.cds--select-input:disabled,
-.cds--select-input:hover:disabled {
-  --cds-text-disabled: rgba(22, 22, 22, .5);
+/* makde the completed user form modal more readable */
+.completed-task-modal .cds--modal-container {
   background-color: #ffffff
+}
+.completed-task-modal .cds--text-input:disabled,
+.completed-task-modal .cds--text-area:disabled,
+.completed-task-modal .cds--date-picker__input:disabled,
+.completed-task-modal .cds--select-input:disabled,
+.completed-task-modal .cds--select-input:hover:disabled {
+  --cds-text-disabled: rgba(22, 22, 22, .5);
+  background-color: var(--cds-field)
+}
+.completed-task-modal .cds--form__helper-text--disabled {
+  --cds-text-disabled: rgba(22, 22, 22, .5);
 }
