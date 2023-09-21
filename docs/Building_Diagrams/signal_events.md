@@ -2,7 +2,7 @@
 
 A Signal Event is a type of event that provides a mechanism for communication across different processes. Unlike messages that are sent from a specific sender to a specific receiver, signals are broadcast to multiple recipients. When a signal is thrown, all active processes that are listening for that signal can catch and react to it. Signals do not have any expectation of a response. Once a signal is sent out, it does not wait for a reply.
 
- ![signal_relationship](images/signal_relationship.png) 
+ ![signal_relationship](images/signal_relationships.png) 
 
 **Reasons to Use a Signal Event:**
 
