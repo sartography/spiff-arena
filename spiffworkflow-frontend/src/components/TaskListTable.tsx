@@ -166,8 +166,8 @@ export default function TaskListTable({
           open={!!formSubmissionTask}
           passiveModal
           onRequestClose={() => setFormSubmissionTask(null)}
-          modalHeading={`${formSubmissionTask.name_for_display}
-              `}
+          modalHeading={`${formSubmissionTask.name_for_display}`}
+          className="completed-task-modal"
         >
           <div className="indented-content explanatory-message">
             ✅ You completed this form{' '}
@@ -179,7 +179,9 @@ export default function TaskListTable({
             </div>
           </div>
           <hr />
-          <InstructionsForEndUser task={formSubmissionTask} allowCollapse />
+          <div className="with-bottom-margin">
+            <InstructionsForEndUser task={formSubmissionTask} allowCollapse />
+          </div>
           <CustomForm
             id={formSubmissionTask.guid}
             formData={formSubmissionTask.data}
@@ -344,16 +346,16 @@ export default function TaskListTable({
     }
     tableHeaders.push('Task');
     if (showStartedBy) {
-      tableHeaders.push('Started By');
+      tableHeaders.push('Started by');
     }
     if (showWaitingOn) {
-      tableHeaders.push('Waiting For');
+      tableHeaders.push('Waiting for');
     }
     if (showDateStarted) {
-      tableHeaders.push('Date Started');
+      tableHeaders.push('Date started');
     }
     if (showLastUpdated) {
-      tableHeaders.push('Last Updated');
+      tableHeaders.push('Last updated');
     }
     if (showActionsColumn) {
       tableHeaders = tableHeaders.concat(['Actions']);

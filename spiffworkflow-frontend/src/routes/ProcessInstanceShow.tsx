@@ -1511,7 +1511,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <TaskListTable
                   apiPath={`/tasks/completed-by-me/${processInstance.id}`}
                   paginationClassName="with-large-bottom-margin"
-                  textToShowIfEmpty="There are no tasks you completed for this process instance."
+                  textToShowIfEmpty="You have not completed any tasks for this process instance."
                   shouldPaginateTable={false}
                   showProcessModelIdentifier={false}
                   showProcessId={false}
