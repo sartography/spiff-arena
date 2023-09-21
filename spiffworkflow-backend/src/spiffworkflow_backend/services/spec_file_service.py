@@ -8,10 +8,10 @@ from spiffworkflow_backend.models.correlation_property_cache import CorrelationP
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
-from spiffworkflow_backend.models.file import SpecReference
+from spiffworkflow_backend.models.file import Reference
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
@@ -32,7 +32,7 @@ class SpecFileService(FileSystemService):
     """
 
     @staticmethod
-    def reference_map(references: list[SpecReference]) -> dict[str, SpecReference]:
+    def reference_map(references: list[Reference]) -> dict[str, Reference]:
         """Creates a dict with provided references organized by id."""
         ref_map = {}
         for ref in references:
@@ -42,7 +42,7 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def get_references_for_process(
         process_model_info: ProcessModelInfo,
-    ) -> list[SpecReference]:
+    ) -> list[Reference]:
         files = FileSystemService.get_files(process_model_info)
         references = []
         for file in files:
@@ -50,7 +50,7 @@ class SpecFileService(FileSystemService):
         return references
 
     @classmethod
-    def get_references_for_file(cls, file: File, process_model_info: ProcessModelInfo) -> list[SpecReference]:
+    def get_references_for_file(cls, file: File, process_model_info: ProcessModelInfo) -> list[Reference]:
         full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
         file_contents: bytes = b""
         with open(full_file_path) as f:
@@ -71,7 +71,7 @@ class SpecFileService(FileSystemService):
     @classmethod
     def get_references_for_file_contents(
         cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
-    ) -> list[SpecReference]:
+    ) -> list[Reference]:
         """Uses spiffworkflow to parse BPMN and DMN files to determine how they can be externally referenced.
 
         Returns a list of Reference objects that contain the type of reference, the id, the name.
@@ -80,8 +80,8 @@ class SpecFileService(FileSystemService):
         name = {str} 'Level 3'
         type = {str} 'process' / 'decision'
         """
-        references: list[SpecReference] = []
-        file_path = os.path.join(process_model_info.id_for_file_path(), file_name)
+        references: list[Reference] = []
+        os.path.join(process_model_info.id_for_file_path(), file_name)
         file_type = FileSystemService.file_type(file_name)
         parser = MyCustomParser()
         parser_type = None
@@ -116,20 +116,17 @@ class SpecFileService(FileSystemService):
                 called_element_ids = sub_parser.called_element_ids()
 
             references.append(
-                SpecReference(
+                Reference(
                     identifier=sub_parser.bpmn_id,
                     display_name=sub_parser.get_name(),
-                    process_model_id=process_model_info.id,
+                    relative_location=process_model_info.id,
                     type=parser_type,
                     file_name=file_name,
-                    relative_path=file_path,
-                    has_lanes=has_lanes,
-                    is_executable=is_executable,
                     messages=messages,
-                    is_primary=is_primary,
                     correlations=correlations,
                     start_messages=start_messages,
                     called_element_ids=called_element_ids,
+                    properties={"is_primary": is_primary, "has_lanes": has_lanes, "is_executable": is_executable},
                 )
             )
         return references
@@ -160,17 +157,19 @@ class SpecFileService(FileSystemService):
         cls.validate_bpmn_xml(file_name, binary_data)
 
         references = cls.get_references_for_file_contents(process_model_info, file_name, binary_data)
-        primary_process_ref = next((ref for ref in references if ref.is_primary and ref.is_executable), None)
+        primary_process_ref = next(
+            (ref for ref in references if ref.prop_is_true("is_primary") and ref.prop_is_true("is_executable")), None
+        )
 
         SpecFileService.clear_caches_for_file(file_name, process_model_info)
         all_called_element_ids: set[str] = set()
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
-            if not primary_process_ref and ref.type == "process" and ref.is_executable:
-                ref.is_primary = True
+            if not primary_process_ref and ref.type == "process" and ref.prop_is_true("is_executable"):
+                ref.set_prop("is_primary", True)
 
-            if ref.is_primary:
+            if ref.prop_is_true("is_primary"):
                 update_hash = {}
                 if not process_model_info.primary_file_name:
                     update_hash["primary_process_id"] = ref.identifier
@@ -188,11 +187,11 @@ class SpecFileService(FileSystemService):
             SpecFileService.update_caches(ref)
 
         if user is not None:
-            called_element_refs = SpecReferenceCache.query.filter(
-                SpecReferenceCache.identifier.in_(all_called_element_ids)
+            called_element_refs = ReferenceCacheModel.query.filter(
+                ReferenceCacheModel.identifier.in_(all_called_element_ids)
             ).all()
             if len(called_element_refs) > 0:
-                process_model_identifiers: list[str] = [r.process_model_id for r in called_element_refs]
+                process_model_identifiers: list[str] = [r.relative_location for r in called_element_refs]
                 permitted_process_model_identifiers = (
                     ProcessModelService.process_model_identifiers_with_permission_for_user(
                         user=user,
@@ -246,7 +245,7 @@ class SpecFileService(FileSystemService):
     # fixme: Place all the caching stuff in a different service.
 
     @staticmethod
-    def update_caches(ref: SpecReference) -> None:
+    def update_caches(ref: Reference) -> None:
         SpecFileService.update_process_cache(ref)
         SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
@@ -256,9 +255,9 @@ class SpecFileService(FileSystemService):
     def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
         """Clear all caches related to a file."""
         records = (
-            db.session.query(SpecReferenceCache)
-            .filter(SpecReferenceCache.file_name == file_name)
-            .filter(SpecReferenceCache.process_model_id == process_model_info.id)
+            db.session.query(ReferenceCacheModel)
+            .filter(ReferenceCacheModel.file_name == file_name)
+            .filter(ReferenceCacheModel.relative_location == process_model_info.id)
             .all()
         )
 
@@ -273,38 +272,39 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def clear_caches() -> None:
-        db.session.query(SpecReferenceCache).delete()
+        db.session.query(ReferenceCacheModel).delete()
         ProcessCallerService.clear_cache()
         # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
-    def update_process_cache(ref: SpecReference) -> None:
+    def update_process_cache(ref: Reference) -> None:
         process_id_lookup = (
-            SpecReferenceCache.query.filter_by(identifier=ref.identifier).filter_by(type=ref.type).first()
+            ReferenceCacheModel.query.filter_by(identifier=ref.identifier).filter_by(type=ref.type).first()
         )
         if process_id_lookup is None:
-            process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
+            process_id_lookup = ReferenceCacheModel.from_spec_reference(ref)
             db.session.add(process_id_lookup)
         else:
-            if ref.relative_path != process_id_lookup.relative_path:
-                full_bpmn_file_path = SpecFileService.full_path_from_relative_path(process_id_lookup.relative_path)
+            if ref.relative_path() != process_id_lookup.relative_path():
+                full_bpmn_file_path = SpecFileService.full_path_from_relative_path(process_id_lookup.relative_path())
                 # if the old relative bpmn file no longer exists, then assume things were moved around
                 # on the file system. Otherwise, assume it is a duplicate process id and error.
                 if os.path.isfile(full_bpmn_file_path):
                     raise ProcessModelFileInvalidError(
                         f"Process id ({ref.identifier}) has already been used for "
-                        f"{process_id_lookup.relative_path}. It cannot be reused."
+                        f"{process_id_lookup.relative_path()}. It cannot be reused."
                     )
                 else:
-                    process_id_lookup.relative_path = ref.relative_path
+                    process_id_lookup.relative_location = ref.relative_location
+                    process_id_lookup.file_name = ref.file_name
                     db.session.add(process_id_lookup)
 
     @staticmethod
-    def update_process_caller_cache(ref: SpecReference) -> None:
+    def update_process_caller_cache(ref: Reference) -> None:
         ProcessCallerService.add_caller(ref.identifier, ref.called_element_ids)
 
     @staticmethod
-    def update_message_trigger_cache(ref: SpecReference) -> None:
+    def update_message_trigger_cache(ref: Reference) -> None:
         """Assure we know which messages can trigger the start of a process."""
         for message_name in ref.start_messages:
             message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
@@ -313,24 +313,24 @@ class SpecFileService(FileSystemService):
             if message_triggerable_process_model is None:
                 message_triggerable_process_model = MessageTriggerableProcessModel(
                     message_name=message_name,
-                    process_model_identifier=ref.process_model_id,
+                    process_model_identifier=ref.relative_location,
                 )
                 db.session.add(message_triggerable_process_model)
             else:
-                if message_triggerable_process_model.process_model_identifier != ref.process_model_id:
+                if message_triggerable_process_model.process_model_identifier != ref.relative_location:
                     raise ProcessModelFileInvalidError(
-                        f"Message model is already used to start process model {ref.process_model_id}"
+                        f"Message model is already used to start process model {ref.relative_location}"
                     )
 
     @staticmethod
-    def update_correlation_cache(ref: SpecReference) -> None:
+    def update_correlation_cache(ref: Reference) -> None:
         for name in ref.correlations.keys():
             correlation_property_retrieval_expressions = ref.correlations[name]["retrieval_expressions"]
 
             for cpre in correlation_property_retrieval_expressions:
                 message_name = ref.messages.get(cpre["messageRef"], None)
                 retrieval_expression = cpre["expression"]
-                process_model_id = ref.process_model_id
+                process_model_id = ref.relative_location
 
                 existing = CorrelationPropertyCache.query.filter_by(
                     name=name,

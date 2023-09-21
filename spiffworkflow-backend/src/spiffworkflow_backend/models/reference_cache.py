@@ -1,12 +1,13 @@
+import os
 from dataclasses import dataclass
 from typing import Any
-from sqlalchemy.orm import validates
 
 from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
 from sqlalchemy import UniqueConstraint
-from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from sqlalchemy.orm import validates
 
+from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 
@@ -38,7 +39,6 @@ class Reference:
     relative_location: str
     type: str  # can be 'process' or 'decision'
     file_name: str  # The name of the file where this process or decision is defined.
-    relative_path: str  # The path to the file.
     messages: dict  # Any messages defined in the same file where this process is defined.
     correlations: dict  # Any correlations defined in the same file with this process.
     start_messages: list  # The names of any messages that would start this process.
@@ -48,6 +48,16 @@ class Reference:
     # has_lanes: bool  # If this is a process, whether it has lanes or not.
     # is_executable: bool  # Whether this process or decision is designated as executable.
     # is_primary: bool  # Whether this is the primary process of a process model
+
+    def prop_is_true(self, prop_name: str) -> bool:
+        return prop_name in self.properties and self.properties[prop_name] is True
+
+    def set_prop(self, prop_name: str, value: Any) -> None:
+        self.properties[prop_name] = value
+
+    def relative_path(self) -> str:
+        return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
+
 
 # SpecReferenceCache
 class ReferenceCacheModel(SpiffworkflowBaseDBModel):
@@ -70,6 +80,9 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     # is_executable = db.Column(db.Boolean())
     # is_primary = db.Column(db.Boolean())
 
+    def relative_path(self) -> str:
+        return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
+
     @classmethod
     def from_spec_reference(cls, ref: Reference) -> "ReferenceCacheModel":
         return cls(
@@ -78,8 +91,6 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
             relative_location=ref.relative_location,
             type=ref.type,
             file_name=ref.file_name,
-            relative_path=ref.relative_path,
-
             properties=ref.properties,
             # has_lanes=ref.has_lanes,
             # is_executable=ref.is_executable,
@@ -102,9 +113,6 @@ class ReferenceSchema(Schema):  # type: ignore
             "relative_location",
             "type",
             "file_name",
-            "has_lanes",
-            "is_executable",
-            "is_primary",
+            "properties",
         ]
         unknown = INCLUDE
-

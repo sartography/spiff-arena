@@ -16,8 +16,8 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
-from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.models.reference_cache import ReferenceSchema
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
@@ -63,8 +63,8 @@ def process_list() -> Any:
     This includes processes that are not the
     primary process - helpful for finding possible call activities.
     """
-    references = SpecReferenceCache.query.filter_by(type="process").all()
-    process_model_identifiers = [r.process_model_id for r in references]
+    references = ReferenceCacheModel.query.filter_by(type="process").all()
+    process_model_identifiers = [r.relative_location for r in references]
     permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
         user=g.user,
         permission_to_check="create",
@@ -73,17 +73,17 @@ def process_list() -> Any:
     )
     permitted_references = []
     for spec_reference in references:
-        if spec_reference.process_model_id in permitted_process_model_identifiers:
+        if spec_reference.relative_location in permitted_process_model_identifiers:
             permitted_references.append(spec_reference)
-    return SpecReferenceSchema(many=True).dump(permitted_references)
+    return ReferenceSchema(many=True).dump(permitted_references)
 
 
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
     callers = ProcessCallerService.callers(bpmn_process_identifiers)
     references = (
-        SpecReferenceCache.query.filter_by(type="process").filter(SpecReferenceCache.identifier.in_(callers)).all()
+        ReferenceCacheModel.query.filter_by(type="process").filter(ReferenceCacheModel.identifier.in_(callers)).all()
     )
-    return SpecReferenceSchema(many=True).dump(references)
+    return ReferenceSchema(many=True).dump(references)
 
 
 def _process_data_fetcher(

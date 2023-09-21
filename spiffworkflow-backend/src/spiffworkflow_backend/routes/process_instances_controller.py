@@ -28,8 +28,8 @@ from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQ
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
-from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
@@ -702,13 +702,11 @@ def _get_process_instance(
     process_model_with_diagram = None
     name_of_file_with_diagram = None
     if process_identifier:
-        spec_reference = SpecReferenceCache.query.filter_by(identifier=process_identifier, type="process").first()
+        spec_reference = ReferenceCacheModel.query.filter_by(identifier=process_identifier, type="process").first()
         if spec_reference is None:
-            raise SpecReferenceNotFoundError(
-                f"Could not find given process identifier in the cache: {process_identifier}"
-            )
+            raise ReferenceNotFoundError(f"Could not find given process identifier in the cache: {process_identifier}")
 
-        process_model_with_diagram = ProcessModelService.get_process_model(spec_reference.process_model_id)
+        process_model_with_diagram = ProcessModelService.get_process_model(spec_reference.relative_location)
         name_of_file_with_diagram = spec_reference.file_name
         process_instance.process_model_with_diagram_identifier = process_model_with_diagram.id
     else:

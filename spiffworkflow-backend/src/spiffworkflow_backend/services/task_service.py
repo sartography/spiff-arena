@@ -20,8 +20,8 @@ from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
-from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -677,21 +677,21 @@ class TaskService:
         try:
             filename: str | None = cls.get_spec_reference_from_bpmn_process(bpmn_process).file_name
             return filename
-        except SpecReferenceNotFoundError:
+        except ReferenceNotFoundError:
             return None
 
     @classmethod
-    def get_spec_reference_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> SpecReferenceCache:
+    def get_spec_reference_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> ReferenceCacheModel:
         """Get the bpmn file for a given task model.
 
         This involves several queries so avoid calling in a tight loop.
         """
         bpmn_process_definition = bpmn_process.bpmn_process_definition
-        spec_reference: SpecReferenceCache | None = SpecReferenceCache.query.filter_by(
+        spec_reference: ReferenceCacheModel | None = ReferenceCacheModel.query.filter_by(
             identifier=bpmn_process_definition.bpmn_identifier, type="process"
         ).first()
         if spec_reference is None:
-            raise SpecReferenceNotFoundError(
+            raise ReferenceNotFoundError(
                 f"Could not find given process identifier in the cache: {bpmn_process_definition.bpmn_identifier}"
             )
         return spec_reference

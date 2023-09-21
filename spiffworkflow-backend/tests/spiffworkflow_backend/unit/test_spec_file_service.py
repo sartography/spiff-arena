@@ -6,7 +6,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from lxml import etree  # type: ignore
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -22,7 +22,7 @@ class TestSpecFileService(BaseTest):
     # process_model_id = "call_activity_nested"
     bpmn_file_name = "call_activity_nested.bpmn"
 
-    call_activity_nested_relative_file_path = os.path.join(process_group_id, process_model_id, bpmn_file_name)
+    call_activity_nested_relative_file_path = os.path.join(process_model_id, bpmn_file_name)
 
     def test_can_store_process_ids_for_lookup(
         self,
@@ -35,10 +35,10 @@ class TestSpecFileService(BaseTest):
             bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
-        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
 
     def test_fails_to_save_duplicate_process_id(
         self,
@@ -52,10 +52,10 @@ class TestSpecFileService(BaseTest):
             bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
-        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
         with pytest.raises(ProcessModelFileInvalidError) as exception:
             load_test_spec(
                 "call_activity_nested_duplicate",
@@ -75,9 +75,11 @@ class TestSpecFileService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn_process_identifier = "Level1"
-        process_id_lookup = SpecReferenceCache(
+        process_id_lookup = ReferenceCacheModel(
             identifier=bpmn_process_identifier,
-            relative_path=self.call_activity_nested_relative_file_path,
+            display_name="WHO CARES",
+            relative_location=self.process_model_id,
+            file_name=self.bpmn_file_name,
             type="process",
         )
         db.session.add(process_id_lookup)
@@ -89,10 +91,10 @@ class TestSpecFileService(BaseTest):
             process_model_source_directory="call_activity_nested",
         )
 
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
-        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
 
     # this is really a test of your configuration.
     # sqlite and postgres are case sensitive by default,
@@ -102,14 +104,20 @@ class TestSpecFileService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_id_lookup = SpecReferenceCache(
+        process_id_lookup = ReferenceCacheModel(
             identifier="HOT",
+            display_name="WHO CARES",
+            relative_location=self.process_model_id,
+            file_name=self.bpmn_file_name,
             type="process",
         )
         db.session.add(process_id_lookup)
         db.session.commit()
-        process_id_lookup = SpecReferenceCache(
+        process_id_lookup = ReferenceCacheModel(
             identifier="hot",
+            display_name="WHO CARES",
+            relative_location=self.process_model_id,
+            file_name=self.bpmn_file_name,
             type="process",
         )
         db.session.add(process_id_lookup)
@@ -123,11 +131,11 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         """When a BPMN processes identifier is changed in a file, the old id is removed from the cache."""
         old_identifier = "ye_old_identifier"
-        process_id_lookup = SpecReferenceCache(
+        process_id_lookup = ReferenceCacheModel(
             identifier=old_identifier,
-            relative_path=self.call_activity_nested_relative_file_path,
+            display_name="WHO CARES",
+            relative_location=self.process_model_id,
             file_name=self.bpmn_file_name,
-            process_model_id=self.process_model_id,
             type="process",
         )
         db.session.add(process_id_lookup)
@@ -139,11 +147,11 @@ class TestSpecFileService(BaseTest):
             process_model_source_directory="call_activity_nested",
         )
 
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier != old_identifier
         assert bpmn_process_id_lookups[0].identifier == "Level1"
-        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
 
     def test_load_reference_information(
         self,
