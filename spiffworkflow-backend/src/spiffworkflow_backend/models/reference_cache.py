@@ -1,5 +1,7 @@
 import os
 from dataclasses import dataclass
+from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey
 from typing import Any
 
 from flask_marshmallow import Schema  # type: ignore
@@ -8,6 +10,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 
@@ -45,9 +48,6 @@ class Reference:
     called_element_ids: list  # The element ids of any called elements
 
     properties: dict
-    # has_lanes: bool  # If this is a process, whether it has lanes or not.
-    # is_executable: bool  # Whether this process or decision is designated as executable.
-    # is_primary: bool  # Whether this is the primary process of a process model
 
     def prop_is_true(self, prop_name: str) -> bool:
         return prop_name in self.properties and self.properties[prop_name] is True
@@ -64,9 +64,12 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "reference_cache"
-    __table_args__ = (UniqueConstraint("identifier", "relative_location", "type", name="reference_cache_uniq"),)
+    __table_args__ = (UniqueConstraint("generation_id", "identifier", "relative_location", "type", name="reference_cache_uniq"),)
+    # __allow_unmapped__ = True
 
     id: int = db.Column(db.Integer, primary_key=True)
+    generation_id: int = db.Column(ForeignKey(CacheGenerationModel.id), nullable=False, index=True)  # type: ignore
+
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
     display_name: str = db.Column(db.String(255), index=True, nullable=False)
     type: str = db.Column(db.String(255), index=True, nullable=False)
@@ -80,11 +83,17 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     # is_executable = db.Column(db.Boolean())
     # is_primary = db.Column(db.Boolean())
 
+    generation = relationship(CacheGenerationModel)
+
+
     def relative_path(self) -> str:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
     @classmethod
-    def from_spec_reference(cls, ref: Reference) -> "ReferenceCacheModel":
+    def from_spec_reference(cls, ref: Reference, cache_generation: CacheGenerationModel | None = None) -> "ReferenceCacheModel":
+        if cache_generation is None:
+            cache_generation = CacheGenerationModel.query.filter_by(cache_table="reference_cache").order_by(
+                    CacheGenerationModel.id.desc()).first()  # type: ignore
         return cls(
             identifier=ref.identifier,
             display_name=ref.display_name,
@@ -92,13 +101,12 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
             type=ref.type,
             file_name=ref.file_name,
             properties=ref.properties,
-            # has_lanes=ref.has_lanes,
-            # is_executable=ref.is_executable,
-            # is_primary=ref.is_primary,
+            generation_id=cache_generation.id,
+            # generation=cache_generation,
         )
 
     @validates("type")
-    def validate_event_type(self, key: str, value: Any) -> Any:
+    def validate_type(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, ReferenceType)
 
 

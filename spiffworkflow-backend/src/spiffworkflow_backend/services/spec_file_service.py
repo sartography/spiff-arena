@@ -246,7 +246,7 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_caches(ref: Reference) -> None:
-        SpecFileService.update_process_cache(ref)
+        # SpecFileService.update_process_cache(ref)
         SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
         SpecFileService.update_correlation_cache(ref)
@@ -279,7 +279,7 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_process_cache(ref: Reference) -> None:
         process_id_lookup = (
-            ReferenceCacheModel.query.filter_by(identifier=ref.identifier).filter_by(type=ref.type).first()
+            ReferenceCacheModel.query.filter_by(identifier=ref.identifier, relative_location=ref.relative_location, type=ref.type).first()
         )
         if process_id_lookup is None:
             process_id_lookup = ReferenceCacheModel.from_spec_reference(ref)
