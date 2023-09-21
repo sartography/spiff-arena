@@ -16,6 +16,14 @@ First install python and poetry. Then:
     ./bin/recreate_db clean
     ./bin/run_server_locally
 
+## Keycloak Setup
+
+You will want an openid server of some sort.
+There is one built in to the app that is used in the docker compose setup for simplicity, but non-compose defaults use a separate keycloak container by default.
+You can start it like this:
+
+    ./keycloak/bin/start_keycloak
+
 ## Frontend Setup
 
 First install nodejs, ideally the version in .tool-versions (but likely other versions will work). Then:
