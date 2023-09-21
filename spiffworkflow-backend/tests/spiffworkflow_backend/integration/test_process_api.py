@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from SpiffWorkflow.task import TaskState  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -1617,7 +1617,7 @@ class TestProcessApi(BaseTest):
         assert len(ready_tasks) == 1
         ready_task = ready_tasks[0]
 
-        # check all_tasks here to ensure we actually deleted items when cancelling the instance
+        # check all_tasks here to ensure we actually deleted item when cancelling the instance
         all_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id).all()
         assert len(all_tasks) == 8
 

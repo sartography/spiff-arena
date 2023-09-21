@@ -28,7 +28,7 @@ class TestDotNotation(BaseTest):
         processor.do_engine_steps(save=True)
         human_task = process_instance.human_tasks[0]
 
-        user_task = processor.get_ready_user_tasks()[0]
+        user_task = processor.get_all_ready_or_waiting_tasks()[0]
         form_data = {
             "invoice.contibutorName": "Elizabeth",
             "invoice.contributorId": 100,

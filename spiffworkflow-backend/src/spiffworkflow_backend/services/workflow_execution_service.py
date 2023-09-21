@@ -16,7 +16,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefin
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -166,7 +166,7 @@ class ExecutionStrategy:
         self.delegate.save(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        tasks = [t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]
+        tasks = [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
 
         if len(tasks) > 0:
             self.subprocess_spec_loader()
@@ -249,7 +249,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # but it didn't quite work in all cases, so we deleted it. you can find it in commit
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
         for waiting_spiff_task in bpmn_process_instance.get_tasks(
-            TaskState.WAITING
+            state=TaskState.WAITING
             | TaskState.CANCELLED
             | TaskState.READY
             | TaskState.MAYBE

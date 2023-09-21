@@ -18,7 +18,7 @@ from MySQLdb import OperationalError  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
@@ -493,7 +493,7 @@ def _interstitial_stream(
 ) -> Generator[str, str | None, None]:
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
-            TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
+            state=TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
 
     def render_instructions(spiff_task: SpiffTask) -> str:
@@ -607,7 +607,7 @@ def _interstitial_stream(
 
 
 def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
-    return len([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
+    return len([t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual])
 
 
 def _dequeued_interstitial_stream(
