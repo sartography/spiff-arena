@@ -1,12 +1,12 @@
 import os
 from dataclasses import dataclass
-from sqlalchemy.orm import relationship
-from sqlalchemy import ForeignKey
 from typing import Any
 
 from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
+from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
@@ -64,7 +64,9 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "reference_cache"
-    __table_args__ = (UniqueConstraint("generation_id", "identifier", "relative_location", "type", name="reference_cache_uniq"),)
+    __table_args__ = (
+        UniqueConstraint("generation_id", "identifier", "relative_location", "type", name="reference_cache_uniq"),
+    )
     # __allow_unmapped__ = True
 
     id: int = db.Column(db.Integer, primary_key=True)
@@ -85,25 +87,26 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
 
     generation = relationship(CacheGenerationModel)
 
-
     def relative_path(self) -> str:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
     @classmethod
-    def from_spec_reference(cls, ref: Reference, cache_generation: CacheGenerationModel | None = None) -> "ReferenceCacheModel":
-        if cache_generation is None:
-            cache_generation = CacheGenerationModel.query.filter_by(cache_table="reference_cache").order_by(
-                    CacheGenerationModel.id.desc()).first()  # type: ignore
-        return cls(
+    def from_spec_reference(cls, ref: Reference, use_current_cache_generation: bool = False) -> "ReferenceCacheModel":
+        reference_cache = cls(
             identifier=ref.identifier,
             display_name=ref.display_name,
             relative_location=ref.relative_location,
             type=ref.type,
             file_name=ref.file_name,
             properties=ref.properties,
-            generation_id=cache_generation.id,
-            # generation=cache_generation,
         )
+        if use_current_cache_generation:
+            order_by_clause = CacheGenerationModel.id.desc()  # type: ignore
+            cache_generation = (
+                CacheGenerationModel.query.filter_by(cache_table="reference_cache").order_by(order_by_clause).first()
+            )
+            reference_cache.generation_id = cache_generation.id
+        return reference_cache
 
     @validates("type")
     def validate_type(self, key: str, value: Any) -> Any:

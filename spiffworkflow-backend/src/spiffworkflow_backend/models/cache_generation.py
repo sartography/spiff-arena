@@ -1,7 +1,9 @@
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from typing import Any
+
 from sqlalchemy.orm import validates
+
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 
 
