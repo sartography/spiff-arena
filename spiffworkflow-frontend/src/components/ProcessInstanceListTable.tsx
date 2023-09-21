@@ -123,6 +123,7 @@ export default function ProcessInstanceListTable({
   headerElement,
   tableHtmlId,
 }: OwnProps) {
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
     processInstanceApiSearchPath = '/process-instances';
@@ -177,13 +178,9 @@ export default function ProcessInstanceListTable({
   };
 
   const processInstanceListPathPrefix =
-    variant === 'all'
-      ? '/admin/process-instances/all'
-      : '/admin/process-instances/for-me';
+    variant === 'all' ? '/process-instances/all' : '/process-instances/for-me';
   const processInstanceShowPathPrefix =
-    variant === 'all'
-      ? '/admin/process-instances'
-      : '/admin/process-instances/for-me';
+    variant === 'all' ? '/process-instances' : '/process-instances/for-me';
 
   const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
     []
@@ -1834,11 +1831,14 @@ export default function ProcessInstanceListTable({
             hasIconOnly
             size="md"
             onClick={() =>
-              navigate(`/admin/process-instances?report_hash=${reportHash}`)
+              navigate(`/process-instances?report_hash=${reportHash}`)
             }
           />
         </Column>
       );
+    }
+    if (!headerElement && !filterButtonLink) {
+      return null;
     }
     return (
       <>

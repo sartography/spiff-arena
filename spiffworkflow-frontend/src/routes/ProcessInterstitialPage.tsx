@@ -10,16 +10,16 @@ type OwnProps = {
 
 export default function ProcessInterstitialPage({ variant }: OwnProps) {
   const params = useParams();
-  let processInstanceShowPageUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceShowPageUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
-    processInstanceShowPageUrl = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    processInstanceShowPageUrl = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   }
 
   return (
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/admin'],
+          ['Process Groups', '/process-groups'],
           {
             entityToExplode: String(params.process_model_id),
             entityType: 'process-model-id',

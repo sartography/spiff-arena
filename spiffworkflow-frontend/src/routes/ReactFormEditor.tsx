@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Modal } from '@carbon/react';
 import { Can } from '@casl/react';
+import MDEditor from '@uiw/react-md-editor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -57,6 +58,7 @@ export default function ReactFormEditor() {
 
   const hasDiagram = fileExtension === 'bpmn' || fileExtension === 'dmn';
   const hasFormBuilder = fileExtension === 'json';
+  const defaultFileName = searchParams.get('default_file_name');
 
   const editorDefaultLanguage = (() => {
     if (fileExtension === 'json') {
@@ -106,9 +108,10 @@ export default function ReactFormEditor() {
       setProcessModelFile(file);
     }
     if (!params.file_name) {
-      const fileNameWithExtension = `${newFileName}.${fileExtension}`;
+      const fileNameWithExtension =
+        defaultFileName ?? `${newFileName}.${fileExtension}`;
       navigate(
-        `/admin/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`
+        `/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`
       );
     }
   };
@@ -119,7 +122,7 @@ export default function ReactFormEditor() {
 
     let url = `/process-models/${modifiedProcessModelId}/files`;
     let httpMethod = 'PUT';
-    let fileNameWithExtension = params.file_name;
+    let fileNameWithExtension = params.file_name || defaultFileName;
 
     if (newFileName) {
       fileNameWithExtension = `${newFileName}.${fileExtension}`;
@@ -157,7 +160,7 @@ export default function ReactFormEditor() {
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/admin/process-models/${modifiedProcessModelId}`);
+      navigate(`/process-models/${modifiedProcessModelId}`);
     };
 
     HttpService.makeCallToBackend({
@@ -219,6 +222,30 @@ export default function ReactFormEditor() {
     return null;
   };
 
+  const editorArea = () => {
+    if (fileExtension === 'md') {
+      return (
+        <div data-color-mode="light">
+          <MDEditor
+            height={600}
+            highlightEnable={false}
+            value={processModelFileContents || ''}
+            onChange={(value) => setProcessModelFileContents(value || '')}
+          />
+        </div>
+      );
+    }
+    return (
+      <Editor
+        height={600}
+        width="auto"
+        defaultLanguage={editorDefaultLanguage}
+        defaultValue={processModelFileContents || ''}
+        onChange={(value) => setProcessModelFileContents(value || '')}
+      />
+    );
+  };
+
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
     const formBuildFileParam = params.file_name
@@ -228,7 +255,7 @@ export default function ReactFormEditor() {
       <main>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: params.process_model_id || '',
               entityType: 'process-model-id',
@@ -281,7 +308,7 @@ export default function ReactFormEditor() {
               <Button
                 onClick={() =>
                   navigate(
-                    `/admin/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
+                    `/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
                   )
                 }
                 variant="danger"
@@ -318,13 +345,7 @@ export default function ReactFormEditor() {
             <ActiveUsers />
           </Can>
         </ButtonSet>
-        <Editor
-          height={600}
-          width="auto"
-          defaultLanguage={editorDefaultLanguage}
-          defaultValue={processModelFileContents || ''}
-          onChange={(value) => setProcessModelFileContents(value || '')}
-        />
+        {editorArea()}
       </main>
     );
   }

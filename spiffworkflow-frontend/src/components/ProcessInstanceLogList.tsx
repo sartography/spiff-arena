@@ -78,9 +78,9 @@ export default function ProcessInstanceLogList({
     shouldDisplayClearButton = true;
   }
 
-  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${processModelId}`;
+  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${processModelId}`;
   if (variant === 'all') {
-    processInstanceShowPageBaseUrl = `/admin/process-instances/${processModelId}`;
+    processInstanceShowPageBaseUrl = `/process-instances/${processModelId}`;
   }
   const taskNameHeader = isEventsView ? 'Task name' : 'Milestone';
   const tableType = isEventsView ? 'events' : 'milestones';
@@ -259,7 +259,15 @@ export default function ProcessInstanceLogList({
 
   const getTableRow = (logEntry: ProcessInstanceLogEntry) => {
     const tableRow = [];
-    const taskNameCell = <td>{logEntry.task_definition_name}</td>;
+    let taskName = logEntry.task_definition_name;
+    if (!taskName && !isEventsView) {
+      if (logEntry.bpmn_task_type === 'StartEvent') {
+        taskName = 'Started';
+      } else if (logEntry.bpmn_task_type === 'EndEvent') {
+        taskName = 'Completed';
+      }
+    }
+    const taskNameCell = <td>{taskName}</td>;
     const bpmnProcessCell = (
       <td>
         {logEntry.bpmn_process_definition_name ||

@@ -6,6 +6,7 @@ export const useUriListForPermissions = () => {
   const targetUris = useMemo(() => {
     return {
       authenticationListPath: `/v1.0/authentications`,
+      statusPath: `/v1.0/status`,
       messageInstanceListPath: '/v1.0/messages',
       dataStoreListPath: '/v1.0/data-stores',
       extensionListPath: '/v1.0/extensions',

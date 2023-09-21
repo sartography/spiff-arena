@@ -14,7 +14,6 @@ export default function App() {
   }
 
   const ability = defineAbility(() => {});
-
   return (
     <div className="cds--white">
       {/* @ts-ignore */}

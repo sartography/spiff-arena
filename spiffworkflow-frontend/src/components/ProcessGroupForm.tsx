@@ -27,7 +27,7 @@ export default function ProcessGroupForm({
   const navigateToProcessGroup = (_result: any) => {
     if (newProcessGroupId) {
       navigate(
-        `/admin/process-groups/${modifyProcessIdentifierForPathParam(
+        `/process-groups/${modifyProcessIdentifierForPathParam(
           newProcessGroupId
         )}`
       );

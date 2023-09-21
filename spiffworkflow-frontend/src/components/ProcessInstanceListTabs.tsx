@@ -32,7 +32,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           title="Only show process instances for the current user."
           data-qa="process-instance-list-for-me"
           onClick={() => {
-            navigate('/admin/process-instances/for-me');
+            navigate('/process-instances/for-me');
           }}
         >
           For Me
@@ -42,7 +42,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
             title="Show all process instances for all users."
             data-qa="process-instance-list-all"
             onClick={() => {
-              navigate('/admin/process-instances/all');
+              navigate('/process-instances/all');
             }}
           >
             All
@@ -52,7 +52,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           title="Search for a process instance by id."
           data-qa="process-instance-list-find-by-id"
           onClick={() => {
-            navigate('/admin/process-instances/find-by-id');
+            navigate('/process-instances/find-by-id');
           }}
         >
           Find By Id

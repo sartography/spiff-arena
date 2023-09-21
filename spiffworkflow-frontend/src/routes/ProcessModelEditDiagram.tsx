@@ -266,7 +266,7 @@ export default function ProcessModelEditDiagram() {
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/admin/process-models/${modifiedProcessModelId}`);
+      navigate(`/process-models/${modifiedProcessModelId}`);
     };
     HttpService.makeCallToBackend({
       path: url,
@@ -280,7 +280,7 @@ export default function ProcessModelEditDiagram() {
     const httpMethod = 'PUT';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/admin${url}`);
+      navigate(url);
     };
     const processModelToPass = {
       primary_file_name: fileName,
@@ -1131,7 +1131,7 @@ export default function ProcessModelEditDiagram() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',

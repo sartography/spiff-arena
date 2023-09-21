@@ -21,6 +21,7 @@ import {
   StopOutline,
   TrashCan,
   Warning,
+  Link as LinkIcon,
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -117,6 +118,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   >(null);
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
+    useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
@@ -151,12 +154,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
-      `/admin/process-instances?process_model_identifier=${unModifiedProcessModelId}`
+      `/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
 
-  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  const processInstanceShowPageBaseUrlAllVariant = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  const processInstanceShowPageBaseUrlAllVariant = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
   }
@@ -427,7 +430,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <dd>
                 <Link
                   data-qa="go-to-current-diagram-process-model"
-                  to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  to={`/process-models/${modifyProcessIdentifierForPathParam(
                     processInstance.process_model_with_diagram_identifier || ''
                   )}`}
                 >
@@ -475,6 +478,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const copyProcessInstanceShortLink = () => {
+    if (processInstance) {
+      const piShortLink = `${window.location.origin}/i/${processInstance.id}`;
+      navigator.clipboard.writeText(piShortLink);
+      setCopiedShortLinkToClipboard(true);
+    }
+  };
+
   const terminateButton = () => {
     if (
       processInstance &&
@@ -516,6 +527,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
     return <div />;
+  };
+
+  const copyProcessInstanceShortLinkButton = () => {
+    return (
+      <Button
+        onClick={copyProcessInstanceShortLink}
+        kind="ghost"
+        renderIcon={LinkIcon}
+        iconDescription="Copy short link for sharing"
+        hasIconOnly
+        size="lg"
+      />
+    );
   };
 
   const resumeButton = () => {
@@ -1314,6 +1338,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
     const elements = [];
+    elements.push(copyProcessInstanceShortLinkButton());
     if (ability.can('POST', `${targetUris.processInstanceTerminatePath}`)) {
       elements.push(terminateButton());
     }
@@ -1325,6 +1350,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
       elements.push(deleteButton());
+    }
+    let toast = null;
+    if (copiedShortLinkToClipboard) {
+      toast = (
+        <Notification
+          onClose={() => setCopiedShortLinkToClipboard(false)}
+          type="success"
+          title="Copied link to clipboard"
+          timeout={3000}
+          hideCloseButton
+          withBottomMargin={false}
+        />
+      );
+      elements.push(toast);
     }
     return elements;
   };
@@ -1436,7 +1475,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <Tab disabled={!canViewLogs}>Milestones</Tab>
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
-            <Tab>My Forms</Tab>
+            <Tab>My completed tasks</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -1472,14 +1511,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <TaskListTable
                   apiPath={`/tasks/completed-by-me/${processInstance.id}`}
                   paginationClassName="with-large-bottom-margin"
-                  textToShowIfEmpty="There are no tasks you can complete for this process instance."
+                  textToShowIfEmpty="You have not completed any tasks for this process instance."
                   shouldPaginateTable={false}
                   showProcessModelIdentifier={false}
                   showProcessId={false}
                   showStartedBy={false}
                   showTableDescriptionAsTooltip
                   showDateStarted={false}
-                  hideIfNoTasks
                   showWaitingOn={false}
                   canCompleteAllTasks={false}
                   showViewFormDataButton
@@ -1495,7 +1533,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processModelId,
               entityType: 'process-model-id',

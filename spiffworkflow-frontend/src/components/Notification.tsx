@@ -15,6 +15,8 @@ type OwnProps = {
   type?: string;
   hideCloseButton?: boolean;
   allowTogglingFullMessage?: boolean;
+  timeout?: number;
+  withBottomMargin?: boolean;
 };
 
 export function Notification({
@@ -24,6 +26,8 @@ export function Notification({
   type = 'success',
   hideCloseButton = false,
   allowTogglingFullMessage = false,
+  timeout,
+  withBottomMargin = true,
 }: OwnProps) {
   const [showMessage, setShowMessage] = useState<boolean>(
     !allowTogglingFullMessage
@@ -33,11 +37,19 @@ export function Notification({
     iconComponent = <Error className="notification-icon" />;
   }
 
+  if (timeout && onClose) {
+    setTimeout(() => {
+      onClose();
+    }, timeout);
+  }
+
+  let classes = `cds--inline-notification cds--inline-notification--low-contrast cds--inline-notification--${type}`;
+  if (withBottomMargin) {
+    classes = `${classes} with-bottom-margin`;
+  }
+
   return (
-    <div
-      role="status"
-      className={`with-bottom-margin cds--inline-notification cds--inline-notification--low-contrast cds--inline-notification--${type}`}
-    >
+    <div role="status" className={classes}>
       <div className="cds--inline-notification__details">
         <div className="cds--inline-notification__text-wrapper">
           {iconComponent}

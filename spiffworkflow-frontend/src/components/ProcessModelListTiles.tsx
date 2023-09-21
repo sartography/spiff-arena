@@ -56,7 +56,7 @@ export default function ProcessModelListTiles({
           onClose={() => setProcessInstance(null)}
         >
           <Link
-            to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
+            to={`/process-instances/${modifyProcessIdentifierForPathParam(
               processInstance.process_model_identifier
             )}/${processInstance.id}`}
             data-qa="process-instance-show-link"
@@ -83,7 +83,7 @@ export default function ProcessModelListTiles({
                 <a
                   title={row.id}
                   data-qa="process-model-show-link"
-                  href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  href={`/process-models/${modifyProcessIdentifierForPathParam(
                     row.id
                   )}`}
                 >

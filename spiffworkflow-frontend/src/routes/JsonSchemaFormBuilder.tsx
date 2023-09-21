@@ -296,7 +296,7 @@ export default function JsonSchemaFormBuilder() {
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/admin/process-models/${modifiedProcessModelId}`);
+      navigate(`/process-models/${modifiedProcessModelId}`);
     };
 
     HttpService.makeCallToBackend({
@@ -339,7 +339,7 @@ export default function JsonSchemaFormBuilder() {
         <Button
           onClick={() =>
             navigate(
-              `/admin/process-models/${
+              `/process-models/${
                 params.process_model_id
               }/form/${searchParams.get('file_name')}`
             )
@@ -359,7 +359,7 @@ export default function JsonSchemaFormBuilder() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/admin'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: params.process_model_id || '',
               entityType: 'process-model-id',
