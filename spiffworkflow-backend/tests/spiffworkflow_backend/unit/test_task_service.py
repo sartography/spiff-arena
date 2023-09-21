@@ -41,6 +41,7 @@ class TestTaskService(BaseTest):
         bpmn_process_level_2b = (
             BpmnProcessModel.query.join(BpmnProcessDefinitionModel)
             .filter(BpmnProcessDefinitionModel.bpmn_identifier == "Level2b")
+            .order_by(BpmnProcessModel.id)
             .first()
         )
         assert bpmn_process_level_2b is not None
@@ -50,6 +51,7 @@ class TestTaskService(BaseTest):
         bpmn_process_level_3 = (
             BpmnProcessModel.query.join(BpmnProcessDefinitionModel)
             .filter(BpmnProcessDefinitionModel.bpmn_identifier == "Level3")
+            .order_by(BpmnProcessModel.id)
             .first()
         )
         assert bpmn_process_level_3 is not None
@@ -86,6 +88,7 @@ class TestTaskService(BaseTest):
         task_model_level_2b = (
             TaskModel.query.join(TaskDefinitionModel)
             .filter(TaskDefinitionModel.bpmn_identifier == "level_2b_subprocess_script_task")
+            .order_by(TaskModel.id)
             .first()
         )
         assert task_model_level_2b is not None
@@ -100,6 +103,7 @@ class TestTaskService(BaseTest):
         task_model_level_3 = (
             TaskModel.query.join(TaskDefinitionModel)
             .filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task")
+            .order_by(TaskModel.id)
             .first()
         )
         assert task_model_level_3 is not None

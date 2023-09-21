@@ -52,7 +52,7 @@ class TestJinjaService(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        JinjaService.render_instructions_for_end_user(processor.get_ready_user_tasks()[0])
+        JinjaService.render_instructions_for_end_user(processor.get_all_ready_or_waiting_tasks()[0])
         "\n".join(
             [
                 r"* From Filter: Sanitized \| from \| filter",
