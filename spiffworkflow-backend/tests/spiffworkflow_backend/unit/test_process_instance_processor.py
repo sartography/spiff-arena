@@ -659,7 +659,9 @@ class TestProcessInstanceProcessor(BaseTest):
                     .filter(TaskDefinitionModel.bpmn_identifier == spiff_task.task_spec.name)
                     .count()
                 )
-                assert task_models_with_bpmn_identifier_count < 3, count_failure_message
+
+                # some tasks will have 2 COMPLETED and 1 LIKELY/MAYBE
+                assert task_models_with_bpmn_identifier_count < 4, count_failure_message
                 task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
 
                 assert task_model.start_in_seconds is not None
@@ -737,8 +739,7 @@ class TestProcessInstanceProcessor(BaseTest):
             .filter(TaskModel.state.in_(["LIKELY", "MAYBE"]))  # type: ignore
             .count()
         )
-        assert task_models_that_are_predicted_count == 0
-
+        assert task_models_that_are_predicted_count == 4
         assert processor_final.get_data() == data_set_7
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
