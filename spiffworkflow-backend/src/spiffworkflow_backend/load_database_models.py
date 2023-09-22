@@ -26,6 +26,9 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel  # noqa: F401
 from spiffworkflow_backend.models.spec_reference import (
     SpecReferenceCache,
 )  # noqa: F401
+from spiffworkflow_backend.models.reference_cache import (
+    ReferenceCacheModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.process_caller import (
     ProcessCallerCacheModel,
 )  # noqa: F401
