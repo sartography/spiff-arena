@@ -183,7 +183,15 @@ class GitService:
             return False
 
         if "ref" not in webhook:
-            raise InvalidGitWebhookBodyError(f"Could not find the 'ref' arg in the webhook boy: {webhook}")
+            raise InvalidGitWebhookBodyError(f"Could not find the 'ref' arg in the webhook body: {webhook}")
+        if "after" not in webhook:
+            raise InvalidGitWebhookBodyError(f"Could not find the 'after' arg in the webhook body: {webhook}")
+
+        git_revision_before_pull = cls.get_current_revision()
+        git_revision_after = webhook["after"]
+        if git_revision_before_pull == git_revision_after:
+            current_app.logger.info("Skipping git pull because we already have the current git revision, git boy!")
+            return True
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
             raise MissingGitConfigsError(
