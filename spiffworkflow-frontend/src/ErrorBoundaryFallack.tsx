@@ -12,9 +12,12 @@ export function ErrorBoundaryFallback({ error }: ErrorProps) {
   // This is displayed if the ErrorBoundary catches an error when rendering the form.
   const { resetBoundary } = useErrorBoundary();
 
+  // print the error to the console so we can debug issues
+  console.error(error);
+
   return (
     <Notification
-      title="Something Went Wrong. "
+      title="Something Went Wrong."
       onClose={() => resetBoundary()}
       type="error"
     >
