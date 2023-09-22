@@ -33,6 +33,10 @@ def app() -> Flask:  # noqa
 
     return app
 
+# @pytest.fixture(autouse=True, scope='session')
+# def my_fixture(app):
+#     yield
+#     ProcessModelService.check_all_tasks(app)
 
 @pytest.fixture()
 def with_db_and_bpmn_file_cleanup() -> None:
@@ -48,6 +52,7 @@ def with_db_and_bpmn_file_cleanup() -> None:
     try:
         yield
     finally:
+        ProcessModelService.check_all_tasks()
         if os.path.exists(ProcessModelService.root_path()):
             shutil.rmtree(ProcessModelService.root_path())
 

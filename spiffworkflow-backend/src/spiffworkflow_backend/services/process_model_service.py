@@ -1,5 +1,6 @@
 import json
 import os
+from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 import shutil
 import uuid
 from glob import glob
