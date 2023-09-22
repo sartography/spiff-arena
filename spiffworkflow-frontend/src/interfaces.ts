@@ -139,9 +139,7 @@ export interface ProcessReference {
   process_model_id: string;
   type: string; // either "decision" or "process"
   file_name: string;
-  has_lanes: boolean;
-  is_executable: boolean;
-  is_primary: boolean;
+  properties: any;
 }
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
