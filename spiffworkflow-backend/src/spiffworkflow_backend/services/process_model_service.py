@@ -211,6 +211,7 @@ class ProcessModelService(FileSystemService):
                 " filter_runnable_as_extension"
             )
 
+        # get the full list (before we filter it by the ones you are allowed to start)
         process_models = cls.get_process_models(
             process_group_id=process_group_id, recursive=recursive, include_files=include_files
         )
@@ -225,16 +226,27 @@ class ProcessModelService(FileSystemService):
         if filter_runnable_as_extension:
             permission_to_check = "create"
             permission_base_uri = "/v1.0/extensions"
+            process_model_identifiers = [
+                p.id.replace(f"{current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}/", "")
+                for p in process_models
+            ]
 
+        # these are the ones (identifiers, at least) you are allowed to start
         permitted_process_model_identifiers = cls.process_model_identifiers_with_permission_for_user(
             user=user,
             permission_to_check=permission_to_check,
             permission_base_uri=permission_base_uri,
             process_model_identifiers=process_model_identifiers,
         )
+
         permitted_process_models = []
         for process_model in process_models:
-            if process_model.id in permitted_process_model_identifiers:
+            process_model_identifier = process_model.id
+            if filter_runnable_as_extension:
+                process_model_identifier = process_model.id.replace(
+                    f"{current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}/", ""
+                )
+            if process_model_identifier in permitted_process_model_identifiers:
                 permitted_process_models.append(process_model)
         return permitted_process_models
 
