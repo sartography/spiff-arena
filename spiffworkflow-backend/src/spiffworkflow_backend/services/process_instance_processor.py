@@ -65,8 +65,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -1244,7 +1244,9 @@ class ProcessInstanceProcessor:
                 "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
             )
 
-        spec_reference = SpecReferenceCache.query.filter_by(identifier=bpmn_process_identifier, type="process").first()
+        spec_reference = (
+            ReferenceCacheModel.basic_query().filter_by(identifier=bpmn_process_identifier, type="process").first()
+        )
         bpmn_file_full_path = None
         if spec_reference is None:
             bpmn_file_full_path = ProcessInstanceProcessor.backfill_missing_spec_reference_records(
@@ -1253,7 +1255,7 @@ class ProcessInstanceProcessor:
         else:
             bpmn_file_full_path = os.path.join(
                 FileSystemService.root_path(),
-                spec_reference.relative_path,
+                spec_reference.relative_path(),
             )
         if bpmn_file_full_path is None:
             raise (

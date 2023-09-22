@@ -5,7 +5,7 @@ from flask.app import Flask
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -86,7 +86,7 @@ class TestProcessModel(BaseTest):
 
         # delete all of the id lookup items to force to processor to find the correct
         # process model when running the process
-        db.session.query(SpecReferenceCache).delete()
+        db.session.query(ReferenceCacheModel).delete()
         db.session.commit()
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")

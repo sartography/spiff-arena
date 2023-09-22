@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
-from spiffworkflow_backend.models.spec_reference import SpecReference
+from spiffworkflow_backend.models.reference_cache import Reference
 
 
 class FileType(SpiffEnum):
@@ -67,7 +67,7 @@ class File:
     type: str
     last_modified: datetime
     size: int
-    references: list[SpecReference] | None = None
+    references: list[Reference] | None = None
     file_contents: bytes | None = None
     process_model_id: str | None = None
     bpmn_process_ids: list[str] | None = None

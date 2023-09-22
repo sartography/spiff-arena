@@ -22,7 +22,7 @@ from spiffworkflow_backend.models.process_instance_report import ProcessInstance
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -505,7 +505,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(SpecReferenceCache.query.all()) == 1
+        assert len(ReferenceCacheModel.basic_query().all()) == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
@@ -515,7 +515,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(SpecReferenceCache.query.all()) == 6
+        assert len(ReferenceCacheModel.basic_query().all()) == 6
 
         # get the results
         response = client.get(
@@ -529,10 +529,10 @@ class TestProcessApi(BaseTest):
         assert len(response.json) == 5
         simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
         assert simple_form["display_name"] == "Process With Form"
-        assert simple_form["process_model_id"] == "test_group_one/simple_form"
-        assert simple_form["has_lanes"] is False
-        assert simple_form["is_executable"] is True
-        assert simple_form["is_primary"] is True
+        assert simple_form["relative_location"] == "test_group_one/simple_form"
+        assert simple_form["properties"]["has_lanes"] is False
+        assert simple_form["properties"]["is_executable"] is True
+        assert simple_form["properties"]["is_primary"] is True
 
     def test_process_list_with_restricted_access(
         self,
@@ -547,7 +547,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(SpecReferenceCache.query.all()) == 1
+        assert len(ReferenceCacheModel.basic_query().all()) == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
@@ -557,7 +557,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(SpecReferenceCache.query.all()) == 6
+        assert len(ReferenceCacheModel.basic_query().all()) == 6
 
         user_one = self.create_user_with_permission(
             username="user_one", target_uri="/v1.0/process-groups/test_group_one:*"
@@ -580,10 +580,10 @@ class TestProcessApi(BaseTest):
         assert len(response.json) == 1
         simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
         assert simple_form["display_name"] == "Process With Form"
-        assert simple_form["process_model_id"] == "test_group_one/simple_form"
-        assert simple_form["has_lanes"] is False
-        assert simple_form["is_executable"] is True
-        assert simple_form["is_primary"] is True
+        assert simple_form["relative_location"] == "test_group_one/simple_form"
+        assert simple_form["properties"]["has_lanes"] is False
+        assert simple_form["properties"]["is_executable"] is True
+        assert simple_form["properties"]["is_primary"] is True
 
     def test_process_callers(
         self,
@@ -599,7 +599,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(SpecReferenceCache.query.all()) == 1
+        assert len(ReferenceCacheModel.basic_query().all()) == 1
         # but no callers are recorded
         assert ProcessCallerService.count() == 0
 
@@ -611,7 +611,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(SpecReferenceCache.query.all()) == 6
+        assert len(ReferenceCacheModel.basic_query().all()) == 6
         # and 4 callers recorded
         assert ProcessCallerService.count() == 4
 
@@ -1330,7 +1330,7 @@ class TestProcessApi(BaseTest):
             process_model_id=process_model_id,
             bpmn_file_location="call_activity_nested",
         )
-        spec_reference = SpecReferenceCache.query.filter_by(identifier="Level2b").first()
+        spec_reference = ReferenceCacheModel.basic_query().filter_by(identifier="Level2b").first()
         assert spec_reference
         modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
@@ -1356,7 +1356,7 @@ class TestProcessApi(BaseTest):
         with open(process_instance_file_path) as f_open:
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] != xml_file_contents
-        spec_reference_file_path = os.path.join(file_system_root, spec_reference.relative_path)
+        spec_reference_file_path = os.path.join(file_system_root, spec_reference.relative_path())
         with open(spec_reference_file_path) as f_open:
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
