@@ -5,6 +5,7 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from lxml import etree  # type: ignore
+from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -210,6 +211,63 @@ class TestSpecFileService(BaseTest):
 
         full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
         assert not os.path.isfile(full_file_path)
+
+    def test_uses_correct_cache_generation(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        current_cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
+        assert current_cache_generation is None
+
+        load_test_spec(
+            process_model_id=self.process_model_id,
+            bpmn_file_name=self.bpmn_file_name,
+            process_model_source_directory="call_activity_nested",
+        )
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        assert len(bpmn_process_id_lookups) == 1
+        assert bpmn_process_id_lookups[0].identifier == "Level1"
+        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
+
+        current_cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
+        assert current_cache_generation is not None
+        assert bpmn_process_id_lookups[0].generation_id == current_cache_generation.id
+
+        # make sure it doesn't add a new entry to the cache
+        load_test_spec(
+            process_model_id=self.process_model_id,
+            bpmn_file_name=self.bpmn_file_name,
+            process_model_source_directory="call_activity_nested",
+        )
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        assert len(bpmn_process_id_lookups) == 1
+        assert bpmn_process_id_lookups[0].identifier == "Level1"
+        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
+        assert bpmn_process_id_lookups[0].generation_id == current_cache_generation.id
+
+        cache_generations = CacheGenerationModel.query.all()
+        assert len(cache_generations) == 1
+
+        new_cache_generation = CacheGenerationModel(cache_table="reference_cache")
+        db.session.add(new_cache_generation)
+        db.session.commit()
+
+        cache_generations = CacheGenerationModel.query.all()
+        assert len(cache_generations) == 2
+        current_cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
+        assert current_cache_generation is not None
+
+        load_test_spec(
+            process_model_id=self.process_model_id,
+            bpmn_file_name=self.bpmn_file_name,
+            process_model_source_directory="call_activity_nested",
+        )
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        assert len(bpmn_process_id_lookups) == 1
+        assert bpmn_process_id_lookups[0].identifier == "Level1"
+        assert bpmn_process_id_lookups[0].generation_id == current_cache_generation.id
 
     @pytest.mark.skipif(
         sys.platform == "win32",
