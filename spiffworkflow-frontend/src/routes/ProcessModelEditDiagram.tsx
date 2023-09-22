@@ -43,7 +43,6 @@ import {
   CarbonComboBoxProcessSelection,
   ProcessFile,
   ProcessModel,
-  ProcessModelCaller,
   ProcessReference,
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
@@ -136,7 +135,7 @@ export default function ProcessModelEditDiagram() {
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
-  const [callers, setCallers] = useState<ProcessModelCaller[]>([]);
+  const [callers, setCallers] = useState<ProcessReference[]>([]);
 
   usePrompt('Changes you made may not be saved.', diagramHasChanges);
 

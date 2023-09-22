@@ -64,7 +64,7 @@ import {
   modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessModelCaller, Task } from '../interfaces';
+import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 type OwnProps = {
@@ -89,7 +89,7 @@ type OwnProps = {
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
   url?: string;
-  callers?: ProcessModelCaller[];
+  callers?: ProcessReference[];
   activeUserElement?: React.ReactElement;
 };
 
@@ -628,17 +628,17 @@ export default function ReactDiagramEditor({
         passiveModal
       >
         <UnorderedList>
-          {callers.map((ref: ProcessModelCaller) => (
+          {callers.map((ref: ProcessReference) => (
             <li>
               <Link
                 size="lg"
                 href={`/process-models/${modifyProcessIdentifierForPathParam(
-                  ref.process_model_id
+                  ref.relative_location
                 )}`}
               >
                 {`${ref.display_name}`}
               </Link>{' '}
-              ({ref.process_model_id})
+              ({ref.relative_location})
             </li>
           ))}
         </UnorderedList>
