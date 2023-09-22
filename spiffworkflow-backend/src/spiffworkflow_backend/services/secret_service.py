@@ -40,6 +40,7 @@ class SecretService:
         try:
             db.session.commit()
         except Exception as e:
+            db.session.rollback()
             raise ApiError(
                 error_code="create_secret_error",
                 message=(
