@@ -958,7 +958,7 @@ export default function ProcessModelEditDiagram() {
         '/editor/process-models/:process_model_path/files/:file_name',
         {
           process_model_path: modifyProcessIdentifierForPathParam(
-            processReference.process_model_id
+            processReference.relative_location
           ),
           file_name: processReference.file_name,
         }
