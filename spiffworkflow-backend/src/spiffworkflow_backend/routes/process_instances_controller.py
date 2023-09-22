@@ -702,7 +702,9 @@ def _get_process_instance(
     process_model_with_diagram = None
     name_of_file_with_diagram = None
     if process_identifier:
-        spec_reference = ReferenceCacheModel.query.filter_by(identifier=process_identifier, type="process").first()
+        spec_reference = (
+            ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
+        )
         if spec_reference is None:
             raise ReferenceNotFoundError(f"Could not find given process identifier in the cache: {process_identifier}")
 

@@ -187,9 +187,11 @@ class SpecFileService(FileSystemService):
             SpecFileService.update_all_caches(ref)
 
         if user is not None:
-            called_element_refs = ReferenceCacheModel.query.filter(
-                ReferenceCacheModel.identifier.in_(all_called_element_ids)  # type: ignore
-            ).all()
+            called_element_refs = (
+                ReferenceCacheModel.basic_query()
+                .filter(ReferenceCacheModel.identifier.in_(all_called_element_ids))  # type: ignore
+                .all()
+            )
             if len(called_element_refs) > 0:
                 process_model_identifiers: list[str] = [r.relative_location for r in called_element_refs]
                 permitted_process_model_identifiers = (
@@ -282,9 +284,11 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_process_cache(ref: Reference) -> None:
-        process_id_lookup = ReferenceCacheModel.query.filter_by(
-            identifier=ref.identifier, relative_location=ref.relative_location, type=ref.type
-        ).first()
+        process_id_lookup = (
+            ReferenceCacheModel.basic_query()
+            .filter_by(identifier=ref.identifier, relative_location=ref.relative_location, type=ref.type)
+            .first()
+        )
         if process_id_lookup is None:
             process_id_lookup = ReferenceCacheModel.from_spec_reference(ref, use_current_cache_generation=True)
             db.session.add(process_id_lookup)

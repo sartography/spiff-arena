@@ -693,9 +693,11 @@ class TaskService:
         This involves several queries so avoid calling in a tight loop.
         """
         bpmn_process_definition = bpmn_process.bpmn_process_definition
-        spec_reference: ReferenceCacheModel | None = ReferenceCacheModel.query.filter_by(
-            identifier=bpmn_process_definition.bpmn_identifier, type="process"
-        ).first()
+        spec_reference: ReferenceCacheModel | None = (
+            ReferenceCacheModel.basic_query()
+            .filter_by(identifier=bpmn_process_definition.bpmn_identifier, type="process")
+            .first()
+        )
         if spec_reference is None:
             raise ReferenceNotFoundError(
                 f"Could not find given process identifier in the cache: {bpmn_process_definition.bpmn_identifier}"

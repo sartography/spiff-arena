@@ -35,7 +35,7 @@ class TestSpecFileService(BaseTest):
             bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
@@ -52,7 +52,7 @@ class TestSpecFileService(BaseTest):
             bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_duplicate",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         with pytest.raises(ProcessModelFileInvalidError) as exception:
@@ -91,7 +91,7 @@ class TestSpecFileService(BaseTest):
             process_model_source_directory="call_activity_nested",
         )
 
-        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
@@ -150,7 +150,7 @@ class TestSpecFileService(BaseTest):
             process_model_source_directory="call_activity_nested",
         )
 
-        bpmn_process_id_lookups = ReferenceCacheModel.query.all()
+        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier != old_identifier
         assert bpmn_process_id_lookups[0].identifier == "Level1"

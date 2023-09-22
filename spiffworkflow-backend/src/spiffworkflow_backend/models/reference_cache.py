@@ -90,6 +90,14 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
     @classmethod
+    def basic_query(cls) -> Any:
+        cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
+        basic_query = cls.query
+        if cache_generation is not None:
+            basic_query = basic_query.filter_by(generation_id=cache_generation.id)
+        return basic_query
+
+    @classmethod
     def from_params(
         cls,
         identifier: str,
@@ -109,11 +117,10 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
             properties=properties,
         )
         if use_current_cache_generation:
-            order_by_clause = CacheGenerationModel.id.desc()  # type: ignore
-            cache_generation = (
-                CacheGenerationModel.query.filter_by(cache_table="reference_cache").order_by(order_by_clause).first()
-            )
+            cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
             if cache_generation is None:
+                # NOTE: we may want to raise here instead since this should never happen in real environments
+                # but it does happen in tests
                 cache_generation = CacheGenerationModel(cache_table="reference_cache")
                 db.session.add(cache_generation)
             reference_cache.generation = cache_generation

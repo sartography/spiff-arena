@@ -63,7 +63,7 @@ def process_list() -> Any:
     This includes processes that are not the
     primary process - helpful for finding possible call activities.
     """
-    references = ReferenceCacheModel.query.filter_by(type="process").all()
+    references = ReferenceCacheModel.basic_query().filter_by(type="process").all()
     process_model_identifiers = [r.relative_location for r in references]
     permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
         user=g.user,
@@ -81,7 +81,8 @@ def process_list() -> Any:
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
     callers = ProcessCallerService.callers(bpmn_process_identifiers)
     references = (
-        ReferenceCacheModel.query.filter_by(type="process")
+        ReferenceCacheModel.basic_query()
+        .filter_by(type="process")
         .filter(ReferenceCacheModel.identifier.in_(callers))  # type: ignore
         .all()
     )

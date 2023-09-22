@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from sqlalchemy.orm import validates
@@ -19,6 +21,14 @@ class CacheGenerationModel(SpiffworkflowBaseDBModel):
 
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
+
+    @classmethod
+    def newest_generation_for_table(cls, cache_table: str) -> CacheGenerationModel | None:
+        order_by_clause = CacheGenerationModel.id.desc()  # type: ignore
+        cache_generation: CacheGenerationModel | None = (
+            CacheGenerationModel.query.filter_by(cache_table=cache_table).order_by(order_by_clause).first()
+        )
+        return cache_generation
 
     @validates("cache_table")
     def validate_cache_table(self, key: str, value: Any) -> Any:
