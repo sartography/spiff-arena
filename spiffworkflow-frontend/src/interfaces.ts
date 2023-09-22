@@ -132,11 +132,9 @@ export interface ProcessInstanceTask {
 }
 
 export interface ProcessReference {
-  name: string; // The process or decision Display name.
   identifier: string; // The unique id of the process
   display_name: string;
-  process_group_id: string;
-  process_model_id: string;
+  relative_location: string;
   type: string; // either "decision" or "process"
   file_name: string;
   properties: any;
