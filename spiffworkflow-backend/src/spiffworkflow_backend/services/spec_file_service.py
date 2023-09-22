@@ -184,7 +184,7 @@ class SpecFileService(FileSystemService):
                     )
 
             all_called_element_ids = all_called_element_ids | set(ref.called_element_ids)
-            SpecFileService.update_caches(ref)
+            SpecFileService.update_all_caches(ref)
 
         if user is not None:
             called_element_refs = ReferenceCacheModel.query.filter(
@@ -245,8 +245,12 @@ class SpecFileService(FileSystemService):
     # fixme: Place all the caching stuff in a different service.
 
     @staticmethod
-    def update_caches(ref: Reference) -> None:
-        # SpecFileService.update_process_cache(ref)
+    def update_all_caches(ref: Reference) -> None:
+        SpecFileService.update_process_cache(ref)
+        SpecFileService.update_caches_except_process(ref)
+
+    @staticmethod
+    def update_caches_except_process(ref: Reference) -> None:
         SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
         SpecFileService.update_correlation_cache(ref)

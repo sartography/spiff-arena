@@ -40,7 +40,7 @@ class TestSpecFileService(BaseTest):
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
 
-    def test_fails_to_save_duplicate_process_id(
+    def test_fails_to_save_duplicate_process_id_in_same_process_model(
         self,
         app: Flask,
         client: FlaskClient,
@@ -48,23 +48,22 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         bpmn_process_identifier = "Level1"
         load_test_spec(
-            process_model_id=self.process_model_id,
+            process_model_id="call_activity_duplicate",
             bpmn_file_name=self.bpmn_file_name,
-            process_model_source_directory="call_activity_nested",
+            process_model_source_directory="call_activity_duplicate",
         )
         bpmn_process_id_lookups = ReferenceCacheModel.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
-        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
         with pytest.raises(ProcessModelFileInvalidError) as exception:
             load_test_spec(
-                "call_activity_nested_duplicate",
+                process_model_id="call_activity_duplicate",
                 process_model_source_directory="call_activity_duplicate",
                 bpmn_file_name="call_activity_nested_duplicate",
             )
-            assert f"Process id ({bpmn_process_identifier}) has already been used" in str(exception.value)
+        assert f"Process id ({bpmn_process_identifier}) has already been used" in str(exception.value)
 
-        process_model = ProcessModelService.get_process_model("call_activity_nested_duplicate")
+        process_model = ProcessModelService.get_process_model("call_activity_duplicate")
         full_file_path = SpecFileService.full_file_path(process_model, "call_activity_nested_duplicate.bpmn")
         assert not os.path.isfile(full_file_path)
 
@@ -75,12 +74,13 @@ class TestSpecFileService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn_process_identifier = "Level1"
-        process_id_lookup = ReferenceCacheModel(
+        process_id_lookup = ReferenceCacheModel.from_params(
             identifier=bpmn_process_identifier,
             display_name="WHO CARES",
             relative_location=self.process_model_id,
             file_name=self.bpmn_file_name,
             type="process",
+            use_current_cache_generation=True,
         )
         db.session.add(process_id_lookup)
         db.session.commit()
@@ -104,21 +104,23 @@ class TestSpecFileService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_id_lookup = ReferenceCacheModel(
+        process_id_lookup = ReferenceCacheModel.from_params(
             identifier="HOT",
             display_name="WHO CARES",
             relative_location=self.process_model_id,
             file_name=self.bpmn_file_name,
             type="process",
+            use_current_cache_generation=True,
         )
         db.session.add(process_id_lookup)
         db.session.commit()
-        process_id_lookup = ReferenceCacheModel(
+        process_id_lookup = ReferenceCacheModel.from_params(
             identifier="hot",
             display_name="WHO CARES",
             relative_location=self.process_model_id,
             file_name=self.bpmn_file_name,
             type="process",
+            use_current_cache_generation=True,
         )
         db.session.add(process_id_lookup)
         db.session.commit()
@@ -131,12 +133,13 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         """When a BPMN processes identifier is changed in a file, the old id is removed from the cache."""
         old_identifier = "ye_old_identifier"
-        process_id_lookup = ReferenceCacheModel(
+        process_id_lookup = ReferenceCacheModel.from_params(
             identifier=old_identifier,
             display_name="WHO CARES",
             relative_location=self.process_model_id,
             file_name=self.bpmn_file_name,
             type="process",
+            use_current_cache_generation=True,
         )
         db.session.add(process_id_lookup)
         db.session.commit()

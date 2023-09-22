@@ -67,7 +67,6 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     __table_args__ = (
         UniqueConstraint("generation_id", "identifier", "relative_location", "type", name="reference_cache_uniq"),
     )
-    # __allow_unmapped__ = True
 
     id: int = db.Column(db.Integer, primary_key=True)
     generation_id: int = db.Column(ForeignKey(CacheGenerationModel.id), nullable=False, index=True)  # type: ignore
@@ -91,21 +90,46 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
     @classmethod
-    def from_spec_reference(cls, ref: Reference, use_current_cache_generation: bool = False) -> "ReferenceCacheModel":
+    def from_params(
+        cls,
+        identifier: str,
+        display_name: str,
+        type: str,
+        file_name: str,
+        relative_location: str,
+        properties: dict | None = None,
+        use_current_cache_generation: bool = False,
+    ) -> "ReferenceCacheModel":
         reference_cache = cls(
-            identifier=ref.identifier,
-            display_name=ref.display_name,
-            relative_location=ref.relative_location,
-            type=ref.type,
-            file_name=ref.file_name,
-            properties=ref.properties,
+            identifier=identifier,
+            display_name=display_name,
+            relative_location=relative_location,
+            type=type,
+            file_name=file_name,
+            properties=properties,
         )
         if use_current_cache_generation:
             order_by_clause = CacheGenerationModel.id.desc()  # type: ignore
             cache_generation = (
                 CacheGenerationModel.query.filter_by(cache_table="reference_cache").order_by(order_by_clause).first()
             )
-            reference_cache.generation_id = cache_generation.id
+            if cache_generation is None:
+                cache_generation = CacheGenerationModel(cache_table="reference_cache")
+                db.session.add(cache_generation)
+            reference_cache.generation = cache_generation
+        return reference_cache
+
+    @classmethod
+    def from_spec_reference(cls, ref: Reference, use_current_cache_generation: bool = False) -> "ReferenceCacheModel":
+        reference_cache = cls.from_params(
+            identifier=ref.identifier,
+            display_name=ref.display_name,
+            relative_location=ref.relative_location,
+            type=ref.type,
+            file_name=ref.file_name,
+            properties=ref.properties,
+            use_current_cache_generation=use_current_cache_generation,
+        )
         return reference_cache
 
     @validates("type")

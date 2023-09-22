@@ -36,7 +36,7 @@ class DataSetupService:
                             f"{reference_cache.identifier}{reference_cache.relative_location}{reference_cache.type}"
                         )
                         reference_objects[reference_cache_unique] = reference_cache
-                        SpecFileService.update_caches(ref)
+                        SpecFileService.update_caches_except_process(ref)
                         db.session.commit()
                     except Exception as ex:
                         failing_process_models.append(
@@ -65,9 +65,6 @@ class DataSetupService:
         for reference_object in reference_objects.values():
             reference_object.generation_id = cache_generation_id
             reference_object_list_with_cache_generation_id.append(reference_object)
-
-        # slower, but doesn't require inserted_primary_key fanciness
-        # db.session.add_all(reference_objects.values())
 
         db.session.bulk_save_objects(reference_object_list_with_cache_generation_id)
         db.session.commit()
