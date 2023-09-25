@@ -94,12 +94,10 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
 
     def instantiate_executer(self, bpmn_file: str) -> BpmnWorkflow:
         parser = MyCustomParser()
-        bpmn_file_etree = self._get_etree_from_bpmn_file(bpmn_file)
-        parser.add_bpmn_xml(bpmn_file_etree, filename=os.path.basename(bpmn_file))
+        self._add_bpmn_file_to_parser(parser, bpmn_file)
         all_related = self._find_related_bpmn_files(bpmn_file)
         for related_file in all_related:
-            related_file_etree = self._get_etree_from_bpmn_file(related_file)
-            parser.add_bpmn_xml(related_file_etree, filename=os.path.basename(related_file))
+            self._add_bpmn_file_to_parser(parser, related_file)
         sub_parsers = list(parser.process_parsers.values())
         executable_process = None
         for sub_parser in sub_parsers:
@@ -130,6 +128,12 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
         if len(ready_tasks) > 0:
             return ready_tasks[0]
         return None
+
+    def _add_bpmn_file_to_parser(self, parser: MyCustomParser, bpmn_file: str) -> None:
+        related_file_etree = self._get_etree_from_bpmn_file(bpmn_file)
+        parser.add_bpmn_xml(related_file_etree, filename=os.path.basename(bpmn_file))
+        dmn_file_glob = os.path.join(os.path.dirname(bpmn_file), "*.dmn")
+        parser.add_dmn_files_by_glob(dmn_file_glob)
 
     def _get_etree_from_bpmn_file(self, bpmn_file: str) -> etree._Element:
         data = None

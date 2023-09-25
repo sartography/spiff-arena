@@ -59,13 +59,6 @@ Contributions are very welcome.
 To learn more, see the `Contributor Guide`_.
 
 
-License
--------
-
-Distributed under the terms of the `MIT license`_,
-*Spiffworkflow Backend* is free and open source software.
-
-
 Issues
 ------
 

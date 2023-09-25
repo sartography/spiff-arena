@@ -27,7 +27,6 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import { UnauthenticatedError } from '../services/HttpService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { slugifyString } from '../helpers';
@@ -50,11 +49,6 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const [activeKey, setActiveKey] = useState<string>('');
 
   const { targetUris } = useUriListForPermissions();
-
-  // App.jsx forces login (which redirects to keycloak) so we should never get here if we're not logged in.
-  if (!UserService.isLoggedIn()) {
-    throw new UnauthenticatedError('You must be authenticated to do this.');
-  }
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.authenticationListPath]: ['GET'],
     [targetUris.messageInstanceListPath]: ['GET'],
@@ -99,12 +93,6 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     return activeKey === menuItemPath;
   };
 
-  let aboutLinkElement = null;
-
-  if (Object.keys(versionInfo).length) {
-    aboutLinkElement = <a href="/about">About</a>;
-  }
-
   const userEmail = UserService.getUserEmail();
   const username = UserService.getPreferredUsername();
 
@@ -113,48 +101,56 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     return <a href={navItemPage}>{uxElement.label}</a>;
   };
 
-  const profileToggletip = (
-    <div style={{ display: 'flex' }} id="user-profile-toggletip">
-      <Toggletip isTabTip align="bottom-right">
-        <ToggletipButton
-          aria-label="User Actions"
-          className="user-profile-toggletip-button"
-          type="button"
-        >
-          <div className="user-circle">{username[0].toUpperCase()}</div>
-        </ToggletipButton>
-        <ToggletipContent className="user-profile-toggletip-content">
-          <p>
-            <strong>{username}</strong>
-          </p>
-          {username !== userEmail && <p>{userEmail}</p>}
-          <hr />
-          {aboutLinkElement}
-          <a target="_blank" href={documentationUrl} rel="noreferrer">
-            Documentation
-          </a>
-          <ExtensionUxElementForDisplay
-            displayLocation="user_profile_item"
-            elementCallback={extensionUserProfileElement}
-            extensionUxElements={extensionUxElements}
-          />
-          {!UserService.authenticationDisabled() ? (
-            <>
-              <hr />
-              <Button
-                data-qa="logout-button"
-                className="button-link"
-                onClick={handleLogout}
-              >
-                <Logout />
-                &nbsp;&nbsp;Sign out
-              </Button>
-            </>
-          ) : null}
-        </ToggletipContent>
-      </Toggletip>
-    </div>
-  );
+  const profileToggletip = () => {
+    let aboutLinkElement = null;
+
+    if (Object.keys(versionInfo).length) {
+      aboutLinkElement = <a href="/about">About</a>;
+    }
+
+    return (
+      <div style={{ display: 'flex' }} id="user-profile-toggletip">
+        <Toggletip isTabTip align="bottom-right">
+          <ToggletipButton
+            aria-label="User Actions"
+            className="user-profile-toggletip-button"
+            type="button"
+          >
+            <div className="user-circle">{username[0].toUpperCase()}</div>
+          </ToggletipButton>
+          <ToggletipContent className="user-profile-toggletip-content">
+            <p>
+              <strong>{username}</strong>
+            </p>
+            {username !== userEmail && <p>{userEmail}</p>}
+            <hr />
+            {aboutLinkElement}
+            <a target="_blank" href={documentationUrl} rel="noreferrer">
+              Documentation
+            </a>
+            <ExtensionUxElementForDisplay
+              displayLocation="user_profile_item"
+              elementCallback={extensionUserProfileElement}
+              extensionUxElements={extensionUxElements}
+            />
+            {!UserService.authenticationDisabled() ? (
+              <>
+                <hr />
+                <Button
+                  data-qa="logout-button"
+                  className="button-link"
+                  onClick={handleLogout}
+                >
+                  <Logout />
+                  &nbsp;&nbsp;Sign out
+                </Button>
+              </>
+            ) : null}
+          </ToggletipContent>
+        </Toggletip>
+      </div>
+    );
+  };
 
   const loginAndLogoutAction = () => {
     if (UserService.isLoggedIn()) {
@@ -168,7 +164,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>
           ) : null}
-          {profileToggletip}
+          {profileToggletip()}
         </>
       );
     }
@@ -291,6 +287,11 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       </>
     );
   };
+
+  // App.jsx forces login (which redirects to keycloak) so we should never get here if we're not logged in.
+  if (!UserService.isLoggedIn()) {
+    return null;
+  }
 
   if (activeKey && ability && !UserService.onlyGuestTaskCompletion()) {
     return (

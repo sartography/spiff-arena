@@ -18,6 +18,7 @@ import HttpService from './services/HttpService';
 import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
 import BaseRoutes from './routes/BaseRoutes';
 import BackendIsDown from './routes/BackendIsDown';
+import UserService from './services/UserService';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
@@ -93,6 +94,7 @@ export default function ContainerForExtensions() {
   ]);
 
   const routeComponents = () => {
+    UserService.loginIfNeeded();
     return (
       <Routes>
         <Route
