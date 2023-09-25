@@ -1,6 +1,6 @@
 # Events
 
-Events are specific occurrences that dictate the flow or outcome of processes. They are visually represented by circles. Based on their position and function, events are categorized as: Start Events, Intermediate Events, and End Events.
+Events are specific occurrences that dictate the flow or outcome of processes. They are visually represented by circles. Based on their position and function, events are categorized as: Start Events, Intermediate Events, or End Events.
 
  ![start_message_event](images/events_categories.png) 
 
@@ -80,7 +80,7 @@ Non-Interrupting Events allow the current process or activity to continue its ex
 ![interrupting_example](images/interrupting_example.png)
 
 **Example:**
-Think of a scenario where a manager is given a specific duration to assess a request. If the manager fails to complete evaluation within this timeframe, an interruptive timer will activate, ceasing the ongoing process and initiating a different one. The original task is no longer accessible; instead, the situation has shifted. The provided example demonstrates the same function, but one is with an interrupting start event, while the other is with an interrupting boundary event.
+Think of a scenario where a manager is given a specific duration to assess a request. If the manager fails to complete evaluation within this timeframe, an interrupting timer will activate, ceasing the ongoing process and initiating a different one. The original task is no longer accessible; instead, the situation has shifted. The provided example demonstrates the same function, but one is with an interrupting start event, while the other is with an interrupting boundary event.
 
 ### Non-Interrupting Events
 
