@@ -38,11 +38,11 @@ Cypress.Commands.add('navigateToHome', () => {
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
-  cy.visit('/admin');
+  cy.visit('/process-groups');
 });
 
 Cypress.Commands.add('login', (username, password) => {
-  cy.visit('/admin');
+  cy.visit('/process-groups');
   let usernameToUse = username;
   let passwordToUse = password;
   if (!usernameToUse) {
