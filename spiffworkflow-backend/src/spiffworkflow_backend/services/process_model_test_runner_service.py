@@ -370,7 +370,7 @@ class ProcessModelTestRunner:
     def _is_multi_instance_task(self, spiff_task: SpiffTask) -> bool:
         return spiff_task.task_spec.__class__.__name__ in [
             "ParallelMultiInstanceTask",
-            "SequentialMultiINstanceTask",
+            "SequentialMultiInstanceTask",
             "StandardLoopTask",
         ]
 
