@@ -172,7 +172,7 @@ describe('process-instances', () => {
   });
 
   it('can filter', () => {
-    cy.visit('/admin/process-instances/all');
+    cy.visit('/process-instances/all');
     cy.contains('All Process Instances');
     cy.get('.process-instance-list-row-variant-all');
     cy.assertAtLeastOneItemInPaginatedResults();
