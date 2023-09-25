@@ -345,7 +345,15 @@ class ProcessModelTestRunner:
         self, spiff_task: SpiffTask, test_case_task_key: str | None, test_case_task_properties: dict | None
     ) -> None:
         task_data_for_submit = None
-        if test_case_task_key and test_case_task_properties and "data" in test_case_task_properties:
+
+        # do not bother mocking data on multi-instance task types since the mocked data should go to the children
+        # which will be the same type as the actual task like "UserTask" or "ManualTask".
+        if (
+            test_case_task_key
+            and test_case_task_properties
+            and "data" in test_case_task_properties
+            and not self._is_multi_instance_task(spiff_task)
+        ):
             if test_case_task_key not in self.task_data_index:
                 self.task_data_index[test_case_task_key] = 0
             task_data_length = len(test_case_task_properties["data"])
@@ -358,6 +366,13 @@ class ProcessModelTestRunner:
             task_data_for_submit = test_case_task_properties["data"][test_case_index]
             self.task_data_index[test_case_task_key] += 1
         self.process_model_test_runner_delegate.execute_task(spiff_task, task_data_for_submit)
+
+    def _is_multi_instance_task(self, spiff_task: SpiffTask) -> bool:
+        return spiff_task.task_spec.__class__.__name__ in [
+            "ParallelMultiInstanceTask",
+            "SequentialMultiINstanceTask",
+            "StandardLoopTask",
+        ]
 
     def _get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
         return self.process_model_test_runner_delegate.get_next_task(bpmn_process_instance)
