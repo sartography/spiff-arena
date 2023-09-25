@@ -1,5 +1,6 @@
 import json
 import os
+from collections.abc import Callable
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
@@ -16,6 +17,11 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 class ProcessModelFileNotFoundError(Exception):
     pass
+
+
+DirectoryPredicate = Callable[[str], bool] | None
+FilePredicate = Callable[[str, str], bool] | None
+PathGenerator = Generator[str, None, None]
 
 
 class FileSystemService:
@@ -39,17 +45,26 @@ class FileSystemService:
             os.chdir(prevdir)
 
     @classmethod
-    def walk_files(cls, start_dir: str, recursive: bool, dirs_to_skip: set[str]) -> Generator[str, None, None]:
+    def walk_files(
+        cls, start_dir: str, recursive: bool, dirp: DirectoryPredicate, filep: FilePredicate
+    ) -> PathGenerator:
         for root, subdirs, files in os.walk(start_dir):
             if not recursive:
                 subdirs[:] = []
-            subdirs[:] = [d for d in subdirs if d not in dirs_to_skip]
+            elif dirp:
+                subdirs[:] = [d for d in subdirs if dirp(d)]
             for file in files:
+                if filep and not filep(file):
+                    continue
                 yield os.path.join(root, file)
 
+    @staticmethod
+    def non_git_dir(dirname: str) -> bool:
+        return dirname != ".git"
+
     @classmethod
-    def walk_files_from_root_path(cls) -> Generator[str, None, None]:
-        yield from cls.walk_files(cls.root_path(), True, set([".git"]))
+    def walk_files_from_root_path(cls) -> PathGenerator:
+        yield from cls.walk_files(cls.root_path(), True, cls.non_git_dir, None)
 
     @staticmethod
     def root_path() -> str:
@@ -84,8 +99,8 @@ class FileSystemService:
             files = list(filter(lambda file: file.name.endswith(extension_filter), files))
         return files
 
-    #@classmethod
-    #def collect_files(cls, start: str
+    # @classmethod
+    # def collect_files(cls, start: str
 
     @classmethod
     def get_sorted_files(
