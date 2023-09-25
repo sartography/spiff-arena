@@ -204,15 +204,21 @@ class VersionOneThree:
             properties_json = copy.copy(task_definition.properties_json)
             properties_json["event_definition"].pop("internal", None)
             properties_json["event_definition"].pop("external", None)
+
+            something_changed = False
             if "escalation_code" in properties_json["event_definition"]:
                 properties_json["event_definition"]["code"] = properties_json["event_definition"].pop(
                     "escalation_code"
                 )
+                something_changed = True
             if "error_code" in properties_json["event_definition"]:
                 properties_json["event_definition"]["code"] = properties_json["event_definition"].pop("error_code")
-            task_definition.properties_json = properties_json
-            flag_modified(task_definition, "properties_json")  # type: ignore
-            db.session.add(task_definition)
+                something_changed = True
+
+            if something_changed:
+                task_definition.properties_json = properties_json
+                flag_modified(task_definition, "properties_json")  # type: ignore
+                db.session.add(task_definition)
 
     def update_tasks_where_last_change_is_null(self) -> None:
         task_models = TaskModel.query.filter(TaskModel.properties_json.like('%last_state_change": null%')).all()  # type: ignore
