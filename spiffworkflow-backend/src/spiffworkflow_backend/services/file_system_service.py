@@ -38,6 +38,19 @@ class FileSystemService:
         finally:
             os.chdir(prevdir)
 
+    @classmethod
+    def walk_files(cls, start_dir: str, recursive: bool, dirs_to_skip: set[str]) -> Generator[str, None, None]:
+        for root, subdirs, files in os.walk(start_dir):
+            if not recursive:
+                subdirs[:] = []
+            subdirs[:] = [d for d in subdirs if d not in dirs_to_skip]
+            for file in files:
+                yield os.path.join(root, file)
+
+    @classmethod
+    def walk_files_from_root_path(cls) -> Generator[str, None, None]:
+        yield from cls.walk_files(cls.root_path(), True, set([".git"]))
+
     @staticmethod
     def root_path() -> str:
         dir_name = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
@@ -70,6 +83,9 @@ class FileSystemService:
         if extension_filter != "":
             files = list(filter(lambda file: file.name.endswith(extension_filter), files))
         return files
+
+    #@classmethod
+    #def collect_files(cls, start: str
 
     @classmethod
     def get_sorted_files(
