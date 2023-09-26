@@ -641,8 +641,8 @@ export default function ProcessModelShow() {
       <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
         <TabList aria-label="List of tabs">
           <Tab>About</Tab>
-          <Tab>Files</Tab>
-          <Tab>My process instances</Tab>
+          <Tab data-qa="process-model-files">Files</Tab>
+          <Tab data-qa="process-instance-list-link">My process instances</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>{readmeFileArea()}</TabPanel>
@@ -687,7 +687,6 @@ export default function ProcessModelShow() {
                   perPageOptions={[2, 5, 25]}
                   showReports={false}
                 />
-                <span data-qa="process-model-show-permissions-loaded" />
               </Can>
             )}
           </TabPanel>
@@ -799,6 +798,9 @@ export default function ProcessModelShow() {
         <p className="process-description">{processModel.description}</p>
         {processModel.primary_file_name ? processStartButton : null}
         <div className="with-top-margin">{tabArea()}</div>
+        {permissionsLoaded ? (
+          <span data-qa="process-model-show-permissions-loaded" />
+        ) : null}
       </>
     );
   }

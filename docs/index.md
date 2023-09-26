@@ -14,7 +14,9 @@ Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
 Building_Diagrams/Forms.md
 Building_Diagrams/gateways.md
+Building_Diagrams/events.md
 Building_Diagrams/message_events.md
+Building_Diagrams/signal_events.md
 Building_Diagrams/Displaying_Content.md
 Building_Diagrams/Script_Tasks.md
 Building_Diagrams/sub-processes_and_call_activities.md
@@ -46,8 +48,9 @@ DevOps_installation_integration/Secrets.md
 :maxdepth: 1
 :caption: Support & Administration
 Support/suspend_resume_terminate.md
-Support/Running_Server_Locally.md
 Support/Welcome_Messages.md
+Support/Running_Server_Locally.md
+Support/FAQ.md
 ```
 
 ```{toctree}
@@ -59,3 +62,9 @@ appendices/bpmn_terminology.md
 documentation/documentation.md
 wish_list/wish_list.md
 ```
+
+## Indices and tables
+
+* [](genindex)
+* [](modindex)
+* [](search)
