@@ -97,28 +97,28 @@ describe('process-instances', () => {
     cy.runPrimaryBpmnFile();
 
     // Change dmn
-    cy.getBySel('files-accordion').click();
+    cy.getBySel('process-model-files').click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(originalDmnOutputForKevin, newDmnOutputForKevin);
 
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('files-accordion').click();
+    cy.getBySel('process-model-files').click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(newDmnOutputForKevin, originalDmnOutputForKevin);
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
     // Change bpmn
-    cy.getBySel('files-accordion').click();
+    cy.getBySel('process-model-files').click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScript(newPythonScript);
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('files-accordion').click();
+    cy.getBySel('process-model-files').click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     updateBpmnPythonScript(originalPythonScript);
     cy.contains(acceptanceTestOneDisplayName).click();
@@ -133,14 +133,14 @@ describe('process-instances', () => {
   //   const bpmnFile = 'process_model_one.bpmn';
   //
   //   // Change bpmn
-  //   cy.getBySel('files-accordion').click();
+  //   cy.getBySel('process-model-files').click();
   //   cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
   //   cy.contains(`Process Model File: ${bpmnFile}`);
   //   updateBpmnPythonScriptWithMonaco(newPythonScript);
   //   cy.contains('acceptance-tests-model-1').click();
   //   cy.runPrimaryBpmnFile();
   //
-  //   cy.getBySel('files-accordion').click();
+  //   cy.getBySel('process-model-files').click();
   //   cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
   //   cy.contains(`Process Model File: ${bpmnFile}`);
   //   updateBpmnPythonScriptWithMonaco(originalPythonScript);
