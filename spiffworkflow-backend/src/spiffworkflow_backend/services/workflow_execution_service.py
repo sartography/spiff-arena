@@ -257,7 +257,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             | TaskState.LIKELY
             | TaskState.FUTURE
             | TaskState.STARTED
-            | TaskState.ERROR
+            | TaskState.ERROR,
         ):
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
