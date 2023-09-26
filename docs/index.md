@@ -14,7 +14,9 @@ Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
 Building_Diagrams/Forms.md
 Building_Diagrams/gateways.md
+Building_Diagrams/events.md
 Building_Diagrams/message_events.md
+Building_Diagrams/signal_events.md
 Building_Diagrams/Displaying_Content.md
 Building_Diagrams/Script_Tasks.md
 Building_Diagrams/sub-processes_and_call_activities.md
