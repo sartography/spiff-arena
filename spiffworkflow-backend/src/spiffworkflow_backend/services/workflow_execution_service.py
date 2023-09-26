@@ -62,7 +62,7 @@ class EngineStepDelegate:
         pass
 
     @abstractmethod
-    def save(self, bpmn_process_instance: BpmnWorkflow, commit: bool = False) -> None:
+    def add_object_to_db_session(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
     @abstractmethod
@@ -162,8 +162,8 @@ class ExecutionStrategy:
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.on_exception(bpmn_process_instance)
 
-    def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        self.delegate.save(bpmn_process_instance)
+    def add_object_to_db_session(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.delegate.add_object_to_db_session(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         tasks = [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
@@ -240,7 +240,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
-    def save(self, bpmn_process_instance: BpmnWorkflow, _commit: bool = True) -> None:
+    def add_object_to_db_session(self, bpmn_process_instance: BpmnWorkflow) -> None:
         # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
         # excludes COMPLETED. the others were required to get PP1 to go to completion.
         # process FUTURE tasks because Boundary events are not processed otherwise.
@@ -263,8 +263,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.task_service.save_objects_to_database()
 
         if self.secondary_engine_step_delegate:
-            self.secondary_engine_step_delegate.save(bpmn_process_instance, commit=False)
-        db.session.commit()
+            self.secondary_engine_step_delegate.add_object_to_db_session(bpmn_process_instance)
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
@@ -380,9 +379,8 @@ class WorkflowExecutionService:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
 
-            if self.process_instance_model.persistence_level != "none":
-                self.process_bpmn_messages()
-                self.queue_waiting_receive_messages()
+            self.process_bpmn_messages()
+            self.queue_waiting_receive_messages()
         except WorkflowTaskException as wte:
             ProcessInstanceTmpService.add_event_to_process_instance(
                 self.process_instance_model,
@@ -398,9 +396,7 @@ class WorkflowExecutionService:
 
         finally:
             if self.process_instance_model.persistence_level != "none":
-                self.execution_strategy.save(self.bpmn_process_instance)
-                db.session.commit()
-
+                self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
                 if save:
                     self.process_instance_saver()
 
@@ -431,8 +427,6 @@ class WorkflowExecutionService:
                 # update correlations correctly but always null out bpmn_messages since they get cleared out later
                 bpmn_process.properties_json["bpmn_events"] = []
                 db.session.add(bpmn_process)
-
-            db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
         waiting_events = self.bpmn_process_instance.waiting_events()
@@ -473,8 +467,6 @@ class WorkflowExecutionService:
                 bpmn_process_correlations = self.bpmn_process_instance.correlations
                 bpmn_process.properties_json["correlations"] = bpmn_process_correlations
                 db.session.add(bpmn_process)
-
-            db.session.commit()
 
 
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):

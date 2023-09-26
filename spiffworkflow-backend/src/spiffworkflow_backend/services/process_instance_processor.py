@@ -1611,6 +1611,7 @@ class ProcessInstanceProcessor:
         return task_json
 
     def complete_task(self, spiff_task: SpiffTask, human_task: HumanTaskModel, user: UserModel) -> None:
+        self.check_all_tasks()
         task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
         if task_model is None:
             raise TaskNotFoundError(
@@ -1639,6 +1640,7 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
         task_service.update_task_model(task_model, spiff_task)
+        self.check_all_tasks()
         JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
 
         ProcessInstanceTmpService.add_event_to_process_instance(
@@ -1659,9 +1661,11 @@ class ProcessInstanceProcessor:
             spiff_task_to_process = spiff_task.parent
         task_service.process_parents_and_children_and_save_to_database(spiff_task_to_process)
 
+        self.check_all_tasks()
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
 
+        self.check_all_tasks()
         if task_exception is not None:
             raise task_exception
 
@@ -1793,9 +1797,10 @@ class ProcessInstanceProcessor:
         )
         db.session.commit()
 
-    @classmethod
-    def check_all_tasks(cls) -> None:
-        tasks = TaskModel.query.all()
+    # @classmethod
+    # def check_all_tasks(cls) -> None:
+    def check_all_tasks(self) -> None:
+        tasks = TaskModel.query.filter_by(process_instance_id=self.process_instance_model.id).all()
         missing_child_guids = []
         for task in tasks:
             for child_task_guid in task.properties_json["children"]:
@@ -1803,5 +1808,5 @@ class ProcessInstanceProcessor:
                 if child_task is None:
                     missing_child_guids.append(f"Missing child guid {child_task_guid} for {task.properties_json}")
 
-        if len(missing_child_guids) > 0:
-            raise Exception(missing_child_guids)
+        # if len(missing_child_guids) > 0:
+        #     raise Exception(missing_child_guids)

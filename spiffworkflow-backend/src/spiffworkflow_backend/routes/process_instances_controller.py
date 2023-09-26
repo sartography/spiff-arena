@@ -246,8 +246,9 @@ def process_instance_list(
     )
 
     json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(body["report_metadata"])
-    response_json["report_hash"] = json_data_hash
     db.session.commit()
+
+    response_json["report_hash"] = json_data_hash
 
     return make_response(jsonify(response_json), 200)
 
