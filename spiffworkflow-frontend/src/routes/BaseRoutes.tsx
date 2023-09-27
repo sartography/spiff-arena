@@ -11,6 +11,8 @@ import ErrorDisplay from '../components/ErrorDisplay';
 import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 import About from './About';
 import Page404 from './Page404';
+import AdminRedirect from './AdminRedirect';
+import RootRoute from './RootRoute';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -21,7 +23,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
     <div className="fixed-width-container">
       <ErrorDisplay />
       <Routes>
-        <Route path="/" element={<HomeRoutes />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="tasks/*" element={<HomeRoutes />} />
         <Route path="process-groups/*" element={<ProcessGroupRoutes />} />
         <Route path="process-models/*" element={<ProcessModelRoutes />} />
@@ -37,6 +39,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
         <Route path="messages" element={<MessageListPage />} />
         <Route path="data-stores" element={<DataStorePage />} />
         <Route path="about" element={<About />} />
+        <Route path="admin/*" element={<AdminRedirect />} />
         <Route path="/*" element={<Page404 />} />
       </Routes>
     </div>
