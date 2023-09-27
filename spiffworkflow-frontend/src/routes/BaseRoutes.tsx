@@ -11,6 +11,7 @@ import ErrorDisplay from '../components/ErrorDisplay';
 import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 import About from './About';
 import Page404 from './Page404';
+import AdminRedirect from './AdminRedirect';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -37,6 +38,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
         <Route path="messages" element={<MessageListPage />} />
         <Route path="data-stores" element={<DataStorePage />} />
         <Route path="about" element={<About />} />
+        <Route path="admin/*" element={<AdminRedirect />} />
         <Route path="/*" element={<Page404 />} />
       </Routes>
     </div>
