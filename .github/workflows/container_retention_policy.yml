@@ -1,0 +1,23 @@
+name: Delete old container images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 1 * *"  # every day at midnight
+
+
+jobs:
+  clean-ghcr:
+    name: Delete old unused container images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete 'spiff' main containers older than a week
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: spiffworkflow-backend
+          cut-off: Two months ago UTC
+          account-type: org
+          org-name: sartography
+          keep-at-least: 1
+          filter-tags: "main-*"
+          token: ${{ secrets.PERSONAL_TOKEN_FOR_CONTAINER_CLEANUP }}
