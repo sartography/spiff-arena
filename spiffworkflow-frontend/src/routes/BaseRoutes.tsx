@@ -12,6 +12,7 @@ import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 import About from './About';
 import Page404 from './Page404';
 import AdminRedirect from './AdminRedirect';
+import RootRoute from './RootRoute';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -22,7 +23,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
     <div className="fixed-width-container">
       <ErrorDisplay />
       <Routes>
-        <Route path="/" element={<HomeRoutes />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="tasks/*" element={<HomeRoutes />} />
         <Route path="process-groups/*" element={<ProcessGroupRoutes />} />
         <Route path="process-models/*" element={<ProcessModelRoutes />} />
