@@ -383,7 +383,11 @@ export default function ProcessModelShow() {
       }
       constructedTag = (
         <TableRow key={processModelFile.name}>
-          <TableCell key={`${processModelFile.name}-cell`}>
+          <TableCell
+            key={`${processModelFile.name}-cell`}
+            className="process-model-file-table-filename"
+            title={processModelFile.name}
+          >
             {fileLink}
             {primarySuffix}
           </TableCell>
@@ -394,7 +398,11 @@ export default function ProcessModelShow() {
     });
 
     return (
-      <Table size="lg" useZebraStyles={false}>
+      <Table
+        size="lg"
+        useZebraStyles={false}
+        className="process-model-file-table"
+      >
         <TableHead>
           <TableRow>
             <TableHeader id="Name" key="Name">
@@ -648,7 +656,7 @@ export default function ProcessModelShow() {
           <TabPanel>{readmeFileArea()}</TabPanel>
           <TabPanel>
             <Grid condensed fullWidth className="megacondensed">
-              <Column md={4} lg={8} sm={4}>
+              <Column md={6} lg={12} sm={4}>
                 <Can
                   I="POST"
                   a={targetUris.processModelFileCreatePath}

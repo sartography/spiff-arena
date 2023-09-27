@@ -71,10 +71,18 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
 
     # If the user is valid, store the token for this session
     if hasattr(g, "user") and g.user:
+        # TODO: ensure we do not actually need g.token set and set g.authenticated instead.
+        # I am pretty sure g.token is only actually used in UserService.has_user to
+        # figure out if the if the user has logged in.
         if token_info["token"]:
             # This is an id token, so we don't have a refresh token yet
             g.token = token_info["token"]
+            g.authenticated = True
+            # we are getting the scope so it will decode the token and ensure it's valid.
+            # this may be a better way to do this.
             get_scope(token_info["token"])
+        elif token_info["api_key"]:
+            g.authenticated = True
         return None
 
     raise ApiError(error_code="invalid_token", message="Cannot validate token.", status_code=401)
