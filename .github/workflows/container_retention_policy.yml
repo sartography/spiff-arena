@@ -5,7 +5,6 @@ on:
   schedule:
     - cron: "0 0 1 * *"  # every day at midnight
 
-
 jobs:
   clean-ghcr:
     name: Delete old unused container images
@@ -20,4 +19,5 @@ jobs:
           org-name: sartography
           keep-at-least: 1
           filter-tags: "main-*"
+          # see https://github.com/settings/tokens/1335541013 under burnettk, classic personal access token with write:packages, read:packages, and delete:packages
           token: ${{ secrets.PERSONAL_TOKEN_FOR_CONTAINER_CLEANUP }}
