@@ -74,7 +74,7 @@ class UserService:
     # Returns true if the current user is logged in.
     @staticmethod
     def has_user() -> bool:
-        return "token" in g and bool(g.token) and "user" in g and bool(g.user)
+        return hasattr(g, "authenticated") and g.authenticated is True and "user" in g and bool(g.user)
 
     @staticmethod
     def current_user() -> Any:
