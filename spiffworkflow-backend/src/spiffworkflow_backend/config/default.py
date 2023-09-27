@@ -155,6 +155,8 @@ config_from_env(
     "SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID",
     default="Message_SystemMessageNotification",
 )
+# check all tasks listed as child tasks are saved to the database
+config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 
 ### for documentation only
 # we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,

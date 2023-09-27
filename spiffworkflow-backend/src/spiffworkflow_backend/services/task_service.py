@@ -463,7 +463,6 @@ class TaskService:
         # otherwise sqlalchemy returns several warnings.
         for task in human_tasks_to_clear + tasks_to_clear:
             db.session.delete(task)
-        db.session.commit()
 
         bpmn_processes_to_delete = (
             BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(deleted_task_guids))  # type: ignore
