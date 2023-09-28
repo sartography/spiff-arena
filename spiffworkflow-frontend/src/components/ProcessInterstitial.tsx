@@ -59,7 +59,7 @@ export default function ProcessInterstitial({
           setState('CLOSED');
           // we know that this server sent events lib gets these sorts of errors when you are on another tab or window while it is working.
           // it's fine
-          const wasAbortedError = /was aborted/.test(error.message);
+          const wasAbortedError = /\baborted\b/.test(error.message);
           if (!wasAbortedError) {
             addError(error);
             throw error;
