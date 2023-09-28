@@ -2,7 +2,6 @@ from flask import current_app
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from sqlalchemy import insert
@@ -23,9 +22,9 @@ class DataSetupService:
         current_app.logger.debug("DataSetupService.save_all_process_models() start")
 
         # tmp
-        #for file in FileSystemService.walk_files_from_root_path():
+        # for file in FileSystemService.walk_files_from_root_path():
         #    current_app.logger.info(f"FILE: {file}")
-        #exit(1)
+        # exit(1)
 
         failing_process_models = []
         process_models = ProcessModelService.get_process_models(recursive=True)

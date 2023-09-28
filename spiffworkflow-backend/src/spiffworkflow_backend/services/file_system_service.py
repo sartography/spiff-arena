@@ -46,13 +46,13 @@ class FileSystemService:
 
     @classmethod
     def walk_files(
-            cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
+        cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
     ) -> FileGenerator:
         for root, subdirs, files in os.walk(start_dir):
             if directory_predicate:
                 subdirs[:] = [d for d in subdirs if directory_predicate(d)]
-            for file in files:
-                file = os.path.join(root, file)
+            for f in files:
+                file = os.path.join(root, f)
                 if file_predicate and not file_predicate(file):
                     continue
                 yield file

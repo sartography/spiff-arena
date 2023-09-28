@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 import uuid
-from glob import glob
 from json import JSONDecodeError
 from typing import TypeVar
 
@@ -184,11 +183,16 @@ class ProcessModelService(FileSystemService):
             awesome_id = process_group_id.replace("/", os.sep)
             root_path = os.path.join(root_path, awesome_id)
 
-        process_model_files = FileSystemService.walk_files_from_root_path(recursive, FileSystemService.is_process_model_json_file)
+        if recursive is None:
+            recursive = False
+
+        process_model_files = FileSystemService.walk_files_from_root_path(
+            recursive, FileSystemService.is_process_model_json_file
+        )
 
         for file in process_model_files:
             process_model = cls.get_process_model_from_path(file)
-            
+
             if include_files:
                 files = FileSystemService.get_sorted_files(process_model)
                 for f in files:
