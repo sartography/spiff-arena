@@ -32,6 +32,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.json_data import JsonDataDict  # noqa: F401
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
@@ -41,6 +42,8 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_draft_data import TaskDraftDataDict
+from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
@@ -700,33 +703,38 @@ def task_save_draft(
         return make_response(jsonify({"ok": True}), 200)
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    task_draft_data = TaskService.task_draft_data_from_task_model(task_model, create_if_not_exists=True)
+    full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
+    task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+    task_draft_data_dict: TaskDraftDataDict = {
+        "process_instance_id": process_instance.id,
+        "task_definition_id_path": task_definition_id_path,
+        "saved_form_data_hash": None,
+    }
 
-    if task_draft_data is not None:
-        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-            task_draft_data, body, "saved_form_data_hash"
-        )
-        if json_data_dict is not None:
-            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-            db.session.add(task_draft_data)
-            try:
-                db.session.commit()
-            except OperationalError as exception:
-                db.session.rollback()
-                if "Deadlock" in str(exception):
-                    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
-                    # if we do not find a task_draft_data record, that means it was deleted when the form was submitted
-                    # and we therefore have no need to save draft data
-                    if task_draft_data is not None:
-                        json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-                            task_draft_data, body, "saved_form_data_hash"
-                        )
-                        if json_data_dict is not None:
-                            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-                            db.session.add(task_draft_data)
-                            db.session.commit()
-                else:
-                    raise exception
+    json_data_dict = JsonDataModel.json_data_dict_from_dict(body)
+    JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
+    task_draft_data_dict["saved_form_data_hash"] = json_data_dict["hash"]
+    TaskDraftDataModel.insert_or_update_task_draft_data_dict(task_draft_data_dict)
+    try:
+        db.session.commit()
+    except OperationalError as exception:
+        db.session.rollback()
+        if "Deadlock" in str(exception):
+            task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+            # if we do not find a task_draft_data record, that means it was deleted when the form was submitted
+            # and we therefore have no need to save draft data
+            if task_draft_data is not None:
+                # using this method here since it will check the db if the json_data_hash
+                # has changed and then we can update the task_data_draft record if it has
+                new_json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+                    task_draft_data, body, "saved_form_data_hash"
+                )
+                if new_json_data_dict is not None:
+                    JsonDataModel.insert_or_update_json_data_dict(new_json_data_dict)
+                    db.session.add(task_draft_data)
+                    db.session.commit()
+        else:
+            raise exception
 
     return Response(
         json.dumps(
