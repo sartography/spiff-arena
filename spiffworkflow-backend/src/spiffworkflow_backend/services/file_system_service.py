@@ -183,6 +183,10 @@ class FileSystemService:
         workflow_path = FileSystemService.process_model_full_path(process_model)
         return os.path.relpath(workflow_path, start=FileSystemService.root_path())
 
+    @classmethod
+    def relative_location(cls, path: str) -> str:
+        return os.path.dirname(os.path.relpath(path, start=FileSystemService.root_path()))
+
     @staticmethod
     def process_group_path_for_spec(process_model: ProcessModelInfo) -> str:
         # os.path.split apparently returns 2 element tulple like: (first/path, last_item)
