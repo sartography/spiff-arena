@@ -56,8 +56,9 @@ export interface UiSchemaPage {
 }
 
 export interface ExtensionUiSchema {
-  ux_elements?: UiSchemaUxElement[];
   pages: UiSchemaPage;
+  disabled?: boolean;
+  ux_elements?: UiSchemaUxElement[];
 }
 
 export interface ExtensionPostBody {
