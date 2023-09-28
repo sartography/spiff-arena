@@ -155,7 +155,7 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def get_process_model_from_path(cls, path: str) -> ProcessModelInfo:
         relative_path = os.path.relpath(path, start=FileSystemService.root_path())
-        return cls.get_process_model_from_relative_path(relative_path)
+        return cls.get_process_model_from_relative_path(os.path.dirname(relative_path))
 
     @classmethod
     def get_process_model(cls, process_model_id: str) -> ProcessModelInfo:
@@ -188,6 +188,7 @@ class ProcessModelService(FileSystemService):
 
         for file in process_model_files:
             process_model = cls.get_process_model_from_path(file)
+            
             if include_files:
                 files = FileSystemService.get_sorted_files(process_model)
                 for f in files:
