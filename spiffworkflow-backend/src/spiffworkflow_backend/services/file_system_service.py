@@ -116,9 +116,6 @@ class FileSystemService:
             files = list(filter(lambda file: file.name.endswith(extension_filter), files))
         return files
 
-    # @classmethod
-    # def collect_files(cls, start: str
-
     @classmethod
     def get_sorted_files(
         cls,
