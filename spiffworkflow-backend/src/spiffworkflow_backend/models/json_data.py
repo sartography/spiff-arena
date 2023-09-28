@@ -81,6 +81,13 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def create_and_insert_json_data_from_dict(cls, data: dict) -> str:
-        json_data_hash = sha256(json.dumps(data, sort_keys=True).encode("utf8")).hexdigest()
-        cls.insert_or_update_json_data_dict({"hash": json_data_hash, "data": data})
-        return json_data_hash
+        json_data_dict = cls.json_data_dict_from_dict(data)
+        cls.insert_or_update_json_data_dict(json_data_dict)
+        return json_data_dict["hash"]
+
+    @classmethod
+    def json_data_dict_from_dict(cls, data: dict) -> JsonDataDict:
+        task_data_json = json.dumps(data, sort_keys=True)
+        task_data_hash: str = sha256(task_data_json.encode("utf8")).hexdigest()
+        json_data_dict: JsonDataDict = {"hash": task_data_hash, "data": data}
+        return json_data_dict
