@@ -51,7 +51,10 @@ export default function ContainerForExtensions() {
               const extensionUiSchema: ExtensionUiSchema = JSON.parse(
                 extensionUiSchemaFile.file_contents
               );
-              if (extensionUiSchema.ux_elements) {
+              if (
+                extensionUiSchema.ux_elements &&
+                !extensionUiSchema.disabled
+              ) {
                 return extensionUiSchema.ux_elements;
               }
             } catch (jsonParseError: any) {
