@@ -8,6 +8,7 @@ from flask import current_app
 from flask_sqlalchemy.query import Query
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -180,6 +181,27 @@ class ProcessInstanceReportService:
             return None
         return_value: ReportMetadata = temp_system_metadata_map[metadata_key]
         return return_value
+
+    @classmethod
+    def process_instance_metadata_as_columns(
+        cls, process_model_identifier: str | None = None
+    ) -> list[ReportMetadataColumn]:
+        columns_for_metadata_query = (
+            db.session.query(ProcessInstanceMetadataModel.key)
+            .order_by(ProcessInstanceMetadataModel.key)
+            .distinct()  # type: ignore
+        )
+        if process_model_identifier:
+            columns_for_metadata_query = columns_for_metadata_query.join(ProcessInstanceModel)
+            columns_for_metadata_query = columns_for_metadata_query.filter(
+                ProcessInstanceModel.process_model_identifier == process_model_identifier
+            )
+
+        columns_for_metadata = columns_for_metadata_query.all()
+        columns_for_metadata_strings: list[ReportMetadataColumn] = [
+            {"Header": i[0], "accessor": i[0], "filterable": True} for i in columns_for_metadata
+        ]
+        return columns_for_metadata_strings
 
     @classmethod
     def compile_report(cls, report_metadata: ReportMetadata, user: UserModel) -> None:

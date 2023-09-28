@@ -23,7 +23,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSche
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
@@ -291,21 +290,9 @@ def process_instance_report_column_list(
 ) -> flask.wrappers.Response:
     table_columns = ProcessInstanceReportService.builtin_column_options()
     system_report_column_options = ProcessInstanceReportService.system_report_column_options()
-    columns_for_metadata_query = (
-        db.session.query(ProcessInstanceMetadataModel.key)
-        .order_by(ProcessInstanceMetadataModel.key)
-        .distinct()  # type: ignore
+    columns_for_metadata_strings = ProcessInstanceReportService.process_instance_metadata_as_columns(
+        process_model_identifier
     )
-    if process_model_identifier:
-        columns_for_metadata_query = columns_for_metadata_query.join(ProcessInstanceModel)
-        columns_for_metadata_query = columns_for_metadata_query.filter(
-            ProcessInstanceModel.process_model_identifier == process_model_identifier
-        )
-
-    columns_for_metadata = columns_for_metadata_query.all()
-    columns_for_metadata_strings = [
-        {"Header": i[0], "accessor": i[0], "filterable": True} for i in columns_for_metadata
-    ]
     return make_response(jsonify(table_columns + system_report_column_options + columns_for_metadata_strings), 200)
 
 
