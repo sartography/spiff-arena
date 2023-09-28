@@ -57,8 +57,13 @@ export default function ProcessInterstitial({
         onerror(error: any) {
           // if backend returns a 500 then stop attempting to load the task
           setState('CLOSED');
-          addError(error);
-          throw error;
+          // we know that this server sent events lib gets these sorts of errors when you are on another tab or window while it is working.
+          // it's fine
+          const wasAbortedError = /was aborted/.test(error.message);
+          if (!wasAbortedError) {
+            addError(error);
+            throw error;
+          }
         },
         onclose() {
           setState('CLOSED');
