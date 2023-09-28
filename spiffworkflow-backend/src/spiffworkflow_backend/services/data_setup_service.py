@@ -23,9 +23,9 @@ class DataSetupService:
         current_app.logger.debug("DataSetupService.save_all_process_models() start")
 
         # tmp
-        for file in FileSystemService.walk_files_from_root_path():
-            current_app.logger.info(f"FILE: {file}")
-        exit(1)
+        #for file in FileSystemService.walk_files_from_root_path():
+        #    current_app.logger.info(f"FILE: {file}")
+        #exit(1)
 
         failing_process_models = []
         process_models = ProcessModelService.get_process_models(recursive=True)

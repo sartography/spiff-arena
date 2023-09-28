@@ -153,6 +153,11 @@ class ProcessModelService(FileSystemService):
         return cls.__scan_process_model(path)
 
     @classmethod
+    def get_process_model_from_path(cls, path: str) -> ProcessModelInfo:
+        relative_path = os.path.relpath(path, start=FileSystemService.root_path())
+        return cls.get_process_model_from_relative_path(relative_path)
+
+    @classmethod
     def get_process_model(cls, process_model_id: str) -> ProcessModelInfo:
         """Get a process model from a model and group id.
 
@@ -179,13 +184,10 @@ class ProcessModelService(FileSystemService):
             awesome_id = process_group_id.replace("/", os.sep)
             root_path = os.path.join(root_path, awesome_id)
 
-        process_model_glob = os.path.join(root_path, "*", "process_model.json")
-        if recursive:
-            process_model_glob = os.path.join(root_path, "**", "process_model.json")
+        process_model_files = FileSystemService.walk_files_from_root_path(recursive, FileSystemService.is_process_model_json_file)
 
-        for file in glob(process_model_glob, recursive=True):
-            process_model_relative_path = os.path.relpath(file, start=FileSystemService.root_path())
-            process_model = cls.get_process_model_from_relative_path(os.path.dirname(process_model_relative_path))
+        for file in process_model_files:
+            process_model = cls.get_process_model_from_path(file)
             if include_files:
                 files = FileSystemService.get_sorted_files(process_model)
                 for f in files:

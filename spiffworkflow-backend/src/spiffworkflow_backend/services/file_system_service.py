@@ -20,8 +20,8 @@ class ProcessModelFileNotFoundError(Exception):
 
 
 DirectoryPredicate = Callable[[str], bool] | None
-FilePredicate = Callable[[str, str], bool] | None
-PathGenerator = Generator[str, None, None]
+FilePredicate = Callable[[str], bool] | None
+FileGenerator = Generator[str, None, None]
 
 
 class FileSystemService:
@@ -46,25 +46,40 @@ class FileSystemService:
 
     @classmethod
     def walk_files(
-        cls, start_dir: str, recursive: bool, dirp: DirectoryPredicate, filep: FilePredicate
-    ) -> PathGenerator:
+            cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
+    ) -> FileGenerator:
         for root, subdirs, files in os.walk(start_dir):
-            if not recursive:
-                subdirs[:] = []
-            elif dirp:
-                subdirs[:] = [d for d in subdirs if dirp(d)]
+            if directory_predicate:
+                subdirs[:] = [d for d in subdirs if directory_predicate(d)]
             for file in files:
-                if filep and not filep(file):
+                file = os.path.join(root, file)
+                if file_predicate and not file_predicate(file):
                     continue
-                yield os.path.join(root, file)
+                yield file
 
-    @staticmethod
-    def non_git_dir(dirname: str) -> bool:
+    @classmethod
+    def non_git_dir(cls, dirname: str) -> bool:
         return dirname != ".git"
 
     @classmethod
-    def walk_files_from_root_path(cls) -> PathGenerator:
-        yield from cls.walk_files(cls.root_path(), True, cls.non_git_dir, None)
+    def not_recursive(cls, dirname: str) -> bool:
+        return False
+
+    @classmethod
+    def standard_directory_predicate(cls, recursive: bool) -> DirectoryPredicate:
+        return cls.non_git_dir if recursive else cls.not_recursive
+
+    @classmethod
+    def is_process_model_json_file(cls, file: str) -> bool:
+        return file.endswith(cls.PROCESS_MODEL_JSON_FILE)
+
+    @classmethod
+    def is_data_store_json_file(cls, file: str) -> bool:
+        return file.endswith("_datastore.json")
+
+    @classmethod
+    def walk_files_from_root_path(cls, recursive: bool, file_predicate: FilePredicate) -> FileGenerator:
+        yield from cls.walk_files(cls.root_path(), cls.standard_directory_predicate(recursive), file_predicate)
 
     @staticmethod
     def root_path() -> str:
