@@ -512,13 +512,11 @@ class TaskService:
     def update_task_data_on_task_model_and_return_dict_if_updated(
         cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
     ) -> JsonDataDict | None:
-        task_data_json = json.dumps(task_data_dict, sort_keys=True)
-        task_data_hash: str = sha256(task_data_json.encode("utf8")).hexdigest()
-        json_data_dict: JsonDataDict | None = None
-        if getattr(task_model, task_model_data_column) != task_data_hash:
-            json_data_dict = {"hash": task_data_hash, "data": task_data_dict}
-            setattr(task_model, task_model_data_column, task_data_hash)
-        return json_data_dict
+        json_data_dict = JsonDataModel.json_data_dict_from_dict(task_data_dict)
+        if getattr(task_model, task_model_data_column) != json_data_dict["hash"]:
+            setattr(task_model, task_model_data_column, json_data_dict["hash"])
+            return json_data_dict
+        return None
 
     @classmethod
     def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
