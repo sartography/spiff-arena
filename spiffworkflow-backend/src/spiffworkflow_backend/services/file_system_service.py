@@ -19,7 +19,7 @@ class ProcessModelFileNotFoundError(Exception):
     pass
 
 
-DirectoryPredicate = Callable[[str], bool] | None
+DirectoryPredicate = Callable[[str, int], bool] | None
 FilePredicate = Callable[[str], bool] | None
 FileGenerator = Generator[str, None, None]
 
@@ -48,22 +48,24 @@ class FileSystemService:
     def walk_files(
         cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
     ) -> FileGenerator:
+        depth = 0
         for root, subdirs, files in os.walk(start_dir):
             if directory_predicate:
-                subdirs[:] = [d for d in subdirs if directory_predicate(d)]
+                subdirs[:] = [dir for dir in subdirs if directory_predicate(dir, depth)]
             for f in files:
                 file = os.path.join(root, f)
                 if file_predicate and not file_predicate(file):
                     continue
                 yield file
+            depth += 1
 
     @classmethod
-    def non_git_dir(cls, dirname: str) -> bool:
+    def non_git_dir(cls, dirname: str, depth: int) -> bool:
         return dirname != ".git"
 
     @classmethod
-    def not_recursive(cls, dirname: str) -> bool:
-        return False
+    def not_recursive(cls, dirname: str, depth: int) -> bool:
+        return depth == 0
 
     @classmethod
     def standard_directory_predicate(cls, recursive: bool) -> DirectoryPredicate:
