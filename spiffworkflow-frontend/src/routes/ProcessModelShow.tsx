@@ -383,7 +383,11 @@ export default function ProcessModelShow() {
       }
       constructedTag = (
         <TableRow key={processModelFile.name}>
-          <TableCell key={`${processModelFile.name}-cell`}>
+          <TableCell
+            key={`${processModelFile.name}-cell`}
+            className="process-model-file-table-filename"
+            title={processModelFile.name}
+          >
             {fileLink}
             {primarySuffix}
           </TableCell>
@@ -394,7 +398,11 @@ export default function ProcessModelShow() {
     });
 
     return (
-      <Table size="lg" useZebraStyles={false}>
+      <Table
+        size="lg"
+        useZebraStyles={false}
+        className="process-model-file-table"
+      >
         <TableHead>
           <TableRow>
             <TableHeader id="Name" key="Name">
@@ -641,14 +649,14 @@ export default function ProcessModelShow() {
       <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
         <TabList aria-label="List of tabs">
           <Tab>About</Tab>
-          <Tab>Files</Tab>
-          <Tab>My process instances</Tab>
+          <Tab data-qa="process-model-files">Files</Tab>
+          <Tab data-qa="process-instance-list-link">My process instances</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>{readmeFileArea()}</TabPanel>
           <TabPanel>
             <Grid condensed fullWidth className="megacondensed">
-              <Column md={4} lg={8} sm={4}>
+              <Column md={6} lg={12} sm={4}>
                 <Can
                   I="POST"
                   a={targetUris.processModelFileCreatePath}
@@ -687,7 +695,6 @@ export default function ProcessModelShow() {
                   perPageOptions={[2, 5, 25]}
                   showReports={false}
                 />
-                <span data-qa="process-model-show-permissions-loaded" />
               </Can>
             )}
           </TabPanel>
@@ -799,6 +806,9 @@ export default function ProcessModelShow() {
         <p className="process-description">{processModel.description}</p>
         {processModel.primary_file_name ? processStartButton : null}
         <div className="with-top-margin">{tabArea()}</div>
+        {permissionsLoaded ? (
+          <span data-qa="process-model-show-permissions-loaded" />
+        ) : null}
       </>
     );
   }

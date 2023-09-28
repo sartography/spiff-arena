@@ -1026,7 +1026,6 @@ class ProcessInstanceProcessor:
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.spiff_serializer_version = self.SERIALIZER_VERSION
-
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(
             f"the_status: {self.process_instance_model.status} for instance {self.process_instance_model.id}"
@@ -1043,6 +1042,7 @@ class ProcessInstanceProcessor:
 
         db.session.add(self.process_instance_model)
         db.session.commit()
+
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
@@ -1477,6 +1477,7 @@ class ProcessInstanceProcessor:
             self.save,
         )
         execution_service.run_and_save(exit_at, save)
+        self.check_all_tasks()
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
@@ -1791,3 +1792,17 @@ class ProcessInstanceProcessor:
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()
+
+    def check_all_tasks(self) -> None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY"] is not True:
+            return
+        tasks = TaskModel.query.filter_by(process_instance_id=self.process_instance_model.id).all()
+        missing_child_guids = []
+        for task in tasks:
+            for child_task_guid in task.properties_json["children"]:
+                child_task = TaskModel.query.filter_by(guid=child_task_guid).first()
+                if child_task is None:
+                    missing_child_guids.append(f"Missing child guid {child_task_guid} for {task.properties_json}")
+
+        if len(missing_child_guids) > 0:
+            raise Exception(missing_child_guids)

@@ -64,5 +64,4 @@ SpiffArena's main components are published under the terms of the
 ## Support
 
 You can find us on [our Discord Channel](https://discord.gg/BYHcc7PpUC).
-
 Commercial support for SpiffWorkflow is available from [Sartography](https://sartography.com).

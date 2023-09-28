@@ -31,11 +31,17 @@ class GitCommandError(Exception):
 # TOOD: check for the existence of git and configs on bootup if publishing is enabled
 class GitService:
     @classmethod
-    def get_current_revision(cls) -> str:
+    def get_current_revision(cls, short_rev: bool = True) -> str:
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+
+        git_command = ["git", "rev-parse"]
+        if short_rev:
+            git_command.append("--short")
+        git_command.append("HEAD")
+
         # The value includes a carriage return character at the end, so we don't grab the last character
         with FileSystemService.cd(bpmn_spec_absolute_dir):
-            return cls.run_shell_command_to_get_stdout(["git", "rev-parse", "--short", "HEAD"])
+            return cls.run_shell_command_to_get_stdout(git_command)
 
     @classmethod
     def get_instance_file_contents_for_revision(
@@ -187,7 +193,7 @@ class GitService:
         if "after" not in webhook:
             raise InvalidGitWebhookBodyError(f"Could not find the 'after' arg in the webhook body: {webhook}")
 
-        git_revision_before_pull = cls.get_current_revision()
+        git_revision_before_pull = cls.get_current_revision(short_rev=False)
         git_revision_after = webhook["after"]
         if git_revision_before_pull == git_revision_after:
             current_app.logger.info("Skipping git pull because we already have the current git revision, git boy!")

@@ -6,7 +6,6 @@ import './index.scss';
 import './index.css';
 
 import reportWebVitals from './reportWebVitals';
-import UserService from './services/UserService';
 
 // @ts-expect-error TS(2345) FIXME: Argument of type 'HTMLElement | null' is not assig... Remove this comment to see the full error message
 const root = ReactDOMClient.createRoot(document.getElementById('root'));
@@ -19,7 +18,6 @@ const doRender = () => {
   );
 };
 
-UserService.loginIfNeeded();
 doRender();
 
 // If you want to start measuring performance in your app, pass a function

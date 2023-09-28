@@ -856,3 +856,14 @@ div.onboarding {
 .completed-task-modal .cds--form__helper-text--disabled {
   --cds-text-disabled: rgba(22, 22, 22, .5);
 }
+
+.process-model-file-table {
+  width: 100%;
+  table-layout: fixed;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.process-model-file-table-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

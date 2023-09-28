@@ -18,6 +18,7 @@ import HttpService from './services/HttpService';
 import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
 import BaseRoutes from './routes/BaseRoutes';
 import BackendIsDown from './routes/BackendIsDown';
+import UserService from './services/UserService';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
@@ -50,7 +51,10 @@ export default function ContainerForExtensions() {
               const extensionUiSchema: ExtensionUiSchema = JSON.parse(
                 extensionUiSchemaFile.file_contents
               );
-              if (extensionUiSchema.ux_elements) {
+              if (
+                extensionUiSchema.ux_elements &&
+                !extensionUiSchema.disabled
+              ) {
                 return extensionUiSchema.ux_elements;
               }
             } catch (jsonParseError: any) {
@@ -93,6 +97,7 @@ export default function ContainerForExtensions() {
   ]);
 
   const routeComponents = () => {
+    UserService.loginIfNeeded();
     return (
       <Routes>
         <Route
