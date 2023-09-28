@@ -100,12 +100,36 @@ const onlyGuestTaskCompletion = () => {
   return false;
 };
 
+/**
+ * Return prefered username
+ * Somehow if using Google as the OpenID provider, the field `preferred_username` is not returned
+ * therefore a special handling is added to cover the issue.
+ * Please refer to following link, section 5.1 Standard Claims to find the details:
+ * https://openid.net/specs/openid-connect-core-1_0.html
+ * @returns string
+ */
 const getPreferredUsername = () => {
   const idToken = getIdToken();
   if (idToken) {
     const idObject = jwt(idToken);
-    return (idObject as any).preferred_username;
+
+    if (idToken === undefined || idToken === 'undefined') {
+      return null;
+    }
+
+    if ((idObject as any).preferred_username !== undefined) {
+      return (idObject as any).preferred_username;
+    }
+
+    if ((idObject as any).name !== undefined) {
+      // note: handling response if OpenID is using Google SSO as the provider
+      return (idObject as any).name;
+    }
+
+    // fallback to `given_name` as the default value.
+    return (idObject as any).given_name;
   }
+
   return null;
 };
 
