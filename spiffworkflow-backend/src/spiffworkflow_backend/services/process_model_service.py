@@ -190,7 +190,7 @@ class ProcessModelService(FileSystemService):
         process_model_files = FileSystemService.walk_files(
             root_path,
             FileSystemService.standard_directory_predicate(recursive),
-            FileSystemService.is_process_model_json_file
+            FileSystemService.is_process_model_json_file,
         )
 
         for file in process_model_files:
