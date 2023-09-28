@@ -1,13 +1,14 @@
+import os
+
 from flask import current_app
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel, ReferenceType
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from sqlalchemy import insert
-from typing import Dict
-import os
+
 
 class DataSetupService:
     @classmethod
@@ -15,11 +16,13 @@ class DataSetupService:
         return cls.save_all_process_models()
 
     @classmethod
-    def add_unique_reference_cache_object(cls, reference_objects: Dict[str, ReferenceCacheModel], reference_cache: ReferenceCacheModel) -> None:
+    def add_unique_reference_cache_object(
+        cls, reference_objects: dict[str, ReferenceCacheModel], reference_cache: ReferenceCacheModel
+    ) -> None:
         reference_cache_unique = (
             f"{reference_cache.identifier}{reference_cache.relative_location}{reference_cache.type}"
         )
-        reference_objects[reference_cache_unique] = reference_cache                                          
+        reference_objects[reference_cache_unique] = reference_cache
 
     @classmethod
     def save_all_process_models(cls) -> list:
@@ -32,7 +35,7 @@ class DataSetupService:
 
         failing_process_models = []
         files = FileSystemService.walk_files_from_root_path(True, None)
-        reference_objects = {}
+        reference_objects: dict[str, ReferenceCacheModel] = {}
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
