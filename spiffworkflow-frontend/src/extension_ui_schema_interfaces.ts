@@ -29,7 +29,6 @@ export interface UiSchemaForm {
 export interface UiSchemaAction {
   api_path: string;
 
-  navigate_to_on_form_submit?: string;
   persistence_level?: UiSchemaPersistenceLevel;
   process_id_to_run?: string;
   results_markdown_filename?: string;
