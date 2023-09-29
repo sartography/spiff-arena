@@ -15,15 +15,6 @@ class DataSetupService:
         return cls.save_all_process_models()
 
     @classmethod
-    def add_unique_reference_cache_object(
-        cls, reference_objects: dict[str, ReferenceCacheModel], reference_cache: ReferenceCacheModel
-    ) -> None:
-        reference_cache_unique = (
-            f"{reference_cache.identifier}{reference_cache.relative_location}{reference_cache.type}"
-        )
-        reference_objects[reference_cache_unique] = reference_cache
-
-    @classmethod
     def save_all_process_models(cls) -> list:
         """Build a cache of all processes, messages, correlation keys, and start events.
 
@@ -46,7 +37,7 @@ class DataSetupService:
                     for ref in refs:
                         try:
                             reference_cache = ReferenceCacheModel.from_spec_reference(ref)
-                            cls.add_unique_reference_cache_object(reference_objects, reference_cache)
+                            ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
                             SpecFileService.update_caches_except_process(ref)
                             db.session.commit()
                         except Exception as ex:
@@ -76,7 +67,7 @@ class DataSetupService:
                     None,
                     False,
                 )
-                cls.add_unique_reference_cache_object(reference_objects, reference_cache)
+                ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 

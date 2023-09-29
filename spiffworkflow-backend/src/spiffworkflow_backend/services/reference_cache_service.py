@@ -7,6 +7,16 @@ from sqlalchemy import insert
 
 
 class ReferenceCacheService:
+    
+    @classmethod
+    def add_unique_reference_cache_object(
+        cls, reference_objects: dict[str, ReferenceCacheModel], reference_cache: ReferenceCacheModel
+    ) -> None:
+        reference_cache_unique = (
+            f"{reference_cache.identifier}{reference_cache.relative_location}{reference_cache.type}"
+        )
+        reference_objects[reference_cache_unique] = reference_cache
+
     @classmethod
     def add_new_generation(cls, reference_objects: dict[str, ReferenceCacheModel]) -> None:
         # get inserted autoincrement primary key value back in a database agnostic way without committing the db session
