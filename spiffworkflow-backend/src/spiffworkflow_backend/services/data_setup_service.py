@@ -1,14 +1,12 @@
 import os
 
 from flask import current_app
-from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
-from sqlalchemy import insert
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 class DataSetupService:
@@ -83,5 +81,5 @@ class DataSetupService:
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 
         ReferenceCacheService.add_new_generation(reference_objects)
-        
+
         return failing_process_models

@@ -1,17 +1,16 @@
+from collections.abc import Generator
+
+import pytest
 from flask.app import Flask
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-import pytest
-
-
-from spiffworkflow_backend.models.db import db
-from collections.abc import Generator
 
 
 @pytest.fixture()
 def with_loaded_reference_cache(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
     yield
+
 
 class TestReferenceCacheService(BaseTest):
     def test_upsearch_locations(

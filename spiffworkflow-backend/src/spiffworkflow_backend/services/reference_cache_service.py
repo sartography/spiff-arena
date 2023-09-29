@@ -1,8 +1,8 @@
 import os
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from sqlalchemy import insert
 
 
@@ -22,7 +22,7 @@ class ReferenceCacheService:
 
         db.session.bulk_save_objects(reference_object_list_with_cache_generation_id)
         db.session.commit()
-    
+
     @classmethod
     def upsearch(cls, location: str, identifier: str, type: str) -> str | None:
         # really want to be able to join to this table on max(id)
