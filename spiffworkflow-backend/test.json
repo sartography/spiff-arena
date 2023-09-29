@@ -1,0 +1,421 @@
+{
+  "data": {},
+  "correlations": {},
+  "last_task": null,
+  "success": true,
+  "tasks": {
+    "0a9d18a7-e7d3-444a-9356-00ee8f7101cb": {
+      "id": "0a9d18a7-e7d3-444a-9356-00ee8f7101cb",
+      "parent": null,
+      "children": [
+        "4a47049e-b9ef-41d4-840c-0bb7f2799d3f"
+      ],
+      "last_state_change": 1695998361.7392704,
+      "state": 16,
+      "task_spec": "Start",
+      "triggered": false,
+      "internal_data": {},
+      "data": {}
+    },
+    "4a47049e-b9ef-41d4-840c-0bb7f2799d3f": {
+      "id": "4a47049e-b9ef-41d4-840c-0bb7f2799d3f",
+      "parent": "0a9d18a7-e7d3-444a-9356-00ee8f7101cb",
+      "children": [
+        "40fffbb7-e4b6-4f55-ba8f-9d2c321d90ed"
+      ],
+      "last_state_change": 1695998361.7391915,
+      "state": 4,
+      "task_spec": "StartEvent_1",
+      "triggered": false,
+      "internal_data": {},
+      "data": {}
+    },
+    "40fffbb7-e4b6-4f55-ba8f-9d2c321d90ed": {
+      "id": "40fffbb7-e4b6-4f55-ba8f-9d2c321d90ed",
+      "parent": "4a47049e-b9ef-41d4-840c-0bb7f2799d3f",
+      "children": [
+        "d1e8ee0b-dfd3-4dc8-8e23-d2a5657780ea"
+      ],
+      "last_state_change": 1695998361.7392056,
+      "state": 4,
+      "task_spec": "MI_Parallel_Call_Activity",
+      "triggered": false,
+      "internal_data": {},
+      "data": {}
+    },
+    "d1e8ee0b-dfd3-4dc8-8e23-d2a5657780ea": {
+      "id": "d1e8ee0b-dfd3-4dc8-8e23-d2a5657780ea",
+      "parent": "40fffbb7-e4b6-4f55-ba8f-9d2c321d90ed",
+      "children": [
+        "15d15271-0fe5-415b-b906-d455411320cb"
+      ],
+      "last_state_change": 1695998361.7392159,
+      "state": 4,
+      "task_spec": "Event_0vzzq3x",
+      "triggered": false,
+      "internal_data": {},
+      "data": {}
+    },
+    "15d15271-0fe5-415b-b906-d455411320cb": {
+      "id": "15d15271-0fe5-415b-b906-d455411320cb",
+      "parent": "d1e8ee0b-dfd3-4dc8-8e23-d2a5657780ea",
+      "children": [
+        "3cfed45e-3f28-4159-80ad-15b9d3422a8e"
+      ],
+      "last_state_change": 1695998361.7392251,
+      "state": 4,
+      "task_spec": "MI_Parallel_Call_Activity_with_User_Task_Loop_Cardinality.EndJoin",
+      "triggered": false,
+      "internal_data": {},
+      "data": {}
+    },
+    "3cfed45e-3f28-4159-80ad-15b9d3422a8e": {
+      "id": "3cfed45e-3f28-4159-80ad-15b9d3422a8e",
+      "parent": "15d15271-0fe5-415b-b906-d455411320cb",
+      "children": [],
+      "last_state_change": 1695998361.7392392,
+      "state": 4,
+      "task_spec": "End",
+      "triggered": false,
+      "internal_data": {},
+      "data": {}
+    }
+  },
+  "root": "0a9d18a7-e7d3-444a-9356-00ee8f7101cb",
+  "spec": {
+    "name": "MI_Parallel_Call_Activity_with_User_Task_Loop_Cardinality",
+    "description": "MI Parallel Call Activity with User Task Loop Cardinality",
+    "file": "mi_parallel_call_activity_with_user_task_loop_cardinality.bpmn",
+    "task_specs": {
+      "Start": {
+        "name": "Start",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": [
+          "StartEvent_1"
+        ],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "BpmnStartTask"
+      },
+      "MI_Parallel_Call_Activity_with_User_Task_Loop_Cardinality.EndJoin": {
+        "name": "MI_Parallel_Call_Activity_with_User_Task_Loop_Cardinality.EndJoin",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [
+          "Event_0vzzq3x"
+        ],
+        "outputs": [
+          "End"
+        ],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "_EndJoin"
+      },
+      "End": {
+        "name": "End",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [
+          "MI_Parallel_Call_Activity_with_User_Task_Loop_Cardinality.EndJoin"
+        ],
+        "outputs": [],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "SimpleBpmnTask"
+      },
+      "StartEvent_1": {
+        "name": "StartEvent_1",
+        "description": "Default Start Event",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [
+          "Start"
+        ],
+        "outputs": [
+          "MI_Parallel_Call_Activity"
+        ],
+        "bpmn_id": "StartEvent_1",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "event_definition": {
+          "description": "Default",
+          "name": null,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "StartEvent",
+        "extensions": {}
+      },
+      "MI_Parallel_Call_Activity": {
+        "name": "MI_Parallel_Call_Activity",
+        "description": "Parallel MultiInstance",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [
+          "StartEvent_1"
+        ],
+        "outputs": [
+          "Event_0vzzq3x"
+        ],
+        "bpmn_id": "MI_Parallel_Call_Activity",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "task_spec": "MI_Parallel_Call_Activity [child]",
+        "cardinality": "3",
+        "data_input": null,
+        "data_output": {
+          "bpmn_id": "z",
+          "bpmn_name": null,
+          "typename": "TaskDataReference"
+        },
+        "input_item": null,
+        "output_item": {
+          "bpmn_id": "name",
+          "bpmn_name": "name",
+          "typename": "TaskDataReference"
+        },
+        "condition": null,
+        "prescript": null,
+        "postscript": null,
+        "typename": "ParallelMultiInstanceTask"
+      },
+      "MI_Parallel_Call_Activity [child]": {
+        "name": "MI_Parallel_Call_Activity [child]",
+        "description": "Call Activity",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [
+          "MI_Parallel_Call_Activity"
+        ],
+        "outputs": [],
+        "bpmn_id": "MI_Parallel_Call_Activity",
+        "bpmn_name": "MI Parallel Call Activity with User Task",
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "prescript": null,
+        "postscript": null,
+        "spec": "User_Task_Process",
+        "typename": "CallActivity",
+        "extensions": {
+          "instructionsForEndUser": null
+        }
+      },
+      "Event_0vzzq3x": {
+        "name": "Event_0vzzq3x",
+        "description": "Default End Event",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [
+          "MI_Parallel_Call_Activity"
+        ],
+        "outputs": [
+          "MI_Parallel_Call_Activity_with_User_Task_Loop_Cardinality.EndJoin"
+        ],
+        "bpmn_id": "Event_0vzzq3x",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "event_definition": {
+          "description": "Default",
+          "name": null,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "EndEvent",
+        "extensions": {
+          "instructionsForEndUser": "End MI Parallel Call Activity with User Task Loop Cardinality Unit Test. Output: {{z}}"
+        }
+      }
+    },
+    "io_specification": null,
+    "data_objects": {},
+    "correlation_keys": {},
+    "typename": "BpmnProcessSpec"
+  },
+  "subprocess_specs": {
+    "User_Task_Process": {
+      "name": "User_Task_Process",
+      "description": "User Task Process",
+      "file": "user_task.bpmn",
+      "task_specs": {
+        "Start": {
+          "name": "Start",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [],
+          "outputs": [
+            "StartEvent_1"
+          ],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "BpmnStartTask"
+        },
+        "User_Task_Process.EndJoin": {
+          "name": "User_Task_Process.EndJoin",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [
+            "Event_1bgornj"
+          ],
+          "outputs": [
+            "End"
+          ],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "_EndJoin"
+        },
+        "End": {
+          "name": "End",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [
+            "User_Task_Process.EndJoin"
+          ],
+          "outputs": [],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "SimpleBpmnTask"
+        },
+        "StartEvent_1": {
+          "name": "StartEvent_1",
+          "description": "Default Start Event",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [
+            "Start"
+          ],
+          "outputs": [
+            "User_Task"
+          ],
+          "bpmn_id": "StartEvent_1",
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "event_definition": {
+            "description": "Default",
+            "name": null,
+            "typename": "NoneEventDefinition"
+          },
+          "typename": "StartEvent",
+          "extensions": {}
+        },
+        "User_Task": {
+          "name": "User_Task",
+          "description": "User Task",
+          "manual": true,
+          "lookahead": 2,
+          "inputs": [
+            "StartEvent_1"
+          ],
+          "outputs": [
+            "Event_1bgornj"
+          ],
+          "bpmn_id": "User_Task",
+          "bpmn_name": "User Task",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "typename": "UserTask",
+          "extensions": {
+            "instructionsForEndUser": "This is the User Task Unit Test Screen.",
+            "properties": {
+              "formJsonSchemaFilename": "get-name-schema.json",
+              "formUiSchemaFilename": "get-name-uischema.json"
+            }
+          }
+        },
+        "Event_1bgornj": {
+          "name": "Event_1bgornj",
+          "description": "Default End Event",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [
+            "User_Task"
+          ],
+          "outputs": [
+            "User_Task_Process.EndJoin"
+          ],
+          "bpmn_id": "Event_1bgornj",
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "event_definition": {
+            "description": "Default",
+            "name": null,
+            "typename": "NoneEventDefinition"
+          },
+          "typename": "EndEvent",
+          "extensions": {
+            "instructionsForEndUser": "End User Task Unit Test.\nYour name is {{name}}"
+          }
+        }
+      },
+      "io_specification": null,
+      "data_objects": {},
+      "correlation_keys": {},
+      "typename": "BpmnProcessSpec"
+    }
+  },
+  "subprocesses": {},
+  "bpmn_events": []
+}
