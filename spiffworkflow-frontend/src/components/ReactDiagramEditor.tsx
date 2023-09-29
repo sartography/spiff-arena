@@ -750,12 +750,15 @@ export default function ReactDiagramEditor({
   };
 
   const diagramControlButtons = () => {
+    // align the iconDescription to the bottom so it doesn't cover up the Save button
+    // when mousing through them
     return (
       <div className="diagram-control-buttons">
         <Button
           kind="ghost"
           renderIcon={ZoomIn}
-          iconDescription="Zoom In"
+          align="bottom-left"
+          iconDescription="Zoom in"
           hasIconOnly
           onClick={() => {
             zoom(1);
@@ -764,7 +767,8 @@ export default function ReactDiagramEditor({
         <Button
           kind="ghost"
           renderIcon={ZoomOut}
-          iconDescription="Zoom Out"
+          align="bottom-left"
+          iconDescription="Zoom out"
           hasIconOnly
           onClick={() => {
             zoom(-1);
@@ -773,7 +777,8 @@ export default function ReactDiagramEditor({
         <Button
           kind="ghost"
           renderIcon={ZoomFit}
-          iconDescription="Zoom Fit"
+          align="bottom-left"
+          iconDescription="Zoom fit"
           hasIconOnly
           onClick={() => {
             zoom(0);
