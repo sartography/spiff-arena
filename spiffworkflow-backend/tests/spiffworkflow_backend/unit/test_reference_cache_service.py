@@ -2,7 +2,16 @@ from flask.app import Flask
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+import pytest
 
+
+from spiffworkflow_backend.models.db import db
+from collections.abc import Generator
+
+
+@pytest.fixture()
+def with_loaded_reference_cache(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
+    yield
 
 class TestReferenceCacheService(BaseTest):
     def test_upsearch_locations(
@@ -16,7 +25,7 @@ class TestReferenceCacheService(BaseTest):
             "misc",
         ]
 
-    def test_can_find_location(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+    def test_can_find_location(self, with_loaded_reference_cache: None) -> None:
         # TODO: set up generation and cache entries
         location = ReferenceCacheService.upsearch(
             "misc/jonjon/generic-data-store-area/test-level-1", "contacts_datastore", "data_store"

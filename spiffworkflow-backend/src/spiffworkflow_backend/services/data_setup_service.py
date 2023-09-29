@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from sqlalchemy import insert
 
 
@@ -81,17 +82,6 @@ class DataSetupService:
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 
-        # get inserted autoincrement primary key value back in a database agnostic way without committing the db session
-        ins = insert(CacheGenerationModel).values(cache_table="reference_cache")  # type: ignore
-        res = db.session.execute(ins)
-        cache_generation_id = res.inserted_primary_key[0]
-
-        # add primary key value to each element in reference objects list and store in new list
-        reference_object_list_with_cache_generation_id = []
-        for reference_object in reference_objects.values():
-            reference_object.generation_id = cache_generation_id
-            reference_object_list_with_cache_generation_id.append(reference_object)
-
-        db.session.bulk_save_objects(reference_object_list_with_cache_generation_id)
-        db.session.commit()
+        ReferenceCacheService.add_new_generation(reference_objects)
+        
         return failing_process_models
