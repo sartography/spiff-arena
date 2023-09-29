@@ -2,8 +2,8 @@ from collections.abc import Generator
 
 import pytest
 from flask.app import Flask
-from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -12,7 +12,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 def with_loaded_reference_cache(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
     reference_objects: dict[str, ReferenceCacheModel] = {}
     ReferenceCacheService.add_unique_reference_cache_object(
-        reference_objects, 
+        reference_objects,
         ReferenceCacheModel.from_params(
             "contacts_datastore",
             "contacts_datastore",
@@ -21,9 +21,10 @@ def with_loaded_reference_cache(app: Flask, with_db_and_bpmn_file_cleanup: None)
             "misc/jonjon",
             None,
             False,
-        ))
+        ),
+    )
     ReferenceCacheService.add_unique_reference_cache_object(
-        reference_objects, 
+        reference_objects,
         ReferenceCacheModel.from_params(
             "contacts_datastore",
             "contacts_datastore",
@@ -32,9 +33,11 @@ def with_loaded_reference_cache(app: Flask, with_db_and_bpmn_file_cleanup: None)
             "misc/jonjon/generic-data-store-area/test-level-1",
             None,
             False,
-        ))
+        ),
+    )
 
     ReferenceCacheService.add_new_generation(reference_objects)
+    yield
 
 
 class TestReferenceCacheService(BaseTest):
@@ -62,7 +65,5 @@ class TestReferenceCacheService(BaseTest):
         assert location == "misc/jonjon"
 
     def test_does_not_find_data_store_in_non_upsearched_location(self, with_loaded_reference_cache: None) -> None:
-        location = ReferenceCacheService.upsearch(
-            "some/other/place", "contacts_datastore", "data_store"
-        )
-        assert location == None
+        location = ReferenceCacheService.upsearch("some/other/place", "contacts_datastore", "data_store")
+        assert location is None

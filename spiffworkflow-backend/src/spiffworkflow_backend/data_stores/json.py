@@ -24,6 +24,7 @@ def _data_store_filename(name: str) -> str:
 def _data_store_exists_at_location(location: str, name: str) -> bool:
     return FileSystemService.file_exists_at_relative_path(location, _data_store_filename(name))
 
+
 def _data_store_location_for_task(spiff_task: SpiffTask, name: str) -> str | None:
     location = _process_model_location_for_task(spiff_task)
     if location is None:
@@ -31,8 +32,8 @@ def _data_store_location_for_task(spiff_task: SpiffTask, name: str) -> str | Non
     if _data_store_exists_at_location(location, name):
         return location
     location = ReferenceCacheService.upsearch(location, name, "data_store")
-    if not _data_store_exists_at_location(location, name):
-        location = None
+    if location is None or not _data_store_exists_at_location(location, name):
+        return None
     return location
 
 

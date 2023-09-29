@@ -7,7 +7,6 @@ from sqlalchemy import insert
 
 
 class ReferenceCacheService:
-    
     @classmethod
     def add_unique_reference_cache_object(
         cls, reference_objects: dict[str, ReferenceCacheModel], reference_cache: ReferenceCacheModel
