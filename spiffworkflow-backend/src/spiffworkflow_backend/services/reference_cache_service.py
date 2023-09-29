@@ -1,7 +1,8 @@
 import os
 
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+
 
 class ReferenceCacheService:
     @classmethod
@@ -11,18 +12,21 @@ class ReferenceCacheService:
         if cache_generation is None:
             return None
         locations = cls.upsearch_locations(location)
-        references = ReferenceCacheModel.query.filter_by(
-            identifier=identifier,
-            type=type,
-            generation=cache_generation,
-        ).filter(
-            relative_location.in_(locations)
-        ).order_by(ReferenceCacheModel.relative_location.desc()).all()
+        references = (
+            ReferenceCacheModel.query.filter_by(
+                identifier=identifier,
+                type=type,
+                generation=cache_generation,
+            )
+            .filter(ReferenceCacheModel.relative_location.in_(locations))  # type: ignore
+            .order_by(ReferenceCacheModel.relative_location.desc())  # type: ignore
+            .all()
+        )
 
         for reference in references:
             # TODO: permissions check
-            return reference
-        
+            return reference.relative_location  # type: ignore
+
         return None
 
     @classmethod
@@ -32,5 +36,5 @@ class ReferenceCacheService:
         while location != "":
             locations.append(location)
             location = os.path.dirname(location)
-        
+
         return locations

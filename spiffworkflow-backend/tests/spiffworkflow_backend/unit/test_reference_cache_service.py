@@ -1,16 +1,9 @@
-import json
-import os
-import tempfile
-from collections.abc import Generator
-
-from flask.app import Flask
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+
 class TestReferenceCacheService(BaseTest):
-
-
     def test_upsearch_locations(
         self,
     ) -> None:
