@@ -94,10 +94,11 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
 
     def instantiate_executer(self, bpmn_file: str) -> BpmnWorkflow:
         parser = MyCustomParser()
-        self._add_bpmn_file_to_parser(parser, bpmn_file)
         all_related = self._find_related_bpmn_files(bpmn_file)
         for related_file in all_related:
             self._add_bpmn_file_to_parser(parser, related_file)
+        # FIXME: the primary file must be added last otherwise we lose it for some reason
+        self._add_bpmn_file_to_parser(parser, bpmn_file)
         sub_parsers = list(parser.process_parsers.values())
         executable_process = None
         for sub_parser in sub_parsers:
@@ -309,7 +310,7 @@ class ProcessModelTestRunner:
                     test_case_task_properties = test_case_contents["tasks"][test_case_task_key]
 
             task_type = next_task.task_spec.__class__.__name__
-            if task_type in ["ServiceTask", "UserTask", "CallActivity"] and (
+            if task_type in ["ServiceTask", "UserTask"] and (
                 test_case_task_properties is None or "data" not in test_case_task_properties
             ):
                 raise UnrunnableTestCaseError(
