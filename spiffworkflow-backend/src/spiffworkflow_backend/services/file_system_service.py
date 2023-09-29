@@ -1,5 +1,6 @@
 import json
 import os
+from collections.abc import Callable
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
@@ -16,6 +17,11 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 class ProcessModelFileNotFoundError(Exception):
     pass
+
+
+DirectoryPredicate = Callable[[str, int], bool] | None
+FilePredicate = Callable[[str], bool] | None
+FileGenerator = Generator[str, None, None]
 
 
 class FileSystemService:
@@ -37,6 +43,45 @@ class FileSystemService:
             yield
         finally:
             os.chdir(prevdir)
+
+    @classmethod
+    def walk_files(
+        cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
+    ) -> FileGenerator:
+        depth = 0
+        for root, subdirs, files in os.walk(start_dir):
+            if directory_predicate:
+                subdirs[:] = [dir for dir in subdirs if directory_predicate(dir, depth)]
+            for f in files:
+                file = os.path.join(root, f)
+                if file_predicate and not file_predicate(file):
+                    continue
+                yield file
+            depth += 1
+
+    @classmethod
+    def non_git_dir(cls, dirname: str, depth: int) -> bool:
+        return dirname != ".git"
+
+    @classmethod
+    def not_recursive(cls, dirname: str, depth: int) -> bool:
+        return depth == 0
+
+    @classmethod
+    def standard_directory_predicate(cls, recursive: bool) -> DirectoryPredicate:
+        return cls.non_git_dir if recursive else cls.not_recursive
+
+    @classmethod
+    def is_process_model_json_file(cls, file: str) -> bool:
+        return file.endswith(cls.PROCESS_MODEL_JSON_FILE)
+
+    @classmethod
+    def is_data_store_json_file(cls, file: str) -> bool:
+        return file.endswith("_datastore.json")
+
+    @classmethod
+    def walk_files_from_root_path(cls, recursive: bool, file_predicate: FilePredicate) -> FileGenerator:
+        yield from cls.walk_files(cls.root_path(), cls.standard_directory_predicate(recursive), file_predicate)
 
     @staticmethod
     def root_path() -> str:
@@ -136,6 +181,10 @@ class FileSystemService:
         """
         workflow_path = FileSystemService.process_model_full_path(process_model)
         return os.path.relpath(workflow_path, start=FileSystemService.root_path())
+
+    @classmethod
+    def relative_location(cls, path: str) -> str:
+        return os.path.dirname(os.path.relpath(path, start=FileSystemService.root_path()))
 
     @staticmethod
     def process_group_path_for_spec(process_model: ProcessModelInfo) -> str:
