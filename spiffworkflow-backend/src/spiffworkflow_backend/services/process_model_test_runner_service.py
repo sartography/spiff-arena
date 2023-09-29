@@ -94,10 +94,8 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
 
     def instantiate_executer(self, bpmn_file: str) -> BpmnWorkflow:
         parser = MyCustomParser()
-        all_related = self._find_related_bpmn_files(bpmn_file)
-        for related_file in all_related:
-            self._add_bpmn_file_to_parser(parser, related_file)
-        # FIXME: the primary file must be added last otherwise we lose it for some reason
+
+        # ensure we get the executable process for the primary bpmn file
         self._add_bpmn_file_to_parser(parser, bpmn_file)
         sub_parsers = list(parser.process_parsers.values())
         executable_process = None
@@ -108,6 +106,11 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             raise BpmnFileMissingExecutableProcessError(
                 f"Executable process cannot be found in {bpmn_file}. Test cannot run."
             )
+
+        all_related = self._find_related_bpmn_files(bpmn_file)
+        for related_file in all_related:
+            self._add_bpmn_file_to_parser(parser, related_file)
+
         bpmn_process_spec = parser.get_spec(executable_process)
         subprocesses = parser.get_subprocess_specs(bpmn_process_spec.name)
         bpmn_process_instance = BpmnWorkflow(
