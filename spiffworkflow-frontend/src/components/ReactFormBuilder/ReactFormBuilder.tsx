@@ -462,7 +462,10 @@ export default function ReactFormBuilder({
             <TabPanel>
               <p>
                 Data entered in the form to the right will appear below in the
-                same way it will be provided in the Task Data.
+                same way it will be provided in the Task Data. In order to
+                initialize a form in the Workflow with preconfigured values or
+                set up options for dynamic Dropdown lists, this data must be
+                made available as Task Data variables.
               </p>
               <Editor
                 height={600}
