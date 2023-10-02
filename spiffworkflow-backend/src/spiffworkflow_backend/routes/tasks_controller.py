@@ -714,8 +714,8 @@ def task_save_draft(
     json_data_dict = JsonDataModel.json_data_dict_from_dict(body)
     JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
     task_draft_data_dict["saved_form_data_hash"] = json_data_dict["hash"]
-    TaskDraftDataModel.insert_or_update_task_draft_data_dict(task_draft_data_dict)
     try:
+        TaskDraftDataModel.insert_or_update_task_draft_data_dict(task_draft_data_dict)
         db.session.commit()
     except OperationalError as exception:
         db.session.rollback()
