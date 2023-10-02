@@ -1,7 +1,7 @@
 from typing import Any
 
 from flask import current_app
-from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type: ignore
+from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
@@ -55,20 +55,12 @@ class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
         del my_task.data[self.bpmn_id]
 
     @staticmethod
-    def register_converter(spec_config: dict[str, Any]) -> None:
-        spec_config["task_specs"].append(JSONDataStoreConverter)
-
-    @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["JSONDataStore"] = JSONDataStore
 
 
-class JSONDataStoreConverter(BpmnSpecConverter):  # type: ignore
+class JSONDataStoreConverter(BpmnConverter):  # type: ignore
     """JSONDataStoreConverter."""
-
-    def __init__(self, registry):  # type: ignore
-        """__init__."""
-        super().__init__(JSONDataStore, registry)
 
     def to_dict(self, spec: Any) -> dict[str, Any]:
         """to_dict."""
@@ -107,20 +99,12 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
         del my_task.data[self.bpmn_id]
 
     @staticmethod
-    def register_converter(spec_config: dict[str, Any]) -> None:
-        spec_config["task_specs"].append(JSONFileDataStoreConverter)
-
-    @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["JSONFileDataStore"] = JSONFileDataStore
 
 
-class JSONFileDataStoreConverter(BpmnSpecConverter):  # type: ignore
+class JSONFileDataStoreConverter(BpmnConverter):  # type: ignore
     """JSONFileDataStoreConverter."""
-
-    def __init__(self, registry):  # type: ignore
-        """__init__."""
-        super().__init__(JSONFileDataStore, registry)
 
     def to_dict(self, spec: Any) -> dict[str, Any]:
         """to_dict."""

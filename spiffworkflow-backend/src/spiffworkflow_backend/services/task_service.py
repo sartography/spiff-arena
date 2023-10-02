@@ -5,7 +5,7 @@ from hashlib import sha256
 from typing import TypedDict
 from uuid import UUID
 
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore

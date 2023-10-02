@@ -32,21 +32,20 @@ from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEng
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
-from SpiffWorkflow.bpmn.serializer.task_spec import EventBasedGatewayConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
-from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
+from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from SpiffWorkflow.util.task import TaskState
-from spiffworkflow_backend.data_stores.json import JSONDataStore
+from spiffworkflow_backend.data_stores.json import JSONDataStore, JSONDataStoreConverter, JSONFileDataStoreConverter
 from spiffworkflow_backend.data_stores.json import JSONFileDataStore
-from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore, TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -90,13 +89,13 @@ from spiffworkflow_backend.services.workflow_execution_service import SkipOneExe
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
-from spiffworkflow_backend.specs.start_event import StartEvent
+from spiffworkflow_backend.specs.start_event import StartEvent, StartEventConverter
 from sqlalchemy import and_
 
-StartEvent.register_converter(SPIFF_SPEC_CONFIG)
-JSONDataStore.register_converter(SPIFF_SPEC_CONFIG)
-JSONFileDataStore.register_converter(SPIFF_SPEC_CONFIG)
-TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
+SPIFF_CONFIG[StartEvent] = StartEventConverter
+SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
+SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
+SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
@@ -390,9 +389,8 @@ class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
 
-    wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(SPIFF_SPEC_CONFIG)
+    wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
-    _event_serializer = EventBasedGatewayConverter(wf_spec_converter)
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
     VALIDATION_PROCESS_KEY = "validate_only"
@@ -1126,7 +1124,7 @@ class ProcessInstanceProcessor:
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
-        event_definition = self._event_serializer.registry.restore(event_data)
+        event_definition = self._serializer.from_dict(event_data)
         bpmn_event = BpmnEvent(
             event_definition=event_definition,
             payload=payload,
