@@ -3,7 +3,6 @@ from datetime import timedelta
 from typing import Any
 
 from SpiffWorkflow.bpmn.parser.util import full_tag  # type: ignore
-from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import StartEvent as DefaultStartEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.simple import NoneEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import CycleTimerEventDefinition  # type: ignore
@@ -60,9 +59,3 @@ class StartEvent(DefaultStartEvent):  # type: ignore
         if isinstance(self.timer_definition, TimerEventDefinition) and script_engine is not None:
             evaluated_expression = script_engine.evaluate(my_task, self.timer_definition.expression)
         return evaluated_expression
-
-
-class StartEventConverter(EventConverter):  # type: ignore
-    pass
-    # def __init__(self, class_, registry):  # type: ignore
-    #     super().__init__(class_, registry)

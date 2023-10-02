@@ -1,5 +1,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
+import copy
 import decimal
 import json
 import logging
@@ -31,6 +32,7 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ig
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
+from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
@@ -43,9 +45,12 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from SpiffWorkflow.util.task import TaskState
-from spiffworkflow_backend.data_stores.json import JSONDataStore, JSONDataStoreConverter, JSONFileDataStoreConverter
+from spiffworkflow_backend.data_stores.json import JSONDataStore
+from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
 from spiffworkflow_backend.data_stores.json import JSONFileDataStore
-from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore, TypeaheadDataStoreConverter
+from spiffworkflow_backend.data_stores.json import JSONFileDataStoreConverter
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -89,10 +94,10 @@ from spiffworkflow_backend.services.workflow_execution_service import SkipOneExe
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
-from spiffworkflow_backend.specs.start_event import StartEvent, StartEventConverter
+from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
 
-SPIFF_CONFIG[StartEvent] = StartEventConverter
+SPIFF_CONFIG[StartEvent] = EventConverter
 SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
 SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
@@ -778,7 +783,9 @@ class ProcessInstanceProcessor:
                     process_instance_model,
                     bpmn_definition_to_task_definitions_mappings,
                 )
-                bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
+                # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
+                process_copy = copy.deepcopy(full_bpmn_process_dict)
+                bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
             except Exception as err:
                 raise err
             finally:
@@ -1115,11 +1122,12 @@ class ProcessInstanceProcessor:
                 db.session.add(at)
             db.session.commit()
 
-    def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
+    def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
         """Get a serialized version of a task spec."""
         # The task spec is NOT actually a SpiffTask, it is the task spec attached to a SpiffTask
         # Not sure why mypy accepts this but whatever.
-        return self._serializer.spec_converter.convert(task_spec)
+        result: dict = self._serializer.to_dict(task_spec)
+        return result
 
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
         """Send an event to the workflow."""
@@ -1518,7 +1526,7 @@ class ProcessInstanceProcessor:
     def serialize(self) -> dict:
         self.check_task_data_size()
         self.preserve_script_engine_state()
-        return self._serializer.workflow_to_dict(self.bpmn_process_instance)  # type: ignore
+        return self._serializer.to_dict(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
         return self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)  # type: ignore

@@ -1269,6 +1269,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
+        assert response.status_code == 200
         assert response.json is not None
         assert type(response.json["updated_at_in_seconds"]) is int
         assert response.json["updated_at_in_seconds"] > 0
