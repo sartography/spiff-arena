@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
@@ -194,3 +195,16 @@ class UserService:
                         )
                     )
         return unique_permission_assignments
+
+    @classmethod
+    def all_principals_for_user(cls, user: UserModel) -> list[PrincipalModel]:
+        if user.principal is None:
+            raise MissingPrincipalError(f"Missing principal for user with id: {user.id}")
+        principals = [user.principal]
+
+        for group in user.groups:
+            if group.principal is None:
+                raise MissingPrincipalError(f"Missing principal for group with id: {group.id}")
+            principals.append(group.principal)
+
+        return principals

@@ -14,6 +14,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
+from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -322,6 +323,14 @@ class BaseTest:
         target_uri: str = PermissionTargetModel.URI_ALL,
         permission_names: list[str] | None = None,
     ) -> UserModel:
+        principal = user.principal
+        cls.add_permissions_to_principal(principal, target_uri=target_uri, permission_names=permission_names)
+        return user
+
+    @classmethod
+    def add_permissions_to_principal(
+        cls, principal: PrincipalModel, target_uri: str, permission_names: list[str] | None
+    ) -> None:
         permission_target = AuthorizationService.find_or_create_permission_target(target_uri)
 
         if permission_names is None:
@@ -329,11 +338,10 @@ class BaseTest:
 
         for permission in permission_names:
             AuthorizationService.create_permission_for_principal(
-                principal=user.principal,
+                principal=principal,
                 permission_target=permission_target,
                 permission=permission,
             )
-        return user
 
     def assert_user_has_permission(
         self,

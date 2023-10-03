@@ -26,6 +26,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -72,6 +73,39 @@ class TestProcessApi(BaseTest):
     ) -> None:
         user = self.find_or_create_user()
         self.add_permissions_to_user(user, target_uri="/v1.0/process-groups", permission_names=["read"])
+        request_body = {
+            "requests_to_check": {
+                "/v1.0/process-groups": ["GET", "POST"],
+                "/v1.0/process-models": ["GET"],
+            }
+        }
+        expected_response_body = {
+            "results": {
+                "/v1.0/process-groups": {"GET": True, "POST": False},
+                "/v1.0/process-models": {"GET": False},
+            }
+        }
+        response = client.post(
+            "/v1.0/permissions-check",
+            headers=self.logged_in_headers(user),
+            content_type="application/json",
+            data=json.dumps(request_body),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json == expected_response_body
+
+    def test_permissions_check_with_wildcard_permissions_through_group(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.find_or_create_user()
+        group = GroupService.find_or_create_group("test_group")
+        principal = group.principal
+        GroupService.add_user_to_group(user, group.identifier)
+        self.add_permissions_to_principal(principal, target_uri="/v1.0/process-groups/%", permission_names=["read"])
         request_body = {
             "requests_to_check": {
                 "/v1.0/process-groups": ["GET", "POST"],

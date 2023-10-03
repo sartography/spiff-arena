@@ -442,6 +442,16 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2:yo")
         self.assert_user_has_permission(user_two, "create", "/v1.0/process-groups/hey2:yo")
 
+    def test_target_uri_matches_actual_uri(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        # exact match
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/hey", "/process-groups/hey")
+        # wildcard
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/%", "/process-groups/hey")
+        # wildcard is magical
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/%", "/process-groups")
+        # no match, since prefix doesn't match. wildcard isn't that magical.
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/%", "/process-models") is False
+
     def _expected_basic_permissions(self) -> list[tuple[str, str]]:
         return sorted(
             [
