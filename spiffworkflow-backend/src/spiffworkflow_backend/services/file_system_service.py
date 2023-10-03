@@ -33,17 +33,6 @@ class FileSystemService:
     PROCESS_GROUP_JSON_FILE = "process_group.json"
     PROCESS_MODEL_JSON_FILE = "process_model.json"
 
-    # https://stackoverflow.com/a/24176022/6090676
-    @staticmethod
-    @contextmanager
-    def cd(newdir: str) -> Generator:
-        prevdir = os.getcwd()
-        os.chdir(os.path.expanduser(newdir))
-        try:
-            yield
-        finally:
-            os.chdir(prevdir)
-
     @classmethod
     def walk_files(
         cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
