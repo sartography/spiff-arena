@@ -24,6 +24,8 @@ function failed_to_get_lock() {
 }
 
 function run() {
+  # we are very careful not to run "cd" from python, since it is at the process level and will screw up other threads.
+  # we are safe in this case because this entire script is run in a new process.
   cd "${bpmn_models_absolute_dir}"
   git add .
 
