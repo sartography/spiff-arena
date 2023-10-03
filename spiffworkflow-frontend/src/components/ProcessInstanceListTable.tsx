@@ -1913,6 +1913,7 @@ export default function ProcessInstanceListTable({
             setShowFilterOptions={setShowFilterOptions}
             reportSearchComponent={reportSearchComponent}
             filtersEnabled={filtersEnabled}
+            reportHash={reportHash}
           />
         </Column>
         <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
