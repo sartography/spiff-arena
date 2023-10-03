@@ -1,11 +1,11 @@
-import React from "react";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import FormLabel from "@mui/material/FormLabel";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import { WidgetProps } from "@rjsf/utils";
+import React from 'react';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import { WidgetProps } from '@rjsf/utils';
+import { getCommonAttributes } from '../../helpers';
 
-const RadioWidget = ({
+function RadioWidget({
   id,
   schema,
   options,
@@ -17,11 +17,19 @@ const RadioWidget = ({
   onChange,
   onBlur,
   onFocus,
-}: WidgetProps) => {
+  uiSchema,
+  rawErrors,
+}: WidgetProps) {
   const { enumOptions, enumDisabled } = options;
 
-  const _onChange = (_: any, value: any) =>
-    onChange(schema.type == "boolean" ? value !== "false" : value);
+  const _onChange = (_: any, newValue: any) => {
+    if (schema.type === 'boolean') {
+      const v: any = newValue === 'true' || newValue === true;
+      onChange(v);
+    } else {
+      onChange(newValue);
+    }
+  };
   const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
     onBlur(id, value);
   const _onFocus = ({
@@ -30,43 +38,42 @@ const RadioWidget = ({
 
   const row = options ? options.inline : false;
 
-  return (
-    <>
-      <RadioGroup
-        id={id}
-        name={id}
-        value={`${value}`}
-        row={row as boolean}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
-      >
-        {Array.isArray(enumOptions) &&
-          enumOptions.map((option) => {
-            const itemDisabled =
-              Array.isArray(enumDisabled) &&
-              enumDisabled.indexOf(option.value) !== -1;
-            const radio = (
-              <FormControlLabel
-                control={
-                  <Radio
-                    name={id}
-                    id={`${id}-${option.value}`}
-                    color="primary"
-                  />
-                }
-                label={`${option.label}`}
-                value={`${option.value}`}
-                key={option.value}
-                disabled={disabled || itemDisabled || readonly}
-              />
-            );
-
-            return radio;
-          })}
-      </RadioGroup>
-    </>
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    rawErrors
   );
-};
+
+  return (
+    <RadioGroup
+      id={id}
+      name={id}
+      value={`${value}`}
+      row={row as boolean}
+      onChange={_onChange}
+      onBlur={_onBlur}
+      onFocus={_onFocus}
+    >
+      {Array.isArray(enumOptions) &&
+        enumOptions.map((option) => {
+          const itemDisabled =
+            Array.isArray(enumDisabled) &&
+            enumDisabled.indexOf(option.value) !== -1;
+          return (
+            <FormControlLabel
+              control={
+                <Radio name={id} id={`${id}-${option.value}`} color="primary" />
+              }
+              label={`${option.label}`}
+              value={`${option.value}`}
+              key={option.value}
+              disabled={disabled || itemDisabled || readonly}
+            />
+          );
+        })}
+    </RadioGroup>
+  );
+}
 
 export default RadioWidget;
