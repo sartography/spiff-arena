@@ -205,7 +205,6 @@ class AuthorizationService:
         uri_with_percent = re.sub(r"\*", "%", target_uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
         for permission_assignment in permission_assignments:
-            print(f"permission_assignment.permission_target.uri: {permission_assignment.permission_target.uri}")
             if permission_assignment.permission == permission and cls.target_uri_matches_actual_uri(
                 permission_assignment.permission_target.uri, target_uri_normalized
             ):
