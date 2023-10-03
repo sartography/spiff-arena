@@ -27,6 +27,7 @@ from spiffworkflow_backend.services.authentication_service import TokenNotProvid
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
+from werkzeug.exceptions import MethodNotAllowed
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
@@ -247,6 +248,11 @@ def should_notify_sentry(exception: Exception) -> bool:
             return False
     if isinstance(exception, NotAuthorizedError):
         return False
+
+    # like a 404, 405 Method Not Allowed: The method is not allowed for the requested URL
+    if isinstance(exception, MethodNotAllowed):
+        return False
+
     return True
 
 
