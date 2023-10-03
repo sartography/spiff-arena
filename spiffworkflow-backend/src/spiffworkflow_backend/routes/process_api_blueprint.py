@@ -12,6 +12,8 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
+from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
@@ -24,6 +26,7 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.user_service import UserService
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
@@ -40,6 +43,16 @@ def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.R
     response_dict: dict[str, dict[str, bool]] = {}
     requests_to_check = body["requests_to_check"]
 
+    user = g.user
+    principals = UserService.all_principals_for_user(user)
+    principal_ids = [p.id for p in principals]
+
+    permission_assignments = (
+        PermissionAssignmentModel.query.filter(PermissionAssignmentModel.principal_id.in_(principal_ids))
+        .join(PermissionTargetModel)
+        .all()
+    )
+
     for target_uri, http_methods in requests_to_check.items():
         if target_uri not in response_dict:
             response_dict[target_uri] = {}
@@ -47,8 +60,8 @@ def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.R
         for http_method in http_methods:
             permission_string = AuthorizationService.get_permission_from_http_method(http_method)
             if permission_string:
-                has_permission = AuthorizationService.user_has_permission(
-                    user=g.user,
+                has_permission = AuthorizationService.permission_assignments_include(
+                    permission_assignments=permission_assignments,
                     permission=permission_string,
                     target_uri=target_uri,
                 )
