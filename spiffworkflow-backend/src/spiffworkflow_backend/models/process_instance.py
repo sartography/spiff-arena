@@ -89,13 +89,15 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     start_in_seconds: int | None = db.Column(db.Integer, index=True)
     end_in_seconds: int | None = db.Column(db.Integer, index=True)
     task_updated_at_in_seconds: int = db.Column(db.Integer, nullable=True)
-    updated_at_in_seconds: int = db.Column(db.Integer)
-    created_at_in_seconds: int = db.Column(db.Integer)
     status: str = db.Column(db.String(50), index=True)
 
-    bpmn_version_control_type: str = db.Column(db.String(50))
-    bpmn_version_control_identifier: str = db.Column(db.String(255))
-    last_milestone_bpmn_name: str = db.Column(db.String(255))
+    updated_at_in_seconds: int = db.Column(db.Integer)
+    created_at_in_seconds: int = db.Column(db.Integer)
+
+    bpmn_version_control_type: str | None = db.Column(db.String(50))
+    # this could also be a blank string for older instances since we were putting blank strings in here as well
+    bpmn_version_control_identifier: str | None = db.Column(db.String(255))
+    last_milestone_bpmn_name: str | None = db.Column(db.String(255))
 
     bpmn_xml_file_contents: str | None = None
     bpmn_xml_file_contents_retrieval_error: str | None = None

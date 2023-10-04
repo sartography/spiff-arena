@@ -94,7 +94,7 @@ class ProcessInstanceService:
         try:
             current_git_revision = GitService.get_current_revision()
         except GitCommandError:
-            current_git_revision = ""
+            current_git_revision = None
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator_id=user.id,
