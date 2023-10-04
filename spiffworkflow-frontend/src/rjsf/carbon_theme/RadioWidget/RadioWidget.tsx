@@ -1,7 +1,5 @@
 import React from 'react';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
+import { RadioButtonGroup, RadioButton } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes } from '../../helpers';
 
@@ -22,7 +20,7 @@ function RadioWidget({
 }: WidgetProps) {
   const { enumOptions, enumDisabled } = options;
 
-  const _onChange = (_: any, newValue: any) => {
+  const _onChange = (newValue: any, _radioButtonId: any) => {
     if (schema.type === 'boolean') {
       const v: any = newValue === 'true' || newValue === true;
       onChange(v);
@@ -45,34 +43,31 @@ function RadioWidget({
     rawErrors
   );
 
+  // pass values in as strings so we can support both boolean and string radio buttons
   return (
-    <RadioGroup
+    <RadioButtonGroup
       id={id}
       name={id}
-      value={`${value}`}
-      row={row as boolean}
+      legendText={commonAttributes.helperText}
+      valueSelected={`${value}`}
+      invalid={commonAttributes.invalid}
+      invalidText={commonAttributes.errorMessageForFieldWithoutLabel}
+      disabled={disabled || readonly}
       onChange={_onChange}
       onBlur={_onBlur}
       onFocus={_onFocus}
     >
       {Array.isArray(enumOptions) &&
         enumOptions.map((option) => {
-          const itemDisabled =
-            Array.isArray(enumDisabled) &&
-            enumDisabled.indexOf(option.value) !== -1;
           return (
-            <FormControlLabel
-              control={
-                <Radio name={id} id={`${id}-${option.value}`} color="primary" />
-              }
-              label={`${option.label}`}
+            <RadioButton
+              id={`${id}-${option.value}`}
+              labelText={option.label}
               value={`${option.value}`}
-              key={option.value}
-              disabled={disabled || itemDisabled || readonly}
             />
           );
         })}
-    </RadioGroup>
+    </RadioButtonGroup>
   );
 }
 
