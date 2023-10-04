@@ -274,6 +274,13 @@ def configure_sentry(app: flask.app.Flask) -> None:
         "before_send": before_send,
     }
 
+    # https://docs.sentry.io/platforms/python/configuration/releases
+    version_info_data = get_version_info_data()
+    if len(version_info_data) > 0:
+        git_commit = version_info_data.get("org.opencontainers.image.revision") or version_info_data.get("git_commit")
+        if git_commit is not None:
+            sentry_configs["release"] = git_commit
+
     if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROFILING_ENABLED"):
         # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
         # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
