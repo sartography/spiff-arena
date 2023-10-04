@@ -1403,7 +1403,7 @@ class ProcessInstanceProcessor:
         tasks = self.bpmn_process_instance.get_tasks(state=TaskState.DEFINITE_MASK)
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
-            if task.task_spec.description != "Call Activity":
+            if task.task_spec.__class__.__name__ != "CallActivity":
                 continue
             spec_to_check = task.task_spec.spec
 
