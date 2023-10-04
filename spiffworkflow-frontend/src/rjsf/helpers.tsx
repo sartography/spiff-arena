@@ -25,9 +25,11 @@ export const getCommonAttributes = (
     }
   }
 
+  // some rjsf validations add in labels by default so avoid showing it twice
+  let errorMessageForFieldWithoutLabel = null;
+
   let invalid = false;
   let errorMessageForField = null;
-  let errorMessageForFieldWithoutLabel = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
     [errorMessageForFieldWithoutLabel] = rawErrors;
