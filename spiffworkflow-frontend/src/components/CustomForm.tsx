@@ -152,8 +152,18 @@ export default function CustomForm({
     formDataToCheck: any,
     propertyKey: string,
     errors: any,
-    jsonSchema: any
+    jsonSchema: any,
+    uiSchemaPassedIn?: any
   ) => {
+    // this validation only applies to checkboxes,
+    // other forms of booleans are validated differently
+    if (
+      uiSchemaPassedIn &&
+      'ui:widget' in uiSchemaPassedIn &&
+      uiSchemaPassedIn['ui:widget'] !== 'checkbox'
+    ) {
+      return;
+    }
     if (
       jsonSchema.required &&
       jsonSchema.required.includes(propertyKey) &&
@@ -169,7 +179,8 @@ export default function CustomForm({
   const checkFieldsWithCustomValidations = (
     jsonSchema: any,
     formDataToCheck: any,
-    errors: any
+    errors: any,
+    uiSchemaPassedIn?: any
     // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     // if the jsonSchema has an items attribute then assume the element itself
@@ -177,9 +188,21 @@ export default function CustomForm({
     const jsonSchemaToUse =
       'items' in jsonSchema ? jsonSchema.items : jsonSchema;
 
+    let uiSchemaToUse = uiSchemaPassedIn;
+    if (!uiSchemaToUse) {
+      uiSchemaToUse = uiSchema;
+    }
+    if ('items' in uiSchemaToUse) {
+      uiSchemaToUse = uiSchemaToUse.items;
+    }
+
     if ('properties' in jsonSchemaToUse) {
       Object.keys(jsonSchemaToUse.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchemaToUse.properties[propertyKey];
+        let currentUiSchema: any = null;
+        if (propertyKey in uiSchemaToUse) {
+          currentUiSchema = uiSchemaToUse[propertyKey];
+        }
         if ('minimumDate' in propertyMetadata) {
           checkMinimumDate(
             formDataToCheck,
@@ -195,7 +218,8 @@ export default function CustomForm({
             formDataToCheck,
             propertyKey,
             errors,
-            jsonSchemaToUse
+            jsonSchemaToUse,
+            currentUiSchema
           );
         }
 
@@ -213,7 +237,8 @@ export default function CustomForm({
             checkFieldsWithCustomValidations(
               propertyMetadata,
               item,
-              errorsToSend
+              errorsToSend,
+              currentUiSchema
             );
           });
         }
