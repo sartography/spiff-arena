@@ -25,12 +25,17 @@ export const getCommonAttributes = (
     }
   }
 
+  // some rjsf validations add in labels by default so avoid showing it twice
+  let errorMessageForFieldWithoutLabel = null;
+
   let invalid = false;
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
+    [errorMessageForFieldWithoutLabel] = rawErrors;
     if ('validationErrorMessage' in schema) {
       errorMessageForField = (schema as any).validationErrorMessage;
+      errorMessageForFieldWithoutLabel = errorMessageForField;
     } else {
       errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
     }
@@ -41,6 +46,7 @@ export const getCommonAttributes = (
     label: labelToUse,
     invalid,
     errorMessageForField,
+    errorMessageForFieldWithoutLabel,
     labelWithRequiredIndicator,
     tooltipText,
   };

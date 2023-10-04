@@ -57,7 +57,7 @@ function CheckboxWidget(props: WidgetProps) {
       title={commonAttributes.tooltipText}
       autoFocus={autofocus}
       invalid={commonAttributes.invalid}
-      invalidText={commonAttributes.errorMessageForField}
+      invalidText={commonAttributes.errorMessageForFieldWithoutLabel}
       helperText={commonAttributes.helperText}
       labelText={
         required
