@@ -10,6 +10,7 @@ from spiffworkflow_backend.config import ConfigurationError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 class MissingGitConfigsError(Exception):
@@ -47,18 +48,42 @@ class GitService:
         cls,
         process_model: ProcessModelInfo,
         revision: str,
-        file_name: str | None = None,
+        file_name: str,
     ) -> str:
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         process_model_relative_path = FileSystemService.process_model_relative_path(process_model)
-        file_name_to_use = file_name
-        if file_name_to_use is None:
-            file_name_to_use = process_model.primary_file_name
         shell_command = [
             "show",
-            f"{revision}:{process_model_relative_path}/{file_name_to_use}",
+            f"{revision}:{process_model_relative_path}/{file_name}",
         ]
         return cls.run_shell_command_to_get_stdout(shell_command, context_directory=bpmn_spec_absolute_dir)
+
+    @classmethod
+    def get_file_contents_for_revision_if_git_revision(
+        cls,
+        process_model: ProcessModelInfo,
+        file_name: str,
+        revision: str | None = None,
+    ) -> str:
+        try:
+            current_version_control_revision = cls.get_current_revision()
+        except GitCommandError:
+            current_version_control_revision = None
+        file_contents = None
+        if (
+            revision is None
+            or revision == ""
+            or current_version_control_revision is None
+            or revision == current_version_control_revision
+        ):
+            file_contents = SpecFileService.get_data(process_model, file_name).decode("utf-8")
+        else:
+            file_contents = GitService.get_instance_file_contents_for_revision(
+                process_model,
+                revision,
+                file_name=file_name,
+            )
+        return file_contents
 
     @classmethod
     def commit(
@@ -92,7 +117,7 @@ class GitService:
             if raise_on_missing:
                 raise MissingGitConfigsError(
                     "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. "
-                    "This is required for publishing process models"
+                    "This is required for committing and publishing process models"
                 )
             return False
         return True

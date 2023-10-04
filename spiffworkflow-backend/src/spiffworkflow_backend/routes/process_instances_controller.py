@@ -46,7 +46,6 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 
 # from spiffworkflow_backend.services.process_instance_report_service import (
@@ -682,10 +681,6 @@ def _get_process_instance(
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    try:
-        current_version_control_revision = GitService.get_current_revision()
-    except GitCommandError:
-        current_version_control_revision = ""
 
     process_model_with_diagram = None
     name_of_file_with_diagram = None
@@ -706,19 +701,14 @@ def _get_process_instance(
 
     if process_model_with_diagram and name_of_file_with_diagram:
         bpmn_xml_file_contents = None
-        if process_instance.bpmn_version_control_identifier == current_version_control_revision:
-            bpmn_xml_file_contents = SpecFileService.get_data(
-                process_model_with_diagram, name_of_file_with_diagram
-            ).decode("utf-8")
-        else:
-            try:
-                bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                    process_model_with_diagram,
-                    process_instance.bpmn_version_control_identifier,
-                    file_name=name_of_file_with_diagram,
-                )
-            except GitCommandError as ex:
-                process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
+        try:
+            bpmn_xml_file_contents = GitService.get_file_contents_for_revision_if_git_revision(
+                process_model=process_model_with_diagram,
+                revision=process_instance.bpmn_version_control_identifier,
+                file_name=name_of_file_with_diagram,
+            )
+        except GitCommandError as ex:
+            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
     process_instance_as_dict = process_instance.serialized_with_metadata()
