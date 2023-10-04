@@ -54,6 +54,7 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskNotFou
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -949,30 +950,44 @@ def _prepare_form_data(
     if task_model.data is None:
         return {}
 
-    file_contents = GitService.get_file_contents_for_revision_if_git_revision(
-        process_model=process_model,
-        revision=revision,
-        file_name=form_file,
-    )
+    try:
+        file_contents = GitService.get_file_contents_for_revision_if_git_revision(
+            process_model=process_model,
+            revision=revision,
+            file_name=form_file,
+        )
+    except GitCommandError as exception:
+        raise (
+            ApiError(
+                error_code="git_error_loading_form",
+                message=(
+                    f"Could not load form schema from: {form_file}. Was git history rewritten such that revision"
+                    f" '{revision}' no longer exists? Error was: {str(exception)}"
+                ),
+                status_code=400,
+            )
+        ) from exception
+
     try:
         form_contents = JinjaService.render_jinja_template(file_contents, task=task_model)
-        try:
-            # form_contents is a str
-            hot_dict: dict = json.loads(form_contents)
-            return hot_dict
-        except Exception as exception:
-            raise (
-                ApiError(
-                    error_code="error_loading_form",
-                    message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
-                    status_code=400,
-                )
-            ) from exception
     except TaskModelError as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
         raise api_error
+
+    try:
+        # form_contents is a str
+        hot_dict: dict = json.loads(form_contents)
+        return hot_dict
+    except Exception as exception:
+        raise (
+            ApiError(
+                error_code="error_loading_form",
+                message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
+                status_code=400,
+            )
+        ) from exception
 
 
 def _get_spiff_task_from_process_instance(
