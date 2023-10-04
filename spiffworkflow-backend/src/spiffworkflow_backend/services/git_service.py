@@ -160,7 +160,7 @@ class GitService:
         command_to_run = command
         if prepend_with_git:
             if context_directory is not None:
-                command_to_run = ["-c", context_directory] + command_to_run
+                command_to_run = ["-C", context_directory] + command_to_run
             command_to_run = ["git"] + command_to_run
 
         # this is fine since we pass the commands directly
