@@ -17,7 +17,7 @@ FROM quay.io/keycloak/keycloak:22.0.4
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 WORKDIR /opt/keycloak
 
-COPY spifftheme /opt/keycloak/themes/
+COPY spifftheme /opt/keycloak/themes/spifftheme
 
 # for demonstration purposes only, please make sure to use proper certificates in production instead
 # RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
