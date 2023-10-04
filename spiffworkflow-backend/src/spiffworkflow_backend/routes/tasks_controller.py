@@ -54,6 +54,7 @@ from spiffworkflow_backend.services.authorization_service import HumanTaskNotFou
 from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -452,9 +453,10 @@ def task_show(
                 )
 
             form_dict = _prepare_form_data(
-                form_schema_file_name,
-                task_model,
-                process_model_with_form,
+                form_file=form_schema_file_name,
+                task_model=task_model,
+                process_model=process_model_with_form,
+                revision=process_instance.bpmn_version_control_identifier,
             )
 
             _update_form_schema_with_task_data_as_needed(form_dict, task_model.data)
@@ -464,9 +466,10 @@ def task_show(
 
             if form_ui_schema_file_name:
                 ui_form_contents = _prepare_form_data(
-                    form_ui_schema_file_name,
-                    task_model,
-                    process_model_with_form,
+                    form_file=form_ui_schema_file_name,
+                    task_model=task_model,
+                    process_model=process_model_with_form,
+                    revision=process_instance.bpmn_version_control_identifier,
                 )
                 if ui_form_contents:
                     task_model.form_ui_schema = ui_form_contents
@@ -940,11 +943,17 @@ def _get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: ProcessModelInfo) -> dict:
+def _prepare_form_data(
+    form_file: str, task_model: TaskModel, process_model: ProcessModelInfo, revision: str | None = None
+) -> dict:
     if task_model.data is None:
         return {}
 
-    file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
+    file_contents = GitService.get_file_contents_for_revision_if_git_revision(
+        process_model=process_model,
+        revision=revision,
+        file_name=form_file,
+    )
     try:
         form_contents = JinjaService.render_jinja_template(file_contents, task=task_model)
         try:
