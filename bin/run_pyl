@@ -44,7 +44,7 @@ function run_autofixers() {
 }
 
 function run_pre_commmit() {
-  poetry run pre-commit run --verbose --all-files
+  poetry run pre-commit run --verbose
 }
 
 for react_project in "${react_projects[@]}" ; do

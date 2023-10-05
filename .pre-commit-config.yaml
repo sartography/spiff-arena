@@ -51,7 +51,6 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        exclude: "/migrations/"
       - id: trailing-whitespace
         files: ^spiffworkflow-backend/
         name: Trim Trailing Whitespace

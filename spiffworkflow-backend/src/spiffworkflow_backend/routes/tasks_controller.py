@@ -708,7 +708,7 @@ def task_save_draft(
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
-    task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+    task_definition_id_path = f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
     task_draft_data_dict: TaskDraftDataDict = {
         "process_instance_id": process_instance.id,
         "task_definition_id_path": task_definition_id_path,
@@ -974,7 +974,7 @@ def _prepare_form_data(
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
-        raise api_error
+        raise api_error from wfe
 
     try:
         # form_contents is a str

@@ -32,7 +32,6 @@ from spiffworkflow_backend.services.authentication_service import TokenExpiredEr
 from spiffworkflow_backend.services.authentication_service import TokenInvalidError
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -146,7 +145,7 @@ class AuthorizationService:
         permission: str = "all",
         auth_token_properties: dict | None = None,
     ) -> None:
-        guest_user = GroupService.find_or_create_guest_user(username=username, group_identifier=group_identifier)
+        guest_user = UserService.find_or_create_guest_user(username=username, group_identifier=group_identifier)
         if permission_target is not None:
             cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
         g.user = guest_user
@@ -508,14 +507,14 @@ class AuthorizationService:
                 )
             else:
                 for desired_group_identifier in desired_group_identifiers:
-                    GroupService.add_user_to_group(user_model, desired_group_identifier)
+                    UserService.add_user_to_group_by_group_identifier(user_model, desired_group_identifier)
                 current_group_identifiers = [g.identifier for g in user_model.groups]
                 groups_to_remove_from_user = [
                     item for item in current_group_identifiers if item not in desired_group_identifiers
                 ]
                 for gtrfu in groups_to_remove_from_user:
                     if gtrfu != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
-                        GroupService.remove_user_from_group(user_model, gtrfu)
+                        UserService.remove_user_from_group(user_model, gtrfu)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
@@ -768,7 +767,7 @@ class AuthorizationService:
     def add_permission_from_uri_or_macro(
         cls, group_identifier: str, permission: str, target: str
     ) -> list[PermissionAssignmentModel]:
-        group = GroupService.find_or_create_group(group_identifier)
+        group = UserService.find_or_create_group(group_identifier)
         permissions_to_assign = cls.explode_permissions(permission, target)
         permission_assignments = []
         for permission_to_assign in permissions_to_assign:
@@ -833,12 +832,12 @@ class AuthorizationService:
         default_group = None
         default_group_identifier = current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
         if default_group_identifier:
-            default_group = GroupService.find_or_create_group(default_group_identifier)
+            default_group = UserService.find_or_create_group(default_group_identifier)
             unique_user_group_identifiers.add(default_group_identifier)
 
         for group in group_permissions:
             group_identifier = group["name"]
-            GroupService.find_or_create_group(group_identifier)
+            UserService.find_or_create_group(group_identifier)
             if not group_permissions_only:
                 for username in group["users"]:
                     if user_model and username != user_model.username:
@@ -848,7 +847,7 @@ class AuthorizationService:
                         "group_identifier": group_identifier,
                     }
                     user_to_group_identifiers.append(user_to_group_dict)
-                    GroupService.add_user_to_group_or_add_to_waiting(username, group_identifier)
+                    UserService.add_user_to_group_or_add_to_waiting(username, group_identifier)
                     unique_user_group_identifiers.add(group_identifier)
         for group in group_permissions:
             group_identifier = group["name"]
