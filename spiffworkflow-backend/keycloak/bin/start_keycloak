@@ -71,8 +71,9 @@ set +e
 import_output=$(docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/${realm_name}-realm.json 2>&1)
 setup_traps
 set -e
-if ! grep -qE "Import finished successfully" <<<"$import_output"; then
-  echo -e "FAILED: $import_output"
+# if ! grep -qE "Import finished successfully" <<<"$import_output"; then
+if ! grep -qE "Realm '${realm_name}' imported" <<<"$import_output"; then
+  echo -e "IMPORT FAILED: $import_output"
   exit 1
 fi
 
