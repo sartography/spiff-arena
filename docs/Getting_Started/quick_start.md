@@ -361,7 +361,7 @@ The setup involves creating two process models named "Chef" and "Waiter". The wa
 
 One of the complexities in BPMN messaging is ensuring that the right processes are communicating with each other, especially when multiple instances are running. This is achieved using correlation keys and properties.
 
-![corelation](images/corelation.png)
+![corelation](images/Corelation.png)
 
 - **Correlation Keys**: These represent the topic of the conversation. In the given example, the correlation key is the "order".
   
