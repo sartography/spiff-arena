@@ -151,7 +151,6 @@ class UserService:
             db.session.delete(assignment)
         wildcard = (
             UserGroupAssignmentWaitingModel()
-            # .query.filter(prefix matches REGEX.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS)
             .query.filter(
                 UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS
             ).all()
