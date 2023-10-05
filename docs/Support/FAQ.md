@@ -134,10 +134,12 @@ By doing this, you'll pull the latest images, shut down the current containers, 
 **A:** Ensure that you're using the latest versions of Docker and docker-compose. If you encounter warnings about platform mismatches, note that these are just warnings and not errors. Update your images and restart the containers as needed. Deleting all containers and images and using the `wget` command instead of `curl` has also been found to be effective.
 
 **25: Why aren't timer events working in Spiff Arena, and how can they be fixed?**
+
 **A:** Timer events in Spiff Arena require a specific syntax for their expressions. For instance, the expression "R5/PT10S" should be quoted. This is because the value needs to be derived from a valid Python expression. Ensure that the background scheduler is running, as timers in Spiff Arena are controlled by it.
 
  If you're still facing issues, refer to the provided sample BPMN file and ensure that your timer expressions match the required format.
 
-**26: Why can't I import the 'requests' module in a script task in Spiff Arena?**
-**A:** In Spiff Arena, script tasks are designed for lightweight scripting and do not support importing external modules like 'requests'. If you need to communicate with external systems, it's recommended to use a ServiceTask instead. 
-ServiceTasks in Spiff Arena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol. For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request. Detailed documentation and examples on how connectors work are available.
+**26: Why can't I import the external' module in a script task in Spiff Arena?**
+
+**A:** In Spiff Arena, script tasks are designed for lightweight scripting and do not support importing external modules. If you need to communicate with external systems, it's recommended to use a ServiceTask instead. ServiceTasks in Spiff Arena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol. 
+For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request. Detailed documentation available [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/configure_connector_proxy.html).
