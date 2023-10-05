@@ -5,7 +5,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
@@ -341,7 +340,7 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
-        user_group = GroupService.find_or_create_group("group_one")
+        user_group = UserService.find_or_create_group("group_one")
         UserService.add_user_to_group(user, user_group)
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
@@ -376,10 +375,10 @@ class TestAuthorizationService(BaseTest):
         admin_user = self.find_or_create_user(username="testadmin1")
 
         # this group is not mentioned so it will get deleted
-        GroupService.find_or_create_group("group_two")
+        UserService.find_or_create_group("group_two")
         assert GroupModel.query.filter_by(identifier="group_two").first() is not None
 
-        GroupService.find_or_create_group("group_three")
+        UserService.find_or_create_group("group_three")
         assert GroupModel.query.filter_by(identifier="group_three").first() is not None
 
         group_info: list[GroupPermissionsDict] = [

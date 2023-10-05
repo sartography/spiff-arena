@@ -75,7 +75,6 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -815,7 +814,7 @@ class ProcessInstanceProcessor:
         lane_assignment_id = None
 
         if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
-            guest_user = GroupService.find_or_create_guest_user()
+            guest_user = UserService.find_or_create_guest_user()
             potential_owner_ids = [guest_user.id]
         elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
             potential_owner_ids = [self.process_instance_model.process_initiator_id]

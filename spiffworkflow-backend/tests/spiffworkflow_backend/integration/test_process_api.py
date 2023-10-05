@@ -26,11 +26,11 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -102,9 +102,9 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user()
-        group = GroupService.find_or_create_group("test_group")
+        group = UserService.find_or_create_group("test_group")
         principal = group.principal
-        GroupService.add_user_to_group(user, group.identifier)
+        UserService.add_user_to_group(user, group)
         self.add_permissions_to_principal(principal, target_uri="/v1.0/process-groups/%", permission_names=["read"])
         request_body = {
             "requests_to_check": {
@@ -1304,7 +1304,7 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.json is not None
-        assert type(response.json["updated_at_in_seconds"]) is int
+        assert isinstance(response.json["updated_at_in_seconds"], int)
         assert response.json["updated_at_in_seconds"] > 0
         assert response.json["status"] == "complete"
         assert response.json["process_model_identifier"] == process_model.id
@@ -1738,9 +1738,9 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["total"] == 1
 
         process_instance_dict = response.json["results"][0]
-        assert type(process_instance_dict["id"]) is int
+        assert isinstance(process_instance_dict["id"], int)
         assert process_instance_dict["process_model_identifier"] == process_model.id
-        assert type(process_instance_dict["start_in_seconds"]) is int
+        assert isinstance(process_instance_dict["start_in_seconds"], int)
         assert process_instance_dict["start_in_seconds"] > 0
         assert process_instance_dict["end_in_seconds"] is None
         assert process_instance_dict["status"] == "not_started"
