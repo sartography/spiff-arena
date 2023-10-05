@@ -151,9 +151,8 @@ class UserService:
             db.session.delete(assignment)
         wildcard = (
             UserGroupAssignmentWaitingModel()
-            .query.filter(
-                UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS
-            ).all()
+            .query.filter(UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS)
+            .all()
         )
         for assignment in wildcard:
             cls.add_user_to_group(user, assignment.group)
