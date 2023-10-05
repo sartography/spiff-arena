@@ -12,8 +12,8 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
-from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
@@ -49,7 +49,7 @@ def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.R
 
     permission_assignments = (
         PermissionAssignmentModel.query.filter(PermissionAssignmentModel.principal_id.in_(principal_ids))
-        .join(PermissionTargetModel)
+        .options(db.joinedload(PermissionAssignmentModel.permission_target))
         .all()
     )
 
