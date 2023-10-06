@@ -29,7 +29,7 @@ paths:
           type: string
     get:
       summary: redirect to open id authentication server
-      operationId: spiffworkflow_backend.routes.user.login
+      operationId: spiffworkflow_backend.routes.authentication_controller.login
       tags:
         - Authentication
       responses:
@@ -53,7 +53,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.user.login_return
+      operationId: spiffworkflow_backend.routes.authentication_controller.login_return
       tags:
         - Authentication
       responses:
@@ -72,7 +72,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.user.logout
+      operationId: spiffworkflow_backend.routes.authentication_controller.logout
       summary: Logout authenticated user
       tags:
         - Authentication
@@ -81,7 +81,7 @@ paths:
           description: Logout Authenticated User
   /logout_return:
     get:
-      operationId: spiffworkflow_backend.routes.user.logout_return
+      operationId: spiffworkflow_backend.routes.authentication_controller.logout_return
       summary: Logout authenticated user
       tags:
         - Authentication
@@ -97,7 +97,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.user.login_with_access_token
+      operationId: spiffworkflow_backend.routes.authentication_controller.login_with_access_token
       summary: Authenticate user for API access with an openid token already posessed.
       tags:
         - Authentication
@@ -111,7 +111,7 @@ paths:
 
   /login_api:
     get:
-      operationId: spiffworkflow_backend.routes.user.login_api
+      operationId: spiffworkflow_backend.routes.authentication_controller.login_api
       summary: Authenticate user for API access
       tags:
         - Authentication
@@ -136,7 +136,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.user.login_api_return
+      operationId: spiffworkflow_backend.routes.authentication_controller.login_api_return
       tags:
         - Authentication
       responses:
@@ -2628,8 +2628,8 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      x-bearerInfoFunc: spiffworkflow_backend.routes.user.verify_token
-      x-scopeValidateFunc: spiffworkflow_backend.routes.user.validate_scope
+      x-bearerInfoFunc: spiffworkflow_backend.routes.authentication_controller.verify_token
+      x-scopeValidateFunc: spiffworkflow_backend.routes.authentication_controller.validate_scope
 
     oAuth2AuthCode:
       type: oauth2
@@ -2640,7 +2640,7 @@ components:
           tokenUrl: /v1.0/login_api_return
           scopes:
             read_email: read email
-      x-tokenInfoFunc: spiffworkflow_backend.routes.user.get_scope
+      x-tokenInfoFunc: spiffworkflow_backend.routes.authentication_controller.get_scope
 
   schemas:
     OkTrue:
