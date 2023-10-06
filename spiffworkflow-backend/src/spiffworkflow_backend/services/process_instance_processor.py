@@ -386,10 +386,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
 
 
-# update process_instance set serializer_version = '1' where serializer_version = '1.0-spiffworkflow-backend';
-# select * where coerce_int(serializer_version) < 2 and open;
- # predict
- # save
 class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "2"
