@@ -48,16 +48,10 @@ docker run \
   -e KEYCLOAK_ADMIN_PASSWORD=admin \
   quay.io/keycloak/keycloak:22.0.4 start-dev \
   -Dkeycloak.profile.feature.token_exchange=enabled \
-  -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
-
-# Add these lines if you want live reloading of changed theme files
-# Theme files are stored in keycloak/spifftheme.  From the keycloak
-# directory run docker cp ./spifftheme keycloak:/opt/keycloak/themes to
-# see changes.
-#  \
-#  -D--spi-theme-static-max-age=-1 \
-#  -D--spi-theme-cache-themes=false \
-#  -D--spi-theme-cache-templates=false
+  -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled \
+  -D--spi-theme-static-max-age=-1 \
+  -D--spi-theme-cache-themes=false \
+  -D--spi-theme-cache-templates=false
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cp "${script_dir}/../realm_exports/${realm_name}-realm.json" /tmp/${realm_name}-realm.json
