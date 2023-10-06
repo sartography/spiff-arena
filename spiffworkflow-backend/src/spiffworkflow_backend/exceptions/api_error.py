@@ -20,11 +20,11 @@ from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
+from spiffworkflow_backend.exceptions.error import NotAuthorizedError
+from spiffworkflow_backend.exceptions.error import TokenInvalidError
+from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
+from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
-from spiffworkflow_backend.services.authentication_service import TokenInvalidError
-from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
-from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 from werkzeug.exceptions import MethodNotAllowed

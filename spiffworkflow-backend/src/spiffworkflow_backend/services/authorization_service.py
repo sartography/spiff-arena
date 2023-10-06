@@ -1,17 +1,20 @@
 import inspect
 import re
 from dataclasses import dataclass
-from hashlib import sha256
-from hmac import HMAC
-from hmac import compare_digest
 from typing import TypedDict
 
-import jwt
 import yaml
 from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
+from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
+from spiffworkflow_backend.exceptions.error import InvalidPermissionError
+from spiffworkflow_backend.exceptions.error import NotAuthorizedError
+from spiffworkflow_backend.exceptions.error import PermissionsFileNotSetError
+from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
+from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
@@ -27,35 +30,10 @@ from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
-from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
-from spiffworkflow_backend.services.authentication_service import TokenExpiredError
-from spiffworkflow_backend.services.authentication_service import TokenInvalidError
-from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
-from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy import text
-
-
-class PermissionsFileNotSetError(Exception):
-    pass
-
-
-class HumanTaskNotFoundError(Exception):
-    pass
-
-
-class HumanTaskAlreadyCompletedError(Exception):
-    pass
-
-
-class UserDoesNotHaveAccessToTaskError(Exception):
-    pass
-
-
-class InvalidPermissionError(Exception):
-    pass
 
 
 @dataclass
@@ -119,40 +97,6 @@ class GroupPermissionsDict(TypedDict):
 
 class AuthorizationService:
     """Determine whether a user has permission to perform their request."""
-
-    # https://stackoverflow.com/a/71320673/6090676
-    @classmethod
-    def verify_sha256_token(cls, auth_header: str | None) -> None:
-        if auth_header is None:
-            raise TokenNotProvidedError(
-                "unauthorized",
-            )
-
-        received_sign = auth_header.split("sha256=")[-1].strip()
-        secret = current_app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"].encode()
-        expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
-        if not compare_digest(received_sign, expected_sign):
-            raise TokenInvalidError(
-                "unauthorized",
-            )
-
-    @classmethod
-    def create_guest_token(
-        cls,
-        username: str,
-        group_identifier: str,
-        permission_target: str | None = None,
-        permission: str = "all",
-        auth_token_properties: dict | None = None,
-    ) -> None:
-        guest_user = UserService.find_or_create_guest_user(username=username, group_identifier=group_identifier)
-        if permission_target is not None:
-            cls.add_permission_from_uri_or_macro(group_identifier, permission=permission, target=permission_target)
-        g.user = guest_user
-        g.token = guest_user.encode_auth_token(auth_token_properties)
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        tld.new_access_token = g.token
-        tld.new_id_token = g.token
 
     @classmethod
     def has_permission(cls, principals: list[PrincipalModel], permission: str, target_uri: str) -> bool:
@@ -389,24 +333,6 @@ class AuthorizationService:
             if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
                 return True
         return False
-
-    @staticmethod
-    def decode_auth_token(auth_token: str) -> dict[str, str | None]:
-        secret_key = current_app.config.get("SECRET_KEY")
-        if secret_key is None:
-            raise KeyError("we need current_app.config to have a SECRET_KEY")
-
-        try:
-            payload = jwt.decode(auth_token, options={"verify_signature": False})
-            return payload
-        except jwt.ExpiredSignatureError as exception:
-            raise TokenExpiredError(
-                "The Authentication token you provided expired and must be renewed.",
-            ) from exception
-        except jwt.InvalidTokenError as exception:
-            raise TokenInvalidError(
-                "The Authentication token you provided is invalid. You need a new token. ",
-            ) from exception
 
     @staticmethod
     def assert_user_can_complete_task(
