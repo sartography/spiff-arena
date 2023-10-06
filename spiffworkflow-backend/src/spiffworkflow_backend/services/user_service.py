@@ -138,7 +138,7 @@ class UserService:
         # to handle people who are already signed in
         wildcard_pattern = wugam.pattern_from_wildcard_username()
         if wildcard_pattern is not None:
-            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))
+            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))  # type: ignore
             for user in users:
                 cls.add_user_to_group(user, group)
 
