@@ -1043,9 +1043,6 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-        if self.process_instance_model.id == 82:
-            self.dump_to_disk()
-
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
