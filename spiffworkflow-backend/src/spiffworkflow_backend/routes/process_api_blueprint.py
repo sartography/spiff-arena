@@ -20,7 +20,7 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.reference_cache import ReferenceSchema
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.services.authentication_service import AuthenticationService  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
@@ -178,7 +178,7 @@ def process_data_file_download(
 # where 7000 is the port the app is running on locally
 def github_webhook_receive(body: dict) -> Response:
     auth_header = request.headers.get("X-Hub-Signature-256")
-    AuthorizationService.verify_sha256_token(auth_header)
+    AuthenticationService.verify_sha256_token(auth_header)
     result = GitService.handle_web_hook(body)
     return Response(json.dumps({"git_pull": result}), status=200, mimetype="application/json")
 

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
+from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
@@ -13,7 +14,6 @@ from spiffworkflow_backend.models.message_triggerable_process_model import Messa
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService

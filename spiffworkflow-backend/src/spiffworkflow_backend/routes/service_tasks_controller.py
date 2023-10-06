@@ -10,7 +10,7 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.routes.user import verify_token
+from spiffworkflow_backend.routes.authentication_controller import verify_token
 from spiffworkflow_backend.services.oauth_service import OAuthService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
