@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from flask import current_app
@@ -135,7 +136,7 @@ class UserService:
             db.session.add(wugam)
             db.session.commit()
 
-        # to handle people who are already signed in
+        # backfill existing users
         wildcard_pattern = wugam.pattern_from_wildcard_username()
         if wildcard_pattern is not None:
             users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))  # type: ignore
@@ -153,13 +154,14 @@ class UserService:
         for assignment in waiting:
             cls.add_user_to_group(user, assignment.group)
             db.session.delete(assignment)
-        wildcard = (
+        wildcards = (
             UserGroupAssignmentWaitingModel()
-            .query.filter(UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS)
+            .query.filter(UserGroupAssignmentWaitingModel.username.regexp_match("^REGEX:"))  # type: ignore
             .all()
         )
-        for assignment in wildcard:
-            cls.add_user_to_group(user, assignment.group)
+        for wildcard in wildcards:
+            if re.match(wildcard.pattern_from_wildcard_username(), user.username):
+                cls.add_user_to_group(user, wildcard.group)
         db.session.commit()
 
     @staticmethod

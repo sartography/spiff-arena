@@ -1,7 +1,6 @@
 """Process Model."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -26,7 +25,7 @@ class TestUserService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         everybody_group = UserService.find_or_create_group("everybodyGroup")
-        UserService.add_waiting_group_assignment(UserGroupAssignmentWaitingModel.MATCH_ALL_USERS, everybody_group)
+        UserService.add_waiting_group_assignment("REGEX:.*", everybody_group)
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.groups[0] == everybody_group
 
@@ -38,5 +37,5 @@ class TestUserService(BaseTest):
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
         everybody_group = UserService.find_or_create_group("everybodyGroup")
-        UserService.add_waiting_group_assignment(UserGroupAssignmentWaitingModel.MATCH_ALL_USERS, everybody_group)
+        UserService.add_waiting_group_assignment("REGEX:.*", everybody_group)
         assert initiator_user.groups[0] == everybody_group

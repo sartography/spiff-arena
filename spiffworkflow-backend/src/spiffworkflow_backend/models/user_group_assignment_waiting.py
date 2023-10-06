@@ -12,7 +12,6 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     We cache it here to be applied in the event the user does log in to the system.
     """
 
-    MATCH_ALL_USERS = "*"
     __tablename__ = "user_group_assignment_waiting"
     __table_args__ = (db.UniqueConstraint("username", "group_id", name="user_group_assignment_staged_unique"),)
 
