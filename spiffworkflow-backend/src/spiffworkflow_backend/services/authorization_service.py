@@ -29,6 +29,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy import and_
@@ -82,6 +83,7 @@ class AddedPermissionDict(TypedDict):
     group_identifiers: set[str]
     permission_assignments: list[PermissionAssignmentModel]
     user_to_group_identifiers: list[UserToGroupDict]
+    waiting_user_group_assignments: list[UserGroupAssignmentWaitingModel]
 
 
 class DesiredGroupPermissionDict(TypedDict):
@@ -753,6 +755,7 @@ class AuthorizationService:
     ) -> AddedPermissionDict:
         unique_user_group_identifiers: set[str] = set()
         user_to_group_identifiers: list[UserToGroupDict] = []
+        waiting_user_group_assignments: list[UserGroupAssignmentWaitingModel] = []
         permission_assignments = []
 
         default_group = None
@@ -773,8 +776,11 @@ class AuthorizationService:
                         "group_identifier": group_identifier,
                     }
                     user_to_group_identifiers.append(user_to_group_dict)
-                    UserService.add_user_to_group_or_add_to_waiting(username, group_identifier)
+                    wugam = UserService.add_user_to_group_or_add_to_waiting(username, group_identifier)
+                    if wugam is not None:
+                        waiting_user_group_assignments.append(wugam)
                     unique_user_group_identifiers.add(group_identifier)
+
         for group in group_permissions:
             group_identifier = group["name"]
             if user_model and group_identifier not in unique_user_group_identifiers:
@@ -801,6 +807,7 @@ class AuthorizationService:
             "group_identifiers": unique_user_group_identifiers,
             "permission_assignments": permission_assignments,
             "user_to_group_identifiers": user_to_group_identifiers,
+            "waiting_user_group_assignments": waiting_user_group_assignments,
         }
 
     @classmethod
@@ -809,11 +816,13 @@ class AuthorizationService:
         added_permissions: AddedPermissionDict,
         initial_permission_assignments: list[PermissionAssignmentModel],
         initial_user_to_group_assignments: list[UserGroupAssignmentModel],
+        initial_waiting_group_assignments: list[UserGroupAssignmentWaitingModel],
         group_permissions_only: bool = False,
     ) -> None:
         added_permission_assignments = added_permissions["permission_assignments"]
         added_group_identifiers = added_permissions["group_identifiers"]
         added_user_to_group_identifiers = added_permissions["user_to_group_identifiers"]
+        added_waiting_group_assignments = added_permissions["waiting_user_group_assignments"]
 
         for ipa in initial_permission_assignments:
             if ipa not in added_permission_assignments:
@@ -839,6 +848,11 @@ class AuthorizationService:
         groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()
         for gtd in groups_to_delete:
             db.session.delete(gtd)
+
+        for wugam in initial_waiting_group_assignments:
+            if wugam not in added_waiting_group_assignments:
+                db.session.delete(wugam)
+
         db.session.commit()
 
     @classmethod
@@ -856,6 +870,7 @@ class AuthorizationService:
             .all()
         )
         initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
+        initial_waiting_group_assignments = UserGroupAssignmentWaitingModel.query.all()
         group_permissions = group_permissions + cls.parse_permissions_yaml_into_group_info()
         added_permissions = cls.add_permissions_from_group_permissions(
             group_permissions, group_permissions_only=group_permissions_only
@@ -864,5 +879,6 @@ class AuthorizationService:
             added_permissions,
             initial_permission_assignments,
             initial_user_to_group_assignments,
+            initial_waiting_group_assignments,
             group_permissions_only=group_permissions_only,
         )

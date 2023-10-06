@@ -588,3 +588,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey", expected_result=False)
         self.assert_user_has_permission(user_three, "read", "/v1.0/process-groups/hey", expected_result=False)
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey", expected_result=True)
+
+        waiting_assignments = UserGroupAssignmentWaitingModel.query.all()
+        # ensure we didn't delete all of the user group assignments
+        assert len(waiting_assignments) > 0

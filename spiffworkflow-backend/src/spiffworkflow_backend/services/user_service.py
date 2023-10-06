@@ -126,12 +126,12 @@ class UserService:
             db.session.commit()
 
     @classmethod
-    def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
-        """Only called from set-permissions"""
-        wugam = (
+    def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> UserGroupAssignmentWaitingModel:
+        """Only called from set-permissions."""
+        wugam: UserGroupAssignmentWaitingModel | None = (
             UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
         )
-        if not wugam:
+        if wugam is None:
             wugam = UserGroupAssignmentWaitingModel(username=username, group_id=group.id)
             db.session.add(wugam)
             db.session.commit()
@@ -142,6 +142,8 @@ class UserService:
             users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))  # type: ignore
             for user in users:
                 cls.add_user_to_group(user, group)
+
+        return wugam
 
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
@@ -232,13 +234,16 @@ class UserService:
         return group
 
     @classmethod
-    def add_user_to_group_or_add_to_waiting(cls, username: str | UserModel, group_identifier: str) -> None:
+    def add_user_to_group_or_add_to_waiting(
+        cls, username: str | UserModel, group_identifier: str
+    ) -> UserGroupAssignmentWaitingModel | None:
         group = cls.find_or_create_group(group_identifier)
         user = UserModel.query.filter_by(username=username).first()
         if user:
             cls.add_user_to_group(user, group)
         else:
-            cls.add_waiting_group_assignment(username, group)
+            return cls.add_waiting_group_assignment(username, group)
+        return None
 
     @classmethod
     def add_user_to_group_by_group_identifier(cls, user: UserModel, group_identifier: str) -> None:
