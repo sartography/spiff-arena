@@ -386,9 +386,13 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
 
 
+# update process_instance set serializer_version = '1' where serializer_version = '1.0-spiffworkflow-backend';
+# select * where coerce_int(serializer_version) < 2 and open;
+ # predict
+ # save
 class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
-    SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
+    SERIALIZER_VERSION = "2"
 
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(SPIFF_SPEC_CONFIG)
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
@@ -1043,6 +1047,9 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+        if self.process_instance_model.id == 82:
+            self.dump_to_disk()
+
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
@@ -1056,6 +1063,9 @@ class ProcessInstanceProcessor:
             process_model_display_name = process_model_info.display_name
 
         self.extract_metadata(process_model_info)
+
+        # if self.process_instance_model.id == 82:
+        #     with open("tasks.txt", "w") as f: f.write(str(ready_or_waiting_tasks))
 
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
