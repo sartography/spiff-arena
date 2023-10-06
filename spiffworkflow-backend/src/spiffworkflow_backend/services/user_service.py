@@ -126,6 +126,7 @@ class UserService:
 
     @classmethod
     def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
+        """Only called from set-permissions"""
         wugam = (
             UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
         )
@@ -135,12 +136,15 @@ class UserService:
             db.session.commit()
 
         # to handle people who are already signed in
-        if wugam.is_match_all():
-            for user in UserModel.query.all():
+        wildcard_pattern = wugam.pattern_from_wildcard_username()
+        if wildcard_pattern is not None:
+            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))
+            for user in users:
                 cls.add_user_to_group(user, group)
 
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
+        """Only called from create_user which is normally called at sign-in time"""
         waiting = (
             UserGroupAssignmentWaitingModel()
             .query.filter(UserGroupAssignmentWaitingModel.username == user.username)
