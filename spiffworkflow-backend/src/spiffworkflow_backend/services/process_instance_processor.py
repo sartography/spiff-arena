@@ -478,11 +478,6 @@ class ProcessInstanceProcessor:
                 ),
             ) from ke
 
-        # this only needs to happen for versions less than 2 since we were not saving LIKELY and MAYBE then
-        # once save is called, this should be in the correct form
-        if self.process_instance_model.spiff_serializer_version < "2":
-            self.bpmn_process_instance._predict()
-
     @classmethod
     def get_process_model_and_subprocesses(
         cls,
@@ -1061,9 +1056,6 @@ class ProcessInstanceProcessor:
             process_model_display_name = process_model_info.display_name
 
         self.extract_metadata(process_model_info)
-
-        # if self.process_instance_model.id == 82:
-        #     with open("tasks.txt", "w") as f: f.write(str(ready_or_waiting_tasks))
 
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks

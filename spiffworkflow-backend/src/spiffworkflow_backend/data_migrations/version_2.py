@@ -1,7 +1,7 @@
-from SpiffWorkflow.bpmn.workflow import TaskState
 import time
-from SpiffWorkflow.task import Task as SpiffTask # type: ignore
+
 from flask import current_app
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.task_service import TaskService

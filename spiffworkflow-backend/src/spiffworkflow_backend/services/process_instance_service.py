@@ -1,6 +1,5 @@
 import base64
 import hashlib
-from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 import time
 from collections.abc import Generator
 from datetime import datetime
@@ -17,6 +16,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinitio
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend import db
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel

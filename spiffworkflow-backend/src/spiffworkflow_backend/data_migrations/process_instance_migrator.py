@@ -1,7 +1,7 @@
 import time
+from typing import Any
 
 from flask import current_app
-from typing import Any
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel

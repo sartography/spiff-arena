@@ -1,6 +1,5 @@
 import json
 import os
-from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 import uuid
 from collections import OrderedDict
 from collections.abc import Generator
@@ -27,6 +26,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
