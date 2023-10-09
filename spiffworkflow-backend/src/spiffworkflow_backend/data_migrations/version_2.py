@@ -10,7 +10,12 @@ class Version2:
 
     @classmethod
     def run(cls, process_instances: list[ProcessInstanceModel]) -> None:
+        process_instance_count = len(process_instances)
+        current_app.logger.info(f"process_instance_count: {process_instance_count}")
+        ii = 0
         for process_instance in process_instances:
+            ii += 1
+            current_app.logger.info(f"working process_instance: {ii} of {process_instance_count}")
             try:
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.bpmn_process_instance._predict()
