@@ -72,7 +72,8 @@ def main() -> None:
         )
         if potentially_relevant_instance_count > 0:
             run_version_1()
-            run_version_2(process_instances)
+            # this will run while using the new per instance on demand data migration framework
+            # run_version_2(process_instances)
 
         end_time = time.time()
         current_app.logger.debug(

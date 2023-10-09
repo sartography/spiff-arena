@@ -1,5 +1,6 @@
 import json
 import os
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 import uuid
 from collections import OrderedDict
 from collections.abc import Generator
@@ -271,8 +272,10 @@ def manual_complete_task(
     execute = body.get("execute", True)
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(task_guid, execute, g.user)
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceMigrator.run(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.manual_complete_task(task_guid, execute, g.user)
     else:
         raise ApiError(
             error_code="complete_task",
@@ -629,6 +632,7 @@ def _dequeued_interstitial_stream(
             try:
                 if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
                     with ProcessInstanceQueueService.dequeued(process_instance):
+                        ProcessInstanceMigrator.run(process_instance)
                         yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
             except ProcessInstanceIsAlreadyLockedError:
                 yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
@@ -770,30 +774,30 @@ def _task_submit_shared(
             ),
             status_code=400,
         )
+    with ProcessInstanceQueueService.dequeued(process_instance):
+        ProcessInstanceMigrator.run(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+        )
+        spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
+        AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
 
-    processor = ProcessInstanceProcessor(
-        process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
-    )
-    spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
-
-    if spiff_task.state != TaskState.READY:
-        raise (
-            ApiError(
-                error_code="invalid_state",
-                message="You may not update a task unless it is in the READY state.",
-                status_code=400,
+        if spiff_task.state != TaskState.READY:
+            raise (
+                ApiError(
+                    error_code="invalid_state",
+                    message="You may not update a task unless it is in the READY state.",
+                    status_code=400,
+                )
             )
+
+        human_task = _find_human_task_or_raise(
+            process_instance_id=process_instance_id,
+            task_guid=task_guid,
+            only_tasks_that_can_be_completed=True,
         )
 
-    human_task = _find_human_task_or_raise(
-        process_instance_id=process_instance_id,
-        task_guid=task_guid,
-        only_tasks_that_can_be_completed=True,
-    )
-
-    with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(process_instance):
+        with sentry_sdk.start_span(op="task", description="complete_form_task"):
             ProcessInstanceService.complete_form_task(
                 processor=processor,
                 spiff_task=spiff_task,
@@ -993,10 +997,8 @@ def _prepare_form_data(
 def _get_spiff_task_from_process_instance(
     task_guid: str,
     process_instance: ProcessInstanceModel,
-    processor: ProcessInstanceProcessor | None = None,
+    processor: ProcessInstanceProcessor,
 ) -> SpiffTask:
-    if processor is None:
-        processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
     spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
 

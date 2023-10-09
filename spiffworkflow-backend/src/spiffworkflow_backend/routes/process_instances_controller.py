@@ -11,6 +11,7 @@ from flask.wrappers import Response
 from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -158,10 +159,11 @@ def process_instance_terminate(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
 
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceMigrator.run(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
             processor.terminate()
     except (
         ProcessInstanceIsNotEnqueuedError,
@@ -660,9 +662,10 @@ def send_bpmn_event(
 
 
 def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
-    processor = ProcessInstanceProcessor(process_instance)
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceMigrator.run(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
             processor.send_bpmn_event(body)
     except (
         ProcessInstanceIsNotEnqueuedError,
