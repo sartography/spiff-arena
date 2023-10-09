@@ -71,6 +71,7 @@ import {
   ErrorForDisplay,
   PermissionsToCheck,
   FilterOperatorMapping,
+  FilterDisplayTypeMapping,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -177,6 +178,11 @@ export default function ProcessInstanceListTable({
     'Is Not Empty': { id: 'is_not_empty', requires_value: false },
   };
 
+  const filterDisplayTypes: FilterDisplayTypeMapping = {
+    date_time: 'Date / time',
+    duration: 'Duration',
+  };
+
   const processInstanceListPathPrefix =
     variant === 'all' ? '/process-instances/all' : '/process-instances/for-me';
   const processInstanceShowPathPrefix =
@@ -216,6 +222,8 @@ export default function ProcessInstanceListTable({
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
   const [withOldestOpenTask, setWithOldestOpenTask] =
+    useState<boolean>(showActionsColumn);
+  const [withRelationToMe, setwithRelationToMe] =
     useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
@@ -343,6 +351,7 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
     setProcessInitiatorSelection(null);
     setWithOldestOpenTask(false);
+    setwithRelationToMe(false);
     setSystemReport(null);
     setSelectedUserGroup(null);
     if (updateRequiresRefilter) {
@@ -410,6 +419,8 @@ export default function ProcessInstanceListTable({
             setProcessInitiatorSelection(reportFilter.field_value || '');
           } else if (reportFilter.field_name === 'with_oldest_open_task') {
             setWithOldestOpenTask(reportFilter.field_value);
+          } else if (reportFilter.field_name === 'with_relation_to_me') {
+            setwithRelationToMe(reportFilter.field_value);
           } else if (reportFilter.field_name === 'user_group_identifier') {
             setSelectedUserGroup(reportFilter.field_value);
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
@@ -781,6 +792,11 @@ export default function ProcessInstanceListTable({
     );
     insertOrUpdateFieldInReportMetadata(
       newReportMetadata,
+      'with_relation_to_me',
+      withRelationToMe
+    );
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
       'user_group_identifier',
       selectedUserGroup
     );
@@ -1128,6 +1144,18 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  const setFilterDisplayType = (selectedItem: string) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      const displayType = getKeyByValue(filterDisplayTypes, selectedItem);
+      reportColumnToOperateOnCopy.display_type = displayType;
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+      setRequiresRefilter(true);
+    }
+  };
+
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
@@ -1174,7 +1202,24 @@ export default function ProcessInstanceListTable({
         }}
       />,
     ]);
+    console.log('reportColumnToOperateOn', reportColumnToOperateOn);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
+      formElements.push(
+        <Dropdown
+          titleText="Display type"
+          id="report-column-display-type"
+          items={[''].concat(Object.values(filterDisplayTypes))}
+          selectedItem={
+            reportColumnToOperateOn.display_type
+              ? filterDisplayTypes[reportColumnToOperateOn.display_type]
+              : ''
+          }
+          onChange={(value: any) => {
+            setFilterDisplayType(value.selectedItem);
+            setRequiresRefilter(true);
+          }}
+        />
+      );
       formElements.push(
         <Dropdown
           titleText="Operator"
@@ -1358,6 +1403,19 @@ export default function ProcessInstanceListTable({
               }}
             />
           </Column>
+          {variant === 'all' ? (
+            <Column md={4} lg={8} sm={2}>
+              <Checkbox
+                labelText="Include tasks for me"
+                id="with-relation-to-me"
+                checked={withRelationToMe}
+                onChange={(value: any) => {
+                  setwithRelationToMe(value.target.checked);
+                  setRequiresRefilter(true);
+                }}
+              />
+            </Column>
+          ) : null}
         </Grid>
         <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
       </>
@@ -1628,6 +1686,25 @@ export default function ProcessInstanceListTable({
     return value;
   };
 
+  const formatDateTime = (_row: any, value: any) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    let dateObject = value;
+    console.log('value', value);
+    if (isNaN(value)) {
+      const timeArgs = value.split('T');
+      dateObject = convertDateAndTimeStringsToSeconds(timeArgs[0], timeArgs[1]);
+      // } else {
+      // dateObject = convertSecondsToDateObject(value)
+    }
+    console.log('dateObject', dateObject);
+    if (dateObject) {
+      return convertSecondsToFormattedDateTime(dateObject);
+    }
+    return null;
+  };
+
   const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
@@ -1640,9 +1717,13 @@ export default function ProcessInstanceListTable({
       task_updated_at_in_seconds: formatSecondsForDisplay,
       last_milestone_bpmn_name: formatLastMilestone,
     };
+    const displayTypeFormatters: Record<string, any> = {
+      date_time: formatDateTime,
+    };
     const columnAccessor = column.accessor as keyof ProcessInstance;
-    const formatter =
-      reportColumnFormatters[columnAccessor] ?? defaultFormatter;
+    const formatter = column.display_type
+      ? displayTypeFormatters[column.display_type]
+      : reportColumnFormatters[columnAccessor] ?? defaultFormatter;
     const value = row[columnAccessor];
 
     if (columnAccessor === 'status') {
