@@ -1,3 +1,4 @@
+from SpiffWorkflow.bpmn.workflow import TaskState
 from flask import current_app
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -20,7 +21,7 @@ class Version2:
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.bpmn_process_instance._predict()
 
-                spiff_tasks = processor.bpmn_process_instance.get_tasks()
+                spiff_tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.PREDICTED_MASK)
                 task_service = TaskService(
                     process_instance, processor._serializer, processor.bpmn_definition_to_task_definitions_mappings
                 )
@@ -28,6 +29,7 @@ class Version2:
                 # implicit begin db transaction
                 for spiff_task in spiff_tasks:
                     task_service.update_task_model_with_spiff_task(spiff_task)
+                    task_service.update_task_model_with_spiff_task(spiff_task.parent)
 
                 task_service.save_objects_to_database()
                 process_instance.spiff_serializer_version = cls.VERSION
