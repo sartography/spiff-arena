@@ -1,3 +1,4 @@
+import { intervalToDuration } from 'date-fns';
 import React, {
   useCallback,
   useEffect,
@@ -50,6 +51,7 @@ import {
   REFRESH_TIMEOUT_SECONDS,
   titleizeString,
   truncateString,
+  isANumber,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -854,7 +856,11 @@ export default function ProcessInstanceListTable({
   ) => {
     return (
       <>
-        <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
+        <DatePicker
+          id={`date-picker-parent-${name}`}
+          dateFormat={DATE_FORMAT_CARBON}
+          datePickerType="single"
+        >
           <DatePickerInput
             id={`date-picker-${name}`}
             placeholder={DATE_FORMAT_FOR_DISPLAY}
@@ -876,7 +882,7 @@ export default function ProcessInstanceListTable({
         </DatePicker>
         <TimePicker
           invalid={timeInvalid}
-          id="time-picker"
+          id={`time-picker-${name}`}
           labelText="Select a time"
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
           value={initialTime}
@@ -1202,7 +1208,6 @@ export default function ProcessInstanceListTable({
         }}
       />,
     ]);
-    console.log('reportColumnToOperateOn', reportColumnToOperateOn);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
         <Dropdown
@@ -1690,19 +1695,26 @@ export default function ProcessInstanceListTable({
     if (value === undefined) {
       return undefined;
     }
-    let dateObject = value;
-    console.log('value', value);
-    if (isNaN(value)) {
+    let dateInSeconds = value;
+    if (!isANumber(value)) {
       const timeArgs = value.split('T');
-      dateObject = convertDateAndTimeStringsToSeconds(timeArgs[0], timeArgs[1]);
-      // } else {
-      // dateObject = convertSecondsToDateObject(value)
+      dateInSeconds = convertDateAndTimeStringsToSeconds(
+        timeArgs[0],
+        timeArgs[1]
+      );
     }
-    console.log('dateObject', dateObject);
-    if (dateObject) {
-      return convertSecondsToFormattedDateTime(dateObject);
+    if (dateInSeconds) {
+      return convertSecondsToFormattedDateTime(dateInSeconds);
     }
     return null;
+  };
+
+  const formatDuration = (_row: any, value: any) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    const duration = intervalToDuration({ start: 0, end: value * 1000 });
+    return `${duration.hours}h ${duration.minutes}m`;
   };
 
   const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
@@ -1719,6 +1731,7 @@ export default function ProcessInstanceListTable({
     };
     const displayTypeFormatters: Record<string, any> = {
       date_time: formatDateTime,
+      duration: formatDuration,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type
