@@ -275,8 +275,41 @@ If you want to filter by ID, go to the "Find by Id" section of the page. Enter t
 
 You can now view the process instances that you filtered for and take appropriate action based on their status. This can help you manage your workflows more efficiently and keep track of the progress of various process instances.
 
+---
+
+## How to Interpret Colors in a BPMN Diagram
+
+ One of the key features of BPMN diagrams in SpiffWorkflow is the use of colors to represent different states or statuses of process instances.
+
+ Here are the colors used in BPMN Process:
+
+1. **Grey Color:**  
+   - **Meaning:** The task is completed.
+   - **Implication:** Tasks or activities associated with this process have been successfully completed, and no further action is required.
+
+![Colors](images/Grey_color.png)
+
+2. **Yellow Color:**  
+   - **Meaning:** The process instance has started and is currently in progress.
+   - **Implication:** This color signifies that the task is active and ongoing. It may require monitoring or further inputs to proceed.
+
+   ![Colors](images/Yellow.png)
 
 
+3. **Red/Pink Color:**  
+   - **Meaning:** Indicates errors in the task.
+   - **Implication:** There might be issues or obstacles preventing the task from proceeding as expected. Immediate attention and troubleshooting may be required.
+
+   ![Colors](images/Red.png)
+
+4. **Purple Color:**  
+   - **Meaning:** The activity has been cancelled.
+   - **Implication:** This task was intentionally stopped before completion. This could be due to time constraints, external triggers, or other predefined conditions that have been set as boundary events.
+
+   ![Colors](images/Purple.png)
+
+
+---
 ## How to check Milestones and Events
 
 ### Milestones
@@ -293,3 +326,50 @@ Events provide a detailed log of everything that happens in a process. They reco
 The events tab provides a detailed log of all the tasks and their execution times. It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
 
 
+## How to check messages
+Messages in BPMN allow processes to communicate with each other. This communication can take various forms:
+
+- Two processes running concurrently, exchanging messages.
+- One process initiating another through a message.
+- An external system making an API call, passing a payload (like a JSON data structure) that can either communicate with an ongoing process or initiate a new one.
+
+### The Waiter-Chef Illustration
+
+To explain the concept, we are using a relatable example involving two processes: the Waiter and the Chef.
+
+**Waiter Process**:
+![Waiter Process](images/waiter.png)
+
+1. The waiter takes an order.
+2. This order is then communicated to the chef via a message.
+3. The waiter then waits for a response from the chef, indicating the order's readiness.
+
+**Chef Process**:
+
+![Chef Process](images/chef.png)
+
+1. The chef starts by receiving the order message from the waiter.
+2. After preparing the meal, the chef sends a message back to the waiter, signaling that the order is ready.
+
+
+### Setting Up the Processes
+
+The setup involves creating two process models named "Chef" and "Waiter." The waiter's process involves taking an order, setting up variables like table number, drink, and meal, and then sending a message to the chef. The chef's process starts by listening for the order message, preparing the meal, and then sending a confirmation message back to the waiter.
+
+
+### Correlation Keys and Properties
+
+One of the complexities in BPMN messaging is ensuring that the right processes are communicating with each other, especially when multiple instances are running. This is achieved using correlation keys and properties.
+
+![corelation](images/Corelation.png)
+
+- **Correlation Keys**: These represent the topic of the conversation. In the given example, the correlation key is the "order".
+  
+- **Correlation Properties**: These are unique identifiers within the conversation. In the example, the "table number" serves as the correlation property, ensuring the right waiter communicates with the right chef.
+
+### Execution and Observation
+
+Upon executing the waiter's process, it sends a message to the chef and waits. The chef's process, upon receiving the message, requires user input (indicating the meal's completion). Once the chef confirms the meal's readiness, a message is sent back to the waiter, completing both processes.
+
+
+For a more visual understanding and a step-by-step walkthrough, you can watch Dan Funk's full tutorial [here](https://www.youtube.com/watch?v=Uk7__onZiVk).

@@ -96,3 +96,68 @@ workflow.reset_from_task_id(start.id)
 ### **19. Designing an Approval Process in SpiffWorkflow**
 **Q:** I am designing an approval process using SpiffWorkflow. Can SpiffWorkflow handle scenarios where a task should complete if more than 2 users approve out of 3 assignees?  
 **A:** Yes, SpiffWorkflow can handle complex approval processes. The [provided video](https://www.youtube.com/watch?v=EfTbTg3KRqc) link offers insights into managing such scenarios using SpiffWorkflow.
+
+
+
+**20: I restarted docker-compose, and my process instances in Spiff Arena aren't persistent. How can I ensure they remain after a restart?**
+
+**A:** Make sure you're using the updated "getting started" `docker-compose.yml` file that uses sqlite to persist the database between docker compose restarts.
+This will ensure that your process instances remain after a restart.
+
+If you're still facing issues, refer to the provided documentation on admin and permissions for further guidance.
+
+**21: Is it possible to download a process model in Spiff Arena and then re-upload it?**
+
+**A:** Yes, in Spiff Arena, you can download a process model and then re-upload it. However, it's essential to note that all process IDs must be unique across the system. If you're re-uploading a process model, its ID might need to be modified to ensure uniqueness.
+
+**22: What are the "notification addresses" and "metadata extractions" fields when creating a new process model in Spiff Arena?**
+
+**A:** When creating a new process model in Spiff Arena, the "notification addresses" field is used to specify recipients for notifications related to that process.
+The "metadata extractions" field is used to extract specific metadata from the process.
+Detailed documentation for both fields is available.
+It's worth noting that the functionality of "Notification Addresses" might undergo changes in the future to centralize the logic and avoid splitting configurations.
+
+
+**23: Why doesn't the Spiff Arena frontend always load completely?**
+
+**A:** The issue might arise when the frontend cannot communicate with the backend.
+Recent updates have been made to address this specific problem.
+Previously, the backend could deadlock when it received a high number of concurrent requests, exhausting the available worker processes.
+
+Since it uses built-in openid, each request would need to communicate with the backend itself.
+This issue has been resolved in the newer versions. To potentially fix this, you can update your setup by running the following commands in the directory where you downloaded the `docker-compose.yml` file:
+
+```
+docker compose pull
+docker compose down
+docker compose up -d
+```
+
+By doing this, you'll pull the latest images, shut down the current containers, and then start them up again with the updated configurations.
+This should help in ensuring that the frontend loads completely and communicates effectively with the backend.
+
+
+**24: I'm using an M1/M2 Mac and facing issues with docker-compose in Spiff Arena. How can I resolve this?**
+
+**A:** Ensure that you're using the latest versions of Docker and docker-compose.
+If you encounter messages about platform mismatches, note that these may just be warnings and not errors.
+Update your images and restart the containers as needed.
+Instructions in the getting started guide reference `curl`, but if that is not working for you, `wget` may be an option that is already installed on your system.
+
+**25: Why aren't timer events working in Spiff Arena, and how can they be fixed?**
+
+**A:** Timer events in Spiff Arena require a specific syntax for their expressions.
+For instance, the expression "R5/PT10S" should be quoted.
+This is because the value needs to be derived from a valid Python expression.
+Ensure that the background scheduler is running, as timers in Spiff Arena are controlled by it.
+
+ If you're still facing issues, refer to the provided sample BPMN file and ensure that your timer expressions match the required format.
+
+**26: Why can't I import an external module in a script task in Spiff Arena?**
+
+**A:** In Spiff Arena, script tasks are designed for lightweight scripting and do not support importing external modules.
+If you need to communicate with external systems, it's recommended to use a ServiceTask instead.
+ServiceTasks in Spiff Arena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol.
+For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request.
+Detailed documentation available [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/configure_connector_proxy.html).
+If you want to bypass security features of the restricted script engine and import modules from your script tasks, you can set the environment variable: `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false`
