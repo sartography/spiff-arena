@@ -4,6 +4,7 @@ import {
   slugifyString,
   underscorizeString,
   recursivelyChangeNullAndUndefined,
+  formatDurationForDisplay,
 } from './helpers';
 
 test('it can slugify a string', () => {
@@ -100,4 +101,14 @@ test('it can replace null values in object with undefined', () => {
   expect(result.items[2]).toEqual('HEY');
   expect(result.contacts.awesome).toEqual(false);
   expect(result.contacts.info).toEqual('');
+});
+
+test('it can properly format a duration', () => {
+  expect(formatDurationForDisplay(null, '0')).toEqual('0s');
+  expect(formatDurationForDisplay(null, '60')).toEqual('1m');
+  expect(formatDurationForDisplay(null, '65')).toEqual('1m 5s');
+  expect(formatDurationForDisplay(null, 65)).toEqual('1m 5s');
+  expect(formatDurationForDisplay(null, 86500)).toEqual('1d 1m 40s');
+  expect(formatDurationForDisplay(null, 2629746)).toEqual('30d 10h 29m 6s');
+  expect(formatDurationForDisplay(null, 31536765)).toEqual('365d 12m 45s');
 });
