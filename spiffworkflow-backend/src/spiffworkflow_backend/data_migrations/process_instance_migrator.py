@@ -44,4 +44,10 @@ class ProcessInstanceMigrator:
         Someday, we might need to run the migrator in more places, if using spiff to read depends on
         an updated serialization.
         """
+
+        # if the serializer version is None, then we are dealing with a new process instance,
+        # so we do not need to run the migrator
+        if process_instance.spiff_serializer_version is None:
+            return
+
         cls.run_version_2(process_instance)
