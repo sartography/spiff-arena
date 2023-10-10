@@ -26,6 +26,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
@@ -271,8 +272,10 @@ def manual_complete_task(
     execute = body.get("execute", True)
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(task_guid, execute, g.user)
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceMigrator.run(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.manual_complete_task(task_guid, execute, g.user)
     else:
         raise ApiError(
             error_code="complete_task",
@@ -629,6 +632,7 @@ def _dequeued_interstitial_stream(
             try:
                 if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
                     with ProcessInstanceQueueService.dequeued(process_instance):
+                        ProcessInstanceMigrator.run(process_instance)
                         yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
             except ProcessInstanceIsAlreadyLockedError:
                 yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
@@ -770,6 +774,14 @@ def _task_submit_shared(
             ),
             status_code=400,
         )
+
+    # we're dequeing twice in this function.
+    # tried to wrap the whole block in one dequeue, but that has the confusing side-effect that every exception
+    # in the block causes the process instance to go into an error state. for example, when
+    # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
+    # and the cost is not huge given that this function is not the most common code path in the world.
+    with ProcessInstanceQueueService.dequeued(process_instance):
+        ProcessInstanceMigrator.run(process_instance)
 
     processor = ProcessInstanceProcessor(
         process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
@@ -993,10 +1005,8 @@ def _prepare_form_data(
 def _get_spiff_task_from_process_instance(
     task_guid: str,
     process_instance: ProcessInstanceModel,
-    processor: ProcessInstanceProcessor | None = None,
+    processor: ProcessInstanceProcessor,
 ) -> SpiffTask:
-    if processor is None:
-        processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
     spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
 

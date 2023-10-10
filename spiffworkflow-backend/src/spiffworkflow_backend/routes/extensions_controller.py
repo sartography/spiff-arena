@@ -147,6 +147,7 @@ def _run_extension(
 
     processor = None
     try:
+        # this is only creates new process instances so no need to worry about process instance migrations
         processor = ProcessInstanceProcessor(
             process_instance,
             script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),

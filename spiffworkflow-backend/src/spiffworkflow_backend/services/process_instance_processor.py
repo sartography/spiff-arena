@@ -387,7 +387,7 @@ IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, Bpm
 
 class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
-    SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
+    SERIALIZER_VERSION = "2"
 
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(SPIFF_SPEC_CONFIG)
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
