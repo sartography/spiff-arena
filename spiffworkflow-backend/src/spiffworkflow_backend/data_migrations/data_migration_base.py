@@ -11,11 +11,13 @@ class DataMigrationBase(metaclass=abc.ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, subclass: Any) -> bool:
-        return (hasattr(subclass, 'run') and
-                callable(subclass.run) and
-                hasattr(subclass, 'version') and
-                callable(subclass.version) and
-                NotImplemented)
+        return (
+            hasattr(subclass, "run")
+            and callable(subclass.run)
+            and hasattr(subclass, "version")
+            and callable(subclass.version)
+            and NotImplemented
+        )
 
     @classmethod
     @abc.abstractmethod

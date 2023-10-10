@@ -20,8 +20,8 @@ class Version3(DataMigrationBase):
             bpmn_process_ids = []
             for task_model in tasks:
                 new_properties_json = copy.copy(task_model.properties_json)
-                if 'typename' not in new_properties_json or new_properties_json['typename'] != "task":
-                    new_properties_json['typename'] = 'task'
+                if "typename" not in new_properties_json or new_properties_json["typename"] != "task":
+                    new_properties_json["typename"] = "task"
                     task_model.properties_json = new_properties_json
                     db.session.add(task_model)
                     bpmn_process_ids.append(task_model.bpmn_process_id)
@@ -32,8 +32,8 @@ class Version3(DataMigrationBase):
                 typename = "BpmnWorkflow"
                 if bpmn_process.direct_parent_process_id is not None:
                     typename = "BpmnSubWorkflow"
-                if 'typename' not in new_properties_json or new_properties_json['typename'] != typename:
-                    new_properties_json['typename'] = typename
+                if "typename" not in new_properties_json or new_properties_json["typename"] != typename:
+                    new_properties_json["typename"] = typename
                     bpmn_process.properties_json = new_properties_json
                     db.session.add(bpmn_process)
 
