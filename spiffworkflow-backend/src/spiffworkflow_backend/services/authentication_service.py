@@ -2,50 +2,27 @@ import base64
 import enum
 import json
 import time
+from hashlib import sha256
+from hmac import HMAC
+from hmac import compare_digest
 
 import jwt
 import requests
 from flask import current_app
+from flask import g
 from flask import redirect
+from flask import request
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
+from spiffworkflow_backend.exceptions.error import OpenIdConnectionError
+from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
+from spiffworkflow_backend.exceptions.error import TokenExpiredError
+from spiffworkflow_backend.exceptions.error import TokenInvalidError
+from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.user_service import UserService
 from werkzeug.wrappers import Response
-
-
-class MissingAccessTokenError(Exception):
-    pass
-
-
-class NotAuthorizedError(Exception):
-    pass
-
-
-class RefreshTokenStorageError(Exception):
-    pass
-
-
-class UserNotLoggedInError(Exception):
-    pass
-
-
-# These could be either 'id' OR 'access' tokens and we can't always know which
-
-
-class TokenExpiredError(Exception):
-    pass
-
-
-class TokenInvalidError(Exception):
-    pass
-
-
-class TokenNotProvidedError(Exception):
-    pass
-
-
-class OpenIdConnectionError(Exception):
-    pass
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -249,3 +226,57 @@ class AuthenticationService:
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
         return auth_token_object
+
+    @staticmethod
+    def decode_auth_token(auth_token: str) -> dict[str, str | None]:
+        secret_key = current_app.config.get("SECRET_KEY")
+        if secret_key is None:
+            raise KeyError("we need current_app.config to have a SECRET_KEY")
+
+        try:
+            payload = jwt.decode(auth_token, options={"verify_signature": False})
+            return payload
+        except jwt.ExpiredSignatureError as exception:
+            raise TokenExpiredError(
+                "The Authentication token you provided expired and must be renewed.",
+            ) from exception
+        except jwt.InvalidTokenError as exception:
+            raise TokenInvalidError(
+                "The Authentication token you provided is invalid. You need a new token. ",
+            ) from exception
+
+    # https://stackoverflow.com/a/71320673/6090676
+    @classmethod
+    def verify_sha256_token(cls, auth_header: str | None) -> None:
+        if auth_header is None:
+            raise TokenNotProvidedError(
+                "unauthorized",
+            )
+
+        received_sign = auth_header.split("sha256=")[-1].strip()
+        secret = current_app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"].encode()
+        expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
+        if not compare_digest(received_sign, expected_sign):
+            raise TokenInvalidError(
+                "unauthorized",
+            )
+
+    @classmethod
+    def create_guest_token(
+        cls,
+        username: str,
+        group_identifier: str,
+        permission_target: str | None = None,
+        permission: str = "all",
+        auth_token_properties: dict | None = None,
+    ) -> None:
+        guest_user = UserService.find_or_create_guest_user(username=username, group_identifier=group_identifier)
+        if permission_target is not None:
+            AuthorizationService.add_permission_from_uri_or_macro(
+                group_identifier, permission=permission, target=permission_target
+            )
+        g.user = guest_user
+        g.token = guest_user.encode_auth_token(auth_token_properties)
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.new_access_token = g.token
+        tld.new_id_token = g.token

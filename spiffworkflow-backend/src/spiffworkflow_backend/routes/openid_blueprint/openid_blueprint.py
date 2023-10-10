@@ -6,6 +6,7 @@ handle openid authentication -- definitely not a production ready system.
 This is just here to make local development, testing, and demonstration easier.
 """
 import base64
+import json
 import time
 from typing import Any
 from urllib.parse import urlencode
@@ -81,11 +82,14 @@ def form_submit() -> Any:
 
 
 @openid_blueprint.route("/token", methods=["POST"])
-def token() -> dict:
+def token() -> Response | dict:
     """Url that will return a valid token, given the super secret sauce."""
-    request.values.get("grant_type")
     code = request.values.get("code")
-    request.values.get("redirect_uri")
+
+    if code is None:
+        return Response(
+            json.dumps({"error": "missing_code_value_in_token_request"}), status=400, mimetype="application/json"
+        )
 
     """We just stuffed the user name on the front of the code, so grab it."""
     user_name, secret_hash = code.split(":")

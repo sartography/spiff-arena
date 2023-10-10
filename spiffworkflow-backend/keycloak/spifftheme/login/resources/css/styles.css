@@ -1,0 +1,78 @@
+:root {
+  --pf-global--link--Color: #126d82;
+  --pf-global--link--Color--hover: #004080;
+  --pf-global--link--Color--visited: #40199a;
+  --pf-global--primary-color--100: #126d82;
+  --pf-global--primary-color--200: #004080;
+  --pf-c-form__label--FontSize: 1.25rem;
+  --pf-c-form__label--LineHeight: 1.5rem;
+}
+
+.login-pf body {
+    background:white;
+    font-family: open sans,sans-serif;
+}
+
+
+.login-pf-page .login-pf-header h1, .kc-social-section h4 {
+    font-size: 2rem;
+    line-height: 2.5rem;
+    font-weight: 100;
+    text-align: center;
+}
+
+.login-pf-page-header {
+    background-repeat:no-repeat;
+    background-position: center center;
+    background-image: url(../images/spiffworkflow_logo.png);
+    min-height: 60px;
+}
+
+#kc-header-wrapper {
+    display: none;
+}
+
+
+.card-pf {
+    margin: 0 auto;
+    margin-bottom: 0px;
+    box-shadow: var(--pf-global--BoxShadow--lg);
+    padding: 0 20px;
+    max-width: 500px;
+    border-top: 4px solid;
+    border-top-color: currentcolor;
+    border-color: var(--pf-global--primary-color--100);
+}
+
+.pf-c-button.pf-m-primary {
+    background: #126d82;
+    border-color: #126d82;
+    border-radius: 15px;
+    color: #FFFFFF;
+    font-size: 1.2rem;
+    line-height: 2.5rem;
+    font-weight: 700;
+}
+
+.pf-c-button.kc-social-item {
+    background: #FF7A59;
+    border-color: #FF7A59;
+    border-radius: 15px;
+    color: #FFFFFF;
+    font-size: 1.2rem;
+    line-height: 2.5rem;
+    font-weight: 700;
+    padding: 10px;
+    --pf-c-button--after--BorderColor: none;
+}
+
+
+
+.pf-c-login__main-footer-links.kc-social-links {
+    display: block;
+}
+
+.followup {
+    font-size: 1.1em;
+    margin: 10px;
+}

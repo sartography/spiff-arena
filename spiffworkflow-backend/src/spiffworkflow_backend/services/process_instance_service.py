@@ -16,7 +16,11 @@ from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinitio
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend import db
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
+from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
@@ -30,9 +34,6 @@ from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleMo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
-from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
-from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -71,6 +72,7 @@ class ProcessInstanceService:
     @staticmethod
     def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
         try:
+            # this is only called from create_process_instance so no need to worry about process instance migrations
             processor = ProcessInstanceProcessor(process_instance_model)
             start_configuration = WorkflowService.next_start_event_configuration(
                 processor.bpmn_process_instance, datetime.now(timezone.utc)
@@ -94,7 +96,7 @@ class ProcessInstanceService:
         try:
             current_git_revision = GitService.get_current_revision()
         except GitCommandError:
-            current_git_revision = ""
+            current_git_revision = None
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator_id=user.id,
@@ -259,6 +261,7 @@ class ProcessInstanceService:
     ) -> ProcessInstanceProcessor | None:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(
                 process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
             )

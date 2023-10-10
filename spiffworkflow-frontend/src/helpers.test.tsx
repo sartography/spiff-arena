@@ -1,9 +1,10 @@
 import {
   convertSecondsToFormattedDateString,
-  isInteger,
+  isANumber,
   slugifyString,
   underscorizeString,
   recursivelyChangeNullAndUndefined,
+  formatDurationForDisplay,
 } from './helpers';
 
 test('it can slugify a string', () => {
@@ -24,11 +25,13 @@ test('it can keep the correct date when converting seconds to date', () => {
 });
 
 test('it can validate numeric values', () => {
-  expect(isInteger('11')).toEqual(true);
-  expect(isInteger('hey')).toEqual(false);
-  expect(isInteger('        ')).toEqual(false);
-  expect(isInteger('1 2')).toEqual(false);
-  expect(isInteger(2)).toEqual(true);
+  expect(isANumber('11')).toEqual(true);
+  expect(isANumber('hey')).toEqual(false);
+  expect(isANumber('        ')).toEqual(false);
+  expect(isANumber('1 2')).toEqual(false);
+  expect(isANumber(2)).toEqual(true);
+  expect(isANumber(2.0)).toEqual(true);
+  expect(isANumber('2.0')).toEqual(true);
 });
 
 test('it can replace undefined values in object with null', () => {
@@ -98,4 +101,14 @@ test('it can replace null values in object with undefined', () => {
   expect(result.items[2]).toEqual('HEY');
   expect(result.contacts.awesome).toEqual(false);
   expect(result.contacts.info).toEqual('');
+});
+
+test('it can properly format a duration', () => {
+  expect(formatDurationForDisplay(null, '0')).toEqual('0s');
+  expect(formatDurationForDisplay(null, '60')).toEqual('1m');
+  expect(formatDurationForDisplay(null, '65')).toEqual('1m 5s');
+  expect(formatDurationForDisplay(null, 65)).toEqual('1m 5s');
+  expect(formatDurationForDisplay(null, 86500)).toEqual('1d 1m 40s');
+  expect(formatDurationForDisplay(null, 2629746)).toEqual('30d 10h 29m 6s');
+  expect(formatDurationForDisplay(null, 31536765)).toEqual('365d 12m 45s');
 });

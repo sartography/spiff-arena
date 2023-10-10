@@ -30,6 +30,7 @@ from spiffworkflow_backend.services.process_caller_service import ProcessCallerS
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -72,6 +73,39 @@ class TestProcessApi(BaseTest):
     ) -> None:
         user = self.find_or_create_user()
         self.add_permissions_to_user(user, target_uri="/v1.0/process-groups", permission_names=["read"])
+        request_body = {
+            "requests_to_check": {
+                "/v1.0/process-groups": ["GET", "POST"],
+                "/v1.0/process-models": ["GET"],
+            }
+        }
+        expected_response_body = {
+            "results": {
+                "/v1.0/process-groups": {"GET": True, "POST": False},
+                "/v1.0/process-models": {"GET": False},
+            }
+        }
+        response = client.post(
+            "/v1.0/permissions-check",
+            headers=self.logged_in_headers(user),
+            content_type="application/json",
+            data=json.dumps(request_body),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json == expected_response_body
+
+    def test_permissions_check_with_wildcard_permissions_through_group(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.find_or_create_user()
+        group = UserService.find_or_create_group("test_group")
+        principal = group.principal
+        UserService.add_user_to_group(user, group)
+        self.add_permissions_to_principal(principal, target_uri="/v1.0/process-groups/%", permission_names=["read"])
         request_body = {
             "requests_to_check": {
                 "/v1.0/process-groups": ["GET", "POST"],
@@ -1271,7 +1305,7 @@ class TestProcessApi(BaseTest):
 
         assert response.status_code == 200
         assert response.json is not None
-        assert type(response.json["updated_at_in_seconds"]) is int
+        assert isinstance(response.json["updated_at_in_seconds"], int)
         assert response.json["updated_at_in_seconds"] > 0
         assert response.json["status"] == "complete"
         assert response.json["process_model_identifier"] == process_model.id
@@ -1705,9 +1739,9 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["total"] == 1
 
         process_instance_dict = response.json["results"][0]
-        assert type(process_instance_dict["id"]) is int
+        assert isinstance(process_instance_dict["id"], int)
         assert process_instance_dict["process_model_identifier"] == process_model.id
-        assert type(process_instance_dict["start_in_seconds"]) is int
+        assert isinstance(process_instance_dict["start_in_seconds"], int)
         assert process_instance_dict["start_in_seconds"] > 0
         assert process_instance_dict["end_in_seconds"] is None
         assert process_instance_dict["status"] == "not_started"

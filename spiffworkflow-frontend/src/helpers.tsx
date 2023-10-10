@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { Duration, format } from 'date-fns';
 import { Buffer } from 'buffer';
 
 import {
@@ -351,8 +351,10 @@ export const setPageTitle = (items: Array<string>) => {
   document.title = ['SpiffWorkflow'].concat(items).join(' - ');
 };
 
-export const isInteger = (str: string | number) => {
-  return /^\d+$/.test(str.toString());
+// calling it isANumber to avoid confusion with other libraries
+// that have isNumber methods
+export const isANumber = (str: string | number) => {
+  return /^\d+(\.\d+)?$/.test(str.toString());
 };
 
 export const encodeBase64 = (data: string) => {
@@ -396,4 +398,44 @@ export const getLastMilestoneFromProcessInstance = (
     )}...`;
   }
   return [valueToUse, truncatedValue];
+};
+
+// logic from https://stackoverflow.com/a/28510323/6090676
+export const secondsToDuration = (secNum: number) => {
+  const days = Math.floor(secNum / 86400);
+  const hours = Math.floor(secNum / 3600) % 24;
+  const minutes = Math.floor(secNum / 60) % 60;
+  const seconds = secNum % 60;
+
+  const duration: Duration = {
+    days,
+    hours,
+    minutes,
+    seconds,
+  };
+  return duration;
+};
+
+export const formatDurationForDisplay = (_row: any, value: any) => {
+  if (value === undefined) {
+    return undefined;
+  }
+  const duration = secondsToDuration(parseInt(value, 10));
+  const durationTimes = [];
+  if (duration.seconds !== undefined && duration.seconds > 0) {
+    durationTimes.unshift(`${duration.seconds}s`);
+  }
+  if (duration.minutes !== undefined && duration.minutes > 0) {
+    durationTimes.unshift(`${duration.minutes}m`);
+  }
+  if (duration.hours !== undefined && duration.hours > 0) {
+    durationTimes.unshift(`${duration.hours}h`);
+  }
+  if (duration.days !== undefined && duration.days > 0) {
+    durationTimes.unshift(`${duration.days}d`);
+  }
+  if (durationTimes.length < 1) {
+    durationTimes.push('0s');
+  }
+  return durationTimes.join(' ');
 };

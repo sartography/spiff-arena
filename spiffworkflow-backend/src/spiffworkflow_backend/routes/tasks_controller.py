@@ -26,7 +26,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
+from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -49,11 +53,10 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_o
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
-from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
-from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.git_service import GitCommandError
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -269,8 +272,10 @@ def manual_complete_task(
     execute = body.get("execute", True)
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
     if process_instance:
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(task_guid, execute, g.user)
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceMigrator.run(process_instance)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.manual_complete_task(task_guid, execute, g.user)
     else:
         raise ApiError(
             error_code="complete_task",
@@ -452,9 +457,10 @@ def task_show(
                 )
 
             form_dict = _prepare_form_data(
-                form_schema_file_name,
-                task_model,
-                process_model_with_form,
+                form_file=form_schema_file_name,
+                task_model=task_model,
+                process_model=process_model_with_form,
+                revision=process_instance.bpmn_version_control_identifier,
             )
 
             _update_form_schema_with_task_data_as_needed(form_dict, task_model.data)
@@ -464,9 +470,10 @@ def task_show(
 
             if form_ui_schema_file_name:
                 ui_form_contents = _prepare_form_data(
-                    form_ui_schema_file_name,
-                    task_model,
-                    process_model_with_form,
+                    form_file=form_ui_schema_file_name,
+                    task_model=task_model,
+                    process_model=process_model_with_form,
+                    revision=process_instance.bpmn_version_control_identifier,
                 )
                 if ui_form_contents:
                     task_model.form_ui_schema = ui_form_contents
@@ -625,6 +632,7 @@ def _dequeued_interstitial_stream(
             try:
                 if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
                     with ProcessInstanceQueueService.dequeued(process_instance):
+                        ProcessInstanceMigrator.run(process_instance)
                         yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
             except ProcessInstanceIsAlreadyLockedError:
                 yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
@@ -704,7 +712,7 @@ def task_save_draft(
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
-    task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+    task_definition_id_path = f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
     task_draft_data_dict: TaskDraftDataDict = {
         "process_instance_id": process_instance.id,
         "task_definition_id_path": task_definition_id_path,
@@ -766,6 +774,14 @@ def _task_submit_shared(
             ),
             status_code=400,
         )
+
+    # we're dequeing twice in this function.
+    # tried to wrap the whole block in one dequeue, but that has the confusing side-effect that every exception
+    # in the block causes the process instance to go into an error state. for example, when
+    # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
+    # and the cost is not huge given that this function is not the most common code path in the world.
+    with ProcessInstanceQueueService.dequeued(process_instance):
+        ProcessInstanceMigrator.run(process_instance)
 
     processor = ProcessInstanceProcessor(
         process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
@@ -940,39 +956,57 @@ def _get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: ProcessModelInfo) -> dict:
+def _prepare_form_data(
+    form_file: str, task_model: TaskModel, process_model: ProcessModelInfo, revision: str | None = None
+) -> dict:
     if task_model.data is None:
         return {}
 
-    file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
+    try:
+        file_contents = GitService.get_file_contents_for_revision_if_git_revision(
+            process_model=process_model,
+            revision=revision,
+            file_name=form_file,
+        )
+    except GitCommandError as exception:
+        raise (
+            ApiError(
+                error_code="git_error_loading_form",
+                message=(
+                    f"Could not load form schema from: {form_file}. Was git history rewritten such that revision"
+                    f" '{revision}' no longer exists? Error was: {str(exception)}"
+                ),
+                status_code=400,
+            )
+        ) from exception
+
     try:
         form_contents = JinjaService.render_jinja_template(file_contents, task=task_model)
-        try:
-            # form_contents is a str
-            hot_dict: dict = json.loads(form_contents)
-            return hot_dict
-        except Exception as exception:
-            raise (
-                ApiError(
-                    error_code="error_loading_form",
-                    message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
-                    status_code=400,
-                )
-            ) from exception
     except TaskModelError as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
-        raise api_error
+        raise api_error from wfe
+
+    try:
+        # form_contents is a str
+        hot_dict: dict = json.loads(form_contents)
+        return hot_dict
+    except Exception as exception:
+        raise (
+            ApiError(
+                error_code="error_loading_form",
+                message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
+                status_code=400,
+            )
+        ) from exception
 
 
 def _get_spiff_task_from_process_instance(
     task_guid: str,
     process_instance: ProcessInstanceModel,
-    processor: ProcessInstanceProcessor | None = None,
+    processor: ProcessInstanceProcessor,
 ) -> SpiffTask:
-    if processor is None:
-        processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_guid)
     spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
 

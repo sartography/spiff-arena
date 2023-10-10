@@ -15,6 +15,8 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
+from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
@@ -24,8 +26,6 @@ from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
-from spiffworkflow_backend.services.authentication_service import MissingAccessTokenError
-from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -90,7 +90,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
 
 def login(redirect_url: str = "/", process_instance_id: int | None = None, task_guid: str | None = None) -> Response:
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
-        AuthorizationService.create_guest_token(
+        AuthenticationService.create_guest_token(
             username=SPIFF_NO_AUTH_USER,
             group_identifier=SPIFF_NO_AUTH_GROUP,
             permission_target="/*",
@@ -99,7 +99,7 @@ def login(redirect_url: str = "/", process_instance_id: int | None = None, task_
         return redirect(redirect_url)
 
     if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-        AuthorizationService.create_guest_token(
+        AuthenticationService.create_guest_token(
             username=SPIFF_GUEST_USER,
             group_identifier=SPIFF_GUEST_GROUP,
             auth_token_properties={"only_guest_task_completion": True},

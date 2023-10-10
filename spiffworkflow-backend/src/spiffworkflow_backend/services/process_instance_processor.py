@@ -79,7 +79,6 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -392,7 +391,7 @@ IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, Bpm
 
 class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
-    SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
+    SERIALIZER_VERSION = "2"
 
     wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
@@ -820,7 +819,7 @@ class ProcessInstanceProcessor:
         lane_assignment_id = None
 
         if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
-            guest_user = GroupService.find_or_create_guest_user()
+            guest_user = UserService.find_or_create_guest_user()
             potential_owner_ids = [guest_user.id]
         elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
             potential_owner_ids = [self.process_instance_model.process_initiator_id]
@@ -1409,7 +1408,7 @@ class ProcessInstanceProcessor:
         tasks = self.bpmn_process_instance.get_tasks(state=TaskState.DEFINITE_MASK)
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
-            if task.task_spec.description != "Call Activity":
+            if task.task_spec.__class__.__name__ != "CallActivity":
                 continue
             spec_to_check = task.task_spec.spec
 
