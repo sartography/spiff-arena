@@ -1,4 +1,3 @@
-import { intervalToDuration } from 'date-fns';
 import React, {
   useCallback,
   useEffect,
@@ -52,6 +51,7 @@ import {
   titleizeString,
   truncateString,
   isANumber,
+  formatDurationForDisplay,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -1667,10 +1667,16 @@ export default function ProcessInstanceListTable({
   const formatProcessInstanceId = (_row: ProcessInstance, id: number) => {
     return <span data-qa="paginated-entity-id">{id}</span>;
   };
-  const formatProcessModelIdentifier = (_row: any, identifier: any) => {
+  const formatProcessModelIdentifier = (
+    _row: ProcessInstance,
+    identifier: any
+  ) => {
     return <span>{identifier}</span>;
   };
-  const formatProcessModelDisplayName = (_row: any, identifier: any) => {
+  const formatProcessModelDisplayName = (
+    _row: ProcessInstance,
+    identifier: any
+  ) => {
     return <span>{identifier}</span>;
   };
   const formatLastMilestone = (
@@ -1684,14 +1690,14 @@ export default function ProcessInstanceListTable({
     return <span title={valueToUse}>{truncatedValue}</span>;
   };
 
-  const formatSecondsForDisplay = (_row: any, seconds: any) => {
+  const formatSecondsForDisplay = (_row: ProcessInstance, seconds: any) => {
     return convertSecondsToFormattedDateTime(seconds) || '-';
   };
-  const defaultFormatter = (_row: any, value: any) => {
+  const defaultFormatter = (_row: ProcessInstance, value: any) => {
     return value;
   };
 
-  const formatDateTime = (_row: any, value: any) => {
+  const formatDateTime = (_row: ProcessInstance, value: any) => {
     if (value === undefined) {
       return undefined;
     }
@@ -1709,21 +1715,6 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
-  const formatDuration = (_row: any, value: any) => {
-    if (value === undefined) {
-      return undefined;
-    }
-    const duration = intervalToDuration({ start: 0, end: value * 1000 });
-    let durationString = `${duration.minutes}m ${duration.seconds}s`;
-    if (duration.hours !== undefined && duration.hours > 0) {
-      durationString = `${duration.hours}h ${durationString}`;
-    }
-    if (duration.days !== undefined && duration.days > 0) {
-      durationString = `${duration.days}d ${durationString}`;
-    }
-    return durationString;
-  };
-
   const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
@@ -1738,7 +1729,7 @@ export default function ProcessInstanceListTable({
     };
     const displayTypeFormatters: Record<string, any> = {
       date_time: formatDateTime,
-      duration: formatDuration,
+      duration: formatDurationForDisplay,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type
