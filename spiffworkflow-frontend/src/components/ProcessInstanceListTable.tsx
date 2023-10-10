@@ -1714,7 +1714,14 @@ export default function ProcessInstanceListTable({
       return undefined;
     }
     const duration = intervalToDuration({ start: 0, end: value * 1000 });
-    return `${duration.hours}h ${duration.minutes}m`;
+    let durationString = `${duration.minutes}m ${duration.seconds}s`;
+    if (duration.hours !== undefined && duration.hours > 0) {
+      durationString = `${duration.hours}h ${durationString}`;
+    }
+    if (duration.days !== undefined && duration.days > 0) {
+      durationString = `${duration.days}d ${durationString}`;
+    }
+    return durationString;
   };
 
   const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
