@@ -279,32 +279,32 @@ You can now view the process instances that you filtered for and take appropriat
 
 ## How to Interpret Colors in a BPMN Diagram
 
- One of the key features of BPMN diagrams is the use of colors to represent different states or statuses of process instances. 
+ One of the key features of BPMN diagrams in SpiffWorkflow is the use of colors to represent different states or statuses of process instances.
 
  Here are the colors used in BPMN Process:
 
 1. **Grey Color:**  
-   - **Meaning:** The process instance is completed.
-   - **Implication:** All tasks or activities associated with this process have been successfully completed, and no further action is required.
+   - **Meaning:** The task is completed.
+   - **Implication:** Tasks or activities associated with this process have been successfully completed, and no further action is required.
 
 ![Colors](images/Grey_color.png)
 
 2. **Yellow Color:**  
    - **Meaning:** The process instance has started and is currently in progress.
-   - **Implication:** This color signifies that the process or task is active and ongoing. It may require monitoring or further inputs to proceed.
+   - **Implication:** This color signifies that the task is active and ongoing. It may require monitoring or further inputs to proceed.
 
    ![Colors](images/Yellow.png)
 
 
 3. **Red/Pink Color:**  
-   - **Meaning:** Indicates errors in the process.
-   - **Implication:** There might be issues or obstacles preventing the process from proceeding as expected. Immediate attention and troubleshooting may be required.
+   - **Meaning:** Indicates errors in the task.
+   - **Implication:** There might be issues or obstacles preventing the task from proceeding as expected. Immediate attention and troubleshooting may be required.
 
    ![Colors](images/Red.png)
 
 4. **Purple Color:**  
-   - **Meaning:** The process instance or specific activity has been cancelled.
-   - **Implication:** This process or task was intentionally stopped before completion. This could be due to time constraints, external triggers, or other predefined conditions that have been set as boundary events.
+   - **Meaning:** The activity has been cancelled.
+   - **Implication:** This task was intentionally stopped before completion. This could be due to time constraints, external triggers, or other predefined conditions that have been set as boundary events.
 
    ![Colors](images/Purple.png)
 
@@ -346,7 +346,7 @@ To explain the concept, we are using a relatable example involving two processes
 
 **Chef Process**:
 
-![Cheff Process](images/chef.png)
+![Chef Process](images/chef.png)
 
 1. The chef starts by receiving the order message from the waiter.
 2. After preparing the meal, the chef sends a message back to the waiter, signaling that the order is ready.
@@ -354,7 +354,7 @@ To explain the concept, we are using a relatable example involving two processes
 
 ### Setting Up the Processes
 
-The setup involves creating two process models named "Chef" and "Waiter". The waiter's process involves taking an order, setting up variables like table number, drink, and meal, and then sending a message to the chef. The chef's process starts by listening for the order message, preparing the meal, and then sending a confirmation message back to the waiter.
+The setup involves creating two process models named "Chef" and "Waiter." The waiter's process involves taking an order, setting up variables like table number, drink, and meal, and then sending a message to the chef. The chef's process starts by listening for the order message, preparing the meal, and then sending a confirmation message back to the waiter.
 
 
 ### Correlation Keys and Properties
