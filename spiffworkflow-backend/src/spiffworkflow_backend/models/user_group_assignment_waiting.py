@@ -12,17 +12,21 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     We cache it here to be applied in the event the user does log in to the system.
     """
 
-    MATCH_ALL_USERS = "*"
     __tablename__ = "user_group_assignment_waiting"
     __table_args__ = (db.UniqueConstraint("username", "group_id", name="user_group_assignment_staged_unique"),)
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False)
-    group_id = db.Column(ForeignKey(GroupModel.id), nullable=False, index=True)
+    id: int = db.Column(db.Integer, primary_key=True)
+    username: str = db.Column(db.String(255), nullable=False)
+    group_id: int = db.Column(ForeignKey(GroupModel.id), nullable=False, index=True)
 
     group = relationship("GroupModel", overlaps="groups,user_group_assignments_waiting,users")  # type: ignore
 
-    def is_match_all(self) -> bool:
-        if self.username == self.MATCH_ALL_USERS:
+    def is_wildcard(self) -> bool:
+        if self.username.startswith("REGEX:"):
             return True
         return False
+
+    def pattern_from_wildcard_username(self) -> str | None:
+        if self.is_wildcard():
+            return self.username.removeprefix("REGEX:")
+        return None

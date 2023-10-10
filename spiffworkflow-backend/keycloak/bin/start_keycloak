@@ -46,9 +46,12 @@ docker run \
   -e ROOT_LOGLEVEL=ALL \
   -e KEYCLOAK_ADMIN=admin \
   -e KEYCLOAK_ADMIN_PASSWORD=admin \
-  quay.io/keycloak/keycloak:20.0.1 start-dev \
+  quay.io/keycloak/keycloak:22.0.4 start-dev \
   -Dkeycloak.profile.feature.token_exchange=enabled \
-  -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
+  -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled \
+  -D--spi-theme-static-max-age=-1 \
+  -D--spi-theme-cache-themes=false \
+  -D--spi-theme-cache-templates=false
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cp "${script_dir}/../realm_exports/${realm_name}-realm.json" /tmp/${realm_name}-realm.json
@@ -62,8 +65,9 @@ set +e
 import_output=$(docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/${realm_name}-realm.json 2>&1)
 setup_traps
 set -e
-if ! grep -qE "Import finished successfully" <<<"$import_output"; then
-  echo -e "FAILED: $import_output"
+# if ! grep -qE "Import finished successfully" <<<"$import_output"; then
+if ! grep -qE "Realm '${realm_name}' imported" <<<"$import_output"; then
+  echo -e "IMPORT FAILED: $import_output"
   exit 1
 fi
 
@@ -75,6 +79,7 @@ if [ "${TURN_OFF_SSL:-}" == "true" ]; then
   docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/${realm_name} -s sslRequired=NONE
   echo 'turned off SSL requirement'
 fi
+
 
 docker stop keycloak
 docker start keycloak

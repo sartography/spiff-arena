@@ -1,11 +1,11 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.exceptions.error import InvalidPermissionError
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
-from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
-from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
@@ -341,7 +341,7 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
-        user_group = GroupService.find_or_create_group("group_one")
+        user_group = UserService.find_or_create_group("group_one")
         UserService.add_user_to_group(user, user_group)
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
@@ -376,10 +376,10 @@ class TestAuthorizationService(BaseTest):
         admin_user = self.find_or_create_user(username="testadmin1")
 
         # this group is not mentioned so it will get deleted
-        GroupService.find_or_create_group("group_two")
+        UserService.find_or_create_group("group_two")
         assert GroupModel.query.filter_by(identifier="group_two").first() is not None
 
-        GroupService.find_or_create_group("group_three")
+        UserService.find_or_create_group("group_three")
         assert GroupModel.query.filter_by(identifier="group_three").first() is not None
 
         group_info: list[GroupPermissionsDict] = [
@@ -441,6 +441,16 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2")
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2:yo")
         self.assert_user_has_permission(user_two, "create", "/v1.0/process-groups/hey2:yo")
+
+    def test_target_uri_matches_actual_uri(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        # exact match
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/hey", "/process-groups/hey")
+        # wildcard
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/%", "/process-groups/hey")
+        # wildcard is magical
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/%", "/process-groups")
+        # no match, since prefix doesn't match. wildcard isn't that magical.
+        assert AuthorizationService.target_uri_matches_actual_uri("/process-groups/%", "/process-models") is False
 
     def _expected_basic_permissions(self) -> list[tuple[str, str]]:
         return sorted(
@@ -518,3 +528,67 @@ class TestAuthorizationService(BaseTest):
                 ("/service-accounts", "create"),
             ]
         )
+
+    def test_can_refresh_permissions_with_regexes(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user_regex = "REGEX:^user_.*"
+        user = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="second_user_to_not_match_regex")
+
+        # this group is not mentioned so it will get deleted
+        UserService.find_or_create_group("group_two")
+        assert GroupModel.query.filter_by(identifier="group_two").first() is not None
+
+        UserService.find_or_create_group("group_three")
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+
+        group_info: list[GroupPermissionsDict] = [
+            {
+                "users": [user_regex],
+                "name": "group_one",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+            }
+        ]
+        AuthorizationService.refresh_permissions(group_info)
+        waiting_assignments = UserGroupAssignmentWaitingModel.query.filter_by(username=user_regex).all()
+        assert len(waiting_assignments) == 1
+        assert waiting_assignments[0].username == user_regex
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey", expected_result=False)
+
+        user_three_dict = {
+            "username": "user_three",
+            "email": "user_three@example.com",
+            "iss": "test_service",
+            "sub": "unique_id_three",
+        }
+        # create the user using the same method that login uses by default as a sanity check
+        # and since we are testing the authorization service here anyway
+        user_three = AuthorizationService.create_user_from_sign_in(user_three_dict)
+        assert user_three is not None
+        group_identifiers = sorted([g.identifier for g in user_three.groups])
+        assert group_identifiers == ["everybody", "group_one"]
+        self.assert_user_has_permission(user_three, "read", "/v1.0/process-groups/hey")
+
+        # removing the regex removes permissions as well
+        group_info = [
+            {
+                "users": ["second_user_to_not_match_regex"],
+                "name": "group_one",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+            }
+        ]
+        AuthorizationService.refresh_permissions(group_info)
+        waiting_assignments = UserGroupAssignmentWaitingModel.query.filter_by(username=user_regex).all()
+        assert len(waiting_assignments) == 0
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey", expected_result=False)
+        self.assert_user_has_permission(user_three, "read", "/v1.0/process-groups/hey", expected_result=False)
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey", expected_result=True)
+
+        waiting_assignments = UserGroupAssignmentWaitingModel.query.all()
+        # ensure we didn't delete all of the user group assignments
+        assert len(waiting_assignments) > 0

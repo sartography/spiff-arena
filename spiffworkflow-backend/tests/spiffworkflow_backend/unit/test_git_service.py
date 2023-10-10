@@ -14,6 +14,6 @@ class TestGitService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         output = GitService.run_shell_command_to_get_stdout(
-            ["echo", "   This output should not end in space or newline  \n"]
+            ["echo", "   This output should not end in space or newline  \n"], prepend_with_git=False
         )
         assert output == "This output should not end in space or newline"

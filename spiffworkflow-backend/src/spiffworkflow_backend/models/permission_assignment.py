@@ -41,6 +41,7 @@ class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     principal_id = db.Column(ForeignKey(PrincipalModel.id), nullable=False, index=True)
     permission_target_id = db.Column(ForeignKey(PermissionTargetModel.id), nullable=False, index=True)  # type: ignore
+    permission_target = db.relationship(PermissionTargetModel, backref="permission_assignments")
     grant_type = db.Column(db.String(50), nullable=False)
     permission = db.Column(db.String(50), nullable=False)
 

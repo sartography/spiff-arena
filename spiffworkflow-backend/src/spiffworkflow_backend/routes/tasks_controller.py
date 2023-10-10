@@ -28,6 +28,9 @@ from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
+from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -50,9 +53,6 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_o
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.authorization_service import HumanTaskAlreadyCompletedError
-from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
-from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -712,7 +712,7 @@ def task_save_draft(
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
-    task_definition_id_path = f"{':'.join(map(str,full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+    task_definition_id_path = f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
     task_draft_data_dict: TaskDraftDataDict = {
         "process_instance_id": process_instance.id,
         "task_definition_id_path": task_definition_id_path,
@@ -986,7 +986,7 @@ def _prepare_form_data(
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
-        raise api_error
+        raise api_error from wfe
 
     try:
         # form_contents is a str

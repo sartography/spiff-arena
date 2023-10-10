@@ -535,7 +535,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         onClick={copyProcessInstanceShortLink}
         kind="ghost"
         renderIcon={LinkIcon}
-        iconDescription="Copy short link for sharing"
+        iconDescription="Copy shareable short link"
         hasIconOnly
         size="lg"
       />

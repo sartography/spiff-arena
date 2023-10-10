@@ -24,9 +24,9 @@ from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
+from spiffworkflow_backend.routes.authentication_controller import _set_new_access_token_in_cookie
+from spiffworkflow_backend.routes.authentication_controller import verify_token
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
-from spiffworkflow_backend.routes.user import _set_new_access_token_in_cookie
-from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.background_processing_service import BackgroundProcessingService
@@ -273,6 +273,13 @@ def configure_sentry(app: flask.app.Flask) -> None:
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
         "before_send": before_send,
     }
+
+    # https://docs.sentry.io/platforms/python/configuration/releases
+    version_info_data = get_version_info_data()
+    if len(version_info_data) > 0:
+        git_commit = version_info_data.get("org.opencontainers.image.revision") or version_info_data.get("git_commit")
+        if git_commit is not None:
+            sentry_configs["release"] = git_commit
 
     if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROFILING_ENABLED"):
         # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62

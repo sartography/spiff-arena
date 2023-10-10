@@ -89,3 +89,75 @@ del(k)
 ```
 
 - **Post Scripts** are also available on most task types, but they execute AFTER the task is completed. These are great for user forms where you want to modify and clean up the form results before moving on to the next task.
+
+## Functions available to script tasks
+
+Please see the [implementing files themselves](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/scripts) for the gory details.
+
+### `delete_process_instances_with_criteria`
+Deletes process instances that match the provided criteria.
+
+### `get_all_permissions`
+Get all permissions currently in the system.
+
+### `get_current_task_info`
+Returns the information about the current task.
+
+### `get_current_user`
+Return the current user.
+
+### `get_data_sizes`
+Returns a dictionary of information about the size of task data.
+
+### `get_encoded_file_data`
+Returns a string which is the encoded file data. This is a very expensive call.
+
+### `get_env`
+Returns the current environment - i.e., testing, staging, production.
+
+### `get_frontend_url`
+Return the URL to the frontend.
+
+### `get_group_members`
+Return the list of usernames of the users in the given group.
+
+### `get_last_user_completing_task`
+Return the last user who completed the given task.
+
+### `get_localtime`
+Converts a Datetime object into a Datetime object for a specific timezone.
+
+### `get_process_initiator_user`
+Return the user that initiated the process instance.
+
+### `get_secret`
+Returns the value for a previously configured secret.
+
+### `get_task_data_value`
+Checks to see if given value is in task data and returns its value.
+If does not exist or is None, it returns the default value.
+
+### `get_toplevel_process_info`
+Returns a dictionary of information about the currently running process.
+
+### `get_url_for_task_with_bpmn_identifier`
+Returns the url to the task show page for a task with the given bpmn identifier.
+The script task calling this MUST be in the same process as the desired task and should be next to each other in the diagram.
+
+### `get_user_properties`
+Gets the user properties for the current user.
+
+### `markdown_file_download_link`
+Returns a string which is a string in markdown format.
+
+### `refresh_permissions`
+Add permissions using a dict.
+
+### `set_user_properties`
+Sets given user properties on the current user.
+
+### `times_executed_by_user`
+Returns a number indicating how many times the user has started an instance of the current process model.
+
+### `user_has_started_instance`
+Returns boolean to indicate if the user has started an instance of the current process model.
