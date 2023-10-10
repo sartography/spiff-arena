@@ -1,6 +1,6 @@
 import {
   convertSecondsToFormattedDateString,
-  isInteger,
+  isANumber,
   slugifyString,
   underscorizeString,
   recursivelyChangeNullAndUndefined,
@@ -24,11 +24,13 @@ test('it can keep the correct date when converting seconds to date', () => {
 });
 
 test('it can validate numeric values', () => {
-  expect(isInteger('11')).toEqual(true);
-  expect(isInteger('hey')).toEqual(false);
-  expect(isInteger('        ')).toEqual(false);
-  expect(isInteger('1 2')).toEqual(false);
-  expect(isInteger(2)).toEqual(true);
+  expect(isANumber('11')).toEqual(true);
+  expect(isANumber('hey')).toEqual(false);
+  expect(isANumber('        ')).toEqual(false);
+  expect(isANumber('1 2')).toEqual(false);
+  expect(isANumber(2)).toEqual(true);
+  expect(isANumber(2.0)).toEqual(true);
+  expect(isANumber('2.0')).toEqual(true);
 });
 
 test('it can replace undefined values in object with null', () => {

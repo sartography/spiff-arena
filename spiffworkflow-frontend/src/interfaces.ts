@@ -151,6 +151,10 @@ export interface FilterOperatorMapping {
   [key: string]: FilterOperator;
 }
 
+export interface FilterDisplayTypeMapping {
+  [key: string]: string;
+}
+
 export interface ProcessFile {
   content_type: string;
   last_modified: string;
@@ -228,6 +232,7 @@ export interface ReportColumn {
   Header: string;
   accessor: string;
   filterable: boolean;
+  display_type?: string;
 }
 
 export interface ReportColumnForEditing extends ReportColumn {

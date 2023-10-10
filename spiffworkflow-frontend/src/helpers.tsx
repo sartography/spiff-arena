@@ -351,8 +351,10 @@ export const setPageTitle = (items: Array<string>) => {
   document.title = ['SpiffWorkflow'].concat(items).join(' - ');
 };
 
-export const isInteger = (str: string | number) => {
-  return /^\d+$/.test(str.toString());
+// calling it isANumber to avoid confusion with other libraries
+// that have isNumber methods
+export const isANumber = (str: string | number) => {
+  return /^\d+(\.\d+)?$/.test(str.toString());
 };
 
 export const encodeBase64 = (data: string) => {

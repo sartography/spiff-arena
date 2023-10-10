@@ -1,3 +1,4 @@
+import { intervalToDuration } from 'date-fns';
 import React, {
   useCallback,
   useEffect,
@@ -50,6 +51,7 @@ import {
   REFRESH_TIMEOUT_SECONDS,
   titleizeString,
   truncateString,
+  isANumber,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -71,6 +73,7 @@ import {
   ErrorForDisplay,
   PermissionsToCheck,
   FilterOperatorMapping,
+  FilterDisplayTypeMapping,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -177,6 +180,11 @@ export default function ProcessInstanceListTable({
     'Is Not Empty': { id: 'is_not_empty', requires_value: false },
   };
 
+  const filterDisplayTypes: FilterDisplayTypeMapping = {
+    date_time: 'Date / time',
+    duration: 'Duration',
+  };
+
   const processInstanceListPathPrefix =
     variant === 'all' ? '/process-instances/all' : '/process-instances/for-me';
   const processInstanceShowPathPrefix =
@@ -216,6 +224,8 @@ export default function ProcessInstanceListTable({
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
   const [withOldestOpenTask, setWithOldestOpenTask] =
+    useState<boolean>(showActionsColumn);
+  const [withRelationToMe, setwithRelationToMe] =
     useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
@@ -343,6 +353,7 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
     setProcessInitiatorSelection(null);
     setWithOldestOpenTask(false);
+    setwithRelationToMe(false);
     setSystemReport(null);
     setSelectedUserGroup(null);
     if (updateRequiresRefilter) {
@@ -410,6 +421,8 @@ export default function ProcessInstanceListTable({
             setProcessInitiatorSelection(reportFilter.field_value || '');
           } else if (reportFilter.field_name === 'with_oldest_open_task') {
             setWithOldestOpenTask(reportFilter.field_value);
+          } else if (reportFilter.field_name === 'with_relation_to_me') {
+            setwithRelationToMe(reportFilter.field_value);
           } else if (reportFilter.field_name === 'user_group_identifier') {
             setSelectedUserGroup(reportFilter.field_value);
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
@@ -781,6 +794,11 @@ export default function ProcessInstanceListTable({
     );
     insertOrUpdateFieldInReportMetadata(
       newReportMetadata,
+      'with_relation_to_me',
+      withRelationToMe
+    );
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
       'user_group_identifier',
       selectedUserGroup
     );
@@ -838,7 +856,11 @@ export default function ProcessInstanceListTable({
   ) => {
     return (
       <>
-        <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
+        <DatePicker
+          id={`date-picker-parent-${name}`}
+          dateFormat={DATE_FORMAT_CARBON}
+          datePickerType="single"
+        >
           <DatePickerInput
             id={`date-picker-${name}`}
             placeholder={DATE_FORMAT_FOR_DISPLAY}
@@ -860,7 +882,7 @@ export default function ProcessInstanceListTable({
         </DatePicker>
         <TimePicker
           invalid={timeInvalid}
-          id="time-picker"
+          id={`time-picker-${name}`}
           labelText="Select a time"
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
           value={initialTime}
@@ -1128,6 +1150,18 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  const setFilterDisplayType = (selectedItem: string) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      const displayType = getKeyByValue(filterDisplayTypes, selectedItem);
+      reportColumnToOperateOnCopy.display_type = displayType;
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+      setRequiresRefilter(true);
+    }
+  };
+
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
@@ -1175,6 +1209,22 @@ export default function ProcessInstanceListTable({
       />,
     ]);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
+      formElements.push(
+        <Dropdown
+          titleText="Display type"
+          id="report-column-display-type"
+          items={[''].concat(Object.values(filterDisplayTypes))}
+          selectedItem={
+            reportColumnToOperateOn.display_type
+              ? filterDisplayTypes[reportColumnToOperateOn.display_type]
+              : ''
+          }
+          onChange={(value: any) => {
+            setFilterDisplayType(value.selectedItem);
+            setRequiresRefilter(true);
+          }}
+        />
+      );
       formElements.push(
         <Dropdown
           titleText="Operator"
@@ -1358,6 +1408,19 @@ export default function ProcessInstanceListTable({
               }}
             />
           </Column>
+          {variant === 'all' ? (
+            <Column md={4} lg={8} sm={2}>
+              <Checkbox
+                labelText="Include tasks for me"
+                id="with-relation-to-me"
+                checked={withRelationToMe}
+                onChange={(value: any) => {
+                  setwithRelationToMe(value.target.checked);
+                  setRequiresRefilter(true);
+                }}
+              />
+            </Column>
+          ) : null}
         </Grid>
         <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
       </>
@@ -1628,6 +1691,39 @@ export default function ProcessInstanceListTable({
     return value;
   };
 
+  const formatDateTime = (_row: any, value: any) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    let dateInSeconds = value;
+    if (!isANumber(value)) {
+      const timeArgs = value.split('T');
+      dateInSeconds = convertDateAndTimeStringsToSeconds(
+        timeArgs[0],
+        timeArgs[1]
+      );
+    }
+    if (dateInSeconds) {
+      return convertSecondsToFormattedDateTime(dateInSeconds);
+    }
+    return null;
+  };
+
+  const formatDuration = (_row: any, value: any) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    const duration = intervalToDuration({ start: 0, end: value * 1000 });
+    let durationString = `${duration.minutes}m ${duration.seconds}s`;
+    if (duration.hours !== undefined && duration.hours > 0) {
+      durationString = `${duration.hours}h ${durationString}`;
+    }
+    if (duration.days !== undefined && duration.days > 0) {
+      durationString = `${duration.days}d ${durationString}`;
+    }
+    return durationString;
+  };
+
   const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
@@ -1640,9 +1736,14 @@ export default function ProcessInstanceListTable({
       task_updated_at_in_seconds: formatSecondsForDisplay,
       last_milestone_bpmn_name: formatLastMilestone,
     };
+    const displayTypeFormatters: Record<string, any> = {
+      date_time: formatDateTime,
+      duration: formatDuration,
+    };
     const columnAccessor = column.accessor as keyof ProcessInstance;
-    const formatter =
-      reportColumnFormatters[columnAccessor] ?? defaultFormatter;
+    const formatter = column.display_type
+      ? displayTypeFormatters[column.display_type]
+      : reportColumnFormatters[columnAccessor] ?? defaultFormatter;
     const value = row[columnAccessor];
 
     if (columnAccessor === 'status') {

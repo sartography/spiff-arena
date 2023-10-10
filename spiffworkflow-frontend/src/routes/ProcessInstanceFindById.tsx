@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Stack, TextInput } from '@carbon/react';
-import { isInteger, modifyProcessIdentifierForPathParam } from '../helpers';
+import { isANumber, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
 import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
 import { ProcessInstance } from '../interfaces';
@@ -42,7 +42,7 @@ export default function ProcessInstanceFindById() {
   };
 
   const handleProcessInstanceIdChange = (event: any) => {
-    if (isInteger(event.target.value)) {
+    if (isANumber(event.target.value)) {
       setProcessInstanceIdValid(true);
     } else {
       setProcessInstanceIdValid(false);
