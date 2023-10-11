@@ -44,6 +44,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from SpiffWorkflow.util.task import TaskState
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.json import JSONFileDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
@@ -93,6 +94,7 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
 
 StartEvent.register_converter(SPIFF_SPEC_CONFIG)
+KKVDataStore.register_converter(SPIFF_SPEC_CONFIG)
 JSONDataStore.register_converter(SPIFF_SPEC_CONFIG)
 JSONFileDataStore.register_converter(SPIFF_SPEC_CONFIG)
 TypeaheadDataStore.register_converter(SPIFF_SPEC_CONFIG)
