@@ -164,9 +164,8 @@ class AuthorizationService:
     @classmethod
     def target_uri_matches_actual_uri(cls, target_uri: str, actual_uri: str) -> bool:
         if target_uri.endswith("%"):
-            return actual_uri.startswith(target_uri.removesuffix("%")) or actual_uri == target_uri.removesuffix(
-                "%"
-            ).removesuffix("/")
+            target_uri_without_suffix = target_uri.removesuffix("%").removesuffix(":").removesuffix("/")
+            return actual_uri.startswith(target_uri_without_suffix) or actual_uri == target_uri_without_suffix
         return actual_uri == target_uri
 
     @classmethod
