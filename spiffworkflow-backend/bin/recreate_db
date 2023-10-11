@@ -42,7 +42,7 @@ if [[ "${1:-}" == "clean" ]]; then
     exit 1
   fi
 
-  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "mysql" ]]; then
+  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "sqlite" ]]; then
     rm -f ./src/instance/*.sqlite3
   else
     mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"

@@ -9,6 +9,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from sqlalchemy import or_
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy import text
 
 
 class VersionOneThree:
@@ -221,7 +222,13 @@ class VersionOneThree:
                 db.session.add(task_definition)
 
     def update_tasks_where_last_change_is_null(self) -> None:
-        task_models = TaskModel.query.filter(TaskModel.properties_json.like('%last_state_change": null%')).all()  # type: ignore
+        # task_models = db.session.query(TaskModel).filter(TaskModel.properties_json["last_state_change"] == None).all()
+        # task_models = db.session.query(TaskModel).filter(text("properties_json->['last_state_change'] = null")).all()
+        task_models = db.session.query(TaskModel).filter(
+            TaskModel.properties_json.op("->>")("last_state_changed") == None
+            ).all()
+        # task_models = TaskModel.query.filter(TaskModel.properties_json.like('%last_state_change": null%')).all()  # type: ignore
+        print(f"task_models: {task_models}")
         for task_model in task_models:
             parent_task_model = task_model.parent_task_model()
 
@@ -234,5 +241,6 @@ class VersionOneThree:
 
             task_model.properties_json["last_state_change"] = last_state_change
             task_model.properties_json["task_spec"] = task_model.task_definition.bpmn_identifier
+            print(f"task_model.properties_json: {task_model.properties_json}")
             flag_modified(task_model, "properties_json")  # type: ignore
         db.session.bulk_save_objects(task_models)
