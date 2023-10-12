@@ -53,7 +53,8 @@ The `docker-compose.yml` file is for running a full-fledged instance of spiff-ar
 To start understanding the system, you might:
 
  1. Explore the demo site via the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started)
- 1. clone this repo, `cd docs`, run `./bin/build`, and open your browser to [http://127.0.0.1:8000](http://127.0.0.1:8000) to view (and ideally edit!) the docs
+ 1. Clone this repo, `cd docs`, run `./bin/build`, and open your browser to [http://127.0.0.1:8000](http://127.0.0.1:8000) to view (and ideally edit!) the docs
+ 1. Check out our [GitHub issues](https://github.com/sartography/spiff-arena/issues), find something you like, and ask for help on discord
 
 Please ignore the `SpiffWorkflow` directory at the root of spiff-arena.
 We use https://github.com/sartography/SpiffWorkflow instead.
