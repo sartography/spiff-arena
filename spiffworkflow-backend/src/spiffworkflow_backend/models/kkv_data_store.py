@@ -9,8 +9,8 @@ class KKVDataStoreModel(SpiffworkflowBaseDBModel):
     __tablename__ = "kkv_data_store"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    namespace: str = db.Column(db.String(255), index=True)
-    key: str = db.Column(db.String(255), index=True)
-    data: dict = db.Column(db.JSON)
+    top_level_key: str = db.Column(db.String(255), index=True)
+    secondary_key: str = db.Column(db.String(255), index=True)
+    value: dict = db.Column(db.JSON)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
