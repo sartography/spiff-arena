@@ -102,13 +102,14 @@ class ServiceTaskDelegate:
                 if "spiff__logs" in parsed_response:
                     for log in parsed_response["spiff__logs"]:
                         current_app.logger.info(f"Log from connector {name}: {log}")
-                    if "api_response" in parsed_response:
-                        parsed_response = parsed_response["api_response"]
-                        response_text = json.dumps(parsed_response)
+                    # if "api_response" in parsed_response:
+                    #     parsed_response = parsed_response["api_response"]
+                    #     response_text = json.dumps(parsed_response)
 
                 if proxied_response.status_code >= 300:
                     message = ServiceTaskDelegate.get_message_for_status(proxied_response.status_code)
                     error = f"Received an unexpected response from service {name} : {message}"
+                    print(f"parsed_response: {parsed_response}")
                     if "error" in parsed_response:
                         error_response = parsed_response["error"]
                         if isinstance(error_response, list | dict):
