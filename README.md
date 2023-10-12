@@ -50,11 +50,20 @@ The `docker-compose.yml` file is for running a full-fledged instance of spiff-ar
 
 ## Contributing
 
-This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects.
-Feel free to ignore that and drop us a pull request.
-If you need to push back from the monorepo to one of the individual repos, here's an example command (and find other scripts we use in the `bin` directory):
+To start understanding the system, you might:
 
-    git subtree push --prefix=spiffworkflow-frontend git@github.com:sartography/spiffworkflow-frontend.git add_md_file
+ 1. Explore the demo site via the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started)
+ 1. Clone this repo, `cd docs`, run `./bin/build`, and open your browser to [http://127.0.0.1:8000](http://127.0.0.1:8000) to view (and ideally edit!) the docs
+ 1. Check out our [GitHub issues](https://github.com/sartography/spiff-arena/issues), find something you like, and ask for help on discord
+
+Please ignore the `SpiffWorkflow` directory at the root of spiff-arena.
+We use https://github.com/sartography/SpiffWorkflow instead.
+
+## Monorepo
+
+This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects. FYI, some scripts:
+
+    ls bin | grep subtree
 
 ## License
 
