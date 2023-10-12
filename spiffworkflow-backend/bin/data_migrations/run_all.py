@@ -41,7 +41,7 @@ def put_serializer_version_onto_numeric_track() -> None:
 
 def all_potentially_relevant_process_instances() -> list[ProcessInstanceModel]:
     return ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.spiff_serializer_version < Version2.VERSION,
+        ProcessInstanceModel.spiff_serializer_version < Version2.version(),
         ProcessInstanceModel.status.in_(ProcessInstanceModel.non_terminal_statuses()),
     ).all()
 

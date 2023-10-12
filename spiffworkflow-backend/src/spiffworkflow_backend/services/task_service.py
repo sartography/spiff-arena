@@ -5,8 +5,8 @@ from hashlib import sha256
 from typing import TypedDict
 from uuid import UUID
 
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -261,7 +261,7 @@ class TaskService:
         It also returns the relating json_data object so they can be imported later.
         """
 
-        new_properties_json = self.serializer.task_to_dict(spiff_task)
+        new_properties_json = self.serializer.to_dict(spiff_task)
 
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
@@ -318,7 +318,7 @@ class TaskService:
             if self.process_instance.bpmn_process_id is None:
                 spiff_workflow = spiff_task.workflow.top_workflow
                 bpmn_process = self.add_bpmn_process(
-                    bpmn_process_dict=self.serializer.workflow_to_dict(spiff_workflow),
+                    bpmn_process_dict=self.serializer.to_dict(spiff_workflow),
                     spiff_workflow=spiff_workflow,
                 )
         else:
@@ -326,7 +326,7 @@ class TaskService:
             if bpmn_process is None:
                 spiff_workflow = spiff_task.workflow
                 bpmn_process = self.add_bpmn_process(
-                    bpmn_process_dict=self.serializer.subworkflow_to_dict(subprocess),
+                    bpmn_process_dict=self.serializer.to_dict(subprocess),
                     top_level_process=self.process_instance.bpmn_process,
                     bpmn_process_guid=subprocess_guid,
                     spiff_workflow=spiff_workflow,
@@ -745,5 +745,5 @@ class TaskService:
     ) -> dict:
         user_defined_state = spiff_task.workflow.script_engine.environment.user_defined_state()
         # this helps to convert items like datetime objects to be json serializable
-        converted_data: dict = serializer.data_converter.convert(user_defined_state)
+        converted_data: dict = serializer.registry.convert(user_defined_state)
         return converted_data

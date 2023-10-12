@@ -2,13 +2,16 @@ import time
 
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.task_service import TaskService
 
 
-class Version2:
-    VERSION = "2"
+class Version2(DataMigrationBase):
+    @classmethod
+    def version(cls) -> str:
+        return "2"
 
     @classmethod
     def run(cls, process_instance: ProcessInstanceModel) -> None:
