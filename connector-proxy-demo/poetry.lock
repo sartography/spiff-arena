@@ -120,20 +120,22 @@ resolved_reference = "ad386286bcc72eeb000b9b053596dfee40f7c6b5"
 
 [[package]]
 name = "connector-http"
-version = "0.2.0"
+version = "1.0.0"
 description = "Make HTTP Requests available to SpiffWorkflow Service Tasks"
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 requests = "^2.28.2"
-spiffworkflow-connector-command = {path = "../spiffworkflow-connector-command", develop = true}
+spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 [package.source]
-type = "directory"
-url = "../../connector-http"
+type = "git"
+url = "https://github.com/sartography/connector-http.git"
+reference = "HEAD"
+resolved_reference = "8ecf7a4338f82ef522575a0e41ecbc7441814c03"
 
 [[package]]
 name = "connector-slack"
@@ -516,33 +518,37 @@ description = "Make HTTP Requests available to SpiffWorkflow Service Tasks"
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 requests = "^2.28.2"
 typing-extensions = "^4.8.0"
 
 [package.source]
-type = "directory"
-url = "../../spiffworkflow-connector-command"
+type = "git"
+url = "https://github.com/sartography/spiffworkflow-connector-command.git"
+reference = "main"
+resolved_reference = "88bcbafdb1ffbf3f85fa9f13e05e41ace48b0988"
 
 [[package]]
 name = "spiffworkflow-proxy"
-version = "0.1.0"
+version = "1.0.0"
 description = "A blueprint that can allow (and limit) SpiffWorkflow's Service Tasks access to an organizations API's, such as connections to AWS Services and existing applications."
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 Flask = "^2.2"
 Flask-OAuthlib = "^0.9.6"
-spiffworkflow-connector-command = {path = "../spiffworkflow-connector-command", develop = true}
+spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 [package.source]
-type = "directory"
-url = "../../spiffworkflow-proxy"
+type = "git"
+url = "https://github.com/sartography/spiffworkflow-proxy"
+reference = "HEAD"
+resolved_reference = "53fcd3eb49c345a06fd787a16e2439fe1e920181"
 
 [[package]]
 name = "typing-extensions"
@@ -591,4 +597,4 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7b5e429b84286ff87ce6bdcfea203f96166ed1963eed936b84a5a2384bae6906"
+content-hash = "6f96f7239cd02d2790664a47c0d7085a7a634825d7876b32331d2d8c5d1c5994"
