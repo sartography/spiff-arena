@@ -152,15 +152,15 @@ class ServiceTaskDelegate:
 
                 # only v2 responses have command_response
                 if "command_response" in parsed_response:
-                    parsed_response["operator_identifier"] = operator_identifier
                     merged_responses = {**parsed_response["command_response"], **(parsed_response["error"] or {})}
+                    merged_responses["operator_identifier"] = operator_identifier
                     response_text = json.dumps(merged_responses)
 
                 # v2 support
                 if (
                     "error" in parsed_response
-                    and "error_code" in parsed_response["error"]
                     and isinstance(parsed_response["error"], dict)
+                    and "error_code" in parsed_response["error"]
                 ):
                     error_dict = parsed_response["error"]
                     error_dict["operator_identifier"] = operator_identifier

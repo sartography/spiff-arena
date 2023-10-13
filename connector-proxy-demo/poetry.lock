@@ -139,36 +139,40 @@ resolved_reference = "8ecf7a4338f82ef522575a0e41ecbc7441814c03"
 
 [[package]]
 name = "connector-slack"
-version = "0.1.0"
+version = "1.0.0"
 description = "Send messages to Slack through a SpiffWorkflow Service Task"
 optional = false
-python-versions = "^3.11"
+python-versions = "^3.10"
 files = []
 develop = false
 
 [package.dependencies]
 requests = "^2.28.1"
+spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 [package.source]
 type = "git"
 url = "https://github.com/sartography/connector-slack.git"
 reference = "HEAD"
-resolved_reference = "8390faca568f769f37412c7a58041bbad1695f31"
+resolved_reference = "49477e08735bf9d0ad127026cb9ec8a9497009a5"
 
 [[package]]
 name = "connector-smtp"
-version = "0.1.0"
+version = "1.0.0"
 description = "Make SMTP Requests available to SpiffWorkflow Service Tasks"
 optional = false
 python-versions = "^3.9"
 files = []
 develop = false
 
+[package.dependencies]
+spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
+
 [package.source]
 type = "git"
 url = "https://github.com/sartography/connector-smtp.git"
 reference = "HEAD"
-resolved_reference = "680a8f408d95fa3d64bb20c205437a98002e2f17"
+resolved_reference = "353e51546f3a1c2c4960b1e3a69f5df005dbda1d"
 
 [[package]]
 name = "Flask"
