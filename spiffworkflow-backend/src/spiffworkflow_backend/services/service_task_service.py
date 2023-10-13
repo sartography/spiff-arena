@@ -1,3 +1,4 @@
+import copy
 import json
 from typing import Any
 
@@ -5,6 +6,13 @@ import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
+from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
+from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # type: ignore
+from SpiffWorkflow.spiff.specs.event_definitions import EscalationEventDefinition
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -19,6 +27,26 @@ class ConnectorProxyError(Exception):
 def connector_proxy_url() -> Any:
     """Returns the connector proxy url."""
     return current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"]
+
+
+class CustomServiceTask(ServiceTask):  # type: ignore
+    def _execute(self, spiff_task: SpiffTask) -> bool:
+        def evaluate(param: dict) -> dict:
+            param["value"] = spiff_task.workflow.script_engine.evaluate(spiff_task, param["value"])
+            return param
+
+        operation_params_copy = copy.deepcopy(self.operation_params)
+        evaluated_params = {k: evaluate(v) for k, v in operation_params_copy.items()}
+
+        try:
+            result = spiff_task.workflow.script_engine.call_service(self.operation_name, evaluated_params, spiff_task)
+        except Exception as e:
+            wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
+            wte.add_note(str(e))
+            raise wte from e
+        parsed_result = json.loads(result)
+        spiff_task.data[self._result_variable(spiff_task)] = parsed_result
+        return True
 
 
 class ServiceTaskDelegate:
@@ -52,8 +80,8 @@ class ServiceTaskDelegate:
                 value[key] = cls.value_with_secrets_replaced(v)
         return value
 
-    @staticmethod
-    def get_message_for_status(code: int) -> str:
+    @classmethod
+    def get_message_for_status(cls, code: int) -> str:
         """Given a code like 404, return a string like: The requested resource was not found."""
         msg = f"HTTP Status Code {code}."
         if code == 301:
@@ -78,11 +106,26 @@ class ServiceTaskDelegate:
         return msg
 
     @classmethod
-    def call_connector(cls, name: str, bpmn_params: Any, task_data: Any) -> str:
+    def catch_error_codes(cls, spiff_task: SpiffTask, error: Any) -> None:
+        top_level_workflow = spiff_task.workflow.top_workflow
+        task_caught_event = False
+        for event_definition_class in [ErrorEventDefinition, EscalationEventDefinition]:
+            event_definition = event_definition_class(name=error["error_code"], code=error["error_code"])
+            bpmn_event = BpmnEvent(event_definition, payload=error)
+            tasks = top_level_workflow.get_tasks(catches_event=bpmn_event, state=TaskState.NOT_FINISHED_MASK)
+            if len(tasks) > 0:
+                top_level_workflow.catch(bpmn_event)
+                task_caught_event = True
+            if task_caught_event is False:
+                raise ConnectorProxyError(error)
+
+    @classmethod
+    def call_connector(cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask) -> str:
         """Calls a connector via the configured proxy."""
-        call_url = f"{connector_proxy_url()}/v1/do/{name}"
-        current_app.logger.info(f"Calling connector proxy using connector: {name}")
-        with sentry_sdk.start_span(op="connector_by_name", description=name):
+        call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
+        current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
+        task_data = spiff_task.data
+        with sentry_sdk.start_span(op="connector_by_name", description=operator_identifier):
             with sentry_sdk.start_span(op="call-connector", description=call_url):
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__task_data"] = task_data
@@ -101,15 +144,33 @@ class ServiceTaskDelegate:
 
                 if "spiff__logs" in parsed_response:
                     for log in parsed_response["spiff__logs"]:
-                        current_app.logger.info(f"Log from connector {name}: {log}")
-                    # if "api_response" in parsed_response:
-                    #     parsed_response = parsed_response["api_response"]
-                    #     response_text = json.dumps(parsed_response)
+                        current_app.logger.info(f"Log from connector {operator_identifier}: {log}")
+                    # legacy v1 support
+                    if "api_response" in parsed_response:
+                        parsed_response = parsed_response["api_response"]
+                        response_text = json.dumps(parsed_response)
 
-                if proxied_response.status_code >= 300:
-                    message = ServiceTaskDelegate.get_message_for_status(proxied_response.status_code)
-                    error = f"Received an unexpected response from service {name} : {message}"
-                    print(f"parsed_response: {parsed_response}")
+                # only v2 responses have command_response
+                if "command_response" in parsed_response:
+                    parsed_response["operator_identifier"] = operator_identifier
+                    merged_responses = {**parsed_response["command_response"], **(parsed_response["error"] or {})}
+                    response_text = json.dumps(merged_responses)
+
+                # v2 support
+                if (
+                    "error" in parsed_response
+                    and "error_code" in parsed_response["error"]
+                    and isinstance(parsed_response["error"], dict)
+                ):
+                    error_dict = parsed_response["error"]
+                    error_dict["operator_identifier"] = operator_identifier
+                    cls.catch_error_codes(spiff_task, error_dict)
+                elif proxied_response.status_code >= 300:
+                    # this can happen for both v1 and v2 connector responses
+                    # we used to raise errors for v1 responses, and we need to make that happen
+                    # if there is an error with no error code, that is v1
+                    message = cls.get_message_for_status(proxied_response.status_code)
+                    error = f"Received an unexpected response from service {operator_identifier} : {message}"
                     if "error" in parsed_response:
                         error_response = parsed_response["error"]
                         if isinstance(error_response, list | dict):
@@ -119,9 +180,10 @@ class ServiceTaskDelegate:
                     if json_parse_error:
                         error += "A critical component (The connector proxy) is not responding correctly."
                     raise ConnectorProxyError(error)
+
                 elif json_parse_error:
                     raise ConnectorProxyError(
-                        f"There is a problem with this connector: '{name}'. "
+                        f"There is a problem with this connector: '{operator_identifier}'. "
                         "Responses for connectors must be in JSON format. "
                     )
 

@@ -2360,17 +2360,15 @@ description = "A workflow framework and BPMN/DMN Processor"
 optional = false
 python-versions = "*"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 configparser = "*"
 lxml = "*"
 
 [package.source]
-type = "git"
-url = "https://github.com/sartography/SpiffWorkflow"
-reference = "main"
-resolved_reference = "c3a49431ecbe50fd44c89ad07aa72a01fff79b42"
+type = "directory"
+url = "../../SpiffWorkflow"
 
 [[package]]
 name = "sqlalchemy"
@@ -2800,4 +2798,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "38add9297ce0c445da94865bbdf82bb37c95b57e056ec195b3c68704236fcec5"
+content-hash = "022ba0c2d2180e11f980f758eaa0a785e05ce1e29f0a24501eb059fe6663c810"
