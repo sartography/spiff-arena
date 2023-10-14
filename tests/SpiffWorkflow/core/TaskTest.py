@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 import unittest
 import re
 
-from SpiffWorkflow.task import Task, TaskState
+from SpiffWorkflow.task import Task, TaskState, TaskIterator, TaskFilter
 from SpiffWorkflow.specs.WorkflowSpec import WorkflowSpec
 from SpiffWorkflow.specs.Simple import Simple
 
@@ -11,6 +9,7 @@ from SpiffWorkflow.specs.Simple import Simple
 class MockWorkflow(object):
     def __init__(self, spec):
         self.spec = spec
+        self.tasks = {}
 
 
 class TaskTest(unittest.TestCase):
@@ -69,16 +68,8 @@ class TaskTest(unittest.TestCase):
 
         # Run the iterator test.
         result = ''
-        for thetask in Task.Iterator(root, TaskState.MAYBE):
+        for thetask in TaskIterator(root, task_filter=TaskFilter(state=TaskState.MAYBE)):
             result += thetask.get_dump(0, False) + '\n'
         self.assertTrue(expected2.match(result),
                         'Expected:\n' + repr(expected2.pattern) + '\n' +
                         'but got:\n' + repr(result))
-
-
-def suite():
-    taskSuite = unittest.TestLoader().loadTestsFromTestCase(TaskTest)
-    return unittest.TestSuite([taskSuite])
-
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())

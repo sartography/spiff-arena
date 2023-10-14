@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 import unittest
 
+from SpiffWorkflow.task import TaskFilter
 from SpiffWorkflow.specs.Join import Join
 from SpiffWorkflow.specs.Simple import Simple
 from SpiffWorkflow.specs.WorkflowSpec import WorkflowSpec
@@ -16,8 +16,11 @@ class TaskSpecTest(unittest.TestCase):
             del self.wf_spec.task_specs['testtask']
         return TaskSpec(self.wf_spec, 'testtask', description='foo')
 
+    def get_first_task_from_spec_name(self, workflow, spec_name):
+        return workflow.get_next_task(task_filter=TaskFilter(spec_name=spec_name))
+
     def setUp(self):
-        self.wf_spec = WorkflowSpec()
+        self.wf_spec = WorkflowSpec(addstart=True)
         self.spec = self.create_instance()
 
     def testConstructor(self):
@@ -39,12 +42,12 @@ class TaskSpecTest(unittest.TestCase):
         return self.testSetData()
 
     def testConnect(self):
-        self.assertEqual(self.spec.outputs, [])
-        self.assertEqual(self.spec.inputs, [])
+        self.assertEqual(self.spec._outputs, [])
+        self.assertEqual(self.spec._inputs, [])
         spec = self.create_instance()
         self.spec.connect(spec)
-        self.assertEqual(self.spec.outputs, [spec])
-        self.assertEqual(spec.inputs, [self.spec])
+        self.assertEqual(self.spec._outputs, [spec.name])
+        self.assertEqual(spec._inputs, [self.spec.name])
 
     def testTest(self):
         # Should fail because the TaskSpec has no id yet.
