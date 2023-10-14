@@ -26,6 +26,8 @@ Features
 Running Locally
 ---------------
 
+See detailed instructions at the root of spiff-arena, but:
+
 * Install libraries using poetry:
 
 .. code:: console
@@ -73,11 +75,7 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 
 .. _@cjolowicz: https://github.com/cjolowicz
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _MIT license: https://opensource.org/licenses/MIT
 .. _PyPI: https://pypi.org/
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
-.. _file an issue: https://github.com/sartography/spiffworkflow-backend/issues
-.. _pip: https://pip.pypa.io/
+.. _file an issue: https://github.com/sartography/spiffworkflow-arena/issues
 .. github-only
-.. _Contributor Guide: CONTRIBUTING.rst
-.. _Usage: https://spiffworkflow-backend.readthedocs.io/en/latest/usage.html
