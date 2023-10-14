@@ -5,10 +5,10 @@ import {
   setExtensionValue,
 } from '../extensionHelpers';
 
-const spiffExtensionOptions = {};
+export const spiffExtensionOptions = {};
 
 export const OPTION_TYPE = {
-  json_files: 'json_files',
+  json_schema_files: 'json_schema_files',
   dmn_files: 'dmn_files',
 };
 
@@ -52,6 +52,10 @@ export function SpiffExtensionSelect(props) {
   }
   const getOptions = () => {
     const optionList = [];
+    optionList.push({
+      label: '',
+      value: '',
+    });
     if (
       optionType in spiffExtensionOptions &&
       spiffExtensionOptions[optionType] !== null
@@ -81,7 +85,7 @@ export function SpiffExtensionSelect(props) {
 function requestOptions(eventBus, element, commandStack, optionType) {
   // Little backwards, but you want to assure you are ready to catch, before you throw
   // or you risk a race condition.
-  eventBus.once(`spiff.${optionType}.returned`, (event) => {
+  eventBus.on(`spiff.${optionType}.returned`, (event) => {
     spiffExtensionOptions[optionType] = event.options;
   });
   eventBus.fire(`spiff.${optionType}.requested`, { eventBus });

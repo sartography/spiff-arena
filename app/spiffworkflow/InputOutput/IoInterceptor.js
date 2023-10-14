@@ -30,7 +30,7 @@ export default class IoInterceptor extends CommandInterceptor {
         let process = context.parent.businessObject;
         let ioSpec = assureIOSpecificationExists(process, bpmnFactory);
         let di = context.shape.di;
-        let generator = new IdGenerator(type_name), ioSpecification = process.get('ioSpecification');
+        let generator = new IdGenerator(type_name);
         let dataIO = bpmnFactory.create(type, { id: generator.next() });
         context.shape.businessObject = dataIO;
         dataIO.$parent = ioSpec;
@@ -40,9 +40,11 @@ export default class IoInterceptor extends CommandInterceptor {
         bpmnUpdater.updateBounds(context.shape);
 
         if (type == 'bpmn:DataInput') {
-          collectionAdd(ioSpecification.get('dataInputs'), dataIO);
+          collectionAdd(ioSpec.inputSets[0].get('dataInputRefs'), dataIO);
+          collectionAdd(ioSpec.get('dataInputs'), dataIO);
         } else {
-          collectionAdd(ioSpecification.get('dataOutputs'), dataIO);
+          collectionAdd(ioSpec.outputSets[0].get('dataOutputRefs'), dataIO);
+          collectionAdd(ioSpec.get('dataOutputs'), dataIO);
         }
       }
     });
@@ -54,8 +56,10 @@ export default class IoInterceptor extends CommandInterceptor {
         let process = context.shape.parent.businessObject;
         let ioSpec = assureIOSpecificationExists(process, bpmnFactory);
         if (type == 'bpmn:DataInput') {
+          collectionRemove(ioSpec.inputSets[0].get('dataInputRefs'), context.shape.businessObject);
           collectionRemove(ioSpec.get('dataInputs'), context.shape.businessObject);
         } else {
+          collectionRemove(ioSpec.outputSets[0].get('dataOutputRefs'), context.shape.businessObject);
           collectionRemove(ioSpec.get('dataOutputs'), context.shape.businessObject);
         }
         if (context.shape.di.$parent) {

@@ -18,7 +18,7 @@ export function MessageVariable(props) {
         return messageElement.extensionElements
           .get('values')
           .filter(function getInstanceOfType(e) {
-            return e.$instanceOf('spiffworkflow:messageVariable');
+            return e.$instanceOf('spiffworkflow:MessageVariable');
           })[0];
       }
     }
@@ -37,7 +37,7 @@ export function MessageVariable(props) {
     let messageVariableObject = getMessageVariableObject();
     if (!messageVariableObject) {
       messageVariableObject = messageElement.$model.create(
-        'spiffworkflow:messageVariable'
+        'spiffworkflow:MessageVariable'
       );
       if (!messageElement.extensionElements) {
         messageElement.extensionElements = messageElement.$model.create(

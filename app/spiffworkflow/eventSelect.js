@@ -148,7 +148,7 @@ function getTextFieldForExtension(eventDetails, label, description, catching) {
     const debounce = useService('debounceInput');
     const translate = useService('translate');
     const root = getRoot(element.businessObject);
-    const extensionName = (catching) ? 'spiffworkflow:variableName' : 'spiffworkflow:payloadExpression';
+    const extensionName = (catching) ? 'spiffworkflow:VariableName' : 'spiffworkflow:PayloadExpression';
 
     const getEvent = () => {
       const eventDef = element.businessObject.eventDefinitions.find(v => v.$type == eventDefType);

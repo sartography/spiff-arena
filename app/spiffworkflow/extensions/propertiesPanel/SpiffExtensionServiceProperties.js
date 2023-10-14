@@ -12,9 +12,11 @@ let serviceTaskOperators = [];
 const previouslyUsedServiceTaskParameterValuesHash = {};
 
 const LOW_PRIORITY = 500;
-const SERVICE_TASK_OPERATOR_ELEMENT_NAME = `${SPIFFWORKFLOW_XML_NAMESPACE}:serviceTaskOperator`;
-const SERVICE_TASK_PARAMETERS_ELEMENT_NAME = `${SPIFFWORKFLOW_XML_NAMESPACE}:parameters`;
-const SERVICE_TASK_PARAMETER_ELEMENT_NAME = `${SPIFFWORKFLOW_XML_NAMESPACE}:parameter`;
+// I'm not going to change these variable names, but this is actually the name of the modeller
+// type (as defined in moddle/spiffworkflow.json) NOT the element name (which is lowercase)
+const SERVICE_TASK_OPERATOR_ELEMENT_NAME = `${SPIFFWORKFLOW_XML_NAMESPACE}:ServiceTaskOperator`;
+const SERVICE_TASK_PARAMETERS_ELEMENT_NAME = `${SPIFFWORKFLOW_XML_NAMESPACE}:Parameters`;
+const SERVICE_TASK_PARAMETER_ELEMENT_NAME = `${SPIFFWORKFLOW_XML_NAMESPACE}:Parameter`;
 
 /**
  * A generic properties' editor for text input.

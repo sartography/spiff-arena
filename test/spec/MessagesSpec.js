@@ -80,7 +80,7 @@ describe('Messages should work', function () {
     // Select the second Task
     const sendShape = await expectSelected('ActivitySendLetter');
     expect(sendShape, "Can't find Send Task").to.exist;
-
+    
     // THEN - there is a payload.
     const payload = findEntry('messagePayload', container);
     expect(payload, "Can't find the message payload").to.exist;

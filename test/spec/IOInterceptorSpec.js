@@ -33,7 +33,8 @@ describe('Input/Output Interceptor', function() {
     // THEN - the process should now have an IO Specification
     const iospec = canvas.getRootElement().businessObject.ioSpecification;
     expect(iospec).to.not.be.null;
-    expect(iospec.dataInputs.length).to.equal(1)
+    expect(iospec.dataInputs.length).to.equal(1);
+    expect(iospec.inputSets[0].dataInputRefs.length).to.equal(1);
   }));
 
 
@@ -59,5 +60,17 @@ describe('Input/Output Interceptor', function() {
       {x: 220, y: 220}, rootShape);
     modeling.removeShape(dataInput)
     expect(canvas.getRootElement().businessObject.ioSpecification).to.be.null;
+  }));
+
+  it('deleting a data input should remove it from the input set', inject(function(canvas, modeling) {
+    let rootShape = canvas.getRootElement();
+    const dataInput = modeling.createShape({type: 'bpmn:DataInput'},
+      {x: 220, y: 220}, rootShape);
+    const dataOutput = modeling.createShape({type: 'bpmn:DataOutput'},
+      {x: 240, y: 220}, rootShape);
+    modeling.removeShape(dataInput);
+    const iospec = canvas.getRootElement().businessObject.ioSpecification;
+    expect(iospec.dataInputs.length).to.equal(0);
+    expect(iospec.inputSets[0].dataInputRefs.length).to.equal(0);
   }));
 });
