@@ -62,7 +62,7 @@ class ThreadSplit(TaskSpec):
         self.times = times
         if not suppress_threadstart_creation:
             self.thread_starter = ThreadStart(wf_spec, **kwargs)
-            self.outputs.append(self.thread_starter)
+            self._outputs.append(self.thread_starter.name)
             self.thread_starter._connect_notify(self)
         else:
             self.thread_starter = None
@@ -74,7 +74,7 @@ class ThreadSplit(TaskSpec):
 
         task -- the task to connect to.
         """
-        self.thread_starter.outputs.append(task_spec)
+        self.thread_starter._outputs.append(task_spec.name)
         task_spec._connect_notify(self.thread_starter)
 
     def _get_activated_tasks(self, my_task, destination):
@@ -87,7 +87,7 @@ class ThreadSplit(TaskSpec):
         my_task -- the task of this TaskSpec
         destination -- the child task
         """
-        task = destination._find_ancestor(self.thread_starter)
+        task = destination.find_ancestor(self.thread_starter.name)
         return self.thread_starter._get_activated_tasks(task, destination)
 
     def _get_activated_threads(self, my_task):
@@ -118,7 +118,7 @@ class ThreadSplit(TaskSpec):
             self.thread_starter = self.outputs[0]
 
         outputs = self._get_predicted_outputs(my_task)
-        if my_task._is_definite():
+        if my_task.has_state(TaskState.DEFINITE_MASK):
             my_task._sync_children(outputs, TaskState.FUTURE)
         else:
             my_task._sync_children(outputs, TaskState.LIKELY)

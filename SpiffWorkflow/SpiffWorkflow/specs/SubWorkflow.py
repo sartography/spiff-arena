@@ -83,7 +83,7 @@ class SubWorkflow(TaskSpec):
         for output in self.outputs:
             if output not in outputs:
                 outputs.insert(0, output)
-        if my_task._is_definite():
+        if my_task.has_state(TaskState.DEFINITE_MASK):
             # This prevents errors with sync children
             my_task._sync_children(outputs, TaskState.LIKELY)
         else:
@@ -100,10 +100,12 @@ class SubWorkflow(TaskSpec):
         wf_spec = WorkflowSpec.deserialize(serializer, xml, filename=file_name)
         subworkflow = Workflow(wf_spec)
         my_task._sync_children(self.outputs, TaskState.FUTURE)
-        for child in subworkflow.task_tree.children:
-            my_task.children.insert(0, child)
-            child.parent = my_task
-            child.state = TaskState.READY
+        # I don't necessarily like this, but I can't say I like anything about subproceses work here
+        for task in subworkflow.task_tree:
+            my_task.workflow.tasks[task.id] = task
+        subworkflow.tasks[my_task.id] = my_task
+        subworkflow.task_tree.parent = my_task
+        my_task._children.insert(0, subworkflow.task_tree.id)
         subworkflow.completed_event.connect(self._on_subworkflow_completed, my_task)
         my_task._set_internal_data(subworkflow=subworkflow)
         my_task._set_state(TaskState.WAITING)
@@ -133,9 +135,7 @@ class SubWorkflow(TaskSpec):
                     child.data = subworkflow.last_task.data
                 for assignment in self.out_assign:
                     assignment.assign(subworkflow, child)
-
-                # Alright, abusing that hook is just evil but it works.
-                child.task_spec._update_hook(child)
+        my_task.task_spec._update(my_task)
 
     def serialize(self, serializer):
         return serializer.serialize_sub_workflow(self)
