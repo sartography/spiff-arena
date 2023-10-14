@@ -1,5 +1,5 @@
-const SPIFF_PARENT_PROP = 'spiffworkflow:properties';
-const SPIFF_PROP = 'spiffworkflow:property';
+const SPIFF_PARENT_PROP = 'spiffworkflow:Properties';
+const SPIFF_PROP = 'spiffworkflow:Property';
 const PREFIX = 'spiffworkflow:';
 
 /**

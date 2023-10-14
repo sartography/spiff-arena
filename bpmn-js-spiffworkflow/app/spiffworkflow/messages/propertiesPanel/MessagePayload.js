@@ -18,7 +18,7 @@ export function MessagePayload(props) {
         return messageElement.extensionElements
           .get('values')
           .filter(function getInstanceOfType(e) {
-            return e.$instanceOf('spiffworkflow:messagePayload');
+            return e.$instanceOf('spiffworkflow:MessagePayload');
           })[0];
       }
     }
@@ -37,7 +37,7 @@ export function MessagePayload(props) {
     let messagePayloadObject = getMessagePayloadObject();
     if (!messagePayloadObject) {
       messagePayloadObject = messageElement.$model.create(
-        'spiffworkflow:messagePayload'
+        'spiffworkflow:MessagePayload'
       );
       if (!messageElement.extensionElements) {
         messageElement.extensionElements = messageElement.$model.create(

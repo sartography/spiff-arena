@@ -3,9 +3,10 @@
   "uri": "http://spiffworkflow.org/bpmn/schema/1.0/core",
   "prefix": "spiffworkflow",
   "associations": [],
+  "xml": { "tagAlias": "lowerCase" },
   "types": [
     {
-      "name": "preScript",
+      "name": "PreScript",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -16,7 +17,7 @@
       ]
     },
     {
-      "name": "postScript",
+      "name": "PostScript",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -27,7 +28,7 @@
       ]
     },
     {
-      "name": "messagePayload",
+      "name": "MessagePayload",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -38,7 +39,7 @@
       ]
     },
     {
-      "name": "messageVariable",
+      "name": "MessageVariable",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -49,7 +50,7 @@
       ]
     },
     {
-      "name": "calledDecisionId",
+      "name": "CalledDecisionId",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -60,7 +61,7 @@
       ]
     },
     {
-      "name": "instructionsForEndUser",
+      "name": "InstructionsForEndUser",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -71,7 +72,18 @@
       ]
     },
     {
-      "name": "signalButtonLabel",
+      "name": "AllowGuest",
+      "superClass": [ "Element" ],
+      "properties": [
+        {
+          "name": "value",
+          "isBody": true,
+          "type": "Boolean"
+        }
+      ]
+    },
+    {
+      "name": "GuestConfirmation",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -82,20 +94,31 @@
       ]
     },
     {
-      "name": "properties",
+      "name": "SignalButtonLabel",
+      "superClass": [ "Element" ],
+      "properties": [
+        {
+          "name": "value",
+          "isBody": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "Properties",
       "superClass": [
         "Element"
       ],
       "properties": [
         {
           "name": "properties",
-          "type": "property",
+          "type": "Property",
           "isMany": true
         }
       ]
     },
     {
-      "name": "property",
+      "name": "Property",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -111,7 +134,7 @@
       ]
     },
     {
-      "name": "serviceTaskOperator",
+      "name": "ServiceTaskOperator",
       "superClass": [
         "Element"
       ],
@@ -128,25 +151,25 @@
         },
         {
           "name": "parameterList",
-          "type": "parameters"
+          "type": "Parameters"
         }
       ]
     },
     {
-      "name": "parameters",
+      "name": "Parameters",
       "superClass": [
         "Element"
       ],
       "properties": [
         {
           "name": "parameters",
-          "type": "parameter",
+          "type": "Parameter",
           "isMany": true
         }
       ]
     },
     {
-      "name": "parameter",
+      "name": "Parameter",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -167,20 +190,20 @@
       ]
     },
     {
-      "name": "unitTests",
+      "name": "UnitTests",
       "superClass": [
         "Element"
       ],
       "properties": [
         {
           "name": "unitTests",
-          "type": "unitTest",
+          "type": "UnitTest",
           "isMany": true
         }
       ]
     },
     {
-      "name": "unitTest",
+      "name": "UnitTest",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -190,16 +213,16 @@
         },
         {
           "name": "inputJson",
-          "type": "inputJson"
+          "type": "InputJson"
         },
         {
           "name": "expectedOutputJson",
-          "type": "expectedOutputJson"
+          "type": "ExpectedOutputJson"
         }
       ]
     },
     {
-      "name": "inputJson",
+      "name": "InputJson",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -210,7 +233,7 @@
       ]
     },
     {
-      "name": "expectedOutputJson",
+      "name": "ExpectedOutputJson",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -221,7 +244,7 @@
       ]
     },
     {
-      "name": "payloadExpression",
+      "name": "PayloadExpression",
       "superClass": [ "Element" ],
       "properties": [
         {
@@ -232,13 +255,27 @@
       ]
     },
     {
-      "name": "variableName",
+      "name": "VariableName",
       "superClass": [ "Element" ],
       "properties": [
         {
           "name": "value",
           "isBody": true,
           "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "ScriptsOnInstances",
+      "extends": [
+        "bpmn:MultiInstanceLoopCharacteristics",
+        "bpmn:StandardLoopCharacteristics"
+      ],
+      "properties": [
+        {
+          "name": "scriptsOnInstances",
+          "isAttr": true,
+          "type": "Boolean"
         }
       ]
     }

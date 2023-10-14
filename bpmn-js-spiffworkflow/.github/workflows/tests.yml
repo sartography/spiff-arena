@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 #Checkout Repo
+      - uses: actions/checkout@v4 #Checkout Repo
       - uses: actions/setup-node@v3 #Setup Node
       - uses: nanasess/setup-chromedriver@v2 #Setup ChromeDriver
         with:
