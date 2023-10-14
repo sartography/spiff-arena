@@ -1,25 +1,22 @@
-# -*- coding: utf-8 -*-
-
 import json
 import os
 import unittest
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator
 
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.bpmn.workflow import BpmnTaskFilter
 
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer, DEFAULT_SPEC_CONFIG
-from .BpmnLoaderForTests import TestUserTaskConverter, TestBpmnParser, TestDataStoreConverter
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
+from .BpmnLoaderForTests import TestBpmnParser, SERIALIZER_CONFIG
+
 
 __author__ = 'matth'
 
-DEFAULT_SPEC_CONFIG['task_specs'].append(TestUserTaskConverter)
-DEFAULT_SPEC_CONFIG['task_specs'].append(TestDataStoreConverter)
-
-wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(spec_config=DEFAULT_SPEC_CONFIG)
+registry = BpmnWorkflowSerializer.configure(SERIALIZER_CONFIG)
 
 class BpmnWorkflowTestCase(unittest.TestCase):
 
-    serializer = BpmnWorkflowSerializer(wf_spec_converter)
+    serializer = BpmnWorkflowSerializer(registry)
 
     def get_parser(self, filename, validate=True):
         f = os.path.join(os.path.dirname(__file__), 'data', filename)
@@ -46,12 +43,15 @@ class BpmnWorkflowTestCase(unittest.TestCase):
         parser.add_bpmn_files_by_glob(f)
         return parser.find_all_specs()
 
+    def get_ready_user_tasks(self, lane=None):
+        return self.workflow.get_tasks(task_filter=BpmnTaskFilter(state=TaskState.READY, manual=True, lane=lane))
+
     def do_next_exclusive_step(self, step_name, with_save_load=False, set_attribs=None, choice=None):
         if with_save_load:
             self.save_restore_all()
 
         self.workflow.do_engine_steps()
-        tasks = self.workflow.get_tasks(TaskState.READY)
+        tasks = self.workflow.get_tasks(state=TaskState.READY)
         self._do_single_step(step_name, tasks, set_attribs, choice)
 
     def do_next_named_step(self, step_name, with_save_load=False, set_attribs=None, choice=None, only_one_instance=True):
@@ -84,13 +84,13 @@ class BpmnWorkflowTestCase(unittest.TestCase):
                     return False
             return True
 
-        tasks = [t for t in self.workflow.get_tasks(TaskState.READY) if is_match(t)]
+        tasks = [t for t in self.workflow.get_tasks(state=TaskState.READY) if is_match(t)]
 
         self._do_single_step(
             step_name_path[-1], tasks, set_attribs, choice, only_one_instance=only_one_instance)
 
     def assertTaskNotReady(self, step_name):
-        tasks = list([t for t in self.workflow.get_tasks(TaskState.READY)
+        tasks = list([t for t in self.workflow.get_tasks(state=TaskState.READY)
                      if t.task_spec.name == step_name or t.task_spec.bpmn_name == step_name])
         self.assertEqual([], tasks)
 
@@ -124,9 +124,9 @@ class BpmnWorkflowTestCase(unittest.TestCase):
         before_dump = self.workflow.get_dump()
         # Check that we can actully convert this to JSON
         json_str = json.dumps(before_state)
-        after = self.serializer.workflow_from_dict(json.loads(json_str))
+        after = self.serializer.from_dict(json.loads(json_str))
         # Check that serializing and deserializing results in the same workflow
-        after_state = self.serializer.workflow_to_dict(after)
+        after_state = self.serializer.to_dict(after)
         after_dump = after.get_dump()
         self.maxDiff = None
         self.assertEqual(before_dump, after_dump)
@@ -141,4 +141,4 @@ class BpmnWorkflowTestCase(unittest.TestCase):
         if do_steps:
             self.workflow.do_engine_steps()
             self.workflow.refresh_waiting_tasks()
-        return self.serializer.workflow_to_dict(self.workflow)
+        return self.serializer.to_dict(self.workflow)
