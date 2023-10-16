@@ -18,6 +18,11 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
         )
         return model
 
+    def _delete_all_for_top_level_key(self, top_level_key: str) -> None:
+        models = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key).all()
+        for model in models:
+            db.session.delete(model)
+
     def get(self, my_task: SpiffTask) -> None:
         """get."""
 
@@ -38,9 +43,7 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
             )
         for top_level_key, second_level in data.items():
             if second_level is None:
-                models = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key).all()
-                for model in models:
-                    db.session.delete(model)
+                self._delete_all_for_top_level_key(top_level_key)
                 continue
             if type(second_level) != dict:
                 raise Exception(
