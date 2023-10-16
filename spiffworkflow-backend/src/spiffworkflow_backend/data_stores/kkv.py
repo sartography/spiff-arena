@@ -10,15 +10,19 @@ from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
     """KKVDataStore."""
 
+    def _get_model(self, top_level_key: str, secondary_key: str) -> KKVDataStoreModel | None:
+        model = (
+            db.session.query(KKVDataStoreModel)
+            .filter_by(top_level_key=top_level_key, secondary_key=secondary_key)
+            .first()
+        )
+        return model 
+
     def get(self, my_task: SpiffTask) -> None:
         """get."""
 
         def getter(top_level_key: str, secondary_key: str) -> Any | None:
-            model = (
-                db.session.query(KKVDataStoreModel)
-                .filter_by(top_level_key=top_level_key, secondary_key=secondary_key)
-                .first()
-            )
+            model = self._get_model(top_level_key, secondary_key)
             if model is not None:
                 return model.value
             return None
@@ -39,9 +43,12 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
                     f" '{self.bpmn_id}[\"{top_level_key}\"]'"
                 )
             for secondary_key, value in second_level.items():
-                if value is not None:
+                model = self._get_model(top_level_key, secondary_key)
+                if model is None:
                     model = KKVDataStoreModel(top_level_key=top_level_key, secondary_key=secondary_key, value=value)
-                    db.session.add(model)
+                else:
+                    model.value = value
+                db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
 

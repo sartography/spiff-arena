@@ -98,3 +98,12 @@ class TestKKVDataStore(BaseTest):
         assert result1 == "newValue"
         result2 = my_task.data["the_id"]("newKey3", "newKey4")
         assert result2 == "newValue2"
+
+    def test_can_update_a_value(self, with_clean_data_store: None) -> None:
+        kkv_data_store = KKVDataStore("the_id", "the_name")
+        my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}}})
+        kkv_data_store.set(my_task)
+        my_task.data={"the_id": {"newKey1": {"newKey2": "newValue2"}}}
+        kkv_data_store.set(my_task)
+        count = db.session.query(KKVDataStoreModel).count()
+        assert count == 1
