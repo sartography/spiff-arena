@@ -7,22 +7,6 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 
-def _kkvs(bpmn_id: str, data: any) -> Generator[tuple[str, list[tuple[str, Any]]], None, None]:
-    if type(data) != dict:
-            raise Exception(
-                f"When writing to this data store, a dictionary is expected as the value for variable '{bpmn_id}'"
-            )
-    for top_level_key, second_level in data.items():
-        if type(second_level) != dict:
-            raise Exception(
-                "When writing to this data store, a dictionary is expected as the value for"
-                f" '{self.bpmn_id}[\"{top_level_key}\"]'"
-                )
-        kkvs = (top_level_key, list(second_level.items()))
-        yield kkvs
-        yield kkvs
-    return None
-
 class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
     """KKVDataStore."""
 
