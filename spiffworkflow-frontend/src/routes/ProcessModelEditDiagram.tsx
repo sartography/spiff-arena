@@ -312,6 +312,7 @@ export default function ProcessModelEditDiagram() {
         primaryButtonText="Save Changes"
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileNameCancel}
+        onRequestSubmit={handleFileNameSave}
         onRequestClose={handleFileNameCancel}
       >
         <Grid
