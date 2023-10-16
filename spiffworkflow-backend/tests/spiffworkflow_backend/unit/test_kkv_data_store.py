@@ -82,3 +82,19 @@ class TestKKVDataStore(BaseTest):
         kkv_data_store.set(my_task)
         count = db.session.query(KKVDataStoreModel).count()
         assert count == 2
+
+    def test_value_is_removed_from_task_data_after_insert(self, with_clean_data_store: None) -> None:
+        kkv_data_store = KKVDataStore("the_id", "the_name")
+        my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}, "newKey3": {"newKey4": "newValue2"}}})
+        kkv_data_store.set(my_task)
+        assert "the_id" not in my_task.data
+
+    def test_can_get_after_a_set(self, with_clean_data_store: None) -> None:
+        kkv_data_store = KKVDataStore("the_id", "the_name")
+        my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}, "newKey3": {"newKey4": "newValue2"}}})
+        kkv_data_store.set(my_task)
+        kkv_data_store.get(my_task)
+        result1 = my_task.data["the_id"]("newKey1", "newKey2")
+        assert result1 == "newValue"
+        result2 = my_task.data["the_id"]("newKey3", "newKey4")
+        assert result2 == "newValue2"
