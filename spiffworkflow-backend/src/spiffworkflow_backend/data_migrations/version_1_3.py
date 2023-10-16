@@ -3,6 +3,7 @@ import json
 import uuid
 from hashlib import sha256
 
+from flask import current_app
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -221,7 +222,18 @@ class VersionOneThree:
                 db.session.add(task_definition)
 
     def update_tasks_where_last_change_is_null(self) -> None:
-        task_models = TaskModel.query.filter(TaskModel.properties_json.like('%last_state_change": null%')).all()  # type: ignore
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
+            task_models = (
+                db.session.query(TaskModel)
+                .filter(
+                    TaskModel.properties_json.op("->>")("last_state_changed") == None  # type: ignore  # noqa: E711
+                )
+                .all()
+            )
+        else:
+            task_models = TaskModel.query.filter(
+                TaskModel.properties_json.like('%last_state_change": null%')  # type: ignore
+            ).all()
         for task_model in task_models:
             parent_task_model = task_model.parent_task_model()
 

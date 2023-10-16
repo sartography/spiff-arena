@@ -1,7 +1,7 @@
 from time import time
 from typing import Any
 
-from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type: ignore
+from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
@@ -36,20 +36,12 @@ class TypeaheadDataStore(BpmnDataStoreSpecification):  # type: ignore
         )
 
     @staticmethod
-    def register_converter(spec_config: dict[str, Any]) -> None:
-        spec_config["task_specs"].append(TypeaheadDataStoreConverter)
-
-    @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["TypeaheadDataStore"] = TypeaheadDataStore
 
 
-class TypeaheadDataStoreConverter(BpmnSpecConverter):  # type: ignore
+class TypeaheadDataStoreConverter(BpmnConverter):  # type: ignore
     """TypeaheadDataStoreConverter."""
-
-    def __init__(self, registry):  # type: ignore
-        """__init__."""
-        super().__init__(TypeaheadDataStore, registry)
 
     def to_dict(self, spec: Any) -> dict[str, Any]:
         """to_dict."""

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-import unittest
-
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
 from tests.SpiffWorkflow.camunda.BaseTestCase import BaseTestCase
 
@@ -23,7 +19,7 @@ class ResetTokenParallelTaskCountTest(BaseTestCase):
         self.actual_test(save_restore=True)
 
     def actual_test(self, save_restore=False):
-        total = 10  # I would expect there to be 9 tasks, but we get 10.
+        total = 9
 
         # Set the workflow in motion, and assure we have the right
         # number of tasks
@@ -34,19 +30,13 @@ class ResetTokenParallelTaskCountTest(BaseTestCase):
         # Tell the exclusive gateway to skip the parallel tasks section.
         # We should still have the same number of tasks.
         data = {'skipParallel': True}
-        task = self.workflow.get_ready_user_tasks()[0]
+        task = self.get_ready_user_tasks()[0]
         task.data = data
         self.workflow.run_task_from_id(task.id)
         self.assertEquals(total, len(self.workflow.get_tasks()))
 
         # Reset the token to the first user task.
         # We should still have the same number of tasks.
-        task.reset_token(data)
+        task.reset_branch(data)
         self.assertEquals(total, len(self.workflow.get_tasks()))
-        self.assertEquals(1, len(self.workflow.get_ready_user_tasks()))
-
-def suite():
-    return unittest.TestLoader().loadTestsFromTestCase(ResetTokenParallelTaskCountTest)
-
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())
+        self.assertEquals(1, len(self.get_ready_user_tasks()))

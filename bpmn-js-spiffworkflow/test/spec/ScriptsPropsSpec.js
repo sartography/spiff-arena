@@ -62,10 +62,10 @@ describe('Properties Panel Script Tasks', function () {
     expect(scriptInput.value).to.equal('x = 100');
   });
 
-  it('should parse the bpmn:script tag when you open an existing file', async function () {
+  it('should parse the spiffworkflow:prescript tag when you open an existing file', async function () {
     await expectSelected('task_confirm');
     const entry = findEntry(
-      'pythonScript_spiffworkflow:preScript',
+      'pythonScript_spiffworkflow:PreScript',
       PROPERTIES_PANEL_CONTAINER
     );
     const scriptInput = domQuery('textarea', entry);

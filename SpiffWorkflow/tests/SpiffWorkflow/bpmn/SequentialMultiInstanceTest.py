@@ -9,17 +9,24 @@ class BaseTestCase(BpmnWorkflowTestCase):
 
     def set_io_and_run_workflow(self, data, data_input=None, data_output=None, save_restore=False):
 
-        start = self.workflow.get_tasks_from_spec_name('Start')[0]
+        start = self.workflow.task_tree
         start.data = data
 
-        any_task = self.workflow.get_tasks_from_spec_name('any_task')[0]
+        any_task = self.workflow.get_next_task(spec_name='any_task')
         any_task.task_spec.data_input = TaskDataReference(data_input) if data_input is not None else None
         any_task.task_spec.data_output = TaskDataReference(data_output) if data_output is not None else None
 
         self.workflow.do_engine_steps()
         self.workflow.refresh_waiting_tasks()
-        ready_tasks = self.workflow.get_ready_user_tasks()
+        ready_tasks = self.get_ready_user_tasks()
 
+        task_info = any_task.task_spec.task_info(any_task)
+        self.assertEqual(len(task_info['completed']), 0)
+        self.assertEqual(len(task_info['running']), 1)
+        self.assertEqual(len(task_info['future']), 2)
+        self.assertEqual(len(task_info['instance_map']), 1)
+
+        ready_tasks = self.get_ready_user_tasks()
         while len(ready_tasks) > 0:
             self.assertEqual(len(ready_tasks), 1)
             task = ready_tasks[0]
@@ -29,24 +36,36 @@ class BaseTestCase(BpmnWorkflowTestCase):
             task.run()
             if save_restore:
                 self.save_restore()
-            ready_tasks = self.workflow.get_ready_user_tasks()
+            ready_tasks = self.get_ready_user_tasks()
 
         self.workflow.do_engine_steps()
-        children = self.workflow.get_tasks_from_spec_name('any_task [child]')
+
+        any_task = self.workflow.get_next_task(spec_name='any_task')
+        task_info = any_task.task_spec.task_info(any_task)
+        self.assertEqual(len(task_info['completed']), 3)
+        self.assertEqual(len(task_info['running']), 0)
+        self.assertEqual(len(task_info['future']), 0)
+        self.assertEqual(len(task_info['instance_map']), 3)
+
+        children = self.workflow.get_tasks(spec_name='any_task [child]')
+        for child in children:
+            info = child.task_spec.task_info(child)
+            instance = info['instance']
+            self.assertEqual(task_info['instance_map'][instance], str(child.id))
         self.assertEqual(len(children), 3)
         self.assertTrue(self.workflow.is_completed()) 
 
     def run_workflow_with_condition(self, data, condition):
 
-        start = self.workflow.get_tasks_from_spec_name('Start')[0]
+        start = self.workflow.task_tree
         start.data = data
 
-        task = self.workflow.get_tasks_from_spec_name('any_task')[0]
+        task = self.workflow.get_next_task(spec_name='any_task')
         task.task_spec.condition = condition
 
         self.workflow.do_engine_steps()
         self.workflow.refresh_waiting_tasks()
-        ready_tasks = self.workflow.get_ready_user_tasks()
+        ready_tasks = self.get_ready_user_tasks()
 
         while len(ready_tasks) > 0:
             ready = ready_tasks[0]
@@ -56,10 +75,10 @@ class BaseTestCase(BpmnWorkflowTestCase):
             ready.run()
             self.workflow.do_engine_steps()
             self.workflow.refresh_waiting_tasks()
-            ready_tasks = self.workflow.get_ready_user_tasks()
+            ready_tasks = self.get_ready_user_tasks()
 
         self.workflow.do_engine_steps()
-        children = self.workflow.get_tasks_from_spec_name('any_task [child]')
+        children = self.workflow.get_tasks(spec_name='any_task [child]')
         self.assertEqual(len(children), 2)
         self.assertTrue(self.workflow.is_completed())
 
@@ -160,7 +179,7 @@ class SequentialMultiInstanceNewOutputTest(BaseTestCase):
 
     def testEmptyCollection(self):
 
-        start = self.workflow.get_tasks_from_spec_name('Start')[0]
+        start = self.workflow.task_tree
         start.data = {'input_data': []}
         self.workflow.do_engine_steps()
         self.assertTrue(self.workflow.is_completed())

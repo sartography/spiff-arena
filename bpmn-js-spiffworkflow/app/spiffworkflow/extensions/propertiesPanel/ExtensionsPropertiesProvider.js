@@ -1,16 +1,22 @@
-import { ListGroup } from '@bpmn-io/properties-panel';
+import {
+  ListGroup,
+  CheckboxEntry,
+  isCheckboxEntryEdited,
+} from '@bpmn-io/properties-panel';
 import { is, isAny } from 'bpmn-js/lib/util/ModelUtil';
 import scriptGroup, { SCRIPT_TYPE } from './SpiffScriptGroup';
 import {
   ServiceTaskParameterArray,
   ServiceTaskOperatorSelect, ServiceTaskResultTextInput,
 } from './SpiffExtensionServiceProperties';
-import {OPTION_TYPE, SpiffExtensionSelect} from './SpiffExtensionSelect';
+import {OPTION_TYPE, spiffExtensionOptions, SpiffExtensionSelect} from './SpiffExtensionSelect';
 import {SpiffExtensionLaunchButton} from './SpiffExtensionLaunchButton';
 import {SpiffExtensionTextArea} from './SpiffExtensionTextArea';
 import {SpiffExtensionTextInput} from './SpiffExtensionTextInput';
+import {SpiffExtensionCheckboxEntry} from './SpiffExtensionCheckboxEntry';
 import {hasEventDefinition} from 'bpmn-js/lib/util/DiUtil';
 import { PropertyDescription } from 'bpmn-js-properties-panel/';
+import {setExtensionValue} from "../extensionHelpers";
 
 const LOW_PRIORITY = 500;
 
@@ -55,6 +61,16 @@ export default function ExtensionsPropertiesProvider(
       ) {
         groups.push(
           createUserInstructionsGroup(element, translate, moddle, commandStack)
+        );
+      }
+      if (
+        isAny(element, [
+          'bpmn:ManualTask',
+          'bpmn:UserTask',
+        ])
+      ) {
+        groups.push(
+          createAllowGuestGroup(element, translate, moddle, commandStack)
         );
       }
       if (
@@ -117,30 +133,67 @@ function createScriptGroup(element, translate, moddle, commandStack) {
  * @returns The components to add to the properties panel.
  */
 function preScriptPostScriptGroup(element, translate, moddle, commandStack) {
+  const entries = [
+    ...scriptGroup({
+      element,
+      moddle,
+      commandStack,
+      translate,
+      scriptType: SCRIPT_TYPE.pre,
+      label: 'Pre-Script',
+      description: 'code to execute prior to this task.',
+    }),
+    ...scriptGroup({
+      element,
+      moddle,
+      commandStack,
+      translate,
+      scriptType: SCRIPT_TYPE.post,
+      label: 'Post-Script',
+      description: 'code to execute after this task.',
+    }),
+  ];
+  const loopCharacteristics = element.businessObject.loopCharacteristics;
+  if (typeof(loopCharacteristics) !== 'undefined') {
+    entries.push({
+      id: 'scriptValence',
+      component: ScriptValenceCheckbox,
+      isEdited: isCheckboxEntryEdited,
+      commandStack,
+    });
+  }
   return {
     id: 'spiff_pre_post_scripts',
     label: translate('Pre/Post Scripts'),
-    entries: [
-      ...scriptGroup({
-        element,
-        moddle,
-        commandStack,
-        translate,
-        scriptType: SCRIPT_TYPE.pre,
-        label: 'Pre-Script',
-        description: 'code to execute prior to this task.',
-      }),
-      ...scriptGroup({
-        element,
-        moddle,
-        commandStack,
-        translate,
-        scriptType: SCRIPT_TYPE.post,
-        label: 'Post-Script',
-        description: 'code to execute after this task.',
-      }),
-    ],
+    entries: entries,
   };
+}
+
+function ScriptValenceCheckbox(props) {
+
+  const { element, commandStack } = props;
+
+  const getValue = () => {
+    return element.businessObject.loopCharacteristics.scriptsOnInstances;
+  };
+
+  const setValue = (value) => {
+    const loopCharacteristics = element.businessObject.loopCharacteristics;
+    loopCharacteristics.scriptsOnInstances = value || undefined;
+    commandStack.execute('element.updateModdleProperties', {
+      element,
+      moddleElement: loopCharacteristics,
+    });
+  };
+
+  return CheckboxEntry({
+    element,
+    id: 'selectScriptValence',
+    label: 'Run scripts on instances',
+    description: 'By default, scripts will attach to the multiinstance task',
+    getValue,
+    setValue,
+  });
 }
 
 /**
@@ -151,6 +204,17 @@ function preScriptPostScriptGroup(element, translate, moddle, commandStack) {
  * @returns entries
  */
 function createUserGroup(element, translate, moddle, commandStack) {
+
+  const updateExtensionProperties = (element, name, value, moddle, commandStack) => {
+    const uiName = value.replace('schema\.json', 'uischema\.json')
+    setExtensionValue(element, 'formJsonSchemaFilename', value, moddle, commandStack);
+    setExtensionValue(element, 'formUiSchemaFilename', uiName, moddle, commandStack);
+    const matches = spiffExtensionOptions[OPTION_TYPE.json_schema_files].filter((opt) => opt.value === value);
+    if (matches.length === 0) {
+      spiffExtensionOptions[OPTION_TYPE.json_schema_files].push({label: value, value: value});
+    }
+  }
+
   return {
     id: 'user_task_properties',
     label: translate('Web Form (with Json Schemas)'),
@@ -160,7 +224,7 @@ function createUserGroup(element, translate, moddle, commandStack) {
         moddle,
         commandStack,
         component: SpiffExtensionSelect,
-        optionType: OPTION_TYPE.json_files,
+        optionType: OPTION_TYPE.json_schema_files,
         name: 'formJsonSchemaFilename',
         label: translate('JSON Schema Filename'),
         description: translate('Form Description (RSJF)'),
@@ -168,29 +232,14 @@ function createUserGroup(element, translate, moddle, commandStack) {
       {
         component: SpiffExtensionLaunchButton,
         element,
+        moddle,
+        commandStack,
         name: 'formJsonSchemaFilename',
         label: translate('Launch Editor'),
         event: 'spiff.file.edit',
-        description: translate('Edit the form description'),
-      },
-      {
-        element,
-        moddle,
-        commandStack,
-        component: SpiffExtensionSelect,
-        optionType: OPTION_TYPE.json_files,
-        label: translate('UI Schema Filename'),
-        event: 'spiff.file.edit',
-        description: translate('Rules for displaying the form. (RSJF Schema)'),
-        name: 'formUiSchemaFilename',
-      },
-      {
-        component: SpiffExtensionLaunchButton,
-        element,
-        name: 'formUiSchemaFilename',
-        label: translate('Launch Editor'),
-        event: 'spiff.file.edit',
-        description: translate('Edit the form schema'),
+        listenEvent: 'spiff.jsonSchema.update',
+        listenFunction: updateExtensionProperties,
+        description: translate('Edit the form schema')
       },
     ],
   };
@@ -216,14 +265,14 @@ function createBusinessRuleGroup(element, translate, moddle, commandStack) {
         commandStack,
         component: SpiffExtensionSelect,
         optionType: OPTION_TYPE.dmn_files,
-        name: 'spiffworkflow:calledDecisionId',
+        name: 'spiffworkflow:CalledDecisionId',
         label: translate('Select Decision Table'),
         description: translate('Select a decision table from the list'),
       },
       {
         element,
         component: SpiffExtensionLaunchButton,
-        name: 'spiffworkflow:calledDecisionId',
+        name: 'spiffworkflow:CalledDecisionId',
         label: translate('Launch Editor'),
         event: 'spiff.dmn.edit',
         description: translate('Modify the Decision Table'),
@@ -254,7 +303,7 @@ function createUserInstructionsGroup (
         moddle,
         commandStack,
         component: SpiffExtensionTextArea,
-        name: 'spiffworkflow:instructionsForEndUser',
+        name: 'spiffworkflow:InstructionsForEndUser',
         label: 'Instructions',
         description: 'Displayed above user forms or when this task is executing.',
       },
@@ -263,11 +312,60 @@ function createUserInstructionsGroup (
         moddle,
         commandStack,
         component: SpiffExtensionLaunchButton,
-        name: 'spiffworkflow:instructionsForEndUser',
+        name: 'spiffworkflow:InstructionsForEndUser',
         label: translate('Launch Editor'),
         event: 'spiff.markdown.edit',
         listenEvent: 'spiff.markdown.update',
         description: translate('Edit the form schema'),
+      }
+    ],
+  };
+}
+
+/**
+ * Create a group on the main panel with a text box (for choosing the information to display to the user)
+ * @param element
+ * @param translate
+ * @param moddle
+ * @returns entries
+ */
+function createAllowGuestGroup (
+  element,
+  translate,
+  moddle,
+  commandStack
+) {
+  return {
+    id: 'allow_guest_user',
+    label: translate('Guest options'),
+    entries: [
+      {
+        element,
+        moddle,
+        commandStack,
+        component: SpiffExtensionCheckboxEntry,
+        name: 'spiffworkflow:AllowGuest',
+        label: 'Guest can complete this task',
+        description: 'Allow a guest user to complete this task without logging in. They will not be allowed to do anything but submit this task. If another task directly follows it that allows guest access, they could also complete that task.',
+      },
+      {
+        element,
+        moddle,
+        commandStack,
+        component: SpiffExtensionTextArea,
+        name: 'spiffworkflow:GuestConfirmation',
+        label: 'Guest confirmation',
+        description: 'This is markdown that is displayed to the user after they complete the task. If this is filled out then the user will not be able to complete additional tasks without a new link to the next task.',
+      },
+      {
+        element,
+        moddle,
+        commandStack,
+        component: SpiffExtensionLaunchButton,
+        name: 'spiffworkflow:GuestConfirmation',
+        label: translate('Launch Editor'),
+        event: 'spiff.markdown.edit',
+        listenEvent: 'spiff.markdown.update',
       }
     ],
   };
@@ -299,7 +397,7 @@ function createSignalButtonGroup (
         moddle,
         commandStack,
         component: SpiffExtensionTextInput,
-        name: 'spiffworkflow:signalButtonLabel',
+        name: 'spiffworkflow:SignalButtonLabel',
         label: 'Button Label',
         description: description
       },

@@ -170,7 +170,7 @@ export default function TaskListTable({
           className="completed-task-modal"
         >
           <div className="indented-content explanatory-message">
-            ✅ You completed this form{' '}
+            ✅ You completed this task{' '}
             {TimeAgo.inWords(formSubmissionTask.end_in_seconds)}
             <div>
               <Stack orientation="horizontal" gap={2}>

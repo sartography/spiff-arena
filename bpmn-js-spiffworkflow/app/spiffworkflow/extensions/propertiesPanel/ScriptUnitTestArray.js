@@ -16,7 +16,7 @@ const getScriptUnitTestsModdleElement = (shapeElement) => {
   return bizObj.extensionElements
     .get('values')
     .filter(function getInstanceOfType(e) {
-      return e.$instanceOf('spiffworkflow:unitTests');
+      return e.$instanceOf('spiffworkflow:UnitTests');
     })[0];
 };
 
@@ -73,19 +73,19 @@ export function ScriptUnitTestArray(props) {
 
     if (!scriptUnitTestsModdleElement) {
       scriptUnitTestsModdleElement = scriptTaskModdleElement.$model.create(
-        'spiffworkflow:unitTests'
+        'spiffworkflow:UnitTests'
       );
       scriptTaskModdleElement.extensionElements
         .get('values')
         .push(scriptUnitTestsModdleElement);
     }
     const scriptUnitTestModdleElement = scriptTaskModdleElement.$model.create(
-      'spiffworkflow:unitTest'
+      'spiffworkflow:UnitTest'
     );
     const scriptUnitTestInputModdleElement =
-      scriptTaskModdleElement.$model.create('spiffworkflow:inputJson');
+      scriptTaskModdleElement.$model.create('spiffworkflow:InputJson');
     const scriptUnitTestOutputModdleElement =
-      scriptTaskModdleElement.$model.create('spiffworkflow:expectedOutputJson');
+      scriptTaskModdleElement.$model.create('spiffworkflow:ExpectedOutputJson');
     scriptUnitTestModdleElement.id = moddle.ids.nextPrefixed('ScriptUnitTest_');
     scriptUnitTestInputModdleElement.value = '{}';
     scriptUnitTestOutputModdleElement.value = '{}';

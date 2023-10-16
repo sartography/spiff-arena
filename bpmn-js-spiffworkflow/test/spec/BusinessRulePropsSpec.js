@@ -49,7 +49,7 @@ describe('Business Rule Properties Panel', function () {
     modeler.get('eventBus').once('spiff.dmn_files.requested', return_files);
     expectSelected('business_rule_task');
     // THEN - a properties panel exists with a section for editing that script
-    const entry = findEntry('extension_spiffworkflow:calledDecisionId', getPropertiesPanel());
+    const entry = findEntry('extension_spiffworkflow:CalledDecisionId', getPropertiesPanel());
     expect(entry, 'No Entry').to.exist;
     const selectList = findSelect(entry);
     expect(selectList, 'No Select').to.exist;
@@ -60,7 +60,7 @@ describe('Business Rule Properties Panel', function () {
     const modeler = getBpmnJS();
     modeler.get('eventBus').once('spiff.dmn_files.requested', return_files);
     const businessRuleTask = await expectSelected('business_rule_task');
-    const entry = findEntry('extension_calledDecisionId', getPropertiesPanel());
+    const entry = findEntry('extension_CalledDecisionId', getPropertiesPanel());
     const selectList = findSelect(entry);
     changeInput(selectList, 'Decision_Pizza_Price');
 
@@ -73,7 +73,7 @@ describe('Business Rule Properties Panel', function () {
 
   it('should load up the xml and the value for the called decision should match the xml', async function () {
     const businessRuleTask = await expectSelected('business_rule_task');
-    const entry = findEntry('extension_calledDecisionId', getPropertiesPanel());
+    const entry = findEntry('extension_CalledDecisionId', getPropertiesPanel());
     const selectList = findSelect(entry);
     expect(selectList.value, "initial value is wrong").to.equal('test_decision');
 
