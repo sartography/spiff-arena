@@ -29,7 +29,7 @@ class Version2(DataMigrationBase):
             for spiff_task in spiff_tasks:
                 cls.update_spiff_task_parents(spiff_task, task_service)
 
-            task_service.save_objects_to_database()
+            task_service.save_objects_to_database(save_process_instance_events=False)
         except Exception as ex:
             current_app.logger.warning(
                 f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}"
