@@ -1,18 +1,20 @@
 from collections.abc import Generator
+from dataclasses import dataclass
+from typing import Any
 
 import pytest
 from flask.app import Flask
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
-from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from dataclasses import dataclass
-from typing import Any
+
 
 @dataclass
 class MockTask:
     data: dict[str, Any]
+
 
 @pytest.fixture()
 def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
@@ -20,12 +22,14 @@ def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Ge
     db.session.commit()
     yield
 
+
 @pytest.fixture()
 def with_key1_key2_record(with_clean_data_store: None) -> Generator[None, None, None]:
-    model = KKVDataStoreModel(top_level_key="key1", secondary_key="key2", value="value1")
+    model = KKVDataStoreModel(top_level_key="key1", secondary_key="key2", value="value1")  # type: ignore
     db.session.add(model)
     db.session.commit()
     yield
+
 
 class TestKKVDataStore(BaseTest):
     """Infer from class name."""
@@ -103,7 +107,7 @@ class TestKKVDataStore(BaseTest):
         kkv_data_store = KKVDataStore("the_id", "the_name")
         my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}}})
         kkv_data_store.set(my_task)
-        my_task.data={"the_id": {"newKey1": {"newKey2": "newValue2"}}}
+        my_task.data = {"the_id": {"newKey1": {"newKey2": "newValue2"}}}
         kkv_data_store.set(my_task)
         count = db.session.query(KKVDataStoreModel).count()
         assert count == 1

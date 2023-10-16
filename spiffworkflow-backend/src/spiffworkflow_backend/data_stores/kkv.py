@@ -1,11 +1,11 @@
 from typing import Any
-from collections.abc import Generator
 
 from SpiffWorkflow.bpmn.serializer.helpers.spec import BpmnSpecConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+
 
 class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
     """KKVDataStore."""
@@ -16,7 +16,7 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
             .filter_by(top_level_key=top_level_key, secondary_key=secondary_key)
             .first()
         )
-        return model 
+        return model
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
