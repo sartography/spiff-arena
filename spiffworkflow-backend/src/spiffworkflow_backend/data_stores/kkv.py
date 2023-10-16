@@ -44,6 +44,11 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
                 )
             for secondary_key, value in second_level.items():
                 model = self._get_model(top_level_key, secondary_key)
+                if model is None and value is None:
+                    continue
+                if value is None:
+                    db.session.delete(model)
+                    continue
                 if model is None:
                     model = KKVDataStoreModel(top_level_key=top_level_key, secondary_key=secondary_key, value=value)
                 else:

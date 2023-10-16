@@ -111,3 +111,16 @@ class TestKKVDataStore(BaseTest):
         kkv_data_store.set(my_task)
         count = db.session.query(KKVDataStoreModel).count()
         assert count == 1
+        kkv_data_store.get(my_task)
+        result2 = my_task.data["the_id"]("newKey1", "newKey2")
+        assert result2 == "newValue2"
+
+    def test_can_delete_record_by_nulling_a_key(self, with_key1_key2_record: None) -> None:
+        kkv_data_store = KKVDataStore("the_id", "the_name")
+        my_task = MockTask(data={"the_id": {"key1": {"key2": None}}})
+        kkv_data_store.set(my_task)
+        kkv_data_store.get(my_task)
+        result = my_task.data["the_id"]("key1", "key2")
+        assert result is None
+        count = db.session.query(KKVDataStoreModel).count()
+        assert count == 0
