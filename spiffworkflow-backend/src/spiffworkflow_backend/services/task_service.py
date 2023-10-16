@@ -117,10 +117,11 @@ class TaskService:
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
 
-    def save_objects_to_database(self) -> None:
+    def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
         db.session.bulk_save_objects(self.bpmn_processes.values())
         db.session.bulk_save_objects(self.task_models.values())
-        db.session.bulk_save_objects(self.process_instance_events.values())
+        if save_process_instance_events:
+            db.session.bulk_save_objects(self.process_instance_events.values())
         JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
 
     def process_parents_and_children_and_save_to_database(
