@@ -115,7 +115,7 @@ class TestKKVDataStore(BaseTest):
         result2 = my_task.data["the_id"]("newKey1", "newKey2")
         assert result2 == "newValue2"
 
-    def test_can_delete_record_by_nulling_a_key(self, with_key1_key2_record: None) -> None:
+    def test_can_delete_record_by_nulling_a_secondary_key(self, with_key1_key2_record: None) -> None:
         kkv_data_store = KKVDataStore("the_id", "the_name")
         my_task = MockTask(data={"the_id": {"key1": {"key2": None}}})
         kkv_data_store.set(my_task)
@@ -124,3 +124,24 @@ class TestKKVDataStore(BaseTest):
         assert result is None
         count = db.session.query(KKVDataStoreModel).count()
         assert count == 0
+
+    def test_can_delete_all_records_by_nulling_a_top_level_key(self, with_clean_data_store: None) -> None:
+        kkv_data_store = KKVDataStore("the_id", "the_name")
+        my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue", "newKey3": "newValue2"}}})
+        kkv_data_store.set(my_task)
+        my_task.data = {"the_id": {"newKey1": None}}
+        kkv_data_store.set(my_task)
+        count = db.session.query(KKVDataStoreModel).count()
+        assert count == 0
+
+    def test_top_key_delete_does_not_delete_for_other_top_levels(self, with_clean_data_store: None) -> None:
+        kkv_data_store = KKVDataStore("the_id", "the_name")
+        my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}, "newKey3": {"newKey4": "newValue2"}}})
+        kkv_data_store.set(my_task)
+        my_task.data = {"the_id": {"newKey1": None}}
+        kkv_data_store.set(my_task)
+        count = db.session.query(KKVDataStoreModel).count()
+        assert count == 1
+        kkv_data_store.get(my_task)
+        result = my_task.data["the_id"]("newKey3", "newKey4")
+        assert result == "newValue2"

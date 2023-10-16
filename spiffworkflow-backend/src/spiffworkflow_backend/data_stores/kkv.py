@@ -37,6 +37,11 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
                 f"When writing to this data store, a dictionary is expected as the value for variable '{self.bpmn_id}'"
             )
         for top_level_key, second_level in data.items():
+            if second_level is None:
+                models = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key).all()
+                for model in models:
+                    db.session.delete(model)
+                continue
             if type(second_level) != dict:
                 raise Exception(
                     "When writing to this data store, a dictionary is expected as the value for"
