@@ -1,5 +1,6 @@
 import copy
 import json
+from json import JSONDecodeError
 from typing import Any
 
 import requests
@@ -21,6 +22,10 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 class ConnectorProxyError(Exception):
+    pass
+
+
+class UncaughtServiceTaskError(Exception):
     pass
 
 
@@ -116,8 +121,14 @@ class ServiceTaskDelegate:
             if len(tasks) > 0:
                 top_level_workflow.catch(bpmn_event)
                 task_caught_event = True
-            if task_caught_event is False:
-                raise ConnectorProxyError(error)
+        if task_caught_event is False:
+            message_from_status_code = cls.get_message_for_status(error["status_code"])
+            message = [
+                f"Received error code '{error['error_code']}' from service '{error['operator_identifier']}'",
+                message_from_status_code,
+                f"The original message: {error['message']}",
+            ]
+            raise UncaughtServiceTaskError(" ::: ".join(message))
 
     @classmethod
     def call_connector(cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask) -> str:
@@ -130,17 +141,37 @@ class ServiceTaskDelegate:
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__task_data"] = task_data
 
-                proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
-                response_text = proxied_response.text
-                json_parse_error = None
-
-                if response_text == "":
-                    response_text = "{}"
+                response_text = ""
+                status_code = 0
+                parsed_response: dict = {}
                 try:
-                    parsed_response = json.loads(response_text)
-                except Exception as e:
-                    json_parse_error = e
-                    parsed_response = {}
+                    # when does this raise?
+                    # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
+                    proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
+
+                    status_code = proxied_response.status_code
+                    response_text = proxied_response.text
+                except Exception as exception:
+                    status_code = 500
+                    parsed_response = {
+                        "error": {
+                            "error_code": exception.__class__.__name__,
+                            "message": str(exception),
+                        }
+                    }
+
+                if "error" not in parsed_response:
+                    try:
+                        # if the connector proxy does not return json, something horrible happened
+                        parsed_response = json.loads(response_text or "{}")
+                    except JSONDecodeError:
+                        parsed_response = {
+                            "error": {
+                                "error_code": "ServiceTaskUnexpectedResponseError",
+                                # mention the connector may not be returning valid json
+                                "message": response_text,
+                            }
+                        }
 
                 if "spiff__logs" in parsed_response:
                     for log in parsed_response["spiff__logs"]:
@@ -157,38 +188,40 @@ class ServiceTaskDelegate:
                     response_text = json.dumps(merged_responses)
 
                 # v2 support
+                error_dict = None
                 if (
                     "error" in parsed_response
                     and isinstance(parsed_response["error"], dict)
                     and "error_code" in parsed_response["error"]
                 ):
                     error_dict = parsed_response["error"]
-                    error_dict["operator_identifier"] = operator_identifier
-                    cls.catch_error_codes(spiff_task, error_dict)
-                elif proxied_response.status_code >= 300:
+                # v1 support or something terrible happened with a v2 connector
+                elif status_code >= 300:
                     # this can happen for both v1 and v2 connector responses
                     # we used to raise errors for v1 responses, and we need to make that happen
-                    # if there is an error with no error code, that is v1
-                    message = cls.get_message_for_status(proxied_response.status_code)
-                    error = f"Received an unexpected response from service {operator_identifier} : {message}"
+                    error_message = ""
                     if "error" in parsed_response:
                         error_response = parsed_response["error"]
                         if isinstance(error_response, list | dict):
                             error_response = json.dumps(parsed_response["error"])
 
-                        error += error_response
-                    if json_parse_error:
-                        error += "A critical component (The connector proxy) is not responding correctly."
-                    raise ConnectorProxyError(error)
+                        error_message += error_response
+                    else:
+                        error_message = response_text
+                    error_message += "A critical component (The connector proxy) is not responding correctly."
+                    error_dict = {
+                        "error_code": "ServiceTaskUnexpectedResponseError",
+                        # mention the connector may not be returning valid json
+                        "message": error_message,
+                    }
 
-                elif json_parse_error:
-                    raise ConnectorProxyError(
-                        f"There is a problem with this connector: '{operator_identifier}'. "
-                        "Responses for connectors must be in JSON format. "
-                    )
+                if error_dict is not None:
+                    error_dict["operator_identifier"] = operator_identifier
+                    error_dict["status_code"] = status_code
+                    cls.catch_error_codes(spiff_task, error_dict)
 
                 if "refreshed_token_set" not in parsed_response:
-                    return response_text
+                    return response_text or "{}"
 
                 secret_key = parsed_response["auth"]
                 refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])

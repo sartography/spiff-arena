@@ -1,11 +1,13 @@
+import json
+import re
 from unittest.mock import patch
 
 import pytest
 from flask.app import Flask
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.services.service_task_service import ConnectorProxyError
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_service import UncaughtServiceTaskError
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -54,9 +56,116 @@ class TestServiceTaskDelegate(BaseTest):
         with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 404
             mock_post.return_value.ok = True
-            mock_post.return_value.json.return_value = ""
-            with pytest.raises(ConnectorProxyError) as ae:
+            mock_post.return_value.text = '{"error_stuff": "WE ERRORED"}'
+            with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
                 ServiceTaskDelegate.call_connector("my_invalid_operation", {}, spiff_task)
-        assert "404" in str(ae)
-        assert "The service did not find the requested resource." in str(ae)
-        assert "A critical component (The connector proxy) is not responding correctly." in str(ae)
+            message_regex = (
+                r"The service did not find the requested resource\..*A critical component \(The connector proxy\) is"
+                r" not responding correctly"
+            )
+            self._assert_error_with_code(
+                str(connector_proxy_error.value), "ServiceTaskUnexpectedResponseError", message_regex, 404
+            )
+
+    def test_call_connector_on_request_post_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        with patch("requests.post", side_effect=Exception("mocked error")):
+            with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+            self._assert_error_with_code(str(connector_proxy_error.value), "Exception", "mocked error", 500)
+
+    def test_call_connector_on_json_loads_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+        return_text = "NOT JSON"
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = return_text
+            with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+            self._assert_error_with_code(
+                str(connector_proxy_error.value), "ServiceTaskUnexpectedResponseError", return_text, 200
+            )
+
+    def test_call_connector_on_error_response(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        connector_response = {
+            "command_response": {},
+            "error": {
+                "error_code": "OurTestError",
+                "message": "We errored",
+            },
+        }
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 500
+            mock_post.return_value.ok = False
+            mock_post.return_value.text = json.dumps(connector_response)
+            with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+            self._assert_error_with_code(str(connector_proxy_error.value), "OurTestError", "We errored", 500)
+
+    def test_call_connector_can_succeed(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        connector_response = {
+            "command_response": {"we_did_it": True},
+            "error": None,
+        }
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = json.dumps(connector_response)
+            result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+            assert result is not None
+            assert json.loads(result) == {
+                **connector_response["command_response"],  # type: ignore
+                **{"operator_identifier": "my_operation"},  # type: ignore
+            }
+
+    def _assert_error_with_code(
+        self, response_text: str, error_code: str, contains_message: str, status_code: int
+    ) -> None:
+        assert f"'{error_code}'" in response_text
+        assert bool(
+            re.search(rf"\b{contains_message}\b", response_text)
+        ), f"Expected to find '{contains_message}' in: {response_text}"
+        assert bool(
+            re.search(rf"\b{status_code}\b", response_text)
+        ), f"Expected to find '{status_code}' in: {response_text}"

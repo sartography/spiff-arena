@@ -10,8 +10,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 Flask = "^2.2.2"
-spiffworkflow-proxy = {git = "https://github.com/sartography/spiffworkflow-proxy"}
-# spiffworkflow-proxy = {develop = true, path = "../../spiffworkflow-proxy"}
+# spiffworkflow-proxy = {git = "https://github.com/sartography/spiffworkflow-proxy"}
+spiffworkflow-proxy = {develop = true, path = "../../spiffworkflow-proxy"}
 
 connector-aws = { git = "https://github.com/sartography/connector-aws.git"}
 connector-http = {git = "https://github.com/sartography/connector-http.git"}

@@ -541,7 +541,7 @@ description = "A blueprint that can allow (and limit) SpiffWorkflow's Service Ta
 optional = false
 python-versions = "^3.9"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 Flask = "^2.2"
@@ -549,10 +549,8 @@ Flask-OAuthlib = "^0.9.6"
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 [package.source]
-type = "git"
-url = "https://github.com/sartography/spiffworkflow-proxy"
-reference = "HEAD"
-resolved_reference = "53fcd3eb49c345a06fd787a16e2439fe1e920181"
+type = "directory"
+url = "../../spiffworkflow-proxy"
 
 [[package]]
 name = "typing-extensions"
@@ -601,4 +599,4 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "6f96f7239cd02d2790664a47c0d7085a7a634825d7876b32331d2d8c5d1c5994"
+content-hash = "772ab5c11f57f0efedd2a2c3396ed549e9aaab572029a260bf10c1844bdf56c8"
