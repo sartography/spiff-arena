@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import unittest
 
 from SpiffWorkflow.workflow import Workflow
@@ -6,7 +5,7 @@ from SpiffWorkflow.specs.Join import Join
 from SpiffWorkflow.specs.MultiChoice import MultiChoice
 from SpiffWorkflow.specs.WorkflowSpec import WorkflowSpec
 from SpiffWorkflow.operators import Attrib, Equal, PathAttrib
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.util.task import TaskState, TaskFilter
 from SpiffWorkflow.specs.Simple import Simple
 from SpiffWorkflow.serializer.dict import DictionarySerializer
 
@@ -14,7 +13,7 @@ from SpiffWorkflow.serializer.dict import DictionarySerializer
 class ASmallWorkflow(WorkflowSpec):
 
     def __init__(self):
-        super(ASmallWorkflow, self).__init__(name="asmallworkflow")
+        super(ASmallWorkflow, self).__init__(name="asmallworkflow", addstart=True)
 
         multichoice = MultiChoice(self, 'multi_choice_1')
         self.start.connect(multichoice)
@@ -38,6 +37,8 @@ class PersistSmallWorkflowTest(unittest.TestCase):
 
     """Runs persistency tests agains a small and easy to inspect workflowdefinition"""
 
+    ready_task_filter = TaskFilter(state=TaskState.READY)
+
     def setUp(self):
         self.wf_spec = ASmallWorkflow()
         self.workflow = self._advance_to_a1(self.wf_spec)
@@ -45,15 +46,15 @@ class PersistSmallWorkflowTest(unittest.TestCase):
     def _advance_to_a1(self, wf_spec):
         workflow = Workflow(wf_spec)
 
-        tasks = workflow.get_tasks(TaskState.READY)
+        tasks = workflow.get_tasks(task_filter=self.ready_task_filter)
         task_start = tasks[0]
         workflow.run_task_from_id(task_start.id)
 
-        tasks = workflow.get_tasks(TaskState.READY)
+        tasks = workflow.get_tasks(task_filter=self.ready_task_filter)
         multichoice = tasks[0]
         workflow.run_task_from_id(multichoice.id)
 
-        tasks = workflow.get_tasks(TaskState.READY)
+        tasks = workflow.get_tasks(task_filter=self.ready_task_filter)
         task_a1 = tasks[0]
         workflow.run_task_from_id(task_a1.id)
         return workflow
@@ -89,30 +90,21 @@ class PersistSmallWorkflowTest(unittest.TestCase):
             len(new_workflow.get_tasks()), len(old_workflow.get_tasks()))
         self.assertEqual(new_workflow.spec.start.get_data(
             'marker'), old_workflow.spec.start.get_data('marker'))
-        self.assertEqual(
-            1, len([t for t in new_workflow.get_tasks() if t.task_spec.name == 'Start']))
-        self.assertEqual(
-            1, len([t for t in new_workflow.get_tasks() if t.task_spec.name == 'Root']))
+        self.assertEqual(1, len([t for t in new_workflow.get_tasks() if t.task_spec.name == 'Start']))
 
-    def testDeserialization2(self):
+    def testCompleteAfterDeserialization(self):
         """
         Tests the that deserialized workflow can be completed.
         """
         old_workflow = self.workflow
 
         old_workflow.run_next()
-        self.assertEqual('task_a2', old_workflow.last_task.get_name())
+        self.assertEqual('task_a2', old_workflow.last_task.task_spec.name)
         serializer = DictionarySerializer()
         serialized_workflow = old_workflow.serialize(serializer)
 
         serializer = DictionarySerializer()
         new_workflow = Workflow.deserialize(serializer, serialized_workflow)
-        self.assertEqual('task_a2', old_workflow.last_task.get_name())
+        self.assertEqual('task_a2', old_workflow.last_task.task_spec.name)
         new_workflow.run_all()
-        self.assertEqual('task_a2', old_workflow.last_task.get_name())
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromTestCase(PersistSmallWorkflowTest)
-if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(suite())
+        self.assertEqual('task_a2', old_workflow.last_task.task_spec.name)

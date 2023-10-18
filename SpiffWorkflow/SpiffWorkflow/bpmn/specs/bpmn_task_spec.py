@@ -28,7 +28,8 @@ class BpmnTaskSpec(TaskSpec):
     easy way of knowing whether a task appearson the diagram.
     """
     def __init__(self, wf_spec, name, lane=None, documentation=None,
-                 data_input_associations=None, data_output_associations=None, **kwargs):
+                 data_input_associations=None, data_output_associations=None, 
+                 io_specification=None, **kwargs):
         """
         :param lane: Indicates the name of the lane that this task belongs to
         :param documentation: the contents of the documentation element
@@ -42,7 +43,7 @@ class BpmnTaskSpec(TaskSpec):
         self.documentation = documentation
         self.data_input_associations = data_input_associations or []
         self.data_output_associations = data_output_associations or []
-        self.io_specification = None
+        self.io_specification = io_specification
         if self.description is None:
             self.description = 'BPMN Task'
 
@@ -93,3 +94,15 @@ class BpmnTaskSpec(TaskSpec):
             my_task.data.pop(obj.bpmn_id, None)
 
         super()._on_complete_hook(my_task)
+
+    def task_info(self, my_task):
+        # This method can be extended to provide task specific info for different spec types
+        # Since almost all spec types can be MI, add instance info here if present
+        info = {}
+        if 'key_or_index' in my_task.internal_data:
+            info['instance'] = my_task.internal_data.get('key_or_index')
+        if 'item' in my_task.internal_data:
+            info['instance'] = my_task.internal_data.get('item')
+        if 'iteration' in my_task.internal_data:
+            info['iteration'] = my_task.internal_data.get('iteration')
+        return info

@@ -50,6 +50,8 @@ from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
 from spiffworkflow_backend.data_stores.json import JSONFileDataStore
 from spiffworkflow_backend.data_stores.json import JSONFileDataStoreConverter
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
+from spiffworkflow_backend.data_stores.kkv import KKVDataStoreConverter
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -101,6 +103,7 @@ from sqlalchemy import and_
 SPIFF_CONFIG[StartEvent] = EventConverter
 SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
 SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
+SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 SPIFF_CONFIG[CustomServiceTask] = ServiceTaskConverter
 

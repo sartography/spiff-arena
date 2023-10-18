@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - uses: actions/checkout@v3 #Checkout Repo
+      - uses: actions/checkout@v4 #Checkout Repo
       - uses: actions/setup-node@v3 #Setup Node
         with:
           node-version: 18

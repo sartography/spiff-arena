@@ -17,14 +17,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301  USA
 
-from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec
+from ..helpers.registry import BpmnConverter
 
-from .helpers.spec import WorkflowSpecConverter
 
-class BpmnProcessSpecConverter(WorkflowSpecConverter):
-
-    def __init__(self, registry):
-        super().__init__(BpmnProcessSpec, registry)
+class BpmnProcessSpecConverter(BpmnConverter):
 
     def convert_task_spec_extensions(self, task_spec, dct):
         # Extensions will be moved out of the base parser, but since we currently add them to some
@@ -56,7 +52,7 @@ class BpmnProcessSpecConverter(WorkflowSpecConverter):
 
     def from_dict(self, dct):
 
-        spec = self.spec_class(name=dct['name'], description=dct['description'], filename=dct['file'])
+        spec = self.target_class(name=dct['name'], description=dct['description'], filename=dct['file'])
         # These are automatically created with a workflow and should be replaced
         del spec.task_specs['Start']
         spec.start = None
@@ -85,10 +81,5 @@ class BpmnProcessSpecConverter(WorkflowSpecConverter):
             if name == 'Start':
                 spec.start = task_spec
             self.restore_task_spec_extensions(task_dict, task_spec)
-
-        # Now we have to go back and fix all the circular references to everything
-        for task_spec in spec.task_specs.values():
-            task_spec.inputs = [ spec.get_task_spec_from_name(name) for name in task_spec.inputs ]
-            task_spec.outputs = [ spec.get_task_spec_from_name(name) for name in task_spec.outputs ]
 
         return spec

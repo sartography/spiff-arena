@@ -308,7 +308,7 @@ export default function ProcessModelEditDiagram() {
     return (
       <Modal
         open={showFileNameEditor}
-        modalHeading="Processs Model File Name"
+        modalHeading="Process Model File Name"
         primaryButtonText="Save Changes"
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileNameCancel}

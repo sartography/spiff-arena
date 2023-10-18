@@ -9,8 +9,8 @@ import { ScriptUnitTestArray } from './ScriptUnitTestArray';
 
 export const SCRIPT_TYPE = {
   bpmn: 'bpmn:script',
-  pre: 'spiffworkflow:preScript',
-  post: 'spiffworkflow:postScript',
+  pre: 'spiffworkflow:PreScript',
+  post: 'spiffworkflow:PostScript',
 };
 
 function PythonScript(props) {

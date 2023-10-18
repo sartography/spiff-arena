@@ -8,7 +8,7 @@ import {getExtensionValue, setExtensionValue} from '../extensionHelpers';
  * update the value and send it back.
  */
 export function SpiffExtensionLaunchButton(props) {
-  const { element, name, event, listenEvent } = props;
+  const { element, name, event, listenEvent, listenFunction } = props;
   const eventBus = useService('eventBus');
   return HeaderButton({
     className: 'spiffworkflow-properties-panel-button',
@@ -28,7 +28,11 @@ export function SpiffExtensionLaunchButton(props) {
         const { commandStack, moddle } = props;
         // Listen for a response, to update the script.
         eventBus.once(listenEvent, (response) => {
-          setExtensionValue(element, name, response.value, moddle, commandStack);
+          if(listenFunction) {
+            listenFunction(element, name, response.value, moddle, commandStack);
+          } else {
+            setExtensionValue(element, name, response.value, moddle, commandStack);
+          }
         });
       }
 

@@ -160,8 +160,8 @@ bpmnModeler.on('spiff.dmn.edit', (newEvent) => {
  * Also handy to get a list of available files that can be used in a given
  * context, say json files for a form, or a DMN file for a BusinessRuleTask
  */
-bpmnModeler.on('spiff.json_files.requested', (event) => {
-  event.eventBus.fire('spiff.json_files.returned', {
+bpmnModeler.on('spiff.json_schema_files.requested', (event) => {
+  event.eventBus.fire('spiff.json_schema_files.returned', {
     options: [
       { label: 'pizza_form.json', value: 'pizza_form.json' },
       { label: 'credit_card_form.json', value: 'credit_card_form.json' },

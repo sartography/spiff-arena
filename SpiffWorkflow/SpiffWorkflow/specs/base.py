@@ -19,8 +19,9 @@
 
 from abc import abstractmethod
 
-from ..util.event import Event
-from ..task import TaskState
+from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.util.event import Event
+
 from ..exceptions import WorkflowException
 
 
@@ -91,8 +92,8 @@ class TaskSpec(object):
         self._wf_spec = wf_spec
         self.name = str(name)
         self.description = kwargs.get('description', None)
-        self.inputs = []
-        self.outputs = []
+        self._inputs = kwargs.get('inputs', [])
+        self._outputs = kwargs.get('outputs', [])
         self.manual = kwargs.get('manual', False)
         self.data = kwargs.get('data', {})
         self.defines = kwargs.get('defines', {})
@@ -115,6 +116,22 @@ class TaskSpec(object):
     def spec_type(self):
         return f'{self.__class__.__module__}.{self.__class__.__name__}'
 
+    @property
+    def inputs(self):
+        return [self._wf_spec.task_specs.get(name) for name in self._inputs]
+
+    @inputs.setter
+    def inputs(self, task_specs):
+        self._inputs = [spec.name for spec in task_specs]
+
+    @property
+    def outputs(self):
+        return [self._wf_spec.task_specs.get(name) for name in self._outputs]
+
+    @outputs.setter
+    def outputs(self, task_specs):
+        self._outputs = [spec.name for spec in task_specs]
+
     def _connect_notify(self, taskspec):
         """
         Called by the previous task to let us know that it exists.
@@ -122,7 +139,7 @@ class TaskSpec(object):
         :type  taskspec: TaskSpec
         :param taskspec: The task by which this method is executed.
         """
-        self.inputs.append(taskspec)
+        self._inputs.append(taskspec.name)
 
     def ancestors(self):
         """Returns list of ancestor task specs based on inputs"""
@@ -191,7 +208,7 @@ class TaskSpec(object):
         :type  taskspec: TaskSpec
         :param taskspec: The new output task.
         """
-        self.outputs.append(taskspec)
+        self._outputs.append(taskspec.name)
         taskspec._connect_notify(self)
 
     def test(self):
@@ -218,21 +235,21 @@ class TaskSpec(object):
         if seen is None:
             seen = []
 
-        if my_task._has_state(mask):
+        if my_task.has_state(mask):
             self._predict_hook(my_task)
 
-        if my_task._is_predicted():
+        if my_task.has_state(TaskState.PREDICTED_MASK):
             seen.append(self)
 
-        look_ahead = my_task._is_definite() or looked_ahead + 1 < self.lookahead
+        look_ahead = my_task.has_state(TaskState.DEFINITE_MASK) or looked_ahead + 1 < self.lookahead
         for child in my_task.children:
-            if child._has_state(mask) and child not in seen and look_ahead:
+            if child.has_state(mask) and child not in seen and look_ahead:
                 child.task_spec._predict(child, seen[:], looked_ahead + 1, mask)
 
     def _predict_hook(self, my_task):
         # If the task's status is definite, we default to FUTURE for all it's outputs.
         # Otherwise, copy my own state to the children.
-        if  my_task._is_definite():
+        if  my_task.has_state(TaskState.DEFINITE_MASK):
             best_state = TaskState.FUTURE
         else:
             best_state = my_task.state
@@ -244,7 +261,7 @@ class TaskSpec(object):
         state of this task in the workflow. For example, if a predecessor
         completes it makes sure to call this method so we can react.
         """
-        if my_task._is_predicted():
+        if my_task.has_state(TaskState.PREDICTED_MASK):
             self._predict(my_task)
         self.entered_event.emit(my_task.workflow, my_task)
         if self._update_hook(my_task):
@@ -358,7 +375,7 @@ class TaskSpec(object):
         """
         self._on_complete_hook(my_task)
         for child in my_task.children:
-            if not child._is_finished():
+            if not child.has_state(TaskState.FINISHED_MASK):
                 child.task_spec._update(child)
         my_task.workflow._task_completed_notify(my_task)
         self.completed_event.emit(my_task.workflow, my_task)
@@ -406,8 +423,8 @@ class TaskSpec(object):
                   'class': class_name,
                   'name':self.name,
                   'description':self.description,
-                  'inputs':[x.name for x in self.inputs],
-                  'outputs':[x.name for x in self.outputs],
+                  'inputs': self._inputs,
+                  'outputs': self._outputs,
                   'manual':self.manual,
                   'data':self.data,
                   'defines':self.defines,
@@ -441,8 +458,8 @@ class TaskSpec(object):
         out = cls(wf_spec,s_state.get('name'))
         out.name = s_state.get('name')
         out.description = s_state.get('description')
-        out.inputs = s_state.get('inputs')
-        out.outputs = s_state.get('outputs')
+        out._inputs = s_state.get('inputs')
+        out._outputs = s_state.get('outputs')
         out.manual = s_state.get('manual')
         out.data = s_state.get('data')
         out.defines = s_state.get('defines')

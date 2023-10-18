@@ -475,7 +475,7 @@ def task_show(
                     process_model=process_model_with_form,
                     revision=process_instance.bpmn_version_control_identifier,
                 )
-                if ui_form_contents:
+                if ui_form_contents is not None:
                     task_model.form_ui_schema = ui_form_contents
             else:
                 task_model.form_ui_schema = {}

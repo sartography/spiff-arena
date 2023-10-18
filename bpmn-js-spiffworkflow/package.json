@@ -73,7 +73,7 @@
     "webpack-cli": "^4.9.2"
   },
   "peerDependencies": {
-    "bpmn-js": "*",
+    "bpmn-js": "^13.0.0",
     "bpmn-js-properties-panel": "*",
     "diagram-js": "*"
   },
