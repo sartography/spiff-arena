@@ -13,7 +13,7 @@ jobs:
       - name: Delete 'spiff' main containers older than a week
         uses: snok/container-retention-policy@v2
         with:
-          image-names: spiffworkflow-backend
+          image-names: spiffworkflow-backend, spiffworkflow-frontend
           cut-off: Two months ago UTC
           account-type: org
           org-name: sartography
