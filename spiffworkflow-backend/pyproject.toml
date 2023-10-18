@@ -9,7 +9,7 @@ homepage = "https://spiffworkflow.org"
 repository = "https://github.com/sartography/spiff-arena"
 documentation = "https://spiff-arena.readthedocs.io"
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 4 - Beta",
 ]
 
 [tool.poetry.urls]
@@ -36,6 +36,8 @@ sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
+
+spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 # pinned to higher than 65.5.0 because of a vulnerability
 # and to lower than 67 because i didn't feel like addressing

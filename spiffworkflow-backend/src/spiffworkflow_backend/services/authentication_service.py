@@ -36,17 +36,20 @@ class AuthenticationService:
     @staticmethod
     def client_id() -> str:
         """Returns the client id from the config."""
-        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", "")
+        config: str = current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", "")
+        return config
 
     @staticmethod
     def server_url() -> str:
         """Returns the server url from the config."""
-        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL", "")
+        config: str = current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL", "")
+        return config
 
     @staticmethod
     def secret_key() -> str:
         """Returns the secret key from the config."""
-        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", "")
+        config: str = current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", "")
+        return config
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> str:
@@ -60,7 +63,8 @@ class AuthenticationService:
                 raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
         if name not in AuthenticationService.ENDPOINT_CACHE:
             raise Exception(f"Unknown OpenID Endpoint: {name}. Tried to get from {openid_config_url}")
-        return AuthenticationService.ENDPOINT_CACHE.get(name, "")
+        config: str = AuthenticationService.ENDPOINT_CACHE.get(name, "")
+        return config
 
     @staticmethod
     def get_backend_url() -> str:
@@ -234,7 +238,7 @@ class AuthenticationService:
             raise KeyError("we need current_app.config to have a SECRET_KEY")
 
         try:
-            payload = jwt.decode(auth_token, options={"verify_signature": False})
+            payload: dict[str, str | None] = jwt.decode(auth_token, options={"verify_signature": False})
             return payload
         except jwt.ExpiredSignatureError as exception:
             raise TokenExpiredError(

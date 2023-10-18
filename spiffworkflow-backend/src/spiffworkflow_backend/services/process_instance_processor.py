@@ -41,6 +41,7 @@ from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
+from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
@@ -85,6 +86,7 @@ from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.service_task_service import CustomServiceTask
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
@@ -103,6 +105,7 @@ SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
 SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
+SPIFF_CONFIG[CustomServiceTask] = ServiceTaskConverter
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
@@ -384,9 +387,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         self,
         operation_name: str,
         operation_params: dict[str, Any],
-        task_data: dict[str, Any],
-    ) -> Any:
-        return ServiceTaskDelegate.call_connector(operation_name, operation_params, task_data)
+        spiff_task: SpiffTask,
+    ) -> str:
+        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task)
 
 
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
