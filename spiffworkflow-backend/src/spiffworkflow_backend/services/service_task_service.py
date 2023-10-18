@@ -19,6 +19,7 @@ from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_connector_command.command_interface import CommandErrorDict
 
 
 class ConnectorProxyError(Exception):
@@ -27,6 +28,12 @@ class ConnectorProxyError(Exception):
 
 class UncaughtServiceTaskError(Exception):
     pass
+
+
+class ServiceTaskErrorDict(CommandErrorDict):
+    operator_identifier: str
+    status_code: int
+    command_response_body: Any
 
 
 def connector_proxy_url() -> Any:
@@ -131,6 +138,53 @@ class ServiceTaskDelegate:
             raise UncaughtServiceTaskError(" ::: ".join(message))
 
     @classmethod
+    def check_for_errors(
+        cls,
+        spiff_task: SpiffTask,
+        parsed_response: dict,
+        status_code: int,
+        response_text: str,
+        operator_identifier: str,
+    ) -> None:
+        # v2 support
+        base_error = None
+        if (
+            "error" in parsed_response
+            and isinstance(parsed_response["error"], dict)
+            and "error_code" in parsed_response["error"]
+        ):
+            base_error = parsed_response["error"]
+        # v1 support or something terrible happened with a v2 connector
+        elif status_code >= 300:
+            # this can happen for both v1 and v2 connector responses
+            # we used to raise errors for v1 responses, and we need to make that happen
+            error_message = ""
+            if "error" in parsed_response:
+                error_response = parsed_response["error"]
+                if isinstance(error_response, list | dict):
+                    error_response = json.dumps(parsed_response["error"])
+
+                error_message += error_response
+            else:
+                error_message = response_text
+            error_message += "A critical component (The connector proxy) is not responding correctly."
+            base_error = {
+                "error_code": "ServiceTaskUnexpectedResponseError",
+                # mention the connector may not be returning valid json
+                "message": error_message,
+            }
+
+        if base_error is not None:
+            error_dict: ServiceTaskErrorDict = {
+                "error_code": base_error["error_code"],
+                "message": base_error["message"],
+                "operator_identifier": operator_identifier,
+                "status_code": status_code,
+                "command_response_body": response_text,
+            }
+            cls.catch_error_codes(spiff_task, error_dict)
+
+    @classmethod
     def call_connector(cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
@@ -183,42 +237,11 @@ class ServiceTaskDelegate:
 
                 # only v2 responses have command_response
                 if "command_response" in parsed_response:
-                    merged_responses = {**parsed_response["command_response"], **(parsed_response["error"] or {})}
-                    merged_responses["operator_identifier"] = operator_identifier
-                    response_text = json.dumps(merged_responses)
+                    new_response = parsed_response["command_response"]
+                    new_response["operator_identifier"] = operator_identifier
+                    response_text = json.dumps(new_response)
 
-                # v2 support
-                error_dict = None
-                if (
-                    "error" in parsed_response
-                    and isinstance(parsed_response["error"], dict)
-                    and "error_code" in parsed_response["error"]
-                ):
-                    error_dict = parsed_response["error"]
-                # v1 support or something terrible happened with a v2 connector
-                elif status_code >= 300:
-                    # this can happen for both v1 and v2 connector responses
-                    # we used to raise errors for v1 responses, and we need to make that happen
-                    error_message = ""
-                    if "error" in parsed_response:
-                        error_response = parsed_response["error"]
-                        if isinstance(error_response, list | dict):
-                            error_response = json.dumps(parsed_response["error"])
-
-                        error_message += error_response
-                    else:
-                        error_message = response_text
-                    error_message += "A critical component (The connector proxy) is not responding correctly."
-                    error_dict = {
-                        "error_code": "ServiceTaskUnexpectedResponseError",
-                        # mention the connector may not be returning valid json
-                        "message": error_message,
-                    }
-
-                if error_dict is not None:
-                    error_dict["operator_identifier"] = operator_identifier
-                    error_dict["status_code"] = status_code
-                    cls.catch_error_codes(spiff_task, error_dict)
+                cls.check_for_errors(spiff_task, parsed_response, status_code, response_text, operator_identifier)
 
                 if "refreshed_token_set" not in parsed_response:
                     return response_text or "{}"

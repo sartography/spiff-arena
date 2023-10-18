@@ -399,7 +399,7 @@ def _get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | No
 
 def _get_decoded_token(token: str) -> dict | None:
     try:
-        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        decoded_token: dict = jwt.decode(token, options={"verify_signature": False})
     except Exception as e:
         raise ApiError(error_code="invalid_token", message="Cannot decode token.") from e
     else:
