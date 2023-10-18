@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM ghcr.io/sartography/python:3.11 AS base
+FROM python:3.11.6-slim AS base
 
 ENV VIRTUAL_ENV=/app/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -13,8 +13,10 @@ FROM base AS deployment
 
 RUN apt-get update \
  && apt-get clean -y \
- && apt-get install -y -q curl git-core gunicorn3 default-mysql-client vim \
+ && apt-get install -y -q git-core gunicorn3 default-mysql-client vim \
  && rm -rf /var/lib/apt/lists/*
+
+RUN pip install poetry==1.6.1
 
 # Setup image for installing Python dependencies.
 FROM base AS setup
@@ -24,7 +26,7 @@ FROM base AS setup
 #   problem with poetry but with lazy-object-proxy (1.7.1) not supporting PEP 517 builds.
 #   You can verify this by running 'pip wheel --use-pep517 "lazy-object-proxy (==1.7.1) ; python_version >= "3.6""'.
 # Pinnning to 1.3.2 to attempt to avoid it.
-RUN pip install poetry==1.3.2
+RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
