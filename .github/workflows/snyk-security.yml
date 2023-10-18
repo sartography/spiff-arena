@@ -93,7 +93,7 @@ jobs:
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: snyk-code.sarif
+          sarif_file: spiffworkflow-backend/snyk-code.sarif
   # snyk:
   #   permissions:
   #     contents: read # for actions/checkout to fetch code
