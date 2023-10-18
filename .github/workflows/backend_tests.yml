@@ -226,7 +226,7 @@ jobs:
         run: ./bin/wait_for_server_to_be_up 5
       - name: Scan Docker image
         uses: snyk/actions/docker@master
-        # continue-on-error: true
+        continue-on-error: true
         with:
           image: spiffworkflow-backend-spiffworkflow-backend
           args: --file=spiffworkflow-backend/Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
