@@ -135,7 +135,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/connector-http.git"
 reference = "HEAD"
-resolved_reference = "8ecf7a4338f82ef522575a0e41ecbc7441814c03"
+resolved_reference = "7cdb8ef379e49a39609901874e7e197d2b2162e1"
 
 [[package]]
 name = "connector-slack"
@@ -154,7 +154,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/connector-slack.git"
 reference = "HEAD"
-resolved_reference = "49477e08735bf9d0ad127026cb9ec8a9497009a5"
+resolved_reference = "2df500f83ce8d91b15dd0f3d8a42e8695c0b57a8"
 
 [[package]]
 name = "connector-smtp"
@@ -172,7 +172,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/connector-smtp.git"
 reference = "HEAD"
-resolved_reference = "353e51546f3a1c2c4960b1e3a69f5df005dbda1d"
+resolved_reference = "f8ea7bb7e056e531e87e57c023df03048949ff2f"
 
 [[package]]
 name = "Flask"
@@ -541,7 +541,7 @@ description = "A blueprint that can allow (and limit) SpiffWorkflow's Service Ta
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 Flask = "^2.2"
@@ -549,8 +549,10 @@ Flask-OAuthlib = "^0.9.6"
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 [package.source]
-type = "directory"
-url = "../../spiffworkflow-proxy"
+type = "git"
+url = "https://github.com/sartography/spiffworkflow-proxy"
+reference = "HEAD"
+resolved_reference = "1dc289cc2e533092d5571c60bdbac62e797a49ec"
 
 [[package]]
 name = "typing-extensions"
@@ -599,4 +601,4 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "772ab5c11f57f0efedd2a2c3396ed549e9aaab572029a260bf10c1844bdf56c8"
+content-hash = "6f96f7239cd02d2790664a47c0d7085a7a634825d7876b32331d2d8c5d1c5994"
