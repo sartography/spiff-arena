@@ -8,6 +8,8 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_service import UncaughtServiceTaskError
+from spiffworkflow_connector_command.command_interface import CommandResponseDict
+from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -64,7 +66,7 @@ class TestServiceTaskDelegate(BaseTest):
                 r" not responding correctly"
             )
             self._assert_error_with_code(
-                str(connector_proxy_error.value), "ServiceTaskUnexpectedResponseError", message_regex, 404
+                str(connector_proxy_error.value), "ServiceTaskOperatorReturnedBadStatusError", message_regex, 404
             )
 
     def test_call_connector_on_request_post_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -102,7 +104,7 @@ class TestServiceTaskDelegate(BaseTest):
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
                 ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
             self._assert_error_with_code(
-                str(connector_proxy_error.value), "ServiceTaskUnexpectedResponseError", return_text, 200
+                str(connector_proxy_error.value), "ServiceTaskOperatorReturnedInvalidJsonError", return_text, 200
             )
 
     def test_call_connector_on_error_response(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -116,12 +118,17 @@ class TestServiceTaskDelegate(BaseTest):
         processor.do_engine_steps(save=True)
         spiff_task = processor.next_task()
 
-        connector_response = {
-            "command_response": {},
+        command_response: CommandResponseDict = {
+            "body": "{}",
+            "mimetype": "application/json",
+        }
+        connector_response: ConnectorProxyResponseDict = {
+            "command_response": command_response,
             "error": {
                 "error_code": "OurTestError",
                 "message": "We errored",
             },
+            "command_response_version": 2,
         }
 
         with patch("requests.post") as mock_post:
@@ -143,9 +150,14 @@ class TestServiceTaskDelegate(BaseTest):
         processor.do_engine_steps(save=True)
         spiff_task = processor.next_task()
 
-        connector_response = {
-            "command_response": {"we_did_it": True},
+        command_response: CommandResponseDict = {
+            "body": json.dumps({"we_did_it": True}),
+            "mimetype": "application/json",
+        }
+        connector_response: ConnectorProxyResponseDict = {
+            "command_response": command_response,
             "error": None,
+            "command_response_version": 2,
         }
 
         with patch("requests.post") as mock_post:
@@ -155,8 +167,8 @@ class TestServiceTaskDelegate(BaseTest):
             result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
             assert result is not None
             assert json.loads(result) == {
-                **connector_response["command_response"],  # type: ignore
-                **{"operator_identifier": "my_operation"},  # type: ignore
+                **connector_response["command_response"],
+                **{"operator_identifier": "my_operation"},
             }
 
     def _assert_error_with_code(

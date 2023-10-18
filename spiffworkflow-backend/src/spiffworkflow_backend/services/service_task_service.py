@@ -169,8 +169,7 @@ class ServiceTaskDelegate:
                 error_message = response_text
             error_message += "A critical component (The connector proxy) is not responding correctly."
             base_error = {
-                "error_code": "ServiceTaskUnexpectedResponseError",
-                # mention the connector may not be returning valid json
+                "error_code": "ServiceTaskOperatorReturnedBadStatusError",
                 "message": error_message,
             }
 
@@ -199,14 +198,14 @@ class ServiceTaskDelegate:
                 status_code = 0
                 parsed_response: dict = {}
                 try:
-                    # when does this raise?
                     # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
                     proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
 
                     status_code = proxied_response.status_code
                     response_text = proxied_response.text
                 except Exception as exception:
-                    status_code = 500
+                    # in case proxied_response.text fails we do not want to lose the original status code
+                    status_code = status_code or 500
                     parsed_response = {
                         "error": {
                             "error_code": exception.__class__.__name__,
@@ -221,8 +220,7 @@ class ServiceTaskDelegate:
                     except JSONDecodeError:
                         parsed_response = {
                             "error": {
-                                "error_code": "ServiceTaskUnexpectedResponseError",
-                                # mention the connector may not be returning valid json
+                                "error_code": "ServiceTaskOperatorReturnedInvalidJsonError",
                                 "message": response_text,
                             }
                         }
@@ -236,7 +234,7 @@ class ServiceTaskDelegate:
                         response_text = json.dumps(parsed_response)
 
                 # only v2 responses have command_response
-                if "command_response" in parsed_response:
+                if "command_response_version" in parsed_response and parsed_response["command_response_version"] > 1:
                     new_response = parsed_response["command_response"]
                     new_response["operator_identifier"] = operator_identifier
                     response_text = json.dumps(new_response)
