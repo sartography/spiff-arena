@@ -353,7 +353,10 @@ export const setPageTitle = (items: Array<string>) => {
 
 // calling it isANumber to avoid confusion with other libraries
 // that have isNumber methods
-export const isANumber = (str: string | number) => {
+export const isANumber = (str: string | number | null) => {
+  if (str === undefined || str === null) {
+    return false;
+  }
   return /^\d+(\.\d+)?$/.test(str.toString());
 };
 

@@ -1698,8 +1698,8 @@ export default function ProcessInstanceListTable({
   };
 
   const formatDateTime = (_row: ProcessInstance, value: any) => {
-    if (value === undefined) {
-      return undefined;
+    if (value === undefined || value === null) {
+      return value;
     }
     let dateInSeconds = value;
     if (!isANumber(value)) {
