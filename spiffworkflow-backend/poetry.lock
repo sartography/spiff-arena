@@ -2360,15 +2360,17 @@ description = "A workflow framework and BPMN/DMN Processor"
 optional = false
 python-versions = "*"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 configparser = "*"
 lxml = "*"
 
 [package.source]
-type = "directory"
-url = "../../SpiffWorkflow"
+type = "git"
+url = "https://github.com/sartography/SpiffWorkflow"
+reference = "main"
+resolved_reference = "f59ad47ebb1364372b6b8ccd7e9a9265707abf65"
 
 [[package]]
 name = "spiffworkflow-connector-command"
@@ -2817,4 +2819,4 @@ tests-strict = ["codecov (==2.0.15)", "pytest (==4.6.0)", "pytest (==4.6.0)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "b49485ff6e9f2599f4c6fad6be3b95809851656e8bdeb1b53bc54130d56914e2"
+content-hash = "05c4b60c5e60b6ed386ce6ff3a8b56a089657a96efb3d4a313597b11192fae2b"
