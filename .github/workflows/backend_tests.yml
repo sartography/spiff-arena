@@ -224,6 +224,14 @@ jobs:
           SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
       - name: wait_for_backend
         run: ./bin/wait_for_server_to_be_up 5
+      - name: Scan Docker image
+        uses: snyk/actions/docker@master
+        continue-on-error: true
+        with:
+          image: spiffworkflow-backend-spiffworkflow-backend
+          args: --file=Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   coverage:
     runs-on: ubuntu-latest
