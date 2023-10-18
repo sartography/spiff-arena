@@ -11,9 +11,14 @@ WORKDIR /app
 # vim is just for debugging
 FROM base AS deployment
 
+# git-core because the app does "git commit", etc
+# curl because the docker health check uses it
+# gunicorn3 for web server
+# default-mysql-client for convenience accessing mysql docker container
+# vim ftw
 RUN apt-get update \
  && apt-get clean -y \
- && apt-get install -y -q git-core gunicorn3 default-mysql-client vim \
+ && apt-get install -y -q git-core curl gunicorn3 default-mysql-client vim \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
