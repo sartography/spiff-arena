@@ -9,203 +9,203 @@ defaults:
     working-directory: spiffworkflow-backend
 
 jobs:
-  tests:
-    name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { python: "3.11", os: "ubuntu-latest", session: "safety" }
-          - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
-          - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
-          - {
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "mysql",
-              upload_coverage: true,
-            }
-          - {
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "postgres",
-            }
-          - {
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
-              python: "3.10",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          # FIXME: tests cannot pass on windows and we currently cannot debug
-          # since none of us have a windows box that can run the python app.
-          # so ignore windows tests until we can get it fixed.
-          # - {
-          #     python: "3.10",
-          #     os: "windows-latest",
-          #     session: "tests",
-          #     database: "sqlite",
-          #   }
-          - {
-              python: "3.11",
-              os: "macos-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
-              # typeguard 2.13.3 is broken with TypeDict in 3.11.
-              # probably the next release fixes it.
-              # https://github.com/agronholm/typeguard/issues/242
-              python: "3.11",
-              os: "ubuntu-latest",
-              session: "typeguard",
-              database: "sqlite",
-            }
-          # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
-          # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
-
-    env:
-      FLASK_SESSION_SECRET_KEY: super_secret_key
-      FORCE_COLOR: "1"
-      NOXSESSION: ${{ matrix.session }}
-      PRE_COMMIT_COLOR: "always"
-      SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
-      SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
-      SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: 'true'
-
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3.3.0
-
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4.6.1
-        with:
-          python-version: ${{ matrix.python }}
-
-      - name: Upgrade pip
-        run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
-          pip --version
-
-      - name: Upgrade pip in virtual environments
-        shell: python
-        run: |
-          import os
-          import pip
-
-          with open(os.environ["GITHUB_ENV"], mode="a") as io:
-              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
-          poetry --version
-
-      # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
-      # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
-      # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
-      # - name: Checkout Samples
-      #   if: matrix.database == 'sqlite'
-      #   uses: actions/checkout@v3
-      #   with:
-      #     repository: sartography/sample-process-models
-      #     path: sample-process-models
-      # - name: Poetry Install
-      #   if: matrix.database == 'sqlite'
-      #   run: poetry install
-      # - name: Setup sqlite
-      #   if: matrix.database == 'sqlite'
-      #   env:
-      #     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
-      #   run: ./bin/recreate_db clean rmall
-
-      - name: Setup Mysql
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          host port: 3306
-          container port: 3306
-          mysql version: "8.0"
-          mysql database: "spiffworkflow_backend_unit_testing"
-          mysql root password: password
-          collation server: 'utf8mb4_0900_as_cs'
-        if: matrix.database == 'mysql'
-
-      - name: Setup Postgres
-        run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
-        if: matrix.database == 'postgres'
-
-      - name: Install mysqlclient lib dependencies
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install mysql pkg-config
-
-      - name: Run Session
-        run: |
-          ./bin/run_ci_session ${{ matrix.session }}
-
-      - name: Upload coverage data
-        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v3"
-        # this action doesn't seem to respect working-directory so include working-directory value in path
-        with:
-          name: coverage-data
-          path: "spiffworkflow-backend/.coverage.*"
-
-      # - name: Upload documentation
-      #   if: matrix.session == 'docs-build'
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: docs
-      #     path: docs/_build
-      #
-      - name: Upload logs
-        if: failure() && matrix.session == 'tests'
-        uses: "actions/upload-artifact@v3"
-        with:
-          name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
-          path: "./log/*.log"
-
-  # burnettk created an account at https://app.snyk.io/org/kevin-jfx
-  # and added his SNYK_TOKEN secret under the spiff-arena repo.
-  snyk:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/python@master
-        with:
-          args: spiffworkflow-backend
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-  run_pre_commit_checks:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3.3.0
-      - name: Set up Python
-        uses: actions/setup-python@v4.6.1
-        with:
-          python-version: "3.11"
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
-          poetry --version
-      - name: Poetry Install
-        run: poetry install
-      - name: run_pre_commit
-        run: ./bin/run_pre_commit_in_ci
+  # tests:
+  #   name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - { python: "3.11", os: "ubuntu-latest", session: "safety" }
+  #         - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
+  #         - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
+  #         - {
+  #             python: "3.11",
+  #             os: "ubuntu-latest",
+  #             session: "tests",
+  #             database: "mysql",
+  #             upload_coverage: true,
+  #           }
+  #         - {
+  #             python: "3.11",
+  #             os: "ubuntu-latest",
+  #             session: "tests",
+  #             database: "postgres",
+  #           }
+  #         - {
+  #             python: "3.11",
+  #             os: "ubuntu-latest",
+  #             session: "tests",
+  #             database: "sqlite",
+  #           }
+  #         - {
+  #             python: "3.10",
+  #             os: "ubuntu-latest",
+  #             session: "tests",
+  #             database: "sqlite",
+  #           }
+  #         # FIXME: tests cannot pass on windows and we currently cannot debug
+  #         # since none of us have a windows box that can run the python app.
+  #         # so ignore windows tests until we can get it fixed.
+  #         # - {
+  #         #     python: "3.10",
+  #         #     os: "windows-latest",
+  #         #     session: "tests",
+  #         #     database: "sqlite",
+  #         #   }
+  #         - {
+  #             python: "3.11",
+  #             os: "macos-latest",
+  #             session: "tests",
+  #             database: "sqlite",
+  #           }
+  #         - {
+  #             # typeguard 2.13.3 is broken with TypeDict in 3.11.
+  #             # probably the next release fixes it.
+  #             # https://github.com/agronholm/typeguard/issues/242
+  #             python: "3.11",
+  #             os: "ubuntu-latest",
+  #             session: "typeguard",
+  #             database: "sqlite",
+  #           }
+  #         # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+  #         # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
+  #
+  #   env:
+  #     FLASK_SESSION_SECRET_KEY: super_secret_key
+  #     FORCE_COLOR: "1"
+  #     NOXSESSION: ${{ matrix.session }}
+  #     PRE_COMMIT_COLOR: "always"
+  #     SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
+  #     SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
+  #     SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: 'true'
+  #
+  #   steps:
+  #     - name: Check out the repository
+  #       uses: actions/checkout@v3.3.0
+  #
+  #     - name: Set up Python ${{ matrix.python }}
+  #       uses: actions/setup-python@v4.6.1
+  #       with:
+  #         python-version: ${{ matrix.python }}
+  #
+  #     - name: Upgrade pip
+  #       run: |
+  #         pip install --constraint=../.github/workflows/constraints.txt pip
+  #         pip --version
+  #
+  #     - name: Upgrade pip in virtual environments
+  #       shell: python
+  #       run: |
+  #         import os
+  #         import pip
+  #
+  #         with open(os.environ["GITHUB_ENV"], mode="a") as io:
+  #             print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
+  #
+  #     - name: Install Poetry
+  #       run: |
+  #         pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
+  #         poetry --version
+  #
+  #     # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
+  #     # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
+  #     # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
+  #     # - name: Checkout Samples
+  #     #   if: matrix.database == 'sqlite'
+  #     #   uses: actions/checkout@v3
+  #     #   with:
+  #     #     repository: sartography/sample-process-models
+  #     #     path: sample-process-models
+  #     # - name: Poetry Install
+  #     #   if: matrix.database == 'sqlite'
+  #     #   run: poetry install
+  #     # - name: Setup sqlite
+  #     #   if: matrix.database == 'sqlite'
+  #     #   env:
+  #     #     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
+  #     #   run: ./bin/recreate_db clean rmall
+  #
+  #     - name: Setup Mysql
+  #       uses: mirromutth/mysql-action@v1.1
+  #       with:
+  #         host port: 3306
+  #         container port: 3306
+  #         mysql version: "8.0"
+  #         mysql database: "spiffworkflow_backend_unit_testing"
+  #         mysql root password: password
+  #         collation server: 'utf8mb4_0900_as_cs'
+  #       if: matrix.database == 'mysql'
+  #
+  #     - name: Setup Postgres
+  #       run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
+  #       if: matrix.database == 'postgres'
+  #
+  #     - name: Install mysqlclient lib dependencies
+  #       if: matrix.os == 'macos-latest'
+  #       run: |
+  #         brew install mysql pkg-config
+  #
+  #     - name: Run Session
+  #       run: |
+  #         ./bin/run_ci_session ${{ matrix.session }}
+  #
+  #     - name: Upload coverage data
+  #       # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
+  #       if: matrix.upload_coverage
+  #       uses: "actions/upload-artifact@v3"
+  #       # this action doesn't seem to respect working-directory so include working-directory value in path
+  #       with:
+  #         name: coverage-data
+  #         path: "spiffworkflow-backend/.coverage.*"
+  #
+  #     # - name: Upload documentation
+  #     #   if: matrix.session == 'docs-build'
+  #     #   uses: actions/upload-artifact@v3
+  #     #   with:
+  #     #     name: docs
+  #     #     path: docs/_build
+  #     #
+  #     - name: Upload logs
+  #       if: failure() && matrix.session == 'tests'
+  #       uses: "actions/upload-artifact@v3"
+  #       with:
+  #         name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
+  #         path: "./log/*.log"
+  #
+  # # burnettk created an account at https://app.snyk.io/org/kevin-jfx
+  # # and added his SNYK_TOKEN secret under the spiff-arena repo.
+  # snyk:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@master
+  #     - name: Run Snyk to check for vulnerabilities
+  #       uses: snyk/actions/python@master
+  #       with:
+  #         args: spiffworkflow-backend
+  #       env:
+  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #
+  # run_pre_commit_checks:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: .
+  #   steps:
+  #     - name: Check out the repository
+  #       uses: actions/checkout@v3.3.0
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4.6.1
+  #       with:
+  #         python-version: "3.11"
+  #     - name: Install Poetry
+  #       run: |
+  #         pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+  #         poetry --version
+  #     - name: Poetry Install
+  #       run: poetry install
+  #     - name: run_pre_commit
+  #       run: ./bin/run_pre_commit_in_ci
 
   check_docker_start_script:
     runs-on: ubuntu-latest
@@ -226,76 +226,80 @@ jobs:
         run: ./bin/wait_for_server_to_be_up 5
       - name: Scan Docker image
         uses: snyk/actions/docker@master
-        continue-on-error: true
+        # continue-on-error: true
         with:
           image: spiffworkflow-backend-spiffworkflow-backend
-          args: --file=Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
+          args: --file=spiffworkflow-backend/Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-  coverage:
-    runs-on: ubuntu-latest
-    needs: [tests, run_pre_commit_checks, check_docker_start_script]
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+      - name: Upload Snyk report as sarif
+        uses: github/codeql-action/upload-sarif@v2
         with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-          fetch-depth: 0
+          sarif_file: snyk.sarif
 
-      - name: Set up Python
-        uses: actions/setup-python@v4.6.1
-        with:
-          python-version: "3.11"
-
-      - name: Upgrade pip
-        run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
-          pip --version
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
-          poetry --version
-
-      - name: Download coverage data
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: coverage-data
-          # this action doesn't seem to respect working-directory so include working-directory value in path
-          path: spiffworkflow-backend
-
-      - name: Run Coverage
-        run: |
-          ./bin/run_ci_session coverage
-
-      - name: Upload coverage report
-        uses: codecov/codecov-action@v3.1.4
-
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v1.9
-        # thought about just skipping dependabot
-        # if: ${{ github.actor != 'dependabot[bot]' }}
-        # but figured all pull requests seems better, since none of them will have access to sonarcloud.
-        # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
-        # if: ${{ github.event_name != 'pull_request' }}
-        # so just skip everything but main
-        if: github.ref_name == 'main'
-        with:
-          projectBaseDir: spiffworkflow-backend
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Save PR number
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          mkdir -p ./pr
-          echo "$PR_NUMBER" > ./pr/pr_number
-      - uses: actions/upload-artifact@v3
-        with:
-          name: pr_number
-          path: pr/
+  # coverage:
+  #   runs-on: ubuntu-latest
+  #   needs: [tests, run_pre_commit_checks, check_docker_start_script]
+  #   steps:
+  #     - name: Check out the repository
+  #       uses: actions/checkout@v3.3.0
+  #       with:
+  #         # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+  #         fetch-depth: 0
+  #
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4.6.1
+  #       with:
+  #         python-version: "3.11"
+  #
+  #     - name: Upgrade pip
+  #       run: |
+  #         pip install --constraint=../.github/workflows/constraints.txt pip
+  #         pip --version
+  #
+  #     - name: Install Poetry
+  #       run: |
+  #         pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
+  #         poetry --version
+  #
+  #     - name: Download coverage data
+  #       uses: actions/download-artifact@v3.0.2
+  #       with:
+  #         name: coverage-data
+  #         # this action doesn't seem to respect working-directory so include working-directory value in path
+  #         path: spiffworkflow-backend
+  #
+  #     - name: Run Coverage
+  #       run: |
+  #         ./bin/run_ci_session coverage
+  #
+  #     - name: Upload coverage report
+  #       uses: codecov/codecov-action@v3.1.4
+  #
+  #     - name: SonarCloud Scan
+  #       uses: sonarsource/sonarcloud-github-action@v1.9
+  #       # thought about just skipping dependabot
+  #       # if: ${{ github.actor != 'dependabot[bot]' }}
+  #       # but figured all pull requests seems better, since none of them will have access to sonarcloud.
+  #       # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
+  #       # if: ${{ github.event_name != 'pull_request' }}
+  #       # so just skip everything but main
+  #       if: github.ref_name == 'main'
+  #       with:
+  #         projectBaseDir: spiffworkflow-backend
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #     # part about saving PR number and then using it from auto-merge-dependabot-prs from:
+  #     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+  #     - name: Save PR number
+  #       if: ${{ github.event_name == 'pull_request' }}
+  #       env:
+  #         PR_NUMBER: ${{ github.event.number }}
+  #       run: |
+  #         mkdir -p ./pr
+  #         echo "$PR_NUMBER" > ./pr/pr_number
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: pr_number
+  #         path: pr/
