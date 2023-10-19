@@ -1,7 +1,8 @@
 # Base image to share ENV vars that activate VENV.
-FROM quay.io/sartography/node:latest AS base
+FROM node:20.8.1-bookworm-slim AS base
 
 RUN mkdir /app
+
 WORKDIR /app
 
 # this matches total memory on spiffworkflow-demo
@@ -31,11 +32,14 @@ FROM base AS final
 
 LABEL description="Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
 
-# WARNING: On localhost frontend assumes backend is one port lowe.
+# WARNING: On localhost frontend assumes backend is one port lower.
 ENV PORT0=7001
 
 COPY --from=setup /app/build /app/build
 COPY --from=setup /app/bin /app/bin
 COPY --from=setup /app/node_modules.justserve /app/node_modules
 
-ENTRYPOINT ["/app/bin/boot_server_in_docker"]
+RUN chown -R node:node /app
+
+USER node
+CMD ["/app/bin/boot_server_in_docker"]

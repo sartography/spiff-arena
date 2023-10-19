@@ -37,7 +37,7 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
     def set(self, my_task: SpiffTask) -> None:
         """set."""
         data = my_task.data[self.bpmn_id]
-        if type(data) != dict:
+        if not isinstance(data, dict):
             raise Exception(
                 f"When writing to this data store, a dictionary is expected as the value for variable '{self.bpmn_id}'"
             )
@@ -45,7 +45,7 @@ class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
             if second_level is None:
                 self._delete_all_for_top_level_key(top_level_key)
                 continue
-            if type(second_level) != dict:
+            if not isinstance(second_level, dict):
                 raise Exception(
                     "When writing to this data store, a dictionary is expected as the value for"
                     f" '{self.bpmn_id}[\"{top_level_key}\"]'"
