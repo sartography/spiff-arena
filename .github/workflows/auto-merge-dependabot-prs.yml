@@ -1,7 +1,7 @@
 name: Dependabot auto-merge
 on:
   workflow_run:
-    workflows: ["Backend Tests", "Frontend Tests"]
+    workflows: ["Tests"]
     # completed does not mean success of Tests workflow. see below checking github.event.workflow_run.conclusion
     types:
       - completed
