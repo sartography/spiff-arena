@@ -308,7 +308,7 @@ export default function ProcessInstanceLogList({
     let timestampComponent = (
       <td>{convertSecondsToFormattedDateTime(logEntry.timestamp)}</td>
     );
-    if (logEntry.spiff_task_guid) {
+    if (logEntry.spiff_task_guid && logEntry.event_type !== 'task_cancelled') {
       timestampComponent = (
         <td>
           <Link
