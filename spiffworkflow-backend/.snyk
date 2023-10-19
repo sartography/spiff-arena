@@ -1,12 +1,19 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
 version: v1.25.0
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
-#
-# leaving for documenting how to ignore items
-# ignore:
-#   SNYK-PYTHON-FLASK-5490129:
-#     - '*':
-#         reason: Filed ticket to upgrade flask
-#         expires: 2024-06-02T14:48:14.372Z
-#         created: 2023-05-03T14:48:14.379Z
+ignore: {}
 patch: {}
+
+# when running snyk ignore to ignore issues with "snyk code test"
+# make sure to EXCLUDE the id option. Otherwise a bad file is created.
+#
+# Works:
+#   snyk ignore --file-path=src/spiffworkflow_backend/routes/debug_controller.py
+#
+# Des not work:
+#   snyk ignore --file-path=src/spiffworkflow_backend/routes/debug_controller.py --id=whatever
+#
+# a single vulnerability cannot be ignored for "snyk code test". Only whole files can be ingored.
+exclude:
+  global:
+    - src/spiffworkflow_backend/routes/debug_controller.py
