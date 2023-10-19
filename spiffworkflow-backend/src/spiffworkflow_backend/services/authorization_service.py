@@ -33,8 +33,9 @@ from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroup
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import literal
 from sqlalchemy import or_
-from sqlalchemy import text
 
 
 @dataclass
@@ -111,10 +112,11 @@ class AuthorizationService:
             .join(PermissionTargetModel)
             .filter(
                 or_(
-                    text(f"'{target_uri_normalized}' LIKE permission_target.uri"),
+                    # found from https://stackoverflow.com/a/46783555
+                    literal(target_uri_normalized).like(PermissionTargetModel.uri),
                     # to check for exact matches as well
                     # see test_user_can_access_base_path_when_given_wildcard_permission unit test
-                    text(f"'{target_uri_normalized}' = replace(replace(permission_target.uri, '/%', ''), ':%', '')"),
+                    func.REPLACE(func.REPLACE(PermissionTargetModel.uri, "/%", ""), ":%", "") == target_uri_normalized,
                 )
             )
             .all()
