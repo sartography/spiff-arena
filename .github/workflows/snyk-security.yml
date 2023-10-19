@@ -131,7 +131,8 @@ jobs:
         run: docker build -t spiffworkflow-frontend/snyk-test .
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
-        run: snyk container monitor spiffworkflow-frontend/snyk-test --file=Dockerfile
+        # pruning repeated subdependencies because it fails otherwise
+        run: snyk container monitor spiffworkflow-frontend/snyk-test --file=Dockerfile --prune-repeated-subdependencies
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
