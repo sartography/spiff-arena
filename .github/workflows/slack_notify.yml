@@ -2,14 +2,14 @@ name: Slack Notification
 
 on:
   workflow_run:
-    workflows: ["Backend Tests", "Frontend Tests", "Docker Image For Main Builds", "Release Builds", "Build Docs"]
+    workflows: ["Tests", "Docker Image For Main Builds", "Release Builds", "Build Docs"]
     types: [completed]
 
 jobs:
   send_notification:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify on Backend Tests failure
+      - name: Notify on Tests failure
         if: ${{ github.event.workflow_run.conclusion != 'success' && github.event.workflow_run.conclusion != 'skipped' }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
