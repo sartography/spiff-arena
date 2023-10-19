@@ -228,18 +228,6 @@ jobs:
           SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
       - name: wait_for_backend
         run: ./bin/wait_for_server_to_be_up 5
-      - name: Scan Docker image
-        uses: snyk/actions/docker@master
-        continue-on-error: true
-        with:
-          image: spiffworkflow-backend-spiffworkflow-backend
-          args: --file=spiffworkflow-backend/Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      - name: Upload Snyk report as sarif
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: snyk.sarif
 
   # coverage:
   #   runs-on: ubuntu-latest
