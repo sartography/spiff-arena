@@ -1,6 +1,6 @@
 // @ts-ignore
 import { TimeAgo } from '../helpers/timeago';
-import { convertSecondsToFormattedDateTime } from '../helpers';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 type OwnProps = {
   timeInSeconds: number;
@@ -16,7 +16,10 @@ export default function TableCellWithTimeAgoInWords({
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <td
-      title={convertSecondsToFormattedDateTime(timeInSeconds) || '-'}
+      title={
+        DateAndTimeService.convertSecondsToFormattedDateTime(timeInSeconds) ||
+        '-'
+      }
       onClick={onClick}
       onKeyDown={onKeyDown}
     >

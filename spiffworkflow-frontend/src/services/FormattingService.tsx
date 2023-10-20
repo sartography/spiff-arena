@@ -1,8 +1,9 @@
-import { formatDateTime, formatDurationForDisplay } from '../helpers';
+import DateAndTimeService from './DateAndTimeService';
 
 const spiffFormatFunctions: { [key: string]: Function } = {
-  convert_seconds_to_date_time_for_display: formatDateTime,
-  convert_seconds_to_duration_for_display: formatDurationForDisplay,
+  convert_seconds_to_date_time_for_display: DateAndTimeService.formatDateTime,
+  convert_seconds_to_duration_for_display:
+    DateAndTimeService.formatDurationForDisplay,
 };
 
 const checkForSpiffFormats = (markdown: string) => {

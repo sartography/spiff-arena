@@ -36,22 +36,13 @@ import {
   DATE_FORMAT_FOR_DISPLAY,
 } from '../config';
 import {
-  convertDateAndTimeStringsToSeconds,
-  convertDateObjectToFormattedHoursMinutes,
-  convertSecondsToFormattedDateString,
-  convertSecondsToFormattedDateTime,
-  convertSecondsToFormattedTimeHoursMinutes,
   getKeyByValue,
   getLastMilestoneFromProcessInstance,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
-  REFRESH_INTERVAL_SECONDS,
-  REFRESH_TIMEOUT_SECONDS,
   titleizeString,
   truncateString,
-  formatDurationForDisplay,
-  formatDateTime,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -86,6 +77,7 @@ import { Can } from '../contexts/Can';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 import UserService from '../services/UserService';
 import Filters from './Filters';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -443,13 +435,15 @@ export default function ProcessInstanceListTable({
             const timeFunctionToCall =
               dateParametersToAlwaysFilterBy[reportFilter.field_name][1];
             if (reportFilter.field_value) {
-              const dateString = convertSecondsToFormattedDateString(
-                reportFilter.field_value as any
-              );
+              const dateString =
+                DateAndTimeService.convertSecondsToFormattedDateString(
+                  reportFilter.field_value as any
+                );
               dateFunctionToCall(dateString);
-              const timeString = convertSecondsToFormattedTimeHoursMinutes(
-                reportFilter.field_value as any
-              );
+              const timeString =
+                DateAndTimeService.convertSecondsToFormattedTimeHoursMinutes(
+                  reportFilter.field_value as any
+                );
               timeFunctionToCall(timeString);
             }
           }
@@ -566,8 +560,8 @@ export default function ProcessInstanceListTable({
     checkFiltersAndRun();
     if (autoReload) {
       clearRefreshRef.current = refreshAtInterval(
-        REFRESH_INTERVAL_SECONDS,
-        REFRESH_TIMEOUT_SECONDS,
+        DateAndTimeService.REFRESH_INTERVAL_SECONDS,
+        DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
         checkFiltersAndRun
       );
       return clearRefreshRef.current;
@@ -627,19 +621,22 @@ export default function ProcessInstanceListTable({
   // with the use of the setErrorMessageSafely function. we are not sure why the context not
   // changing still causes things to rerender when we call its setter without our extra check.
   const calculateStartAndEndSeconds = (validate: boolean = true) => {
-    const startFromSeconds = convertDateAndTimeStringsToSeconds(
-      startFromDate,
-      startFromTime || '00:00:00'
-    );
-    const startToSeconds = convertDateAndTimeStringsToSeconds(
-      startToDate,
-      startToTime || '00:00:00'
-    );
-    const endFromSeconds = convertDateAndTimeStringsToSeconds(
-      endFromDate,
-      endFromTime || '00:00:00'
-    );
-    const endToSeconds = convertDateAndTimeStringsToSeconds(
+    const startFromSeconds =
+      DateAndTimeService.convertDateAndTimeStringsToSeconds(
+        startFromDate,
+        startFromTime || '00:00:00'
+      );
+    const startToSeconds =
+      DateAndTimeService.convertDateAndTimeStringsToSeconds(
+        startToDate,
+        startToTime || '00:00:00'
+      );
+    const endFromSeconds =
+      DateAndTimeService.convertDateAndTimeStringsToSeconds(
+        endFromDate,
+        endFromTime || '00:00:00'
+      );
+    const endToSeconds = DateAndTimeService.convertDateAndTimeStringsToSeconds(
       endToDate,
       endToTime || '00:00:00'
     );
@@ -872,7 +869,9 @@ export default function ProcessInstanceListTable({
             onChange={(dateChangeEvent: any) => {
               if (!initialDate && !initialTime) {
                 onChangeTimeFunction(
-                  convertDateObjectToFormattedHoursMinutes(new Date())
+                  DateAndTimeService.convertDateObjectToFormattedHoursMinutes(
+                    new Date()
+                  )
                 );
               }
               onChangeDateFunction(dateChangeEvent.srcElement.value);
@@ -1691,7 +1690,7 @@ export default function ProcessInstanceListTable({
   };
 
   const formatSecondsForDisplay = (_row: ProcessInstance, seconds: any) => {
-    return convertSecondsToFormattedDateTime(seconds) || '-';
+    return DateAndTimeService.convertSecondsToFormattedDateTime(seconds) || '-';
   };
   const defaultFormatter = (_row: ProcessInstance, value: any) => {
     return value;
@@ -1710,8 +1709,8 @@ export default function ProcessInstanceListTable({
       last_milestone_bpmn_name: formatLastMilestone,
     };
     const displayTypeFormatters: Record<string, any> = {
-      date_time: formatDateTime,
-      duration: formatDurationForDisplay,
+      date_time: DateAndTimeService.formatDateTime,
+      duration: DateAndTimeService.formatDurationForDisplay,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type
