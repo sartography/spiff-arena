@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 // @ts-ignore
 import MDEditor from '@uiw/react-md-editor';
 import { Toggle } from '@carbon/react';
+import FormattingService from '../services/FormattingService';
 
 type OwnProps = {
   task: any;
@@ -25,6 +26,7 @@ export default function InstructionsForEndUser({
   if (instructionsForEndUser) {
     instructions = instructionsForEndUser;
   }
+  instructions = FormattingService.checkForSpiffFormats(instructions);
 
   const maxLineCount: number = 8;
   const maxWordCount: number = 75;

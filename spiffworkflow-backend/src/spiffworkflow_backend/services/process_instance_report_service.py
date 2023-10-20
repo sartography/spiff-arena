@@ -643,6 +643,10 @@ class ProcessInstanceReportService:
                     join_conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
                 elif filter_for_column["operator"] == "not_equals":
                     join_conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "greater_than_or_equal_to":
+                    join_conditions.append(instance_metadata_alias.value >= filter_for_column["field_value"])
+                elif filter_for_column["operator"] == "less_than":
+                    join_conditions.append(instance_metadata_alias.value < filter_for_column["field_value"])
                 elif filter_for_column["operator"] == "contains":
                     join_conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
                 elif filter_for_column["operator"] == "is_empty":

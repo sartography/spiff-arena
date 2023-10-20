@@ -442,3 +442,21 @@ export const formatDurationForDisplay = (_row: any, value: any) => {
   }
   return durationTimes.join(' ');
 };
+
+export const formatDateTime = (_row: any, value: any) => {
+  if (value === undefined || value === null) {
+    return value;
+  }
+  let dateInSeconds = value;
+  if (!isANumber(value)) {
+    const timeArgs = value.split('T');
+    dateInSeconds = convertDateAndTimeStringsToSeconds(
+      timeArgs[0],
+      timeArgs[1]
+    );
+  }
+  if (dateInSeconds) {
+    return convertSecondsToFormattedDateTime(dateInSeconds);
+  }
+  return null;
+};
