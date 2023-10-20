@@ -488,6 +488,7 @@ class BaseTest:
         process_instance: ProcessInstanceModel,
         operator: str,
         filter_field_value: str = "",
+        expect_to_find_instance: bool = True,
     ) -> None:
         report_metadata: ReportMetadata = {
             "columns": [
@@ -506,8 +507,17 @@ class BaseTest:
         response = self.post_to_process_instance_list(
             client, user, report_metadata=process_instance_report.get_report_metadata()
         )
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == process_instance.id
+
+        if expect_to_find_instance is True:
+            assert len(response.json["results"]) == 1
+            assert response.json["results"][0]["id"] == process_instance.id
+        else:
+            if len(response.json["results"]) == 1:
+                assert (
+                    response.json["results"][0]["id"] != process_instance.id
+                ), "expected not to find a specific process instance, but we found it"
+            else:
+                assert len(response.json["results"]) == 0
         db.session.delete(process_instance_report)
         db.session.commit()
 

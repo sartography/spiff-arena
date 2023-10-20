@@ -16,6 +16,7 @@ import {
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
 import ErrorDisplay from '../components/ErrorDisplay';
+import FormattingService from '../services/FormattingService';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
@@ -47,7 +48,10 @@ export default function Extension() {
       const processLoadResult = (result: any) => {
         setFormData(result.task_data);
         if (result.rendered_results_markdown) {
-          setMarkdownToRenderOnLoad(result.rendered_results_markdown);
+          const newMarkdown = FormattingService.checkForSpiffFormats(
+            result.rendered_results_markdown
+          );
+          setMarkdownToRenderOnLoad(newMarkdown);
         }
       };
 
@@ -162,7 +166,10 @@ export default function Extension() {
     } else {
       setProcessedTaskData(result.task_data);
       if (result.rendered_results_markdown) {
-        setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
+        const newMarkdown = FormattingService.checkForSpiffFormats(
+          result.rendered_results_markdown
+        );
+        setMarkdownToRenderOnSubmit(newMarkdown);
       }
       setFormButtonsDisabled(false);
     }
