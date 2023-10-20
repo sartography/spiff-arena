@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@carbon/react';
 import MDEditor from '@uiw/react-md-editor';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -7,7 +7,11 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import { recursivelyChangeNullAndUndefined } from '../helpers';
+import {
+  formatDateTime,
+  formatDurationForDisplay,
+  recursivelyChangeNullAndUndefined,
+} from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
 import {
@@ -41,13 +45,50 @@ export default function Extension() {
 
   const { addError, removeError } = useAPIError();
 
+  const spiffConversionFunctions: { [key: string]: Function } = useMemo(() => {
+    return {
+      convert_seconds_to_date_time_for_display: formatDateTime,
+      convert_seconds_to_duration_for_display: formatDurationForDisplay,
+    };
+  }, []);
+
+  const checkForSpiffConversions = useCallback(
+    (markdown: string) => {
+      const replacer = (
+        match: string,
+        spiffConversion: string,
+        originalValue: string
+      ) => {
+        if (spiffConversion in spiffConversionFunctions) {
+          return spiffConversionFunctions[spiffConversion](
+            undefined,
+            originalValue
+          );
+        }
+        console.warn(
+          `attempted: ${match}, but ${spiffConversion} is not a valid conversion function`
+        );
+
+        return match;
+      };
+      return markdown.replaceAll(
+        /SPIFF_CONVERSION:::(\w+)\(([^)]+)\)/g,
+        replacer
+      );
+    },
+    [spiffConversionFunctions]
+  );
+
   const setConfigsIfDesiredSchemaFile = useCallback(
     // eslint-disable-next-line sonarjs/cognitive-complexity
     (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
       const processLoadResult = (result: any) => {
         setFormData(result.task_data);
         if (result.rendered_results_markdown) {
-          setMarkdownToRenderOnLoad(result.rendered_results_markdown);
+          const newMarkdown = checkForSpiffConversions(
+            result.rendered_results_markdown
+          );
+          setMarkdownToRenderOnLoad(newMarkdown);
         }
       };
 
@@ -99,6 +140,7 @@ export default function Extension() {
       params.page_identifier,
       searchParams,
       filesByName,
+      checkForSpiffConversions,
     ]
   );
 
@@ -124,6 +166,30 @@ export default function Extension() {
     targetUris.extensionListPath,
     targetUris.extensionPath,
   ]);
+
+  // this relies on the MDEditor rendering the markdown before
+  // this useEffect triggers which may or may not alwasy be the case
+  // so we may need to change implementation to a search/replace
+  // before renddering any markdown.
+  useEffect(() => {
+    const convertField = (className: string, conversionFunction: any) => {
+      const elements = document.getElementsByClassName(className);
+      if (elements.length > 0) {
+        for (let i = 0; i < elements.length; i += 1) {
+          const element = elements[i];
+          if (element) {
+            const originalValue = element.innerHTML;
+            element.innerHTML = conversionFunction(undefined, originalValue);
+          }
+        }
+      }
+    };
+    convertField('convert_seconds_to_date_time_for_display', formatDateTime);
+    convertField(
+      'convert_seconds_to_duration_for_display',
+      formatDurationForDisplay
+    );
+  }, [markdownToRenderOnLoad, markdownToRenderOnSubmit]);
 
   const interpolateNavigationString = (
     navigationString: string,
@@ -162,7 +228,10 @@ export default function Extension() {
     } else {
       setProcessedTaskData(result.task_data);
       if (result.rendered_results_markdown) {
-        setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
+        const newMarkdown = checkForSpiffConversions(
+          result.rendered_results_markdown
+        );
+        setMarkdownToRenderOnSubmit(newMarkdown);
       }
       setFormButtonsDisabled(false);
     }

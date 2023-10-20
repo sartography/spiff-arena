@@ -50,8 +50,8 @@ import {
   REFRESH_TIMEOUT_SECONDS,
   titleizeString,
   truncateString,
-  isANumber,
   formatDurationForDisplay,
+  formatDateTime,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -1695,24 +1695,6 @@ export default function ProcessInstanceListTable({
   };
   const defaultFormatter = (_row: ProcessInstance, value: any) => {
     return value;
-  };
-
-  const formatDateTime = (_row: ProcessInstance, value: any) => {
-    if (value === undefined || value === null) {
-      return value;
-    }
-    let dateInSeconds = value;
-    if (!isANumber(value)) {
-      const timeArgs = value.split('T');
-      dateInSeconds = convertDateAndTimeStringsToSeconds(
-        timeArgs[0],
-        timeArgs[1]
-      );
-    }
-    if (dateInSeconds) {
-      return convertSecondsToFormattedDateTime(dateInSeconds);
-    }
-    return null;
   };
 
   const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {

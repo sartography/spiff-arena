@@ -153,11 +153,12 @@ def _run_extension(
             script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
             process_id_to_run=process_id_to_run,
         )
+        save_to_db = process_instance.persistence_level != "none"
         if body and "extension_input" in body:
-            processor.do_engine_steps(save=False, execution_strategy_name="run_current_ready_tasks")
+            processor.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
             next_task = processor.next_task()
             next_task.update_data(body["extension_input"])
-        processor.do_engine_steps(save=False, execution_strategy_name="greedy")
+        processor.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,
