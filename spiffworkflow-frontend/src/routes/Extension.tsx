@@ -7,11 +7,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import {
-  formatDateTime,
-  formatDurationForDisplay,
-  recursivelyChangeNullAndUndefined,
-} from '../helpers';
+import { recursivelyChangeNullAndUndefined } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
 import {
@@ -132,30 +128,6 @@ export default function Extension() {
     targetUris.extensionListPath,
     targetUris.extensionPath,
   ]);
-
-  // this relies on the MDEditor rendering the markdown before
-  // this useEffect triggers which may or may not alwasy be the case
-  // so we may need to change implementation to a search/replace
-  // before renddering any markdown.
-  useEffect(() => {
-    const convertField = (className: string, conversionFunction: any) => {
-      const elements = document.getElementsByClassName(className);
-      if (elements.length > 0) {
-        for (let i = 0; i < elements.length; i += 1) {
-          const element = elements[i];
-          if (element) {
-            const originalValue = element.innerHTML;
-            element.innerHTML = conversionFunction(undefined, originalValue);
-          }
-        }
-      }
-    };
-    convertField('convert_seconds_to_date_time_for_display', formatDateTime);
-    convertField(
-      'convert_seconds_to_duration_for_display',
-      formatDurationForDisplay
-    );
-  }, [markdownToRenderOnLoad, markdownToRenderOnSubmit]);
 
   const interpolateNavigationString = (
     navigationString: string,
