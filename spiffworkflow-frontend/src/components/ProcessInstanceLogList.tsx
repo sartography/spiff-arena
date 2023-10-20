@@ -15,7 +15,6 @@ import { createSearchParams, Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from './PaginationForTable';
 import {
   getPageInfoFromSearchParams,
-  convertSecondsToFormattedDateTime,
   selectKeysFromSearchParams,
 } from '../helpers';
 import HttpService from '../services/HttpService';
@@ -32,6 +31,7 @@ import {
   childrenForErrorObject,
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 type OwnProps = {
   variant: string; // 'all' or 'for-me'
@@ -306,7 +306,11 @@ export default function ProcessInstanceLogList({
     }
 
     let timestampComponent = (
-      <td>{convertSecondsToFormattedDateTime(logEntry.timestamp)}</td>
+      <td>
+        {DateAndTimeService.convertSecondsToFormattedDateTime(
+          logEntry.timestamp
+        )}
+      </td>
     );
     if (logEntry.spiff_task_guid && logEntry.event_type !== 'task_cancelled') {
       timestampComponent = (
@@ -317,7 +321,9 @@ export default function ProcessInstanceLogList({
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
             title="View state when task was completed"
           >
-            {convertSecondsToFormattedDateTime(logEntry.timestamp)}
+            {DateAndTimeService.convertSecondsToFormattedDateTime(
+              logEntry.timestamp
+            )}
           </Link>
         </td>
       );

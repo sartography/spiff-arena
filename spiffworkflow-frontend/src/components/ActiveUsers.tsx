@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 import HttpService from '../services/HttpService';
 import { User } from '../interfaces';
-import { refreshAtInterval, REFRESH_TIMEOUT_SECONDS } from '../helpers';
+import { refreshAtInterval } from '../helpers';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 async function sha256(message: string) {
   // encode as UTF-8
@@ -48,7 +49,7 @@ export default function ActiveUsers() {
 
     return refreshAtInterval(
       15,
-      REFRESH_TIMEOUT_SECONDS,
+      DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
       updateActiveUsers,
       unregisterUser
     );
