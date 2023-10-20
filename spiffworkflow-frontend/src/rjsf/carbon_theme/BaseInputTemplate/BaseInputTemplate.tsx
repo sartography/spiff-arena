@@ -9,7 +9,7 @@ import {
 
 import { useCallback } from 'react';
 import { DATE_FORMAT_CARBON, DATE_FORMAT_FOR_DISPLAY } from '../../../config';
-import { ymdDateStringToConfiguredFormat } from '../../../helpers';
+import DateAndTimeService from '../../../services/DateAndTimeService';
 import { getCommonAttributes } from '../../helpers';
 
 /** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
@@ -87,7 +87,7 @@ export default function BaseInputTemplate<
         dateValue = value;
       } else {
         try {
-          dateValue = ymdDateStringToConfiguredFormat(value);
+          dateValue = DateAndTimeService.ymdDateStringToConfiguredFormat(value);
           // let the date component and form validators handle bad dates and do not blow up
         } catch (RangeError) {}
       }

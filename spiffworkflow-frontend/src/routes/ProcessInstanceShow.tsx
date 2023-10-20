@@ -45,7 +45,6 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
-  convertSecondsToFormattedDateTime,
   getLastMilestoneFromProcessInstance,
   HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
@@ -78,6 +77,7 @@ import {
   errorForDisplayFromString,
 } from '../components/ErrorDisplay';
 import { Notification } from '../components/Notification';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 type OwnProps = {
   variant: string;
@@ -380,7 +380,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <dl>
         <dt>{lastUpdatedTimeLabel}:</dt>
         <dd>
-          {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
+          {DateAndTimeService.convertSecondsToFormattedDateTime(
+            lastUpdatedTime || 0
+          ) || 'N/A'}
         </dd>
       </dl>
     );
@@ -442,7 +444,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <dl>
             <dt>Started:</dt>
             <dd>
-              {convertSecondsToFormattedDateTime(
+              {DateAndTimeService.convertSecondsToFormattedDateTime(
                 processInstance.start_in_seconds || 0
               )}
             </dd>
