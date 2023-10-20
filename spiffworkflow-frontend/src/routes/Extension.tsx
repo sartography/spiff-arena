@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@carbon/react';
 import MDEditor from '@uiw/react-md-editor';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -20,6 +20,7 @@ import {
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
 import ErrorDisplay from '../components/ErrorDisplay';
+import FormattingService from '../services/FormattingService';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension() {
@@ -45,47 +46,13 @@ export default function Extension() {
 
   const { addError, removeError } = useAPIError();
 
-  const spiffConversionFunctions: { [key: string]: Function } = useMemo(() => {
-    return {
-      convert_seconds_to_date_time_for_display: formatDateTime,
-      convert_seconds_to_duration_for_display: formatDurationForDisplay,
-    };
-  }, []);
-
-  const checkForSpiffConversions = useCallback(
-    (markdown: string) => {
-      const replacer = (
-        match: string,
-        spiffConversion: string,
-        originalValue: string
-      ) => {
-        if (spiffConversion in spiffConversionFunctions) {
-          return spiffConversionFunctions[spiffConversion](
-            undefined,
-            originalValue
-          );
-        }
-        console.warn(
-          `attempted: ${match}, but ${spiffConversion} is not a valid conversion function`
-        );
-
-        return match;
-      };
-      return markdown.replaceAll(
-        /SPIFF_CONVERSION:::(\w+)\(([^)]+)\)/g,
-        replacer
-      );
-    },
-    [spiffConversionFunctions]
-  );
-
   const setConfigsIfDesiredSchemaFile = useCallback(
     // eslint-disable-next-line sonarjs/cognitive-complexity
     (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
       const processLoadResult = (result: any) => {
         setFormData(result.task_data);
         if (result.rendered_results_markdown) {
-          const newMarkdown = checkForSpiffConversions(
+          const newMarkdown = FormattingService.checkForSpiffFormats(
             result.rendered_results_markdown
           );
           setMarkdownToRenderOnLoad(newMarkdown);
@@ -140,7 +107,6 @@ export default function Extension() {
       params.page_identifier,
       searchParams,
       filesByName,
-      checkForSpiffConversions,
     ]
   );
 
@@ -228,7 +194,7 @@ export default function Extension() {
     } else {
       setProcessedTaskData(result.task_data);
       if (result.rendered_results_markdown) {
-        const newMarkdown = checkForSpiffConversions(
+        const newMarkdown = FormattingService.checkForSpiffFormats(
           result.rendered_results_markdown
         );
         setMarkdownToRenderOnSubmit(newMarkdown);
