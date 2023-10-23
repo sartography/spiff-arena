@@ -422,9 +422,9 @@ export default function ReactFormBuilder({
               <p>
                 The Json Schema describes the structure of the data you want to
                 collect, and what validation rules should be applied to each
-                field.
+                field.{' '}
                 <a
-                  target="new"
+                  target="_spiff_rjsf_read_me"
                   href="https://json-schema.org/learn/getting-started-step-by-step"
                 >
                   Read More
@@ -442,9 +442,9 @@ export default function ReactFormBuilder({
             <TabPanel>
               <p>
                 These UI Settings augment the Json Schema, specifying how the
-                web form should be displayed.
+                web form should be displayed.{' '}
                 <a
-                  target="new"
+                  target="_spiff_rjsf_learn_more"
                   href="https://rjsf-team.github.io/react-jsonschema-form/docs/"
                 >
                   Learn More.
