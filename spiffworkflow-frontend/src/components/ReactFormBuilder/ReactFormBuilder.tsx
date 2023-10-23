@@ -427,8 +427,9 @@ export default function ReactFormBuilder({
                   target="_spiff_rjsf_read_me"
                   href="https://json-schema.org/learn/getting-started-step-by-step"
                 >
-                  Read More
+                  Read more
                 </a>
+                .
               </p>
               <Editor
                 height={600}
@@ -447,8 +448,9 @@ export default function ReactFormBuilder({
                   target="_spiff_rjsf_learn_more"
                   href="https://rjsf-team.github.io/react-jsonschema-form/docs/"
                 >
-                  Learn More.
+                  Learn more
                 </a>
+                .
               </p>
               <Editor
                 height={600}
