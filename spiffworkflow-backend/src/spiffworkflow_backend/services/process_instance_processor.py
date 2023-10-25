@@ -31,7 +31,6 @@ from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  #
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
-from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import TaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
@@ -336,7 +335,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def _evaluate(
         self,
         expression: str,
-        context: dict[str, Box | str],
+        context: dict[str, str],
         task: SpiffTask | None = None,
         external_methods: dict[str, Any] | None = None,
     ) -> Any:
