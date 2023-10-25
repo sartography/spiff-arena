@@ -14,7 +14,7 @@ def data_store_list() -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
 
-    # Right now the only data store we support is type ahead and kkv
+    # Right now the only data stores we support are type ahead and kkv
 
     for cat in db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category):  # type: ignore
         data_stores.append({"name": cat[0], "type": "typeahead"})
