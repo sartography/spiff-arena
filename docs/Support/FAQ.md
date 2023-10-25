@@ -168,24 +168,20 @@ For instance, the configuration for a service task can be found [here](https://g
 **A:** If you're using the spiff-arena/spiffworkflow-backend, there's a script named `./keycloak/bin/start_keycloak` that can initiate a container serving as an example OpenID provider. This can be a good starting point if you're looking to set up your own OpenID provider.
 
 
-**29: What is the difference between SpiffWorkflow's core library and BPMN?**
-
-**A:** SpiffWorkflow is essentially divided into two main components. The core library is a versatile workflow library designed for a wide range of workflow patterns. On the other hand, the BPMN component was added to provide support for this useful standard library.
-
-**30: Where can I configure an SMTP server for Spiffworkflow to send email notifications?**
+**29: Where can I configure an SMTP server for Spiffworkflow to send email notifications?**
 
 **A:** To configure an SMTP server for email notifications, you can utilize connectors and service tasks within SpiffWorkflow. For instance, connectors can be set up to send notifications to platforms like Slack.
 
-**31: Is there any way to access the timer event value/expression in my code?**
+**30: Is there any way to access the timer event value/expression in my code?**
 
 **A:** Yes, in SpiffWorkflow, you can access timer event values directly from the backend. There are specific sections in the codebase where timer event values are checked and utilized for various functionalities.
 
-**32: How can I create new users for my co-workers in SpiffWorkflow?**
+**31: How can I create new users for my co-workers in SpiffWorkflow?**
 **A:** There are multiple methods to manage this, such as using OpenID or the process model. However, for beginners eager to add a user quickly, you can adjust the 'example.yml' configuration file within the app identified as `` 'SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"`` 
 
 After making changes, restart the container to update user details. For more information, refer to the [Spiff-Arena documentation](https://spiff-arena.readthedocs.io/en/latest/installation_integration/admin_and_permissions.html). The mentioned file can be found [here](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/config/permissions).
 
-**33: Explain the functionality and purpose of the collaboration flag in spiff-example-cli?**
+**32: Explain the functionality and purpose of the collaboration flag in spiff-example-cli?**
 
 **A:** The collaboration flag enables the simultaneous loading of multiple top-level processes within a single workflow. This results in the creation of a subworkflow for each process, allowing them to initiate concurrently. 
 
