@@ -16,9 +16,14 @@ import {
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
 import ErrorDisplay from '../components/ErrorDisplay';
+import FormattingService from '../services/FormattingService';
+
+type OwnProps = {
+  displayErrors?: boolean;
+};
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-export default function Extension() {
+export default function Extension({ displayErrors = true }: OwnProps) {
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -47,7 +52,10 @@ export default function Extension() {
       const processLoadResult = (result: any) => {
         setFormData(result.task_data);
         if (result.rendered_results_markdown) {
-          setMarkdownToRenderOnLoad(result.rendered_results_markdown);
+          const newMarkdown = FormattingService.checkForSpiffFormats(
+            result.rendered_results_markdown
+          );
+          setMarkdownToRenderOnLoad(newMarkdown);
         }
       };
 
@@ -162,14 +170,19 @@ export default function Extension() {
     } else {
       setProcessedTaskData(result.task_data);
       if (result.rendered_results_markdown) {
-        setMarkdownToRenderOnSubmit(result.rendered_results_markdown);
+        const newMarkdown = FormattingService.checkForSpiffFormats(
+          result.rendered_results_markdown
+        );
+        setMarkdownToRenderOnSubmit(newMarkdown);
       }
       setFormButtonsDisabled(false);
     }
   };
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
-  const handleFormSubmit = (formObject: any, _event: any) => {
+  const handleFormSubmit = (formObject: any, event: any) => {
+    event.preventDefault();
+
     if (formButtonsDisabled) {
       return;
     }
@@ -212,7 +225,6 @@ export default function Extension() {
       // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
       // so we convert undefined values to null recursively so that we can unset values in form fields
       recursivelyChangeNullAndUndefined(dataToSubmit, null);
-
       HttpService.makeCallToBackend({
         path: apiPath,
         successCallback: processSubmitResult,
@@ -322,7 +334,7 @@ export default function Extension() {
     }
     return (
       <div className="fixed-width-container">
-        <ErrorDisplay />
+        {displayErrors ? <ErrorDisplay /> : null}
         {componentsToDisplay}
       </div>
     );

@@ -213,6 +213,7 @@ class TaskService:
             event_type = ProcessInstanceEventType.task_completed.value
             if task_model.state == "CANCELLED":
                 event_type = ProcessInstanceEventType.task_cancelled.value
+
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
             (
                 process_instance_event,

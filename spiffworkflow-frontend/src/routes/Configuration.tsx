@@ -3,7 +3,6 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Tabs, TabList, Tab } from '@carbon/react';
 import { Can } from '@casl/react';
-import useAPIError from '../hooks/UseApiError';
 import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';
@@ -22,7 +21,6 @@ type OwnProps = {
 
 export default function Configuration({ extensionUxElements }: OwnProps) {
   const location = useLocation();
-  const { removeError } = useAPIError();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
 
@@ -36,14 +34,13 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
   );
 
   useEffect(() => {
-    removeError();
     setPageTitle(['Configuration']);
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/configuration\/authentications\b/)) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location, removeError]);
+  }, [location]);
 
   const configurationExtensionTab = (
     uxElement: UiSchemaUxElement,
@@ -103,7 +100,11 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
         <Route path="secrets/new" element={<SecretNew />} />
         <Route path="secrets/:key" element={<SecretShow />} />
         <Route path="authentications" element={<AuthenticationList />} />
-        <Route path="extension/:page_identifier" element={<Extension />} />;
+        <Route
+          path="extension/:page_identifier"
+          element={<Extension displayErrors={false} />}
+        />
+        ;
       </Routes>
     </>
   );

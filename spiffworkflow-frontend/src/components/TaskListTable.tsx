@@ -6,18 +6,16 @@ import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
 import {
-  convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
-  REFRESH_INTERVAL_SECONDS,
-  REFRESH_TIMEOUT_SECONDS,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, ProcessInstanceTask, Task } from '../interfaces';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
@@ -100,8 +98,8 @@ export default function TaskListTable({
     getTasks();
     if (autoReload) {
       return refreshAtInterval(
-        REFRESH_INTERVAL_SECONDS,
-        REFRESH_TIMEOUT_SECONDS,
+        DateAndTimeService.REFRESH_INTERVAL_SECONDS,
+        DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
         getTasks
       );
     }
@@ -288,7 +286,7 @@ export default function TaskListTable({
     if (showDateStarted) {
       rowElements.push(
         <td>
-          {convertSecondsToFormattedDateTime(
+          {DateAndTimeService.convertSecondsToFormattedDateTime(
             processInstanceTask.created_at_in_seconds
           ) || '-'}
         </td>

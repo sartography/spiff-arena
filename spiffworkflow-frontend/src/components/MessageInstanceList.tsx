@@ -7,13 +7,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from './PaginationForTable';
 import ProcessBreadcrumb from './ProcessBreadcrumb';
 import {
-  convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { FormatProcessModelDisplayName } from './MiniComponents';
 import { MessageInstance } from '../interfaces';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 type OwnProps = {
   processInstanceId?: number;
@@ -128,7 +128,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           </td>
           <td>{row.status}</td>
           <td>
-            {convertSecondsToFormattedDateTime(row.created_at_in_seconds)}
+            {DateAndTimeService.convertSecondsToFormattedDateTime(
+              row.created_at_in_seconds
+            )}
           </td>
         </tr>
       );

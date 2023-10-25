@@ -135,7 +135,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/connector-http.git"
 reference = "HEAD"
-resolved_reference = "7cdb8ef379e49a39609901874e7e197d2b2162e1"
+resolved_reference = "026de90d01e1127b7944600818aa94dc53850518"
 
 [[package]]
 name = "connector-slack"
@@ -532,7 +532,7 @@ typing-extensions = "^4.8.0"
 type = "git"
 url = "https://github.com/sartography/spiffworkflow-connector-command.git"
 reference = "main"
-resolved_reference = "88bcbafdb1ffbf3f85fa9f13e05e41ace48b0988"
+resolved_reference = "7e20603849ee609267ddc97c8433077e09ccd124"
 
 [[package]]
 name = "spiffworkflow-proxy"
@@ -552,7 +552,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/spiffworkflow-proxy"
 reference = "HEAD"
-resolved_reference = "1dc289cc2e533092d5571c60bdbac62e797a49ec"
+resolved_reference = "25afae5b4c703971aa7bb68030dc127ddb6bb920"
 
 [[package]]
 name = "typing-extensions"

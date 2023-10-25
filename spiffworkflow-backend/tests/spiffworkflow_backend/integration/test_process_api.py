@@ -2938,7 +2938,99 @@ class TestProcessApi(BaseTest):
             filter_field_value="hey",
         )
         self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="less_than",
+            filter_field_value="value4",
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="greater_than_or_equal_to",
+            filter_field_value="value1",
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
             client=client, user=with_super_admin_user, process_instance=process_instance_two, operator="is_empty"
+        )
+
+    def test_can_get_process_instance_list_with_report_metadata_using_different_operators_when_no_matches(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            bpmn_file_name="save_process_instance_metadata.bpmn",
+            process_model_source_directory="save_process_instance_metadata",
+        )
+
+        process_instance_one_metadata = {"key1": "value1"}
+        process_instance_one = self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict=process_instance_one_metadata
+        )
+
+        process_instance_two_metadata = {"key2": "value2"}
+        process_instance_two = self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict=process_instance_two_metadata
+        )
+
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_two,
+            operator="is_not_empty",
+            expect_to_find_instance=False,
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="equals",
+            filter_field_value="value2",
+            expect_to_find_instance=False,
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="contains",
+            filter_field_value="alunooo",
+            expect_to_find_instance=False,
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="not_equals",
+            filter_field_value="value1",
+            expect_to_find_instance=False,
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="less_than",
+            filter_field_value="value1",
+            expect_to_find_instance=False,
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="greater_than_or_equal_to",
+            filter_field_value="value2",
+            expect_to_find_instance=False,
+        )
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="is_empty",
+            expect_to_find_instance=False,
         )
 
     def test_can_get_process_instance_list_with_report_metadata_and_process_initiator(

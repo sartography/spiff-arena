@@ -5,12 +5,8 @@ import {
   DATE_FORMAT_FOR_DISPLAY,
   DATE_RANGE_DELIMITER,
 } from '../../../config';
-import {
-  convertDateObjectToFormattedString,
-  convertStringToDate,
-  dateStringToYMDFormat,
-} from '../../../helpers';
 import { getCommonAttributes } from '../../helpers';
+import DateAndTimeService from '../../../services/DateAndTimeService';
 
 interface widgetArgs {
   id: string;
@@ -52,13 +48,18 @@ export default function DateRangePickerWidget({
   const onChangeLocal = useCallback(
     (dateRange: Date[]) => {
       let dateRangeString;
-      const startDate = convertDateObjectToFormattedString(dateRange[0]);
+      const startDate = DateAndTimeService.convertDateObjectToFormattedString(
+        dateRange[0]
+      );
       if (startDate) {
-        const startDateYMD = dateStringToYMDFormat(startDate);
-        const endDate = convertDateObjectToFormattedString(dateRange[1]);
+        const startDateYMD =
+          DateAndTimeService.dateStringToYMDFormat(startDate);
+        const endDate = DateAndTimeService.convertDateObjectToFormattedString(
+          dateRange[1]
+        );
         dateRangeString = startDateYMD;
         if (endDate) {
-          const endDateYMD = dateStringToYMDFormat(endDate);
+          const endDateYMD = DateAndTimeService.dateStringToYMDFormat(endDate);
           dateRangeString = `${dateRangeString}${DATE_RANGE_DELIMITER}${endDateYMD}`;
         }
       }
@@ -73,11 +74,11 @@ export default function DateRangePickerWidget({
     let startDate = null;
     let endDate = null;
     try {
-      startDate = convertStringToDate(startDateString);
+      startDate = DateAndTimeService.convertStringToDate(startDateString);
       // eslint-disable-next-line no-empty
     } catch (RangeError) {}
     try {
-      endDate = convertStringToDate(endDateString);
+      endDate = DateAndTimeService.convertStringToDate(endDateString);
       // eslint-disable-next-line no-empty
     } catch (RangeError) {}
 
