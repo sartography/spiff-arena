@@ -107,11 +107,15 @@ class TestProcessApi(BaseTest):
         UserService.add_user_to_group(user, group)
         self.add_permissions_to_principal(principal, target_uri="/v1.0/process-groups/%", permission_names=["read"])
         self.add_permissions_to_principal(
+            principal, target_uri="/v1.0/process-groups/deny_group:%", permission_names=["create"], grant_type="deny"
+        )
+        self.add_permissions_to_principal(
             principal, target_uri="/v1.0/process-groups/test_group:%", permission_names=["create"]
         )
         request_body = {
             "requests_to_check": {
                 "/v1.0/process-groups": ["GET", "POST"],
+                "/v1.0/process-groups/deny_group:hey": ["GET", "POST"],
                 "/v1.0/process-groups/test_group": ["GET", "POST"],
                 "/v1.0/process-models": ["GET"],
             }
@@ -119,6 +123,7 @@ class TestProcessApi(BaseTest):
         expected_response_body = {
             "results": {
                 "/v1.0/process-groups": {"GET": True, "POST": False},
+                "/v1.0/process-groups/deny_group:hey": {"GET": True, "POST": False},
                 "/v1.0/process-groups/test_group": {"GET": True, "POST": True},
                 "/v1.0/process-models": {"GET": False},
             }
