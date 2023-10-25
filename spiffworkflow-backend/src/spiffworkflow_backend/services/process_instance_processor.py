@@ -190,8 +190,6 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         context: dict[str, Any],
         external_methods: dict[str, Any] | None = None,
     ) -> Any:
-        # TODO: once integrated look at the tests that fail without Box
-        Box.convert_to_box(context)
         state = {}
         state.update(self.globals)
         state.update(external_methods or {})
@@ -205,9 +203,6 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         context: dict[str, Any],
         external_methods: dict[str, Any] | None = None,
     ) -> bool:
-        # TODO: once integrated look at the tests that fail without Box
-        # context is task.data
-        Box.convert_to_box(context)
         self.state.update(self.globals)
         self.state.update(external_methods or {})
         self.state.update(context)
@@ -268,12 +263,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-# SpiffWorkflow at revision f162aac43af3af18d1a55186aeccea154fb8b05d runs script tasks on ready
-# which means that our will_complete_task hook does not have the correct env state when it runs
-# so save everything to task data for now until we can figure out a better way to hook into that.
-# Revision 6cad2981712bb61eca23af1adfafce02d3277cb9 is the last revision that can run with this.
-# class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
-class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
     pass
 
 
