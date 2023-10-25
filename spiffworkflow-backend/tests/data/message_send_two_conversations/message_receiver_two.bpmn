@@ -34,8 +34,8 @@
   <bpmn:message id="message_response_two" name="Message Response Two">
     <bpmn:extensionElements>
       <spiffworkflow:messagePayload>{
-"topic_two_a": payload_var_two.topica_two,
-"topic_two_b": payload_var_two.topicb_two,
+"topic_two_a": payload_var_two["topica_two"],
+"topic_two_b": payload_var_two["topicb_two"],
 "second_var_two": second_var_two
 }</spiffworkflow:messagePayload>
     </bpmn:extensionElements>
@@ -54,7 +54,7 @@
     <bpmn:scriptTask id="add_numbers" name="Add Numbers" scriptFormat="python">
       <bpmn:incoming>Flow_0rx0bxv</bpmn:incoming>
       <bpmn:outgoing>Flow_197lbl3</bpmn:outgoing>
-      <bpmn:script>second_var_two = payload_var_two.initial_var_two + 1</bpmn:script>
+      <bpmn:script>second_var_two = payload_var_two["initial_var_two"] + 1</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:startEvent id="receive_message" name="Receive Message">
       <bpmn:outgoing>Flow_0rx0bxv</bpmn:outgoing>
