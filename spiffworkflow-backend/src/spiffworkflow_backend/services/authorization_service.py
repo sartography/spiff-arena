@@ -229,7 +229,6 @@ class AuthorizationService:
             principal_id=principal.id,
             permission_target_id=permission_target.id,
             permission=permission,
-            grant_type=grant_type,
         ).first()
         if permission_assignment is None:
             permission_assignment = PermissionAssignmentModel(
@@ -238,6 +237,10 @@ class AuthorizationService:
                 permission=permission,
                 grant_type=grant_type,
             )
+            db.session.add(permission_assignment)
+            db.session.commit()
+        elif permission_assignment.grant_type != grant_type:
+            permission_assignment.grant_type = grant_type
             db.session.add(permission_assignment)
             db.session.commit()
         return permission_assignment

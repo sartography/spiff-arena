@@ -617,3 +617,8 @@ class TestAuthorizationService(BaseTest):
         # test wildcard deny
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:new", expected_result=False)
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:new:group", expected_result=True)
+
+        # test it can be permitted again
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey:yo")
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo", expected_result=True)
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo:me", expected_result=True)
