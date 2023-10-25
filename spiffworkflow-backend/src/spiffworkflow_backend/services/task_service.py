@@ -177,7 +177,6 @@ class TaskService:
         self,
         spiff_task: SpiffTask,
         start_and_end_times: StartAndEndTimes | None = None,
-        cancelled_spiff_task_guids_with_events: list[str] | None = None,
     ) -> TaskModel:
         new_bpmn_process = None
         if str(spiff_task.id) in self.task_models:
@@ -211,29 +210,22 @@ class TaskService:
 
         # let failed tasks raise and we will log the event then
         if task_model.state in ["COMPLETED", "CANCELLED"]:
-            skip_event_entry = False
             event_type = ProcessInstanceEventType.task_completed.value
             if task_model.state == "CANCELLED":
-                if (
-                    cancelled_spiff_task_guids_with_events
-                    and task_model.guid in cancelled_spiff_task_guids_with_events
-                ):
-                    skip_event_entry = True
                 event_type = ProcessInstanceEventType.task_cancelled.value
 
-            if skip_event_entry is False:
-                timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-                (
-                    process_instance_event,
-                    _process_instance_error_detail,
-                ) = ProcessInstanceTmpService.add_event_to_process_instance(
-                    self.process_instance,
-                    event_type,
-                    task_guid=task_model.guid,
-                    timestamp=timestamp,
-                    add_to_db_session=False,
-                )
-                self.process_instance_events[task_model.guid] = process_instance_event
+            timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
+            (
+                process_instance_event,
+                _process_instance_error_detail,
+            ) = ProcessInstanceTmpService.add_event_to_process_instance(
+                self.process_instance,
+                event_type,
+                task_guid=task_model.guid,
+                timestamp=timestamp,
+                add_to_db_session=False,
+            )
+            self.process_instance_events[task_model.guid] = process_instance_event
 
         self.update_bpmn_process(spiff_task.workflow, bpmn_process)
         return task_model
