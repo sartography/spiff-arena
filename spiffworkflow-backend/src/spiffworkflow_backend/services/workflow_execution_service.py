@@ -22,6 +22,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -250,7 +251,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
         for waiting_spiff_task in bpmn_process_instance.get_tasks(
             state=TaskState.WAITING
-            | TaskState.CANCELLED
             | TaskState.READY
             | TaskState.MAYBE
             | TaskState.LIKELY
@@ -259,6 +259,18 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             | TaskState.ERROR,
         ):
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+
+        cancelled_spiff_tasks = bpmn_process_instance.get_tasks(state=TaskState.CANCELLED)
+        cancelled_spiff_task_guids = [str(sp.id) for sp in cancelled_spiff_tasks]
+        existing_cancelled_events = ProcessInstanceEventModel.query.filter(
+            ProcessInstanceEventModel.task_guid.in_(cancelled_spiff_task_guids)  # type: ignore
+        ).all()
+        cancelled_spiff_task_guids_with_events = [event.task_guid for event in existing_cancelled_events]
+        for cancelled_spiff_task in cancelled_spiff_tasks:
+            self.task_service.update_task_model_with_spiff_task(
+                spiff_task=cancelled_spiff_task,
+                cancelled_spiff_task_guids_with_events=cancelled_spiff_task_guids_with_events,
+            )
 
         self.task_service.save_objects_to_database()
 
