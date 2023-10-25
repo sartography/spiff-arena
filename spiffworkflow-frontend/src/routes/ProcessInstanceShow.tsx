@@ -1506,6 +1506,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
             <Tab>My completed tasks</Tab>
+            <Tab>All completed tasks</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -1551,6 +1552,25 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   showWaitingOn={false}
                   canCompleteAllTasks={false}
                   showViewFormDataButton
+                />
+              ) : null}
+            </TabPanel>
+            <TabPanel>
+              {selectedTabIndex === 5 ? (
+                <TaskListTable
+                  apiPath={`/tasks/completed/${processInstance.id}`}
+                  paginationClassName="with-large-bottom-margin"
+                  textToShowIfEmpty="There are no completed tasks for this process instance."
+                  shouldPaginateTable={false}
+                  showProcessModelIdentifier={false}
+                  showProcessId={false}
+                  showStartedBy={false}
+                  showTableDescriptionAsTooltip
+                  showDateStarted={false}
+                  showWaitingOn={false}
+                  canCompleteAllTasks={false}
+                  showCompletedBy
+                  showActionsColumn={false}
                 />
               ) : null}
             </TabPanel>

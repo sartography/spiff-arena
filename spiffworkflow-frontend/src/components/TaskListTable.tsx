@@ -40,6 +40,7 @@ type OwnProps = {
   canCompleteAllTasks?: boolean;
   showActionsColumn?: boolean;
   showViewFormDataButton?: boolean;
+  showCompletedBy?: boolean;
 };
 
 export default function TaskListTable({
@@ -63,6 +64,7 @@ export default function TaskListTable({
   canCompleteAllTasks = false,
   showActionsColumn = true,
   showViewFormDataButton = false,
+  showCompletedBy = false,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
@@ -283,6 +285,9 @@ export default function TaskListTable({
         <td>{getWaitingForTableCellComponent(processInstanceTask)}</td>
       );
     }
+    if (showCompletedBy) {
+      rowElements.push(<td>{processInstanceTask.completed_by_username}</td>);
+    }
     if (showDateStarted) {
       rowElements.push(
         <td>
@@ -348,6 +353,9 @@ export default function TaskListTable({
     }
     if (showWaitingOn) {
       tableHeaders.push('Waiting for');
+    }
+    if (showCompletedBy) {
+      tableHeaders.push('Completed by');
     }
     if (showDateStarted) {
       tableHeaders.push('Date started');
