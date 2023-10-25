@@ -32,6 +32,7 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ig
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import TaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -139,7 +140,7 @@ class MissingProcessInfoError(Exception):
     pass
 
 
-class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
+class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
         self._last_result: dict[str, Any] = {}
         super().__init__(environment_globals)
@@ -263,7 +264,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(TaskDataBasedScriptEngineEnvironment):
     pass
 
 
