@@ -19,7 +19,7 @@ mysql -uroot "$database" -e '
     JOIN `user_group_assignment` uga ON uga.user_id = u.id
     JOIN `group` g ON g.id = uga.group_id;
 
-  select pa.id, g.identifier group_identifier, pt.uri, permission from permission_assignment pa
+  select pa.id pa_id, g.identifier group_identifier, pt.uri, pa.grant_type, permission, p.id principal_id from permission_assignment pa
   JOIN principal p ON p.id = pa.principal_id
   JOIN `group` g ON g.id = p.group_id
   JOIN permission_target pt ON pt.id = pa.permission_target_id;

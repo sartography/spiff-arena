@@ -619,6 +619,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const processDataDisplayArea = () => {
     if (processDataToDisplay) {
+      let bodyComponent = (
+        <>
+          <p>Value:</p>
+          <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
+        </>
+      );
+      if (processDataToDisplay.authorized === false) {
+        bodyComponent = (
+          <>
+            {childrenForErrorObject(
+              errorForDisplayFromString(processDataToDisplay.process_data_value)
+            )}
+          </>
+        );
+      }
       return (
         <Modal
           open={!!processDataToDisplay}
@@ -627,8 +642,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         >
           <h2>Data Object: {processDataToDisplay.process_data_identifier}</h2>
           <br />
-          <p>Value:</p>
-          <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
+          {bodyComponent}
         </Modal>
       );
     }
@@ -639,6 +653,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setProcessDataToDisplay(processData);
   };
 
+  const handleProcessDataShowReponseUnauthorized = (
+    dataObjectIdentifer: string,
+    result: any
+  ) => {
+    const processData: ProcessData = {
+      process_data_identifier: dataObjectIdentifer,
+      process_data_value: result.message,
+      authorized: false,
+    };
+    setProcessDataToDisplay(processData);
+  };
+
   const handleClickedDiagramTask = (
     shapeElement: any,
     bpmnProcessIdentifiers: any
@@ -646,9 +672,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (shapeElement.type === 'bpmn:DataObjectReference') {
       const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
       HttpService.makeCallToBackend({
-        path: `/process-data/${params.process_model_id}/${params.process_instance_id}/${dataObjectIdentifer}`,
+        path: `/process-data/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}`,
         httpMethod: 'GET',
         successCallback: handleProcessDataShowResponse,
+        onUnauthorized: (result: any) =>
+          handleProcessDataShowReponseUnauthorized(dataObjectIdentifer, result),
       });
     } else if (tasks) {
       const matchingTask: Task | undefined = tasks.find((task: Task) => {
