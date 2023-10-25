@@ -705,10 +705,15 @@ class AuthorizationService:
 
     @classmethod
     def add_permission_from_uri_or_macro(
-        cls, group_identifier: str, permission: str, target: str, grant_type: str = "permit"
+        cls, group_identifier: str, permission: str, target: str
     ) -> list[PermissionAssignmentModel]:
         group = UserService.find_or_create_group(group_identifier)
-        permissions_to_assign = cls.explode_permissions(permission, target)
+        grant_type = "permit"
+        target_without_deny = target
+        if target.startswith("DENY:"):
+            target_without_deny = target.removeprefix("DENY:")
+            grant_type = "deny"
+        permissions_to_assign = cls.explode_permissions(permission, target_without_deny)
         permission_assignments = []
         for permission_to_assign in permissions_to_assign:
             permission_target = cls.find_or_create_permission_target(permission_to_assign.target_uri)
