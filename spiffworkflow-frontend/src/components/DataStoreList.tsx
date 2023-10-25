@@ -36,7 +36,6 @@ export default function DataStoreList() {
       1,
       'datastore'
     );
-    console.log();
     const dataStoreType = searchParams.get('type') || '';
     const dataStoreName = searchParams.get('name') || '';
 
@@ -60,12 +59,24 @@ export default function DataStoreList() {
     });
   }, [dataStores, searchParams]);
 
+  const getCell = (value: any) => {
+    const valueToUse =
+      typeof value === 'object' ? (
+        <pre>
+          <code>{JSON.stringify(value, null, 4)}</code>
+        </pre>
+      ) : (
+        value
+      );
+
+    return <TableCell>{valueToUse}</TableCell>;
+  };
+
   const getTable = () => {
     if (results.length === 0) {
       return null;
     }
     const firstResult = results[0];
-    console.log('Results', results);
     const tableHeaders: any[] = [];
     const keys = Object.keys(firstResult);
     keys.forEach((key) => tableHeaders.push(<TableHeader>{key}</TableHeader>));
@@ -80,7 +91,7 @@ export default function DataStoreList() {
             return (
               <TableRow>
                 {keys.map((key) => {
-                  return <TableCell>{object[key]}</TableCell>;
+                  return getCell(object[key]);
                 })}
               </TableRow>
             );
