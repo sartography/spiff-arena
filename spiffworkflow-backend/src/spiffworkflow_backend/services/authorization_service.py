@@ -121,15 +121,20 @@ class AuthorizationService:
             )
             .all()
         )
+
+        if len(permission_assignments) == 0:
+            return False
+
+        all_permissions_permit = True
         for permission_assignment in permission_assignments:
             if permission_assignment.grant_type == "permit":
-                return True
+                pass
             elif permission_assignment.grant_type == "deny":
-                return False
+                all_permissions_permit = False
             else:
                 raise Exception(f"Unknown grant type: {permission_assignment.grant_type}")
 
-        return False
+        return all_permissions_permit
 
     @classmethod
     def user_has_permission(cls, user: UserModel, permission: str, target_uri: str) -> bool:
@@ -214,18 +219,23 @@ class AuthorizationService:
         principal: PrincipalModel,
         permission_target: PermissionTargetModel,
         permission: str,
+        grant_type: str | None = None,
     ) -> PermissionAssignmentModel:
+        if grant_type is None:
+            grant_type = "permit"
+
         permission_assignment: PermissionAssignmentModel | None = PermissionAssignmentModel.query.filter_by(
             principal_id=principal.id,
             permission_target_id=permission_target.id,
             permission=permission,
+            grant_type=grant_type,
         ).first()
         if permission_assignment is None:
             permission_assignment = PermissionAssignmentModel(
                 principal_id=principal.id,
                 permission_target_id=permission_target.id,
                 permission=permission,
-                grant_type="permit",
+                grant_type=grant_type,
             )
             db.session.add(permission_assignment)
             db.session.commit()
@@ -694,7 +704,7 @@ class AuthorizationService:
 
     @classmethod
     def add_permission_from_uri_or_macro(
-        cls, group_identifier: str, permission: str, target: str
+        cls, group_identifier: str, permission: str, target: str, grant_type: str | None = None
     ) -> list[PermissionAssignmentModel]:
         group = UserService.find_or_create_group(group_identifier)
         permissions_to_assign = cls.explode_permissions(permission, target)
@@ -703,7 +713,10 @@ class AuthorizationService:
             permission_target = cls.find_or_create_permission_target(permission_to_assign.target_uri)
             permission_assignments.append(
                 cls.create_permission_for_principal(
-                    group.principal, permission_target, permission_to_assign.permission
+                    principal=group.principal,
+                    permission_target=permission_target,
+                    permission=permission_to_assign.permission,
+                    grant_type=grant_type,
                 )
             )
         return permission_assignments

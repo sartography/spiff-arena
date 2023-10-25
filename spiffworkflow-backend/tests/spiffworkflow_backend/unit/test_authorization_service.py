@@ -592,3 +592,28 @@ class TestAuthorizationService(BaseTest):
         waiting_assignments = UserGroupAssignmentWaitingModel.query.all()
         # ensure we didn't delete all of the user group assignments
         assert len(waiting_assignments) > 0
+
+    def test_can_deny_access_with_permission(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.find_or_create_user(username="user_one")
+        user_group = UserService.find_or_create_group("group_one")
+        UserService.add_user_to_group(user, user_group)
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey:yo", "deny")
+        AuthorizationService.add_permission_from_uri_or_macro(
+            user_group.identifier, "read", "/process-groups/hey:new", "deny"
+        )
+
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+
+        # test specific uri deny
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo", expected_result=False)
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo:me", expected_result=False)
+
+        # test wildcard deny
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:new", expected_result=False)
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:new:group", expected_result=True)
