@@ -121,15 +121,20 @@ class AuthorizationService:
             )
             .all()
         )
+
+        if len(permission_assignments) == 0:
+            return False
+
+        all_permissions_permit = True
         for permission_assignment in permission_assignments:
             if permission_assignment.grant_type == "permit":
-                return True
+                pass
             elif permission_assignment.grant_type == "deny":
-                return False
+                all_permissions_permit = False
             else:
                 raise Exception(f"Unknown grant type: {permission_assignment.grant_type}")
 
-        return False
+        return all_permissions_permit
 
     @classmethod
     def user_has_permission(cls, user: UserModel, permission: str, target_uri: str) -> bool:
@@ -151,17 +156,21 @@ class AuthorizationService:
     ) -> bool:
         uri_with_percent = re.sub(r"\*", "%", target_uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
+
+        matching_permission_assignments = []
         for permission_assignment in permission_assignments:
             if permission_assignment.permission == permission and cls.target_uri_matches_actual_uri(
                 permission_assignment.permission_target.uri, target_uri_normalized
             ):
-                # we might have to rethink this to actually support deny
-                if permission_assignment.grant_type == "permit":
-                    return True
-                elif permission_assignment.grant_type == "deny":
-                    return False
-                return True
-        return False
+                matching_permission_assignments.append(permission_assignment)
+        if len(matching_permission_assignments) == 0:
+            return False
+
+        all_permissions_permit = True
+        for permission_assignment in matching_permission_assignments:
+            if permission_assignment.grant_type == "deny":
+                all_permissions_permit = False
+        return all_permissions_permit
 
     @classmethod
     def target_uri_matches_actual_uri(cls, target_uri: str, actual_uri: str) -> bool:
@@ -214,6 +223,7 @@ class AuthorizationService:
         principal: PrincipalModel,
         permission_target: PermissionTargetModel,
         permission: str,
+        grant_type: str = "permit",
     ) -> PermissionAssignmentModel:
         permission_assignment: PermissionAssignmentModel | None = PermissionAssignmentModel.query.filter_by(
             principal_id=principal.id,
@@ -225,8 +235,12 @@ class AuthorizationService:
                 principal_id=principal.id,
                 permission_target_id=permission_target.id,
                 permission=permission,
-                grant_type="permit",
+                grant_type=grant_type,
             )
+            db.session.add(permission_assignment)
+            db.session.commit()
+        elif permission_assignment.grant_type != grant_type:
+            permission_assignment.grant_type = grant_type
             db.session.add(permission_assignment)
             db.session.commit()
         return permission_assignment
@@ -697,13 +711,21 @@ class AuthorizationService:
         cls, group_identifier: str, permission: str, target: str
     ) -> list[PermissionAssignmentModel]:
         group = UserService.find_or_create_group(group_identifier)
-        permissions_to_assign = cls.explode_permissions(permission, target)
+        grant_type = "permit"
+        target_without_deny = target
+        if target.startswith("DENY:"):
+            target_without_deny = target.removeprefix("DENY:")
+            grant_type = "deny"
+        permissions_to_assign = cls.explode_permissions(permission, target_without_deny)
         permission_assignments = []
         for permission_to_assign in permissions_to_assign:
             permission_target = cls.find_or_create_permission_target(permission_to_assign.target_uri)
             permission_assignments.append(
                 cls.create_permission_for_principal(
-                    group.principal, permission_target, permission_to_assign.permission
+                    principal=group.principal,
+                    permission_target=permission_target,
+                    permission=permission_to_assign.permission,
+                    grant_type=grant_type,
                 )
             )
         return permission_assignments
