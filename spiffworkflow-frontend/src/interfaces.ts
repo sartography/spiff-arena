@@ -29,6 +29,8 @@ export interface Onboarding {
 export interface ProcessData {
   process_data_identifier: string;
   process_data_value: any;
+
+  authorized?: boolean;
 }
 
 export interface RecentProcessModel {
