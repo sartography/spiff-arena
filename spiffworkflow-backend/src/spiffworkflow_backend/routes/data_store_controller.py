@@ -6,8 +6,8 @@ from flask import make_response
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.typeahead import TypeaheadModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+from spiffworkflow_backend.models.typeahead import TypeaheadModel
 
 
 def data_store_list() -> flask.wrappers.Response:
@@ -19,8 +19,9 @@ def data_store_list() -> flask.wrappers.Response:
     for cat in db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category):  # type: ignore
         data_stores.append({"name": cat[0], "type": "typeahead"})
 
-    for cat in db.session.query(KKVDataStoreModel.top_level_key).distinct().order_by(KKVDataStoreModel.top_level_key):  # type: ignore
-        data_stores.append({"name": cat[0], "type": "kkv"})
+    keys = db.session.query(KKVDataStoreModel.top_level_key).distinct().order_by(KKVDataStoreModel.top_level_key)  # type: ignore
+    for key in keys:
+        data_stores.append({"name": key[0], "type": "kkv"})
 
     return make_response(jsonify(data_stores), 200)
 
@@ -48,7 +49,7 @@ def data_store_item_list(
             },
         }
         return make_response(jsonify(response_json), 200)
-    
+
     if data_store_type == "kkv":
         data_store_query = KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
             KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
@@ -70,5 +71,5 @@ def data_store_item_list(
             },
         }
         return make_response(jsonify(response_json), 200)
-    
+
     raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
