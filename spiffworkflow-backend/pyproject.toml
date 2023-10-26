@@ -28,7 +28,6 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 flask-simple-crypt = "^0.3.3"
-werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
@@ -45,7 +44,10 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 # but at one time it was pulled in by various libs we depend on.
 setuptools = "^65.5.1"
 
+# we cannot upgrade werkzeug due to connexion. See comment in .snyk file
+werkzeug = "*"
 connexion = {extras = [ "swagger-ui",], version = "^2"}
+
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
 PyJWT = "^2.6.0"
