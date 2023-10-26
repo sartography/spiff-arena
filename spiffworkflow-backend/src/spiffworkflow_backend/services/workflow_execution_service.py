@@ -201,12 +201,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.spiff_tasks_to_process: set[UUID] = set()
         self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
 
-        self.run_started_at = time.time()
-
         self.task_service = TaskService(
             process_instance=self.process_instance,
             serializer=self.serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            run_started_at=time.time(),
         )
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
@@ -252,6 +251,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
         for waiting_spiff_task in bpmn_process_instance.get_tasks(
             state=TaskState.WAITING
+            | TaskState.CANCELLED
             | TaskState.READY
             | TaskState.MAYBE
             | TaskState.LIKELY
@@ -260,21 +260,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             | TaskState.ERROR,
         ):
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
-
-        # FIXME: this may have broken error boundary events getting cancelled.
-        # Getting all cancelled tasks to see if that fixes it
-        #
-        # only process cancelled tasks that were cancelled during this run
-        # NOTE: this could mean we do not add task models that we should be adding
-        # in which case we may have to remove the updated_ts filter here and
-        # instead just avoid creating the event in update_task_model_with_spiff_task
-        cancelled_spiff_tasks = bpmn_process_instance.get_tasks(
-            state=TaskState.CANCELLED  # , updated_ts=self.run_started_at
-        )
-        for cancelled_spiff_task in cancelled_spiff_tasks:
-            self.task_service.update_task_model_with_spiff_task(
-                spiff_task=cancelled_spiff_task,
-            )
 
         self.task_service.save_objects_to_database()
 
