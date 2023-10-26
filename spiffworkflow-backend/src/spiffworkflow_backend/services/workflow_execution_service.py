@@ -261,12 +261,15 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         ):
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
+        # FIXME: this may have broken error boundary events getting cancelled.
+        # Getting all cancelled tasks to see if that fixes it
+        #
         # only process cancelled tasks that were cancelled during this run
         # NOTE: this could mean we do not add task models that we should be adding
         # in which case we may have to remove the updated_ts filter here and
         # instead just avoid creating the event in update_task_model_with_spiff_task
         cancelled_spiff_tasks = bpmn_process_instance.get_tasks(
-            state=TaskState.CANCELLED, updated_ts=self.run_started_at
+            state=TaskState.CANCELLED  # , updated_ts=self.run_started_at
         )
         for cancelled_spiff_task in cancelled_spiff_tasks:
             self.task_service.update_task_model_with_spiff_task(
