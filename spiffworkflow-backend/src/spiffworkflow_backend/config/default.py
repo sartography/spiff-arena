@@ -135,7 +135,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND",
 config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB", default="run_until_user_message")
 
 ### element units
-config_from_env("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default="src/instance/element-unit-cache")
 
 ### cryptography or simple-crypt
