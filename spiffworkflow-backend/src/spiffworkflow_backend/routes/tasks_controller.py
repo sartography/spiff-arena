@@ -175,19 +175,22 @@ def task_list_completed_by_me(process_instance_id: int, page: int = 1, per_page:
 
 
 def task_list_completed(process_instance_id: int, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    user_id = g.user.id
-
-    human_tasks_query = db.session.query(HumanTaskModel).join(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id).filter(
-        HumanTaskModel.completed == True,  # noqa: E712
-        HumanTaskModel.process_instance_id == process_instance_id,
-    ).add_columns(
-        HumanTaskModel.task_name,
-        HumanTaskModel.task_title,
-        HumanTaskModel.process_model_display_name,
-        HumanTaskModel.process_instance_id,
-        HumanTaskModel.updated_at_in_seconds,
-        HumanTaskModel.created_at_in_seconds,
-        UserModel.username.label('completed_by_username'),
+    human_tasks_query = (
+        db.session.query(HumanTaskModel)  # type: ignore
+        .join(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id)
+        .filter(
+            HumanTaskModel.completed == True,  # noqa: E712
+            HumanTaskModel.process_instance_id == process_instance_id,
+        )
+        .add_columns(
+            HumanTaskModel.task_name,
+            HumanTaskModel.task_title,
+            HumanTaskModel.process_model_display_name,
+            HumanTaskModel.process_instance_id,
+            HumanTaskModel.updated_at_in_seconds,
+            HumanTaskModel.created_at_in_seconds,
+            UserModel.username.label("completed_by_username"),  # type: ignore
+        )
     )
 
     human_tasks = human_tasks_query.order_by(desc(HumanTaskModel.id)).paginate(  # type: ignore

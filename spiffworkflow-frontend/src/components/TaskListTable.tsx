@@ -251,9 +251,8 @@ export default function TaskListTable({
     }
   };
 
-  const getTableRow = (processInstanceTask: ProcessInstanceTask) => {
+  const getActionButtons = (processInstanceTask: ProcessInstanceTask) => {
     const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
-
     const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
     let hasAccessToCompleteTask = false;
     if (
@@ -262,6 +261,40 @@ export default function TaskListTable({
     ) {
       hasAccessToCompleteTask = true;
     }
+
+    const actions = [];
+    if (
+      !(
+        processInstanceTask.process_instance_status in
+        ['suspended', 'completed', 'error']
+      ) &&
+      !processInstanceTask.completed
+    ) {
+      actions.push(
+        <Button
+          variant="primary"
+          href={taskUrl}
+          disabled={!hasAccessToCompleteTask}
+          size="sm"
+        >
+          Go
+        </Button>
+      );
+    }
+    if (showViewFormDataButton) {
+      actions.push(
+        <Button
+          variant="primary"
+          onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
+        >
+          View task
+        </Button>
+      );
+    }
+    return actions;
+  };
+
+  const getTableRow = (processInstanceTask: ProcessInstanceTask) => {
     const rowElements: ReactElement[] = [];
 
     dealWithProcessCells(rowElements, processInstanceTask);
@@ -305,36 +338,7 @@ export default function TaskListTable({
       );
     }
     if (showActionsColumn) {
-      const actions = [];
-      if (
-        !(
-          processInstanceTask.process_instance_status in
-          ['suspended', 'completed', 'error']
-        ) &&
-        !processInstanceTask.completed
-      ) {
-        actions.push(
-          <Button
-            variant="primary"
-            href={taskUrl}
-            disabled={!hasAccessToCompleteTask}
-            size="sm"
-          >
-            Go
-          </Button>
-        );
-      }
-      if (showViewFormDataButton) {
-        actions.push(
-          <Button
-            variant="primary"
-            onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
-          >
-            View task
-          </Button>
-        );
-      }
-      rowElements.push(<td>{actions}</td>);
+      rowElements.push(<td>{getActionButtons(processInstanceTask)}</td>);
     }
     return <tr key={processInstanceTask.id}>{rowElements}</tr>;
   };
