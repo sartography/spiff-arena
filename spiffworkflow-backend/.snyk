@@ -1,7 +1,17 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
 version: v1.25.0
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
-ignore: {}
+ignore:
+  # we cannot upgrade werkzeug because it breaks connexion
+  # and we can't upgrade connexion because it downgrades werkzeug.
+  # this means we cannot satisfy the snyk requiement to upgrade werkzeug to v3.
+  # we have a ticket to workaroud it:
+  #   https://github.com/sartography/spiff-arena/issues/592
+  SNYK-PYTHON-WERKZEUG-6035177:
+    - '*':
+        reason: None Given
+        expires: 2023-11-25T15:25:26.883Z
+        created: 2023-10-26T15:25:26.894Z
 patch: {}
 
 # when running snyk ignore to ignore issues with "snyk code test"
