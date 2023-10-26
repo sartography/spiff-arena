@@ -118,6 +118,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   >(null);
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [selectedTaskTabSubTab, setSelectedTaskTabSubTab] = useState<number>(0);
   const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
     useState<boolean>(false);
 
@@ -249,6 +250,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     if (searchParams.get('tab')) {
       setSelectedTabIndex(parseInt(searchParams.get('tab') || '0', 10));
+    }
+    if (searchParams.get('taskSubTab')) {
+      setSelectedTaskTabSubTab(
+        parseInt(searchParams.get('taskSubTab') || '0', 10)
+      );
     }
     return undefined;
   }, [
@@ -1475,6 +1481,67 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     updateSearchParams(newTabIndex.selectedIndex, 'tab');
   };
 
+  const updateSelectedTaskTabSubTab = (newTabIndex: any) => {
+    updateSearchParams(newTabIndex.selectedIndex, 'taskSubTab');
+  };
+
+  const taskTabSubTabs = () => {
+    if (!processInstance) {
+      return null;
+    }
+
+    return (
+      <Tabs
+        selectedIndex={selectedTaskTabSubTab}
+        onChange={updateSelectedTaskTabSubTab}
+      >
+        <TabList aria-label="List of tabs">
+          <Tab>Completed by me</Tab>
+          <Tab>All completed</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel>
+            {selectedTaskTabSubTab === 0 ? (
+              <TaskListTable
+                apiPath={`/tasks/completed-by-me/${processInstance.id}`}
+                paginationClassName="with-large-bottom-margin"
+                textToShowIfEmpty="You have not completed any tasks for this process instance."
+                shouldPaginateTable={false}
+                showProcessModelIdentifier={false}
+                showProcessId={false}
+                showStartedBy={false}
+                showTableDescriptionAsTooltip
+                showDateStarted={false}
+                showWaitingOn={false}
+                canCompleteAllTasks={false}
+                showViewFormDataButton
+              />
+            ) : null}
+          </TabPanel>
+          <TabPanel>
+            {selectedTaskTabSubTab === 1 ? (
+              <TaskListTable
+                apiPath={`/tasks/completed/${processInstance.id}`}
+                paginationClassName="with-large-bottom-margin"
+                textToShowIfEmpty="There are no completed tasks for this process instance."
+                shouldPaginateTable={false}
+                showProcessModelIdentifier={false}
+                showProcessId={false}
+                showStartedBy={false}
+                showTableDescriptionAsTooltip
+                showDateStarted={false}
+                showWaitingOn={false}
+                canCompleteAllTasks={false}
+                showCompletedBy
+                showActionsColumn={false}
+              />
+            ) : null}
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    );
+  };
+
   if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
@@ -1505,7 +1572,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <Tab disabled={!canViewLogs}>Milestones</Tab>
             <Tab disabled={!canViewLogs}>Events</Tab>
             <Tab disabled={!canViewMsgs}>Messages</Tab>
-            <Tab>My completed tasks</Tab>
+            <Tab>Tasks</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -1537,22 +1604,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               {selectedTabIndex === 3 ? getMessageDisplay() : null}
             </TabPanel>
             <TabPanel>
-              {selectedTabIndex === 4 ? (
-                <TaskListTable
-                  apiPath={`/tasks/completed-by-me/${processInstance.id}`}
-                  paginationClassName="with-large-bottom-margin"
-                  textToShowIfEmpty="You have not completed any tasks for this process instance."
-                  shouldPaginateTable={false}
-                  showProcessModelIdentifier={false}
-                  showProcessId={false}
-                  showStartedBy={false}
-                  showTableDescriptionAsTooltip
-                  showDateStarted={false}
-                  showWaitingOn={false}
-                  canCompleteAllTasks={false}
-                  showViewFormDataButton
-                />
-              ) : null}
+              {selectedTabIndex === 4 ? taskTabSubTabs() : null}
             </TabPanel>
           </TabPanels>
         </Tabs>

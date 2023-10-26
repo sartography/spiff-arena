@@ -131,6 +131,9 @@ export interface ProcessInstanceTask {
   task_title?: string;
   task_name?: string;
   completed?: boolean;
+
+  // gets shoved onto HumanTaskModel in result
+  completed_by_username?: string;
 }
 
 export interface ProcessReference {
