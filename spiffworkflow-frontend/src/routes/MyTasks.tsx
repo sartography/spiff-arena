@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Notification } from '../components/Notification';
 import PaginationForTable from '../components/PaginationForTable';
 import {
   getPageInfoFromSearchParams,
@@ -12,7 +11,6 @@ import {
 import HttpService from '../services/HttpService';
 import {
   PaginationObject,
-  ProcessInstance,
   ProcessModel,
   RecentProcessModel,
 } from '../interfaces';
@@ -25,8 +23,6 @@ export default function MyTasks() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
-  const [processInstance, setProcessInstance] =
-    useState<ProcessInstance | null>(null);
 
   useEffect(() => {
     const getTasks = () => {
@@ -51,27 +47,6 @@ export default function MyTasks() {
       getTasks
     );
   }, [searchParams]);
-
-  const processInstanceRunResultTag = () => {
-    if (processInstance) {
-      return (
-        <Notification
-          title={`Process Instance ${processInstance.id} kicked off`}
-          onClose={() => setProcessInstance(null)}
-        >
-          <Link
-            to={`/process-instances/${modifyProcessIdentifierForPathParam(
-              processInstance.process_model_identifier
-            )}/${processInstance.id}`}
-            data-qa="process-instance-show-link"
-          >
-            view
-          </Link>
-        </Notification>
-      );
-    }
-    return null;
-  };
 
   let recentProcessModels: RecentProcessModel[] = [];
   const recentProcessModelsString = localStorage.getItem('recentProcessModels');
@@ -163,10 +138,7 @@ export default function MyTasks() {
             </Link>
           </td>
           <td className="actions-cell">
-            <ProcessInstanceRun
-              processModel={processModel}
-              onSuccessCallback={setProcessInstance}
-            />
+            <ProcessInstanceRun processModel={processModel} />
           </td>
         </tr>
       );
@@ -220,7 +192,6 @@ export default function MyTasks() {
     }
     return (
       <>
-        {processInstanceRunResultTag()}
         {tasksWaitingForMe}
         <br />
         {relevantProcessModelSection}

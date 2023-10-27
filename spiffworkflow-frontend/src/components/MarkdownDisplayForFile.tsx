@@ -1,6 +1,6 @@
-import MDEditor from '@uiw/react-md-editor';
 import { useEffect, useState } from 'react';
 import HttpService from '../services/HttpService';
+import MarkdownRenderer from './MarkdownRenderer';
 
 type OwnProps = {
   apiPath: string;
@@ -24,9 +24,11 @@ export default function MarkdownDisplayForFile({ apiPath }: OwnProps) {
 
   if (markdownContents) {
     return (
-      <div data-color-mode="light" className="with-bottom-margin">
-        <MDEditor.Markdown linkTarget="_blank" source={markdownContents} />
-      </div>
+      <MarkdownRenderer
+        linkTarget="_blank"
+        source={markdownContents}
+        wrapperClassName="with-bottom-margin"
+      />
     );
   }
 

@@ -58,7 +58,7 @@ class ElementUnitsService:
                 # make mypy happy
                 return None
 
-            current_app.logger.info(f"Checking element unit cache @ {cache_key} :: '{process_id}' - '{element_id}'")
+            current_app.logger.debug(f"Checking element unit cache @ {cache_key} :: '{process_id}' - '{element_id}'")
 
             bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
                 cache_dir, cache_key, process_id, element_id

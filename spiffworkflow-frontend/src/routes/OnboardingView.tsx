@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import MDEditor from '@uiw/react-md-editor';
 import { useLocation, useNavigate } from 'react-router-dom';
 import HttpService from '../services/HttpService';
 import { Onboarding } from '../interfaces';
 import { objectIsEmpty } from '../helpers';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function OnboardingView() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
@@ -40,13 +40,11 @@ export default function OnboardingView() {
       onboarding.instructions.length > 0
     ) {
       return (
-        <div data-color-mode="light">
-          <MDEditor.Markdown
-            className="onboarding"
-            linkTarget="_blank"
-            source={onboarding.instructions}
-          />
-        </div>
+        <MarkdownRenderer
+          className="onboarding"
+          linkTarget="_blank"
+          source={onboarding.instructions}
+        />
       );
     }
     return null;
