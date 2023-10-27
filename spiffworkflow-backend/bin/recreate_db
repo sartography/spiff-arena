@@ -44,14 +44,12 @@ if [[ "${1:-}" == "clean" ]]; then
 
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "sqlite" ]]; then
     rm -f ./src/instance/*.sqlite3
-  else
+  elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
     mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
     mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
-  fi
-
-  # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
-  # start postgres in background with one db
-  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
+  elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
+    # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
+    # start postgres in background with one db
     container_name="postgres-spiff"
     container_regex="^postgres-spiff$"
     if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then

@@ -5,6 +5,7 @@ from typing import TypedDict
 
 from flask import current_app
 from sqlalchemy import ForeignKey
+from sqlalchemy import PrimaryKeyConstraint
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
@@ -31,9 +32,13 @@ class TaskDraftDataModel(SpiffworkflowBaseDBModel):
             "task_definition_id_path",
             name="process_instance_task_definition_unique",
         ),
+        PrimaryKeyConstraint(
+            "process_instance_id",
+            "task_definition_id_path",
+            name="process_instance_task_definition_pk",
+        ),
     )
 
-    id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(
         ForeignKey(ProcessInstanceModel.id), nullable=False, index=True  # type: ignore
     )
