@@ -1617,7 +1617,8 @@ class ProcessInstanceProcessor:
                 f"Cannot find a task with guid {self.process_instance_model.id} and task_id is {human_task.task_id}"
             )
 
-        task_model.start_in_seconds = time.time()
+        run_started_at = time.time()
+        task_model.start_in_seconds = run_started_at
         task_exception = None
         task_event = ProcessInstanceEventType.task_completed.value
         try:
@@ -1637,6 +1638,7 @@ class ProcessInstanceProcessor:
             process_instance=self.process_instance_model,
             serializer=self._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            run_started_at=run_started_at,
         )
         task_service.update_task_model(task_model, spiff_task)
         JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
@@ -1657,7 +1659,13 @@ class ProcessInstanceProcessor:
         spiff_task_to_process = spiff_task
         if spiff_task_to_process.triggered is True:
             spiff_task_to_process = spiff_task.parent
-        task_service.process_parents_and_children_and_save_to_database(spiff_task_to_process)
+
+        tasks_to_update = self.bpmn_process_instance.get_tasks(updated_ts=run_started_at)
+        for spiff_task_to_update in tasks_to_update:
+            if spiff_task_to_update.id != spiff_task.id:
+                task_service.update_task_model_with_spiff_task(spiff_task_to_update)
+
+        task_service.save_objects_to_database()
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()

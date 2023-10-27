@@ -312,9 +312,12 @@ class BaseTest:
         username: str,
         target_uri: str = PermissionTargetModel.URI_ALL,
         permission_names: list[str] | None = None,
+        grant_type: str = "permit",
     ) -> UserModel:
         user = BaseTest.find_or_create_user(username=username)
-        return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
+        return cls.add_permissions_to_user(
+            user, target_uri=target_uri, permission_names=permission_names, grant_type=grant_type
+        )
 
     @classmethod
     def add_permissions_to_user(
@@ -322,14 +325,17 @@ class BaseTest:
         user: UserModel,
         target_uri: str = PermissionTargetModel.URI_ALL,
         permission_names: list[str] | None = None,
+        grant_type: str = "permit",
     ) -> UserModel:
         principal = user.principal
-        cls.add_permissions_to_principal(principal, target_uri=target_uri, permission_names=permission_names)
+        cls.add_permissions_to_principal(
+            principal, target_uri=target_uri, permission_names=permission_names, grant_type=grant_type
+        )
         return user
 
     @classmethod
     def add_permissions_to_principal(
-        cls, principal: PrincipalModel, target_uri: str, permission_names: list[str] | None
+        cls, principal: PrincipalModel, target_uri: str, permission_names: list[str] | None, grant_type: str = "permit"
     ) -> None:
         permission_target = AuthorizationService.find_or_create_permission_target(target_uri)
 
@@ -341,6 +347,7 @@ class BaseTest:
                 principal=principal,
                 permission_target=permission_target,
                 permission=permission,
+                grant_type=grant_type,
             )
 
     def assert_user_has_permission(

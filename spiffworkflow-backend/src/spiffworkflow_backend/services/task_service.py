@@ -107,6 +107,7 @@ class TaskService:
         process_instance: ProcessInstanceModel,
         serializer: BpmnWorkflowSerializer,
         bpmn_definition_to_task_definitions_mappings: dict,
+        run_started_at: float | None = None,
     ) -> None:
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
@@ -116,6 +117,8 @@ class TaskService:
         self.task_models: dict[str, TaskModel] = {}
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
+
+        self.run_started_at: float | None = run_started_at
 
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
         db.session.bulk_save_objects(self.bpmn_processes.values())
@@ -208,8 +211,11 @@ class TaskService:
             task_model.start_in_seconds = start_and_end_times["start_in_seconds"]
             task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
-        # let failed tasks raise and we will log the event then
-        if task_model.state in ["COMPLETED", "CANCELLED"]:
+        # let failed tasks raise and we will log the event then.
+        # avoid creating events for the same state transition multiple times to avoid multiple cancelled events
+        if task_model.state in ["COMPLETED", "CANCELLED"] and (
+            self.run_started_at is None or spiff_task.last_state_change >= self.run_started_at
+        ):
             event_type = ProcessInstanceEventType.task_completed.value
             if task_model.state == "CANCELLED":
                 event_type = ProcessInstanceEventType.task_cancelled.value
@@ -438,7 +444,6 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-
             task_model = TaskModel.query.filter_by(guid=task_id).first()
             if task_model is None:
                 task_model = self.__class__._create_task(
