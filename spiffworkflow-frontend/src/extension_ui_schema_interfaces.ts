@@ -37,10 +37,16 @@ export interface UiSchemaAction {
   full_api_path?: boolean;
 }
 
+export interface UiSchemaPageComponent {
+  name: string;
+  arguments: object;
+}
+
 export interface UiSchemaPageDefinition {
   header: string;
   api: string;
 
+  components?: UiSchemaPageComponent[];
   form?: UiSchemaForm;
   markdown_instruction_filename?: string;
   navigate_instead_of_post_to_api?: boolean;

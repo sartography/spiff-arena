@@ -66,20 +66,21 @@ const storeRecentProcessModelInLocalStorage = (
 
 type OwnProps = {
   processModel: ProcessModel;
-  onSuccessCallback: Function;
   className?: string;
   checkPermissions?: boolean;
+  buttonText?: string;
 };
 
 export default function ProcessInstanceRun({
   processModel,
-  onSuccessCallback,
   className,
   checkPermissions = true,
+  buttonText = 'Start',
 }: OwnProps) {
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
   const [disableStartButton, setDisableStartButton] = useState<boolean>(false);
+
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     processModel.id
   );
@@ -98,16 +99,15 @@ export default function ProcessInstanceRun({
   const onProcessInstanceRun = (processInstance: any) => {
     const processInstanceId = (processInstance as any).id;
     navigate(
-      `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-        processModel.id
-      )}/${processInstanceId}/interstitial`
+      `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`
     );
-    onSuccessCallback(processInstance);
   };
 
   const processModelRun = (processInstance: any) => {
     removeError();
-    storeRecentProcessModelInLocalStorage(processModel);
+    if (processModel) {
+      storeRecentProcessModelInLocalStorage(processModel);
+    }
     HttpService.makeCallToBackend({
       path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
@@ -141,7 +141,7 @@ export default function ProcessInstanceRun({
       disabled={disableStartButton}
       size="md"
     >
-      Start
+      {buttonText}
     </Button>
   );
 

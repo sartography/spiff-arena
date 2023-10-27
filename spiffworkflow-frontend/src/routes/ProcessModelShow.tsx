@@ -38,12 +38,7 @@ import {
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
-import {
-  PermissionsToCheck,
-  ProcessFile,
-  ProcessInstance,
-  ProcessModel,
-} from '../interfaces';
+import { PermissionsToCheck, ProcessFile, ProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -59,8 +54,6 @@ export default function ProcessModelShow() {
   const navigate = useNavigate();
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
-  const [processInstance, setProcessInstance] =
-    useState<ProcessInstance | null>(null);
   const [reloadModel, setReloadModel] = useState<boolean>(false);
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
@@ -119,25 +112,6 @@ export default function ProcessModelShow() {
       successCallback: processResult,
     });
   }, [reloadModel, modifiedProcessModelId]);
-
-  const processInstanceRunResultTag = () => {
-    if (processInstance) {
-      return (
-        <Notification
-          title="Process Instance Kicked Off:"
-          onClose={() => setProcessInstance(null)}
-        >
-          <Link
-            to={`/process-instances/for-me/${modifiedProcessModelId}/${processInstance.id}`}
-            data-qa="process-instance-show-link"
-          >
-            view
-          </Link>
-        </Notification>
-      );
-    }
-    return null;
-  };
 
   const onUploadedCallback = () => {
     setReloadModel(true);
@@ -729,10 +703,7 @@ export default function ProcessModelShow() {
           ability={ability}
         >
           <>
-            <ProcessInstanceRun
-              processModel={processModel}
-              onSuccessCallback={setProcessInstance}
-            />
+            <ProcessInstanceRun processModel={processModel} />
             <br />
             <br />
           </>
@@ -753,7 +724,6 @@ export default function ProcessModelShow() {
           ]}
         />
         {processModelPublishMessage()}
-        {processInstanceRunResultTag()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Model: {processModel.display_name}
