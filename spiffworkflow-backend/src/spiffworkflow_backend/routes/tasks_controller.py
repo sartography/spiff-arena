@@ -267,7 +267,7 @@ def task_data_update(
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
-            json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+            json_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
                 task_model, new_task_data_dict, "json_data_hash"
             )
             if json_data_dict is not None:
@@ -769,7 +769,7 @@ def task_save_draft(
             if task_draft_data is not None:
                 # using this method here since it will check the db if the json_data_hash
                 # has changed and then we can update the task_data_draft record if it has
-                new_json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
+                new_json_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
                     task_draft_data, body, "saved_form_data_hash"
                 )
                 if new_json_data_dict is not None:

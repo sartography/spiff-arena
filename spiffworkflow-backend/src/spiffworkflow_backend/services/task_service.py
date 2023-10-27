@@ -13,6 +13,7 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.json_data import JsonDataDict
@@ -277,10 +278,10 @@ class TaskService:
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskState.get_name(new_properties_json["state"])
-        json_data_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(
+        json_data_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"
         )
-        python_env_dict = self.__class__.update_task_data_on_task_model_and_return_dict_if_updated(
+        python_env_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
             task_model, python_env_data_dict, "python_env_data_hash"
         )
         if json_data_dict is not None:
@@ -516,12 +517,12 @@ class TaskService:
         return json_data_dict
 
     @classmethod
-    def update_task_data_on_task_model_and_return_dict_if_updated(
-        cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
+    def update_json_data_on_db_model_and_return_dict_if_updated(
+        cls, db_model: SpiffworkflowBaseDBModel, task_data_dict: dict, task_model_data_column: str
     ) -> JsonDataDict | None:
         json_data_dict = JsonDataModel.json_data_dict_from_dict(task_data_dict)
-        if getattr(task_model, task_model_data_column) != json_data_dict["hash"]:
-            setattr(task_model, task_model_data_column, json_data_dict["hash"])
+        if getattr(db_model, task_model_data_column) != json_data_dict["hash"]:
+            setattr(db_model, task_model_data_column, json_data_dict["hash"])
             return json_data_dict
         return None
 

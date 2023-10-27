@@ -21,6 +21,10 @@ def upgrade():
     with op.batch_alter_table('json_data', schema=None) as batch_op:
         batch_op.drop_column('id')
         batch_op.create_primary_key('hash_pk', ['hash'])
+
+    with op.batch_alter_table('task_draft_data', schema=None) as batch_op:
+        batch_op.drop_column('id')
+        batch_op.create_primary_key('process_instance_task_definition_pk', ['process_instance_id', 'task_definition_id_path'])
     # ### end Alembic commands ###
 
 
@@ -33,4 +37,8 @@ def downgrade():
         batch_op.add_column(sa.Column('id', mysql.INTEGER(), autoincrement=True, nullable=False))
         batch_op.create_primary_key('id_pk', ['id'])
 
+    with op.batch_alter_table('task_draft_data', schema=None) as batch_op:
+        batch_op.drop_constraint('process_instance_task_definition_pk', 'primary')
+        batch_op.add_column(sa.Column('id', mysql.INTEGER(), autoincrement=True, nullable=False))
+        batch_op.create_primary_key('id_pk', ['id'])
     # ### end Alembic commands ###
