@@ -141,7 +141,7 @@ export default function TaskListTable({
       // TODO: move this and the code from TaskShow to new component to handle instructions and manual tasks
       let formUiSchema;
       let jsonSchema = formSubmissionTask.form_schema;
-      if (formSubmissionTask.typename === 'ManualTask') {
+      if (formSubmissionTask.typename !== 'UserTask') {
         jsonSchema = {
           type: 'object',
           required: [],

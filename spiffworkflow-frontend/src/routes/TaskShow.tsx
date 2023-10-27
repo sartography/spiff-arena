@@ -102,7 +102,7 @@ export default function TaskShow() {
   //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
   const autoSaveTaskData = (formData: any, successCallback?: Function) => {
     // save-draft gets called when a manual task form loads but there's no data to save so don't do it
-    if (taskWithTaskData?.typename === 'ManualTask') {
+    if (['ManualTask', 'Task'].includes(taskWithTaskData?.typename || '')) {
       return undefined;
     }
     let successCallbackToUse = successCallback;
