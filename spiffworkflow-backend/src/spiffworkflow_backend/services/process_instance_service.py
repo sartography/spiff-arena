@@ -12,6 +12,7 @@ from flask import current_app
 from flask import g
 from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
+from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -204,7 +205,13 @@ class ProcessInstanceService:
     def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
         for ready_user_task in processor.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True):
             if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
-                return True
+                for boundary_event_child in ready_user_task.parent.children:
+                    child_task_spec = boundary_event_child.task_spec
+                    if (
+                        isinstance(child_task_spec, BoundaryEvent)
+                        and "Timer" in child_task_spec.event_definition.__class__.__name__
+                    ):
+                        return True
         return False
 
     @classmethod
@@ -215,8 +222,10 @@ class ProcessInstanceService:
         if processor.process_instance_model.status != status_value:
             return True
 
-        if status_value == "user_input_required" and cls.ready_user_task_has_associated_timer(processor):
-            return cls.all_waiting_events_can_be_skipped(processor.bpmn_process_instance.waiting_events())
+        if status_value == "user_input_required":
+            if cls.ready_user_task_has_associated_timer(processor):
+                return cls.all_waiting_events_can_be_skipped(processor.bpmn_process_instance.waiting_events())
+            return True
 
         return False
 
@@ -265,6 +274,10 @@ class ProcessInstanceService:
             processor = ProcessInstanceProcessor(
                 process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
             )
+
+        # if status_value is user_input_required (we are processing instances with that status from background processor),
+        # the ONLY reason we need to do anything is if the task has a timer boundary event on it that has triggered.
+        # otherwise, in all cases, we should optimistically skip it.
         if status_value and cls.can_optimistically_skip(processor, status_value):
             current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
             return None
