@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
 
 import { useDebouncedCallback } from 'use-debounce';
-import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import {
@@ -23,6 +22,7 @@ import CustomForm from '../components/CustomForm';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import UserService from '../services/UserService';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function TaskShow() {
   // get a basic task which doesn't get the form data so we can load
@@ -397,9 +397,7 @@ export default function TaskShow() {
 
   if (guestConfirmationText) {
     pageElements.push(
-      <div data-color-mode="light">
-        <MDEditor.Markdown linkTarget="_blank" source={guestConfirmationText} />
-      </div>
+      <MarkdownRenderer linkTarget="_blank" source={guestConfirmationText} />
     );
   } else if (basicTask && taskData) {
     pageElements.push(<InstructionsForEndUser task={taskWithTaskData} />);

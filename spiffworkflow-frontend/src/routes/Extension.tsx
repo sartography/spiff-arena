@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@carbon/react';
-import MDEditor from '@uiw/react-md-editor';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { ProcessFile, ProcessModel } from '../interfaces';
+import {
+  ObjectWithStringKeysAndFunctionValues,
+  ProcessFile,
+  ProcessModel,
+} from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined } from '../helpers';
@@ -13,10 +16,13 @@ import { BACKEND_BASE_URL } from '../config';
 import {
   ExtensionPostBody,
   ExtensionUiSchema,
+  UiSchemaPageComponent,
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
 import ErrorDisplay from '../components/ErrorDisplay';
 import FormattingService from '../services/FormattingService';
+import ProcessInstanceRun from '../components/ProcessInstanceRun';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 type OwnProps = {
   displayErrors?: boolean;
@@ -43,8 +49,15 @@ export default function Extension({ displayErrors = true }: OwnProps) {
   }>({});
   const [uiSchemaPageDefinition, setUiSchemaPageDefinition] =
     useState<UiSchemaPageDefinition | null>(null);
+  const [readyForComponentsToDisplay, setReadyForComponentsToDisplay] =
+    useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
+
+  const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
+    ProcessInstanceRun,
+    MarkdownRenderer,
+  };
 
   const setConfigsIfDesiredSchemaFile = useCallback(
     // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -57,6 +70,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
           );
           setMarkdownToRenderOnLoad(newMarkdown);
         }
+        setReadyForComponentsToDisplay(true);
       };
 
       if (
@@ -98,6 +112,8 @@ export default function Extension({ displayErrors = true }: OwnProps) {
               httpMethod: 'POST',
               postBody,
             });
+          } else {
+            setReadyForComponentsToDisplay(true);
           }
         }
       }
@@ -238,7 +254,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     }
   };
 
-  if (uiSchemaPageDefinition) {
+  if (readyForComponentsToDisplay && uiSchemaPageDefinition) {
     const componentsToDisplay = [<h1>{uiSchemaPageDefinition.header}</h1>];
     const markdownContentsToRender = [];
 
@@ -261,12 +277,28 @@ export default function Extension({ displayErrors = true }: OwnProps) {
 
     if (markdownContentsToRender.length > 0) {
       componentsToDisplay.push(
-        <div data-color-mode="light" className="with-bottom-margin">
-          <MDEditor.Markdown
-            linkTarget={mdEditorLinkTarget}
-            source={markdownContentsToRender.join('\n')}
-          />
-        </div>
+        <MarkdownRenderer
+          linkTarget={mdEditorLinkTarget}
+          source={markdownContentsToRender.join('\n')}
+          wrapperClassName="with-bottom-margin"
+        />
+      );
+    }
+
+    if (uiSchemaPageDefinition.components) {
+      uiSchemaPageDefinition.components.forEach(
+        (component: UiSchemaPageComponent) => {
+          if (supportedComponents[component.name]) {
+            const argumentsForComponent: any = component.arguments;
+            componentsToDisplay.push(
+              supportedComponents[component.name](argumentsForComponent)
+            );
+          } else {
+            console.error(
+              `Extension tried to use component with name '${component.name}' but that is not allowed.`
+            );
+          }
+        }
       );
     }
 
@@ -304,13 +336,12 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     if (processedTaskData) {
       if (markdownToRenderOnSubmit) {
         componentsToDisplay.push(
-          <div data-color-mode="light" className="with-top-margin">
-            <MDEditor.Markdown
-              className="onboarding"
-              linkTarget="_blank"
-              source={markdownToRenderOnSubmit}
-            />
-          </div>
+          <MarkdownRenderer
+            className="onboarding"
+            linkTarget="_blank"
+            source={markdownToRenderOnSubmit}
+            wrapperClassName="with-top-margin"
+          />
         );
       } else {
         componentsToDisplay.push(

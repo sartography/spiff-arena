@@ -1,17 +1,16 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   Tile,
   // @ts-ignore
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
-import { ProcessModel, ProcessInstance, ProcessGroup } from '../interfaces';
+import { ProcessModel, ProcessGroup } from '../interfaces';
 import {
   modifyProcessIdentifierForPathParam,
   truncateString,
 } from '../helpers';
 import ProcessInstanceRun from './ProcessInstanceRun';
-import { Notification } from './Notification';
 
 type OwnProps = {
   headerElement?: ReactElement;
@@ -28,8 +27,6 @@ export default function ProcessModelListTiles({
   const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
     null
   );
-  const [processInstance, setProcessInstance] =
-    useState<ProcessInstance | null>(null);
 
   useEffect(() => {
     const setProcessModelsFromResult = (result: any) => {
@@ -47,27 +44,6 @@ export default function ProcessModelListTiles({
       successCallback: setProcessModelsFromResult,
     });
   }, [searchParams, processGroup]);
-
-  const processInstanceRunResultTag = () => {
-    if (processInstance) {
-      return (
-        <Notification
-          title={`Process Instance ${processInstance.id} kicked off`}
-          onClose={() => setProcessInstance(null)}
-        >
-          <Link
-            to={`/process-instances/${modifyProcessIdentifierForPathParam(
-              processInstance.process_model_identifier
-            )}/${processInstance.id}`}
-            data-qa="process-instance-show-link"
-          >
-            view
-          </Link>
-        </Notification>
-      );
-    }
-    return null;
-  };
 
   const processModelsDisplayArea = () => {
     let displayText = null;
@@ -95,7 +71,6 @@ export default function ProcessModelListTiles({
               </p>
               <ProcessInstanceRun
                 processModel={row}
-                onSuccessCallback={setProcessInstance}
                 className="tile-pin-bottom"
                 checkPermissions={checkPermissions}
               />
@@ -114,7 +89,6 @@ export default function ProcessModelListTiles({
       return (
         <>
           {headerElement}
-          {processInstanceRunResultTag()}
           {processModelsDisplayArea()}
         </>
       );
