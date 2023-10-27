@@ -25,6 +25,7 @@ export const HUMAN_TASK_TYPES = [
   'Manual Task',
   'UserTask',
   'ManualTask',
+  'Task',
 ];
 
 export const underscorizeString = (inputString: string) => {
