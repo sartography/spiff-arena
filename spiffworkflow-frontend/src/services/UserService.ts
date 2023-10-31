@@ -11,6 +11,8 @@ import { BACKEND_BASE_URL } from '../config';
 // Some explanation:
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
 
+const SIGN_IN_PATH = '/';
+
 const getCookie = (key: string) => {
   const parsedCookies = cookie.parse(document.cookie);
   if (key in parsedCookies) {
@@ -61,9 +63,16 @@ const getIdToken = () => {
 
 const doLogout = () => {
   const idToken = getIdToken();
-  const redirectUrl = `${window.location.origin}`;
-  const url = `${BACKEND_BASE_URL}/logout?redirect_url=${redirectUrl}&id_token=${idToken}`;
-  window.location.href = url;
+
+  const frontendBaseUrl = window.location.origin;
+  let logoutRedirectUrl = `${BACKEND_BASE_URL}/logout?redirect_url=${frontendBaseUrl}&id_token=${idToken}`;
+
+  // edge case. if the user is already logged out, just take them somewhere that will force them to sign in.
+  if (idToken === null) {
+    logoutRedirectUrl = SIGN_IN_PATH;
+  }
+
+  window.location.href = logoutRedirectUrl;
 };
 
 const getAccessToken = () => {
