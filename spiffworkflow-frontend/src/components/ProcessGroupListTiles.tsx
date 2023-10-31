@@ -16,13 +16,17 @@ import {
 } from '../helpers';
 
 type OwnProps = {
+  defaultProcessGroups?: ProcessGroup[];
   processGroup?: ProcessGroup;
   headerElement?: ReactElement;
+  showNoItemsDisplayText?: boolean;
 };
 
 export default function ProcessGroupListTiles({
+  defaultProcessGroups,
   processGroup,
   headerElement,
+  showNoItemsDisplayText,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
 
@@ -34,15 +38,20 @@ export default function ProcessGroupListTiles({
     const setProcessGroupsFromResult = (result: any) => {
       setProcessGroups(result.results);
     };
-    let queryParams = '?per_page=1000';
-    if (processGroup) {
-      queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
+
+    if (defaultProcessGroups) {
+      setProcessGroups(defaultProcessGroups);
+    } else {
+      let queryParams = '?per_page=1000';
+      if (processGroup) {
+        queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
+      }
+      HttpService.makeCallToBackend({
+        path: `/process-groups${queryParams}`,
+        successCallback: setProcessGroupsFromResult,
+      });
     }
-    HttpService.makeCallToBackend({
-      path: `/process-groups${queryParams}`,
-      successCallback: setProcessGroupsFromResult,
-    });
-  }, [searchParams, processGroup]);
+  }, [searchParams, processGroup, defaultProcessGroups]);
 
   const processGroupDirectChildrenCount = (pg: ProcessGroup) => {
     return (pg.process_models || []).length + (pg.process_groups || []).length;
@@ -76,13 +85,19 @@ export default function ProcessGroupListTiles({
         );
       });
     } else {
-      displayText = <p>No Groups To Display</p>;
+      displayText = (
+        <p className="no-results-message">
+          There are no process groups to display. You can add one by clicking
+          the &quot;Add a process group&quot; button. Process groups can contain
+          additional process groups and / or process models.
+        </p>
+      );
     }
     return displayText;
   };
 
   const processGroupArea = () => {
-    if (processGroups && (!processGroup || processGroups.length > 0)) {
+    if (processGroups && (showNoItemsDisplayText || processGroups.length > 0)) {
       return (
         <>
           {headerElement}
