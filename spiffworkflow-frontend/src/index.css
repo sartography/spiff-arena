@@ -867,3 +867,10 @@ div.onboarding {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.login-button {
+  height: 48px;
+  width: 216px;
+  padding-right: 0px;
+  margin-right: 1rem;
+}

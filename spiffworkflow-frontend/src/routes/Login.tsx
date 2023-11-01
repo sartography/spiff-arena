@@ -1,5 +1,6 @@
+import { ArrowRight } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@carbon/react';
+import { Button, Grid, Column } from '@carbon/react';
 import { useSearchParams } from 'react-router-dom';
 import { AuthenticationOption } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -33,7 +34,9 @@ export default function Login() {
       buttons.push(
         <Button
           data-qa={`login-button-${option.identifier}`}
-          size="md"
+          size="lg"
+          className="login-button"
+          renderIcon={ArrowRight}
           onClick={() =>
             UserService.doLogin(option, searchParams.get('original_url'))
           }
@@ -48,7 +51,24 @@ export default function Login() {
   if (authenticationOptions !== null) {
     return (
       <div className="fixed-width-container">
-        {authenticationOptionButtons()}
+        <Grid>
+          <Column
+            lg={{ span: 5, offset: 6 }}
+            md={{ span: 4, offset: 2 }}
+            sm={{ span: 4, offset: 0 }}
+          >
+            <h1 className="with-large-bottom-margin with-top-margin">
+              Log in to SpiffWorkflow
+            </h1>
+          </Column>
+          <Column
+            lg={{ span: 8, offset: 5 }}
+            md={{ span: 5, offset: 2 }}
+            sm={{ span: 4, offset: 0 }}
+          >
+            {authenticationOptionButtons()}
+          </Column>
+        </Grid>
       </div>
     );
   }
