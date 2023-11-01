@@ -12,6 +12,11 @@ ignore:
         reason: None Given
         expires: 2023-11-25T15:25:26.883Z
         created: 2023-10-26T15:25:26.894Z
+  SNYK-PYTHON-WERKZEUG-6041510:
+    - '*':
+        reason: None Given
+        expires: 2023-11-25T15:25:26.883Z
+        created: 2023-10-26T15:25:26.894Z
 patch: {}
 
 # when running snyk ignore to ignore issues with "snyk code test"
