@@ -10,8 +10,22 @@ servers:
 security: []
 
 paths:
+  /authentication-options:
+    get:
+      summary: redirect to open id authentication server
+      operationId: spiffworkflow_backend.routes.authentication_controller.authentication_options
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Redirects to authentication server
   /login:
     parameters:
+      - name: authentication_identifier
+        in: query
+        required: true
+        schema:
+          type: string
       - name: redirect_url
         in: query
         required: false
@@ -38,6 +52,11 @@ paths:
   /login_return:
     parameters:
       - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: authentication_identifier
         in: query
         required: true
         schema:
@@ -71,6 +90,11 @@ paths:
         required: false
         schema:
           type: string
+      - name: authentication_identifier
+        in: query
+        required: true
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.authentication_controller.logout
       summary: Logout authenticated user
@@ -92,6 +116,11 @@ paths:
   /login_with_access_token:
     parameters:
       - name: access_token
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: authentication_identifier
         in: query
         required: true
         schema:

@@ -23,6 +23,7 @@ import ErrorDisplay from '../components/ErrorDisplay';
 import FormattingService from '../services/FormattingService';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import LoginHandler from '../components/LoginHandler';
 
 type OwnProps = {
   displayErrors?: boolean;
@@ -366,6 +367,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     return (
       <div className="fixed-width-container">
         {displayErrors ? <ErrorDisplay /> : null}
+        <LoginHandler />
         {componentsToDisplay}
       </div>
     );

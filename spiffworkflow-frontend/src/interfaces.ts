@@ -460,3 +460,9 @@ export interface JsonSchemaExample {
   ui: any;
   data: any;
 }
+
+export interface AuthenticationOption {
+  identifier: string;
+  label: string;
+  uri: string;
+}

@@ -271,6 +271,7 @@ class AuthorizationService:
             api_view_function
             and api_view_function.__name__.startswith("login")
             or api_view_function.__name__.startswith("logout")
+            or api_view_function.__name__.startswith("authentication_options")
             or api_view_function.__name__.startswith("prom")
             or api_view_function.__name__ == "url_info"
             or api_view_function.__name__.startswith("metric")
