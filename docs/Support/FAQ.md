@@ -144,16 +144,7 @@ If you encounter messages about platform mismatches, note that these may just be
 Update your images and restart the containers as needed.
 Instructions in the getting started guide reference `curl`, but if that is not working for you, `wget` may be an option that is already installed on your system.
 
-**25: Why aren't timer events working in Spiff Arena, and how can they be fixed?**
-
-**A:** Timer events in Spiff Arena require a specific syntax for their expressions.
-For instance, the expression "R5/PT10S" should be quoted.
-This is because the value needs to be derived from a valid Python expression.
-Ensure that the background scheduler is running, as timers in Spiff Arena are controlled by it.
-
- If you're still facing issues, refer to the provided sample BPMN file and ensure that your timer expressions match the required format.
-
-**26: Why can't I import an external module in a script task in Spiff Arena?**
+**25: Why can't I import an external module in a script task in Spiff Arena?**
 
 **A:** In Spiff Arena, script tasks are designed for lightweight scripting and do not support importing external modules.
 If you need to communicate with external systems, it's recommended to use a ServiceTask instead.
@@ -161,3 +152,37 @@ ServiceTasks in Spiff Arena utilize a concept called Connector Proxy, an externa
 For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request.
 Detailed documentation available [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/configure_connector_proxy.html).
 If you want to bypass security features of the restricted script engine and import modules from your script tasks, you can set the environment variable: `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false`
+
+
+**26: Where is the properties data stored in the properties panel?**
+
+**A:** The properties data is stored directly within the XML of the BPMN diagram. Some of this data is stored in extension elements. 
+For instance, the configuration for a service task can be found [here](https://github.com/sartography/sample-process-models/blob/sample-models-1/misc/jonjon/ham/ham.bpmn#L13) and instructions can be found [here](https://github.com/sartography/sample-process-models/blob/sample-models-1/misc/documentation/user-guide-basics/user-guide-basics.bpmn#L24). If you're considering bypassing the properties panel, it's essential to ensure that the XML output remains consistent with the expected format.
+
+**27: How do I start a task? What do I need besides BPMN?**
+
+**A:** To start a task, you'll need to have a proper BPMN diagram and a configured environment. The docker compose file, as mentioned on the [spiffworkflow.org](https://www.spiffworkflow.org/posts/articles/get_started/) website, provides a containerized environment for both the API and asynchronous processing. For a more robust production deployment, it's recommended to use separate containers for different functionalities.
+
+**28: Any documentation on how to set up our own openid provider?**
+
+**A:** If you're using the spiff-arena/spiffworkflow-backend, there's a script named `./keycloak/bin/start_keycloak` that can initiate a container serving as an example OpenID provider. This can be a good starting point if you're looking to set up your own OpenID provider.
+
+
+**29: Where can I configure an SMTP server for Spiffworkflow to send email notifications?**
+
+**A:** To configure an SMTP server for email notifications, you can utilize connectors and service tasks within SpiffWorkflow. For instance, connectors can be set up to send notifications to platforms like Slack.
+
+**30: Is there any way to access the timer event value/expression in my code?**
+
+**A:** Yes, in SpiffWorkflow, you can access timer event values directly from the backend. There are specific sections in the codebase where timer event values are checked and utilized for various functionalities.
+
+**31: How can I create new users for my co-workers in SpiffWorkflow?**
+**A:** There are multiple methods to manage this, such as using OpenID or the process model. However, for beginners eager to add a user quickly, you can adjust the 'example.yml' configuration file within the app identified as `` 'SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"`` 
+
+After making changes, restart the container to update user details. For more information, refer to the [Spiff-Arena documentation](https://spiff-arena.readthedocs.io/en/latest/installation_integration/admin_and_permissions.html). The mentioned file can be found [here](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/config/permissions).
+
+**32: Explain the functionality and purpose of the collaboration flag in spiff-example-cli?**
+
+**A:** The collaboration flag enables the simultaneous loading of multiple top-level processes within a single workflow. This results in the creation of a subworkflow for each process, allowing them to initiate concurrently. 
+
+A practical application of this might be when two processes need to interact but remain independent of each other.
