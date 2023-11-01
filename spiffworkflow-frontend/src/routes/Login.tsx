@@ -6,8 +6,6 @@ import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 
 export default function Login() {
-  // TODO: if only one auth option then go there initially instead of getting the list
-
   const [searchParams] = useSearchParams();
   const [authenticationOptions, setAuthenticationOptions] = useState<
     AuthenticationOption[] | null
@@ -24,6 +22,13 @@ export default function Login() {
       return null;
     }
     const buttons: any = [];
+    if (authenticationOptions.length === 1) {
+      UserService.doLogin(
+        authenticationOptions[0],
+        searchParams.get('original_url')
+      );
+      return null;
+    }
     authenticationOptions.forEach((option: AuthenticationOption) => {
       buttons.push(
         <Button
