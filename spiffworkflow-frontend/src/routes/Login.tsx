@@ -50,14 +50,14 @@ export default function Login() {
 
   if (authenticationOptions !== null) {
     return (
-      <div className="fixed-width-container">
+      <div className="fixed-width-container login-page-spacer">
         <Grid>
           <Column
             lg={{ span: 5, offset: 6 }}
             md={{ span: 4, offset: 2 }}
             sm={{ span: 4, offset: 0 }}
           >
-            <h1 className="with-large-bottom-margin with-top-margin">
+            <h1 className="with-large-bottom-margin">
               Log in to SpiffWorkflow
             </h1>
           </Column>

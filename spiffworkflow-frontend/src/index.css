@@ -873,4 +873,13 @@ div.onboarding {
   width: 216px;
   padding-right: 0px;
   margin-right: 1rem;
+  margin-bottom: 1rem;
+}
+
+/*
+ * on the mockup, it looked like about 142px above the heading.
+ * we already have 32px, so adding the balance.
+*/
+.login-page-spacer {
+  padding-top: 110px;
 }
