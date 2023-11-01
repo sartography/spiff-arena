@@ -56,11 +56,6 @@ paths:
         required: true
         schema:
           type: string
-      - name: authentication_identifier
-        in: query
-        required: true
-        schema:
-          type: string
       - name: state
         in: query
         required: true
@@ -139,6 +134,12 @@ paths:
                 $ref: "#/components/schemas/OkTrue"
 
   /login_api:
+    parameters:
+      - name: authentication_identifier
+        in: query
+        required: true
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.authentication_controller.login_api
       summary: Authenticate user for API access

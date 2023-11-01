@@ -41,7 +41,11 @@ export default function Login() {
   };
 
   if (authenticationOptions !== null) {
-    return authenticationOptionButtons();
+    return (
+      <div className="fixed-width-container">
+        {authenticationOptionButtons()}
+      </div>
+    );
   }
   return null;
 }

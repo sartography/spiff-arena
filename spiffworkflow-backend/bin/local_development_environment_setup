@@ -42,9 +42,14 @@ else
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 
-  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__identifier="keycloak_external"
-  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__label="HEY WE GOT EXTERNAL"
-  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__uri="http://localhost:7002/realms/spiffworkflow2"
+  # export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__identifier="keycloak_external"
+  # export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__label="HEY WE GOT EXTERNAL"
+  # export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__uri="http://localhost:7002/realms/spiffworkflow2"
+  # export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_id="spiffworkflow-backend"
+  # export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__identifier="openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__label="openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__uri="http://localhost:$port/openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_id="spiffworkflow-backend"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 fi

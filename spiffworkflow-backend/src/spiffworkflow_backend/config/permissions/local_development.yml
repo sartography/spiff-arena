@@ -1,4 +1,10 @@
 
+users:
+  admin:
+    service: local_open_id
+    email: admin@spiffworkflow.org
+    password: admin
+    preferred_username: Admin
 groups:
   admin:
     users: [admin@spiffworkflow.org]

@@ -93,7 +93,12 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
     raise ApiError(error_code="invalid_token", message="Cannot validate token.", status_code=401)
 
 
-def login(authentication_identifier: str, redirect_url: str = "/", process_instance_id: int | None = None, task_guid: str | None = None) -> Response:
+def login(
+    authentication_identifier: str,
+    redirect_url: str = "/",
+    process_instance_id: int | None = None,
+    task_guid: str | None = None,
+) -> Response:
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
         AuthenticationService.create_guest_token(
             username=SPIFF_NO_AUTH_USER,
@@ -113,20 +118,27 @@ def login(authentication_identifier: str, redirect_url: str = "/", process_insta
         )
         return redirect(redirect_url)
 
-    state = AuthenticationService.generate_state(redirect_url)
-    login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), authentication_identifier=authentication_identifier)
+    state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
+    login_redirect_url = AuthenticationService().get_login_redirect_url(
+        state.decode("UTF-8"), authentication_identifier=authentication_identifier
+    )
     return redirect(login_redirect_url)
 
 
-def login_return(code: str, authentication_identifier: str, state: str, session_state: str = "") -> Response | None:
+def login_return(code: str, state: str, session_state: str = "") -> Response | None:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
-    auth_token_object = AuthenticationService().get_auth_token_object(code, authentication_identifier=authentication_identifier)
+    authentication_identifier = state_dict["authentication_identifier"]
+    auth_token_object = AuthenticationService().get_auth_token_object(
+        code, authentication_identifier=authentication_identifier
+    )
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
         user_info = _parse_id_token(id_token)
 
-        if AuthenticationService.validate_id_or_access_token(id_token, authentication_identifier=authentication_identifier):
+        if AuthenticationService.validate_id_or_access_token(
+            id_token, authentication_identifier=authentication_identifier
+        ):
             if user_info and "error" not in user_info:
                 user_model = AuthorizationService.create_user_from_sign_in(user_info)
                 g.user = user_model.id
@@ -159,7 +171,9 @@ def login_return(code: str, authentication_identifier: str, state: str, session_
 def login_with_access_token(access_token: str, authentication_identifier: str) -> Response:
     user_info = _parse_id_token(access_token)
 
-    if AuthenticationService.validate_id_or_access_token(access_token, authentication_identifier=authentication_identifier):
+    if AuthenticationService.validate_id_or_access_token(
+        access_token, authentication_identifier=authentication_identifier
+    ):
         if user_info and "error" not in user_info:
             AuthorizationService.create_user_from_sign_in(user_info)
     else:
@@ -172,9 +186,9 @@ def login_with_access_token(access_token: str, authentication_identifier: str) -
     return make_response(jsonify({"ok": True}))
 
 
-def login_api() -> Response:
+def login_api(authentication_identifier: str) -> Response:
     redirect_url = "/v1.0/login_api_return"
-    state = AuthenticationService.generate_state(redirect_url)
+    state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), redirect_url)
     return redirect(login_redirect_url)
 
@@ -196,7 +210,9 @@ def logout(id_token: str, authentication_identifier: str, redirect_url: str | No
         redirect_url = ""
     tld = current_app.config["THREAD_LOCAL_DATA"]
     tld.user_has_logged_out = True
-    return AuthenticationService().logout(redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier)
+    return AuthenticationService().logout(
+        redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
+    )
 
 
 def logout_return() -> Response:
@@ -238,7 +254,9 @@ def _set_new_access_token_in_cookie(
         response.set_cookie("id_token", tld.new_id_token, domain=domain_for_frontend_cookie)
 
     if hasattr(tld, "new_authentication_identifier") and tld.new_authentication_identifier:
-        response.set_cookie("authentication_identifier", tld.new_authentication_identifier, domain=domain_for_frontend_cookie)
+        response.set_cookie(
+            "authentication_identifier", tld.new_authentication_identifier, domain=domain_for_frontend_cookie
+        )
 
     if hasattr(tld, "user_has_logged_out") and tld.user_has_logged_out:
         response.set_cookie("id_token", "", max_age=0, domain=domain_for_frontend_cookie)
@@ -334,7 +352,9 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
             user_info = None
             authentication_identifier = request.headers["authentication_identifier"]
             try:
-                if AuthenticationService.validate_id_or_access_token(token, authentication_identifier=authentication_identifier):
+                if AuthenticationService.validate_id_or_access_token(
+                    token, authentication_identifier=authentication_identifier
+                ):
                     user_info = decoded_token
             except TokenExpiredError as token_expired_error:
                 # Try to refresh the token
@@ -342,7 +362,9 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                 if user:
                     refresh_token = AuthenticationService.get_refresh_token(user.id)
                     if refresh_token:
-                        auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(refresh_token, authentication_identifier=authentication_identifier)
+                        auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
+                            refresh_token, authentication_identifier=authentication_identifier
+                        )
                         if auth_token and "error" not in auth_token and "id_token" in auth_token:
                             tld = current_app.config["THREAD_LOCAL_DATA"]
                             tld.new_access_token = auth_token["id_token"]

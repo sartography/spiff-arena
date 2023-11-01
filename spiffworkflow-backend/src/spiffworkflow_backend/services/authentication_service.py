@@ -1,11 +1,11 @@
 import base64
 import enum
-from typing import TypedDict
 import json
 import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from typing import TypedDict
 
 import jwt
 import requests
@@ -47,18 +47,22 @@ class AuthenticationOptionNotFoundError(Exception):
 
 
 class AuthenticationService:
-    ENDPOINT_CACHE: dict = {}  # We only need to find the openid endpoints once, then we can cache them.
+    ENDPOINT_CACHE: dict[str, dict[str, str]] = (
+        {}
+    )  # We only need to find the openid endpoints once, then we can cache them.
 
     @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
         # ensure we remove sensitive info such as client secret from the config before sending it back
         configs: list[AuthenticationOptionForApi] = []
         for config in current_app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]:
-            configs.append({
-                "identifier": config["identifier"],
-                "label": config["label"],
-                "uri": config["uri"],
-            })
+            configs.append(
+                {
+                    "identifier": config["identifier"],
+                    "label": config["label"],
+                    "uri": config["uri"],
+                }
+            )
         return configs
 
     @classmethod
@@ -67,39 +71,43 @@ class AuthenticationService:
             if config["identifier"] == authentication_identifier:
                 return_config: AuthenticationOption = config
                 return return_config
-        raise AuthenticationOptionNotFoundError(f"Could not find a config with identifier '{authentication_identifier}'")
+        raise AuthenticationOptionNotFoundError(
+            f"Could not find a config with identifier '{authentication_identifier}'"
+        )
 
     @classmethod
     def client_id(cls, authentication_identifier: str) -> str:
         """Returns the client id from the config."""
-        config: str = cls.authentication_option_for_identifier(authentication_identifier)['client_id']
+        config: str = cls.authentication_option_for_identifier(authentication_identifier)["client_id"]
         return config
 
     @classmethod
     def server_url(cls, authentication_identifier: str) -> str:
         """Returns the server url from the config."""
-        config: str = cls.authentication_option_for_identifier(authentication_identifier)['uri']
+        config: str = cls.authentication_option_for_identifier(authentication_identifier)["uri"]
         return config
 
     @classmethod
     def secret_key(cls, authentication_identifier: str) -> str:
         """Returns the secret key from the config."""
-        config: str = cls.authentication_option_for_identifier(authentication_identifier)['client_secret']
+        config: str = cls.authentication_option_for_identifier(authentication_identifier)["client_secret"]
         return config
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
         openid_config_url = f"{cls.server_url(authentication_identifier)}/.well-known/openid-configuration"
-        if name not in AuthenticationService.ENDPOINT_CACHE:
+        if authentication_identifier not in cls.ENDPOINT_CACHE:
+            cls.ENDPOINT_CACHE[authentication_identifier] = {}
+        if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
             try:
                 response = requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
-                AuthenticationService.ENDPOINT_CACHE = response.json()
+                AuthenticationService.ENDPOINT_CACHE[authentication_identifier] = response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
-        if name not in AuthenticationService.ENDPOINT_CACHE:
+        if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
             raise Exception(f"Unknown OpenID Endpoint: {name}. Tried to get from {openid_config_url}")
-        config: str = AuthenticationService.ENDPOINT_CACHE.get(name, "")
+        config: str = AuthenticationService.ENDPOINT_CACHE[authentication_identifier].get(name, "")
         return config
 
     @staticmethod
@@ -118,24 +126,35 @@ class AuthenticationService:
         return redirect(request_url)
 
     @staticmethod
-    def generate_state(redirect_url: str) -> bytes:
-        state = base64.b64encode(bytes(str({"redirect_url": redirect_url}), "UTF-8"))
+    def generate_state(redirect_url: str, authentication_identifier: str) -> bytes:
+        state = base64.b64encode(
+            bytes(str({"redirect_url": redirect_url, "authentication_identifier": authentication_identifier}), "UTF-8")
+        )
         return state
 
-    def get_login_redirect_url(self, state: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return") -> str:
-        return_redirect_url = f"{self.get_backend_url()}{redirect_url}?authentication_identifier={authentication_identifier}"
+    def get_login_redirect_url(
+        self, state: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return"
+    ) -> str:
+        return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
-            self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
+            self.open_id_endpoint_for_name(
+                "authorization_endpoint", authentication_identifier=authentication_identifier
+            )
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
             + "scope=openid profile email&"
             + f"redirect_uri={return_redirect_url}"
         )
+        print(f"login_redirect_url: {login_redirect_url}")
         return login_redirect_url
 
-    def get_auth_token_object(self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return") -> dict:
-        backend_basic_auth_string = f"{self.client_id(authentication_identifier)}:{self.secret_key(authentication_identifier)}"
+    def get_auth_token_object(
+        self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return"
+    ) -> dict:
+        backend_basic_auth_string = (
+            f"{self.client_id(authentication_identifier)}:{self.secret_key(authentication_identifier)}"
+        )
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
         headers = {
@@ -145,13 +164,16 @@ class AuthenticationService:
         data = {
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": f"{self.get_backend_url()}{redirect_url}?authentication_identifier={authentication_identifier}",
+            "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
         }
 
-        request_url = self.open_id_endpoint_for_name("token_endpoint", authentication_identifier=authentication_identifier)
+        request_url = self.open_id_endpoint_for_name(
+            "token_endpoint", authentication_identifier=authentication_identifier
+        )
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
+        print(f"auth_token_object: {auth_token_object}")
         return auth_token_object
 
     @classmethod
@@ -180,20 +202,25 @@ class AuthenticationService:
 
         if iss != cls.server_url(authentication_identifier):
             current_app.logger.error(
-                f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url(authentication_identifier)}'"
+                f"TOKEN INVALID because ISS '{iss}' does not match server url"
+                f" '{cls.server_url(authentication_identifier)}'"
             )
             valid = False
         # aud could be an array or a string
         elif len(overlapping_aud_values) < 1:
             current_app.logger.error(
-                f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id(authentication_identifier)}'"
+                f"TOKEN INVALID because audience '{aud}' does not match client id"
+                f" '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         elif azp and azp not in (
             cls.client_id(authentication_identifier),
             "account",
         ):
-            current_app.logger.error(f"TOKEN INVALID because azp '{azp}' does not match client id '{cls.client_id(authentication_identifier)}'")
+            current_app.logger.error(
+                f"TOKEN INVALID because azp '{azp}' does not match client id"
+                f" '{cls.client_id(authentication_identifier)}'"
+            )
             valid = False
         # make sure issued at time is not in the future
         elif now + iat_clock_skew_leeway < iat:
@@ -246,7 +273,9 @@ class AuthenticationService:
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
         """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
-        backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{cls.secret_key(authentication_identifier)}"
+        backend_basic_auth_string = (
+            f"{cls.client_id(authentication_identifier)}:{cls.secret_key(authentication_identifier)}"
+        )
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
         headers = {
@@ -261,7 +290,9 @@ class AuthenticationService:
             "client_secret": cls.secret_key(authentication_identifier),
         }
 
-        request_url = cls.open_id_endpoint_for_name("token_endpoint", authentication_identifier=authentication_identifier)
+        request_url = cls.open_id_endpoint_for_name(
+            "token_endpoint", authentication_identifier=authentication_identifier
+        )
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)

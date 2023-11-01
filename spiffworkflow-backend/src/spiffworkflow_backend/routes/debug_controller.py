@@ -4,6 +4,7 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend import get_version_info_data
+from spiffworkflow_backend.services.authentication_service import AuthenticationService
 
 
 def test_raise_error() -> Response:
@@ -15,4 +16,4 @@ def version_info() -> Response:
 
 
 def url_info() -> Response:
-    return make_response({"url": request.url}, 200)
+    return make_response({"url": request.url, "cache": AuthenticationService.ENDPOINT_CACHE}, 200)

@@ -1,7 +1,7 @@
 import re
 from os import environ
 
-from spiffworkflow_backend.config.normalise_environment import normalise_environment
+from spiffworkflow_backend.config.normalized_environment import normalized_environment
 
 # Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
 #   and from_prefixed_env(), though we want to ensure that these variables are all documented, so that
@@ -32,7 +32,7 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
     globals()[variable_name] = value_to_return
 
 
-configs_with_structures = normalise_environment(environ)
+configs_with_structures = normalized_environment(environ)
 
 ### basic
 config_from_env("FLASK_SESSION_SECRET_KEY")
@@ -79,18 +79,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_SIZE")
 
 ### open id
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
-# Open ID server
-# use "http://localhost:7000/openid" for running with simple openid
-# server hosted by spiffworkflow-backend
-# config_from_env(
-#     "SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL",
-#     default="http://localhost:7002/realms/spiffworkflow",
-# )
-# config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
-# config_from_env(
-#     "SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY",
-#     default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
-# )  # noqa: S105
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", default=False)
 # Tenant specific fields is a comma separated list of field names that we will be converted to list of strings
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this

@@ -195,6 +195,17 @@ def setup_config(app: Flask) -> None:
         app.config["SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
     )
 
+    if "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS" not in app.config:
+        app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"] = [
+            {
+                "identifier": "default",
+                "label": "Default",
+                "uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"),
+                "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
+                "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
+            }
+        ]
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
