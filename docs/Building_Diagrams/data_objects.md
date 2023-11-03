@@ -35,12 +35,6 @@ Signifies the data or information that is generated or produced as a result of e
 
 A Data Object in BPMN typically represents a specific piece of information or a data entity that is exchanged or manipulated during the course of a business process. It can represent both physical and digital data. Examples of Data Objects include documents, forms, reports, databases, or any other data entity relevant to the process. 
 
-### Data Store
-
-![data_store](images/data_store.png) 
-
-A Data Store represents a persistent storage location where data is stored and retrieved during the course of a process. It typically represents a database, file system, or any other storage mechanism. Data Stores are used to depict the long-term storage of data that can be accessed by multiple activities or tasks within the process. They provide a centralized location for data storage and retrieval.
-
 ## Data Input Configuration
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
