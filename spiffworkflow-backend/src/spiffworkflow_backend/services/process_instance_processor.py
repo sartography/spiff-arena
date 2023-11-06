@@ -100,6 +100,10 @@ from spiffworkflow_backend.services.workflow_execution_service import execution_
 from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
 
+# fix for StandardLoopTask
+from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
+from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
+SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
 
 # this custom converter is just so we use 'ServiceTask' as the typename in the serialization
 # rather than 'CustomServiceTask'
@@ -107,14 +111,14 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
     def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
         super().__init__(target_class, registry, typename)
 
+SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
+del SPIFF_CONFIG[ServiceTask]
 
 SPIFF_CONFIG[StartEvent] = EventConverter
 SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
 SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
-SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
-del SPIFF_CONFIG[ServiceTask]
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
