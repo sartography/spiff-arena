@@ -5,8 +5,8 @@ from flask import jsonify
 from flask import make_response
 
 from spiffworkflow_backend import db
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 
 
@@ -19,9 +19,7 @@ def data_store_list() -> flask.wrappers.Response:
     for cat in db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category):  # type: ignore
         data_stores.append({"name": cat[0], "type": "typeahead"})
 
-    keys = db.session.query(KKVDataStoreModel.top_level_key).distinct().order_by(KKVDataStoreModel.top_level_key)  # type: ignore
-    for key in keys:
-        data_stores.append({"name": key[0], "type": "kkv"})
+    data_stores.extend(KKVDataStore.existing_data_stores())
 
     return make_response(jsonify(data_stores), 200)
 
@@ -51,16 +49,11 @@ def data_store_item_list(
         return make_response(jsonify(response_json), 200)
 
     if data_store_type == "kkv":
-        data_store_query = KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
-            KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
-        )
+        data_store_query = KKVDataStore.query_data_store(name)
         data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
         results = []
         for kkv in data.items:
-            result = {
-                "secondary_key": kkv.secondary_key,
-                "value": kkv.value,
-            }
+            result = KKVDataStore.build_response_item(kkv)
             results.append(result)
         response_json = {
             "results": results,

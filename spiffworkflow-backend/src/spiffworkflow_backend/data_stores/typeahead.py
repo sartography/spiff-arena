@@ -4,6 +4,7 @@ from typing import Any
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 
