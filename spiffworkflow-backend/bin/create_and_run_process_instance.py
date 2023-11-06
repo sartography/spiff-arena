@@ -1,9 +1,9 @@
-from spiffworkflow_backend import create_app
-from spiffworkflow_backend.services.user_service import UserService
 import sys
+
+from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 def main() -> None:

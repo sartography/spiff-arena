@@ -41,7 +41,11 @@ from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
+from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
+
+# fix for StandardLoopTask
+from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
@@ -100,16 +104,15 @@ from spiffworkflow_backend.services.workflow_execution_service import execution_
 from spiffworkflow_backend.specs.start_event import StartEvent
 from sqlalchemy import and_
 
-# fix for StandardLoopTask
-from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
-from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
 SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
+
 
 # this custom converter is just so we use 'ServiceTask' as the typename in the serialization
 # rather than 'CustomServiceTask'
 class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
     def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
         super().__init__(target_class, registry, typename)
+
 
 SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
 del SPIFF_CONFIG[ServiceTask]
