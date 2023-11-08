@@ -732,10 +732,11 @@ class AuthorizationService:
 
     @classmethod
     def parse_permissions_yaml_into_group_info(cls) -> list[GroupPermissionsDict]:
-        if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"] is None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] is None:
             raise (
                 PermissionsFileNotSetError(
-                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME needs to be set in order to import permissions"
+                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import"
+                    " permissions"
                 )
             )
 
