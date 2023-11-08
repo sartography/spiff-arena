@@ -1,10 +1,7 @@
 from collections.abc import Generator
-from dataclasses import dataclass
-from typing import Any
 
 import pytest
 from flask.app import Flask
-from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.scripts.create_unique_kkv_top_level_key import CreateUniqueKKVTopLevelKey
@@ -25,13 +22,13 @@ class TestCreateUniqueKKVTopLevelKey(BaseTest):
     def test_creates_unique_top_level_keys(self, with_clean_data_store: None) -> None:
         prefix = "study_"
         ids = [
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
-            CreateUniqueKKVTopLevelKey().run(None, prefix),
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
+            CreateUniqueKKVTopLevelKey().run(None, prefix),  # type: ignore
         ]
         unique_ids = set(ids)
         assert len(ids) == len(unique_ids)
