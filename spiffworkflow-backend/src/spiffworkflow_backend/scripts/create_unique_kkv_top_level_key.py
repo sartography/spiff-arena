@@ -1,10 +1,10 @@
 from typing import Any
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 
 class CreateUniqueKKVTopLevelKey(Script):
     @staticmethod
@@ -21,10 +21,10 @@ class CreateUniqueKKVTopLevelKey(Script):
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         top_level_key_prefix = args[0]
 
-        model = KKVDataStoreModel(top_level_key="", secondary_key="", value="")
+        model = KKVDataStoreModel(top_level_key="", secondary_key="", value={})
         db.session.add(model)
         db.session.commit()
-        
+
         top_level_key = f"{top_level_key_prefix}{model.id}"
 
         db.session.delete(model)
