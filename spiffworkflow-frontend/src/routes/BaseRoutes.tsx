@@ -13,6 +13,7 @@ import About from './About';
 import Page404 from './Page404';
 import AdminRedirect from './AdminRedirect';
 import RootRoute from './RootRoute';
+import LoginHandler from '../components/LoginHandler';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -22,6 +23,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
   return (
     <div className="fixed-width-container">
       <ErrorDisplay />
+      <LoginHandler />
       <Routes>
         <Route path="/" element={<RootRoute />} />
         <Route path="tasks/*" element={<HomeRoutes />} />
