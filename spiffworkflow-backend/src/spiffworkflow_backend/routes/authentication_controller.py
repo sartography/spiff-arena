@@ -465,7 +465,7 @@ def _parse_id_token(token: str) -> Any:
 def _get_authentication_identifier_from_request() -> str:
     if "authentication_identifier" in request.cookies:
         return request.cookies["authentication_identifier"]
-    if "Authentication-Identifier" in request.headers:
-        authentication_identifier: str = request.headers["Authentication-Identifier"]
+    if "SpiffWorkflow-Authentication-Identifier" in request.headers:
+        authentication_identifier: str = request.headers["SpiffWorkflow-Authentication-Identifier"]
         return authentication_identifier
     return "default"
