@@ -1,6 +1,6 @@
 import { ArrowRight } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
-import { Button, Grid, Column } from '@carbon/react';
+import { Loading, Button, Grid, Column } from '@carbon/react';
 import { useSearchParams } from 'react-router-dom';
 import { AuthenticationOption } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -23,13 +23,6 @@ export default function Login() {
       return null;
     }
     const buttons: any = [];
-    if (authenticationOptions.length === 1) {
-      UserService.doLogin(
-        authenticationOptions[0],
-        searchParams.get('original_url')
-      );
-      return null;
-    }
     authenticationOptions.forEach((option: AuthenticationOption) => {
       buttons.push(
         <Button
@@ -48,7 +41,30 @@ export default function Login() {
     return buttons;
   };
 
-  if (authenticationOptions !== null) {
+  const doLoginIfAppropriate = () => {
+    if (!authenticationOptions) {
+      return;
+    }
+    if (authenticationOptions.length === 1) {
+      UserService.doLogin(
+        authenticationOptions[0],
+        searchParams.get('original_url')
+      );
+    }
+  };
+
+  const getLoadingIcon = () => {
+    const style = { margin: '50px 0 50px 50px' };
+    return (
+      <Loading
+        description="Active loading indicator"
+        withOverlay={false}
+        style={style}
+      />
+    );
+  };
+
+  const loginComponments = () => {
     return (
       <div className="fixed-width-container login-page-spacer">
         <Grid>
@@ -71,6 +87,21 @@ export default function Login() {
         </Grid>
       </div>
     );
+  };
+
+  if (authenticationOptions === null || authenticationOptions.length < 2) {
+    doLoginIfAppropriate();
+    return (
+      <div className="fixed-width-container login-page-spacer">
+        {getLoadingIcon()}
+      </div>
+    );
   }
+
+  if (authenticationOptions !== null) {
+    doLoginIfAppropriate();
+    return loginComponments();
+  }
+
   return null;
 }
