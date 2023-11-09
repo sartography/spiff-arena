@@ -371,29 +371,32 @@ export default function ProcessModelShow() {
       return constructedTag;
     });
 
-    return (
-      <Table
-        size="lg"
-        useZebraStyles={false}
-        className="process-model-file-table"
-      >
-        <TableHead>
-          <TableRow>
-            <TableHeader id="Name" key="Name">
-              Name
-            </TableHeader>
-            <TableHeader
-              id="Actions"
-              key="Actions"
-              className="table-header-right-align"
-            >
-              Actions
-            </TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBody>{tags}</TableBody>
-      </Table>
-    );
+    if (tags.length > 0) {
+      return (
+        <Table
+          size="lg"
+          useZebraStyles={false}
+          className="process-model-file-table"
+        >
+          <TableHead>
+            <TableRow>
+              <TableHeader id="Name" key="Name">
+                Name
+              </TableHeader>
+              <TableHeader
+                id="Actions"
+                key="Actions"
+                className="table-header-right-align"
+              >
+                Actions
+              </TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>{tags}</TableBody>
+        </Table>
+      );
+    }
+    return null;
   };
 
   const [fileUploadEvent, setFileUploadEvent] = useState(null);
@@ -619,6 +622,19 @@ export default function ProcessModelShow() {
       return null;
     }
 
+    let helpText = null;
+    if (processModel.files.length === 0) {
+      helpText = (
+        <p className="no-results-message with-bottom-margin">
+          <strong>
+            **This process model does not have any files associated with it. Try
+            creating a bpmn file by selecting &quot;New BPMN File&quot; in the
+            dropdown below.**
+          </strong>
+        </p>
+      );
+    }
+
     return (
       <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
         <TabList aria-label="List of tabs">
@@ -636,6 +652,7 @@ export default function ProcessModelShow() {
                   a={targetUris.processModelFileCreatePath}
                   ability={ability}
                 >
+                  {helpText}
                   <div className="with-bottom-margin">
                     Files
                     {processModel &&
