@@ -350,7 +350,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
 
         elif "iss" in decoded_token.keys():
             user_info = None
-            authentication_identifier = request.headers["authentication_identifier"]
+            authentication_identifier = request.cookies["authentication_identifier"]
             try:
                 if AuthenticationService.validate_id_or_access_token(
                     token, authentication_identifier=authentication_identifier
