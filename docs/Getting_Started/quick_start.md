@@ -78,7 +78,7 @@ When getting started with SpiffWorkflow, it's essential to take the time to expl
 
 ---
 
-## 🌱 How to Start a Process
+## How to Start a Process
 
 With SpiffWorkflow, you can easily initiate a new process instance. Here's a step-by-step guide on how to start a process.
 
@@ -103,7 +103,7 @@ Congratulations! You have successfully started a new process instance in SpiffWo
 
 ---
 
-## 🔄 How to respond to a request
+## How to respond to a request
 
 When using SpiffWorkflow, knowing how to respond to requests is essential to the process. While each request may have unique requirements, the basic steps for responding are similar. The following steps will guide you through the process of responding to requests.
 
@@ -135,7 +135,7 @@ That's it! With these simple steps, you can efficiently review tasks in SpiffWor
 
 ---
 
-## 📑 How to view process steps for the process you just started
+## How to view process steps for the process you just started
 
 After starting a process, it's important to stay informed about its progress. Even though you'll receive notifications when your attention is required, it's natural to be curious about what's happening in the background. Therefore, monitoring the process steps regularly is a great way to ensure everything is moving smoothly.
 
@@ -165,7 +165,7 @@ By following these steps, you can easily view the steps of the process you initi
 
 ---
 
-## 🏷️How to view the Process-defined metadata for a process instance
+## How to view the Process-defined metadata for a process instance
 
 The Process-defined **metadata can provide valuable insights into its history, current status, and other important details that is specifically created and used within a particular process. With the SpiffWorkflow platform, users can easily view the metadata for a process instance.
 
@@ -187,7 +187,7 @@ By following these simple steps, you can easily view the metadata for a process 
 
 ---
 
-## 📂 How to view Process Model files
+## How to view Process Model files
 
 The process model files provide great transparency into our internal business rules and processes.  You can dig deep into the decision-making process and really understand how the process and organization operate. With these steps, you'll be able to access process models easily and efficiently.
 
@@ -201,19 +201,31 @@ Once you have successfully signed in, navigate to the process section. This sect
 
 You can either search for a process model using the search bar or navigate through displayed processes to find the process model.
 
-![Untitled](images/Untitled_17.png)
+![Untitled](images/View_Forms1.png)
 
 ### Step 3: Access the process model files
 
 Once you have clicked on the process you want to view, a list of the model files that are associated with the process will appear. 
 
-![Untitled](images/Untitled_18.png)
+![Untitled](images/View_Forms3.png)
+
 
 By following these simple steps, you can easily view process model files in SpiffWorkflow.
 
+If you want to check or create information on specifc files or your process instances, we have an about section.
+
+![Untitled](images/View_Forms2.png)
+
+If you are creating a model add information in about section. We have an integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform. Here is How you can Use:
+- **Create a README File**: Generate a new README.md file within your project.
+- **Document with Markdown**: Utilize Markdown syntax to add structured and detailed information about your BPMN model.
+
+Furthermore, to check the process instances you started, you can also switch to "My process instance" tab.
+![View forms](images/View_Forms4.png)
+
 ---
 
-## 🔍 How to view and filter process instances
+## How to view and filter process instances
 
 As you work on various process instances in SpiffWorkflow, you may want to view and filter some of them. This can help you track the status of various instances and manage them more efficiently. 
 
@@ -325,7 +337,7 @@ Events provide a detailed log of everything that happens in a process. They reco
 
 The events tab provides a detailed log of all the tasks and their execution times. It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
 
-
+---
 ## How to check messages
 Messages in BPMN allow processes to communicate with each other. This communication can take various forms:
 
@@ -373,3 +385,17 @@ Upon executing the waiter's process, it sends a message to the chef and waits. T
 
 
 For a more visual understanding and a step-by-step walkthrough, you can watch Dan Funk's full tutorial [here](https://www.youtube.com/watch?v=Uk7__onZiVk).
+
+
+---
+## How to share process instance with Short Links
+The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs. This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
+
+To copy the short link:
+
+- **Access the Process Instance**: Open the process instance that you wish to share.
+- **Find the Short Link Icon**: Look for the link icon near the process instance heading and click on the link icon to copy the short link to your clipboard automatically. please refer to the screenshot provided.
+
+![Short Link](images/Short_link.png)
+
+Now, you can paste the short link into your desired communication medium to share it with others.
