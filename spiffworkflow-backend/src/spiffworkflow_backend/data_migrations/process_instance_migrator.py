@@ -29,6 +29,8 @@ def benchmark_log_func(func: Any) -> Any:
 
 
 class ProcessInstanceMigrator:
+    CURRENT_VERSION = "3"
+
     @classmethod
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         """This updates the serialization of an instance to the current expected state.
@@ -41,6 +43,7 @@ class ProcessInstanceMigrator:
 
         # if the serializer version is None, then we are dealing with a new process instance,
         # so we do not need to run the migrator
+        # it will be set the newest serializer version momentarily.
         if process_instance.spiff_serializer_version is None:
             return
 

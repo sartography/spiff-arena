@@ -29,8 +29,24 @@ if [[ "$process_model_dir" == "acceptance" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
 elif [[ "$process_model_dir" == "localopenid" ]]; then
-  export SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL="http://localhost:$port/openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="http://localhost:$port/openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
+else
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="keycloak_internal"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="I am a Core Contributor"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="http://localhost:7002/realms/spiffworkflow"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
+
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__identifier="openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__label="I am a vendor"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__uri="http://localhost:$port/openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_id="spiffworkflow-backend"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 fi
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then

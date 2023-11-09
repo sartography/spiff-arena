@@ -12,6 +12,8 @@ export const getBasicHeaders = (): Record<string, string> => {
   if (UserService.isLoggedIn()) {
     return {
       Authorization: `Bearer ${UserService.getAccessToken()}`,
+      'Authentication-Identifier':
+        UserService.getAuthenticationIdentifier() || '',
     };
   }
   return {};
@@ -77,7 +79,6 @@ backendCallProps) => {
   fetch(`${BACKEND_BASE_URL}${updatedPath}`, httpArgs)
     .then((response) => {
       if (response.status === 401) {
-        UserService.doLogin();
         throw new UnauthenticatedError('You must be authenticated to do this.');
       } else if (response.status === 403) {
         is403 = true;

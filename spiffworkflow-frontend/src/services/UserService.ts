@@ -1,6 +1,7 @@
 import jwt from 'jwt-decode';
 import cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
+import { AuthenticationOption } from '../interfaces';
 
 // NOTE: this currently stores the jwt token in local storage
 // which is considered insecure. Server set cookies seem to be considered
@@ -43,14 +44,22 @@ const checkPathForTaskShowParams = () => {
   return null;
 };
 
-const doLogin = () => {
+const doLogin = (
+  authenticationOption?: AuthenticationOption,
+  redirectUrl?: string | null
+) => {
   const taskShowParams = checkPathForTaskShowParams();
-  const loginParams = [`redirect_url=${getCurrentLocation()}`];
+  const loginParams = [`redirect_url=${redirectUrl || getCurrentLocation()}`];
   if (taskShowParams) {
     loginParams.push(
       `process_instance_id=${taskShowParams.process_instance_id}`
     );
     loginParams.push(`task_guid=${taskShowParams.task_guid}`);
+  }
+  if (authenticationOption) {
+    loginParams.push(
+      `authentication_identifier=${authenticationOption.identifier}`
+    );
   }
   const url = `${BACKEND_BASE_URL}/login?${loginParams.join('&')}`;
   window.location.href = url;
@@ -60,12 +69,22 @@ const doLogin = () => {
 const getIdToken = () => {
   return getCookie('id_token');
 };
+const getAccessToken = () => {
+  return getCookie('access_token');
+};
+const getAuthenticationIdentifier = () => {
+  return getCookie('authentication_identifier');
+};
+
+const isLoggedIn = () => {
+  return !!getAccessToken();
+};
 
 const doLogout = () => {
   const idToken = getIdToken();
 
   const frontendBaseUrl = window.location.origin;
-  let logoutRedirectUrl = `${BACKEND_BASE_URL}/logout?redirect_url=${frontendBaseUrl}&id_token=${idToken}`;
+  let logoutRedirectUrl = `${BACKEND_BASE_URL}/logout?redirect_url=${frontendBaseUrl}&id_token=${idToken}&authentication_identifier=${getAuthenticationIdentifier()}`;
 
   // edge case. if the user is already logged out, just take them somewhere that will force them to sign in.
   if (idToken === null) {
@@ -73,13 +92,6 @@ const doLogout = () => {
   }
 
   window.location.href = logoutRedirectUrl;
-};
-
-const getAccessToken = () => {
-  return getCookie('access_token');
-};
-const isLoggedIn = () => {
-  return !!getAccessToken();
 };
 
 const getUserEmail = () => {
@@ -153,6 +165,8 @@ const UserService = {
   doLogin,
   doLogout,
   getAccessToken,
+  getAuthenticationIdentifier,
+  getCurrentLocation,
   getPreferredUsername,
   getUserEmail,
   isLoggedIn,

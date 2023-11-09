@@ -489,7 +489,7 @@ class TestTasksController(BaseTest):
         # log in a guest user to complete the tasks
         redirect_url = "/test-redirect-dne"
         response = client.get(
-            f"/v1.0/login?process_instance_id={process_instance_id}&task_guid={task_guid}&redirect_url={redirect_url}",
+            f"/v1.0/login?process_instance_id={process_instance_id}&task_guid={task_guid}&redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
         )
         assert response.status_code == 302
         assert response.location == redirect_url
