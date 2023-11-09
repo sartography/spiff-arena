@@ -2,7 +2,6 @@ import { Content } from '@carbon/react';
 import { Routes, Route } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import NavigationBar from './components/NavigationBar';
 
 import ScrollToTop from './components/ScrollToTop';
 import EditorRoutes from './routes/EditorRoutes';
@@ -18,7 +17,8 @@ import HttpService from './services/HttpService';
 import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
 import BaseRoutes from './routes/BaseRoutes';
 import BackendIsDown from './routes/BackendIsDown';
-import UserService from './services/UserService';
+import Login from './routes/Login';
+import NavigationBar from './components/NavigationBar';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
@@ -72,10 +72,10 @@ export default function ContainerForExtensions() {
     };
 
     const getExtensions = () => {
+      setBackendIsUp(true);
       if (!permissionsLoaded) {
         return;
       }
-      setBackendIsUp(true);
       if (ability.can('GET', targetUris.extensionListPath)) {
         HttpService.makeCallToBackend({
           path: targetUris.extensionListPath,
@@ -97,7 +97,6 @@ export default function ContainerForExtensions() {
   ]);
 
   const routeComponents = () => {
-    UserService.loginIfNeeded();
     return (
       <Routes>
         <Route
@@ -106,6 +105,7 @@ export default function ContainerForExtensions() {
         />
         <Route path="/editor/*" element={<EditorRoutes />} />
         <Route path="/extensions/:page_identifier" element={<Extension />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     );
   };
@@ -126,7 +126,7 @@ export default function ContainerForExtensions() {
 
   return (
     <>
-      <NavigationBar extensionUxElements={extensionUxElements} />
+      <NavigationBar extensionUxElements={extensionUxElements} />;
       <Content className={contentClassName}>
         <ScrollToTop />
         <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
