@@ -350,7 +350,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
 
         elif "iss" in decoded_token.keys():
             user_info = None
-            authentication_identifier = request.cookies["authentication_identifier"]
+            authentication_identifier = _get_authentication_identifier_from_request()
             try:
                 if AuthenticationService.validate_id_or_access_token(
                     token, authentication_identifier=authentication_identifier
@@ -460,3 +460,12 @@ def _parse_id_token(token: str) -> Any:
     padded = payload + "=" * (4 - len(payload) % 4)
     decoded = base64.b64decode(padded)
     return json.loads(decoded)
+
+
+def _get_authentication_identifier_from_request() -> str:
+    if "authentication_identifier" in request.cookies:
+        return request.cookies["authentication_identifier"]
+    if "Authentication-Identifier" in request.headers:
+        authentication_identifier: str = request.headers["Authentication-Identifier"]
+        return authentication_identifier
+    return "default"
