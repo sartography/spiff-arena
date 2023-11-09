@@ -20,7 +20,8 @@ describe('process-groups', () => {
     cy.contains(`Process Group: ${groupDisplayName}`);
 
     cy.getBySel('edit-process-group-button').click();
-    cy.get('input[name=display_name]').clear().type(newGroupDisplayName);
+    cy.get('input[name=display_name]').clear();
+    cy.get('input[name=display_name]').type(newGroupDisplayName);
     cy.contains('Submit').click();
     cy.contains(`Process Group: ${newGroupDisplayName}`);
 

@@ -97,8 +97,8 @@ else:
     url_config = config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL")
     if url_config is not None:
         SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = url_config
-        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID")
-        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY")
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q")
     else:
         SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = [
             {
