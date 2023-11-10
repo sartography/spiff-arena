@@ -13,7 +13,7 @@ export const getBasicHeaders = (): Record<string, string> => {
     return {
       Authorization: `Bearer ${UserService.getAccessToken()}`,
       'SpiffWorkflow-Authentication-Identifier':
-        UserService.getAuthenticationIdentifier() || '',
+        UserService.getAuthenticationIdentifier() || 'default',
     };
   }
   return {};
