@@ -40,43 +40,26 @@ permissions:
   # Admins have access to everything.
   admin:
     groups: [admin]
-    allowed_permissions: [create, read, update, delete]
+    allowed_permissions: [all]
     uri: /*
 
   # Everybody can participate in tasks assigned to them.
-  tasks-crud:
+  # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/permission_url.html
+  basic:
     groups: [everybody]
-    allowed_permissions: [create, read, update, delete]
-    uri: /tasks/*
-
-  # Everybody can start all intstances
-  create-test-instances:
-    groups: [ everybody ]
-    allowed_permissions: [ create ]
-    uri: /process-instances/*
+    allowed_permissions: [all]
+    uri: BASIC
 
   # Everyone can see everything (all groups, and processes are visible)
   read-all-process-groups:
     groups: [ everybody ]
     allowed_permissions: [ read ]
-    uri: /process-groups/*
+    uri: PG:ALL
   read-all-process-models:
     groups: [ everybody ]
     allowed_permissions: [ read ]
-    uri: /process-models/*
-  read-all-process-instance:
+    uri: PM:ALL
+  run-all-process-models:
     groups: [ everybody ]
-    allowed_permissions: [ read ]
-    uri: /process-instances/*
-  read-process-instance-reports:
-    groups: [ everybody ]
-    allowed_permissions: [ read ]
-    uri: /process-instances/reports/*
-  processes-read:
-    groups: [ everybody ]
-    allowed_permissions: [ read ]
-    uri: /processes
-  groups-everybody:
-    groups: [everybody]
-    allowed_permissions: [create, read]
-    uri: /v1.0/user-groups/for-current-user
+    allowed_permissions: [ start ]
+    uri: PM:ALL

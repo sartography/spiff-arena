@@ -75,7 +75,7 @@ describe('process-models', () => {
 
     // add new bpmn file
     cy.getBySel('process-model-add-file').click();
-    cy.contains('New BPMN File').click();
+    cy.getBySel('process-model-add-file').contains('New BPMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=StartEvent_1]').click();
     cy.contains('General').click();
@@ -94,7 +94,7 @@ describe('process-models', () => {
 
     // add new dmn file
     cy.getBySel('process-model-add-file').click();
-    cy.contains('New DMN File').click();
+    cy.getBySel('process-model-add-file').contains('New DMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=decision_1]').click();
     cy.contains('General').click();
@@ -112,7 +112,7 @@ describe('process-models', () => {
 
     // add new json file
     cy.getBySel('process-model-add-file').click();
-    cy.contains('New JSON File').click();
+    cy.getBySel('process-model-add-file').contains('New JSON File').click();
     cy.contains(/^Process Model File$/);
     // Some reason, cypress evals json strings so we have to escape it it with '{{}'
     cy.get('.view-line').type('{{} "test_key": "test_value" }');

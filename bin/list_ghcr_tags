@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# HELP: list github container registry tags
+
+image="${1:-}"
+tag_prefix="${2:-}"
+if [[ -z "$image" ]]; then
+  image="spiffworkflow-backend"
+fi
+
+results=$(curl --silent "https://ghcr.io/token?service=ghcr.io&scope=repository:sartography/${image}:pull")
+token=$(jq -r '.token' <<<"$results" 2>/dev/null || echo '')
+if [[ -z "$token" ]]; then
+  >&2 echo "ERROR: Could not get token. Initial results from github were: ${results}"
+  exit 1
+fi
+
+if is_mac; then
+  token_base64=$(echo -n "$token" | base64)
+else
+  token_base64=$(echo -n "$token" | base64 -w 0)
+fi
+
+tag_results=$(curl --silent -H "Authorization: Bearer ${token_base64}" "https://ghcr.io/v2/sartography/${image}/tags/list?n=1000")
+tags=$(jq -r '.tags | sort_by(.)' <<<"$tag_results" 2>/dev/null || echo '')
+if [[ -z "$tags" ]]; then
+  >&2 echo "ERROR: Could not get tags for image '${image}'. Initial results from github were: ${tag_results}"
+  exit 1
+fi
+
+if [[ -n "$tag_prefix" ]]; then
+  jq "map(select(. | startswith(\"${tag_prefix}\")))" <<<"$tags"
+else
+  jq '.' <<<"$tags"
+fi

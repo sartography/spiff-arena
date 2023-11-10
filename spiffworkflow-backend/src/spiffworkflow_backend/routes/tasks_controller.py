@@ -673,7 +673,10 @@ def _dequeued_interstitial_stream(
                 yield from _interstitial_stream(process_instance, execute_tasks=False, is_locked=True)
         else:
             # attempt to run the migrator even for a readonly operation if the process instance is not newest
-            if process_instance.spiff_serializer_version < ProcessInstanceMigrator.CURRENT_VERSION:
+            if (
+                process_instance.spiff_serializer_version is not None
+                and process_instance.spiff_serializer_version < ProcessInstanceMigrator.CURRENT_VERSION
+            ):
                 try:
                     with ProcessInstanceQueueService.dequeued(process_instance):
                         ProcessInstanceMigrator.run(process_instance)

@@ -17,54 +17,56 @@ import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import DateAndTimeService from '../services/DateAndTimeService';
 
-const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
-
 type OwnProps = {
   apiPath: string;
-  tableTitle?: string;
-  tableDescription?: string;
+
   additionalParams?: string;
-  paginationQueryParamPrefix?: string;
-  paginationClassName?: string;
   autoReload?: boolean;
-  showStartedBy?: boolean;
-  showWaitingOn?: boolean;
-  textToShowIfEmpty?: string;
+  canCompleteAllTasks?: boolean;
+  defaultPerPage?: number;
+  hideIfNoTasks?: boolean;
+  paginationClassName?: string;
+  paginationQueryParamPrefix?: string;
   shouldPaginateTable?: boolean;
-  showProcessId?: boolean;
-  showProcessModelIdentifier?: boolean;
-  showTableDescriptionAsTooltip?: boolean;
+  showActionsColumn?: boolean;
+  showCompletedBy?: boolean;
   showDateStarted?: boolean;
   showLastUpdated?: boolean;
-  hideIfNoTasks?: boolean;
-  canCompleteAllTasks?: boolean;
-  showActionsColumn?: boolean;
+  showProcessId?: boolean;
+  showProcessModelIdentifier?: boolean;
+  showStartedBy?: boolean;
+  showTableDescriptionAsTooltip?: boolean;
   showViewFormDataButton?: boolean;
-  showCompletedBy?: boolean;
+  showWaitingOn?: boolean;
+  tableDescription?: string;
+  tableTitle?: string;
+  textToShowIfEmpty?: string;
 };
 
 export default function TaskListTable({
   apiPath,
-  tableTitle,
-  tableDescription,
+
   additionalParams,
-  paginationQueryParamPrefix,
-  paginationClassName,
-  textToShowIfEmpty,
   autoReload = false,
-  showStartedBy = true,
-  showWaitingOn = true,
+  canCompleteAllTasks = false,
+  defaultPerPage = 5,
+  hideIfNoTasks = false,
+  paginationClassName,
+  paginationQueryParamPrefix,
   shouldPaginateTable = true,
-  showProcessId = true,
-  showProcessModelIdentifier = true,
-  showTableDescriptionAsTooltip = false,
+  showActionsColumn = true,
+  showCompletedBy = false,
   showDateStarted = true,
   showLastUpdated = true,
-  hideIfNoTasks = false,
-  canCompleteAllTasks = false,
-  showActionsColumn = true,
+  showProcessId = true,
+  showProcessModelIdentifier = true,
+  showStartedBy = true,
+  showTableDescriptionAsTooltip = false,
   showViewFormDataButton = false,
-  showCompletedBy = false,
+  showWaitingOn = true,
+  tableDescription,
+  tableTitle,
+  textToShowIfEmpty,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
@@ -80,7 +82,7 @@ export default function TaskListTable({
     const getTasks = () => {
       const { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
-        PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+        defaultPerPage,
         undefined,
         paginationQueryParamPrefix
       );
@@ -107,11 +109,12 @@ export default function TaskListTable({
     }
     return undefined;
   }, [
-    searchParams,
     additionalParams,
     apiPath,
-    paginationQueryParamPrefix,
     autoReload,
+    defaultPerPage,
+    paginationQueryParamPrefix,
+    searchParams,
   ]);
 
   const getWaitingForTableCellComponent = (
@@ -405,7 +408,7 @@ export default function TaskListTable({
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      defaultPerPage,
       undefined,
       paginationQueryParamPrefix
     );
@@ -417,7 +420,7 @@ export default function TaskListTable({
         <PaginationForTable
           page={page}
           perPage={perPage}
-          perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
+          perPageOptions={[2, defaultPerPage, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}

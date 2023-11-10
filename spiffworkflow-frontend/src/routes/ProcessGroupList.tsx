@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   // @ts-ignore
@@ -15,7 +15,6 @@ import ProcessModelSearch from '../components/ProcessModelSearch';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
 
 export default function ProcessGroupList() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [processModelAvailableItems, setProcessModelAvailableItems] = useState(
@@ -43,9 +42,12 @@ export default function ProcessGroupList() {
       successCallback: processResultForProcessModels,
     });
     setPageTitle(['Process Groups']);
-  }, [searchParams]);
+  }, []);
 
   const processModelSearchArea = () => {
+    if (processModelAvailableItems.length < 1) {
+      return null;
+    }
     const processModelSearchOnChange = (selection: CarbonComboBoxSelection) => {
       const processModel = selection.selectedItem;
       navigate(
@@ -77,7 +79,7 @@ export default function ProcessGroupList() {
         <br />
         {processModelSearchArea()}
         <br />
-        <ProcessGroupListTiles />
+        <ProcessGroupListTiles showNoItemsDisplayText />
       </>
     );
   }

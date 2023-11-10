@@ -57,6 +57,9 @@ jobs:
       - name: Get current date
         id: date
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
+      - name: Get short commit sha
+        id: commit_sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4.4.0
@@ -64,10 +67,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.description=Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
-            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}
+            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
             type=ref,event=branch,suffix=-latest
-            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
+            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
 
       - name: Write app version info
         working-directory: spiffworkflow-frontend
@@ -105,6 +108,9 @@ jobs:
       - name: Get current date
         id: date
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
+      - name: Get short commit sha
+        id: commit_sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4.4.0
@@ -112,10 +118,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.description=Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
-            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}
+            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
             type=ref,event=branch,suffix=-latest
-            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
+            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
 
       - name: Write app version info
         working-directory: spiffworkflow-backend
@@ -154,6 +160,9 @@ jobs:
       - name: Get current date
         id: date
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
+      - name: Get short commit sha
+        id: commit_sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4.4.0
@@ -161,10 +170,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.description=spiffworkflow-connector-proxy-demo
-            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}
+            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
             type=ref,event=branch,suffix=-latest
-            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
+            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
 
       - name: Build and push the connector proxy
         uses: docker/build-push-action@v4.0.0
