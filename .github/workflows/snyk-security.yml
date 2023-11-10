@@ -117,12 +117,12 @@ jobs:
         # Use || true to not fail the pipeline
       - name: Snyk Code test
         run: snyk code test --sarif > snyk-code.sarif || true
-        env:
-          DEBUG: "*snyk*"
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
         run: snyk monitor --all-projects
+        env:
+          DEBUG: "*snyk*"
 
         # Build the docker image for testing
       - name: Build a Docker image
