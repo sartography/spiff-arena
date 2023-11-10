@@ -127,7 +127,7 @@ export default function ReactDiagramEditor({
 
   const alreadyImportedXmlRef = useRef(false);
 
-  const { targetUris } = useUriListForPermissions();
+  const {targetUris} = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {};
 
   if (diagramType !== 'readonly') {
@@ -140,10 +140,54 @@ export default function ReactDiagramEditor({
     ];
   }
 
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const {ability} = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
 
   const [showingReferences, setShowingReferences] = useState(false);
+
+  const zoom = (amount: number) => {
+    if (diagramModelerState) {
+      let modeler = diagramModelerState as any;
+      if (diagramType === 'dmn') {
+        modeler = (diagramModelerState as any).getActiveViewer();
+      }
+      try {
+        if (amount === 0) {
+          const canvas = (modeler as any).get('canvas');
+          canvas.zoom(FitViewport, 'auto');
+        } else {
+          modeler.get('zoomScroll').stepZoom(amount);
+        }
+      } catch (e) {
+        console.log(
+          'zoom failed, certain modes in DMN do not support zooming.',
+          e
+        );
+      }
+    }
+  };
+
+  /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
+  // @ts-ignore
+  const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
+    // @ts-ignore
+    diagramModelerToUse.on('import.parse.complete', event => { // eslint-disable-line
+      // @ts-ignore
+      const refs = event.references.filter(r => r.property === 'bpmn:loopDataInputRef' || r.property === 'bpmn:loopDataOutputRef');
+      const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor( // eslint-disable-line no-underscore-dangle
+        'bpmn:ItemAwareElement'
+      );
+      refs.forEach((ref: any) => {
+        const props = {
+          id: ref.id,
+          name: ref.id ? typeof ref.name === 'undefined' : ref.name,
+        };
+        const elem = diagramModelerToUse._moddle.create(desc, props); // eslint-disable-line no-underscore-dangle
+        elem.$parent = ref.element;
+        ref.element.set(ref.property, elem);
+      });
+    });
+  };
 
   useEffect(() => {
     if (diagramModelerState) {
@@ -473,38 +517,9 @@ export default function ReactDiagramEditor({
       if (alreadyImportedXmlRef.current) {
         return;
       }
-      if (diagramType === 'bpmn') {
-        diagramModelerToUse._moddle // eslint-disable-line no-underscore-dangle
-          .fromXML(diagramXMLToDisplay)
-          .then((result: any) => {
-            const refs = result.references.filter(
-              (r: any) =>
-                r.property === 'bpmn:loopDataInputRef' ||
-                r.property === 'bpmn:loopDataOutputRef'
-            );
-            const desc =
-              diagramModelerToUse._moddle.registry.getEffectiveDescriptor( // eslint-disable-line
-                'bpmn:ItemAwareElement'
-              );
-            refs.forEach((ref: any) => {
-              const props = {
-                id: ref.id,
-                name: ref.id ? typeof ref.name === 'undefined' : ref.name,
-              };
-              const elem = diagramModelerToUse._moddle.create(desc, props); // eslint-disable-line no-underscore-dangle
-              elem.$parent = ref.element;
-              ref.element.set(ref.property, elem);
-            });
-            diagramModelerToUse.importDefinitions(result.rootElement);
-            console.log(
-              'Zooming the viewport for bpmn at the end of displayDiagram'
-            );
-            diagramModelerToUse.get('canvas').zoom(FitViewport, 'auto');
-          });
-      } else {
-        diagramModelerToUse.importXML(diagramXMLToDisplay);
-      }
-
+      diagramModelerToUse.importXML(diagramXMLToDisplay);
+      zoom(0);
+      fixUnresolvedReferences(diagramModelerToUse);
       alreadyImportedXmlRef.current = true;
     }
 
@@ -725,28 +740,6 @@ export default function ReactDiagramEditor({
       );
     }
     return null;
-  };
-
-  const zoom = (amount: number) => {
-    if (diagramModelerState) {
-      let modeler = diagramModelerState as any;
-      if (diagramType === 'dmn') {
-        modeler = (diagramModelerState as any).getActiveViewer();
-      }
-      try {
-        if (amount === 0) {
-          const canvas = (modeler as any).get('canvas');
-          canvas.zoom(FitViewport, 'auto');
-        } else {
-          modeler.get('zoomScroll').stepZoom(amount);
-        }
-      } catch (e) {
-        console.log(
-          'zoom failed, certain modes in DMN do not support zooming.',
-          e
-        );
-      }
-    }
   };
 
   const diagramControlButtons = () => {
