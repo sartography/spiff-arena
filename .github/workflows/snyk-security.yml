@@ -31,60 +31,60 @@ permissions:
   contents: read
 
 jobs:
-  # snyk-backend:
-  #   permissions:
-  #     contents: read # for actions/checkout to fetch code
-  #     security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-  #     actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: spiffworkflow-backend
-  #   env:
-  #     # This is where you will need to introduce the Snyk API token created with your Snyk account
-  #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Set up Snyk CLI to check for security issues
-  #       # Snyk can be used to break the build when it detects security issues.
-  #       # In this case we want to upload the SAST issues to GitHub Code Scanning
-  #       uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
-  #       env:
-  #         # This is where you will need to introduce the Snyk API token created with your Snyk account
-  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  #
-  #     - name: Upgrade pip
-  #       run: |
-  #         pip install --constraint=../.github/workflows/constraints.txt pip
-  #         pip --version
-  #     - name: Install Poetry
-  #       run: |
-  #         pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
-  #         poetry --version
-  #     - name: Poetry Install
-  #       run: poetry install
-  #
-  #       # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
-  #       # Use || true to not fail the pipeline
-  #     - name: Snyk Code test
-  #       run: snyk code test --sarif > snyk-code.sarif || true
-  #
-  #       # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-  #     - name: Snyk Open Source monitor
-  #       run: snyk monitor --all-projects
-  #
-  #       # Build the docker image for testing
-  #     - name: Build a Docker image
-  #       run: docker build -t spiffworkflow-backend/snyk-test .
-  #       # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
-  #     - name: Snyk Container monitor
-  #       run: snyk container monitor spiffworkflow-backend/snyk-test --file=Dockerfile
-  #
-  #       # Push the Snyk Code results into GitHub Code Scanning tab
-  #     - name: Upload result to GitHub Code Scanning
-  #       uses: github/codeql-action/upload-sarif@v2
-  #       with:
-  #         sarif_file: spiffworkflow-backend/snyk-code.sarif
+  snyk-backend:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spiffworkflow-backend
+    env:
+      # This is where you will need to introduce the Snyk API token created with your Snyk account
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Snyk CLI to check for security issues
+        # Snyk can be used to break the build when it detects security issues.
+        # In this case we want to upload the SAST issues to GitHub Code Scanning
+        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+        env:
+          # This is where you will need to introduce the Snyk API token created with your Snyk account
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=../.github/workflows/constraints.txt pip
+          pip --version
+      - name: Install Poetry
+        run: |
+          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
+          poetry --version
+      - name: Poetry Install
+        run: poetry install
+
+        # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
+        # Use || true to not fail the pipeline
+      - name: Snyk Code test
+        run: snyk code test --sarif > snyk-code.sarif || true
+
+        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
+      - name: Snyk Open Source monitor
+        run: snyk monitor --all-projects
+
+        # Build the docker image for testing
+      - name: Build a Docker image
+        run: docker build -t spiffworkflow-backend/snyk-test .
+        # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
+      - name: Snyk Container monitor
+        run: snyk container monitor spiffworkflow-backend/snyk-test --file=Dockerfile
+
+        # Push the Snyk Code results into GitHub Code Scanning tab
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: spiffworkflow-backend/snyk-code.sarif
   snyk-frontend:
     permissions:
       contents: read # for actions/checkout to fetch code
