@@ -19,7 +19,7 @@ def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Ge
 class TestCreateUniqueKKVTopLevelKey(BaseTest):
     """Infer from class name."""
 
-    # skipped due to sqlite handling of rowid - https://www.sqlite.org/autoinc.html
+    # TODO: skipped due to sqlite handling of rowid - https://www.sqlite.org/autoinc.html
     # since the immediate use case does not require sqlite will defer the fix until needed
     def skip_test_creates_unique_top_level_keys(self, with_clean_data_store: None) -> None:
         prefix = "study_"
