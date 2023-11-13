@@ -20,6 +20,16 @@ groups:
 
 permissions:
   admin:
-    groups: [admin, group1, group2]
+    groups: [admin, group1]
     allowed_permissions: [create, read, update, delete]
     uri: /*
+
+  basic:
+    groups: [group2]
+    allowed_permissions: [all]
+    uri: BASIC
+
+  basic-read:
+    groups: [group2]
+    allowed_permissions: [read]
+    uri: PG:ALL

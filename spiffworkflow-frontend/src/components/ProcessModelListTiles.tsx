@@ -19,6 +19,7 @@ type OwnProps = {
   checkPermissions?: boolean;
   onLoadFunction?: Function;
   showNoItemsDisplayText?: boolean;
+  userCanCreateProcessModels?: boolean;
 };
 
 export default function ProcessModelListTiles({
@@ -28,6 +29,7 @@ export default function ProcessModelListTiles({
   checkPermissions = true,
   onLoadFunction,
   showNoItemsDisplayText,
+  userCanCreateProcessModels,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
@@ -94,13 +96,19 @@ export default function ProcessModelListTiles({
           </Tile>
         );
       });
-    } else {
+    } else if (userCanCreateProcessModels) {
       displayText = (
         <p className="no-results-message">
           There are no process models to display. You can add one by clicking
           the &quot;Add a process model&quot; button. Process models will
           contain the bpmn diagrams and supporting files needed to create a
           runnable workflow.
+        </p>
+      );
+    } else {
+      displayText = (
+        <p className="no-results-message">
+          There are no process models to display
         </p>
       );
     }

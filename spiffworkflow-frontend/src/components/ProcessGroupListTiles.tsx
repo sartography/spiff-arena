@@ -20,6 +20,7 @@ type OwnProps = {
   processGroup?: ProcessGroup;
   headerElement?: ReactElement;
   showNoItemsDisplayText?: boolean;
+  userCanCreateProcessModels?: boolean;
 };
 
 export default function ProcessGroupListTiles({
@@ -27,6 +28,7 @@ export default function ProcessGroupListTiles({
   processGroup,
   headerElement,
   showNoItemsDisplayText,
+  userCanCreateProcessModels,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
 
@@ -84,12 +86,18 @@ export default function ProcessGroupListTiles({
           </ClickableTile>
         );
       });
-    } else {
+    } else if (userCanCreateProcessModels) {
       displayText = (
         <p className="no-results-message">
           There are no process groups to display. You can add one by clicking
           the &quot;Add a process group&quot; button. Process groups can contain
           additional process groups and / or process models.
+        </p>
+      );
+    } else {
+      displayText = (
+        <p className="no-results-message">
+          There are no process groups to display
         </p>
       );
     }

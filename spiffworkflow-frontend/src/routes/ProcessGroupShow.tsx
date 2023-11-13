@@ -34,7 +34,9 @@ export default function ProcessGroupShow() {
     [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelCreatePath]: ['POST'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   useEffect(() => {
     const processResult = (result: any) => {
@@ -63,7 +65,7 @@ export default function ProcessGroupShow() {
     }
   };
 
-  if (processGroup) {
+  if (processGroup && permissionsLoaded) {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
@@ -137,6 +139,10 @@ export default function ProcessGroupShow() {
             processGroup={processGroup}
             defaultProcessModels={processGroup.process_models}
             showNoItemsDisplayText={showNoItemsDisplayText}
+            userCanCreateProcessModels={ability.can(
+              'POST',
+              targetUris.processModelCreatePath
+            )}
           />
           <br />
           <br />
@@ -145,6 +151,10 @@ export default function ProcessGroupShow() {
             headerElement={<h2 className="clear-left">Process Groups</h2>}
             defaultProcessGroups={processGroup.process_groups}
             showNoItemsDisplayText={showNoItemsDisplayText}
+            userCanCreateProcessModels={ability.can(
+              'POST',
+              targetUris.processGroupListPath
+            )}
           />
         </ul>
       </>
