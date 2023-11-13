@@ -15,7 +15,7 @@ import {
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 } from 'dmn-js-properties-panel';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 // @ts-ignore
 import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
@@ -127,7 +127,7 @@ export default function ReactDiagramEditor({
 
   const alreadyImportedXmlRef = useRef(false);
 
-  const {targetUris} = useUriListForPermissions();
+  const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {};
 
   if (diagramType !== 'readonly') {
@@ -140,32 +140,35 @@ export default function ReactDiagramEditor({
     ];
   }
 
-  const {ability} = usePermissionFetcher(permissionRequestData);
+  const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
 
   const [showingReferences, setShowingReferences] = useState(false);
 
-  const zoom = (amount: number) => {
-    if (diagramModelerState) {
-      let modeler = diagramModelerState as any;
-      if (diagramType === 'dmn') {
-        modeler = (diagramModelerState as any).getActiveViewer();
-      }
-      try {
-        if (amount === 0) {
-          const canvas = (modeler as any).get('canvas');
-          canvas.zoom(FitViewport, 'auto');
-        } else {
-          modeler.get('zoomScroll').stepZoom(amount);
+  const zoom = useCallback(
+    (amount: number) => {
+      if (diagramModelerState) {
+        let modeler = diagramModelerState as any;
+        if (diagramType === 'dmn') {
+          modeler = (diagramModelerState as any).getActiveViewer();
         }
-      } catch (e) {
-        console.log(
-          'zoom failed, certain modes in DMN do not support zooming.',
-          e
-        );
+        try {
+          if (amount === 0) {
+            const canvas = (modeler as any).get('canvas');
+            canvas.zoom(FitViewport, 'auto');
+          } else {
+            modeler.get('zoomScroll').stepZoom(amount);
+          }
+        } catch (e) {
+          console.log(
+            'zoom failed, certain modes in DMN do not support zooming.',
+            e
+          );
+        }
       }
-    }
-  };
+    },
+    [diagramModelerState, diagramType]
+  );
 
   /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
   // @ts-ignore
@@ -173,8 +176,13 @@ export default function ReactDiagramEditor({
     // @ts-ignore
     diagramModelerToUse.on('import.parse.complete', event => { // eslint-disable-line
       // @ts-ignore
-      const refs = event.references.filter(r => r.property === 'bpmn:loopDataInputRef' || r.property === 'bpmn:loopDataOutputRef');
-      const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor( // eslint-disable-line no-underscore-dangle
+      const refs = event.references.filter(
+        (r: any) =>
+          r.property === 'bpmn:loopDataInputRef' ||
+          r.property === 'bpmn:loopDataOutputRef'
+      );
+      // eslint-disable-next-line no-underscore-dangle
+      const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
         'bpmn:ItemAwareElement'
       );
       refs.forEach((ref: any) => {
@@ -586,6 +594,7 @@ export default function ReactDiagramEditor({
     performingXmlUpdates,
     processModelId,
     url,
+    zoom,
   ]);
 
   function handleSave() {
