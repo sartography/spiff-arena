@@ -152,6 +152,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
                 tld.new_authentication_identifier = authentication_identifier
                 return redirect(redirect_url)
 
+        # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
         raise ApiError(
             error_code="invalid_login",
             message="Login failed. Please try again",
@@ -159,6 +160,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
         )
 
     else:
+        # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
         current_app.logger.error(f"id_token not found in payload from provider: {auth_token_object}")
         raise ApiError(
             error_code="invalid_token",
