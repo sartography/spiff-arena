@@ -152,6 +152,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
                 tld.new_authentication_identifier = authentication_identifier
                 return redirect(redirect_url)
 
+        # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
         raise ApiError(
             error_code="invalid_login",
             message="Login failed. Please try again",
@@ -159,6 +160,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
         )
 
     else:
+        # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
         current_app.logger.error(f"id_token not found in payload from provider: {auth_token_object}")
         raise ApiError(
             error_code="invalid_token",
@@ -208,8 +210,7 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
 def logout(id_token: str, authentication_identifier: str, redirect_url: str | None) -> Response:
     if redirect_url is None:
         redirect_url = ""
-    tld = current_app.config["THREAD_LOCAL_DATA"]
-    tld.user_has_logged_out = True
+    AuthenticationService.set_user_has_logged_out()
     return AuthenticationService().logout(
         redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
     )
@@ -296,8 +297,7 @@ def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool
             and user_model.service_id == "spiff_guest_service_id"
             and not AuthorizationService.request_allows_guest_access()
         ):
-            tld = current_app.config["THREAD_LOCAL_DATA"]
-            tld.user_has_logged_out = True
+            AuthenticationService.set_user_has_logged_out()
             return True
     return False
 
@@ -377,6 +377,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                             }
 
                 if user_info is None:
+                    AuthenticationService.set_user_has_logged_out()
                     raise ApiError(
                         error_code="invalid_token",
                         message="Your token is expired. Please Login",
@@ -384,6 +385,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                     ) from token_expired_error
 
             except Exception as e:
+                AuthenticationService.set_user_has_logged_out()
                 raise ApiError(
                     error_code="fail_get_user_info",
                     message="Cannot get user info from token",
@@ -396,6 +398,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                     .first()
                 )
                 if user_model is None:
+                    AuthenticationService.set_user_has_logged_out()
                     raise ApiError(
                         error_code="invalid_user",
                         message="Invalid user. Please log in.",
@@ -403,6 +406,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                     )
             # no user_info
             else:
+                AuthenticationService.set_user_has_logged_out()
                 raise ApiError(
                     error_code="no_user_info",
                     message="Cannot retrieve user info",
@@ -411,6 +415,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
 
         else:
             current_app.logger.debug("token_type not in decode_token in verify_token")
+            AuthenticationService.set_user_has_logged_out()
             raise ApiError(
                 error_code="invalid_token",
                 message="Invalid token. Please log in.",
