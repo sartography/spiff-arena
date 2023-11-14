@@ -647,8 +647,10 @@ class ProcessInstanceProcessor:
         bpmn_subprocess_id_to_guid_mappings: dict | None = None,
     ) -> None:
         json_data_hashes = set()
+        states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
         for task in tasks:
-            json_data_hashes.add(task.json_data_hash)
+            if task.state not in states_to_not_rehydrate_data:
+                json_data_hashes.add(task.json_data_hash)
         json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
         for json_data_record in json_data_records:
@@ -659,7 +661,10 @@ class ProcessInstanceProcessor:
                 bpmn_subprocess_guid = bpmn_subprocess_id_to_guid_mappings[task.bpmn_process_id]
                 tasks_dict = spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid]["tasks"]
             tasks_dict[task.guid] = task.properties_json
-            tasks_dict[task.guid]["data"] = json_data_mappings[task.json_data_hash]
+            task_data = {}
+            if task.state not in states_to_not_rehydrate_data:
+                task_data = json_data_mappings[task.json_data_hash]
+            tasks_dict[task.guid]["data"] = task_data
 
     @classmethod
     def _get_full_bpmn_process_dict(
