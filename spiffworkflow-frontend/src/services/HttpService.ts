@@ -75,6 +75,8 @@ backendCallProps) => {
   const updatedPath = path.replace(/^\/v1\.0/, '');
 
   let isSuccessful = true;
+  // this fancy 403 handling is like this because we want to get the response body.
+  // otherwise, we would just throw an exception.
   let is403 = false;
   fetch(`${BACKEND_BASE_URL}${updatedPath}`, httpArgs)
     .then((response) => {
@@ -120,6 +122,11 @@ backendCallProps) => {
         } else {
           console.error(error.message);
         }
+      } else if (
+        !UserService.isLoggedIn() &&
+        window.location.pathname !== '/login'
+      ) {
+        window.location.href = `/login?original_url=${UserService.getCurrentLocation()}`;
       }
     });
 };

@@ -230,6 +230,7 @@ class AuthenticationService:
             valid = False
 
         if valid and now > decoded_token["exp"]:
+            AuthenticationService.set_user_has_logged_out()
             raise TokenExpiredError("Your token is expired. Please Login")
         elif not valid:
             current_app.logger.error(
@@ -353,3 +354,8 @@ class AuthenticationService:
         tld.new_access_token = g.token
         tld.new_id_token = g.token
         tld.new_authentication_identifier = authentication_identifier
+
+    @classmethod
+    def set_user_has_logged_out(cls) -> None:
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.user_has_logged_out = True

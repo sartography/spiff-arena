@@ -1,12 +1,13 @@
 import { ArrowRight } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { Loading, Button, Grid, Column } from '@carbon/react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticationOption } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [authenticationOptions, setAuthenticationOptions] = useState<
     AuthenticationOption[] | null
@@ -17,6 +18,14 @@ export default function Login() {
       successCallback: setAuthenticationOptions,
     });
   }, []);
+
+  const getOriginalUrl = () => {
+    const originalUrl = searchParams.get('original_url');
+    if (originalUrl === '/login') {
+      return '/';
+    }
+    return originalUrl;
+  };
 
   const authenticationOptionButtons = () => {
     if (!authenticationOptions) {
@@ -30,9 +39,7 @@ export default function Login() {
           size="lg"
           className="login-button"
           renderIcon={ArrowRight}
-          onClick={() =>
-            UserService.doLogin(option, searchParams.get('original_url'))
-          }
+          onClick={() => UserService.doLogin(option, getOriginalUrl())}
         >
           {option.label}
         </Button>
@@ -46,10 +53,7 @@ export default function Login() {
       return;
     }
     if (authenticationOptions.length === 1) {
-      UserService.doLogin(
-        authenticationOptions[0],
-        searchParams.get('original_url')
-      );
+      UserService.doLogin(authenticationOptions[0], getOriginalUrl());
     }
   };
 
@@ -88,6 +92,11 @@ export default function Login() {
       </div>
     );
   };
+
+  if (UserService.isLoggedIn()) {
+    navigate('/');
+    return null;
+  }
 
   if (authenticationOptions === null || authenticationOptions.length < 2) {
     doLoginIfAppropriate();
