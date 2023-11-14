@@ -176,6 +176,7 @@ export default function ReactDiagramEditor({
     // @ts-ignore
     diagramModelerToUse.on('import.parse.complete', event => { // eslint-disable-line
       // @ts-ignore
+      if (!event.references) return;
       const refs = event.references.filter(
         (r: any) =>
           r.property === 'bpmn:loopDataInputRef' ||
@@ -527,7 +528,9 @@ export default function ReactDiagramEditor({
       }
       diagramModelerToUse.importXML(diagramXMLToDisplay);
       zoom(0);
-      fixUnresolvedReferences(diagramModelerToUse);
+      if (diagramType !== 'dmn') {
+        fixUnresolvedReferences(diagramModelerToUse);
+      }
       alreadyImportedXmlRef.current = true;
     }
 
