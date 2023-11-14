@@ -239,13 +239,13 @@ Once you have clicked on the process you want to view, a list of the model files
 
 By following these simple steps, you can easily view process model files in SpiffWorkflow.
 
-If you want to check or create information on specifc files or your process instances, we have an about section.
+If you want to view or create information on specific process models, we allow you to create an about section.
 
 ![Untitled](images/View_Forms2.png)
 
-If you are creating a model add information in about section. We have an integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform. Here is How you can Use:
-- **Create a README File**: Generate a new README.md file within your project.
-- **Document with Markdown**: Utilize Markdown syntax to add structured and detailed information about your BPMN model.
+If you are creating a model, you can add information in the about section.
+We have integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform.
+In order to use this feature, simply create a **Create a README File** inside the process model called README.md and document the model so everyone can be on the same page.
 
 Furthermore, to check the process instances you started, you can also switch to "My process instance" tab.
 ![View forms](images/View_Forms4.png)
