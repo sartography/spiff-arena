@@ -1515,6 +1515,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 showWaitingOn={false}
                 canCompleteAllTasks={false}
                 showViewFormDataButton
+                defaultPerPage={20}
               />
             ) : null}
           </TabPanel>
@@ -1534,6 +1535,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 canCompleteAllTasks={false}
                 showCompletedBy
                 showActionsColumn={false}
+                defaultPerPage={20}
               />
             ) : null}
           </TabPanel>

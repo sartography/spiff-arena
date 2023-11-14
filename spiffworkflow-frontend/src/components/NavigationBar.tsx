@@ -16,7 +16,7 @@ import {
   HeaderGlobalAction,
   HeaderGlobalBar,
 } from '@carbon/react';
-import { Logout, Login } from '@carbon/icons-react';
+import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Can } from '@casl/react';
@@ -39,10 +39,6 @@ type OwnProps = {
 export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const handleLogout = () => {
     UserService.doLogout();
-  };
-
-  const handleLogin = () => {
-    UserService.doLogin();
   };
 
   const location = useLocation();
@@ -152,7 +148,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     );
   };
 
-  const loginAndLogoutAction = () => {
+  const logoutAction = () => {
     if (UserService.isLoggedIn()) {
       return (
         <>
@@ -168,15 +164,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         </>
       );
     }
-    return (
-      <HeaderGlobalAction
-        data-qa="login-button"
-        aria-label="Login"
-        onClick={handleLogin}
-      >
-        <Login />
-      </HeaderGlobalAction>
-    );
+    return null;
   };
 
   const configurationElement = () => {
@@ -290,7 +278,17 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   // App.jsx forces login (which redirects to keycloak) so we should never get here if we're not logged in.
   if (!UserService.isLoggedIn()) {
-    return null;
+    return (
+      <HeaderContainer
+        render={() => (
+          <Header aria-label="IBM Platform Name" className="cds--g100">
+            <HeaderName href="/" prefix="" data-qa="spiffworkflow-logo">
+              <img src={logo} className="app-logo" alt="logo" />
+            </HeaderName>
+          </Header>
+        )}
+      />
+    );
   }
 
   if (activeKey && ability && !UserService.onlyGuestTaskCompletion()) {
@@ -324,7 +322,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                 <HeaderSideNavItems>{headerMenuItems()}</HeaderSideNavItems>
               </SideNavItems>
             </SideNav>
-            <HeaderGlobalBar>{loginAndLogoutAction()}</HeaderGlobalBar>
+            <HeaderGlobalBar>{logoutAction()}</HeaderGlobalBar>
           </Header>
         )}
       />
