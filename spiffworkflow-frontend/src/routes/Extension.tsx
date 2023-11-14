@@ -367,10 +367,16 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     return (
       <div className="fixed-width-container">
         {displayErrors ? <ErrorDisplay /> : null}
-        <LoginHandler />
         {componentsToDisplay}
       </div>
     );
   }
-  return null;
+
+  // load the login handler if the components haven't loaded to ensure
+  // things aren't loading because the user is not logged in
+  return (
+    <div className="fixed-width-container">
+      <LoginHandler />
+    </div>
+  );
 }
