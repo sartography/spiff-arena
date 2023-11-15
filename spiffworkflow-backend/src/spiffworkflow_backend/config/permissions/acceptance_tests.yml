@@ -12,5 +12,5 @@ groups:
 permissions:
   admin:
     groups: [admin]
-    allowed_permissions: [create, read, update, delete]
+    actions: [create, read, update, delete]
     uri: /*

@@ -737,6 +737,10 @@ class AuthorizationService:
         if "actions" in permission_config:
             actions = permission_config["actions"]
         elif "allowed_permissions" in permission_config:
+            current_app.logger.warning(
+                "DEPRECATION WARNING: found use of 'allowed_permissions' in permissions yaml. Please use 'actions'"
+                " instead of 'allowed_permissions' in your config file."
+            )
             actions = permission_config["allowed_permissions"]
         return actions
 

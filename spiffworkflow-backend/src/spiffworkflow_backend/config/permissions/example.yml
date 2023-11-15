@@ -40,26 +40,26 @@ permissions:
   # Admins have access to everything.
   admin:
     groups: [admin]
-    allowed_permissions: [all]
+    actions: [all]
     uri: /*
 
   # Everybody can participate in tasks assigned to them.
   # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/permission_url.html
   basic:
     groups: [everybody]
-    allowed_permissions: [all]
+    actions: [all]
     uri: BASIC
 
   # Everyone can see everything (all groups, and processes are visible)
   read-all-process-groups:
     groups: [ everybody ]
-    allowed_permissions: [ read ]
+    actions: [ read ]
     uri: PG:ALL
   read-all-process-models:
     groups: [ everybody ]
-    allowed_permissions: [ read ]
+    actions: [ read ]
     uri: PM:ALL
   run-all-process-models:
     groups: [ everybody ]
-    allowed_permissions: [ start ]
+    actions: [ start ]
     uri: PM:ALL
