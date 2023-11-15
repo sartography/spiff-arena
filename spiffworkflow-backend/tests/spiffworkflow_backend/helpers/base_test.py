@@ -1,6 +1,5 @@
 import io
 import json
-from spiffworkflow_backend.models.process_instance_report import FilterValue
 import os
 import time
 from collections.abc import Generator
@@ -20,6 +19,7 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
@@ -511,8 +511,7 @@ class BaseTest:
                 {"Header": "Key two", "accessor": "key2", "filterable": False},
             ],
             "order_by": ["status"],
-            "filter_by": [first_filter],
-            # "filter_by": filters,
+            "filter_by": filters,
         }
         process_instance_report = ProcessInstanceReportModel.create_report(
             identifier=f"{process_instance.id}_sure",
@@ -528,9 +527,10 @@ class BaseTest:
             assert response.json["results"][0]["id"] == process_instance.id
         else:
             if len(response.json["results"]) == 1:
+                first_result = response.json["results"][0]
                 assert (
-                    response.json["results"][0]["id"] != process_instance.id
-                ), "expected not to find a specific process instance, but we found it"
+                    first_result["id"] != process_instance.id
+                ), f"expected not to find a specific process instance, but we found it: {first_result}"
             else:
                 assert len(response.json["results"]) == 0
         db.session.delete(process_instance_report)

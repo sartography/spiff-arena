@@ -639,7 +639,7 @@ class ProcessInstanceReportService:
                     isouter = False
                     if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
                         join_conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
-                    elif filter_for_column["operator"] == "not_equls":
+                    elif filter_for_column["operator"] == "not_equals":
                         join_conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "greater_than_or_equal_to":
                         join_conditions.append(instance_metadata_alias.value >= filter_for_column["field_value"])
