@@ -328,48 +328,53 @@ export default function ProcessModelShow() {
       return null;
     }
     let constructedTag;
-    const tags = processModel.files.map((processModelFile: ProcessFile) => {
-      const isPrimaryBpmnFile =
-        processModelFile.name === processModel.primary_file_name;
+    const tags = processModel.files
+      .map((processModelFile: ProcessFile) => {
+        if (!processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
+          return undefined;
+        }
+        const isPrimaryBpmnFile =
+          processModelFile.name === processModel.primary_file_name;
 
-      let actionsTableCell = null;
-      if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
-        actionsTableCell = (
-          <TableCell key={`${processModelFile.name}-cell`} align="right">
-            {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
-          </TableCell>
-        );
-      }
+        let actionsTableCell = null;
+        if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
+          actionsTableCell = (
+            <TableCell key={`${processModelFile.name}-cell`} align="right">
+              {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
+            </TableCell>
+          );
+        }
 
-      let primarySuffix = null;
-      if (isPrimaryBpmnFile) {
-        primarySuffix = (
-          <span>
-            &nbsp;-{' '}
-            <span className="primary-file-text-suffix">Primary File</span>
-          </span>
+        let primarySuffix = null;
+        if (isPrimaryBpmnFile) {
+          primarySuffix = (
+            <span>
+              &nbsp;-{' '}
+              <span className="primary-file-text-suffix">Primary File</span>
+            </span>
+          );
+        }
+        let fileLink = null;
+        const fileUrl = profileModelFileEditUrl(processModelFile);
+        if (fileUrl) {
+          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
+        }
+        constructedTag = (
+          <TableRow key={processModelFile.name}>
+            <TableCell
+              key={`${processModelFile.name}-cell`}
+              className="process-model-file-table-filename"
+              title={processModelFile.name}
+            >
+              {fileLink}
+              {primarySuffix}
+            </TableCell>
+            {actionsTableCell}
+          </TableRow>
         );
-      }
-      let fileLink = null;
-      const fileUrl = profileModelFileEditUrl(processModelFile);
-      if (fileUrl) {
-        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
-      }
-      constructedTag = (
-        <TableRow key={processModelFile.name}>
-          <TableCell
-            key={`${processModelFile.name}-cell`}
-            className="process-model-file-table-filename"
-            title={processModelFile.name}
-          >
-            {fileLink}
-            {primarySuffix}
-          </TableCell>
-          {actionsTableCell}
-        </TableRow>
-      );
-      return constructedTag;
-    });
+        return constructedTag;
+      })
+      .filter((element: any) => element !== undefined);
 
     if (tags.length > 0) {
       return (

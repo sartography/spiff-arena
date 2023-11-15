@@ -24,6 +24,7 @@ class FileType(SpiffEnum):
     ppt = "ppt"
     pptx = "pptx"
     rtf = "rtf"
+    sql = "sql"
     svg = "svg"
     svg_xml = "svg+xml"
     txt = "txt"
@@ -48,6 +49,7 @@ CONTENT_TYPES = {
     "ppt": "application/vnd.ms-powerpoint",
     "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "rtf": "application/rtf",
+    "sql": "text/plain",
     "svg": "image/svg+xml",
     "svg_xml": "image/svg+xml",
     "txt": "text/plain",
