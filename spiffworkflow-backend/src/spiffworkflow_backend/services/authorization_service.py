@@ -713,11 +713,11 @@ class AuthorizationService:
     ) -> list[PermissionAssignmentModel]:
         group = UserService.find_or_create_group(group_identifier)
         grant_type = "permit"
-        target_without_deny = target
-        if target.startswith("DENY:"):
-            target_without_deny = target.removeprefix("DENY:")
+        permission_without_deny = permission
+        if permission.startswith("DENY:"):
+            permission_without_deny = permission.removeprefix("DENY:")
             grant_type = "deny"
-        permissions_to_assign = cls.explode_permissions(permission, target_without_deny)
+        permissions_to_assign = cls.explode_permissions(permission_without_deny, target)
         permission_assignments = []
         for permission_to_assign in permissions_to_assign:
             permission_target = cls.find_or_create_permission_target(permission_to_assign.target_uri)
@@ -730,6 +730,19 @@ class AuthorizationService:
                 )
             )
         return permission_assignments
+
+    @classmethod
+    def get_permissions_from_config(cls, permission_config: dict) -> list[str]:
+        actions = []
+        if "actions" in permission_config:
+            actions = permission_config["actions"]
+        elif "allowed_permissions" in permission_config:
+            current_app.logger.warning(
+                "DEPRECATION WARNING: found use of 'allowed_permissions' in permissions yaml. Please use 'actions'"
+                " instead of 'allowed_permissions' in your config file."
+            )
+            actions = permission_config["allowed_permissions"]
+        return actions
 
     @classmethod
     def parse_permissions_yaml_into_group_info(cls) -> list[GroupPermissionsDict]:
@@ -764,9 +777,10 @@ class AuthorizationService:
         if "permissions" in permission_configs:
             for _permission_identifier, permission_config in permission_configs["permissions"].items():
                 uri = permission_config["uri"]
+                actions = cls.get_permissions_from_config(permission_config)
                 for group_identifier in permission_config["groups"]:
                     group_permissions_by_group[group_identifier]["permissions"].append(
-                        {"actions": permission_config["allowed_permissions"], "uri": uri}
+                        {"actions": actions, "uri": uri}
                     )
 
         return list(group_permissions_by_group.values())

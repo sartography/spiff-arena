@@ -21,15 +21,15 @@ groups:
 permissions:
   admin:
     groups: [admin, group1]
-    allowed_permissions: [create, read, update, delete]
+    actions: [create, read, update, delete]
     uri: /*
 
   basic:
     groups: [group2]
-    allowed_permissions: [all]
+    actions: [all]
     uri: BASIC
 
   basic-read:
     groups: [group2]
-    allowed_permissions: [read]
+    actions: [read]
     uri: PG:ALL
