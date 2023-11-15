@@ -230,7 +230,6 @@ class AuthenticationService:
             valid = False
 
         if valid and now > decoded_token["exp"]:
-            AuthenticationService.set_user_has_logged_out()
             raise TokenExpiredError("Your token is expired. Please Login")
         elif not valid:
             current_app.logger.error(
