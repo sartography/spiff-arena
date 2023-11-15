@@ -1,4 +1,3 @@
-import base64
 import faulthandler
 import json
 import os
@@ -14,7 +13,6 @@ from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
-from flask_simple_crypt import SimpleCrypt  # type: ignore
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from werkzeug.exceptions import NotFound
 
@@ -111,14 +109,6 @@ def should_start_scheduler(app: flask.app.Flask) -> bool:
     return True
 
 
-class NoOpCipher:
-    def encrypt(self, value: str) -> bytes:
-        return str.encode(value)
-
-    def decrypt(self, value: str) -> str:
-        return value
-
-
 def create_app() -> flask.app.Flask:
     faulthandler.enable()
 
@@ -160,25 +150,6 @@ def create_app() -> flask.app.Flask:
         start_scheduler(app)
 
     configure_sentry(app)
-
-    encryption_lib = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB")
-    if encryption_lib == "cryptography":
-        from cryptography.fernet import Fernet
-
-        app_secret_key = app.config.get("SECRET_KEY")
-        app_secret_key_bytes = app_secret_key.encode()
-        base64_key = base64.b64encode(app_secret_key_bytes)
-        fernet_cipher = Fernet(base64_key)
-        app.config["CIPHER"] = fernet_cipher
-    # for comparison against possibly-slow encryption libraries
-    elif encryption_lib == "no_op_cipher":
-        no_op_cipher = NoOpCipher()
-        app.config["CIPHER"] = no_op_cipher
-    else:
-        simple_crypt_cipher = SimpleCrypt()
-        app.config["FSC_EXPANSION_COUNT"] = 2048
-        simple_crypt_cipher.init_app(app)
-        app.config["CIPHER"] = simple_crypt_cipher
 
     app.before_request(verify_token)
     app.before_request(AuthorizationService.check_for_permission)

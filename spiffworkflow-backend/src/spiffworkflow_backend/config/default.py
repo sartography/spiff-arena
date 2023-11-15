@@ -162,6 +162,7 @@ config_from_env(
     "SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB",
     default="no_op_cipher",
 )
+config_from_env("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY_FOR_SECRETS")
 
 ### locking
 # timeouts for process instances locks as they are run to avoid stale locks

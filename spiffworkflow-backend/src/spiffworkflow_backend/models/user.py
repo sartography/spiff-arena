@@ -52,7 +52,8 @@ class UserModel(SpiffworkflowBaseDBModel):
 
         :return: string
         """
-        secret_key = current_app.config.get("SECRET_KEY")
+        # current_app.secret_key is the same as current_app.config['SECRET_KEY']
+        secret_key = str(current_app.secret_key)
         if secret_key is None:
             raise KeyError("we need current_app.config to have a SECRET_KEY")
 

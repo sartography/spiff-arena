@@ -153,7 +153,7 @@ class AuthenticationService:
         self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return"
     ) -> dict:
         backend_basic_auth_string = (
-            f"{self.client_id(authentication_identifier)}:{self.secret_key(authentication_identifier)}"
+            f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
         )
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
@@ -300,10 +300,7 @@ class AuthenticationService:
 
     @staticmethod
     def decode_auth_token(auth_token: str) -> dict[str, str | None]:
-        secret_key = current_app.config.get("SECRET_KEY")
-        if secret_key is None:
-            raise KeyError("we need current_app.config to have a SECRET_KEY")
-
+        """This is only used for debugging."""
         try:
             payload: dict[str, str | None] = jwt.decode(auth_token, options={"verify_signature": False})
             return payload
