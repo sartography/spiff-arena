@@ -2957,6 +2957,19 @@ class TestProcessApi(BaseTest):
             operator="greater_than_or_equal_to",
             filter_field_value="value1",
         )
+
+        # these two filters are conflicting, hence the expect_to_find_instance=False
+        # this test was written because, at the time, only one filter per field was being applied,
+        # so the code ignored the less_than and the test passed.
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="less_than",
+            filter_field_value="value1",
+            filters=[{"field_name": "key1", "field_value": "value1", "operator": "greater_than_or_equal_to"}],
+            expect_to_find_instance=False,
+        )
         self.assert_report_with_process_metadata_operator_includes_instance(
             client=client, user=with_super_admin_user, process_instance=process_instance_two, operator="is_empty"
         )
