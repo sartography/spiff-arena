@@ -1,5 +1,6 @@
 import io
 import json
+from spiffworkflow_backend.models.process_instance_report import FilterValue
 import os
 import time
 from collections.abc import Generator
@@ -495,8 +496,14 @@ class BaseTest:
         process_instance: ProcessInstanceModel,
         operator: str,
         filter_field_value: str = "",
+        filters: list[FilterValue] | None = None,
         expect_to_find_instance: bool = True,
     ) -> None:
+        if filters is None:
+            filters = []
+
+        first_filter: FilterValue = {"field_name": "key1", "field_value": filter_field_value, "operator": operator}
+        filters.append(first_filter)
         report_metadata: ReportMetadata = {
             "columns": [
                 {"Header": "ID", "accessor": "id", "filterable": False},
@@ -504,7 +511,8 @@ class BaseTest:
                 {"Header": "Key two", "accessor": "key2", "filterable": False},
             ],
             "order_by": ["status"],
-            "filter_by": [{"field_name": "key1", "field_value": filter_field_value, "operator": operator}],
+            "filter_by": [first_filter],
+            # "filter_by": filters,
         }
         process_instance_report = ProcessInstanceReportModel.create_report(
             identifier=f"{process_instance.id}_sure",

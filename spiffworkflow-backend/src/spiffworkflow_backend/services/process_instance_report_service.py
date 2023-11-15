@@ -626,39 +626,39 @@ class ProcessInstanceReportService:
             instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
             instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
 
-            filter_for_column = None
+            filters_for_column = []
             if "filter_by" in report_metadata:
-                filter_for_column = next(
-                    (f for f in report_metadata["filter_by"] if f["field_name"] == column["accessor"]),
-                    None,
-                )
+                filters_for_column = [f for f in report_metadata["filter_by"] if f["field_name"] == column["accessor"]]
             isouter = True
             join_conditions = [
                 ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
                 instance_metadata_alias.key == column["accessor"],
             ]
-            if filter_for_column:
-                isouter = False
-                if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
-                    join_conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
-                elif filter_for_column["operator"] == "not_equals":
-                    join_conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
-                elif filter_for_column["operator"] == "greater_than_or_equal_to":
-                    join_conditions.append(instance_metadata_alias.value >= filter_for_column["field_value"])
-                elif filter_for_column["operator"] == "less_than":
-                    join_conditions.append(instance_metadata_alias.value < filter_for_column["field_value"])
-                elif filter_for_column["operator"] == "contains":
-                    join_conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
-                elif filter_for_column["operator"] == "is_empty":
-                    # we still need to return results if the metadata value is null so make sure it's outer join
-                    isouter = True
-                    process_instance_query = process_instance_query.filter(
-                        or_(instance_metadata_alias.value.is_(None), instance_metadata_alias.value == "")
-                    )
-                elif filter_for_column["operator"] == "is_not_empty":
-                    join_conditions.append(
-                        or_(instance_metadata_alias.value.is_not(None), instance_metadata_alias.value != "")
-                    )
+            if len(filters_for_column) > 0:
+                for filter_for_column in filters_for_column:
+                    isouter = False
+                    if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
+                        join_conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+                    elif filter_for_column["operator"] == "not_equls":
+                        join_conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
+                    elif filter_for_column["operator"] == "greater_than_or_equal_to":
+                        join_conditions.append(instance_metadata_alias.value >= filter_for_column["field_value"])
+                    elif filter_for_column["operator"] == "less_than":
+                        join_conditions.append(instance_metadata_alias.value < filter_for_column["field_value"])
+                    elif filter_for_column["operator"] == "contains":
+                        join_conditions.append(
+                            instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%")
+                        )
+                    elif filter_for_column["operator"] == "is_empty":
+                        # we still need to return results if the metadata value is null so make sure it's outer join
+                        isouter = True
+                        process_instance_query = process_instance_query.filter(
+                            or_(instance_metadata_alias.value.is_(None), instance_metadata_alias.value == "")
+                        )
+                    elif filter_for_column["operator"] == "is_not_empty":
+                        join_conditions.append(
+                            or_(instance_metadata_alias.value.is_not(None), instance_metadata_alias.value != "")
+                        )
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, and_(*join_conditions), isouter=isouter
             ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
