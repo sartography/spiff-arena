@@ -5,6 +5,17 @@ RUN mkdir /app
 
 WORKDIR /app
 
+# curl for debugging
+# procps for debugging
+# vim ftw
+RUN apt-get update \
+ && apt-get clean -y \
+ && apt-get install -y -q \
+ curl \
+ procps \
+ vim-tiny \
+ && rm -rf /var/lib/apt/lists/*
+
 # this matches total memory on spiffworkflow-demo
 ENV NODE_OPTIONS=--max_old_space_size=2048
 

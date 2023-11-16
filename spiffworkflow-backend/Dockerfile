@@ -13,12 +13,13 @@ FROM base AS deployment
 
 # git-core because the app does "git commit", etc
 # curl because the docker health check uses it
+# procps because it is useful for debugging
 # gunicorn3 for web server
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
 RUN apt-get update \
  && apt-get clean -y \
- && apt-get install -y -q git-core curl gunicorn3 default-mysql-client vim-tiny \
+ && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
