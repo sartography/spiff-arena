@@ -1,8 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import {
-  Button,
-  // @ts-ignore
-} from '@carbon/react';
+import { Button } from '@carbon/react';
 import { Can } from '@casl/react';
 import { useState } from 'react';
 import {

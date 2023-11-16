@@ -18,33 +18,33 @@ groups:
 permissions:
   process-groups-all:
     groups: [admin]
-    allowed_permissions: [all]
+    actions: [all]
     uri: PG:ALL
   basic:
     groups: [admin]
-    allowed_permissions: [all]
+    actions: [all]
     uri: BASIC
   elevated-operations:
     groups: [admin]
-    allowed_permissions: [all]
+    actions: [all]
     uri: ELEVATED
 
   basic-permission:
     groups: [everybody]
-    allowed_permissions: [all]
+    actions: [all]
     uri: BASIC
 
   finance-admin-group:
     groups: ["Finance Team"]
-    allowed_permissions: [all]
+    actions: [all]
     uri: PG:finance
 
   finance-hr-start:
     groups: ["hr"]
-    allowed_permissions: [start]
+    actions: [start]
     uri: PG:finance
 
   read-all-finance:
     groups: [hr]
-    allowed_permissions: [read]
+    actions: [read]
     uri: PG:finance

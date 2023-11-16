@@ -9,7 +9,7 @@ There are also additional articles, videos, and tutorials about SpiffArena and i
 
 ## Backend Setup
 
-First install python and poetry. Then:
+First install python, poetry, and mysql. Then:
 
     cd spiffworkflow-backend
     poetry install

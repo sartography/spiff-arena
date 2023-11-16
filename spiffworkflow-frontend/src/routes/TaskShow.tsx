@@ -232,6 +232,43 @@ export default function TaskShow() {
     sendAutosaveEvent({ successCallback });
   };
 
+  // we had to duplicate this logic because we pass chlidren to the Form.
+  // we pass children to the form because of additional submit buttons on the form for signals, and we
+  // probably want these to be styled next to the default button.
+  // if we remove the children prop from the Form, the submit button text works perfectly per the
+  // docs at https://rjsf-team.github.io/react-jsonschema-form/docs/api-reference/uiSchema
+  const getSubmitButtonOptions = (formUiSchema: any) => {
+    const uiOptionsString = 'ui:options';
+    let submitButtonOptions = {};
+    if ('ui:submitButtonOptions' in formUiSchema) {
+      submitButtonOptions = formUiSchema['ui:submitButtonOptions'];
+    }
+    if (
+      uiOptionsString in formUiSchema &&
+      'submitButtonOptions' in formUiSchema[uiOptionsString]
+    ) {
+      submitButtonOptions = {
+        ...submitButtonOptions,
+        ...formUiSchema[uiOptionsString].submitButtonOptions,
+      };
+    }
+    return submitButtonOptions;
+  };
+
+  const getSubmitButtonText = (formUiSchema: any) => {
+    if (!taskWithTaskData) {
+      return null;
+    }
+    const submitButtonOptions = getSubmitButtonOptions(formUiSchema);
+    let submitButtonText = 'Submit';
+    if ('submitText' in submitButtonOptions) {
+      submitButtonText = submitButtonOptions.submitText as string;
+    } else if (taskWithTaskData.typename === 'ManualTask') {
+      submitButtonText = 'Continue';
+    }
+    return submitButtonText;
+  };
+
   const formElement = () => {
     if (!taskWithTaskData) {
       return null;
@@ -273,11 +310,9 @@ export default function TaskShow() {
     }
 
     if (taskWithTaskData.state === 'READY') {
-      let submitButtonText = 'Submit';
+      const submitButtonText = getSubmitButtonText(formUiSchema);
       let closeButton = null;
-      if (taskWithTaskData.typename === 'ManualTask') {
-        submitButtonText = 'Continue';
-      } else if (
+      if (
         taskWithTaskData.typename === 'UserTask' &&
         !UserService.onlyGuestTaskCompletion()
       ) {
@@ -376,11 +411,18 @@ export default function TaskShow() {
       pageElements.push(
         <ProcessBreadcrumb
           hotCrumbs={[
+            ['Process Groups', '/process-groups'],
+            {
+              entityToExplode: basicTask.process_model_identifier,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+              checkPermission: true,
+            },
             [
-              `Process Instance Id: ${params.process_instance_id}`,
+              `Process Instance Id: ${basicTask.process_instance_id}`,
               `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
                 basicTask.process_model_identifier
-              )}/${params.process_instance_id}`,
+              )}/${basicTask.process_instance_id}`,
             ],
             [`Task: ${basicTask.name_for_display || basicTask.id}`],
           ]}

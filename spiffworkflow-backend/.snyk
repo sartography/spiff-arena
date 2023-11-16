@@ -5,7 +5,7 @@ ignore:
   # we cannot upgrade werkzeug because it breaks connexion
   # and we can't upgrade connexion because it downgrades werkzeug.
   # this means we cannot satisfy the snyk requiement to upgrade werkzeug to v3.
-  # we have a ticket to workaroud it:
+  # we have a ticket to workaround it:
   #   https://github.com/sartography/spiff-arena/issues/592
   SNYK-PYTHON-WERKZEUG-6035177:
     - '*':
@@ -17,6 +17,12 @@ ignore:
         reason: None Given
         expires: 2023-11-25T15:25:26.883Z
         created: 2023-10-26T15:25:26.894Z
+  SNYK-PYTHON-CRYPTOGRAPHY-6050294:
+    - '*':
+        reason: No current resolution
+        expires: 2023-12-15T19:52:08.948Z
+        created: 2023-11-15T19:52:08.954Z
+
 patch: {}
 
 # when running snyk ignore to ignore issues with "snyk code test"

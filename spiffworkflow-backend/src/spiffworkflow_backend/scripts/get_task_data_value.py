@@ -18,7 +18,9 @@ class GetTaskDataValue(Script):
 
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         variable_to_check = args[0]
-        default_value = args[1]
+        default_value = None
+        if len(args) > 1:
+            default_value = args[1]
 
         task = script_attributes_context.task
         if task is None:

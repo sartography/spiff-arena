@@ -876,8 +876,10 @@ class TestProcessInstanceProcessor(BaseTest):
             "script_task_two", processor_final.bpmn_process_instance
         )
         assert spiff_task is not None
-        assert spiff_task.state == TaskState.ERROR
-        assert spiff_task.data == {"my_var": "THE VAR"}
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        assert task_model is not None
+        assert task_model.state == "ERROR"
+        assert task_model.get_data() == {"my_var": "THE VAR"}
 
         process_instance_events = process_instance.process_instance_events
         assert len(process_instance_events) == 4

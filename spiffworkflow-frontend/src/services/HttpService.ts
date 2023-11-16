@@ -12,6 +12,8 @@ export const getBasicHeaders = (): Record<string, string> => {
   if (UserService.isLoggedIn()) {
     return {
       Authorization: `Bearer ${UserService.getAccessToken()}`,
+      'SpiffWorkflow-Authentication-Identifier':
+        UserService.getAuthenticationIdentifier() || 'default',
     };
   }
   return {};
@@ -73,11 +75,12 @@ backendCallProps) => {
   const updatedPath = path.replace(/^\/v1\.0/, '');
 
   let isSuccessful = true;
+  // this fancy 403 handling is like this because we want to get the response body.
+  // otherwise, we would just throw an exception.
   let is403 = false;
   fetch(`${BACKEND_BASE_URL}${updatedPath}`, httpArgs)
     .then((response) => {
       if (response.status === 401) {
-        UserService.doLogin();
         throw new UnauthenticatedError('You must be authenticated to do this.');
       } else if (response.status === 403) {
         is403 = true;
@@ -119,6 +122,11 @@ backendCallProps) => {
         } else {
           console.error(error.message);
         }
+      } else if (
+        !UserService.isLoggedIn() &&
+        window.location.pathname !== '/login'
+      ) {
+        window.location.href = `/login?original_url=${UserService.getCurrentLocation()}`;
       }
     });
 };

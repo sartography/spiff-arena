@@ -27,7 +27,6 @@ flask-mail = "*"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
-flask-simple-crypt = "^0.3.3"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }

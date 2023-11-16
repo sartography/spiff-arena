@@ -9,7 +9,6 @@ from typing import Any
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -2117,8 +2116,10 @@ class TestProcessApi(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
-        assert spiff_task.state == TaskState.ERROR
-        assert spiff_task.data == {"my_var": "THE VAR"}
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        assert task_model is not None
+        assert task_model.state == "ERROR"
+        assert task_model.get_data() == {"my_var": "THE VAR"}
 
     def test_process_model_file_create(
         self,
@@ -2955,6 +2956,19 @@ class TestProcessApi(BaseTest):
             process_instance=process_instance_one,
             operator="greater_than_or_equal_to",
             filter_field_value="value1",
+        )
+
+        # these two filters are conflicting, hence the expect_to_find_instance=False
+        # this test was written because, at the time, only one filter per field was being applied,
+        # so the code ignored the less_than and the test passed.
+        self.assert_report_with_process_metadata_operator_includes_instance(
+            client=client,
+            user=with_super_admin_user,
+            process_instance=process_instance_one,
+            operator="less_than",
+            filter_field_value="value1",
+            filters=[{"field_name": "key1", "field_value": "value1", "operator": "greater_than_or_equal_to"}],
+            expect_to_find_instance=False,
         )
         self.assert_report_with_process_metadata_operator_includes_instance(
             client=client, user=with_super_admin_user, process_instance=process_instance_two, operator="is_empty"

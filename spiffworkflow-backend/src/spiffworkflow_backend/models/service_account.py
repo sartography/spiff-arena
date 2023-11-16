@@ -13,7 +13,7 @@ from spiffworkflow_backend.models.db import db
 
 # this is designed to be used for the "service" column on the user table, which is designed to hold
 # information about which authentiation system is used to authenticate this user.
-# in this case, we are authenticating based on X-API-KEY which correlates to a known value in the spiff db.
+# in this case, we are authenticating based on SpiffWorkflow-Api-key which correlates to a known value in the spiff db.
 SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE = "spiff_service_account"
 SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE_ID_PREFIX = "service_account_"
 

@@ -109,6 +109,7 @@ export default function ProcessGroupForm({
     const textInputs = [
       <TextInput
         id="process-group-display-name"
+        data-qa="process-group-display-name-input"
         name="display_name"
         invalidText="Display Name is required."
         invalid={displayNameInvalid}
