@@ -19,6 +19,9 @@ RUN apt-get update \
 # this matches total memory on spiffworkflow-demo
 ENV NODE_OPTIONS=--max_old_space_size=2048
 
+
+######################## - SETUP
+
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
@@ -37,6 +40,9 @@ RUN cp /app/package.json.bak /app/package.json
 RUN npm ci --ignore-scripts
 
 RUN ./bin/build
+
+
+######################## - FINAL
 
 # Final image without setup dependencies.
 FROM base AS final

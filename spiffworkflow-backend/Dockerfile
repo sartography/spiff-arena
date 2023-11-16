@@ -7,6 +7,9 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
 
+
+######################## - DEPLOYMENT
+
 # base plus packages needed for deployment. Could just install these in final, but then we can't cache as much.
 # vim is just for debugging
 FROM base AS deployment
@@ -23,6 +26,9 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
+
+
+######################## - SETUP
 
 # Setup image for installing Python dependencies.
 FROM base AS setup
@@ -46,6 +52,9 @@ RUN poetry install --without dev
 
 COPY . /app
 RUN poetry install --without dev
+
+
+######################## - FINAL
 
 # Final image without setup dependencies.
 FROM deployment AS final
