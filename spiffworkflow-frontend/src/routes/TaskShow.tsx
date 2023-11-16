@@ -416,6 +416,7 @@ export default function TaskShow() {
               entityToExplode: basicTask.process_model_identifier,
               entityType: 'process-model-id',
               linkLastItem: true,
+              checkPermission: true,
             },
             [
               `Process Instance Id: ${basicTask.process_instance_id}`,

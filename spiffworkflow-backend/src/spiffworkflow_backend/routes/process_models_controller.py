@@ -24,6 +24,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -159,10 +160,14 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     process_model.bpmn_version_control_identifier = current_git_revision
 
     available_actions = {}
+    process_model_path = f"/process-model-publish/{modified_process_model_identifier}"
     if GitService.check_for_publish_configs(raise_on_missing=False):
-        available_actions = {
-            "publish": {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}
-        }
+        available_actions = {"publish": {"path": process_model_path, "method": "POST"}}
+    has_permission = AuthorizationService.user_has_permission(
+        user=g.user, permission="read", target_uri=process_model_path
+    )
+    if has_permission:
+        available_actions = {"read": {"path": process_model_path, "method": "GET"}}
     process_model.actions = available_actions
 
     return make_response(jsonify(process_model), 200)

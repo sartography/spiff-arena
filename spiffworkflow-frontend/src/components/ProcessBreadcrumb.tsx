@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   HotCrumbItem,
+  HotCrumbItemArray,
+  HotCrumbItemObject,
   ProcessGroup,
   ProcessGroupLite,
   ProcessModel,
@@ -47,74 +49,91 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
     }
   }, [setProcessEntity, hotCrumbs]);
 
+  const checkPermissions = (crumb: HotCrumbItemObject) => {
+    if (!crumb.checkPermission) {
+      return true;
+    }
+    return (
+      processEntity &&
+      'actions' in processEntity &&
+      processEntity.actions &&
+      'read' in processEntity.actions
+    );
+  };
+
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const hotCrumbElement = () => {
     if (hotCrumbs) {
-      const leadingCrumbLinks = hotCrumbs.map((crumb: any) => {
-        if (
-          'entityToExplode' in crumb &&
-          processEntity &&
-          processEntity.parent_groups
-        ) {
-          const breadcrumbs = processEntity.parent_groups.map(
-            (parentGroup: ProcessGroupLite) => {
-              const fullUrl = `/process-groups/${modifyProcessIdentifierForPathParam(
-                parentGroup.id
+      const leadingCrumbLinks = hotCrumbs.map(
+        (crumb: HotCrumbItemArray | HotCrumbItemObject) => {
+          if (
+            'entityToExplode' in crumb &&
+            processEntity &&
+            processEntity.parent_groups &&
+            checkPermissions(crumb)
+          ) {
+            const breadcrumbs = processEntity.parent_groups.map(
+              (parentGroup: ProcessGroupLite) => {
+                const fullUrl = `/process-groups/${modifyProcessIdentifierForPathParam(
+                  parentGroup.id
+                )}`;
+                return (
+                  <BreadcrumbItem key={parentGroup.id} href={fullUrl}>
+                    {parentGroup.display_name}
+                  </BreadcrumbItem>
+                );
+              }
+            );
+
+            if (crumb.linkLastItem) {
+              let apiBase = '/process-groups';
+              let dataQaTag = '';
+              if (crumb.entityType.startsWith('process-model')) {
+                apiBase = '/process-models';
+                dataQaTag = 'process-model-breadcrumb-link';
+              }
+              const fullUrl = `${apiBase}/${modifyProcessIdentifierForPathParam(
+                processEntity.id
               )}`;
-              return (
-                <BreadcrumbItem key={parentGroup.id} href={fullUrl}>
-                  {parentGroup.display_name}
+              breadcrumbs.push(
+                <BreadcrumbItem
+                  key={processEntity.id}
+                  href={fullUrl}
+                  data-qa={dataQaTag}
+                >
+                  {processEntity.display_name}
+                </BreadcrumbItem>
+              );
+            } else {
+              breadcrumbs.push(
+                <BreadcrumbItem key={processEntity.id} isCurrentPage>
+                  {processEntity.display_name}
                 </BreadcrumbItem>
               );
             }
-          );
-
-          if (crumb.linkLastItem) {
-            let apiBase = '/process-groups';
-            let dataQaTag = '';
-            if (crumb.entityType.startsWith('process-model')) {
-              apiBase = '/process-models';
-              dataQaTag = 'process-model-breadcrumb-link';
-            }
-            const fullUrl = `${apiBase}/${modifyProcessIdentifierForPathParam(
-              processEntity.id
-            )}`;
-            breadcrumbs.push(
-              <BreadcrumbItem
-                key={processEntity.id}
-                href={fullUrl}
-                data-qa={dataQaTag}
-              >
-                {processEntity.display_name}
-              </BreadcrumbItem>
-            );
-          } else {
-            breadcrumbs.push(
-              <BreadcrumbItem key={processEntity.id} isCurrentPage>
-                {processEntity.display_name}
-              </BreadcrumbItem>
-            );
+            return breadcrumbs;
           }
-          return breadcrumbs;
+          if (Array.isArray(crumb)) {
+            const valueLabel = crumb[0];
+            const url = crumb[1];
+            if (!url && valueLabel) {
+              return (
+                <BreadcrumbItem isCurrentPage key={valueLabel}>
+                  {valueLabel}
+                </BreadcrumbItem>
+              );
+            }
+            if (url && valueLabel) {
+              return (
+                <BreadcrumbItem key={valueLabel} href={url}>
+                  {valueLabel}
+                </BreadcrumbItem>
+              );
+            }
+          }
+          return null;
         }
-        const valueLabel = crumb[0];
-        const url = crumb[1];
-        if (!url && valueLabel) {
-          return (
-            <BreadcrumbItem isCurrentPage key={valueLabel}>
-              {valueLabel}
-            </BreadcrumbItem>
-          );
-        }
-        if (url && valueLabel) {
-          return (
-            <BreadcrumbItem key={valueLabel} href={url}>
-              {valueLabel}
-            </BreadcrumbItem>
-          );
-        }
-        return null;
-      });
+      );
       return <Breadcrumb noTrailingSlash>{leadingCrumbLinks}</Breadcrumb>;
     }
     return null;
