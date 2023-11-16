@@ -40,7 +40,7 @@ class TestServiceAccounts(BaseTest):
         response = client.post(
             "/v1.0/secrets",
             content_type="application/json",
-            headers={"X-API-KEY": service_account.api_key},
+            headers={"SpiffWorkflow-Api-Key": service_account.api_key},
             data=json.dumps(post_body),
         )
         assert response.status_code == 201
