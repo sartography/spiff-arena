@@ -516,8 +516,7 @@ class TaskService:
     ) -> JsonDataDict | None:
         data_dict_to_use = bpmn_process_data_dict
         if bpmn_process_instance is not None:
-            serialized_bpmn_process = self.serializer.to_dict(bpmn_process_instance)
-            data_dict_to_use = serialized_bpmn_process.pop("data")
+            data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
         if data_dict_to_use is None:
             data_dict_to_use = {}
         bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
