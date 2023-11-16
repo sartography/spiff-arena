@@ -299,6 +299,7 @@ export interface HotCrumbItemObject {
   entityToExplode: ProcessModel | ProcessGroup | string;
   entityType: string;
   linkLastItem?: boolean;
+  checkPermission?: boolean;
 }
 
 export type HotCrumbItemArray = [displayValue: string, url?: string];
