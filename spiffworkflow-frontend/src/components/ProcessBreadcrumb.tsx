@@ -31,6 +31,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               entityToExplode as string
             )}`,
             successCallback: setProcessEntity,
+            onUnauthorized: () => {},
           });
         } else if (entityType === 'process-group-id') {
           HttpService.makeCallToBackend({
@@ -38,6 +39,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               entityToExplode as string
             )}`,
             successCallback: setProcessEntity,
+            onUnauthorized: () => {},
           });
         } else {
           setProcessEntity(entityToExplode as any);
