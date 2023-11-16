@@ -1,6 +1,7 @@
 # Escalation Event
 
-An Escalation Event in BPMN symbolizes a situation where an issue or condition within a process requires attention at a higher level or different domain. This event acts as a mechanism to raise awareness or invoke intervention. 
+An Escalation Event in BPMN symbolizes a situation where an issue or condition within a process requires attention at a higher level or different domain.
+This event acts as a mechanism to raise awareness or invoke intervention.
 
 ```{admonition} Note
 ⚠  Escalation Events are similar to signals; however, they differ in their application. An escalation represents a one-to-one relationship, whereas a signal event embodies a one-to-many relationship.
@@ -35,13 +36,16 @@ After a customer's order is processed, a non-interrupting escalation event is tr
 
 ![intermediate_escalation_event](images/intermediate_escalation_throw_event.png) ![intermediate_escalation_event](images/intermediate_escalation_catch_event.png) ![intermediate_escalation_event](images/non_interrupting_intermediate_escalation_event.png)
 
-An Intermediate Escalation Event serves as a mechanism within a process flow to raise an escalation. This could be due to an exception, a delay, or any condition that requires intervention. As a Boundary Event, it can also be associated with specific tasks or sub-processes, highlighting the need for escalation if certain criteria are met.
+An Intermediate Escalation Event serves as a mechanism within a process flow to raise an escalation.
+This could be due to an exception, a delay, or any condition that requires intervention.
+As a Boundary Event, it can also be associated with specific tasks or sub-processes, highlighting the need for escalation if certain criteria are met.
 
 **Example:**
 
 ![escalation_intermediate_example_2](images/escalation_example_2.png)
 
-In the same BPMN scenario, escalations can be managed at a higher level in the process hierarchy through a boundary escalation event. This method involves placing the escalation event on the border of the parent process activity. 
+In the same BPMN scenario, escalations can be managed at a higher level in the process hierarchy through a boundary escalation event.
+This method involves placing the escalation event on the border of the parent process activity.
 
 **Escalation Boundary Event (interrupting):** 
 When the machine manufacturing a part requires calibration, it can be escalated to a parent process where a process is followed to notify or handle the alternate path by catching the throw event (Escalation End Event) from its child process.
@@ -71,10 +75,17 @@ In a subsequent setup, a parallel gateway launches two simultaneous paths. While
 
 ![intermediate_escalation_event](images/end_escalation_event.png) 
 
-In our earlier examples, we demonstrated how to use throw and catch events. The End Escalation event functions similarly to the Intermediate Throw Escalation event, with the key distinction being its occurrence at the end of a particular pathway. It's important to note that the End Escalation event doesn't always signify the termination of the entire process. Particularly in scenarios involving non-interrupting events, the process instance may continue independently even after the escalation event is triggered.
+In our earlier examples, we demonstrated how to use throw and catch events.
+The End Escalation event functions similarly to the Intermediate Throw Escalation event, with the key distinction being its occurrence at the end of a particular pathway.
+It's important to note that the End Escalation event doesn't always signify the termination of the entire process.
+Particularly in scenarios involving non-interrupting events, the process instance may continue independently even after the escalation event is triggered.
 
 **Example:**
 
 ![escalation_intermediate_example_2](images/escalation_example_4.png)
 
-In this scenario, we observe an End Escalation following a Boundary Event. This thrown End Escalation can be intercepted by the boundary event of a Call Activity or at the start of a sub-process, as shown in previous examples on this page. In another example, we see an End Escalation event being thrown within a sub-process and caught at the sub-process's boundary. The application of the last example aligns with the first, where the escalation can be intercepted either on a Call Activity or at the beginning of a sub-process. It's crucial to remember that whether a process is created or terminated in these contexts depends on whether non-interrupting or interrupting events are utilized.
+In this scenario, we observe an End Escalation following a Boundary Event.
+This thrown End Escalation can be intercepted by the boundary event of a Call Activity or at the start of a sub-process, as shown in previous examples on this page.
+In another example, we see an End Escalation event being thrown within a sub-process and caught at the sub-process's boundary.
+The application of the last example aligns with the first, where the escalation can be intercepted either on a Call Activity or at the beginning of a sub-process.
+It's crucial to remember that whether a process is created or terminated in these contexts depends on whether non-interrupting or interrupting events are utilized.

@@ -1,6 +1,8 @@
 # Conditional Event
 
-A Conditional Event is a type of event that activates based on the evaluation of a condition, typically expressed as a Boolean expression (true or false). Conditional Events depend on the state or value of process variables that are part of the process context. They continuously evaluate the given condition and act when the condition is met.
+A Conditional Event is a type of event that activates based on the evaluation of a condition, typically expressed as a Boolean expression (true or false).
+Conditional Events depend on the state or value of process variables that are part of the process context.
+They continuously evaluate the given condition and act when the condition is met.
 
 ```{admonition} Note
 ⚠  The variable(s) evaluated in the condition should typically be initialized with a default value, often set to false. This ensures it doesn't trigger prematurely. Thus, it remains evaluated as false until the specified condition turns true. Importantly, this variable needs to be accessible within the process context.
@@ -32,7 +34,10 @@ In the subsequent scenario, as an online order is placed by a customer, our inve
 
 ![intermediate_conditional_event](images/intermediate_conditional_event.png) ![intermediate_conditional_event](images/non_interrupting_intermediate_conditional_event.png)
 
-An Intermediate Conditional Event serves as a gate or checkpoint within the flow of a process. The process flow will proceed once the attached condition evaluates to true. Additionally, a Boundary Event can be associated with specific tasks or sub-processes, acting as an interrupter based on certain conditions. This ensures that certain actions are taken or the process is redirected when particular circumstances arise.
+An Intermediate Conditional Event serves as a gate or checkpoint within the flow of a process.
+The process flow will proceed once the attached condition evaluates to true.
+Additionally, a Boundary Event can be associated with specific tasks or sub-processes, acting as an interrupter based on certain conditions.
+This ensures that certain actions are taken or the process is redirected when particular circumstances arise.
 
 **Example:**
 
@@ -41,7 +46,11 @@ An Intermediate Conditional Event serves as a gate or checkpoint within the flow
 **Conditional Intermediate Catch Event:**
 Once an order is packed and ready for shipping, it doesn't necessarily imply immediate delivery. The delivery process hinges on the availability of a driver. If no driver is available at the moment, we must patiently await notification of one becoming available.
 
-In a bakery, pastries are made in bulk. However, they can only be put in the oven when it reaches the necessary temperature. While one might consider using a timer to gauge readiness (and it's not entirely wrong to do so), a timer only measures the elapsed time since activation. It can't determine the actual temperature inside the oven. Given that our pastries need a specific temperature for baking, only when this condition is met can we proceed to place them in the oven.
+In a bakery, pastries are made in bulk.
+However, they can only be put in the oven when it reaches the necessary temperature.
+While one might consider using a timer to gauge readiness (and it's not entirely wrong to do so), a timer only measures the elapsed time since activation.
+It can't determine the actual temperature inside the oven.
+Given that our pastries need a specific temperature for baking, only when this condition is met can we proceed to place them in the oven.
 
 **Example:**
 
@@ -50,7 +59,10 @@ In a bakery, pastries are made in bulk. However, they can only be put in the ove
 **Conditional Boundary Event (interrupting):** 
 Boundary events allows us to redirect our processes based on shifts in certain conditions. It's wise to consider such a strategy since it's unrealistic to expect every process to proceed without hiccups. Therefore, planning for alternative pathways becomes essential.
 
-Imagine a user in the midst of completing a form suddenly opting to cancel the process. Or consider a scenario where a user is finalizing an order, only to find that due to a changed condition, the desired product is no longer available. In such cases, the interrupting event ensures we don't proceed on the originally planned course because the order will not be fulfilled. Instead, we shift and use the alternative route to inform the user that the intended process can't progress further, we order more stock or we place the user on a list to be notified when product becomes available again.
+Imagine a user in the midst of completing a form suddenly opting to cancel the process.
+Or consider a scenario where a user is finalizing an order, only to find that due to a changed condition, the desired product is no longer available.
+In such cases, the interrupting event ensures we don't proceed on the originally planned course because the order will not be fulfilled.
+Instead, we shift and use the alternative route to inform the user that the intended process can't progress further, we order more stock or we place the user on a list to be notified when product becomes available again.
 
 **Conditional Boundary Event (non-interrupting):** 
 It's also beneficial in scenarios where there's no need to disrupt the initial workflow, like when receiving a change request. The task still requires completion, but there's an additional remark or modification we must be mindful of.
@@ -59,7 +71,9 @@ It's also beneficial in scenarios where there's no need to disrupt the initial w
 
 ![conditional_intermediate_example_3](images/conditional_intermediate_example_3.png)
 
-When utilizing a condition to loop back to a previous stage, it's crucial to highlight that the condition should be reset to evaluate as false once again. If not adjusted, the condition might activate immediately when the instance revisits the task, potentially causing an infinite loop. Always revert the condition to its default state to ensure appropriate behavior.
+When utilizing a condition to loop back to a previous stage, it's crucial to highlight that the condition should be reset to evaluate as false once again.
+If not adjusted, the condition might activate immediately when the instance revisits the task, potentially causing an infinite loop.
+Always revert the condition to its default state to ensure appropriate behavior.
 
 ## Conditional Event Configuration
 
