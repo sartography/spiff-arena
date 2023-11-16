@@ -1,5 +1,6 @@
 import faulthandler
 import json
+from celery import Celery, Task  # type: ignore
 import os
 import sys
 from typing import Any
@@ -15,6 +16,7 @@ from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from werkzeug.exceptions import NotFound
+from spiffworkflow_backend.celery.celery_controller import setup_celery
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
@@ -28,6 +30,9 @@ from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openi
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.background_processing_service import BackgroundProcessingService
+
+# celery_app = Celery()
+# celery_app.config_from_object('celeryconfig')
 
 
 class MyJSONEncoder(DefaultJSONProvider):
@@ -108,6 +113,20 @@ def should_start_scheduler(app: flask.app.Flask) -> bool:
 
     return True
 
+def celery_init_app(app: flask.app.Flask) -> Celery:
+    class FlaskTask(Task):
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery_app = Celery(app.name) #, task_cls=FlaskTask)
+    celery_app.Task = FlaskTask
+    celery_app.config_from_object(app.config["CELERY"])
+    celery_app.conf.update(app.config)
+    celery_app.set_default()
+    app.extensions["celery"] = celery_app
+    return celery_app
+
 
 def create_app() -> flask.app.Flask:
     faulthandler.enable()
@@ -158,6 +177,27 @@ def create_app() -> flask.app.Flask:
     # The default is true, but we want to preserve the order of keys in the json
     # This is particularly helpful for forms that are generated from json schemas.
     app.json.sort_keys = False
+    # app.celery_app = setup_celery()
+
+    # app.config["CELERY_BROKER_URL"] = "redis://localhost:6379/0"
+    # celery_app = Celery(app.name, broker=app.config["CELERY_BROKER_URL"], backend=app.config["CELERY_BROKER_URL"])
+    # celery_app.conf.update(app.config)
+    # celery_app.set_default()
+
+    app.config.from_mapping(
+        CELERY={
+            "broker_url": "redis://localhost",
+            "result_backend": "redis://localhost",
+            "task_ignore_result": True,
+        },
+    )
+    # app.config.from_prefixed_env()
+
+    celery_app = celery_init_app(app)
+    app.celery_app = celery_app
+
+    # celery_app.conf.update(app.config)
+    # print(f"app.tasks: {celery_app.tasks.keys()}")
 
     return app  # type: ignore
 
