@@ -8,7 +8,7 @@ A Timer Event can be set to activate on an exact date and time. This is like set
 - **2023-12-25T09:00:00Z** - This would set the timer to trigger at 9:00 AM (UTC) on December 25, 2023.
 - **2024-01-01T00:00:00-05:00** - This would set the timer to trigger at midnight (Eastern Time) on January 1, 2024, accounting for the time zone offset.
 
-**Duration-based Trigger:** This isn’t a fixed point in time but a period that is often defined in the format of 'PnYnMnDTnHnMnS', (where P indicates the period, T separates date and time elements, and Y, M, D, H, M, S represent years, months, days, hours, minutes, and seconds, respectively). It's analogous to using a stopwatch. Once the task or process starts, the Timer Event begins counting, and after the predefined duration (say, 48 hours), it activates. 
+**Duration-based Trigger:** This isn't a fixed point in time but a period that is often defined in the format of 'PnYnMnDTnHnMnS', (where P indicates the period, T separates date and time elements, and Y, M, D, H, M, S represent years, months, days, hours, minutes, and seconds, respectively). It's analogous to using a stopwatch. Once the task or process starts, the Timer Event begins counting, and after the predefined duration (say, 48 hours), it activates.
 An example scenario might be an e-commerce platform setting a Timer Event to automatically cancel unprocessed orders after 72 hours.
 
 - **PT72H** - Represents a period of 72 hours.
@@ -53,7 +53,7 @@ An Intermediate Timer Event acts as a pause or delay within the flow of a proces
 
 **Timer Intermediate Catch Event:** 
 
-The intermediate timer event dictate the timing between stages of a process. For example, in the context of baking, once a cake is removed from the oven, it's essential to let it cool properly before decorating. This cooling phase ensures that the icing doesn't melt off the hot cake. To manage this, an 'Intermediate Timer Event' can be set, signaling a baking process to wait for a standard duration of two hours post-baking before decorating.
+The intermediate timer event dictates the timing between stages of a process. For example, in the context of baking, once a cake is removed from the oven, it's essential to let it cool properly before decorating. This cooling phase ensures that the icing doesn't melt off the hot cake. To manage this, an 'Intermediate Timer Event' can be set, signaling a baking process to wait for a standard duration of two hours post-baking before decorating.
 
 Transitioning to a logistics scenario, let's consider a company that processes multiple orders throughout the day. They might spend hours collecting items, packaging, and preparing them for shipment. However, rather than dispatching each order individually, they follow a batch process strategy, consolidating all orders for a one-time dispatch. An 'Intermediate Timer Event' can be configured here to accumulate the day's orders and trigger a batch processing subprocess at a specific time, ensuring efficient and streamlined delivery operations.
 
@@ -65,7 +65,7 @@ Transitioning to a logistics scenario, let's consider a company that processes m
 
 Imagine an online examination system where students have exactly 1 hour to complete the exam. A task labeled "Take Exam" will have a timer boundary event attached to it. If the exam isn't completed within 60 minutes, the timer boundary event activates, automatically submitting whatever has been completed by the student and ending the exam.
 
-On an e-commerce platform, a product is available at a flash sale price for just 24 hours. When customers add this item to their cart, a timer boundary event of 24 hours is set. If they don't purchase within this timeframe, the timer activates, removing the limited offering.
+On an e-commerce platform, a product is available at a flash sale price for just 24 hours. When customers add this item to their cart, a timer boundary event of 24 hours is set. If they don't purchase within this time frame, the timer activates, removing the limited offering.
 
 **Timer Boundary Event (non-interrupting):** 
 

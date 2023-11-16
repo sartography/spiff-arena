@@ -8,8 +8,8 @@ An Escalation Event in BPMN symbolizes a situation where an issue or condition w
 
 **Reasons to Use an Escalation Event:**
 
-- Are mostly used to communicate to a subprocess or an upper (parent) process.
-- They provide a structured way to handle exceptions, ensuring processes remain fluid despite interruptions.
+- Communicate to a subprocess or an upper (parent) process
+- Provide a structured way to handle exceptions, ensuring processes remain fluid despite interruptions
 
 ## Start Escalation Event
 
@@ -18,7 +18,7 @@ An Escalation Event in BPMN symbolizes a situation where an issue or condition w
 A Start Escalation Event indicates the beginning of a sub-process, triggered explicitly by an escalation from another process or activity.
 
 ```{admonition} Note
-⚠  Escalation Events are typically used in scenarios where standard process flow is disrupted, and involvement becomes essential for resolution. They are mostly used to communicate from a subprocess to an upper process.
+⚠  Escalation Events are typically used in scenarios where standard process flow is disrupted, and involvement from other actors becomes essential for resolution. They are mostly used to communicate from a subprocess to an upper process.
 ```
 
 **Example:**
@@ -26,14 +26,14 @@ A Start Escalation Event indicates the beginning of a sub-process, triggered exp
 ![start_escalation_example](images/start_escalation_example_1.png)
 
 **Escalation Start Event (interrupting):** 
-In a production environment, if a machine malfunctions frequently, or requires callibration, the issue might be escalated to a specialized technical team. This team then initiates a comprehensive diagnostic process to identify and fix the root cause.
+In a production environment, if a machine malfunctions frequently, or requires calibration, the issue might be escalated to a specialized technical team. This team then initiates a comprehensive diagnostic process to identify and fix the root cause.
 
 **Escalation Start Event (non-interrupting):** 
 After a customer's order is processed, a non-interrupting escalation event is triggered. This event sends a notification to the customer that their order is being prepared for shipment. The key feature of this event is that it is non-interrupting, which means the notification to the customer does not halt the process of moving the order to the shipping phase. It allows for parallel processing to allow the process to continue seamlessly to the next step.
 
 ## Intermediate Escalation Event
 
-![intermediate_escalation_event](images/intermediate_escalation_throw_event.png) ![intermediate_escalation_event](images/intermediate_escalation_catch_event.png) ![intermediate_escalation_event](images/non_interripting_intermediate_escalation_event.png)
+![intermediate_escalation_event](images/intermediate_escalation_throw_event.png) ![intermediate_escalation_event](images/intermediate_escalation_catch_event.png) ![intermediate_escalation_event](images/non_interrupting_intermediate_escalation_event.png)
 
 An Intermediate Escalation Event serves as a mechanism within a process flow to raise an escalation. This could be due to an exception, a delay, or any condition that requires intervention. As a Boundary Event, it can also be associated with specific tasks or sub-processes, highlighting the need for escalation if certain criteria are met.
 
@@ -44,7 +44,7 @@ An Intermediate Escalation Event serves as a mechanism within a process flow to 
 In the same BPMN scenario, escalations can be managed at a higher level in the process hierarchy through a boundary escalation event. This method involves placing the escalation event on the border of the parent process activity. 
 
 **Escalation Boundary Event (interrupting):** 
-When the machine manufacturing a part requires caliibration, it can be escalated to a parent process where a process is followed to notify or handle the alterate path by cathing the throw event (Escalation End Event) from its child process. 
+When the machine manufacturing a part requires calibration, it can be escalated to a parent process where a process is followed to notify or handle the alternate path by catching the throw event (Escalation End Event) from its child process.
 
 **Escalation Boundary Event (non-interrupting):** 
 The same can be done for our order processing scenario. A non-interrupting escalation event is caught by the parent process, alerting the customer that their order is ready for shipment. This boundary event operates in tandem with the core process, updating the customer in real-time while maintaining uninterrupted progression to shipping. This parallel processing ensures that there are two active instances within the workflow hierarchy, with one instance continuing the child process and the other managing customer communication on the parent level.
