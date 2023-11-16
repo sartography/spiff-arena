@@ -17,6 +17,8 @@ groups:
     users: [jason@sartography.com, kevin@sartography.com]
   group2:
     users: [dan@sartography.com]
+  group3:
+    users: [jon@sartography.com]
 
 permissions:
   admin:
@@ -25,7 +27,7 @@ permissions:
     uri: /*
 
   basic:
-    groups: [group2]
+    groups: [group2, group3]
     actions: [all]
     uri: BASIC
 

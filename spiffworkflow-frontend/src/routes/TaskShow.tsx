@@ -411,11 +411,18 @@ export default function TaskShow() {
       pageElements.push(
         <ProcessBreadcrumb
           hotCrumbs={[
+            ['Process Groups', '/process-groups'],
+            {
+              entityToExplode: basicTask.process_model_identifier,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+              checkPermission: true,
+            },
             [
-              `Process Instance Id: ${params.process_instance_id}`,
+              `Process Instance Id: ${basicTask.process_instance_id}`,
               `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
                 basicTask.process_model_identifier
-              )}/${params.process_instance_id}`,
+              )}/${basicTask.process_instance_id}`,
             ],
             [`Task: ${basicTask.name_for_display || basicTask.id}`],
           ]}

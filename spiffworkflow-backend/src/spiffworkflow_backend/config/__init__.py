@@ -1,4 +1,5 @@
 """__init__.py."""
+import base64
 import os
 import threading
 import uuid
@@ -11,10 +12,19 @@ from spiffworkflow_backend.services.logging_service import setup_logger
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
 CONNECTOR_PROXY_COMMAND_TIMEOUT = 45
+SUPPORTED_ENCRYPTION_LIBS = ["cryptography", "no_op_cipher"]
 
 
 class ConfigurationError(Exception):
     pass
+
+
+class NoOpCipher:
+    def encrypt(self, value: str) -> bytes:
+        return str.encode(value)
+
+    def decrypt(self, value: str) -> str:
+        return value
 
 
 def setup_database_configs(app: Flask) -> None:
@@ -134,6 +144,33 @@ def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
     )
 
 
+def _setup_cipher(app: Flask) -> None:
+    encryption_lib = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB")
+    if encryption_lib not in SUPPORTED_ENCRYPTION_LIBS:
+        raise ConfigurationError(
+            f"Received invalid encryption lib: {encryption_lib}. Supported libs are {SUPPORTED_ENCRYPTION_LIBS}"
+        )
+
+    if encryption_lib == "cryptography":
+        from cryptography.fernet import Fernet
+
+        app_secret_key = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY")
+        if app_secret_key is None:
+            raise ConfigurationError(
+                "SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY must be specified if using cryptography encryption lib"
+            )
+
+        app_secret_key_bytes = app_secret_key.encode()
+        base64_key = base64.b64encode(app_secret_key_bytes)
+        fernet_cipher = Fernet(base64_key)
+        app.config["CIPHER"] = fernet_cipher
+
+    # no_op_cipher for comparison against possibly-slow encryption libraries
+    elif encryption_lib == "no_op_cipher":
+        no_op_cipher = NoOpCipher()
+        app.config["CIPHER"] = no_op_cipher
+
+
 def setup_config(app: Flask) -> None:
     # ensure the instance folder exists
     try:
@@ -211,3 +248,4 @@ def setup_config(app: Flask) -> None:
     _set_up_tenant_specific_fields_as_list_of_strings(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
+    _setup_cipher(app)
