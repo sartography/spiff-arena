@@ -157,8 +157,7 @@ def _setup_cipher(app: Flask) -> None:
         app_secret_key = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY")
         if app_secret_key is None:
             raise ConfigurationError(
-                "SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY must be specified if using cryptography"
-                " encryption lib"
+                "SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY must be specified if using cryptography encryption lib"
             )
 
         app_secret_key_bytes = app_secret_key.encode()
