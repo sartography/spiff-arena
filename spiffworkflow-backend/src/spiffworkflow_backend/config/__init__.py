@@ -154,10 +154,10 @@ def _setup_cipher(app: Flask) -> None:
     if encryption_lib == "cryptography":
         from cryptography.fernet import Fernet
 
-        app_secret_key = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY_FOR_SECRETS")
+        app_secret_key = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY")
         if app_secret_key is None:
             raise ConfigurationError(
-                "SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY_FOR_SECRETS must be specified if using cryptography"
+                "SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY must be specified if using cryptography"
                 " encryption lib"
             )
 
