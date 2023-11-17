@@ -13,16 +13,16 @@
       <bpmn:incoming>Flow_0903e0h</bpmn:incoming>
       <bpmn:outgoing>Flow_1yn50r0</bpmn:outgoing>
     </bpmn:manualTask>
-    <bpmn:boundaryEvent id="user_task_itmer_event" name="User task timer event" attachedToRef="user_task_one">
+    <bpmn:boundaryEvent id="user_task_timer_event" name="User task timer event" attachedToRef="user_task_one">
       <bpmn:outgoing>Flow_1ky2hak</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_12rb24v">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT15S"</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT10M"</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
     <bpmn:endEvent id="timer_event_path_end_event" name="Timer event path end event">
       <bpmn:incoming>Flow_1ky2hak</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1ky2hak" sourceRef="user_task_itmer_event" targetRef="timer_event_path_end_event" />
+    <bpmn:sequenceFlow id="Flow_1ky2hak" sourceRef="user_task_timer_event" targetRef="timer_event_path_end_event" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_zaes0vi">
@@ -45,7 +45,7 @@
           <dc:Bounds x="379" y="325" width="83" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1aw81go_di" bpmnElement="user_task_itmer_event">
+      <bpmndi:BPMNShape id="Event_1aw81go_di" bpmnElement="user_task_timer_event">
         <dc:Bounds x="312" y="199" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="293" y="242" width="75" height="27" />

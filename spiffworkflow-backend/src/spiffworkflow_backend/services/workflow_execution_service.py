@@ -4,6 +4,7 @@ import concurrent.futures
 import time
 from abc import abstractmethod
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -13,12 +14,14 @@ from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -398,6 +401,7 @@ class WorkflowExecutionService:
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
+            self.schedule_waiting_timer_events()
         except WorkflowTaskException as wte:
             ProcessInstanceTmpService.add_event_to_process_instance(
                 self.process_instance_model,
@@ -416,6 +420,15 @@ class WorkflowExecutionService:
                 self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
                 if save:
                     self.process_instance_saver()
+
+    def schedule_waiting_timer_events(self) -> None:
+        waiting_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING, spec_class=CatchingEvent)
+        for spiff_task in waiting_tasks:
+            event = spiff_task.task_spec.event_definition.details(spiff_task)
+            if "Time" in event.event_type:
+                time_string = event.value
+                time_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+                FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=time_in_seconds)
 
     def process_bpmn_messages(self) -> None:
         # FIXE: get_events clears out the events so if we have other events we care about
