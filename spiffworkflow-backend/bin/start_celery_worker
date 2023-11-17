@@ -9,4 +9,4 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 . "bin/local_development_environment_setup"
 
-poet run celery -A make_celery worker --loglevel=info
+poet run celery -A src.spiffworkflow_backend.celery_worker worker --loglevel=info

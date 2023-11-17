@@ -229,6 +229,7 @@ class ProcessInstanceService:
 
         return False
 
+    # this is only used from background processor
     @classmethod
     def do_waiting(cls, status_value: str) -> None:
         run_at_in_seconds_threshold = round(time.time())

@@ -149,6 +149,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def has_terminal_status(self) -> bool:
         return self.status in self.terminal_statuses()
 
+    def is_immediately_runnable(self) -> bool:
+        return self.status in self.immediately_runnable_statuses()
+
     @classmethod
     def terminal_statuses(cls) -> list[str]:
         return ["complete", "error", "terminated"]
@@ -160,7 +163,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def active_statuses(cls) -> list[str]:
-        return ["not_started", "user_input_required", "waiting"]
+        return cls.immediately_runnable_statuses() + ["user_input_required"]
+
+    @classmethod
+    def immediately_runnable_statuses(cls) -> list[str]:
+        return ["not_started", "waiting"]
 
 
 class ProcessInstanceModelSchema(Schema):

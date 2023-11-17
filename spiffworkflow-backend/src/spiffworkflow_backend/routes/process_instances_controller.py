@@ -11,6 +11,7 @@ from flask.wrappers import Response
 from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
+from spiffworkflow_backend.celery_tasks.process_instance_task import process_instance_task_run
 
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -124,6 +125,9 @@ def _process_instance_run(
 
     if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
         MessageService.correlate_all_message_instances()
+
+    if process_instance.is_immediately_runnable():
+        process_instance_task_run.delay(process_instance.id)
 
     return processor
 

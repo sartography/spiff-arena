@@ -95,8 +95,11 @@ export default function ProcessInstanceRun({
 
   const onProcessInstanceRun = (processInstance: any) => {
     const processInstanceId = (processInstance as any).id;
+    // navigate(
+    //   `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`
+    // );
     navigate(
-      `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`
+      `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}`
     );
   };
 
