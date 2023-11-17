@@ -285,6 +285,21 @@ class GreedyExecutionStrategy(ExecutionStrategy):
     pass
 
 
+class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
+    """When you want to run tasks with instructionsForEndUser but you want to queue them.
+
+    The queue can be used to display the instructions to user later.
+    """
+
+    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
+        for task in tasks:
+            if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get("instructionsForEndUser", None):
+                # TODO: actually queue the instructions
+                pass
+        # always return false since we just want to queue instructions but not stop execution
+        return False
+
+
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     """When you want to run tasks until you hit something to report to the end user.
 
@@ -329,6 +344,7 @@ def execution_strategy_named(
 ) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
+        "queue_instructions_for_end_user": QueueInstructionsForEndUserExecutionStrategy,
         "run_until_user_message": RunUntilUserTaskOrMessageExecutionStrategy,
         "run_current_ready_tasks": RunCurrentReadyTasksExecutionStrategy,
         "skip_one": SkipOneExecutionStrategy,

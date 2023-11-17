@@ -1,6 +1,5 @@
 import faulthandler
 import json
-from celery import Celery, Task  # type: ignore
 import os
 import sys
 from typing import Any
@@ -11,6 +10,8 @@ import flask.json
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
+from celery import Celery  # type: ignore
+from celery import Task
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
@@ -114,11 +115,12 @@ celery_configs = {
     "broker_url": "redis://localhost",
     "result_backend": "redis://localhost",
     "task_ignore_result": True,
-    "task_serializer": 'json',
-    "result_serializer": 'json',
-    "accept_content": ['json'],
+    "task_serializer": "json",
+    "result_serializer": "json",
+    "accept_content": ["json"],
     "enable_utc": True,
 }
+
 
 def celery_init_app(app: flask.app.Flask) -> Celery:
     class FlaskTask(Task):  # type: ignore
@@ -126,7 +128,7 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
             with app.app_context():
                 return self.run(*args, **kwargs)
 
-    celery_app = Celery(app.name) #, task_cls=FlaskTask)
+    celery_app = Celery(app.name)  # , task_cls=FlaskTask)
     celery_app.Task = FlaskTask
     celery_app.config_from_object(celery_configs)
     celery_app.conf.update(app.config)

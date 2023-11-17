@@ -878,7 +878,8 @@ def _task_submit_shared(
 
     # enqueue
 
-    # a guest user completed a task, it has a guest_confirmation message to display to them, and there is nothing else for them to do
+    # a guest user completed a task, it has a guest_confirmation message to display to them,
+    # and there is nothing else for them to do
     spiff_task_extensions = spiff_task.task_spec.extensions
     if (
         "allowGuest" in spiff_task_extensions

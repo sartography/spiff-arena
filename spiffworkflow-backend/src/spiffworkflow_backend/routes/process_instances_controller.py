@@ -11,8 +11,8 @@ from flask.wrappers import Response
 from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
-from spiffworkflow_backend.celery_tasks.process_instance_task import process_instance_task_run
 
+from spiffworkflow_backend.celery_tasks.process_instance_task import process_instance_task_run
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
