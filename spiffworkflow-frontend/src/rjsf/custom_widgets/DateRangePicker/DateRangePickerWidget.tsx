@@ -99,6 +99,7 @@ export default function DateRangePickerWidget({
         helperText={commonAttributes.helperText}
         type="text"
         size="md"
+        autocomplete="off"
         disabled={disabled || readonly}
         invalid={commonAttributes.invalid}
         invalidText={commonAttributes.errorMessageForField}
@@ -110,6 +111,7 @@ export default function DateRangePickerWidget({
         placeholder={DATE_FORMAT_FOR_DISPLAY}
         type="text"
         size="md"
+        autocomplete="off"
         disabled={disabled || readonly}
         invalid={commonAttributes.invalid}
         autoFocus={autofocus}
