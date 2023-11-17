@@ -86,7 +86,7 @@ def process_instance_create(
 
 def _process_instance_run(
     process_instance: ProcessInstanceModel,
-) -> ProcessInstanceProcessor | None:
+) -> bool:
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",
@@ -124,7 +124,7 @@ def _process_instance_run(
 
     process_instance_was_queued = queue_process_instance_if_appropriate(process_instance)
 
-    return processor
+    return process_instance_was_queued
 
 
 def process_instance_run(
@@ -132,25 +132,11 @@ def process_instance_run(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = _process_instance_run(process_instance)
+    _process_instance_was_queued = _process_instance_run(process_instance)
 
-    # for mypy
-    if processor is not None:
-        process_instance_api = ProcessInstanceService.processor_to_process_instance_api(processor)
-        process_instance_data = processor.get_data()
-        process_instance_metadata = ProcessInstanceApiSchema().dump(process_instance_api)
-        process_instance_metadata["data"] = process_instance_data
-        return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
-
-    return make_response(jsonify(process_instance), 200)
-
-
-def _process_instance_start(
-    process_model_identifier: str,
-) -> tuple[ProcessInstanceModel, ProcessInstanceProcessor | None]:
-    process_instance = _process_instance_create(process_model_identifier)
-    processor = _process_instance_run(process_instance)
-    return process_instance, processor
+    process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
+    process_instance_metadata = ProcessInstanceApiSchema().dump(process_instance_api)
+    return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
 
 
 def process_instance_terminate(

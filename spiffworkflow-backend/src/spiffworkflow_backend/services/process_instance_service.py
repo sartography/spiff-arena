@@ -290,34 +290,15 @@ class ProcessInstanceService:
         return processor
 
     @staticmethod
-    def processor_to_process_instance_api(
-        processor: ProcessInstanceProcessor, next_task: None = None
-    ) -> ProcessInstanceApi:
-        """Returns an API model representing the state of the current process_instance.
-
-        If requested, and possible, next_task is set to the current_task.
-        """
-        # navigation = processor.bpmn_process_instance.get_deep_nav_list()
-        # ProcessInstanceService.update_navigation(navigation, processor)
-        ProcessModelService.get_process_model(processor.process_model_identifier)
+    def processor_to_process_instance_api(process_instance: ProcessInstanceModel) -> ProcessInstanceApi:
+        """Returns an API model representing the state of the current process_instance."""
         process_instance_api = ProcessInstanceApi(
-            id=processor.get_process_instance_id(),
-            status=processor.get_status(),
-            next_task=None,
-            process_model_identifier=processor.process_model_identifier,
-            process_model_display_name=processor.process_model_display_name,
-            updated_at_in_seconds=processor.process_instance_model.updated_at_in_seconds,
+            id=process_instance.id,
+            status=process_instance.status,
+            process_model_identifier=process_instance.process_model_identifier,
+            process_model_display_name=process_instance.process_model_display_name,
+            updated_at_in_seconds=process_instance.updated_at_in_seconds,
         )
-
-        next_task_trying_again = next_task
-        if not next_task:  # The Next Task can be requested to be a certain task, useful for parallel tasks.
-            # This may or may not work, sometimes there is no next task to complete.
-            next_task_trying_again = processor.next_task()
-
-        if next_task_trying_again is not None:
-            process_instance_api.next_task = ProcessInstanceService.spiff_task_to_api_task(
-                processor, next_task_trying_again, add_docs_and_forms=True
-            )
 
         return process_instance_api
 
