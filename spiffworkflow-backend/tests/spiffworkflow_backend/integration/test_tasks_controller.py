@@ -46,10 +46,9 @@ class TestTasksController(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         # Call this to assure all engine-steps are fully processed.
         _dequeued_interstitial_stream(process_instance_id)
-        assert response.json is not None
-        assert response.json["next_task"] is not None
 
         human_tasks = (
             db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
@@ -214,11 +213,11 @@ class TestTasksController(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=headers,
         )
+        assert response.status_code == 200
 
-        assert response.json is not None
-        assert response.json["next_task"] is not None
-        assert response.json["next_task"]["state"] == "READY"
-        assert response.json["next_task"]["title"] == "Script Task #2"
+        task_model = TaskModel.query.filter_by(process_instance_id=process_instance_id, state="READY").first()
+        assert task_model is not None
+        assert task_model.task_definition.bpmn_name == "Script Task #2"
 
         # Rather that call the API and deal with the Server Side Events, call the loop directly and covert it to
         # a list.  It tests all of our code.  No reason to test Flasks SSE support.
@@ -481,10 +480,10 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert "next_task" in response.json
-        task_guid = response.json["next_task"]["id"]
-        assert task_guid is not None
+
+        task_model = TaskModel.query.filter_by(process_instance_id=process_instance_id, state="READY").first()
+        assert task_model is not None
+        task_guid = task_model.guid
 
         # log in a guest user to complete the tasks
         redirect_url = "/test-redirect-dne"
