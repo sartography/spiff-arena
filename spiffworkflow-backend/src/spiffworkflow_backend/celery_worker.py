@@ -1,7 +1,4 @@
 from spiffworkflow_backend import create_app
 
-flask_app = create_app()
-celery_app = flask_app.celery_app
-
-with flask_app.app_context():
-    print(f"app.tasks: {celery_app.tasks.keys()}")
+the_flask_app = create_app()
+setting_variable_to_make_celery_happy_no_idea_how_this_works = the_flask_app.celery_app

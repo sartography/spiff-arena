@@ -12,7 +12,7 @@ from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
-from spiffworkflow_backend.celery_tasks.process_instance_task import process_instance_task_run
+from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -49,10 +49,6 @@ from spiffworkflow_backend.services.process_instance_report_service import Proce
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
-
-# from spiffworkflow_backend.services.process_instance_report_service import (
-#     ProcessInstanceReportFilter,
-# )
 
 
 def _process_instance_create(
@@ -126,8 +122,7 @@ def _process_instance_run(
     if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
         MessageService.correlate_all_message_instances()
 
-    if process_instance.is_immediately_runnable():
-        process_instance_task_run.delay(process_instance.id)
+    process_instance_was_queued = queue_process_instance_if_appropriate(process_instance)
 
     return processor
 

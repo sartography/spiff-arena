@@ -128,7 +128,7 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
             with app.app_context():
                 return self.run(*args, **kwargs)
 
-    celery_app = Celery(app.name)  # , task_cls=FlaskTask)
+    celery_app = Celery(app.name)
     celery_app.Task = FlaskTask
     celery_app.config_from_object(celery_configs)
     celery_app.conf.update(app.config)
@@ -189,9 +189,6 @@ def create_app() -> flask.app.Flask:
 
     celery_app = celery_init_app(app)
     app.celery_app = celery_app
-
-    # celery_app.conf.update(app.config)
-    # print(f"app.tasks: {celery_app.tasks.keys()}")
 
     return app  # type: ignore
 
