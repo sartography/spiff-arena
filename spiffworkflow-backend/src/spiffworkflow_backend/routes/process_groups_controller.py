@@ -101,7 +101,7 @@ def process_group_show(
 ) -> Any:
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
     try:
-        process_group = ProcessModelService.get_process_group(process_group_id)
+        process_group = ProcessModelService.get_process_group(process_group_id, find_all_nested_items=False)
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(
