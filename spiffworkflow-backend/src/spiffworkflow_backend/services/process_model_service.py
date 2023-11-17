@@ -358,7 +358,9 @@ class ProcessModelService(FileSystemService):
         return new_process_group_list
 
     @classmethod
-    def get_process_group(cls, process_group_id: str, find_direct_nested_items: bool = True) -> ProcessGroup:
+    def get_process_group(
+        cls, process_group_id: str, find_direct_nested_items: bool = True, find_all_nested_items: bool = True
+    ) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = FileSystemService.full_path_from_id(process_group_id)
@@ -366,6 +368,7 @@ class ProcessModelService(FileSystemService):
                 return cls.find_or_create_process_group(
                     process_group_path,
                     find_direct_nested_items=find_direct_nested_items,
+                    find_all_nested_items=find_all_nested_items,
                 )
 
         raise ProcessEntityNotFoundError("process_group_not_found", f"Process Group Id: {process_group_id}")
@@ -445,8 +448,13 @@ class ProcessModelService(FileSystemService):
                     process_groups.append(scanned_process_group)
             return process_groups
 
+    # NOTE: find_all_nested_items was added to avoid potential backwards compatibility issues.
+    # we may be able to remove it and always pass "find_direct_nested_items=False" whenever looking
+    # through the subdirs of a process group instead.
     @classmethod
-    def find_or_create_process_group(cls, dir_path: str, find_direct_nested_items: bool = True) -> ProcessGroup:
+    def find_or_create_process_group(
+        cls, dir_path: str, find_direct_nested_items: bool = True, find_all_nested_items: bool = True
+    ) -> ProcessGroup:
         """Reads the process_group.json file, and any nested directories."""
         cat_path = os.path.join(dir_path, cls.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(cat_path):
@@ -471,7 +479,7 @@ class ProcessModelService(FileSystemService):
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
 
-        if find_direct_nested_items:
+        if find_direct_nested_items or find_all_nested_items:
             with os.scandir(dir_path) as nested_items:
                 process_group.process_models = []
                 process_group.process_groups = []
@@ -480,7 +488,11 @@ class ProcessModelService(FileSystemService):
                         # TODO: check whether this is a group or model
                         if cls.is_process_group(nested_item.path):
                             # This is a nested group
-                            process_group.process_groups.append(cls.find_or_create_process_group(nested_item.path))
+                            process_group.process_groups.append(
+                                cls.find_or_create_process_group(
+                                    nested_item.path, find_all_nested_items=find_all_nested_items
+                                )
+                            )
                         elif ProcessModelService.is_process_model(nested_item.path):
                             process_group.process_models.append(
                                 cls.__scan_process_model(
@@ -489,7 +501,7 @@ class ProcessModelService(FileSystemService):
                                 )
                             )
                 process_group.process_models.sort()
-                # process_group.process_groups.sort()
+                process_group.process_groups.sort()
         return process_group
 
     # path might have backslashes on windows, not sure
