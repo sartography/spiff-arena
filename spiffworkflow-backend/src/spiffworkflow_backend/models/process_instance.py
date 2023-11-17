@@ -5,7 +5,6 @@ from typing import Any
 import marshmallow
 from marshmallow import INCLUDE
 from marshmallow import Schema
-from marshmallow_enum import EnumField  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
@@ -15,8 +14,6 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.task import Task
-from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
 
 
@@ -189,15 +186,13 @@ class ProcessInstanceApi:
     def __init__(
         self,
         id: int,
-        status: ProcessInstanceStatus,
-        next_task: Task | None,
+        status: str,
         process_model_identifier: str,
         process_model_display_name: str,
         updated_at_in_seconds: int,
     ) -> None:
         self.id = id
         self.status = status
-        self.next_task = next_task  # The next task that requires user input.
         self.process_model_identifier = process_model_identifier
         self.process_model_display_name = process_model_display_name
         self.updated_at_in_seconds = updated_at_in_seconds
@@ -209,26 +204,20 @@ class ProcessInstanceApiSchema(Schema):
         fields = [
             "id",
             "status",
-            "next_task",
             "process_model_identifier",
             "process_model_display_name",
             "updated_at_in_seconds",
         ]
         unknown = INCLUDE
 
-    status = EnumField(ProcessInstanceStatus)
-    next_task = marshmallow.fields.Nested(TaskSchema, dump_only=True, required=False)
-
     @marshmallow.post_load
     def make_process_instance(self, data: dict[str, Any], **kwargs: dict) -> ProcessInstanceApi:
         keys = [
             "id",
             "status",
-            "next_task",
             "process_model_identifier",
             "process_model_display_name",
             "updated_at_in_seconds",
         ]
         filtered_fields = {key: data[key] for key in keys}
-        filtered_fields["next_task"] = TaskSchema().make_task(data["next_task"])
         return ProcessInstanceApi(**filtered_fields)
