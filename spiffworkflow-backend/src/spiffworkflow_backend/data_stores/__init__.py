@@ -14,7 +14,7 @@ DATA_STORES: list[BpmnDataStoreSpecification] = [
     TypeaheadDataStore,
 ]
 
+
 def register_data_store_classes(data_store_classes: dict[str, Any]) -> None:
     for ds in DATA_STORES:
         ds.register_data_store_class(data_store_classes)
-
