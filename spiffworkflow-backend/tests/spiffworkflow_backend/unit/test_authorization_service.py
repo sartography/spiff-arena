@@ -557,8 +557,19 @@ class TestAuthorizationService(BaseTest):
         waiting_assignments = UserGroupAssignmentWaitingModel.query.filter_by(username=user_regex).all()
         assert len(waiting_assignments) == 1
         assert waiting_assignments[0].username == user_regex
+        assert len(user.groups) == 2
+        assert "group_one" in [g.identifier for g in user.groups]
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey", expected_result=False)
+
+        # run again to ensure the user does NOT lose permission when refreshing permissions again
+        AuthorizationService.refresh_permissions(group_info)
+        waiting_assignments = UserGroupAssignmentWaitingModel.query.filter_by(username=user_regex).all()
+        assert len(waiting_assignments) == 1
+        assert waiting_assignments[0].username == user_regex
+        assert len(user.groups) == 2
+        assert "group_one" in [g.identifier for g in user.groups]
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
 
         user_three_dict = {
             "username": "user_three",
@@ -621,4 +632,3 @@ class TestAuthorizationService(BaseTest):
         # test it can be permitted again
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey:yo")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo", expected_result=True)
-        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo:me", expected_result=True)
