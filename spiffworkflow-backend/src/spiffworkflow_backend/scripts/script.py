@@ -51,7 +51,7 @@ class Script:
     ) -> Any:
         raise ApiError(
             "invalid_script",
-            "This is an internal error. The script you are trying to execute '%s' " % self.__class__.__name__
+            f"This is an internal error. The script you are trying to execute '{self.__class__.__name__}' "
             + "does not properly implement the run function.",
         )
 
