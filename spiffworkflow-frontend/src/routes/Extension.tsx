@@ -23,6 +23,7 @@ import ErrorDisplay from '../components/ErrorDisplay';
 import FormattingService from '../services/FormattingService';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import LoginHandler from '../components/LoginHandler';
 
 type OwnProps = {
   displayErrors?: boolean;
@@ -370,5 +371,12 @@ export default function Extension({ displayErrors = true }: OwnProps) {
       </div>
     );
   }
-  return null;
+
+  // load the login handler if the components haven't loaded to ensure
+  // things aren't loading because the user is not logged in
+  return (
+    <div className="fixed-width-container">
+      <LoginHandler />
+    </div>
+  );
 }

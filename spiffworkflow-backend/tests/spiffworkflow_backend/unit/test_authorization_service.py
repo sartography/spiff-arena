@@ -603,9 +603,9 @@ class TestAuthorizationService(BaseTest):
         user_group = UserService.find_or_create_group("group_one")
         UserService.add_user_to_group(user, user_group)
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
-        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "DENY:PG:hey:yo")
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "DENY:read", "PG:hey:yo")
         AuthorizationService.add_permission_from_uri_or_macro(
-            user_group.identifier, "read", "DENY:/process-groups/hey:new"
+            user_group.identifier, "DENY:read", "/process-groups/hey:new"
         )
 
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")

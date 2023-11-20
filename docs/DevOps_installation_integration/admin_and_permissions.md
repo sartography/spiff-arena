@@ -14,16 +14,10 @@ groups:
     users: [admin@spiffworkflow.org]
 
 permissions:
-  admin:
+  admin-type-user:
     groups: [admin]
-    allowed_permissions: [create, read, update, delete]
+    actions: [create, read, update, delete]
     uri: /*
-```
-
-```{admonition} uri!
-:class: info
-
-The "uri" field defines the target resource for these permissions, which is set to "/*". This indicates that the permissions apply to all resources within the system.
 ```
 
 ### Groups
@@ -33,9 +27,16 @@ In this example, the "admin" group consists of a single user with the associated
 
 ### Permissions 
 
-The "permissions" section specifies the permissions and access control rules for the "admin" group.
-The "admin" permission set allows members of the "admin" group to perform actions such as create, read, update, start and delete or all.
-The "allowed_permissions" field lists the specific actions that are permitted for the "admin" group.
+Each permission has a name.
+This is just for documentation purposes, and isn't used by the system.
+In this example, we are describing permissions for an "admin-type-user."
+
+There are three keys allowed under each permission:
+* groups: lists the groups to which the permission applies (admin in this case)
+* actions: lists the specific actions that are permitted for the group
+   * actions can be negated by prepending with "DENY:"
+* uri: defines the target resource for these permissions
+   * /* indicates that the permissions apply to all resources within the system
 
 **Permissions allowed:**
 
@@ -50,6 +51,18 @@ The "allowed_permissions" field lists the specific actions that are permitted fo
 - start
 
 - all
+
+To allow reading and updating, it would look like this:
+
+````
+["read", "update"]
+````
+
+To allow reading and DISALLOW updating, it would look like this:
+
+````
+["read", "DENY:update"]
+````
   
 ## Site Administration
 

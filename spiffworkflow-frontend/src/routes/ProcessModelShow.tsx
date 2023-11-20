@@ -328,72 +328,80 @@ export default function ProcessModelShow() {
       return null;
     }
     let constructedTag;
-    const tags = processModel.files.map((processModelFile: ProcessFile) => {
-      const isPrimaryBpmnFile =
-        processModelFile.name === processModel.primary_file_name;
+    const tags = processModel.files
+      .map((processModelFile: ProcessFile) => {
+        if (!processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
+          return undefined;
+        }
+        const isPrimaryBpmnFile =
+          processModelFile.name === processModel.primary_file_name;
 
-      let actionsTableCell = null;
-      if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
-        actionsTableCell = (
-          <TableCell key={`${processModelFile.name}-cell`} align="right">
-            {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
-          </TableCell>
-        );
-      }
+        let actionsTableCell = null;
+        if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
+          actionsTableCell = (
+            <TableCell key={`${processModelFile.name}-cell`} align="right">
+              {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
+            </TableCell>
+          );
+        }
 
-      let primarySuffix = null;
-      if (isPrimaryBpmnFile) {
-        primarySuffix = (
-          <span>
-            &nbsp;-{' '}
-            <span className="primary-file-text-suffix">Primary File</span>
-          </span>
-        );
-      }
-      let fileLink = null;
-      const fileUrl = profileModelFileEditUrl(processModelFile);
-      if (fileUrl) {
-        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
-      }
-      constructedTag = (
-        <TableRow key={processModelFile.name}>
-          <TableCell
-            key={`${processModelFile.name}-cell`}
-            className="process-model-file-table-filename"
-            title={processModelFile.name}
-          >
-            {fileLink}
-            {primarySuffix}
-          </TableCell>
-          {actionsTableCell}
-        </TableRow>
-      );
-      return constructedTag;
-    });
-
-    return (
-      <Table
-        size="lg"
-        useZebraStyles={false}
-        className="process-model-file-table"
-      >
-        <TableHead>
-          <TableRow>
-            <TableHeader id="Name" key="Name">
-              Name
-            </TableHeader>
-            <TableHeader
-              id="Actions"
-              key="Actions"
-              className="table-header-right-align"
+        let primarySuffix = null;
+        if (isPrimaryBpmnFile) {
+          primarySuffix = (
+            <span>
+              &nbsp;-{' '}
+              <span className="primary-file-text-suffix">Primary File</span>
+            </span>
+          );
+        }
+        let fileLink = null;
+        const fileUrl = profileModelFileEditUrl(processModelFile);
+        if (fileUrl) {
+          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
+        }
+        constructedTag = (
+          <TableRow key={processModelFile.name}>
+            <TableCell
+              key={`${processModelFile.name}-cell`}
+              className="process-model-file-table-filename"
+              title={processModelFile.name}
             >
-              Actions
-            </TableHeader>
+              {fileLink}
+              {primarySuffix}
+            </TableCell>
+            {actionsTableCell}
           </TableRow>
-        </TableHead>
-        <TableBody>{tags}</TableBody>
-      </Table>
-    );
+        );
+        return constructedTag;
+      })
+      .filter((element: any) => element !== undefined);
+
+    if (tags.length > 0) {
+      return (
+        <Table
+          size="lg"
+          useZebraStyles={false}
+          className="process-model-file-table"
+        >
+          <TableHead>
+            <TableRow>
+              <TableHeader id="Name" key="Name">
+                Name
+              </TableHeader>
+              <TableHeader
+                id="Actions"
+                key="Actions"
+                className="table-header-right-align"
+              >
+                Actions
+              </TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>{tags}</TableBody>
+        </Table>
+      );
+    }
+    return null;
   };
 
   const [fileUploadEvent, setFileUploadEvent] = useState(null);
@@ -619,6 +627,19 @@ export default function ProcessModelShow() {
       return null;
     }
 
+    let helpText = null;
+    if (processModel.files.length === 0) {
+      helpText = (
+        <p className="no-results-message with-bottom-margin">
+          <strong>
+            **This process model does not have any files associated with it. Try
+            creating a bpmn file by selecting &quot;New BPMN File&quot; in the
+            dropdown below.**
+          </strong>
+        </p>
+      );
+    }
+
     return (
       <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
         <TabList aria-label="List of tabs">
@@ -636,6 +657,7 @@ export default function ProcessModelShow() {
                   a={targetUris.processModelFileCreatePath}
                   ability={ability}
                 >
+                  {helpText}
                   <div className="with-bottom-margin">
                     Files
                     {processModel &&

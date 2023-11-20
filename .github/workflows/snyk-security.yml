@@ -23,9 +23,13 @@ name: Snyk Security
 #     branches: ["main" ]
 #   pull_request:
 #     branches: ["main"]
+# on:
+#   - push
+#   - pull_request
 on:
-  - push
-  - pull_request
+  workflow_dispatch: # allow running on demand
+  schedule:
+    - cron: "0 14 * * 2"  # Every Tuesday at 1PM UTC (9AM/10AM eastern)
 
 permissions:
   contents: read
@@ -121,6 +125,9 @@ jobs:
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
         run: snyk monitor --all-projects
+        # # uncomment to enable debug logs
+        # env:
+        #   DEBUG: "*snyk*"
 
         # Build the docker image for testing
       - name: Build a Docker image

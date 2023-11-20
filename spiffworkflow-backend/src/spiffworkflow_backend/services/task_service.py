@@ -201,8 +201,8 @@ class TaskService:
         )
 
         self.update_task_model(task_model, spiff_task)
-        bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(
-            bpmn_process, spiff_task.workflow.data
+        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
+            bpmn_process, bpmn_process_instance=spiff_task.workflow
         )
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
@@ -247,7 +247,9 @@ class TaskService:
         new_properties_json["success"] = spiff_workflow.success
         bpmn_process.properties_json = new_properties_json
 
-        bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, spiff_workflow.data)
+        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
+            bpmn_process, bpmn_process_instance=spiff_workflow
+        )
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
@@ -411,7 +413,9 @@ class TaskService:
 
         bpmn_process.properties_json = bpmn_process_dict
 
-        bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_data_dict)
+        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
+            bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict
+        )
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
@@ -504,15 +508,22 @@ class TaskService:
                 parent_task_model.properties_json = new_parent_properties_json
                 task_models[spiff_task_parent_guid] = parent_task_model
 
-    @classmethod
     def update_task_data_on_bpmn_process(
-        cls, bpmn_process: BpmnProcessModel, bpmn_process_data_dict: dict
+        self,
+        bpmn_process: BpmnProcessModel,
+        bpmn_process_data_dict: dict | None = None,
+        bpmn_process_instance: BpmnWorkflow | None = None,
     ) -> JsonDataDict | None:
-        bpmn_process_data_json = json.dumps(bpmn_process_data_dict, sort_keys=True)
+        data_dict_to_use = bpmn_process_data_dict
+        if bpmn_process_instance is not None:
+            data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
+        if data_dict_to_use is None:
+            data_dict_to_use = {}
+        bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
         bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
         json_data_dict: JsonDataDict | None = None
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
-            json_data_dict = {"hash": bpmn_process_data_hash, "data": bpmn_process_data_dict}
+            json_data_dict = {"hash": bpmn_process_data_hash, "data": data_dict_to_use}
             bpmn_process.json_data_hash = bpmn_process_data_hash
         return json_data_dict
 

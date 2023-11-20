@@ -5,17 +5,17 @@ groups:
 permissions:
   process-groups-ro:
     groups: [admin]
-    allowed_permissions: [read]
+    actions: [read]
     uri: PG:ALL
   basic:
     groups: [admin]
-    allowed_permissions: [all]
+    actions: [all]
     uri: BASIC
   elevated-operations:
     groups: [admin]
-    allowed_permissions: [all]
+    actions: [all]
     uri: ELEVATED
   process-model-publish:
     groups: [admin]
-    allowed_permissions: [create]
+    actions: [create]
     uri: /process-model-publish/*

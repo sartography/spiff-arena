@@ -299,6 +299,7 @@ export interface HotCrumbItemObject {
   entityToExplode: ProcessModel | ProcessGroup | string;
   entityType: string;
   linkLastItem?: boolean;
+  checkPermission?: boolean;
 }
 
 export type HotCrumbItemArray = [displayValue: string, url?: string];
@@ -459,4 +460,10 @@ export interface JsonSchemaExample {
   schema: any;
   ui: any;
   data: any;
+}
+
+export interface AuthenticationOption {
+  identifier: string;
+  label: string;
+  uri: string;
 }

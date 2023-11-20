@@ -7,21 +7,28 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
 
+
+######################## - DEPLOYMENT
+
 # base plus packages needed for deployment. Could just install these in final, but then we can't cache as much.
 # vim is just for debugging
 FROM base AS deployment
 
 # git-core because the app does "git commit", etc
 # curl because the docker health check uses it
+# procps because it is useful for debugging
 # gunicorn3 for web server
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
 RUN apt-get update \
  && apt-get clean -y \
- && apt-get install -y -q git-core curl gunicorn3 default-mysql-client vim-tiny \
+ && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
+
+
+######################## - SETUP
 
 # Setup image for installing Python dependencies.
 FROM base AS setup
@@ -45,6 +52,9 @@ RUN poetry install --without dev
 
 COPY . /app
 RUN poetry install --without dev
+
+
+######################## - FINAL
 
 # Final image without setup dependencies.
 FROM deployment AS final

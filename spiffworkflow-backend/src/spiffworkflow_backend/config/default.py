@@ -1,12 +1,15 @@
 import re
 from os import environ
+from typing import Any
+
+from spiffworkflow_backend.config.normalized_environment import normalized_environment
 
 # Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
 #   and from_prefixed_env(), though we want to ensure that these variables are all documented, so that
 #   is a benefit of the status quo and having them all in this file explicitly.
 
 
-def config_from_env(variable_name: str, *, default: str | bool | int | None = None) -> None:
+def config_from_env(variable_name: str, *, default: str | bool | int | None = None) -> Any:
     value_from_env: str | None = environ.get(variable_name)
     if value_from_env == "":
         value_from_env = None
@@ -28,7 +31,10 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
     # the value set in the variable here. It is better to set the variables like
     # normal in them so they can take effect.
     globals()[variable_name] = value_to_return
+    return value_to_return
 
+
+configs_with_structures = normalized_environment(environ)
 
 ### basic
 config_from_env("FLASK_SESSION_SECRET_KEY")
@@ -75,23 +81,34 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_SIZE")
 
 ### open id
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
-# Open ID server
-# use "http://localhost:7000/openid" for running with simple openid
-# server hosted by spiffworkflow-backend
-config_from_env(
-    "SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL",
-    default="http://localhost:7002/realms/spiffworkflow",
-)
-config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
-config_from_env(
-    "SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY",
-    default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
-)  # noqa: S105
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", default=False)
 # Tenant specific fields is a comma separated list of field names that we will be converted to list of strings
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
 # comma-separated list.
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS")
+
+# Open ID server
+# use "http://localhost:7000/openid" for running with simple openid
+# server hosted by spiffworkflow-backend
+if "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS" in configs_with_structures:
+    SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = configs_with_structures["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
+else:
+    # do this for now for backwards compatibility
+    url_config = config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL")
+    if url_config is not None:
+        SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = url_config
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q")
+    else:
+        SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = [
+            {
+                "identifier": "default",
+                "label": "Default",
+                "uri": "http://localhost:7002/realms/spiffworkflow",
+                "client_id": "spiffworkflow-backend",
+                "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
+            }
+        ]
 
 ### logs
 # loggers to use is a comma separated list of logger prefixes that we will be converted to list of strings
@@ -145,6 +162,7 @@ config_from_env(
     "SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB",
     default="no_op_cipher",
 )
+config_from_env("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY")
 
 ### locking
 # timeouts for process instances locks as they are run to avoid stale locks

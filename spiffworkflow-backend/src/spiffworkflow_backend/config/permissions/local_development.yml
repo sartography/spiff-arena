@@ -1,14 +1,37 @@
 
+users:
+  admin:
+    service: local_open_id
+    email: admin@spiffworkflow.org
+    password: admin
+    preferred_username: Admin
+  nelson:
+    service: local_open_id
+    email: nelson@spiffworkflow.org
+    password: nelson
+    preferred_username: Nelson
 groups:
   admin:
-    users: [admin@spiffworkflow.org]
+    users: [admin@spiffworkflow.org, nelson@spiffworkflow.org]
   group1:
     users: [jason@sartography.com, kevin@sartography.com]
   group2:
     users: [dan@sartography.com]
+  group3:
+    users: [jon@sartography.com]
 
 permissions:
   admin:
-    groups: [admin, group1, group2]
-    allowed_permissions: [create, read, update, delete]
+    groups: [admin, group1]
+    actions: [create, read, update, delete]
     uri: /*
+
+  basic:
+    groups: [group2, group3]
+    actions: [all]
+    uri: BASIC
+
+  basic-read:
+    groups: [group2]
+    actions: [read]
+    uri: PG:ALL

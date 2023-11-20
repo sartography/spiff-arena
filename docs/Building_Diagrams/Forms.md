@@ -1,95 +1,69 @@
 # Using Forms
 
-This feature allows you to create custom forms for collecting and 
-managing data within your workflows. Whether you need a simple 
-feedback form or a complex multi-step form, SpiffArena provides you 
-with the tools to build and integrate forms seamlessly.
+This feature allows you to create custom forms for collecting and managing data within your workflows.
+Whether you need a simple feedback form or a complex multi-step form, SpiffArena provides you with the tools to build and integrate forms seamlessly.
 
-With SpiffArena's form builder, you can start with basic form elements 
-and gradually add more advanced components as your form requirements 
-evolve. 
-Let's dive in and explore the possibilities of creating forms in 
-SpiffArena.
+With SpiffArena's form builder, you can start with basic form elements and gradually add more advanced components as your form requirements evolve.
+Let's dive in and explore the possibilities of creating forms in SpiffArena.
 
 ## Instructions on Creating Forms
 
-Forms play a crucial role in capturing data, and SpiffArena offers a 
-powerful form-building capability. Here are the ways to create forms:
+Forms play a crucial role in capturing data, and SpiffArena offers a powerful form-building capability.
+Here are the ways to create forms:
 
 1. Leveraging JSON Schema
 
-JSON Schema is an standard for describing the structure of 
-data in a JSON file. JSON Schema forms the foundation for building 
-forms in SpiffArena.
+JSON Schema is an standard for describing the structure of data in a JSON file.
+JSON Schema forms the foundation for building forms in SpiffArena.
 
-To simplify the form creation process, we leverage the React JSON 
-Schema Form (RJSF) library. RJSF is a powerful tool that uses JSON 
-Schema as its basis. It enables you to create dynamic and interactive 
-forms with ease. The RJSF library is open source, free to use, and 
-follows the principles of open standards.
+To simplify the form creation process, we leverage the React JSON Schema Form (RJSF) library.
+RJSF is a powerful tool that uses JSON Schema as its basis.
+It enables you to create dynamic and interactive forms with ease.
+The RJSF library is open source, free to use, and follows the principles of open standards.
 
 ![Image](images/Form_json.png)
 
-Please note that while this guide provides a basic understanding of 
-JSON Schema and RJSF, there is much more to explore. We encourage you 
-to refer to the official 
-[RJSF documentation](https://rjsf-team.github.io/react-jsonschema-form/docs/) for comprehensive details 
-and advanced techniques.
+Please note that while this guide provides a basic understanding of JSON Schema and RJSF, there is much more to explore.
+We encourage you to refer to the official [RJSF documentation](https://rjsf-team.github.io/react-jsonschema-form/docs/) for comprehensive details and advanced techniques.
 
 2. Using Form Builder
 
-An alternative approach to creating JSON code is to utilize the form 
-builder feature, which allows you to easily create various fields 
-without the need for writing JSON manually. 
+An alternative approach to creating JSON code is to utilize the form builder feature, which allows you to easily create various fields without the need for writing JSON manually.
 
-However, it's important to 
-note that the form builder may have certain limitations in terms of 
-features and may not be as powerful as using the JSON editor directly. 
+However, it's important to note that the form builder may have certain limitations in terms of features and may not be as powerful as using the JSON editor directly.
 
-While the form builder provides convenience and simplicity, using the 
-JSON editor offers greater flexibility and control over the form 
-structure.
+While the form builder provides convenience and simplicity, using the JSON editor offers greater flexibility and control over the form structure.
 
 ![Image](images/Form-Builder.png)
 
+3. Creating Forms from BPMN Editor
 
-## Basic Example for Using Forms
-Now that you have a grasp of how to create forms in SpiffArena using 
-JSON Schema and RJSF, it's time to put your knowledge into action. 
-Lets cover the example of using forms process model in the basics.
+To create forms inside editor, we utilize user tasks within the BPMN file.
+Upon creating a new BPMN file, open it to access the editor.
 
-The BPMN diagram initiates with a start event, which is followed by a 
-manual task aimed at providing a comprehensive understanding of web 
-forms and the various approaches to displaying them. 
-![Image](images/Form_manual_editor.png)
+**Initiating the Form Editor**
+- In the editor, proceed to the "Web form" section. Navigate to the "Web form" section. If starting from scratch, launch the editor and name your file (e.g., "demo"). After saving, it will automatically generate three essential files for us: a schema, UI settings, and some example data. 
 
-The expected output of the form during the process execution can be 
-observed in the attached image.
+![Form Editor](images/Form_editor.png)
 
-![Image](images/manual_outpul.png)
+**Understanding the Three Core Files**
+- **JSON Schema**: This file describes the form. It allows you to define titles, property names, and more. As you make changes in this file, they will reflect in the form preview window. This schema outlines the properties or data points you aim to collect.
+![Form Editor](images/Form_editor1.png)
 
-Moving forward, the diagram incorporates a user task specifically 
-designed for form display. Within the properties panel of the user 
-task, two essential files are included: a JSON Schema (containing the 
-form description in RSJF format) and a UI Schema (outlining the rules 
-for displaying the form based on the RSJF schema). 
+- **UI Settings**: This file offers customization options for your form. You can edit descriptions, titles, and more. Changes made here are reflected in real-time on the form.
+![Form Editor](images/Form_editor2.png)
 
-![Image](images/BPMN_Form_display.png)
+- **Data View**: This section displays the data users input into the form. It provides a preview of what will be captured when the form is submitted. Both the data view and the form stay synchronized, ensuring consistency.
+![Form Editor](images/Form_editor3.png)
 
-The anticipated output of the form when the process is executed can be 
-visualized in the attached image.
-![Image](images/Form_display.png)
+**Adding and Customizing Form Elements**
 
+You can add existing templates to add elements to your form, such as text areas, checkboxes, and date selectors.
+Each element can be further customized in the JSON schema and UI settings.
+For instance, you can set the UI widget correctly for each element, ensuring it appears as intended on the form.
 
-Following that, a manual task is included, offering a simple form 
-explanation. As users submit the form, the manual task will display 
-the respective explanation.
-![Image](images/Manual_lasttt.png)
+![Form Editor](images/Form_editor4.png)
 
-An attached image provides an overview of the expected form output 
-during the process execution.
-
-![Image](images/Manual_last.png)
 
 ## SpiffArena react-jsonschema-form enhancements
 
@@ -195,3 +169,60 @@ This is an example where end_date must be after start_date:
 
 These enhancements provide you with more flexibility and control when building forms in SpiffArena.
 By using these features, you can create dynamic, validated forms that enhance the user experience and support your business processes effectively.
+
+### Display UI Help in Web Forms
+
+When designing web forms, it's essential to provide users with contextual help to ensure they understand the purpose and requirements of each field.
+This guidance can be achieved by adding help text to specific form fields.
+
+To add help text to a web form field, use the following format:
+
+```json
+"field_name": {
+  "ui:help": "Your help text here"
+}
+```
+
+The text specified in the `"ui:help"` attribute will be displayed inside the form when the process starts, providing users with the necessary guidance.
+
+#### Example:
+
+Consider a form with two fields: `form_num_1` and `system_generated_number`.
+Here's how you can add help text to the `form_num_1` field and make the `system_generated_number` field read-only:
+
+```json
+{
+  "form_num_1": {
+    "ui:autofocus": true,
+    "ui:help": "Pick whatever # you want!"
+  },
+  "system_generated_number": {
+    "ui:readonly": true
+  }
+}
+```
+
+In the example above:
+
+- The `form_num_1` field will automatically be focused when the form loads (due to the `"ui:autofocus": true` attribute).
+- The help text "Pick whatever # you want!" will be displayed for the `form_num_1` field.
+
+**Output**:
+![Display UI Help](images/Display_UI_Help.png)
+
+By incorporating such help texts, you can enhance the user experience and ensure that users fill out the form correctly.
+
+### Markdown Widget for rjsf Forms
+
+The **Markdown Widget** enhances rjsf forms by allowing users to input and preview markdown text directly within the form.
+
+To incorporate the markdown widget into your rjsf form, follow these steps:
+
+1. **Create a Text Field**: In your rjsf form JSON schema, define a standard text field where you want the markdown content to be entered.
+
+2. **Update the uiSchema**: For the text field you've created, add the following line to its uiSchema to specify the markdown widget:
+
+```json
+"ui:widget": "markdown"
+```
+![rsjf markdown](images/rsjf_markdown.png)

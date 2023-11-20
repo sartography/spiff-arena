@@ -6,6 +6,20 @@ import { AbilityContext } from '../contexts/Can';
 import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
 
+export const checkPermissions = (
+  permissionsToCheck: PermissionsToCheck,
+  successCallback: Function
+) => {
+  if (Object.keys(permissionsToCheck).length !== 0) {
+    HttpService.makeCallToBackend({
+      path: `/permissions-check`,
+      httpMethod: 'POST',
+      successCallback,
+      postBody: { requests_to_check: permissionsToCheck },
+    });
+  }
+};
+
 export const usePermissionFetcher = (
   permissionsToCheck: PermissionsToCheck
 ) => {
@@ -37,14 +51,7 @@ export const usePermissionFetcher = (
       ability.update(rules);
       setPermissionsLoaded(true);
     };
-    if (Object.keys(permissionsToCheck).length !== 0) {
-      HttpService.makeCallToBackend({
-        path: `/permissions-check`,
-        httpMethod: 'POST',
-        successCallback: processPermissionResult,
-        postBody: { requests_to_check: permissionsToCheck },
-      });
-    }
+    checkPermissions(permissionsToCheck, processPermissionResult);
   });
 
   return { ability, permissionsLoaded };
