@@ -1,7 +1,6 @@
 import inspect
 import re
 from dataclasses import dataclass
-from typing import TypedDict
 
 import yaml
 from flask import current_app
@@ -16,6 +15,9 @@ from spiffworkflow_backend.exceptions.error import PermissionsFileNotSetError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.interfaces import AddedPermissionDict
+from spiffworkflow_backend.interfaces import GroupPermissionsDict
+from spiffworkflow_backend.interfaces import UserToGroupDict
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
@@ -73,29 +75,6 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
-
-
-class UserToGroupDict(TypedDict):
-    username: str
-    group_identifier: str
-
-
-class AddedPermissionDict(TypedDict):
-    group_identifiers: set[str]
-    permission_assignments: list[PermissionAssignmentModel]
-    user_to_group_identifiers: list[UserToGroupDict]
-    waiting_user_group_assignments: list[UserGroupAssignmentWaitingModel]
-
-
-class DesiredGroupPermissionDict(TypedDict):
-    actions: list[str]
-    uri: str
-
-
-class GroupPermissionsDict(TypedDict):
-    users: list[str]
-    name: str
-    permissions: list[DesiredGroupPermissionDict]
 
 
 class AuthorizationService:
@@ -675,6 +654,8 @@ class AuthorizationService:
                 * only works with PG and PM target macros
         """
         permissions_to_assign: list[PermissionToAssign] = []
+        if "," in permission_set:
+            raise Exception(f"Found comma in permission_set. This should be an array instead: {permission_set}")
         permissions = permission_set.split(",")
         if permission_set == "all":
             permissions = ["create", "read", "update", "delete"]
@@ -815,9 +796,13 @@ class AuthorizationService:
                         "group_identifier": group_identifier,
                     }
                     user_to_group_identifiers.append(user_to_group_dict)
-                    wugam = UserService.add_user_to_group_or_add_to_waiting(username, group_identifier)
+                    (wugam, new_user_to_group_identifiers) = UserService.add_user_to_group_or_add_to_waiting(
+                        username, group_identifier
+                    )
                     if wugam is not None:
                         waiting_user_group_assignments.append(wugam)
+                    if new_user_to_group_identifiers is not None:
+                        user_to_group_identifiers = user_to_group_identifiers + new_user_to_group_identifiers
                     unique_user_group_identifiers.add(group_identifier)
 
         for group in group_permissions:
