@@ -647,7 +647,9 @@ class ProcessInstanceProcessor:
         bpmn_subprocess_id_to_guid_mappings: dict | None = None,
     ) -> None:
         json_data_hashes = set()
-        states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
+        # disable this while we investigate https://github.com/sartography/spiff-arena/issues/705
+        # states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
+        states_to_not_rehydrate_data: list[str] = []
         for task in tasks:
             if task.state not in states_to_not_rehydrate_data:
                 json_data_hashes.add(task.json_data_hash)
