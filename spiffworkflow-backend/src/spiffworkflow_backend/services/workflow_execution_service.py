@@ -102,13 +102,9 @@ class ExecutionStrategy:
         self,
         spiff_task: SpiffTask,
         app: flask.app.Flask,
-        # process_instance: ProcessInstanceModel,
-        # process_model_identifier: Any | None,
         user: Any | None,
     ) -> SpiffTask:
         with app.app_context():
-            # app.config["THREAD_LOCAL_DATA"].process_instance_id = process_instance_id
-            # app.config["THREAD_LOCAL_DATA"].process_model_identifier = process_model_identifier
             g.user = user
             spiff_task.run()
             return spiff_task
@@ -116,7 +112,6 @@ class ExecutionStrategy:
     def spiff_run(
         self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
     ) -> None:
-        # Note
         while True:
             bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
@@ -136,11 +131,6 @@ class ExecutionStrategy:
                 # service tasks at once - many api calls, and then get those responses back without
                 # waiting for each individual task to complete.
                 futures = []
-                # process_instance_id = None
-                # process_model_identifier = None
-                # if hasattr(current_app.config["THREAD_LOCAL_DATA"], "process_instance_id"):
-                #     process_instance_id = current_app.config["THREAD_LOCAL_DATA"].process_instance_id
-                #     process_model_identifier = current_app.config["THREAD_LOCAL_DATA"].process_model_identifier
                 user = None
                 if hasattr(g, "user"):
                     user = g.user
@@ -153,8 +143,6 @@ class ExecutionStrategy:
                                 self._run,
                                 spiff_task,
                                 current_app._get_current_object(),
-                                # process_instance,
-                                # process_model_identifier,
                                 user,
                             )
                         )
@@ -305,8 +293,10 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
             ):
                 instruction = JinjaService.render_instructions_for_end_user(spiff_task)
                 if instruction != "":
-                    instruction_record = TaskInstructionsForEndUserModel(
-                        guid=str(spiff_task.id), process_instance_id=process_instance_model.id, instruction=instruction
+                    instruction_record = TaskInstructionsForEndUserModel.create_record(
+                        task_guid=str(spiff_task.id),
+                        process_instance_id=process_instance_model.id,
+                        instruction=instruction,
                     )
                     db.session.add(instruction_record)
                 return True

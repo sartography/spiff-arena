@@ -16,6 +16,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -919,3 +920,43 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
+
+    def test_can_store_instructions_for_end_user(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/script_task_with_instruction",
+            bpmn_file_name="script_task_with_instruction.bpmn",
+            process_model_source_directory="script-task-with-instruction",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        user_instructions = TaskInstructionsForEndUserModel.entries_for_process_instance(process_instance.id)
+        assert len(user_instructions) == 1
+        assert user_instructions[0].instruction == "We run script one"
+        processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        user_instructions = TaskInstructionsForEndUserModel.entries_for_process_instance(process_instance.id)
+        assert len(user_instructions) == 2
+        # ensure ordering is correct
+        assert user_instructions[1].instruction == "We run script two"
+
+        assert process_instance.status == ProcessInstanceStatus.waiting.value
+        processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+        assert process_instance.status == ProcessInstanceStatus.waiting.value
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
+        remaining_entries = TaskInstructionsForEndUserModel.query.all()
+        assert len(remaining_entries) == 2
+        user_instruction_list = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
+        user_instruction_strings = [ui["instruction"] for ui in user_instruction_list]
+        assert user_instruction_strings == ["We run script one", "We run script two"]
+        remaining_entries = TaskInstructionsForEndUserModel.query.all()
+        assert len(remaining_entries) == 0
