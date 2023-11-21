@@ -4,6 +4,7 @@ from typing import Any
 from flask import current_app
 from flask import g
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.interfaces import UserToGroupDict
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
@@ -126,7 +127,9 @@ class UserService:
             db.session.commit()
 
     @classmethod
-    def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> UserGroupAssignmentWaitingModel:
+    def add_waiting_group_assignment(
+        cls, username: str, group: GroupModel
+    ) -> tuple[UserGroupAssignmentWaitingModel, list[UserToGroupDict]]:
         """Only called from set-permissions."""
         wugam: UserGroupAssignmentWaitingModel | None = (
             UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
@@ -138,12 +141,14 @@ class UserService:
 
         # backfill existing users
         wildcard_pattern = wugam.pattern_from_wildcard_username()
+        user_to_group_identifiers: list[UserToGroupDict] = []
         if wildcard_pattern is not None:
             users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))  # type: ignore
             for user in users:
                 cls.add_user_to_group(user, group)
+                user_to_group_identifiers.append({"username": user.username, "group_identifier": group.identifier})
 
-        return wugam
+        return (wugam, user_to_group_identifiers)
 
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
@@ -236,14 +241,14 @@ class UserService:
     @classmethod
     def add_user_to_group_or_add_to_waiting(
         cls, username: str | UserModel, group_identifier: str
-    ) -> UserGroupAssignmentWaitingModel | None:
+    ) -> tuple[UserGroupAssignmentWaitingModel | None, list[UserToGroupDict] | None]:
         group = cls.find_or_create_group(group_identifier)
         user = UserModel.query.filter_by(username=username).first()
         if user:
             cls.add_user_to_group(user, group)
         else:
             return cls.add_waiting_group_assignment(username, group)
-        return None
+        return (None, None)
 
     @classmethod
     def add_user_to_group_by_group_identifier(cls, user: UserModel, group_identifier: str) -> None:

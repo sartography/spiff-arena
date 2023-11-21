@@ -647,7 +647,9 @@ class ProcessInstanceProcessor:
         bpmn_subprocess_id_to_guid_mappings: dict | None = None,
     ) -> None:
         json_data_hashes = set()
-        states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
+        # disable this while we investigate https://github.com/sartography/spiff-arena/issues/705
+        # states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
+        states_to_not_rehydrate_data: list[str] = []
         for task in tasks:
             if task.state not in states_to_not_rehydrate_data:
                 json_data_hashes.add(task.json_data_hash)
@@ -1283,8 +1285,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="could_not_find_bpmn_process_identifier",
-                    message="Could not find the the given bpmn process identifier from any sources: %s"
-                    % bpmn_process_identifier,
+                    message=(
+                        "Could not find the the given bpmn process identifier from any sources:"
+                        f" {bpmn_process_identifier}"
+                    ),
                 )
             )
         return os.path.abspath(bpmn_file_full_path)
@@ -1353,7 +1357,7 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="no_primary_bpmn_error",
-                    message="There is no primary BPMN process id defined for process_model %s" % process_model_info.id,
+                    message=f"There is no primary BPMN process id defined for process_model {process_model_info.id}",
                 )
             )
         ProcessInstanceProcessor.update_spiff_parser_with_all_process_dependency_files(parser)
@@ -1366,7 +1370,7 @@ class ProcessInstanceProcessor:
         except ValidationException as ve:
             raise ApiError(
                 error_code="process_instance_validation_error",
-                message="Failed to parse the Workflow Specification. " + "Error is '%s.'" % str(ve),
+                message="Failed to parse the Workflow Specification. " + f"Error is '{str(ve)}.'",
                 file_name=ve.file_name,
                 task_name=ve.name,
                 task_id=ve.id,

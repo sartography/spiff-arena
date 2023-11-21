@@ -346,7 +346,7 @@ class ProcessInstanceService:
                 else:
                     raise ApiError.from_task(
                         error_code="task_lane_user_error",
-                        message="Spiff Task %s lane user is not a string or dict" % spiff_task.task_spec.name,
+                        message=f"Spiff Task {spiff_task.task_spec.name} lane user is not a string or dict",
                         task=spiff_task,
                     )
 

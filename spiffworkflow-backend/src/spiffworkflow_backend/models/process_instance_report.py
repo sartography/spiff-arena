@@ -131,6 +131,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     def with_substitutions(self, field_value: Any, substitution_variables: dict) -> Any:
         if substitution_variables is not None:
             for key, value in substitution_variables.items():
-                if isinstance(value, str) or isinstance(value, int):
+                if isinstance(value, str | int):
                     field_value = str(field_value).replace("{{" + key + "}}", str(value))
         return field_value

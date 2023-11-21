@@ -64,7 +64,7 @@ class ApiError(Exception):
         if self.line_number:
             msg += "Error is on line %i. " % self.line_number
         if self.file_name:
-            msg += "In file %s. " % self.file_name
+            msg += f"In file {self.file_name}. "
         return msg
 
     @classmethod
@@ -288,11 +288,7 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
 
     error_code = "internal_server_error"
     status_code = 500
-    if (
-        isinstance(exception, NotAuthorizedError)
-        or isinstance(exception, TokenNotProvidedError)
-        or isinstance(exception, TokenInvalidError)
-    ):
+    if isinstance(exception, NotAuthorizedError | TokenNotProvidedError | TokenInvalidError):
         error_code = "not_authorized"
         status_code = 403
     if isinstance(exception, UserNotLoggedInError):

@@ -126,7 +126,6 @@ def _process_instance_run(
 
     return process_instance_was_queued
 
-
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,

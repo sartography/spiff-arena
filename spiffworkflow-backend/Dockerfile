@@ -59,7 +59,7 @@ RUN poetry install --without dev
 # Final image without setup dependencies.
 FROM deployment AS final
 
-LABEL source="https://github.com/sartography/spiff-arena"
+LABEL source="https://github.com/sartography/spiff-arena/spiffworkflow-backend"
 LABEL description="Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
 
 COPY --from=setup /app /app
