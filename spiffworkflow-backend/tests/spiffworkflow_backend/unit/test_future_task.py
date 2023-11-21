@@ -1,9 +1,8 @@
-
 import time
-from spiffworkflow_backend.models.db import db
 
 import pytest
 from flask.app import Flask
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
@@ -21,9 +20,7 @@ class TestFutureTask(BaseTest):
             process_model_id="test_group/user-task-with-timer",
             process_model_source_directory="user-task-with-timer",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert process_instance.status == "user_input_required"

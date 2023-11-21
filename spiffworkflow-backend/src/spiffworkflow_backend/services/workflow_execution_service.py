@@ -26,7 +26,9 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
@@ -90,7 +92,7 @@ class ExecutionStrategy:
         self.subprocess_spec_loader = subprocess_spec_loader
         self.options = options
 
-    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
+    def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
         return False
 
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
@@ -100,23 +102,25 @@ class ExecutionStrategy:
         self,
         spiff_task: SpiffTask,
         app: flask.app.Flask,
-        process_instance_id: Any | None,
-        process_model_identifier: Any | None,
+        # process_instance: ProcessInstanceModel,
+        # process_model_identifier: Any | None,
         user: Any | None,
     ) -> SpiffTask:
         with app.app_context():
-            app.config["THREAD_LOCAL_DATA"].process_instance_id = process_instance_id
-            app.config["THREAD_LOCAL_DATA"].process_model_identifier = process_model_identifier
+            # app.config["THREAD_LOCAL_DATA"].process_instance_id = process_instance_id
+            # app.config["THREAD_LOCAL_DATA"].process_model_identifier = process_model_identifier
             g.user = user
             spiff_task.run()
             return spiff_task
 
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+    def spiff_run(
+        self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
+    ) -> None:
         # Note
         while True:
             bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-            if self.should_break_before(engine_steps):
+            if self.should_break_before(engine_steps, process_instance_model=process_instance_model):
                 break
             num_steps = len(engine_steps)
             if num_steps == 0:
@@ -132,11 +136,11 @@ class ExecutionStrategy:
                 # service tasks at once - many api calls, and then get those responses back without
                 # waiting for each individual task to complete.
                 futures = []
-                process_instance_id = None
-                process_model_identifier = None
-                if hasattr(current_app.config["THREAD_LOCAL_DATA"], "process_instance_id"):
-                    process_instance_id = current_app.config["THREAD_LOCAL_DATA"].process_instance_id
-                    process_model_identifier = current_app.config["THREAD_LOCAL_DATA"].process_model_identifier
+                # process_instance_id = None
+                # process_model_identifier = None
+                # if hasattr(current_app.config["THREAD_LOCAL_DATA"], "process_instance_id"):
+                #     process_instance_id = current_app.config["THREAD_LOCAL_DATA"].process_instance_id
+                #     process_model_identifier = current_app.config["THREAD_LOCAL_DATA"].process_model_identifier
                 user = None
                 if hasattr(g, "user"):
                     user = g.user
@@ -149,8 +153,8 @@ class ExecutionStrategy:
                                 self._run,
                                 spiff_task,
                                 current_app._get_current_object(),
-                                process_instance_id,
-                                process_model_identifier,
+                                # process_instance,
+                                # process_model_identifier,
                                 user,
                             )
                         )
@@ -294,11 +298,18 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
     The queue can be used to display the instructions to user later.
     """
 
-    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
-        for task in tasks:
-            if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get("instructionsForEndUser", None):
-                # TODO: actually queue the instructions
-                pass
+    def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
+        for spiff_task in tasks:
+            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
+                "instructionsForEndUser", None
+            ):
+                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
+                if instruction != "":
+                    instruction_record = TaskInstructionsForEndUserModel(
+                        guid=str(spiff_task.id), process_instance_id=process_instance_model.id, instruction=instruction
+                    )
+                    db.session.add(instruction_record)
+                return True
         # always return false since we just want to queue instructions but not stop execution
         return False
 
@@ -310,9 +321,11 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     but will stop if it hits instructions after the first task.
     """
 
-    def should_break_before(self, tasks: list[SpiffTask]) -> bool:
-        for task in tasks:
-            if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get("instructionsForEndUser", None):
+    def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
+        for spiff_task in tasks:
+            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
+                "instructionsForEndUser", None
+            ):
                 return True
         return False
 
@@ -327,7 +340,9 @@ class RunCurrentReadyTasksExecutionStrategy(ExecutionStrategy):
 class SkipOneExecutionStrategy(ExecutionStrategy):
     """When you want to skip over the next task, rather than execute it."""
 
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+    def spiff_run(
+        self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
+    ) -> None:
         spiff_task = None
         if self.options and "spiff_task" in self.options.keys():
             spiff_task = self.options["spiff_task"]
@@ -394,7 +409,9 @@ class WorkflowExecutionService:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             # TODO: implicit re-entrant locks here `with_dequeued`
-            self.execution_strategy.spiff_run(self.bpmn_process_instance, exit_at)
+            self.execution_strategy.spiff_run(
+                self.bpmn_process_instance, exit_at=exit_at, process_instance_model=self.process_instance_model
+            )
 
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)

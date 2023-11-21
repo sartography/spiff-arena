@@ -531,6 +531,91 @@ def task_submit(
         return _task_submit_shared(process_instance_id, task_guid, body)
 
 
+def _interstitial_stream_from_queue(
+    process_instance: ProcessInstanceModel,
+    is_locked: bool = False,
+) -> Generator[str, str | None, None]:
+    def get_reportable_tasks(processor: ProcessInstanceProcessor) -> Any:
+        return processor.bpmn_process_instance.get_tasks(
+            state=TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
+        )
+
+    def render_instructions(spiff_task: SpiffTask) -> str:
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        if task_model is None:
+            return ""
+        return JinjaService.render_instructions_for_end_user(task_model)
+
+    # do not attempt to get task instructions if process instance is suspended or was terminated
+    if process_instance.status in ["suspended", "terminated"]:
+        yield _render_data("unrunnable_instance", process_instance)
+        return
+
+    ProcessInstanceProcessor(process_instance)
+
+    ##### Cycle through stored instructions instead
+    # reported_ids = []  # A list of all the ids reported by this endpoint so far.
+    # tasks = get_reportable_tasks(processor)
+    # has_ready_tasks = False
+    # for spiff_task in tasks:
+    #     # ignore the instructions if they are on the EndEvent for the top level process
+    #     if not TaskService.is_main_process_end_event(spiff_task):
+    #         try:
+    #             instructions = render_instructions(spiff_task)
+    #         except Exception as e:
+    #             api_error = ApiError(
+    #                 error_code="engine_steps_error",
+    #                 message=f"Failed to complete an automated task. Error was: {str(e)}",
+    #                 status_code=400,
+    #             )
+    #             yield _render_data("error", api_error)
+    #             raise e
+    #         if instructions and spiff_task.id not in reported_ids:
+    #             task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+    #             task.properties = {"instructionsForEndUser": instructions}
+    #             yield _render_data("task", task)
+    #             reported_ids.append(spiff_task.id)
+    #     if spiff_task.state == TaskState.READY:
+    #         has_ready_tasks = True
+    #
+    # if has_ready_tasks:
+    #     # do not do any processing if the instance is not currently active
+    #     if process_instance.status not in ProcessInstanceModel.active_statuses():
+    #         yield _render_data("unrunnable_instance", process_instance)
+    #         return
+    #     # return if process instance is now complete and let the frontend redirect to show page
+    #     if process_instance.status not in ProcessInstanceModel.active_statuses():
+    #         yield _render_data("unrunnable_instance", process_instance)
+    #         return
+    #
+    # # HACK: db.session.refresh doesn't seem to refresh without rollback or commit so use rollback.
+    # # we are not executing tasks so there shouldn't be anything to write anyway, so no harm in rollback.
+    # # https://stackoverflow.com/a/20361132/6090676
+    # # note that the thing changing the data in this case is probably the background worker,
+    # # and it is definitely committing its changes, but since we have already queried the data,
+    # # our session has stale results without the rollback.
+    # db.session.rollback()
+    # db.session.refresh(process_instance)
+    # processor = ProcessInstanceProcessor(process_instance)
+
+    # spiff_task = processor.next_task()
+    # if spiff_task is not None:
+    #     task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+    #     if task.id not in reported_ids:
+    #         try:
+    #             instructions = render_instructions(spiff_task)
+    #         except Exception as e:
+    #             api_error = ApiError(
+    #                 error_code="engine_steps_error",
+    #                 message=f"Failed to complete an automated task. Error was: {str(e)}",
+    #                 status_code=400,
+    #             )
+    #             yield _render_data("error", api_error)
+    #             raise e
+    #         task.properties = {"instructionsForEndUser": instructions}
+    #         yield _render_data("task", task)
+
+
 def _interstitial_stream(
     process_instance: ProcessInstanceModel,
     execute_tasks: bool = True,
