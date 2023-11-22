@@ -47,7 +47,7 @@ class GetAllPermissions(Script):
 
         # sort list of strings based on a specific order
         def sort_by_order(string_list: list, order: list) -> list:
-            return sorted(string_list, key=lambda x: order.index(x))
+            return sorted(string_list, key=order.index)
 
         return [
             {

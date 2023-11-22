@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -2114,6 +2115,11 @@ class TestProcessApi(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
+
+        # TODO: remove these 2 lines if we enable no task data on rehydration again from pr-661
+        assert spiff_task.state == TaskState.ERROR
+        assert spiff_task.data == {"my_var": "THE VAR"}
+
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         assert task_model is not None
         assert task_model.state == "ERROR"

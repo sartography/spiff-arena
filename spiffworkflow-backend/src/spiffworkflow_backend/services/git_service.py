@@ -179,7 +179,7 @@ class GitService:
         ssh_key_path = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
         if ssh_key_path is not None:
             my_env["GIT_SSH_COMMAND"] = (
-                "ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s" % ssh_key_path
+                f"ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {ssh_key_path}"
             )
 
         command_to_run = command
