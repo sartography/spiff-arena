@@ -223,7 +223,6 @@ export default function ProcessInterstitial({
     if (myTask.error_message) {
       return inlineMessage('Error', myTask.error_message, 'error');
     }
-    console.log('myTask', myTask);
     return (
       <div>
         <InstructionsForEndUser

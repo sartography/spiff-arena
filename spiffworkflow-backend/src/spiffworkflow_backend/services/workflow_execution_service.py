@@ -98,6 +98,9 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
+    def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
+        pass
+
     def _run(
         self,
         spiff_task: SpiffTask,
@@ -114,6 +117,7 @@ class ExecutionStrategy:
     ) -> None:
         while True:
             bpmn_process_instance.refresh_waiting_tasks()
+            self.should_do_before(bpmn_process_instance, process_instance_model)
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             if self.should_break_before(engine_steps, process_instance_model=process_instance_model):
                 break
@@ -286,21 +290,40 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
     The queue can be used to display the instructions to user later.
     """
 
+    def __init__(
+        self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None
+    ):
+        super().__init__(delegate, subprocess_spec_loader, options)
+        self.tasks_that_have_been_seen: set[str] = set()
+
+    def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
+        tasks = bpmn_process_instance.get_tasks(
+            # state=TaskState.WAITING | TaskState.STARTED | TaskState.READY
+            state=TaskState.WAITING | TaskState.READY
+            # state=TaskState.READY
+        )
+        for spiff_task in tasks:
+            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
+                "instructionsForEndUser", None
+            ):
+                task_guid = str(spiff_task.id)
+                if task_guid in self.tasks_that_have_been_seen:
+                    continue
+                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
+                if instruction != "":
+                    TaskInstructionsForEndUserModel.insert_or_update_record(
+                        task_guid=str(spiff_task.id),
+                        process_instance_id=process_instance_model.id,
+                        instruction=instruction,
+                    )
+                    self.tasks_that_have_been_seen.add(str(spiff_task.id))
+
     def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
         for spiff_task in tasks:
             if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
                 "instructionsForEndUser", None
             ):
-                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
-                if instruction != "":
-                    instruction_record = TaskInstructionsForEndUserModel.create_record(
-                        task_guid=str(spiff_task.id),
-                        process_instance_id=process_instance_model.id,
-                        instruction=instruction,
-                    )
-                    db.session.add(instruction_record)
                 return True
-        # always return false since we just want to queue instructions but not stop execution
         return False
 
 
@@ -424,6 +447,7 @@ class WorkflowExecutionService:
 
         finally:
             if self.process_instance_model.persistence_level != "none":
+                # even if a task fails, try to persist all tasks, which will include the error state.
                 self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
                 if save:
                     self.process_instance_saver()
