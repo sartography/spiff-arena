@@ -9,7 +9,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
-
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 
 def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     tld = current_app.config.get("THREAD_LOCAL_DATA")
@@ -38,8 +38,28 @@ def _data_store_location_for_task(spiff_task: SpiffTask, name: str) -> str | Non
     return location
 
 
-class JSONDataStore(BpmnDataStoreSpecification):  # type: ignore
+class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
+
+    @staticmethod
+    def existing_data_stores() -> list[dict[str, Any]]:
+        data_stores = []
+
+        keys = (
+            db.session.query(JSONDataStoreModel.name).distinct().order_by(JSONDataStoreModel.name)  # type: ignore
+        )
+        for key in keys:
+            data_stores.append({"name": key[0], "type": "json"})
+
+        return data_stores
+
+    @staticmethod
+    def query_data_store(name: str) -> Any:
+        return JSONDataStoreModel.query.filter_by(name=name).order_by(JSONDataStoreModel.name)
+
+    @staticmethod
+    def build_response_item(model: Any) -> dict[str, Any]:
+        return {"location": model.location, "data": model.data}
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
