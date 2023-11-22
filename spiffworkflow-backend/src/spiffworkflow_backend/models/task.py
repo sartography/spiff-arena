@@ -155,6 +155,7 @@ class Task:
         error_message: str | None = None,
         assigned_user_group_identifier: str | None = None,
         potential_owner_usernames: str | None = None,
+        process_instance_was_queued: bool | None = None,
     ):
         self.id = id
         self.name = name
@@ -167,6 +168,7 @@ class Task:
         self.lane = lane
         self.parent = parent
         self.event_definition = event_definition
+        self.process_instance_was_queued = process_instance_was_queued
 
         self.data = data
         if self.data is None:
@@ -228,6 +230,7 @@ class Task:
             "error_message": self.error_message,
             "assigned_user_group_identifier": self.assigned_user_group_identifier,
             "potential_owner_usernames": self.potential_owner_usernames,
+            "process_instance_was_queued": self.process_instance_was_queued,
         }
 
     @classmethod

@@ -156,6 +156,12 @@ export default function TaskShow() {
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+      } else if (result.process_instance_was_queued) {
+        navigate(
+          `/process-instances/${modifyProcessIdentifierForPathParam(
+            result.process_model_identifier
+          )}/${result.process_instance_id}/progress`
+        );
       } else {
         navigateToInterstitial(result);
       }

@@ -63,7 +63,7 @@ class UserService:
                     message=f"Could not add user {username}",
                 ) from e
             cls.create_principal(user_model.id)
-            cls.apply_waiting_group_assignments(user_model)
+            # cls.apply_waiting_group_assignments(user_model)
             return user_model
 
         else:

@@ -1,5 +1,6 @@
 import json
 import os
+from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 import uuid
 from collections import OrderedDict
 from collections.abc import Generator
@@ -892,7 +893,7 @@ def _task_submit_shared(
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
-    # enqueue
+    process_instance_was_queued = queue_process_instance_if_appropriate(process_instance)
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
@@ -908,8 +909,10 @@ def _task_submit_shared(
 
     if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        task.process_instance_was_queued = process_instance_was_queued
         return make_response(jsonify(task), 200)
 
+    # next_task always returns something, even if the instance is complete, so we never get here
     return Response(
         json.dumps(
             {
