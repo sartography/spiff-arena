@@ -5,11 +5,12 @@ from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
-from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
+
 
 def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     tld = current_app.config.get("THREAD_LOCAL_DATA")
@@ -45,9 +46,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def existing_data_stores() -> list[dict[str, Any]]:
         data_stores = []
 
-        keys = (
-            db.session.query(JSONDataStoreModel.name).distinct().order_by(JSONDataStoreModel.name)  # type: ignore
-        )
+        keys = db.session.query(JSONDataStoreModel.name).distinct().order_by(JSONDataStoreModel.name)  # type: ignore
         for key in keys:
             data_stores.append({"name": key[0], "type": "json"})
 
