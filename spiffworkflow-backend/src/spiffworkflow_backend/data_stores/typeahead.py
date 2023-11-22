@@ -5,9 +5,10 @@ from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
-from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
+
 
 class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """TypeaheadDataStore."""
@@ -15,10 +16,8 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
     @staticmethod
     def existing_data_stores() -> list[dict[str, Any]]:
         data_stores = []
-        
-        keys = (
-            db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category)  # type: ignore
-        )
+
+        keys = db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category)  # type: ignore
         for key in keys:
             data_stores.append({"name": key[0], "type": "typeahead"})
 
@@ -34,7 +33,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
     def build_response_item(model: Any) -> dict[str, Any]:
         result = model.result
         result["search_term"] = model.search_term
-        return result
+        return result  # type: ignore
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""

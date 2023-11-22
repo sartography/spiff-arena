@@ -4,11 +4,9 @@ import flask.wrappers
 from flask import jsonify
 from flask import make_response
 
-from spiffworkflow_backend import db
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.typeahead import TypeaheadModel
 
 
 def data_store_list() -> flask.wrappers.Response:
