@@ -205,6 +205,9 @@ export interface ProcessInstance {
   task_id?: string;
   task_updated_at_in_seconds?: number;
   waiting_for?: string;
+
+  // from api instance
+  process_instance_was_queued?: boolean;
 }
 
 export interface MessageCorrelationProperties {
@@ -466,4 +469,16 @@ export interface AuthenticationOption {
   identifier: string;
   label: string;
   uri: string;
+}
+
+export interface TaskInstructionForEndUser {
+  task_guid: string;
+  process_instance_id: number;
+  instruction: string;
+}
+
+export interface ProcessInstanceProgressResponse {
+  instructions: TaskInstructionForEndUser[];
+  process_instance?: ProcessInstance;
+  task?: ProcessInstanceTask;
 }

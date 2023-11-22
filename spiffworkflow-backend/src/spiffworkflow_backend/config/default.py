@@ -53,6 +53,11 @@ config_from_env(
     "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS", default=120
 )
 
+### background with celery
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://localhost")
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default="redis://localhost")
+
 ### frontend
 config_from_env("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", default="http://localhost:7001")
 config_from_env("SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000")

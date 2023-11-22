@@ -3,28 +3,43 @@ import React, { useEffect, useState } from 'react';
 import { Toggle } from '@carbon/react';
 import FormattingService from '../services/FormattingService';
 import MarkdownRenderer from './MarkdownRenderer';
+import {
+  BasicTask,
+  ProcessInstanceTask,
+  TaskInstructionForEndUser,
+} from '../interfaces';
 
 type OwnProps = {
-  task: any;
+  task?: BasicTask | ProcessInstanceTask | null;
+  taskInstructionForEndUser?: TaskInstructionForEndUser;
   defaultMessage?: string;
   allowCollapse?: boolean;
 };
 
 export default function InstructionsForEndUser({
   task,
+  taskInstructionForEndUser,
   defaultMessage = '',
   allowCollapse = false,
 }: OwnProps) {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [collapsable, setCollapsable] = useState<boolean>(false);
   let instructions = defaultMessage;
-  let { properties } = task;
-  if (!properties) {
-    properties = task.extensions;
-  }
-  const { instructionsForEndUser } = properties;
-  if (instructionsForEndUser) {
-    instructions = instructionsForEndUser;
+
+  if (task) {
+    let properties = null;
+    if ('properties' in task) {
+      properties = task.properties;
+    }
+    if (!properties && 'extensions' in task) {
+      properties = task.extensions;
+    }
+    const { instructionsForEndUser } = properties;
+    if (instructionsForEndUser) {
+      instructions = instructionsForEndUser;
+    }
+  } else if (taskInstructionForEndUser) {
+    instructions = taskInstructionForEndUser.instruction;
   }
   instructions = FormattingService.checkForSpiffFormats(instructions);
 
@@ -39,6 +54,7 @@ export default function InstructionsForEndUser({
     return arg.split(' ').length;
   };
 
+  // this is to allow toggling collapsed instructions
   useEffect(() => {
     if (
       allowCollapse &&
@@ -52,10 +68,6 @@ export default function InstructionsForEndUser({
       setCollapsed(false);
     }
   }, [allowCollapse, instructions]);
-
-  if (!task) {
-    return null;
-  }
 
   const toggleCollapse = () => {
     setCollapsed(!collapsed);
@@ -80,17 +92,21 @@ export default function InstructionsForEndUser({
     className += ' markdown-collapsed';
   }
 
-  return (
-    <div>
-      <div className={className}>
-        {/*
+  if (task || taskInstructionForEndUser) {
+    return (
+      <div>
+        <div className={className}>
+          {/*
           https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
         */}
 
-        <MarkdownRenderer linkTarget="_blank" source={instructions} />
+          <MarkdownRenderer linkTarget="_blank" source={instructions} />
+        </div>
+        {showCollapseToggle()}
       </div>
-      {showCollapseToggle()}
-    </div>
-  );
+    );
+  }
+
+  return null;
 }

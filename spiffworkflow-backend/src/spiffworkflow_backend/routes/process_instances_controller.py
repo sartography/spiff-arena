@@ -8,7 +8,6 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
@@ -18,8 +17,6 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
@@ -34,6 +31,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -132,11 +130,12 @@ def process_instance_run(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    _process_instance_was_queued = _process_instance_run(process_instance)
+    process_instance_was_queued = _process_instance_run(process_instance)
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
-    process_instance_metadata = ProcessInstanceApiSchema().dump(process_instance_api)
-    return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
+    process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
+    process_instance_api_dict['process_instance_was_queued'] = process_instance_was_queued
+    return Response(json.dumps(process_instance_api_dict), status=200, mimetype="application/json")
 
 
 def process_instance_terminate(
@@ -701,41 +700,3 @@ def _get_process_instance(
 
     process_instance_as_dict = process_instance.serialized_with_metadata()
     return make_response(jsonify(process_instance_as_dict), 200)
-
-
-def _find_process_instance_for_me_or_raise(
-    process_instance_id: int,
-) -> ProcessInstanceModel:
-    process_instance: ProcessInstanceModel | None = (
-        ProcessInstanceModel.query.filter_by(id=process_instance_id)
-        .outerjoin(HumanTaskModel)
-        .outerjoin(
-            HumanTaskUserModel,
-            and_(
-                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                HumanTaskUserModel.user_id == g.user.id,
-            ),
-        )
-        .filter(
-            or_(
-                # you were allowed to complete it
-                HumanTaskUserModel.id.is_not(None),
-                # or you completed it (which admins can do even if it wasn't assigned via HumanTaskUserModel)
-                HumanTaskModel.completed_by_user_id == g.user.id,
-                # or you started it
-                ProcessInstanceModel.process_initiator_id == g.user.id,
-            )
-        )
-        .first()
-    )
-
-    if process_instance is None:
-        raise (
-            ApiError(
-                error_code="process_instance_cannot_be_found",
-                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
-                status_code=400,
-            )
-        )
-
-    return process_instance

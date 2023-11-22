@@ -9,10 +9,14 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
+from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -265,3 +269,41 @@ def _find_principal_or_raise() -> PrincipalModel:
             )
         )
     return principal  # type: ignore
+
+
+def _find_process_instance_for_me_or_raise(
+    process_instance_id: int,
+) -> ProcessInstanceModel:
+    process_instance: ProcessInstanceModel | None = (
+        ProcessInstanceModel.query.filter_by(id=process_instance_id)
+        .outerjoin(HumanTaskModel)
+        .outerjoin(
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == g.user.id,
+            ),
+        )
+        .filter(
+            or_(
+                # you were allowed to complete it
+                HumanTaskUserModel.id.is_not(None),
+                # or you completed it (which admins can do even if it wasn't assigned via HumanTaskUserModel)
+                HumanTaskModel.completed_by_user_id == g.user.id,
+                # or you started it
+                ProcessInstanceModel.process_initiator_id == g.user.id,
+            )
+        )
+        .first()
+    )
+
+    if process_instance is None:
+        raise (
+            ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+                status_code=400,
+            )
+        )
+
+    return process_instance

@@ -26,6 +26,7 @@ class TaskInstructionsForEndUserModel(SpiffworkflowBaseDBModel):
     def create_record(
         cls, task_guid: str, process_instance_id: int, instruction: str
     ) -> TaskInstructionsForEndUserModel:
+        print(f"task_guid: {task_guid}")
         return TaskInstructionsForEndUserModel(
             task_guid=task_guid,
             process_instance_id=process_instance_id,
@@ -47,7 +48,7 @@ class TaskInstructionsForEndUserModel(SpiffworkflowBaseDBModel):
         entries = cls.entries_for_process_instance(process_instance_id)
         # convert to list[dict] here so we can remove the records from the db right after
         instructions: list[dict] = current_app.json.loads(current_app.json.dumps(entries))
-        for e in entries:
-            db.session.delete(e)
-        db.session.commit()
+        # for e in entries:
+        #     db.session.delete(e)
+        # db.session.commit()
         return instructions

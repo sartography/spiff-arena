@@ -52,6 +52,7 @@ from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInst
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -532,12 +533,24 @@ def task_submit(
         return _task_submit_shared(process_instance_id, task_guid, body)
 
 
-def task_instruction_list(
+def process_instance_progress(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    response: dict[str, Task | ProcessInstanceModel | list] = {}
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+
+    principal = _find_principal_or_raise()
+    next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
+    if next_human_task_assigned_to_me:
+        response["task"] = HumanTaskModel.to_task(next_human_task_assigned_to_me)
+    # this may not catch all times we should redirect to instance show page
+    elif not process_instance.is_immediately_runnable():
+        response["process_instance"] = process_instance
+
     user_instructions = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
-    return make_response(jsonify(user_instructions), 200)
+    response["instructions"] = user_instructions
+
+    return make_response(jsonify(response), 200)
 
 
 def _interstitial_stream(
@@ -875,13 +888,7 @@ def _task_submit_shared(
         db.session.delete(task_draft_data)
         db.session.commit()
 
-    next_human_task_assigned_to_me = (
-        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
-        .order_by(asc(HumanTaskModel.id))  # type: ignore
-        .join(HumanTaskUserModel)
-        .filter_by(user_id=principal.user_id)
-        .first()
-    )
+    next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
@@ -1219,3 +1226,12 @@ def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int)
             status_code=400,
         )
     return task_model
+
+def _next_human_task_for_user(process_instance_id: int, user_id: int) -> HumanTaskModel | None:
+    return (
+            HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+    .order_by(asc(HumanTaskModel.id))  # type: ignore
+    .join(HumanTaskUserModel)
+    .filter_by(user_id=user_id)
+    .first()
+    )

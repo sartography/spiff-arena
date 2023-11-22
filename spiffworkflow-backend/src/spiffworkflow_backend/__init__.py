@@ -111,22 +111,22 @@ def should_start_scheduler(app: flask.app.Flask) -> bool:
     return True
 
 
-celery_configs = {
-    "broker_url": "redis://localhost",
-    "result_backend": "redis://localhost",
-    "task_ignore_result": True,
-    "task_serializer": "json",
-    "result_serializer": "json",
-    "accept_content": ["json"],
-    "enable_utc": True,
-}
-
 
 def celery_init_app(app: flask.app.Flask) -> Celery:
     class FlaskTask(Task):  # type: ignore
         def __call__(self, *args: object, **kwargs: object) -> object:
             with app.app_context():
                 return self.run(*args, **kwargs)
+
+    celery_configs = {
+        "broker_url": app.config['SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL'],
+        "result_backend": app.config['SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND'],
+        "task_ignore_result": True,
+        "task_serializer": "json",
+        "result_serializer": "json",
+        "accept_content": ["json"],
+        "enable_utc": True,
+    }
 
     celery_app = Celery(app.name)
     celery_app.Task = FlaskTask
@@ -187,8 +187,9 @@ def create_app() -> flask.app.Flask:
     # This is particularly helpful for forms that are generated from json schemas.
     app.json.sort_keys = False
 
-    celery_app = celery_init_app(app)
-    app.celery_app = celery_app
+    if app.config['SPIFFWORKFLOW_BACKEND_CELERY_ENABLED']:
+        celery_app = celery_init_app(app)
+        app.celery_app = celery_app
 
     return app  # type: ignore
 

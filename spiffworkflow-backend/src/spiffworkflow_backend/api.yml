@@ -1728,6 +1728,29 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /tasks/progress/{process_instance_id}:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.tasks_controller.process_instance_progress
+      summary: returns the list of instructions that have been queued for a process instance.
+      responses:
+        "200":
+          description: list of task instructions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskInstructionsForEndUser"
+
   /users/search:
     parameters:
       - name: username_prefix
@@ -3013,6 +3036,16 @@ components:
           documentation: "# Heading 1\n\nMarkdown documentation text goes here"
           type: form
           state: ready
+    TaskInstructionsForEndUser:
+      properties:
+        task_guid:
+          type: string
+        process_instance_id:
+          type: integer
+        instruction:
+          type: string
+        timestamp:
+          type: number
     Task:
       properties:
         id:
