@@ -1,15 +1,16 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
+from typing import Any
+
 import flask.wrappers
 from flask import jsonify
 from flask import make_response
 
-from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from typing import Any
+
 
 def data_store_list() -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
@@ -48,12 +49,12 @@ def data_store_item_list(
     """Returns a list of the items in a data store."""
 
     if data_store_type == "typeahead":
-        return _build_response(TypeaheadDataStore, name, page, per_page)  # type: ignore
+        return _build_response(TypeaheadDataStore, name, page, per_page)
 
     if data_store_type == "kkv":
-        return _build_response(KKVDataStore, name, page, per_page)  # type: ignore
+        return _build_response(KKVDataStore, name, page, per_page)
 
     if data_store_type == "json":
-        return _build_response(JSONDataStore, name, page, per_page)  # type: ignore
+        return _build_response(JSONDataStore, name, page, per_page)
 
     raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
