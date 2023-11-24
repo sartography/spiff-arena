@@ -77,7 +77,7 @@ At run time, or when you save it would be great if we could execute a:
 ### Plugins and Extensions 
 * Track down our previous research and add here.  Color picker, etc....
 
-### Automated Testing 
+### Automated Testing ✔️
 Incorporate an end-to-end testing system that will allow you to quickly assure that
 a bpmn model is working as expected.  Imagine Cypress tests that you could define and execute in the modeler.
 
