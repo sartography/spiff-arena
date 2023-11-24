@@ -3,12 +3,39 @@ from typing import Any
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 
 
-class KKVDataStore(BpmnDataStoreSpecification):  # type: ignore
+class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """KKVDataStore."""
+
+    @staticmethod
+    def existing_data_stores() -> list[dict[str, Any]]:
+        data_stores = []
+
+        keys = (
+            db.session.query(KKVDataStoreModel.top_level_key).distinct().order_by(KKVDataStoreModel.top_level_key)  # type: ignore
+        )
+        for key in keys:
+            data_stores.append({"name": key[0], "type": "kkv"})
+
+        return data_stores
+
+    @staticmethod
+    def query_data_store(name: str) -> Any:
+        return KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
+            KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
+        )
+
+    @staticmethod
+    def build_response_item(model: Any) -> dict[str, Any]:
+        return {
+            "secondary_key": model.secondary_key,
+            "value": model.value,
+        }
 
     def _get_model(self, top_level_key: str, secondary_key: str) -> KKVDataStoreModel | None:
         model = (
