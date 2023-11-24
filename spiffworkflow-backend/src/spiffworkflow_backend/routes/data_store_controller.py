@@ -9,7 +9,7 @@ from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
-
+from typing import Any
 
 def data_store_list() -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
@@ -24,7 +24,7 @@ def data_store_list() -> flask.wrappers.Response:
     return make_response(jsonify(data_stores), 200)
 
 
-def _build_response(data_store_class: DataStoreCRUD, name: str, page: int, per_page: int) -> flask.wrappers.Response:
+def _build_response(data_store_class: Any, name: str, page: int, per_page: int) -> flask.wrappers.Response:
     data_store_query = data_store_class.query_data_store(name)
     data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
     results = []
