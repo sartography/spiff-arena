@@ -77,7 +77,7 @@ def _parse_environment(key_values: os._Environ | dict) -> list | dict:
             by_first_component,
         )
 
-    def items_with_first_component(items: ItemsView, first_component: str) -> dict:
+    def items_with_first_component(items: Iterable, first_component: str) -> dict:
         return {
             get_later_components(key): value for key, value in items if get_first_component(key) == first_component
         }
