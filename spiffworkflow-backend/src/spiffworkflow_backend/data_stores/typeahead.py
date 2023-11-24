@@ -4,12 +4,36 @@ from typing import Any
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 
 
-class TypeaheadDataStore(BpmnDataStoreSpecification):  # type: ignore
+class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """TypeaheadDataStore."""
+
+    @staticmethod
+    def existing_data_stores() -> list[dict[str, Any]]:
+        data_stores = []
+
+        keys = db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category)  # type: ignore
+        for key in keys:
+            data_stores.append({"name": key[0], "type": "typeahead"})
+
+        return data_stores
+
+    @staticmethod
+    def query_data_store(name: str) -> Any:
+        return TypeaheadModel.query.filter_by(category=name).order_by(
+            TypeaheadModel.category, TypeaheadModel.search_term
+        )
+
+    @staticmethod
+    def build_response_item(model: Any) -> dict[str, Any]:
+        result = model.result
+        result["search_term"] = model.search_term
+        return result  # type: ignore
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""

@@ -84,7 +84,7 @@ pytest = "^7.1.2"
 coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^2.3.5"
 mypy = ">=0.961"
-typeguard = "^3"
+typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.0.1"}
 pre-commit = "^2.20.0"
 black = ">=21.10b0"
