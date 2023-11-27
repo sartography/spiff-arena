@@ -945,7 +945,7 @@ class TestProcessInstanceProcessor(BaseTest):
         user_instructions = TaskInstructionsForEndUserModel.entries_for_process_instance(process_instance.id)
         assert len(user_instructions) == 2
         # ensure ordering is correct
-        assert user_instructions[1].instruction == "We run script two"
+        assert user_instructions[0].instruction == "We run script two"
 
         assert process_instance.status == ProcessInstanceStatus.waiting.value
         processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
@@ -956,7 +956,9 @@ class TestProcessInstanceProcessor(BaseTest):
         remaining_entries = TaskInstructionsForEndUserModel.query.all()
         assert len(remaining_entries) == 2
         user_instruction_list = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
-        user_instruction_strings = [ui["instruction"] for ui in user_instruction_list]
-        assert user_instruction_strings == ["We run script one", "We run script two"]
+        user_instruction_strings = [ui.instruction for ui in user_instruction_list]
+        assert user_instruction_strings == ["We run script two", "We run script one"]
         remaining_entries = TaskInstructionsForEndUserModel.query.all()
-        assert len(remaining_entries) == 0
+        assert len(remaining_entries) == 2
+        for entry in remaining_entries:
+            assert entry.has_been_retrieved is True

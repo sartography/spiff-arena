@@ -10,7 +10,7 @@ import flask.json
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
-from celery import Celery  # type: ignore
+from celery import Celery
 from celery import Task
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
@@ -111,16 +111,15 @@ def should_start_scheduler(app: flask.app.Flask) -> bool:
     return True
 
 
-
 def celery_init_app(app: flask.app.Flask) -> Celery:
-    class FlaskTask(Task):  # type: ignore
+    class FlaskTask(Task):
         def __call__(self, *args: object, **kwargs: object) -> object:
             with app.app_context():
-                return self.run(*args, **kwargs)
+                return self.run(*args, **kwargs)  # type: ignore
 
     celery_configs = {
-        "broker_url": app.config['SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL'],
-        "result_backend": app.config['SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND'],
+        "broker_url": app.config["SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL"],
+        "result_backend": app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"],
         "task_ignore_result": True,
         "task_serializer": "json",
         "result_serializer": "json",
@@ -129,7 +128,7 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
     }
 
     celery_app = Celery(app.name)
-    celery_app.Task = FlaskTask
+    celery_app.Task = FlaskTask  # type: ignore
     celery_app.config_from_object(celery_configs)
     celery_app.conf.update(app.config)
     celery_app.set_default()
@@ -187,7 +186,7 @@ def create_app() -> flask.app.Flask:
     # This is particularly helpful for forms that are generated from json schemas.
     app.json.sort_keys = False
 
-    if app.config['SPIFFWORKFLOW_BACKEND_CELERY_ENABLED']:
+    if app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
         celery_app = celery_init_app(app)
         app.celery_app = celery_app
 

@@ -98,7 +98,9 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
-    def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
+    def should_do_before(
+        self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel
+    ) -> None:
         pass
 
     def _run(
@@ -296,10 +298,13 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         super().__init__(delegate, subprocess_spec_loader, options)
         self.tasks_that_have_been_seen: set[str] = set()
 
-    def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
+    def should_do_before(
+        self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel
+    ) -> None:
         tasks = bpmn_process_instance.get_tasks(
             # state=TaskState.WAITING | TaskState.STARTED | TaskState.READY
-            state=TaskState.WAITING | TaskState.READY
+            state=TaskState.WAITING
+            | TaskState.READY
             # state=TaskState.READY
         )
         for spiff_task in tasks:

@@ -1,6 +1,5 @@
 import json
 import os
-from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 import uuid
 from collections import OrderedDict
 from collections.abc import Generator
@@ -27,6 +26,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -1230,11 +1230,13 @@ def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int)
         )
     return task_model
 
+
 def _next_human_task_for_user(process_instance_id: int, user_id: int) -> HumanTaskModel | None:
-    return (
-            HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
-    .order_by(asc(HumanTaskModel.id))  # type: ignore
-    .join(HumanTaskUserModel)
-    .filter_by(user_id=user_id)
-    .first()
+    next_human_task: HumanTaskUserModel | None = (
+        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+        .order_by(asc(HumanTaskModel.id))  # type: ignore
+        .join(HumanTaskUserModel)
+        .filter_by(user_id=user_id)
+        .first()
     )
+    return next_human_task

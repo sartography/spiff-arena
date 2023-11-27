@@ -134,7 +134,7 @@ def process_instance_run(
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
-    process_instance_api_dict['process_instance_was_queued'] = process_instance_was_queued
+    process_instance_api_dict["process_instance_was_queued"] = process_instance_was_queued
     return Response(json.dumps(process_instance_api_dict), status=200, mimetype="application/json")
 
 
