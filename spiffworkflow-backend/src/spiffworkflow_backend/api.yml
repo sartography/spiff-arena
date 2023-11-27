@@ -2214,6 +2214,27 @@ paths:
                  $ref: "#/components/schemas/Task"
 
 
+  /tasks/{process_instance_id}/instruction:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_with_instruction
+      summary: Gets the next task and its instructions
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
   /tasks/{process_instance_id}/{task_guid}:
     parameters:
       - name: task_guid

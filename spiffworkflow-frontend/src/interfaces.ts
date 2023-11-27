@@ -110,7 +110,7 @@ export interface ProcessInstanceTask {
   form_schema: any;
   form_ui_schema: any;
   lane_assignment_id: string;
-  name: string;
+  name: string; // bpmn_identifier
   process_identifier: string;
   process_initiator_username: string;
   process_instance_id: number;
@@ -119,7 +119,7 @@ export interface ProcessInstanceTask {
   process_model_identifier: string;
   properties: any;
   state: string;
-  title: string;
+  title: string; // bpmn_name
   type: string;
   updated_at_in_seconds: number;
 

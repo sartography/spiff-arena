@@ -554,6 +554,10 @@ def process_instance_progress(
     return make_response(jsonify(response), 200)
 
 
+def _render_instructions(spiff_task: SpiffTask) -> str:
+    return JinjaService.render_instructions_for_end_user(spiff_task)
+
+
 def _interstitial_stream(
     process_instance: ProcessInstanceModel,
     execute_tasks: bool = True,
@@ -563,12 +567,6 @@ def _interstitial_stream(
         return processor.bpmn_process_instance.get_tasks(
             state=TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
-
-    def render_instructions(spiff_task: SpiffTask) -> str:
-        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-        if task_model is None:
-            return ""
-        return JinjaService.render_instructions_for_end_user(task_model)
 
     # do not attempt to get task instructions if process instance is suspended or was terminated
     if process_instance.status in ["suspended", "terminated"]:
@@ -584,7 +582,7 @@ def _interstitial_stream(
             # ignore the instructions if they are on the EndEvent for the top level process
             if not TaskService.is_main_process_end_event(spiff_task):
                 try:
-                    instructions = render_instructions(spiff_task)
+                    instructions = _render_instructions(spiff_task)
                 except Exception as e:
                     api_error = ApiError(
                         error_code="engine_steps_error",
@@ -657,21 +655,39 @@ def _interstitial_stream(
         tasks = get_reportable_tasks(processor)
 
     spiff_task = processor.next_task()
+    if spiff_task is not None and str(spiff_task.id) not in reported_ids:
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        try:
+            instructions = _render_instructions(spiff_task)
+        except Exception as e:
+            api_error = ApiError(
+                error_code="engine_steps_error",
+                message=f"Failed to complete an automated task. Error was: {str(e)}",
+                status_code=400,
+            )
+            yield _render_data("error", api_error)
+            raise e
+        task.properties = {"instructionsForEndUser": instructions}
+        yield _render_data("task", task)
+
+
+def task_with_instruction(process_instance_id: int) -> Response:
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.next_task()
+    task = None
     if spiff_task is not None:
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-        if task.id not in reported_ids:
-            try:
-                instructions = render_instructions(spiff_task)
-            except Exception as e:
-                api_error = ApiError(
-                    error_code="engine_steps_error",
-                    message=f"Failed to complete an automated task. Error was: {str(e)}",
-                    status_code=400,
-                )
-                yield _render_data("error", api_error)
-                raise e
-            task.properties = {"instructionsForEndUser": instructions}
-            yield _render_data("task", task)
+        try:
+            instructions = _render_instructions(spiff_task)
+        except Exception as exception:
+            raise ApiError(
+                error_code="engine_steps_error",
+                message=f"Failed to complete an automated task. Error was: {str(exception)}",
+                status_code=400,
+            ) from exception
+        task.properties = {"instructionsForEndUser": instructions}
+    return make_response(jsonify({"task": task}), 200)
 
 
 def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:

@@ -42,7 +42,7 @@ class JinjaService:
         if extensions is None:
             if isinstance(task, TaskModel):
                 extensions = TaskService.get_extensions_from_task_model(task)
-            else:
+            elif hasattr(task.task_spec, "extensions"):
                 extensions = task.task_spec.extensions
         if extensions and "instructionsForEndUser" in extensions:
             if extensions["instructionsForEndUser"]:

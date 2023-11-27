@@ -78,6 +78,7 @@ import {
 } from '../components/ErrorDisplay';
 import { Notification } from '../components/Notification';
 import DateAndTimeService from '../services/DateAndTimeService';
+import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 
 type OwnProps = {
   variant: string;
@@ -1637,14 +1638,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Stack>
         {getInfoTag()}
         <br />
-        <ProcessInterstitial
-          processInstanceId={processInstance.id}
-          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
-          allowRedirect={false}
-          smallSpinner
-          collapsableInstructions
-          executeTasks={false}
-        />
+        <ProcessInstanceCurrentTaskInfo processInstance={processInstance} />
         <br />
         <TaskListTable
           apiPath="/tasks"
