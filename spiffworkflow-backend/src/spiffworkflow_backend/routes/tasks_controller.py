@@ -676,7 +676,7 @@ def _interstitial_stream(
         tasks = get_reportable_tasks(processor)
 
     spiff_task = processor.next_task()
-    if spiff_task is not None and str(spiff_task.id) not in reported_ids:
+    if spiff_task is not None and spiff_task.id not in reported_ids:
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         try:
             instructions = _render_instructions(spiff_task)
