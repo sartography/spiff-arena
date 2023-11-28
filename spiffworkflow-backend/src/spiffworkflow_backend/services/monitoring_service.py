@@ -106,4 +106,3 @@ def configure_sentry(app: flask.app.Flask) -> None:
             sentry_configs["_experiments"] = {"profiles_sample_rate": profiles_sample_rate}
 
     sentry_sdk.init(**sentry_configs)
-

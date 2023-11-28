@@ -1,4 +1,3 @@
-
 import flask.wrappers
 from celery import Celery
 from celery import Task

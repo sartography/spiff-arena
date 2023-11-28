@@ -3,7 +3,7 @@ import time
 
 from apscheduler.schedulers.background import BlockingScheduler  # type: ignore
 from spiffworkflow_backend import create_app
-from spiffworkflow_backend import start_scheduler
+from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler_if_appropriate
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.helpers.db_helper import try_to_connect
 
@@ -27,7 +27,7 @@ def main() -> None:
         f"done running data migration from background processor. took {end_time - start_time} seconds. starting"
         " scheduler"
     )
-    start_scheduler(app, BlockingScheduler)
+    start_apscheduler_if_appropriate(app, BlockingScheduler)
 
 
 if __name__ == "__main__":

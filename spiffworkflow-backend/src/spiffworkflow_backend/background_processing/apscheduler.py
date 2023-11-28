@@ -16,7 +16,10 @@ def should_start_apscheduler(app: flask.app.Flask) -> bool:
 
     return True
 
-def start_apscheduler_if_appropriate(app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler) -> None:
+
+def start_apscheduler_if_appropriate(
+    app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler
+) -> None:
     if not should_start_apscheduler(app):
         return None
 
