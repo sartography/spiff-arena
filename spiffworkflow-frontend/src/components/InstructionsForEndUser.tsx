@@ -92,7 +92,7 @@ export default function InstructionsForEndUser({
     className += ' markdown-collapsed';
   }
 
-  if (task || taskInstructionForEndUser) {
+  if (instructions) {
     return (
       <div>
         <div className={className}>

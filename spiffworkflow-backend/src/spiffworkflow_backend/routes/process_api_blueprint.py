@@ -273,6 +273,7 @@ def _find_principal_or_raise() -> PrincipalModel:
 
 def _find_process_instance_for_me_or_raise(
     process_instance_id: int,
+    include_actions: bool = False,
 ) -> ProcessInstanceModel:
     process_instance: ProcessInstanceModel | None = (
         ProcessInstanceModel.query.filter_by(id=process_instance_id)
@@ -305,5 +306,18 @@ def _find_process_instance_for_me_or_raise(
                 status_code=400,
             )
         )
+
+    if include_actions:
+        modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(
+            process_instance.process_model_identifier
+        )
+        target_uri = f"/v1.0/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
+        has_permission = AuthorizationService.user_has_permission(
+            user=g.user,
+            permission="read",
+            target_uri=target_uri,
+        )
+        if has_permission:
+            process_instance.actions = {"read": {"path": target_uri, "method": "GET"}}
 
     return process_instance

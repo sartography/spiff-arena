@@ -11,6 +11,7 @@ from flask.wrappers import Response
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
+from spiffworkflow_backend.celery_tasks.process_instance_task import queue_enabled_for_process_model
 from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -49,26 +50,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.task_service import TaskService
 
 
-def _process_instance_create(
-    process_model_identifier: str,
-) -> ProcessInstanceModel:
-    process_model = _get_process_model(process_model_identifier)
-    if process_model.primary_file_name is None:
-        raise ApiError(
-            error_code="process_model_missing_primary_bpmn_file",
-            message=(
-                f"Process Model '{process_model_identifier}' does not have a primary"
-                " bpmn file. One must be set in order to instantiate this model."
-            ),
-            status_code=400,
-        )
-
-    process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-        process_model_identifier, g.user
-    )
-    return process_instance
-
-
 def process_instance_create(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
@@ -82,59 +63,18 @@ def process_instance_create(
     )
 
 
-def _process_instance_run(
-    process_instance: ProcessInstanceModel,
-) -> bool:
-    if process_instance.status != "not_started":
-        raise ApiError(
-            error_code="process_instance_not_runnable",
-            message=f"Process Instance ({process_instance.id}) is currently running or has already run.",
-            status_code=400,
-        )
-
-    processor = None
-    try:
-        if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-            processor = ProcessInstanceService.run_process_instance_with_processor(process_instance)
-    except (
-        ApiError,
-        ProcessInstanceIsNotEnqueuedError,
-        ProcessInstanceIsAlreadyLockedError,
-    ) as e:
-        ErrorHandlingService.handle_error(process_instance, e)
-        raise e
-    except Exception as e:
-        ErrorHandlingService.handle_error(process_instance, e)
-        # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
-        # we need to recurse through all last tasks if the last task is a call activity or subprocess.
-        if processor is not None:
-            task = processor.bpmn_process_instance.last_task
-            raise ApiError.from_task(
-                error_code="unknown_exception",
-                message=f"An unknown error occurred. Original error: {e}",
-                status_code=400,
-                task=task,
-            ) from e
-        raise e
-
-    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
-        MessageService.correlate_all_message_instances()
-
-    process_instance_was_queued = queue_process_instance_if_appropriate(process_instance)
-
-    return process_instance_was_queued
-
-
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    process_instance_was_queued = _process_instance_run(process_instance)
+    _process_instance_run(process_instance)
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
-    process_instance_api_dict["process_instance_was_queued"] = process_instance_was_queued
+    process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model(
+        process_instance
+    )
     return Response(json.dumps(process_instance_api_dict), status=200, mimetype="application/json")
 
 
@@ -700,3 +640,64 @@ def _get_process_instance(
 
     process_instance_as_dict = process_instance.serialized_with_metadata()
     return make_response(jsonify(process_instance_as_dict), 200)
+
+
+def _process_instance_run(
+    process_instance: ProcessInstanceModel,
+) -> None:
+    if process_instance.status != "not_started":
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=f"Process Instance ({process_instance.id}) is currently running or has already run.",
+            status_code=400,
+        )
+
+    processor = None
+    try:
+        if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+            processor = ProcessInstanceService.run_process_instance_with_processor(process_instance)
+    except (
+        ApiError,
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        raise e
+    except Exception as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
+        # we need to recurse through all last tasks if the last task is a call activity or subprocess.
+        if processor is not None:
+            task = processor.bpmn_process_instance.last_task
+            raise ApiError.from_task(
+                error_code="unknown_exception",
+                message=f"An unknown error occurred. Original error: {e}",
+                status_code=400,
+                task=task,
+            ) from e
+        raise e
+
+    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
+        MessageService.correlate_all_message_instances()
+
+    queue_process_instance_if_appropriate(process_instance)
+
+
+def _process_instance_create(
+    process_model_identifier: str,
+) -> ProcessInstanceModel:
+    process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_missing_primary_bpmn_file",
+            message=(
+                f"Process Model '{process_model_identifier}' does not have a primary"
+                " bpmn file. One must be set in order to instantiate this model."
+            ),
+            status_code=400,
+        )
+
+    process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+        process_model_identifier, g.user
+    )
+    return process_instance

@@ -69,18 +69,11 @@ export default function ProcessInstanceCurrentTaskInfo({
       );
     }
     if (task && task.can_complete && HUMAN_TASK_TYPES.includes(task.type)) {
-      return inlineMessage(
-        '',
-        `The task "${task.title || task.name}" is ready for you to complete.`
-      );
+      return null;
     }
     return (
       <div>
-        <InstructionsForEndUser
-          task={task}
-          defaultMessage="There are no additional instructions or information for this task."
-          allowCollapse
-        />
+        <InstructionsForEndUser task={task} allowCollapse />
       </div>
     );
   };

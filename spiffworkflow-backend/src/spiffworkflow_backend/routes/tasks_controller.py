@@ -26,6 +26,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.celery_tasks.process_instance_task import queue_enabled_for_process_model
 from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -538,7 +539,7 @@ def process_instance_progress(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
     response: dict[str, Task | ProcessInstanceModel | list] = {}
-    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id, include_actions=True)
 
     principal = _find_principal_or_raise()
     next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
@@ -546,12 +547,32 @@ def process_instance_progress(
         response["task"] = HumanTaskModel.to_task(next_human_task_assigned_to_me)
     # this may not catch all times we should redirect to instance show page
     elif not process_instance.is_immediately_runnable():
+        # any time we assign this process_instance, the frontend progress page will redirect to process instance show
         response["process_instance"] = process_instance
 
     user_instructions = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
     response["instructions"] = user_instructions
 
     return make_response(jsonify(response), 200)
+
+
+def task_with_instruction(process_instance_id: int) -> Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.next_task()
+    task = None
+    if spiff_task is not None:
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        try:
+            instructions = _render_instructions(spiff_task)
+        except Exception as exception:
+            raise ApiError(
+                error_code="engine_steps_error",
+                message=f"Failed to complete an automated task. Error was: {str(exception)}",
+                status_code=400,
+            ) from exception
+        task.properties = {"instructionsForEndUser": instructions}
+    return make_response(jsonify({"task": task}), 200)
 
 
 def _render_instructions(spiff_task: SpiffTask) -> str:
@@ -669,25 +690,6 @@ def _interstitial_stream(
             raise e
         task.properties = {"instructionsForEndUser": instructions}
         yield _render_data("task", task)
-
-
-def task_with_instruction(process_instance_id: int) -> Response:
-    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = processor.next_task()
-    task = None
-    if spiff_task is not None:
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-        try:
-            instructions = _render_instructions(spiff_task)
-        except Exception as exception:
-            raise ApiError(
-                error_code="engine_steps_error",
-                message=f"Failed to complete an automated task. Error was: {str(exception)}",
-                status_code=400,
-            ) from exception
-        task.properties = {"instructionsForEndUser": instructions}
-    return make_response(jsonify({"task": task}), 200)
 
 
 def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
@@ -909,7 +911,7 @@ def _task_submit_shared(
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
-    process_instance_was_queued = queue_process_instance_if_appropriate(process_instance)
+    queue_process_instance_if_appropriate(process_instance)
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
@@ -925,7 +927,7 @@ def _task_submit_shared(
 
     if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-        task.process_instance_was_queued = process_instance_was_queued
+        task.process_model_uses_queued_execution = queue_enabled_for_process_model(process_instance)
         return make_response(jsonify(task), 200)
 
     # next_task always returns something, even if the instance is complete, so we never get here

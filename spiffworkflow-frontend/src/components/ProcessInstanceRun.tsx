@@ -96,7 +96,7 @@ export default function ProcessInstanceRun({
 
   const onProcessInstanceRun = (processInstance: ProcessInstance) => {
     const processInstanceId = processInstance.id;
-    if (processInstance.process_instance_was_queued) {
+    if (processInstance.process_model_uses_queued_execution) {
       navigate(
         `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`
       );

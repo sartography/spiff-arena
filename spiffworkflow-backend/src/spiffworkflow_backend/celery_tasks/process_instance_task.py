@@ -6,8 +6,13 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
+def queue_enabled_for_process_model(process_instance: ProcessInstanceModel) -> bool:
+    # TODO: check based on the process model itself as well
+    return current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] is True
+
+
 def queue_process_instance_if_appropriate(process_instance: ProcessInstanceModel) -> bool:
-    if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] and process_instance.is_immediately_runnable():
+    if queue_enabled_for_process_model(process_instance) and process_instance.is_immediately_runnable():
         process_instance_task_run.delay(process_instance.id)  # type: ignore
         return True
 

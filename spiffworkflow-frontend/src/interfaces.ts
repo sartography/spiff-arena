@@ -84,6 +84,8 @@ export interface BasicTask {
   start_in_seconds: number;
   end_in_seconds: number;
   extensions?: any;
+
+  process_model_uses_queued_execution?: boolean;
 }
 
 // TODO: merge with ProcessInstanceTask
@@ -199,6 +201,7 @@ export interface ProcessInstance {
   process_metadata?: ProcessInstanceMetadata[];
   process_model_with_diagram_identifier?: string;
   last_milestone_bpmn_name?: string;
+  actions?: ApiActions;
 
   // from tasks
   potential_owner_usernames?: string;
@@ -207,7 +210,7 @@ export interface ProcessInstance {
   waiting_for?: string;
 
   // from api instance
-  process_instance_was_queued?: boolean;
+  process_model_uses_queued_execution?: boolean;
 }
 
 export interface MessageCorrelationProperties {

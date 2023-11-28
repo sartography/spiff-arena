@@ -103,10 +103,13 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     # full, none
     persistence_level: str = "full"
 
+    actions: dict | None = None
+
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         return {
             "id": self.id,
+            "actions": self.actions,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "bpmn_xml_file_contents_retrieval_error": self.bpmn_xml_file_contents_retrieval_error,

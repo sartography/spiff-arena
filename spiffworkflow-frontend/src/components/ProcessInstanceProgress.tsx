@@ -58,14 +58,24 @@ export default function ProcessInstanceProgress({
   useEffect(() => {
     const processResult = (result: ProcessInstanceProgressResponse) => {
       if (result.task && shouldRedirectToTask(result.task)) {
+        // if task you can complete, go there
         navigate(`/tasks/${result.task.process_instance_id}/${result.task.id}`);
       } else if (result.process_instance) {
-        navigate(processInstanceShowPageUrl);
+        // there is nothing super exciting happening right now. go to process instance.
+        if (
+          result.process_instance.actions &&
+          'read' in result.process_instance.actions
+        ) {
+          navigate(processInstanceShowPageUrl);
+        } else {
+          navigate('/');
+        }
       }
 
-      setTaskInstructionForEndUserList((prevData) => [
+      // otherwise render instructions
+      setTaskInstructionForEndUserList((prevInstructions) => [
         ...result.instructions,
-        ...prevData,
+        ...prevInstructions,
       ]);
     };
 
