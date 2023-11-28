@@ -1,3 +1,6 @@
+# black and ruff are in competition with each other in import formatting so ignore ruff
+# ruff: noqa: I001
+
 import json
 import os
 import uuid
@@ -26,8 +29,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
-from spiffworkflow_backend.celery_tasks.process_instance_task import queue_enabled_for_process_model
-from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError

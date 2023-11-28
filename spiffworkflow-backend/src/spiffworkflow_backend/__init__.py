@@ -1,24 +1,18 @@
 import faulthandler
-import json
 import os
-import sys
 from typing import Any
 
 import connexion  # type: ignore
 import flask.app
 import flask.json
 import sqlalchemy
-from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
-from apscheduler.schedulers.base import BaseScheduler  # type: ignore
-from celery import Celery
-from celery import Task
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
-from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
-from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
+from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler_if_appropriate
+from spiffworkflow_backend.background_processing.celery import init_celery_if_appropriate
 from spiffworkflow_backend.config import setup_config
 from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
@@ -29,7 +23,8 @@ from spiffworkflow_backend.routes.authentication_controller import verify_token
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.background_processing_service import BackgroundProcessingService
+from spiffworkflow_backend.services.monitoring_service import configure_sentry
+from spiffworkflow_backend.services.monitoring_service import setup_prometheus_metrics
 
 
 class MyJSONEncoder(DefaultJSONProvider):
@@ -57,85 +52,6 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().dumps(obj, **kwargs)
 
 
-def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler) -> None:
-    scheduler = scheduler_class()
-
-    # TODO: polling intervals for messages job
-    polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
-    not_started_polling_interval_in_seconds = app.config[
-        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS"
-    ]
-    user_input_required_polling_interval_in_seconds = app.config[
-        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"
-    ]
-    # TODO: add job to release locks to simplify other queries
-    # TODO: add job to delete completed entires
-    # TODO: add job to run old/low priority instances so they do not get drowned out
-
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_message_instances_with_app_context,
-        "interval",
-        seconds=10,
-    )
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_not_started_process_instances,
-        "interval",
-        seconds=not_started_polling_interval_in_seconds,
-    )
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_waiting_process_instances,
-        "interval",
-        seconds=polling_interval_in_seconds,
-    )
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_user_input_required_process_instances,
-        "interval",
-        seconds=user_input_required_polling_interval_in_seconds,
-    )
-    scheduler.add_job(
-        BackgroundProcessingService(app).remove_stale_locks,
-        "interval",
-        seconds=app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"],
-    )
-    scheduler.start()
-
-
-def should_start_scheduler(app: flask.app.Flask) -> bool:
-    if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
-        return False
-
-    # do not start the scheduler twice in flask debug mode but support code reloading
-    if app.config["ENV_IDENTIFIER"] == "local_development" and os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        return False
-
-    return True
-
-
-def celery_init_app(app: flask.app.Flask) -> Celery:
-    class FlaskTask(Task):
-        def __call__(self, *args: object, **kwargs: object) -> object:
-            with app.app_context():
-                return self.run(*args, **kwargs)  # type: ignore
-
-    celery_configs = {
-        "broker_url": app.config["SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL"],
-        "result_backend": app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"],
-        "task_ignore_result": True,
-        "task_serializer": "json",
-        "result_serializer": "json",
-        "accept_content": ["json"],
-        "enable_utc": True,
-    }
-
-    celery_app = Celery(app.name)
-    celery_app.Task = FlaskTask  # type: ignore
-    celery_app.config_from_object(celery_configs)
-    celery_app.conf.update(app.config)
-    celery_app.set_default()
-    app.celery_app = celery_app
-    return celery_app
-
-
 def create_app() -> flask.app.Flask:
     faulthandler.enable()
 
@@ -148,7 +64,7 @@ def create_app() -> flask.app.Flask:
     app = connexion_app.app
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
-    _setup_prometheus_metrics(app, connexion_app)
+    setup_prometheus_metrics(app, connexion_app)
 
     setup_config(app)
     db.init_app(app)
@@ -173,9 +89,6 @@ def create_app() -> flask.app.Flask:
 
     app.json = MyJSONEncoder(app)
 
-    if should_start_scheduler(app):
-        start_scheduler(app)
-
     configure_sentry(app)
 
     app.before_request(verify_token)
@@ -186,108 +99,7 @@ def create_app() -> flask.app.Flask:
     # This is particularly helpful for forms that are generated from json schemas.
     app.json.sort_keys = False
 
-    if app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
-        celery_app = celery_init_app(app)
-        app.celery_app = celery_app
+    start_apscheduler_if_appropriate(app)
+    init_celery_if_appropriate(app)
 
     return app  # type: ignore
-
-
-def get_version_info_data() -> dict[str, Any]:
-    version_info_data_dict = {}
-    if os.path.isfile("version_info.json"):
-        with open("version_info.json") as f:
-            version_info_data_dict = json.load(f)
-    return version_info_data_dict
-
-
-def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
-    metrics = ConnexionPrometheusMetrics(connexion_app)
-    app.config["PROMETHEUS_METRICS"] = metrics
-    version_info_data = get_version_info_data()
-    if len(version_info_data) > 0:
-        # prometheus does not allow periods in key names
-        version_info_data_normalized = {k.replace(".", "_"): v for k, v in version_info_data.items()}
-        metrics.info("version_info", "Application Version Info", **version_info_data_normalized)
-
-
-def traces_sampler(sampling_context: Any) -> Any:
-    # always inherit
-    if sampling_context["parent_sampled"] is not None:
-        return sampling_context["parent_sampled"]
-
-    if "wsgi_environ" in sampling_context:
-        wsgi_environ = sampling_context["wsgi_environ"]
-        path_info = wsgi_environ.get("PATH_INFO")
-        request_method = wsgi_environ.get("REQUEST_METHOD")
-
-        # tasks_controller.task_submit
-        # this is the current pain point as of 31 jan 2023.
-        if path_info and (
-            (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
-            or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
-        ):
-            return 1
-
-    # Default sample rate for all others (replaces traces_sample_rate)
-    return 0.01
-
-
-def configure_sentry(app: flask.app.Flask) -> None:
-    import sentry_sdk
-    from sentry_sdk.integrations.flask import FlaskIntegration
-
-    # get rid of NotFound errors
-    def before_send(event: Any, hint: Any) -> Any:
-        if "exc_info" in hint:
-            _exc_type, exc_value, _tb = hint["exc_info"]
-            # NotFound is mostly from web crawlers
-            if isinstance(exc_value, NotFound):
-                return None
-        return event
-
-    sentry_errors_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE")
-    if sentry_errors_sample_rate is None:
-        raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow")
-
-    sentry_traces_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE")
-    if sentry_traces_sample_rate is None:
-        raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow")
-
-    sentry_env_identifier = app.config["ENV_IDENTIFIER"]
-    if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER"):
-        sentry_env_identifier = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
-
-    sentry_configs = {
-        "dsn": app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
-        "integrations": [
-            FlaskIntegration(),
-        ],
-        "environment": sentry_env_identifier,
-        # sample_rate is the errors sample rate. we usually set it to 1 (100%)
-        # so we get all errors in sentry.
-        "sample_rate": float(sentry_errors_sample_rate),
-        # Set traces_sample_rate to capture a certain percentage
-        # of transactions for performance monitoring.
-        # We recommend adjusting this value to less than 1(00%) in production.
-        "traces_sample_rate": float(sentry_traces_sample_rate),
-        "traces_sampler": traces_sampler,
-        # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
-        "before_send": before_send,
-    }
-
-    # https://docs.sentry.io/platforms/python/configuration/releases
-    version_info_data = get_version_info_data()
-    if len(version_info_data) > 0:
-        git_commit = version_info_data.get("org.opencontainers.image.revision") or version_info_data.get("git_commit")
-        if git_commit is not None:
-            sentry_configs["release"] = git_commit
-
-    if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROFILING_ENABLED"):
-        # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
-        # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
-        profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
-        if profiles_sample_rate > 0:
-            sentry_configs["_experiments"] = {"profiles_sample_rate": profiles_sample_rate}
-
-    sentry_sdk.init(**sentry_configs)

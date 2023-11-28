@@ -1,4 +1,6 @@
-"""APIs for dealing with process groups, process models, and process instances."""
+# black and ruff are in competition with each other in import formatting so ignore ruff
+# ruff: noqa: I001
+
 import json
 from typing import Any
 
@@ -11,8 +13,12 @@ from flask.wrappers import Response
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
-from spiffworkflow_backend.celery_tasks.process_instance_task import queue_enabled_for_process_model
-from spiffworkflow_backend.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -129,6 +135,9 @@ def process_instance_resume(
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor.resume()
+        # the process instance will be in waiting since we just successfully resumed it.
+        # tell the celery worker to get busy.
+        queue_process_instance_if_appropriate(process_instance)
     except (
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,

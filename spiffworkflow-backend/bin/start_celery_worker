@@ -13,4 +13,4 @@ export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
 export SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND="queue_instructions_for_end_user"
 export SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB="queue_instructions_for_end_user"
 
-poet run celery -A src.spiffworkflow_backend.celery_worker worker --loglevel=info
+poet run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info
