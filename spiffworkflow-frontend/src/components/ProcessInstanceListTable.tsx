@@ -308,10 +308,16 @@ export default function ProcessInstanceListTable({
     }
   }, []);
 
+  // only called when the apply button is clicked
   const setProcessInstancesFromApplyFilter = (result: any) => {
     setProcessInstancesFromResult(result);
     if (result.report_hash) {
       searchParams.set('report_hash', result.report_hash);
+      // whenever apply button is clicked, we want to reset the page to 1,
+      // since the user has changed the filters
+      if (searchParams.get('page') !== '1') {
+        searchParams.set('page', '1');
+      }
       setSearchParams(searchParams);
     }
   };

@@ -44,7 +44,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 setuptools = "^65.5.1"
 
 # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
-werkzeug = "*"
+werkzeug = "^2.3"
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 
 lxml = "^4.9.1"
@@ -86,7 +86,7 @@ pytest = "^7.1.2"
 coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^2.3.5"
 mypy = ">=0.961"
-typeguard = "^3"
+typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.0.1"}
 pre-commit = "^2.20.0"
 black = ">=21.10b0"
