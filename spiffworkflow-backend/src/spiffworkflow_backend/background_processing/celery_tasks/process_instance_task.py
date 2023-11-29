@@ -1,10 +1,11 @@
-from datetime import datetime
+import time
 
 from celery import shared_task
 from flask import current_app
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
@@ -14,14 +15,19 @@ def queue_enabled_for_process_model(process_instance: ProcessInstanceModel) -> b
     return current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] is True
 
 
-def queue_process_instance_if_appropriate(
-    process_instance: ProcessInstanceModel, eta_in_seconds: float | None = None, task_guid: str | None = None
-) -> bool:
-    eta = None
-    if eta_in_seconds is not None:
-        eta = datetime.fromtimestamp(eta_in_seconds)
+def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta_in_seconds: float, task_guid: str) -> bool:
+    if queue_enabled_for_process_model(process_instance):
+        countdown = eta_in_seconds - time.time()
+        args_to_celery = {"process_instance_id": process_instance.id, "task_guid": task_guid}
+        celery_task_process_instance_run.apply_async(kwargs=args_to_celery, countdown=countdown)  # type: ignore
+        return True
+
+    return False
+
+
+def queue_process_instance_if_appropriate(process_instance: ProcessInstanceModel) -> bool:
     if queue_enabled_for_process_model(process_instance) and process_instance.is_immediately_runnable():
-        celery_task_process_instance_run.delay(process_instance.id, eta=eta, task_guid=task_guid)  # type: ignore
+        celery_task_process_instance_run.delay(process_instance.id)  # type: ignore
         return True
 
     return False
@@ -48,6 +54,8 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
                     db.session.add(future_task)
                     db.session.commit()
             queue_process_instance_if_appropriate(process_instance)
+    except ProcessInstanceIsAlreadyLockedError:
+        pass
     except Exception as e:
         db.session.rollback()  # in case the above left the database with a bad transaction
         error_message = (

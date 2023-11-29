@@ -1,6 +1,9 @@
+import time
+
 import flask
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_future_task_if_appropriate
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.message_service import MessageService
@@ -50,15 +53,19 @@ class BackgroundProcessingService:
             future_task_lookahead_in_seconds = self.app.config[
                 "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS"
             ]
+            lookahead = time.time() + future_task_lookahead_in_seconds
             future_tasks = FutureTaskModel.query.filter(
                 and_(
                     FutureTaskModel.completed == False,  # noqa: E712
-                    FutureTaskModel.run_at_in_seconds < future_task_lookahead_in_seconds,
+                    FutureTaskModel.run_at_in_seconds < lookahead,
                 )
-            )
+            ).all()
             for future_task in future_tasks:
-                task = TaskModel.query.filter_by(guid=future_task.guid).first()
-                if task is not None:
-                    queue_process_instance_if_appropriate(
-                        task.process_instance, eta_in_seconds=future_task.run_at_in_seconds, task_guid=task.guid
-                    )
+                process_instance = (
+                    ProcessInstanceModel.query.join(TaskModel, TaskModel.process_instance_id == ProcessInstanceModel.id)
+                    .filter(TaskModel.guid == future_task.guid)
+                    .first()
+                )
+                queue_future_task_if_appropriate(
+                    process_instance, eta_in_seconds=future_task.run_at_in_seconds, task_guid=future_task.guid
+                )
