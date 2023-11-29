@@ -23,10 +23,7 @@ def main() -> None:
         VersionOneThree().run()
 
     end_time = time.time()
-    print(
-        f"done running data migration from background processor. took {end_time - start_time} seconds. starting"
-        " scheduler"
-    )
+    print(f"done running data migration from background processor. took {end_time - start_time} seconds. starting scheduler")
     start_apscheduler_if_appropriate(app, BlockingScheduler)
 
 

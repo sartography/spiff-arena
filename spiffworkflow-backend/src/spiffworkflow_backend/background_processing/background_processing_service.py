@@ -1,8 +1,12 @@
 import flask
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
+from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from sqlalchemy import and_
 
 
 class BackgroundProcessingService:
@@ -39,3 +43,22 @@ class BackgroundProcessingService:
         """If something has been locked for a certain amount of time it is probably stale so unlock it."""
         with self.app.app_context():
             ProcessInstanceLockService.remove_stale_locks()
+
+    def process_future_tasks(self) -> None:
+        """If something has been locked for a certain amount of time it is probably stale so unlock it."""
+        with self.app.app_context():
+            future_task_lookahead_in_seconds = self.app.config[
+                "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS"
+            ]
+            future_tasks = FutureTaskModel.query.filter(
+                and_(
+                    FutureTaskModel.completed == False,  # noqa: E712
+                    FutureTaskModel.run_at_in_seconds < future_task_lookahead_in_seconds,
+                )
+            )
+            for future_task in future_tasks:
+                task = TaskModel.query.filter_by(guid=future_task.guid).first()
+                if task is not None:
+                    queue_process_instance_if_appropriate(
+                        task.process_instance, eta_in_seconds=future_task.run_at_in_seconds, task_guid=task.guid
+                    )

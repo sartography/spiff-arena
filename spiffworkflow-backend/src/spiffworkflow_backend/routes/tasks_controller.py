@@ -1,6 +1,3 @@
-# black and ruff are in competition with each other in import formatting so ignore ruff
-# ruff: noqa: I001
-
 import json
 import os
 import uuid
@@ -29,12 +26,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
-    queue_enabled_for_process_model,
-)
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
-    queue_process_instance_if_appropriate,
-)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_enabled_for_process_model
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_process_instance_if_appropriate
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -92,9 +85,7 @@ class ReactJsonSchemaSelectOption(TypedDict):
 
 
 # this is currently not used by the Frontend
-def task_list_my_tasks(
-    process_instance_id: int | None = None, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
+def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     assigned_user = aliased(UserModel)
     process_initiator_user = aliased(UserModel)
@@ -264,8 +255,7 @@ def task_data_update(
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
-                "The process instance needs to be suspended to update the task-data."
-                f" It is currently: {process_instance.status}"
+                f"The process instance needs to be suspended to update the task-data. It is currently: {process_instance.status}"
             )
 
         task_model = TaskModel.query.filter_by(guid=task_guid).first()
@@ -361,9 +351,7 @@ def task_assign(
     )
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    human_tasks = HumanTaskModel.query.filter_by(
-        process_instance_id=process_instance.id, task_id=task_model.guid
-    ).all()
+    human_tasks = HumanTaskModel.query.filter_by(process_instance_id=process_instance.id, task_id=task_model.guid).all()
 
     if len(human_tasks) > 1:
         raise ApiError(
@@ -464,15 +452,11 @@ def task_show(
             )
             relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
             process_model_relative_path = os.path.dirname(relative_path)
-            process_model_with_form = ProcessModelService.get_process_model_from_relative_path(
-                process_model_relative_path
-            )
+            process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
-        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
-            process_instance_id, task_model.guid
-        )
+        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id, task_model.guid)
 
         if "properties" in extensions:
             properties = extensions["properties"]
@@ -494,10 +478,7 @@ def task_show(
                 raise (
                     ApiError(
                         error_code="missing_form_file",
-                        message=(
-                            f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid:"
-                            f" {task_guid}"
-                        ),
+                        message=f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid: {task_guid}",
                         status_code=400,
                     )
                 )
@@ -928,9 +909,7 @@ def _task_submit_shared(
         and spiff_task_extensions["allowGuest"] == "true"
         and "guestConfirmation" in spiff_task.task_spec.extensions
     ):
-        return make_response(
-            jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
-        )
+        return make_response(jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200)
 
     if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
@@ -999,9 +978,7 @@ def _get_tasks(
             if user_group_identifier:
                 human_tasks_query = human_tasks_query.filter(GroupModel.identifier == user_group_identifier)
             else:
-                human_tasks_query = human_tasks_query.filter(
-                    HumanTaskModel.lane_assignment_id.is_not(None)  # type: ignore
-                )
+                human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_not(None))  # type: ignore
         else:
             human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
@@ -1185,15 +1162,15 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict)
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
-    potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
-        assigned_user.username.distinct()
-    ).label("potential_owner_usernames")
+    potential_owner_usernames_from_group_concat_or_similar = func.group_concat(assigned_user.username.distinct()).label(
+        "potential_owner_usernames"
+    )
     db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
 
     if db_type == "postgres":
-        potential_owner_usernames_from_group_concat_or_similar = func.string_agg(
-            assigned_user.username.distinct(), ", "
-        ).label("potential_owner_usernames")
+        potential_owner_usernames_from_group_concat_or_similar = func.string_agg(assigned_user.username.distinct(), ", ").label(
+            "potential_owner_usernames"
+        )
 
     return potential_owner_usernames_from_group_concat_or_similar
 
@@ -1217,10 +1194,7 @@ def _find_human_task_or_raise(
         raise (
             ApiError(
                 error_code="no_human_task",
-                message=(
-                    f"Cannot find a task to complete for task id '{task_guid}' and"
-                    f" process instance {process_instance_id}."
-                ),
+                message=f"Cannot find a task to complete for task id '{task_guid}' and process instance {process_instance_id}.",
                 status_code=500,
             )
         )
@@ -1244,9 +1218,7 @@ def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui_schema: di
 
 
 def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int) -> TaskModel:
-    task_model: TaskModel | None = TaskModel.query.filter_by(
-        guid=task_guid, process_instance_id=process_instance_id
-    ).first()
+    task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
     if task_model is None:
         raise ApiError(
             error_code="task_not_found",

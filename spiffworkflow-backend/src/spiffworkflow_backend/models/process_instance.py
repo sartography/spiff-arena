@@ -58,9 +58,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     active_human_tasks = relationship(
         "HumanTaskModel",
-        primaryjoin=(
-            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)"
-        ),
+        primaryjoin="and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)",
     )  # type: ignore
 
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
@@ -130,9 +128,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def serialized_with_metadata(self) -> dict[str, Any]:
         process_instance_attributes = self.serialized()
         process_instance_attributes["process_metadata"] = self.process_metadata
-        process_instance_attributes["process_model_with_diagram_identifier"] = (
-            self.process_model_with_diagram_identifier
-        )
+        process_instance_attributes["process_model_with_diagram_identifier"] = self.process_model_with_diagram_identifier
         return process_instance_attributes
 
     @validates("status")

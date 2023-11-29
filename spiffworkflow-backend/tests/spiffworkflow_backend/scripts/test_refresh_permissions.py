@@ -24,9 +24,7 @@ class TestRefreshPermissions(BaseTest):
             process_model_id="refresh_permissions",
             process_model_source_directory="script_refresh_permissions",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=basic_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=basic_user)
 
         processor = ProcessInstanceProcessor(process_instance)
 
@@ -34,9 +32,7 @@ class TestRefreshPermissions(BaseTest):
             processor.do_engine_steps(save=True)
             assert "ScriptUnauthorizedForUserError" in str(exception)
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=privileged_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=privileged_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"

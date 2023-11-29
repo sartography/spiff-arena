@@ -68,21 +68,15 @@ class TestAuthorizationService(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         finance_user = AuthorizationService.create_user_from_sign_in(
             {
                 "username": "testuser2",
@@ -143,9 +137,7 @@ class TestAuthorizationService(BaseTest):
                 ("/task-data/some-process-group:some-process-model:*", "update"),
             ]
         )
-        permissions_to_assign = AuthorizationService.explode_permissions(
-            "all", "PG:/some-process-group/some-process-model"
-        )
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "PG:/some-process-group/some-process-model")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
@@ -177,9 +169,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/some-process-group:some-process-model:*", "create"),
             ]
         )
-        permissions_to_assign = AuthorizationService.explode_permissions(
-            "start", "PG:/some-process-group/some-process-model"
-        )
+        permissions_to_assign = AuthorizationService.explode_permissions("start", "PG:/some-process-group/some-process-model")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
@@ -229,9 +219,7 @@ class TestAuthorizationService(BaseTest):
                 ("/task-data/some-process-group:some-process-model/*", "update"),
             ]
         )
-        permissions_to_assign = AuthorizationService.explode_permissions(
-            "all", "PM:/some-process-group/some-process-model"
-        )
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "PM:/some-process-group/some-process-model")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
@@ -263,9 +251,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/some-process-group:some-process-model/*", "create"),
             ]
         )
-        permissions_to_assign = AuthorizationService.explode_permissions(
-            "start", "PM:/some-process-group/some-process-model"
-        )
+        permissions_to_assign = AuthorizationService.explode_permissions("start", "PM:/some-process-group/some-process-model")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
@@ -615,9 +601,7 @@ class TestAuthorizationService(BaseTest):
         UserService.add_user_to_group(user, user_group)
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "DENY:read", "PG:hey:yo")
-        AuthorizationService.add_permission_from_uri_or_macro(
-            user_group.identifier, "DENY:read", "/process-groups/hey:new"
-        )
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "DENY:read", "/process-groups/hey:new")
 
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
 

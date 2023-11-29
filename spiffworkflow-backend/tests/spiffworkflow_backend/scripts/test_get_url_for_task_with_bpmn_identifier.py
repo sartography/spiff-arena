@@ -22,9 +22,7 @@ class TestGetUrlForTaskWithBpmnIdentifier(BaseTest):
             process_model_id="misc/test-get-url-for-task-with-bpmn-identifier",
             process_model_source_directory="test-get-url-for-task-with-bpmn-identifier",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -33,9 +31,7 @@ class TestGetUrlForTaskWithBpmnIdentifier(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
         assert process_instance.status == ProcessInstanceStatus.complete.value
         assert spiff_task is not None

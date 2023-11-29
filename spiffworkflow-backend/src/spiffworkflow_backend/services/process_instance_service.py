@@ -124,16 +124,12 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
-            process_model, user
-        )
+        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(process_model, user)
         cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         return process_instance_model
 
     @classmethod
-    def register_process_model_cycles(
-        cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int
-    ) -> None:
+    def register_process_model_cycles(cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int) -> None:
         # clean up old cycle record if it exists. event if the given cycle_count is 0 the previous version
         # of the model could have included a cycle timer start event
         cycles = ProcessModelCycleModel.query.filter(
@@ -334,10 +330,7 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message=(
-                                "Spiff Task %s lane user dict must have a key called"
-                                " 'value' with the user's uid in it."
-                            )
+                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
                             % spiff_task.task_spec.name,
                             task=spiff_task,
                         )
@@ -425,9 +418,7 @@ class ProcessInstanceService:
         models: list[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
-            digest_reference = (
-                f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
-            )
+            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:

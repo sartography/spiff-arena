@@ -1,22 +1,13 @@
 import time
 from dataclasses import dataclass
-from typing import Any
 
 from flask import current_app
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-from sqlalchemy.orm import validates
 
-from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-
-
-class FutureTaskStatus(SpiffEnum):
-    waiting = "waiting"
-    queued = "queued"
-    completed = "completed"
 
 
 @dataclass
@@ -24,16 +15,10 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "future_task"
 
     guid: str = db.Column(db.String(36), primary_key=True)
-    run_at_in_seconds: int = db.Column(db.Integer, nullable=False)
-
-    # waiting, queued, complete / delete it
-    status: str = db.Column(db.String(50), index=True, nullable=False, default="waiting")
+    run_at_in_seconds: int = db.Column(db.Integer, nullable=False, index=True)
+    completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
-
-    @validates("status")
-    def validate_status(self, key: str, value: Any) -> Any:
-        return self.validate_enum_field(key, value, FutureTaskStatus)
 
     @classmethod
     def insert_or_update(cls, guid: str, run_at_in_seconds: int) -> None:

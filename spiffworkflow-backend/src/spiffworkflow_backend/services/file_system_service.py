@@ -33,9 +33,7 @@ class FileSystemService:
     PROCESS_MODEL_JSON_FILE = "process_model.json"
 
     @classmethod
-    def walk_files(
-        cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate
-    ) -> FileGenerator:
+    def walk_files(cls, start_dir: str, directory_predicate: DirectoryPredicate, file_predicate: FilePredicate) -> FileGenerator:
         depth = 0
         for root, subdirs, files in os.walk(start_dir):
             if directory_predicate:
@@ -119,9 +117,7 @@ class FileSystemService:
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
         full_file_path = FileSystemService.full_file_path(process_model_info, file_name)
         if not os.path.exists(full_file_path):
-            raise ProcessModelFileNotFoundError(
-                f"No file found with name {file_name} in {process_model_info.display_name}"
-            )
+            raise ProcessModelFileNotFoundError(f"No file found with name {file_name} in {process_model_info.display_name}")
         with open(full_file_path, "rb") as f_handle:
             spec_file_data = f_handle.read()
         return spec_file_data

@@ -145,9 +145,7 @@ class SpecFileService(FileSystemService):
             try:
                 parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data), filename=file_name)
             except Exception as exception:
-                raise ProcessModelFileInvalidError(
-                    f"Received error trying to parse bpmn xml: {str(exception)}"
-                ) from exception
+                raise ProcessModelFileInvalidError(f"Received error trying to parse bpmn xml: {str(exception)}") from exception
 
     @classmethod
     def update_file(
@@ -194,17 +192,13 @@ class SpecFileService(FileSystemService):
             )
             if len(called_element_refs) > 0:
                 process_model_identifiers: list[str] = [r.relative_location for r in called_element_refs]
-                permitted_process_model_identifiers = (
-                    ProcessModelService.process_model_identifiers_with_permission_for_user(
-                        user=user,
-                        permission_to_check="create",
-                        permission_base_uri="/v1.0/process-instances",
-                        process_model_identifiers=process_model_identifiers,
-                    )
+                permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
+                    user=user,
+                    permission_to_check="create",
+                    permission_base_uri="/v1.0/process-instances",
+                    process_model_identifiers=process_model_identifiers,
                 )
-                unpermitted_process_model_identifiers = set(process_model_identifiers) - set(
-                    permitted_process_model_identifiers
-                )
+                unpermitted_process_model_identifiers = set(process_model_identifiers) - set(permitted_process_model_identifiers)
                 if len(unpermitted_process_model_identifiers):
                     raise NotAuthorizedError(
                         "You are not authorized to use one or more processes as a called element:"

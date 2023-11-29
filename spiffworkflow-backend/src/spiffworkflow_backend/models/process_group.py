@@ -66,12 +66,8 @@ class ProcessGroupSchema(Schema):
             "process_groups",
         ]
 
-    process_models = marshmallow.fields.List(
-        marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False)
-    )
-    process_groups = marshmallow.fields.List(
-        marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False)
-    )
+    process_models = marshmallow.fields.List(marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False))
+    process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
 
     @post_load
     def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:

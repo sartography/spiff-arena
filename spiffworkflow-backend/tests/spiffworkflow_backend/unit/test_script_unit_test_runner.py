@@ -25,9 +25,7 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-            process_model_identifier
-        )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
         assert task is not None
 
@@ -58,9 +56,7 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-            process_model_identifier
-        )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
         assert task is not None
 
@@ -91,9 +87,7 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-            process_model_identifier
-        )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
         assert task is not None
 
@@ -121,9 +115,7 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-            process_model_identifier
-        )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
         assert task is not None
 

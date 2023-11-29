@@ -35,9 +35,7 @@ class ProcessInstanceQueueService:
 
     @classmethod
     def enqueue_new_process_instance(cls, process_instance: ProcessInstanceModel, run_at_in_seconds: int) -> None:
-        queue_entry = ProcessInstanceQueueModel(
-            process_instance_id=process_instance.id, run_at_in_seconds=run_at_in_seconds
-        )
+        queue_entry = ProcessInstanceQueueModel(process_instance_id=process_instance.id, run_at_in_seconds=run_at_in_seconds)
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod

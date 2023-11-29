@@ -53,9 +53,7 @@ class VersionOneThree:
 
     def process_task_definition(self, task_definition: TaskDefinitionModel) -> None:
         task_definition.typename = task_definition.typename.replace("_BoundaryEventParent", "BoundaryEventSplit")
-        task_definition.bpmn_identifier = task_definition.bpmn_identifier.replace(
-            "BoundaryEventParent", "BoundaryEventSplit"
-        )
+        task_definition.bpmn_identifier = task_definition.bpmn_identifier.replace("BoundaryEventParent", "BoundaryEventSplit")
 
         properties_json = copy.copy(task_definition.properties_json)
         properties_json.pop("main_child_task_spec", None)
@@ -65,9 +63,7 @@ class VersionOneThree:
         # mostly for ExclusiveGateways
         if "cond_task_specs" in properties_json and properties_json["cond_task_specs"] is not None:
             for cond_task_spec in properties_json["cond_task_specs"]:
-                cond_task_spec["task_spec"] = cond_task_spec["task_spec"].replace(
-                    "BoundaryEventParent", "BoundaryEventSplit"
-                )
+                cond_task_spec["task_spec"] = cond_task_spec["task_spec"].replace("BoundaryEventParent", "BoundaryEventSplit")
         if "default_task_spec" in properties_json and properties_json["default_task_spec"] is not None:
             properties_json["default_task_spec"] = properties_json["default_task_spec"].replace(
                 "BoundaryEventParent", "BoundaryEventSplit"
@@ -208,9 +204,7 @@ class VersionOneThree:
 
             something_changed = False
             if "escalation_code" in properties_json["event_definition"]:
-                properties_json["event_definition"]["code"] = properties_json["event_definition"].pop(
-                    "escalation_code"
-                )
+                properties_json["event_definition"]["code"] = properties_json["event_definition"].pop("escalation_code")
                 something_changed = True
             if "error_code" in properties_json["event_definition"]:
                 properties_json["event_definition"]["code"] = properties_json["event_definition"].pop("error_code")
@@ -225,9 +219,7 @@ class VersionOneThree:
         if current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
             task_models = (
                 db.session.query(TaskModel)
-                .filter(
-                    TaskModel.properties_json.op("->>")("last_state_changed") == None  # type: ignore  # noqa: E711
-                )
+                .filter(TaskModel.properties_json.op("->>")("last_state_changed") == None)  # type: ignore  # noqa: E711
                 .all()
             )
         else:

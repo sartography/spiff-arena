@@ -57,9 +57,7 @@ class ProcessInstanceMigrator:
 
     @classmethod
     @benchmark_log_func
-    def run_version(
-        cls, data_migration_version_class: DataMigrationBase, process_instance: ProcessInstanceModel
-    ) -> None:
+    def run_version(cls, data_migration_version_class: DataMigrationBase, process_instance: ProcessInstanceModel) -> None:
         if process_instance.spiff_serializer_version < data_migration_version_class.version():
             data_migration_version_class.run(process_instance)
             process_instance.spiff_serializer_version = data_migration_version_class.version()

@@ -30,8 +30,7 @@ class GetUrlForTaskWithBpmnIdentifier(Script):
         desired_spiff_task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(bpmn_identifier, spiff_task.workflow)
         if desired_spiff_task is None:
             raise Exception(
-                f"Could not find a task with bpmn identifier '{bpmn_identifier}' in"
-                " get_url_for_task_with_bpmn_identifier"
+                f"Could not find a task with bpmn identifier '{bpmn_identifier}' in get_url_for_task_with_bpmn_identifier"
             )
 
         if not desired_spiff_task.task_spec.manual:

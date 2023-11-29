@@ -32,9 +32,7 @@ def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, 
 def with_multiple_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
     db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="one_caller"))
     db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="two_caller"))
-    db.session.add(
-        ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="three_caller")
-    )
+    db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="three_caller"))
     db.session.commit()
     yield
 

@@ -161,9 +161,7 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     # if the user got here then they can read the process model
     available_actions = {"read": {"path": f"/process-models/{modified_process_model_identifier}", "method": "GET"}}
     if GitService.check_for_publish_configs(raise_on_missing=False):
-        available_actions = {
-            "publish": {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}
-        }
+        available_actions = {"publish": {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}}
     process_model.actions = available_actions
 
     return make_response(jsonify(process_model), 200)
@@ -172,21 +170,16 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 def process_model_move(modified_process_model_identifier: str, new_location: str) -> flask.wrappers.Response:
     original_process_model_id = _un_modify_modified_process_model_id(modified_process_model_identifier)
     new_process_model = ProcessModelService.process_model_move(original_process_model_id, new_location)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
-    )
+    _commit_and_push_to_git(f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}")
     return make_response(jsonify(new_process_model), 200)
 
 
-def process_model_publish(
-    modified_process_model_identifier: str, branch_to_update: str | None = None
-) -> flask.wrappers.Response:
+def process_model_publish(modified_process_model_identifier: str, branch_to_update: str | None = None) -> flask.wrappers.Response:
     if branch_to_update is None:
         branch_to_update = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"]
     if branch_to_update is None:
         raise MissingGitConfigsError(
-            "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
-            "This is required for publishing process models"
+            "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. This is required for publishing process models"
         )
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
     pr_url = GitService().publish(process_model_identifier, branch_to_update)
@@ -267,9 +260,7 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
             )
         ) from exception
 
-    _commit_and_push_to_git(
-        f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
-    )
+    _commit_and_push_to_git(f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}")
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -331,9 +322,7 @@ def process_model_test_run(
 #       "natural_language_text": "Create a bug tracker process model \
 #           with a bug-details form that collects summary, description, and priority"
 #   }
-def process_model_create_with_natural_language(
-    modified_process_group_id: str, body: dict[str, str]
-) -> flask.wrappers.Response:
+def process_model_create_with_natural_language(modified_process_group_id: str, body: dict[str, str]) -> flask.wrappers.Response:
     pattern = re.compile(
         r"Create a (?P<pm_name>.*?) process model with a (?P<form_name>.*?) form that" r" collects (?P<columns>.*)"
     )
@@ -391,9 +380,7 @@ def process_model_create_with_natural_language(
     with open(bpmn_template_file, encoding="utf-8") as f:
         bpmn_template_contents = f.read()
 
-    bpmn_template_contents = bpmn_template_contents.replace(
-        "natural_language_process_id_template", bpmn_process_identifier
-    )
+    bpmn_template_contents = bpmn_template_contents.replace("natural_language_process_id_template", bpmn_process_identifier)
     bpmn_template_contents = bpmn_template_contents.replace("form-identifier-id-template", form_identifier)
 
     form_uischema_json: dict = {"ui:order": columns}
@@ -427,9 +414,7 @@ def process_model_create_with_natural_language(
         str.encode(json.dumps(form_uischema_json)),
     )
 
-    _commit_and_push_to_git(
-        f"User: {g.user.username} created process model via natural language: {process_model_info.id}"
-    )
+    _commit_and_push_to_git(f"User: {g.user.username} created process model via natural language: {process_model_info.id}")
 
     default_report_metadata = ProcessInstanceReportService.system_metadata_map("default")
     if default_report_metadata is None:

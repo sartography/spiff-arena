@@ -64,9 +64,7 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "reference_cache"
-    __table_args__ = (
-        UniqueConstraint("generation_id", "identifier", "relative_location", "type", name="reference_cache_uniq"),
-    )
+    __table_args__ = (UniqueConstraint("generation_id", "identifier", "relative_location", "type", name="reference_cache_uniq"),)
 
     id: int = db.Column(db.Integer, primary_key=True)
     generation_id: int = db.Column(ForeignKey(CacheGenerationModel.id), nullable=False, index=True)  # type: ignore

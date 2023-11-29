@@ -85,9 +85,7 @@ SubprocessSpecLoader = Callable[[], dict[str, Any] | None]
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(
-        self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None
-    ):
+    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None):
         self.delegate = delegate
         self.subprocess_spec_loader = subprocess_spec_loader
         self.options = options
@@ -98,9 +96,7 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
-    def should_do_before(
-        self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel
-    ) -> None:
+    def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         pass
 
     def _run(
@@ -292,15 +288,11 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
     The queue can be used to display the instructions to user later.
     """
 
-    def __init__(
-        self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None
-    ):
+    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None):
         super().__init__(delegate, subprocess_spec_loader, options)
         self.tasks_that_have_been_seen: set[str] = set()
 
-    def should_do_before(
-        self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel
-    ) -> None:
+    def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         tasks = bpmn_process_instance.get_tasks(
             # state=TaskState.WAITING | TaskState.STARTED | TaskState.READY
             state=TaskState.WAITING
@@ -375,9 +367,7 @@ class SkipOneExecutionStrategy(ExecutionStrategy):
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
-def execution_strategy_named(
-    name: str, delegate: EngineStepDelegate, spec_loader: SubprocessSpecLoader
-) -> ExecutionStrategy:
+def execution_strategy_named(name: str, delegate: EngineStepDelegate, spec_loader: SubprocessSpecLoader) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
         "queue_instructions_for_end_user": QueueInstructionsForEndUserExecutionStrategy,
@@ -458,13 +448,15 @@ class WorkflowExecutionService:
                     self.process_instance_saver()
 
     def schedule_waiting_timer_events(self) -> None:
-        waiting_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING, spec_class=CatchingEvent)
-        for spiff_task in waiting_tasks:
-            event = spiff_task.task_spec.event_definition.details(spiff_task)
-            if "Time" in event.event_type:
-                time_string = event.value
-                time_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
-                FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=time_in_seconds)
+        # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs
+        if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
+            waiting_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING, spec_class=CatchingEvent)
+            for spiff_task in waiting_tasks:
+                event = spiff_task.task_spec.event_definition.details(spiff_task)
+                if "Time" in event.event_type:
+                    time_string = event.value
+                    time_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+                    FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=time_in_seconds)
 
     def process_bpmn_messages(self) -> None:
         # FIXE: get_events clears out the events so if we have other events we care about

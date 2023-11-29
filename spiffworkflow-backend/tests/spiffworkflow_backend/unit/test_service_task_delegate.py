@@ -39,9 +39,7 @@ class TestServiceTaskDelegate(BaseTest):
     def test_check_prefixes_with_spiff_secret_in_dict(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         user = self.find_or_create_user("test_user")
         SecretService().add_secret("hot_secret", "my_secret_value", user.id)
-        result = ServiceTaskDelegate.value_with_secrets_replaced(
-            {"Authorization": "TOKEN SPIFF_SECRET:hot_secret-haha"}
-        )
+        result = ServiceTaskDelegate.value_with_secrets_replaced({"Authorization": "TOKEN SPIFF_SECRET:hot_secret-haha"})
         assert result == {"Authorization": "TOKEN my_secret_value-haha"}
 
     def test_invalid_call_returns_good_error_message(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -171,13 +169,9 @@ class TestServiceTaskDelegate(BaseTest):
                 **{"operator_identifier": "my_operation"},
             }
 
-    def _assert_error_with_code(
-        self, response_text: str, error_code: str, contains_message: str, status_code: int
-    ) -> None:
+    def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text
         assert bool(
             re.search(rf"\b{contains_message}\b", response_text)
         ), f"Expected to find '{contains_message}' in: {response_text}"
-        assert bool(
-            re.search(rf"\b{status_code}\b", response_text)
-        ), f"Expected to find '{status_code}' in: {response_text}"
+        assert bool(re.search(rf"\b{status_code}\b", response_text)), f"Expected to find '{status_code}' in: {response_text}"

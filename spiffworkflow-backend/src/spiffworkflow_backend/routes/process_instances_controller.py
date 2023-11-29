@@ -78,9 +78,7 @@ def process_instance_run(
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
-    process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model(
-        process_instance
-    )
+    process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model(process_instance)
     return Response(json.dumps(process_instance_api_dict), status=200, mimetype="application/json")
 
 
@@ -194,10 +192,7 @@ def process_instance_report_show(
     if report_hash is None and report_id is None and report_identifier is None:
         raise ApiError(
             error_code="report_key_missing",
-            message=(
-                "A report key is needed to lookup a report. Either choose a report_hash, report_id, or"
-                " report_identifier."
-            ),
+            message="A report key is needed to lookup a report. Either choose a report_hash, report_id, or report_identifier.",
         )
     response_result: Report | ProcessInstanceReportModel | None = None
     if report_hash is not None:
@@ -224,9 +219,7 @@ def process_instance_report_column_list(
 ) -> flask.wrappers.Response:
     table_columns = ProcessInstanceReportService.builtin_column_options()
     system_report_column_options = ProcessInstanceReportService.system_report_column_options()
-    columns_for_metadata_strings = ProcessInstanceReportService.process_instance_metadata_as_columns(
-        process_model_identifier
-    )
+    columns_for_metadata_strings = ProcessInstanceReportService.process_instance_metadata_as_columns(process_model_identifier)
     return make_response(jsonify(table_columns + system_report_column_options + columns_for_metadata_strings), 200)
 
 
@@ -256,9 +249,7 @@ def process_instance_show(
     )
 
 
-def process_instance_delete(
-    process_instance_id: int, modified_process_model_identifier: str
-) -> flask.wrappers.Response:
+def process_instance_delete(process_instance_id: int, modified_process_model_identifier: str) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     if not process_instance.has_terminal_status():
@@ -382,8 +373,7 @@ def process_instance_task_list(
             raise ApiError(
                 error_code="bpmn_process_not_found",
                 message=(
-                    f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance"
-                    f" '{process_instance.id}'"
+                    f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance '{process_instance.id}'"
                 ),
                 status_code=400,
             )
@@ -422,9 +412,7 @@ def process_instance_task_list(
             task_models_of_parent_bpmn_processes,
         ) = TaskService.task_models_of_parent_bpmn_processes(to_task_model)
         task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
-        if to_task_model.runtime_info and (
-            "instance" in to_task_model.runtime_info or "iteration" in to_task_model.runtime_info
-        ):
+        if to_task_model.runtime_info and ("instance" in to_task_model.runtime_info or "iteration" in to_task_model.runtime_info):
             to_task_model_parent = [to_task_model.properties_json["parent"]]
         else:
             to_task_model_parent = []
@@ -449,8 +437,7 @@ def process_instance_task_list(
         )
         .outerjoin(
             direct_parent_bpmn_process_definition_alias,
-            direct_parent_bpmn_process_definition_alias.id
-            == direct_parent_bpmn_process_alias.bpmn_process_definition_id,
+            direct_parent_bpmn_process_definition_alias.id == direct_parent_bpmn_process_alias.bpmn_process_definition_id,
         )
         .join(
             BpmnProcessDefinitionModel,
@@ -503,9 +490,7 @@ def process_instance_task_list(
                 most_recent_tasks[row_key] = task_model
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
-            elif task_model.runtime_info and (
-                "instance" in task_model.runtime_info or "iteration" in task_model.runtime_info
-            ):
+            elif task_model.runtime_info and ("instance" in task_model.runtime_info or "iteration" in task_model.runtime_info):
                 # This handles adding all instances of a MI and iterations of loop tasks
                 additional_tasks.append(task_model)
 
@@ -522,9 +507,7 @@ def process_instance_task_list(
             if to_task_model.guid == task_model["guid"] and task_model["state"] == "COMPLETED":
                 TaskService.reset_task_model_dict(task_model, state="READY")
             elif (
-                end_in_seconds is None
-                or to_task_model.end_in_seconds is None
-                or to_task_model.end_in_seconds < end_in_seconds
+                end_in_seconds is None or to_task_model.end_in_seconds is None or to_task_model.end_in_seconds < end_in_seconds
             ) and task_model["guid"] in task_models_of_parent_bpmn_processes_guids:
                 TaskService.reset_task_model_dict(task_model, state="WAITING")
         return make_response(jsonify(task_models_dict), 200)
@@ -621,9 +604,7 @@ def _get_process_instance(
     process_model_with_diagram = None
     name_of_file_with_diagram = None
     if process_identifier:
-        spec_reference = (
-            ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
-        )
+        spec_reference = ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
         if spec_reference is None:
             raise ReferenceNotFoundError(f"Could not find given process identifier in the cache: {process_identifier}")
 

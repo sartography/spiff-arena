@@ -70,9 +70,7 @@ class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
             raise
 
 
-def update_created_modified_on_create_listener(
-    mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel
-) -> None:
+def update_created_modified_on_create_listener(mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel) -> None:
     """Event listener that runs before a record is updated, and sets the create/modified field accordingly."""
     if "created_at_in_seconds" in mapper.columns.keys():
         target.created_at_in_seconds = round(time.time())
@@ -80,9 +78,7 @@ def update_created_modified_on_create_listener(
         target.updated_at_in_seconds = round(time.time())
 
 
-def update_modified_on_update_listener(
-    mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel
-) -> None:
+def update_modified_on_update_listener(mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel) -> None:
     """Event listener that runs before a record is updated, and sets the modified field accordingly."""
     if "updated_at_in_seconds" in mapper.columns.keys():
         if db.session.is_modified(target, include_collections=False):

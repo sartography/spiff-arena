@@ -87,9 +87,7 @@ class TestForGoodErrors(BaseTest):
         _dequeued_interstitial_stream(process_instance_id)
 
         """Returns the next available user task for a given process instance, if possible."""
-        human_tasks = (
-            db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
-        )
+        human_tasks = db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
         assert len(human_tasks) > 0, "No human tasks found for process."
         human_task = human_tasks[0]
         response = client.get(

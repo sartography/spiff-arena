@@ -91,9 +91,7 @@ def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
     else:
         app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
         if len(app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
-            raise ConfigurationError(
-                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
-            )
+            raise ConfigurationError("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields")
 
 
 def _check_extension_api_configs(app: Flask) -> None:

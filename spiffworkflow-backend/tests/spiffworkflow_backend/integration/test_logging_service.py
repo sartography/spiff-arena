@@ -28,9 +28,7 @@ class TestLoggingService(BaseTest):
             process_model_id="misc/category_number_one/simple_form",
             process_model_source_directory="simple_form",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -39,9 +37,7 @@ class TestLoggingService(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {"name": "HEY"}, initiator_user, human_task)
 
         headers = self.logged_in_headers(with_super_admin_user)
@@ -86,9 +82,7 @@ class TestLoggingService(BaseTest):
             process_model_id="misc/category_number_one/simple_form",
             process_model_source_directory="simple_form",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -97,9 +91,7 @@ class TestLoggingService(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {"name": "HEY"}, initiator_user, human_task)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()

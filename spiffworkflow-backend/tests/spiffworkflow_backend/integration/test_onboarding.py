@@ -77,7 +77,5 @@ class TestOnboarding(BaseTest):
         assert len(results.json.keys()) == 4
         assert results.json["type"] == "user_input_required"
         assert results.json["process_instance_id"] is not None
-        instance = ProcessInstanceModel.query.filter(
-            ProcessInstanceModel.id == results.json["process_instance_id"]
-        ).first()
+        instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == results.json["process_instance_id"]).first()
         assert instance is not None

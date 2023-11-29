@@ -123,13 +123,10 @@ class Script:
                             f" running script '{script_function_name}'"
                         )
                     user = process_instance.process_initiator
-                    has_permission = AuthorizationService.user_has_permission(
-                        user=user, permission="create", target_uri=uri
-                    )
+                    has_permission = AuthorizationService.user_has_permission(user=user, permission="create", target_uri=uri)
                     if not has_permission:
                         raise ScriptUnauthorizedForUserError(
-                            f"User {user.username} does not have access to run"
-                            f" privileged script '{script_function_name}'"
+                            f"User {user.username} does not have access to run privileged script '{script_function_name}'"
                         )
 
             def run_script_if_allowed(*ar: Any, **kw: Any) -> Any:

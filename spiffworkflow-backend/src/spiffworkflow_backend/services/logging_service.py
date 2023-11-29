@@ -49,9 +49,7 @@ class JsonFormatter(logging.Formatter):
         return "asctime" in self.fmt_dict.values()
 
     # we are overriding a method that returns a string and returning a dict, hence the Any
-    def formatMessage(  # noqa: N802, this is overriding a method from python's stdlib
-        self, record: logging.LogRecord
-    ) -> Any:
+    def formatMessage(self, record: logging.LogRecord) -> Any:  # noqa: N802, this is overriding a method from python's stdlib
         """Overwritten to return a dictionary of the relevant LogRecord attributes instead of a string.
 
         KeyError is raised if an unknown attribute is provided in the fmt_dict.
@@ -90,9 +88,7 @@ def setup_logger(app: Flask) -> None:
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
     if upper_log_level_string not in log_levels:
-        raise InvalidLogLevelError(
-            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}"
-        )
+        raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
     log_level = getattr(logging, upper_log_level_string)
     spiff_log_level = getattr(logging, upper_log_level_string)
@@ -119,9 +115,7 @@ def setup_logger(app: Flask) -> None:
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
-        spiff_logger_filehandler = logging.FileHandler(
-            f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log"
-        )
+        spiff_logger_filehandler = logging.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
         spiff_logger_filehandler.setLevel(spiff_log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 

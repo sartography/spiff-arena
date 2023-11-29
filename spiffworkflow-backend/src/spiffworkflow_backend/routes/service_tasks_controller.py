@@ -68,9 +68,7 @@ def authentication_callback(
         verify_token(token, force_run=True)
         remote_app = OAuthService.remote_app(service, token)
         response = remote_app.authorized_response()
-        SecretService.update_secret(
-            f"{service}_{auth_method}", response["access_token"], g.user.id, create_if_not_exists=True
-        )
+        SecretService.update_secret(f"{service}_{auth_method}", response["access_token"], g.user.id, create_if_not_exists=True)
     else:
         verify_token(request.args.get("token"), force_run=True)
         response = request.args["response"]

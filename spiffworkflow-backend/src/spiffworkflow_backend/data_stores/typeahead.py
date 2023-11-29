@@ -25,9 +25,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
 
     @staticmethod
     def query_data_store(name: str) -> Any:
-        return TypeaheadModel.query.filter_by(category=name).order_by(
-            TypeaheadModel.category, TypeaheadModel.search_term
-        )
+        return TypeaheadModel.query.filter_by(category=name).order_by(TypeaheadModel.category, TypeaheadModel.search_term)
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:

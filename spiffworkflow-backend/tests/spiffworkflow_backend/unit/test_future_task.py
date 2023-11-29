@@ -16,24 +16,25 @@ class TestFutureTask(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            process_model_id="test_group/user-task-with-timer",
-            process_model_source_directory="user-task-with-timer",
-        )
-        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        assert process_instance.status == "user_input_required"
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
+            process_model = load_test_spec(
+                process_model_id="test_group/user-task-with-timer",
+                process_model_source_directory="user-task-with-timer",
+            )
+            process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.do_engine_steps(save=True)
+            assert process_instance.status == "user_input_required"
 
-        future_tasks = FutureTaskModel.query.all()
-        assert len(future_tasks) == 1
-        future_task = future_tasks[0]
-        ten_minutes_from_now = 10 * 60 + time.time()
+            future_tasks = FutureTaskModel.query.all()
+            assert len(future_tasks) == 1
+            future_task = future_tasks[0]
+            ten_minutes_from_now = 10 * 60 + time.time()
 
-        # give a 2 second leeway
-        assert future_task.run_at_in_seconds == pytest.approx(ten_minutes_from_now, abs=2)
+            # give a 2 second leeway
+            assert future_task.run_at_in_seconds == pytest.approx(ten_minutes_from_now, abs=2)
 
-        twenty_minutes_from_now = round(20 * 60 + time.time())
-        FutureTaskModel.insert_or_update(guid=future_task.guid, run_at_in_seconds=twenty_minutes_from_now)
-        db.session.commit()
-        assert future_task.run_at_in_seconds == pytest.approx(twenty_minutes_from_now, abs=2)
+            twenty_minutes_from_now = round(20 * 60 + time.time())
+            FutureTaskModel.insert_or_update(guid=future_task.guid, run_at_in_seconds=twenty_minutes_from_now)
+            db.session.commit()
+            assert future_task.run_at_in_seconds == pytest.approx(twenty_minutes_from_now, abs=2)

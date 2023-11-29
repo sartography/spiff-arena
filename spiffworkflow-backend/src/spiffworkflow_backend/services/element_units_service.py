@@ -41,9 +41,7 @@ class ElementUnitsService:
         return None
 
     @classmethod
-    def workflow_from_cached_element_unit(
-        cls, cache_key: str, process_id: str, element_id: str
-    ) -> BpmnSpecDict | None:
+    def workflow_from_cached_element_unit(cls, cache_key: str, process_id: str, element_id: str) -> BpmnSpecDict | None:
         if not cls._enabled():
             return None
 
@@ -60,9 +58,7 @@ class ElementUnitsService:
 
             current_app.logger.debug(f"Checking element unit cache @ {cache_key} :: '{process_id}' - '{element_id}'")
 
-            bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
-                cache_dir, cache_key, process_id, element_id
-            )
+            bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(cache_dir, cache_key, process_id, element_id)
             return json.loads(bpmn_spec_json)  # type: ignore
         except Exception as e:
             current_app.logger.exception(e)

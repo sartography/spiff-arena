@@ -153,11 +153,7 @@ class UserService:
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
         """Only called from create_user which is normally called at sign-in time"""
-        waiting = (
-            UserGroupAssignmentWaitingModel()
-            .query.filter(UserGroupAssignmentWaitingModel.username == user.username)
-            .all()
-        )
+        waiting = UserGroupAssignmentWaitingModel().query.filter(UserGroupAssignmentWaitingModel.username == user.username).all()
         for assignment in waiting:
             cls.add_user_to_group(user, assignment.group)
             db.session.delete(assignment)
@@ -173,9 +169,7 @@ class UserService:
 
     @staticmethod
     def get_user_by_service_and_service_id(service: str, service_id: str) -> UserModel | None:
-        user: UserModel = (
-            UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
-        )
+        user: UserModel = UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         if user:
             return user
         return None
@@ -183,9 +177,7 @@ class UserService:
     @classmethod
     def add_user_to_human_tasks_if_appropriate(cls, user: UserModel) -> None:
         group_ids = [g.id for g in user.groups]
-        human_tasks = HumanTaskModel.query.filter(
-            HumanTaskModel.lane_assignment_id.in_(group_ids)  # type: ignore
-        ).all()
+        human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(group_ids)).all()  # type: ignore
         for human_task in human_tasks:
             human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
             db.session.add(human_task_user)
@@ -271,9 +263,7 @@ class UserService:
         db.session.commit()
 
     @classmethod
-    def find_or_create_guest_user(
-        cls, username: str = SPIFF_GUEST_USER, group_identifier: str = SPIFF_GUEST_GROUP
-    ) -> UserModel:
+    def find_or_create_guest_user(cls, username: str = SPIFF_GUEST_USER, group_identifier: str = SPIFF_GUEST_GROUP) -> UserModel:
         guest_user: UserModel | None = UserModel.query.filter_by(
             username=username, service="spiff_guest_service", service_id="spiff_guest_service_id"
         ).first()

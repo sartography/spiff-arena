@@ -187,9 +187,7 @@ class AuthorizationService:
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
-        permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(
-            uri=target_uri_normalized
-        ).first()
+        permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=target_uri_normalized)
             db.session.add(permission_target)
@@ -304,10 +302,7 @@ class AuthorizationService:
                 return None
 
         raise NotAuthorizedError(
-            (
-                f"User {g.user.username} is not authorized to perform requested action:"
-                f" {permission_string} - {request.path}"
-            ),
+            f"User {g.user.username} is not authorized to perform requested action: {permission_string} - {request.path}",
         )
 
     @classmethod
@@ -348,8 +343,7 @@ class AuthorizationService:
 
         if human_task.completed:
             raise HumanTaskAlreadyCompletedError(
-                f"Human task with task guid '{task_guid}' for process instance '{process_instance_id}' has already"
-                " been completed"
+                f"Human task with task guid '{task_guid}' for process instance '{process_instance_id}' has already been completed"
             )
 
         if user not in human_task.potential_owners:
@@ -425,16 +419,13 @@ class AuthorizationService:
         if desired_group_identifiers is not None:
             if not isinstance(desired_group_identifiers, list):
                 current_app.logger.error(
-                    f"Invalid groups property in token: {desired_group_identifiers}."
-                    "If groups is specified, it must be a list"
+                    f"Invalid groups property in token: {desired_group_identifiers}.If groups is specified, it must be a list"
                 )
             else:
                 for desired_group_identifier in desired_group_identifiers:
                     UserService.add_user_to_group_by_group_identifier(user_model, desired_group_identifier)
                 current_group_identifiers = [g.identifier for g in user_model.groups]
-                groups_to_remove_from_user = [
-                    item for item in current_group_identifiers if item not in desired_group_identifiers
-                ]
+                groups_to_remove_from_user = [item for item in current_group_identifiers if item not in desired_group_identifiers]
                 for gtrfu in groups_to_remove_from_user:
                     if gtrfu != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
                         UserService.remove_user_from_group(user_model, gtrfu)
@@ -523,17 +514,11 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/onboarding"))
 
-        permissions_to_assign.append(
-            PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata")
-        )
-        permissions_to_assign.append(
-            PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*")
-        )
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*"))
 
         for permission in ["create", "read", "update", "delete"]:
-            permissions_to_assign.append(
-                PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*")
-            )
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
         return permissions_to_assign
 
@@ -550,9 +535,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentications"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication/configuration"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentication_begin/*"))
-        permissions_to_assign.append(
-            PermissionToAssign(permission="update", target_uri="/authentication/configuration")
-        )
+        permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/authentication/configuration"))
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/service-accounts"))
 
@@ -572,9 +555,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
 
-        permissions_to_assign.append(
-            PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*")
-        )
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
@@ -730,8 +711,7 @@ class AuthorizationService:
         if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] is None:
             raise (
                 PermissionsFileNotSetError(
-                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import"
-                    " permissions"
+                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import permissions"
                 )
             )
 
@@ -760,9 +740,7 @@ class AuthorizationService:
                 uri = permission_config["uri"]
                 actions = cls.get_permissions_from_config(permission_config)
                 for group_identifier in permission_config["groups"]:
-                    group_permissions_by_group[group_identifier]["permissions"].append(
-                        {"actions": actions, "uri": uri}
-                    )
+                    group_permissions_by_group[group_identifier]["permissions"].append({"actions": actions, "uri": uri})
 
         return list(group_permissions_by_group.values())
 
@@ -880,9 +858,7 @@ class AuthorizationService:
         db.session.commit()
 
     @classmethod
-    def refresh_permissions(
-        cls, group_permissions: list[GroupPermissionsDict], group_permissions_only: bool = False
-    ) -> None:
+    def refresh_permissions(cls, group_permissions: list[GroupPermissionsDict], group_permissions_only: bool = False) -> None:
         """Adds new permission assignments and deletes old ones."""
         initial_permission_assignments = (
             PermissionAssignmentModel.query.outerjoin(
