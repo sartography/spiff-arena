@@ -140,6 +140,11 @@ export const truncateString = (text: string, len: number) => {
   return text;
 };
 
+export const pathFromFullUrl = (fullUrl: string) => {
+  const parsedURL = new URL(fullUrl);
+  return parsedURL.pathname;
+};
+
 // Because of limitations in the way openapi defines parameters, we have to modify process models ids
 // which are basically paths to the models
 export const modifyProcessIdentifierForPathParam = (path: string) => {
