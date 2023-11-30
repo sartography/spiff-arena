@@ -2,7 +2,7 @@ import jwt from 'jwt-decode';
 import cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
-import { pathFromFullUrl } from '../helpers';
+import { parseTaskShowUrl } from '../helpers';
 
 // NOTE: this currently stores the jwt token in local storage
 // which is considered insecure. Server set cookies seem to be considered
@@ -36,13 +36,7 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
 const checkPathForTaskShowParams = (
   redirectUrl: string = window.location.pathname
 ) => {
-  const path = pathFromFullUrl(redirectUrl);
-
-  // expected url pattern:
-  // /tasks/[process_instance_id]/[task_guid]
-  const pathSegments = path.match(
-    /^\/tasks\/(\d+)\/([0-9a-z]{8}-([0-9a-z]{4}-){3}[0-9a-z]{12})$/
-  );
+  const pathSegments = parseTaskShowUrl(redirectUrl);
   if (pathSegments) {
     return { process_instance_id: pathSegments[1], task_guid: pathSegments[2] };
   }

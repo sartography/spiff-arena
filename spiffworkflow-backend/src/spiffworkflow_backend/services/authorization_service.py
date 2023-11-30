@@ -7,6 +7,11 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
+from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import literal
+from sqlalchemy import or_
+
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import InvalidPermissionError
@@ -34,10 +39,6 @@ from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignme
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.user_service import UserService
-from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import literal
-from sqlalchemy import or_
 
 
 @dataclass
@@ -226,11 +227,15 @@ class AuthorizationService:
     def should_disable_auth_for_request(cls) -> bool:
         swagger_functions = ["get_json_spec"]
         authentication_exclusion_list = [
-            "status",
-            "test_raise_error",
             "authentication_begin",
             "authentication_callback",
+            "authentication_options",
             "github_webhook_receive",
+            "prometheus_metrics",
+            "status",
+            "task_allows_guest",
+            "test_raise_error",
+            "url_info",
         ]
         if request.method == "OPTIONS":
             return True
@@ -248,10 +253,6 @@ class AuthorizationService:
             api_view_function
             and api_view_function.__name__.startswith("login")
             or api_view_function.__name__.startswith("logout")
-            or api_view_function.__name__.startswith("authentication_options")
-            or api_view_function.__name__.startswith("prom")
-            or api_view_function.__name__ == "url_info"
-            or api_view_function.__name__.startswith("metric")
             or api_view_function.__name__.startswith("console_ui_")
             or api_view_function.__name__ in authentication_exclusion_list
             or api_view_function.__name__ in swagger_functions

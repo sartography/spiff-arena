@@ -575,7 +575,7 @@ export default function ProcessModelShow() {
             </Column>
             <Column md={1} lg={1} sm={1}>
               <Can
-                I="GET"
+                I="PUT"
                 a={targetUris.processModelFileCreatePath}
                 ability={ability}
               >

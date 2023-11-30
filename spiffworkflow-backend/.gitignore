@@ -22,3 +22,4 @@ node_modules
 /local_wheels/*.whl
 /some_cache_dir
 /process.json
+/spiffworkflow_backend.svg

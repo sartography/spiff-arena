@@ -6,6 +6,13 @@ from typing import Any
 import sqlalchemy
 from flask import current_app
 from flask_sqlalchemy.query import Query
+from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.util import AliasedClass
+
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -22,12 +29,6 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import or_
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import selectinload
-from sqlalchemy.orm.util import AliasedClass
 
 
 class ProcessInstanceReportNotFoundError(Exception):

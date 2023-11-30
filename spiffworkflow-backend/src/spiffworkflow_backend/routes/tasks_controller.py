@@ -84,6 +84,16 @@ class ReactJsonSchemaSelectOption(TypedDict):
     enum: list[str]
 
 
+def task_allows_guest(
+    process_instance_id: int,
+    task_guid: str,
+) -> flask.wrappers.Response:
+    allows_guest = False
+    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
+        allows_guest = True
+    return make_response(jsonify({"allows_guest": allows_guest}), 200)
+
+
 # this is currently not used by the Frontend
 def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
