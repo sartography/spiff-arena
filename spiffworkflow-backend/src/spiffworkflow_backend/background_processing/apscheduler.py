@@ -21,6 +21,10 @@ def start_apscheduler_if_appropriate(app: flask.app.Flask, scheduler_class: Base
     if not should_start_apscheduler(app):
         return None
 
+    start_apscheduler(app, scheduler_class)
+
+
+def start_apscheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler) -> None:
     scheduler = scheduler_class()
 
     if app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
