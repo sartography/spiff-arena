@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if ! command -v pydeps >/dev/null 2>&1; then
+  echo "pydeps is not installed. installing..."
+  pip install pydeps
+fi
+
+pydeps src/spiffworkflow_backend --display "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --only spiffworkflow_backend --rmprefix spiffworkflow_backend. --rankdir LR --exclude-exact spiffworkflow_backend.services.custom_parser spiffworkflow_backend.specs spiffworkflow_backend.services spiffworkflow_backend spiffworkflow_backend.models spiffworkflow_backend.load_database_models spiffworkflow_backend.routes --exclude spiffworkflow_backend.config spiffworkflow_backend.interfaces spiffworkflow_backend.models.db
