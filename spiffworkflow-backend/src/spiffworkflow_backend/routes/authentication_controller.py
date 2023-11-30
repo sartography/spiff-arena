@@ -15,6 +15,7 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import InvalidRedirectUrlError
 from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
@@ -99,6 +100,12 @@ def login(
     process_instance_id: int | None = None,
     task_guid: str | None = None,
 ) -> Response:
+    frontend_url = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"))
+    if not redirect_url.startswith(frontend_url):
+        raise InvalidRedirectUrlError(
+            f"Invalid redirect url was given: '{redirect_url}'. It must match the domain the frontend is running on."
+        )
+
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
         AuthenticationService.create_guest_token(
             username=SPIFF_NO_AUTH_USER,
