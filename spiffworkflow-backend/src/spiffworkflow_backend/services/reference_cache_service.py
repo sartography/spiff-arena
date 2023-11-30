@@ -1,9 +1,10 @@
 import os
 
+from sqlalchemy import insert
+
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from sqlalchemy import insert
 
 
 class ReferenceCacheService:

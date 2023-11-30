@@ -7,6 +7,11 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
+from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import literal
+from sqlalchemy import or_
+
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import InvalidPermissionError
@@ -34,10 +39,6 @@ from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignme
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.user_service import UserService
-from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import literal
-from sqlalchemy import or_
 
 
 @dataclass

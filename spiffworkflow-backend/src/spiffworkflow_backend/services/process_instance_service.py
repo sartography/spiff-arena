@@ -16,6 +16,7 @@ from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+
 from spiffworkflow_backend import db
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -380,7 +381,7 @@ class ProcessInstanceService:
                         created_at_in_seconds=now_in_seconds,
                     )
             except Exception as e:
-                print(e)
+                current_app.logger.warning(e)
 
         return None
 

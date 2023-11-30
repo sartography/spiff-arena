@@ -13,6 +13,8 @@ from flask import current_app
 from flask import g
 from flask import redirect
 from flask import request
+from werkzeug.wrappers import Response
+
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.exceptions.error import OpenIdConnectionError
 from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
@@ -23,7 +25,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
-from werkzeug.wrappers import Response
 
 
 class AuthenticationProviderTypes(enum.Enum):
