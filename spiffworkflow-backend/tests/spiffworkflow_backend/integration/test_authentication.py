@@ -2,6 +2,7 @@ import ast
 import base64
 import re
 import time
+from typing import Any
 
 from flask.app import Flask
 from flask.testing import FlaskClient
@@ -121,6 +122,7 @@ class TestAuthentication(BaseTest):
     def test_can_login_with_valid_user(
         self,
         app: Flask,
+        mocker: Any,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
@@ -128,10 +130,16 @@ class TestAuthentication(BaseTest):
         auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
         login_return_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/login_return"
 
+        class_method_mock = mocker.patch(
+            "spiffworkflow_backend.services.authentication_service.AuthenticationService.open_id_endpoint_for_name",
+            return_value=auth_uri,
+        )
+
         response = client.get(
             f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
         )
-        assert response.data == 'hey'
+
+        assert class_method_mock.call_count == 1
         assert response.status_code == 302
         assert response.location.startswith(auth_uri)
         assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), response.location) is not None
