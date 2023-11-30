@@ -14,4 +14,4 @@ export SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND="queue_inst
 export SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB="queue_instructions_for_end_user"
 export SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
 
-poet run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info
+poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info
