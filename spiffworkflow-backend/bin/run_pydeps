@@ -12,4 +12,9 @@ if ! command -v pydeps >/dev/null 2>&1; then
   pip install pydeps
 fi
 
-pydeps src/spiffworkflow_backend --display "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --only spiffworkflow_backend --rmprefix spiffworkflow_backend. --rankdir LR --exclude-exact spiffworkflow_backend.services.custom_parser spiffworkflow_backend.specs spiffworkflow_backend.services spiffworkflow_backend spiffworkflow_backend.models spiffworkflow_backend.load_database_models spiffworkflow_backend.routes --exclude spiffworkflow_backend.config spiffworkflow_backend.interfaces spiffworkflow_backend.models.db
+more_args=''
+if [[ "${1:-}" == "r" ]]; then
+  more_args='--rankdir LR'
+fi
+
+pydeps src/spiffworkflow_backend --display "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --only spiffworkflow_backend --rmprefix spiffworkflow_backend. --exclude-exact spiffworkflow_backend.services.custom_parser spiffworkflow_backend.specs spiffworkflow_backend.services spiffworkflow_backend spiffworkflow_backend.models spiffworkflow_backend.load_database_models spiffworkflow_backend.routes --exclude spiffworkflow_backend.config spiffworkflow_backend.interfaces spiffworkflow_backend.models.db $more_args
