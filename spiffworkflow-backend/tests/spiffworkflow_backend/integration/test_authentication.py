@@ -1,5 +1,6 @@
 import ast
 import base64
+import re
 import time
 
 from flask.app import Flask
@@ -116,3 +117,34 @@ class TestAuthentication(BaseTest):
             UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
         )
         assert service_account_permissions_before == service_account_permissions_after
+
+    def test_can_login_with_valid_user(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
+        auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        login_return_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/login_return"
+
+        response = client.get(
+            f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
+        )
+        assert response.status_code == 302
+        assert response.location.startswith(auth_uri)
+        assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), response.location) is not None
+
+    def test_raises_error_if_invalid_redirect_url(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        redirect_url = "http://www.bad_url.com/test-redirect-dne"
+        response = client.get(
+            f"/v1.0/login?redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
+        )
+        assert response.status_code == 500
+        assert response.json is not None
+        assert response.json["message"].startswith("InvalidRedirectUrlError:")

@@ -13,6 +13,8 @@ from flask import current_app
 from flask import g
 from flask import redirect
 from flask import request
+from werkzeug.wrappers import Response
+
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.exceptions.error import OpenIdConnectionError
 from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
@@ -23,7 +25,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
-from werkzeug.wrappers import Response
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -146,7 +147,6 @@ class AuthenticationService:
             + "scope=openid profile email&"
             + f"redirect_uri={return_redirect_url}"
         )
-        print(f"login_redirect_url: {login_redirect_url}")
         return login_redirect_url
 
     def get_auth_token_object(
@@ -173,7 +173,6 @@ class AuthenticationService:
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
-        print(f"auth_token_object: {auth_token_object}")
         return auth_token_object
 
     @classmethod

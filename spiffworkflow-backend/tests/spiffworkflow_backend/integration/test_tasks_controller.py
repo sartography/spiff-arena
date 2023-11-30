@@ -486,7 +486,7 @@ class TestTasksController(BaseTest):
         task_guid = task_model.guid
 
         # log in a guest user to complete the tasks
-        redirect_url = "/test-redirect-dne"
+        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
         response = client.get(
             f"/v1.0/login?process_instance_id={process_instance_id}&task_guid={task_guid}&redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
         )

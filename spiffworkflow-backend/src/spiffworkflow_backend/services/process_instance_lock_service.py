@@ -3,10 +3,11 @@ import time
 from typing import Any
 
 from flask import current_app
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from sqlalchemy import and_
 from sqlalchemy import or_
+
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 
 
 class ExpectedLockNotFoundError(Exception):
