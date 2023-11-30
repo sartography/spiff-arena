@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from dataclasses import field
 from typing import Any
 
 import flask.wrappers
@@ -38,18 +37,18 @@ class ApiError(Exception):
 
     error_code: str
     message: str
-    error_line: str | None = ""
-    error_type: str | None = ""
-    file_name: str | None = ""
-    line_number: int | None = 0
-    offset: int | None = 0
+    error_line: str | None = None
+    error_type: str | None = None
+    file_name: str | None = None
+    line_number: int | None = None
+    offset: int | None = None
     sentry_link: str | None = None
     status_code: int | None = 400
-    tag: str | None = ""
-    task_data: dict | str | None = field(default_factory=dict)
-    task_id: str | None = ""
-    task_name: str | None = ""
-    task_trace: list | None = field(default_factory=list)
+    tag: str | None = None
+    task_data: dict | str | None = None
+    task_id: str | None = None
+    task_name: str | None = None
+    task_trace: list | None = None
 
     # these are useful if the error response cannot be json but has to be something else
     # such as returning content type 'text/event-stream' for the interstitial page
@@ -67,6 +66,14 @@ class ApiError(Exception):
             msg += f"In file {self.file_name}. "
         return msg
 
+    def serialized(self) -> dict[str, Any]:
+        initial_dict = self.__dict__
+        return_dict = {}
+        for key, value in initial_dict.items():
+            if value is not None and value != "":
+                return_dict[key] = value
+        return return_dict
+
     @classmethod
     def from_task(
         cls,
@@ -74,17 +81,17 @@ class ApiError(Exception):
         message: str,
         task: Task,
         status_code: int = 400,
-        line_number: int = 0,
-        offset: int = 0,
-        error_type: str = "",
-        error_line: str = "",
+        line_number: int | None = None,
+        offset: int | None = None,
+        error_type: str | None = None,
+        error_line: str | None = None,
         task_trace: list | None = None,
     ) -> ApiError:
         """Constructs an API Error with details pulled from the current task."""
         instance = cls(error_code, message, status_code=status_code)
-        instance.task_id = task.task_spec.name or ""
-        instance.task_name = task.task_spec.description or ""
-        instance.file_name = task.workflow.spec.file or ""
+        instance.task_id = task.task_spec.name
+        instance.task_name = task.task_spec.description
+        instance.file_name = task.workflow.spec.file
         instance.line_number = line_number
         instance.offset = offset
         instance.error_type = error_type
@@ -110,17 +117,17 @@ class ApiError(Exception):
         message: str,
         task_model: TaskModel,
         status_code: int | None = 400,
-        line_number: int | None = 0,
-        offset: int | None = 0,
-        error_type: str | None = "",
-        error_line: str | None = "",
+        line_number: int | None = None,
+        offset: int | None = None,
+        error_type: str | None = None,
+        error_line: str | None = None,
         task_trace: list | None = None,
     ) -> ApiError:
         """Constructs an API Error with details pulled from the current task model."""
         instance = cls(error_code, message, status_code=status_code)
         task_definition = task_model.task_definition
         instance.task_id = task_definition.bpmn_identifier
-        instance.task_name = task_definition.bpmn_name or ""
+        instance.task_name = task_definition.bpmn_name
         instance.line_number = line_number
         instance.offset = offset
         instance.error_type = error_type

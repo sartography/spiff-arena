@@ -50,6 +50,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from SpiffWorkflow.util.task import TaskState
+from sqlalchemy import and_
+
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
 from spiffworkflow_backend.data_stores.json import JSONFileDataStore
@@ -102,7 +104,6 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskModelS
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.specs.start_event import StartEvent
-from sqlalchemy import and_
 
 SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
 

@@ -1,6 +1,7 @@
 import os
 
 from flask import current_app
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService

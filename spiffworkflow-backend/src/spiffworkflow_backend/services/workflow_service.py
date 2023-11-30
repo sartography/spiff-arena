@@ -3,6 +3,7 @@ from datetime import datetime
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 from spiffworkflow_backend.specs.start_event import StartEvent
 

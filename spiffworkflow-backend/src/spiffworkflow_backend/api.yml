@@ -2285,6 +2285,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /tasks/{process_instance_id}/{task_guid}/allows-guest:
+    parameters:
+      - name: task_guid
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_allows_guest
+      summary: Gets checks if the given task allows guest login
+      responses:
+        "200":
+          description: Whether the task can be completed by a guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskAllowsGuest"
+
   # NOTE: this should probably be /process-instances instead
   /tasks/{process_instance_id}/send-user-signal-event:
     parameters:
@@ -3013,6 +3040,10 @@ components:
           documentation: "# Heading 1\n\nMarkdown documentation text goes here"
           type: form
           state: ready
+    TaskAllowsGuest:
+      properties:
+        allows_guest:
+          type: boolean
     Task:
       properties:
         id:
