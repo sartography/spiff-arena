@@ -131,6 +131,7 @@ class TestAuthentication(BaseTest):
         response = client.get(
             f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
         )
+        assert response.data == 'hey'
         assert response.status_code == 302
         assert response.location.startswith(auth_uri)
         assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), response.location) is not None
