@@ -229,11 +229,15 @@ class AuthorizationService:
     def should_disable_auth_for_request(cls) -> bool:
         swagger_functions = ["get_json_spec"]
         authentication_exclusion_list = [
-            "status",
-            "test_raise_error",
             "authentication_begin",
             "authentication_callback",
+            "authentication_options",
             "github_webhook_receive",
+            "prometheus_metrics",
+            "status",
+            "task_allows_guest",
+            "test_raise_error",
+            "url_info",
         ]
         if request.method == "OPTIONS":
             return True
@@ -251,10 +255,6 @@ class AuthorizationService:
             api_view_function
             and api_view_function.__name__.startswith("login")
             or api_view_function.__name__.startswith("logout")
-            or api_view_function.__name__.startswith("authentication_options")
-            or api_view_function.__name__.startswith("prom")
-            or api_view_function.__name__ == "url_info"
-            or api_view_function.__name__.startswith("metric")
             or api_view_function.__name__.startswith("console_ui_")
             or api_view_function.__name__ in authentication_exclusion_list
             or api_view_function.__name__ in swagger_functions

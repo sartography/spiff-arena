@@ -119,7 +119,9 @@ class AuthenticationService:
         if redirect_url is None:
             redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
         request_url = (
-            self.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
+            self.__class__.open_id_endpoint_for_name(
+                "end_session_endpoint", authentication_identifier=authentication_identifier
+            )
             + f"?post_logout_redirect_uri={redirect_url}&"
             + f"id_token_hint={id_token}"
         )
@@ -138,7 +140,7 @@ class AuthenticationService:
     ) -> str:
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
-            self.open_id_endpoint_for_name(
+            self.__class__.open_id_endpoint_for_name(
                 "authorization_endpoint", authentication_identifier=authentication_identifier
             )
             + f"?state={state}&"
@@ -147,7 +149,6 @@ class AuthenticationService:
             + "scope=openid profile email&"
             + f"redirect_uri={return_redirect_url}"
         )
-        print(f"login_redirect_url: {login_redirect_url}")
         return login_redirect_url
 
     def get_auth_token_object(
@@ -174,7 +175,6 @@ class AuthenticationService:
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
-        print(f"auth_token_object: {auth_token_object}")
         return auth_token_object
 
     @classmethod

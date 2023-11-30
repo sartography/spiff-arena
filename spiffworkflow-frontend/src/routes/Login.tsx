@@ -1,10 +1,11 @@
 import { ArrowRight } from '@carbon/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Loading, Button, Grid, Column } from '@carbon/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticationOption } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
+import { parseTaskShowUrl } from '../helpers';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,20 +13,34 @@ export default function Login() {
   const [authenticationOptions, setAuthenticationOptions] = useState<
     AuthenticationOption[] | null
   >(null);
+  const [allowsGuestLogin, setAllowsGuestLogin] = useState<boolean | null>(
+    null
+  );
+
+  const originalUrl = searchParams.get('original_url');
+  const getOriginalUrl = useCallback(() => {
+    if (originalUrl === '/login') {
+      return '/';
+    }
+    return originalUrl;
+  }, [originalUrl]);
+
   useEffect(() => {
     HttpService.makeCallToBackend({
       path: '/authentication-options',
       successCallback: setAuthenticationOptions,
     });
-  }, []);
-
-  const getOriginalUrl = () => {
-    const originalUrl = searchParams.get('original_url');
-    if (originalUrl === '/login') {
-      return '/';
+    const pathSegments = parseTaskShowUrl(getOriginalUrl() || '');
+    if (pathSegments) {
+      HttpService.makeCallToBackend({
+        path: `/tasks/${pathSegments[1]}/${pathSegments[2]}/allows-guest`,
+        successCallback: (result: any) =>
+          setAllowsGuestLogin(result.allows_guest),
+      });
+    } else {
+      setAllowsGuestLogin(false);
     }
-    return originalUrl;
-  };
+  }, [getOriginalUrl]);
 
   const authenticationOptionButtons = () => {
     if (!authenticationOptions) {
@@ -46,15 +61,6 @@ export default function Login() {
       );
     });
     return buttons;
-  };
-
-  const doLoginIfAppropriate = () => {
-    if (!authenticationOptions) {
-      return;
-    }
-    if (authenticationOptions.length === 1) {
-      UserService.doLogin(authenticationOptions[0], getOriginalUrl());
-    }
   };
 
   const getLoadingIcon = () => {
@@ -98,8 +104,7 @@ export default function Login() {
     return null;
   }
 
-  if (authenticationOptions === null || authenticationOptions.length < 2) {
-    doLoginIfAppropriate();
+  if (authenticationOptions === null) {
     return (
       <div className="fixed-width-container login-page-spacer">
         {getLoadingIcon()}
@@ -107,8 +112,11 @@ export default function Login() {
     );
   }
 
-  if (authenticationOptions !== null) {
-    doLoginIfAppropriate();
+  if (authenticationOptions !== null && allowsGuestLogin !== null) {
+    if (allowsGuestLogin || authenticationOptions.length === 1) {
+      UserService.doLogin(authenticationOptions[0], getOriginalUrl());
+      return null;
+    }
     return loginComponments();
   }
 

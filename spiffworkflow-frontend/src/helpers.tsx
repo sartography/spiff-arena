@@ -272,3 +272,13 @@ export const getLastMilestoneFromProcessInstance = (
   }
   return [valueToUse, truncatedValue];
 };
+
+export const parseTaskShowUrl = (url: string) => {
+  const path = pathFromFullUrl(url);
+
+  // expected url pattern:
+  // /tasks/[process_instance_id]/[task_guid]
+  return path.match(
+    /^\/tasks\/(\d+)\/([0-9a-z]{8}-([0-9a-z]{4}-){3}[0-9a-z]{12})$/
+  );
+};
