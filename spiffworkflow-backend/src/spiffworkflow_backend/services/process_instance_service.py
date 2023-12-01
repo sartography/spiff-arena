@@ -384,7 +384,7 @@ class ProcessInstanceService:
                         created_at_in_seconds=now_in_seconds,
                     )
             except Exception as e:
-                print(e)
+                current_app.logger.warning(e)
 
         return None
 

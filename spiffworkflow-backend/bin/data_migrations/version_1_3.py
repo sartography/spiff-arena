@@ -12,7 +12,9 @@ def main() -> None:
         VersionOneThree().run()
 
     end_time = time.time()
-    print(f"done running data migration from ./bin/data_migrations/version_1_3.py. took {end_time - start_time} seconds")
+    app.logger.debug(
+        f"done running data migration from ./bin/data_migrations/version_1_3.py. took {end_time - start_time} seconds"
+    )
 
 
 if __name__ == "__main__":
