@@ -18,8 +18,11 @@ from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # 
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.util.task import TaskState  # type: ignore
+from SpiffWorkflow.util.task import TaskState
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_future_task_if_appropriate,  # type: ignore
+)
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import db
@@ -473,6 +476,9 @@ class WorkflowExecutionService:
                     time_string = event.value
                     time_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
                     FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=time_in_seconds)
+                    queue_future_task_if_appropriate(
+                        self.process_instance_model, eta_in_seconds=time_in_seconds, task_guid=str(spiff_task.id)
+                    )
 
     def process_bpmn_messages(self) -> None:
         # FIXE: get_events clears out the events so if we have other events we care about

@@ -3,7 +3,9 @@ import time
 import flask
 from sqlalchemy import and_
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_future_task_if_appropriate
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_future_task_if_appropriate,
+)
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
