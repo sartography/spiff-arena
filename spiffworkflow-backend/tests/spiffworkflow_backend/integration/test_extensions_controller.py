@@ -90,7 +90,6 @@ class TestExtensionsController(BaseTest):
                 f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            print(f"response.json: {response.json}")
             assert response.status_code == 403
             assert response.json
             assert response.json["error_code"] == "invalid_process_model_extension"

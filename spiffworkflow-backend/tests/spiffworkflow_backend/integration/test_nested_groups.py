@@ -245,5 +245,3 @@ class TestNestedGroups(BaseTest):
         user = self.find_or_create_user()
         self.add_permissions_to_user(user, target_uri=target_uri, permission_names=["read"])
         response = client.get(target_uri, headers=self.logged_in_headers(user))  # noqa: F841
-
-        print("test_process_group_show: ")

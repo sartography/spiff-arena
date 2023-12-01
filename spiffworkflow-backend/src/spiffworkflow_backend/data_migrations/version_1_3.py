@@ -20,9 +20,9 @@ class VersionOneThree:
     """
 
     def run(self) -> None:
-        print("start VersionOneThree.run")
+        current_app.logger.debug("start VersionOneThree.run")
         task_definitions = self.get_relevant_task_definitions()
-        print(f"found relevant task_definitions: {len(task_definitions)}")
+        current_app.logger.debug(f"found relevant task_definitions: {len(task_definitions)}")
         for task_definition in task_definitions:
             self.process_task_definition(task_definition)
             relating_task_models = TaskModel.query.filter_by(task_definition_id=task_definition.id).all()
@@ -42,7 +42,7 @@ class VersionOneThree:
         self.update_tasks_where_last_change_is_null()
 
         db.session.commit()
-        print("end VersionOneThree.run")
+        current_app.logger.debug("end VersionOneThree.run")
 
     def get_relevant_task_definitions(self) -> list[TaskDefinitionModel]:
         task_definitions: list[TaskDefinitionModel] = TaskDefinitionModel.query.filter(

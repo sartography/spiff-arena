@@ -77,7 +77,6 @@ def setup_database_configs(app: Flask) -> None:
 def load_config_file(app: Flask, env_config_module: str) -> None:
     try:
         app.config.from_object(env_config_module)
-        print(f"loaded config: {env_config_module}")
     except ImportStringError:
         # ignore this error
         pass
@@ -201,9 +200,6 @@ def setup_config(app: Flask) -> None:
                 "permissions",
                 permissions_file_name,
             )
-            print(f"base_permissions: loaded permissions file: {permissions_file_name}")
-        else:
-            print("base_permissions: no permissions file loaded")
 
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py
