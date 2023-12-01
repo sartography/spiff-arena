@@ -2,6 +2,7 @@ import time
 
 import pytest
 from flask.app import Flask
+from pytest_mock.plugin import MockerFixture
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -14,6 +15,7 @@ class TestFutureTask(BaseTest):
     def test_can_add_record_from_bpmn_timer_event(
         self,
         app: Flask,
+        mocker: MockerFixture,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
@@ -23,7 +25,10 @@ class TestFutureTask(BaseTest):
             )
             process_instance = self.create_process_instance_from_process_model(process_model=process_model)
             processor = ProcessInstanceProcessor(process_instance)
+            mock = mocker.patch("celery.current_app.send_task")
             processor.do_engine_steps(save=True)
+            assert mock.call_count == 1
+
             assert process_instance.status == "user_input_required"
 
             future_tasks = FutureTaskModel.query.all()

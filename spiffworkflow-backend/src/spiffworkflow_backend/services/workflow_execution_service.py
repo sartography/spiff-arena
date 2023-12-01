@@ -18,10 +18,10 @@ from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # 
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_future_task_if_appropriate,  # type: ignore
+    queue_future_task_if_appropriate,
 )
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
@@ -466,6 +466,10 @@ class WorkflowExecutionService:
                 if save:
                     self.process_instance_saver()
 
+    def is_happening_soon(self, time_in_seconds: int) -> bool:
+        # if it is supposed to happen in less than the amount of time we take between polling runs
+        return time_in_seconds - time.time() < current_app.config['SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTION_INTERVAL_IN_SECONDS']
+
     def schedule_waiting_timer_events(self) -> None:
         # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs
         if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
@@ -474,11 +478,12 @@ class WorkflowExecutionService:
                 event = spiff_task.task_spec.event_definition.details(spiff_task)
                 if "Time" in event.event_type:
                     time_string = event.value
-                    time_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
-                    FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=time_in_seconds)
-                    queue_future_task_if_appropriate(
-                        self.process_instance_model, eta_in_seconds=time_in_seconds, task_guid=str(spiff_task.id)
-                    )
+                    run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+                    FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=run_at_in_seconds)
+                    if self.is_happening_soon(run_at_in_seconds):
+                        queue_future_task_if_appropriate(
+                            self.process_instance_model, eta_in_seconds=run_at_in_seconds, task_guid=str(spiff_task.id)
+                        )
 
     def process_bpmn_messages(self) -> None:
         # FIXE: get_events clears out the events so if we have other events we care about

@@ -2,10 +2,10 @@ import ast
 import base64
 import re
 import time
-from typing import Any
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+from pytest_mock.plugin import MockerFixture
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -122,7 +122,7 @@ class TestAuthentication(BaseTest):
     def test_can_login_with_valid_user(
         self,
         app: Flask,
-        mocker: Any,
+        mocker: MockerFixture,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
