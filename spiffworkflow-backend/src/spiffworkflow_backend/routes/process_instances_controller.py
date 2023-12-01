@@ -673,8 +673,6 @@ def _process_instance_run(
     if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
         MessageService.correlate_all_message_instances()
 
-    queue_process_instance_if_appropriate(process_instance)
-
 
 def _process_instance_create(
     process_model_identifier: str,
