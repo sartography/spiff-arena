@@ -1239,7 +1239,7 @@ def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int)
 
 
 def _next_human_task_for_user(process_instance_id: int, user_id: int) -> HumanTaskModel | None:
-    next_human_task: HumanTaskUserModel | None = (
+    next_human_task: HumanTaskModel | None = (
         HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
         .order_by(asc(HumanTaskModel.id))  # type: ignore
         .join(HumanTaskUserModel)
