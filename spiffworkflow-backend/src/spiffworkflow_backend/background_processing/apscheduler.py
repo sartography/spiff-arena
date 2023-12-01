@@ -3,6 +3,7 @@ import os
 import flask.wrappers
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
+
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
 
 
@@ -62,6 +63,11 @@ def _add_jobs_for_non_celery_based_configuration(app: flask.app.Flask, scheduler
     # we should be able to remove these once we switch over to future tasks for non-celery configuration
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
+        "interval",
+        seconds=polling_interval_in_seconds,
+    )
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_running_process_instances,
         "interval",
         seconds=polling_interval_in_seconds,
     )

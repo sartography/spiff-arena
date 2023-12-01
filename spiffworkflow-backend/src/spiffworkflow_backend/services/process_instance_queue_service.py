@@ -39,16 +39,18 @@ class ProcessInstanceQueueService:
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
-    def _enqueue(cls, process_instance: ProcessInstanceModel) -> None:
-        queue_entry = ProcessInstanceLockService.unlock(process_instance.id)
+    def _enqueue(cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None) -> None:
+        queue_entry = ProcessInstanceLockService.unlock(
+            process_instance.id, additional_processing_identifier=additional_processing_identifier
+        )
         current_time = round(time.time())
         if current_time > queue_entry.run_at_in_seconds:
             queue_entry.run_at_in_seconds = current_time
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
-    def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:
-        locked_by = ProcessInstanceLockService.locked_by()
+    def _dequeue(cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None) -> None:
+        locked_by = ProcessInstanceLockService.locked_by(additional_processing_identifier=additional_processing_identifier)
         current_time = round(time.time())
 
         db.session.query(ProcessInstanceQueueModel).filter(
@@ -82,16 +84,22 @@ class ProcessInstanceQueueService:
                 f"It has already been locked by {queue_entry.locked_by}."
             )
 
-        ProcessInstanceLockService.lock(process_instance.id, queue_entry)
+        ProcessInstanceLockService.lock(
+            process_instance.id, queue_entry, additional_processing_identifier=additional_processing_identifier
+        )
 
     @classmethod
     @contextlib.contextmanager
-    def dequeued(cls, process_instance: ProcessInstanceModel) -> Generator[None, None, None]:
-        reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
+    def dequeued(
+        cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None
+    ) -> Generator[None, None, None]:
+        reentering_lock = ProcessInstanceLockService.has_lock(
+            process_instance.id, additional_processing_identifier=additional_processing_identifier
+        )
         if not reentering_lock:
             # this can blow up with ProcessInstanceIsNotEnqueuedError or ProcessInstanceIsAlreadyLockedError
             # that's fine, let it bubble up. and in that case, there's no need to _enqueue / unlock
-            cls._dequeue(process_instance)
+            cls._dequeue(process_instance, additional_processing_identifier=additional_processing_identifier)
         try:
             yield
         except Exception as ex:
@@ -105,7 +113,7 @@ class ProcessInstanceQueueService:
             raise ex
         finally:
             if not reentering_lock:
-                cls._enqueue(process_instance)
+                cls._enqueue(process_instance, additional_processing_identifier=additional_processing_identifier)
 
     @classmethod
     def entries_with_status(

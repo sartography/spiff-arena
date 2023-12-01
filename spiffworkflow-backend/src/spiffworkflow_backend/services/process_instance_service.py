@@ -42,6 +42,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
@@ -265,9 +266,13 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
-    ) -> ProcessInstanceProcessor | None:
+        additional_processing_identifier: str | None = None,
+    ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
         processor = None
-        with ProcessInstanceQueueService.dequeued(process_instance):
+        task_runnability = TaskRunnability.unknown_if_ready_tasks
+        with ProcessInstanceQueueService.dequeued(
+            process_instance, additional_processing_identifier=additional_processing_identifier
+        ):
             ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(
                 process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
@@ -278,13 +283,17 @@ class ProcessInstanceService:
         # otherwise, in all cases, we should optimistically skip it.
         if status_value and cls.can_optimistically_skip(processor, status_value):
             current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
-            return None
+            return (processor, task_runnability)
 
         db.session.refresh(process_instance)
         if status_value is None or process_instance.status == status_value:
-            processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+            task_runnability = processor.do_engine_steps(
+                save=True,
+                execution_strategy_name=execution_strategy_name,
+                additional_processing_identifier=additional_processing_identifier,
+            )
 
-        return processor
+        return (processor, task_runnability)
 
     @staticmethod
     def processor_to_process_instance_api(process_instance: ProcessInstanceModel) -> ProcessInstanceApi:

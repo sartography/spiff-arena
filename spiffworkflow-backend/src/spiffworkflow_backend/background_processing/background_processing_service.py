@@ -1,6 +1,8 @@
 import time
 
 import flask
+from sqlalchemy import and_
+
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import queue_future_task_if_appropriate
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -9,7 +11,6 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from sqlalchemy import and_
 
 
 class BackgroundProcessingService:
@@ -29,6 +30,12 @@ class BackgroundProcessingService:
         with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:waiting")
             ProcessInstanceService.do_waiting(ProcessInstanceStatus.waiting.value)
+
+    def process_running_process_instances(self) -> None:
+        """Since this runs in a scheduler, we need to specify the app context as well."""
+        with self.app.app_context():
+            ProcessInstanceLockService.set_thread_local_locking_context("bg:running")
+            ProcessInstanceService.do_waiting(ProcessInstanceStatus.running.value)
 
     def process_user_input_required_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""

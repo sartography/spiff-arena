@@ -888,9 +888,9 @@ class TestProcessInstanceProcessor(BaseTest):
         # ensure ordering is correct
         assert user_instructions[0].instruction == "We run script two"
 
-        assert process_instance.status == ProcessInstanceStatus.waiting.value
+        assert process_instance.status == ProcessInstanceStatus.running.value
         processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
-        assert process_instance.status == ProcessInstanceStatus.waiting.value
+        assert process_instance.status == ProcessInstanceStatus.running.value
         processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
         assert process_instance.status == ProcessInstanceStatus.complete.value
 

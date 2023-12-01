@@ -30,13 +30,14 @@ class ProcessInstanceCannotBeDeletedError(Exception):
 
 
 class ProcessInstanceStatus(SpiffEnum):
-    not_started = "not_started"
-    user_input_required = "user_input_required"
-    waiting = "waiting"
     complete = "complete"
     error = "error"
+    not_started = "not_started"
+    running = "running"
     suspended = "suspended"
     terminated = "terminated"
+    user_input_required = "user_input_required"
+    waiting = "waiting"
 
 
 class ProcessInstanceModel(SpiffworkflowBaseDBModel):
@@ -159,11 +160,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def active_statuses(cls) -> list[str]:
-        return cls.immediately_runnable_statuses() + ["user_input_required"]
+        return cls.immediately_runnable_statuses() + ["user_input_required", "waiting"]
 
     @classmethod
     def immediately_runnable_statuses(cls) -> list[str]:
-        return ["not_started", "waiting"]
+        return ["not_started", "running"]
 
 
 class ProcessInstanceModelSchema(Schema):

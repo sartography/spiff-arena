@@ -101,6 +101,7 @@ from spiffworkflow_backend.services.workflow_execution_service import ExecutionS
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
 from spiffworkflow_backend.services.workflow_execution_service import SkipOneExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
+from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.specs.start_event import StartEvent
@@ -1341,6 +1342,7 @@ class ProcessInstanceProcessor:
         if bpmn_process_instance.is_completed():
             return ProcessInstanceStatus.complete
         user_tasks = bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)
+        ready_tasks = bpmn_process_instance.get_tasks(state=TaskState.READY)
 
         # workflow.waiting_events (includes timers, and timers have a when firing property)
 
@@ -1353,6 +1355,8 @@ class ProcessInstanceProcessor:
         #     return ProcessInstanceStatus.waiting
         if len(user_tasks) > 0:
             return ProcessInstanceStatus.user_input_required
+        elif len(ready_tasks) > 0:
+            return ProcessInstanceStatus.running
         else:
             return ProcessInstanceStatus.waiting
 
@@ -1412,15 +1416,18 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
-    ) -> None:
+        additional_processing_identifier: str | None = None,
+    ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
-            with ProcessInstanceQueueService.dequeued(self.process_instance_model):
+            with ProcessInstanceQueueService.dequeued(
+                self.process_instance_model, additional_processing_identifier=additional_processing_identifier
+            ):
                 # TODO: ideally we just lock in the execution service, but not sure
                 # about _add_bpmn_process_definitions and if that needs to happen in
                 # the same lock like it does on main
-                self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+                return self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
         else:
-            self._do_engine_steps(
+            return self._do_engine_steps(
                 exit_at,
                 save=False,
                 execution_strategy_name=execution_strategy_name,
@@ -1433,7 +1440,7 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
-    ) -> None:
+    ) -> TaskRunnability:
         self._add_bpmn_process_definitions()
 
         task_model_delegate = TaskModelSavingDelegate(
@@ -1460,8 +1467,9 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
-        execution_service.run_and_save(exit_at, save)
+        task_runnability = execution_service.run_and_save(exit_at, save)
         self.check_all_tasks()
+        return task_runnability
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
