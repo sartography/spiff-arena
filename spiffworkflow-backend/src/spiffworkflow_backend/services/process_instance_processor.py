@@ -1159,7 +1159,7 @@ class ProcessInstanceProcessor:
         try:
             self.bpmn_process_instance.send_event(bpmn_event)
         except Exception as e:
-            print(e)
+            current_app.logger.warning(e)
 
         # TODO: do_engine_steps without a lock
         self.do_engine_steps(save=True)
