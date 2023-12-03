@@ -107,8 +107,9 @@ Choose the process you want to initiate and click “Start”.
 
 ![Untitled](images/Untitled_7.png)
 
-Congratulations!
 You have successfully started a new process instance in SpiffWorkflow.
+
+ If a process model doesn't have an associated BPMN file, the system will not display a start button. This is to prevent confusion and errors that might arise from attempting to start an incomplete process model.
 
 ---
 
@@ -444,3 +445,19 @@ To copy the short link:
 ![Short Link](images/Short_link.png)
 
 Now, you can paste the short link into your desired communication medium to share it with others.
+
+---
+## How to View Completed User Forms
+
+To access and review completed user forms within a specific process model, follow these guidelines:
+
+1. **Find the Tasks Tab in Process Instance**:  Begin by going to the process instance and scroll to locate the 'Tasks' tab. This area displays all user forms connected to the process.
+
+2. **Examine Completed Forms**: 
+   - **Forms You Completed**: In this section, you can view the forms that you have completed. It allows you to see the specific details and inputs you provided in each task.
+   ![Completed by me](images/Completed_by_me.png)
+
+   - **Forms Completed by Others**: This part shows all the forms completed by any user. You can see who completed each form and the last time it was updated. However, for privacy and security reasons, you won't be able to view the specific input details of forms completed by others.
+   ![Completed by others](images/Completed_by_others.png)
+
+This approach ensures you can monitor and review the progress of user forms within any process model while maintaining the confidentiality of inputs made by other users.
