@@ -447,7 +447,7 @@ To copy the short link:
 Now, you can paste the short link into your desired communication medium to share it with others.
 
 ---
-## How to View Completed User Forms
+## How to View Who Completed User Forms
 
 To access and review completed user forms within a specific process model, follow these guidelines:
 
