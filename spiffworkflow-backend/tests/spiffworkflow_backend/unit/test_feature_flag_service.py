@@ -1,23 +1,16 @@
-import json
-import os
-import tempfile
 from collections.abc import Generator
 
 import pytest
 from flask.app import Flask
-from flask import g
-import flask
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.feature_flag import FeatureFlagModel
-from spiffworkflow_backend.services.element_units_service import BpmnSpecDict
-from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+
 @pytest.fixture()
 def no_feature_flags(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
     yield
+
 
 class TestFeatureFlagService(BaseTest):
     """Tests the FeatureFlagService."""
@@ -41,8 +34,11 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"
-        FeatureFlagService.set_feature_flags({}, {"a/b/c": {"some_feature": False}}, )
+        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        FeatureFlagService.set_feature_flags(
+            {},
+            {"a/b/c": {"some_feature": False}},
+        )
         assert not FeatureFlagService.feature_enabled("some_feature", True)
 
     def test_process_model_override_feature_flag_value_overrides_default_feature_flag_value(
@@ -50,8 +46,11 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"
-        FeatureFlagService.set_feature_flags({"some_feature": True}, {"a/b/c": {"some_feature": False}}, )
+        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        FeatureFlagService.set_feature_flags(
+            {"some_feature": True},
+            {"a/b/c": {"some_feature": False}},
+        )
         assert not FeatureFlagService.feature_enabled("some_feature", True)
 
     def test_does_not_consider_other_features(
@@ -59,6 +58,9 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"
-        FeatureFlagService.set_feature_flags({"one_feature": False}, {"a/b/c": {"two_feature": False}}, )
+        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        FeatureFlagService.set_feature_flags(
+            {"one_feature": False},
+            {"a/b/c": {"two_feature": False}},
+        )
         assert FeatureFlagService.feature_enabled("some_feature", True)
