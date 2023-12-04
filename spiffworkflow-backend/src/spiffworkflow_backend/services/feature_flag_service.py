@@ -21,15 +21,6 @@ class FeatureFlagService:
     @classmethod
     def feature_enabled(cls, name: str, enabled_by_default: bool = False) -> bool:
         if not hasattr(g, "feature_flags"):
-            # TODO: add a script so a process model would set this, below is just an example
-            cls.set_feature_flags({
-                    "element_units": True,
-                },
-                {
-                    "misc/jonjon/lazy-call-activity/sample1": {
-                        "element_units": False,
-                    },
-                })
             g.feature_flags = FeatureFlagModel.most_recent_feature_flags()
 
         value = cls._process_model_specific_value(name, g.feature_flags)
