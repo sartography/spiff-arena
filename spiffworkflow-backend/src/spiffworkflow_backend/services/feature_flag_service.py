@@ -5,7 +5,7 @@ from flask import g
 
 from spiffworkflow_backend.models.feature_flag import FeatureFlagModel
 
-GLOBAL_FEATURE_FLAGS = "__spiff_global_feature_flags"
+DEFAULT_FEATURE_FLAGS = "__spiff_default_feature_flags"
 
 
 class FeatureFlagService:
@@ -22,19 +22,25 @@ class FeatureFlagService:
     def feature_enabled(cls, name: str, enabled_by_default: bool = False) -> bool:
         if not hasattr(g, "feature_flags"):
             # TODO: add a script so a process model would set this, below is just an example
-            feature_flags_example = {
-                "misc/jonjon/lazy-call-activity/sample1": {
-                    "element_units": False,
+            cls.set_feature_flags({
+                    "element_units": True,
                 },
-                GLOBAL_FEATURE_FLAGS: {
-                    "element_units": False,
-                },
-            }
-            FeatureFlagModel.set_most_recent_feature_flags(feature_flags_example)
+                {
+                    "misc/jonjon/lazy-call-activity/sample1": {
+                        "element_units": False,
+                    },
+                })
             g.feature_flags = FeatureFlagModel.most_recent_feature_flags()
 
         value = cls._process_model_specific_value(name, g.feature_flags)
         if value is not None:
             return value
 
-        return g.feature_flags.get(GLOBAL_FEATURE_FLAGS, {}).get(name, enabled_by_default)  # type: ignore
+        return g.feature_flags.get(DEFAULT_FEATURE_FLAGS, {}).get(name, enabled_by_default)  # type: ignore
+
+    @classmethod
+    def set_feature_flags(cls, default_feature_flags: dict[str, Any], process_model_overrides: dict[str, Any]) -> None:
+        feature_flags = {}
+        feature_flags.update(process_model_overrides)
+        feature_flags[DEFAULT_FEATURE_FLAGS] = default_feature_flags
+        FeatureFlagModel.set_most_recent_feature_flags(feature_flags)
