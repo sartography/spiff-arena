@@ -32,7 +32,9 @@ from spiffworkflow_backend.models.message_instance_correlation import MessageIns
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
+from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
@@ -307,10 +309,7 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         self.tasks_that_have_been_seen: set[str] = set()
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
-        tasks = bpmn_process_instance.get_tasks(
-            state=TaskState.WAITING
-            | TaskState.READY
-        )
+        tasks = bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
         for spiff_task in tasks:
             if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
                 "instructionsForEndUser", None
@@ -409,12 +408,14 @@ class WorkflowExecutionService:
         execution_strategy: ExecutionStrategy,
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
+        additional_processing_identifier: str | None = None,
     ):
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
         self.process_instance_saver = process_instance_saver
+        self.additional_processing_identifier = additional_processing_identifier
 
     # names of methods that do spiff stuff:
     # processor.do_engine_steps calls:
@@ -422,13 +423,17 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
-        # if self.process_instance_model.persistence_level != "none":
-        #     with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
-        #         if tripped:
-        #             raise AssertionError(
-        #                 "The current thread has not obtained a lock for this process"
-        #                 f" instance ({self.process_instance_model.id})."
-        #             )
+        if self.process_instance_model.persistence_level != "none":
+            with safe_assertion(
+                ProcessInstanceLockService.has_lock(
+                    self.process_instance_model.id, additional_processing_identifier=self.additional_processing_identifier
+                )
+            ) as tripped:
+                if tripped:
+                    raise AssertionError(
+                        "The current thread has not obtained a lock for this process"
+                        f" instance ({self.process_instance_model.id})."
+                    )
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
@@ -466,7 +471,9 @@ class WorkflowExecutionService:
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:
         # if it is supposed to happen in less than the amount of time we take between polling runs
-        return time_in_seconds - time.time() < current_app.config['SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTION_INTERVAL_IN_SECONDS']
+        return time_in_seconds - time.time() < int(
+            current_app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTION_INTERVAL_IN_SECONDS"]
+        )
 
     def schedule_waiting_timer_events(self) -> None:
         # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs

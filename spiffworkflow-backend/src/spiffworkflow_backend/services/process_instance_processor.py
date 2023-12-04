@@ -423,10 +423,12 @@ class ProcessInstanceProcessor:
         script_engine: PythonScriptEngine | None = None,
         workflow_completed_handler: WorkflowCompletedHandler | None = None,
         process_id_to_run: str | None = None,
+        additional_processing_identifier: str | None = None,
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine
         self._workflow_completed_handler = workflow_completed_handler
+        self.additional_processing_identifier = additional_processing_identifier
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model,
             validate_only=validate_only,
@@ -1416,11 +1418,10 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
-        additional_processing_identifier: str | None = None,
     ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
             with ProcessInstanceQueueService.dequeued(
-                self.process_instance_model, additional_processing_identifier=additional_processing_identifier
+                self.process_instance_model, additional_processing_identifier=self.additional_processing_identifier
             ):
                 # TODO: ideally we just lock in the execution service, but not sure
                 # about _add_bpmn_process_definitions and if that needs to happen in
@@ -1466,6 +1467,7 @@ class ProcessInstanceProcessor:
             execution_strategy,
             self._script_engine.environment.finalize_result,
             self.save,
+            additional_processing_identifier=self.additional_processing_identifier,
         )
         task_runnability = execution_service.run_and_save(exit_at, save)
         self.check_all_tasks()

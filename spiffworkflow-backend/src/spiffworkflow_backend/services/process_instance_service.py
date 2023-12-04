@@ -290,7 +290,6 @@ class ProcessInstanceService:
             task_runnability = processor.do_engine_steps(
                 save=True,
                 execution_strategy_name=execution_strategy_name,
-                additional_processing_identifier=additional_processing_identifier,
             )
 
         return (processor, task_runnability)

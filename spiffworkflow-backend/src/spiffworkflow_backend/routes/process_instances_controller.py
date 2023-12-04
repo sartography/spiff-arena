@@ -72,7 +72,7 @@ def process_instance_create(
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    force_run: bool,
+    force_run: bool = False,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     _process_instance_run(process_instance, force_run=force_run)
@@ -635,7 +635,7 @@ def _get_process_instance(
 
 def _process_instance_run(
     process_instance: ProcessInstanceModel,
-    force_run: bool,
+    force_run: bool = False,
 ) -> None:
     if process_instance.status != "not_started" and not force_run:
         raise ApiError(
