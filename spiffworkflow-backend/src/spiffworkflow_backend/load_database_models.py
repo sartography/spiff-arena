@@ -106,5 +106,8 @@ from spiffworkflow_backend.models.user_property import (
 from spiffworkflow_backend.models.service_account import (
     ServiceAccountModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.feature_flag import (
+    FeatureFlagModel,
+)  # noqa: F401
 
 add_listeners()

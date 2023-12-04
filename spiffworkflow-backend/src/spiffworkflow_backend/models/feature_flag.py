@@ -11,7 +11,7 @@ from spiffworkflow_backend.models.db import db
 
 @dataclass
 class FeatureFlagModel(SpiffworkflowBaseDBModel):
-    __tablename__ = "kkv_data_store"
+    __tablename__ = "feature_flags"
 
     id: int = db.Column(db.Integer, primary_key=True)
     generation_id: int = db.Column(ForeignKey(CacheGenerationModel.id), nullable=False, unique=True, index=True)  # type: ignore
