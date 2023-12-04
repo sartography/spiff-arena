@@ -74,7 +74,6 @@ jobs:
     env:
       FLASK_SESSION_SECRET_KEY: super_secret_key
       FORCE_COLOR: "1"
-      NOXSESSION: ${{ matrix.session }}
       PRE_COMMIT_COLOR: "always"
       SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
       SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
@@ -171,7 +170,7 @@ jobs:
         uses: "actions/upload-artifact@v3"
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
-          path: "./log/*.log"
+          path: "./spiffworkflow-backend/log/*.log"
 
   # burnettk created an account at https://app.snyk.io/org/kevin-jfx
   # and added his SNYK_TOKEN secret under the spiff-arena repo.

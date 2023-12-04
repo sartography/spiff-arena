@@ -14,12 +14,13 @@ from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # 
 from SpiffWorkflow.spiff.specs.event_definitions import EscalationEventDefinition
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from spiffworkflow_connector_command.command_interface import CommandErrorDict
+
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_connector_command.command_interface import CommandErrorDict
 
 
 class ConnectorProxyError(Exception):

@@ -51,3 +51,7 @@ class UserDoesNotHaveAccessToTaskError(Exception):
 
 class InvalidPermissionError(Exception):
     pass
+
+
+class InvalidRedirectUrlError(Exception):
+    pass

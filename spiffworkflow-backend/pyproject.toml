@@ -17,7 +17,6 @@ Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-click = "^8.0.1"
 flask = "2.2.5"
 flask-admin = "*"
 flask-bcrypt = "*"
@@ -44,7 +43,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 setuptools = "^65.5.1"
 
 # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
-werkzeug = "*"
+werkzeug = "^2.3"
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 
 lxml = "^4.9.1"
@@ -183,6 +182,7 @@ select = [
   "N",   # pep8-naming
   "PL",  # pylint
   "S",   # flake8-bandit
+  "T",   # flake8-print
   "UP",  # pyupgrade
   "W",   # pycodestyle warning
   "I001" # isort
@@ -207,6 +207,7 @@ exclude = [
 [tool.ruff.per-file-ignores]
 "migrations/versions/*.py" = ["E501"]
 "tests/**/*.py" = ["PLR2004", "S101"]  # PLR2004 is about magic vars, S101 allows assert
+"bin/*.py" = ["T"]  # it's ok to print things in scripts
 
 [tool.ruff.isort]
 force-single-line = true
