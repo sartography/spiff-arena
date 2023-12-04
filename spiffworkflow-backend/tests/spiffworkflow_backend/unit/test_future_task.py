@@ -27,7 +27,9 @@ class TestFutureTask(BaseTest):
             processor = ProcessInstanceProcessor(process_instance)
             mock = mocker.patch("celery.current_app.send_task")
             processor.do_engine_steps(save=True)
-            assert mock.call_count == 1
+
+            # this one is not happening soon. it will get picked up by the "every five minutes" job
+            assert mock.call_count == 0
 
             assert process_instance.status == "user_input_required"
 
