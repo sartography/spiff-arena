@@ -3,15 +3,15 @@ import os
 import tempfile
 from collections.abc import Generator
 
-from spiffworkflow_backend.models.db import db
 import pytest
 from flask.app import Flask
-from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.feature_flag import FeatureFlagModel
 from spiffworkflow_backend.services.element_units_service import BpmnSpecDict
 from spiffworkflow_backend.services.element_units_service import ElementUnitsService
+from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from spiffworkflow_backend.models.feature_flag import FeatureFlagModel
 
 #
 # we don't want to fully flex every aspect of the spiff-element-units
@@ -19,12 +19,14 @@ from spiffworkflow_backend.models.feature_flag import FeatureFlagModel
 # as expected.
 #
 
+
 @pytest.fixture()
 def feature_enabled(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
     db.session.query(FeatureFlagModel).delete()
     db.session.commit()
     FeatureFlagService.set_feature_flags({"element_units": True}, {})
     yield
+
 
 @pytest.fixture()
 def feature_disabled(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:

@@ -1,4 +1,3 @@
-
 from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
