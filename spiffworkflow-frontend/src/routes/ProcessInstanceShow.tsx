@@ -78,6 +78,7 @@ import {
 import { Notification } from '../components/Notification';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
+import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 
 type OwnProps = {
   variant: string;
@@ -158,6 +159,36 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       `/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
+
+  const onProcessInstanceRun = (processInstanceResult: ProcessInstance) => {
+    const processInstanceId = processInstanceResult.id;
+    if (processInstanceResult.process_model_uses_queued_execution) {
+      navigate(
+        `/process-instances/${modifiedProcessModelId}/${processInstanceId}/progress`
+      );
+    } else {
+      navigate(
+        `/process-instances/${modifiedProcessModelId}/${processInstanceId}/interstitial`
+      );
+    }
+  };
+
+  const forceRunProcessInstance = () => {
+  console.log("WE RUN")
+    // HttpService.makeCallToBackend({
+    //   path: `${targetUris.processInstanceActionPath}/run?force_run=true`,
+    //   successCallback: onProcessInstanceRun,
+    //   httpMethod: 'POST',
+    // });
+  };
+
+  const shortcuts = {
+    'g,r,enter': {
+      function: forceRunProcessInstance,
+      label: 'Force run process instance',
+    },
+  };
+  const keyboardShortcutStuff = useKeyboardShortcut(shortcuts);
 
   let processInstanceShowPageBaseUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   const processInstanceShowPageBaseUrlAllVariant = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
@@ -1626,6 +1657,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
+        {keyboardShortcutStuff}
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
         {viewMostRecentStateComponent()}

@@ -1200,10 +1200,10 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: do_engine_steps
+      - name: force_run
         in: query
         required: false
-        description: Defaults to true, can be set to false if you are just looking at the workflow not completeing it.
+        description: Force the process instance to run even if it has already been started.
         schema:
           type: boolean
     post:

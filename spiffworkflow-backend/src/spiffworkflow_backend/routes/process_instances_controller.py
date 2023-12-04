@@ -72,9 +72,10 @@ def process_instance_create(
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
+    force_run: bool,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    _process_instance_run(process_instance)
+    _process_instance_run(process_instance, force_run=force_run)
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
@@ -634,8 +635,9 @@ def _get_process_instance(
 
 def _process_instance_run(
     process_instance: ProcessInstanceModel,
+    force_run: bool,
 ) -> None:
-    if process_instance.status != "not_started":
+    if process_instance.status != "not_started" and not force_run:
         raise ApiError(
             error_code="process_instance_not_runnable",
             message=f"Process Instance ({process_instance.id}) is currently running or has already run.",

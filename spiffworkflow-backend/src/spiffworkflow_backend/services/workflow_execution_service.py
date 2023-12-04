@@ -128,10 +128,10 @@ class ExecutionStrategy:
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             num_steps = len(engine_steps)
             if self.should_break_before(engine_steps, process_instance_model=process_instance_model):
-                task_runnablility = TaskRunnability.has_ready_tasks if num_steps > 0 else TaskRunnability.no_ready_tasks
+                task_runnability = TaskRunnability.has_ready_tasks if num_steps > 0 else TaskRunnability.no_ready_tasks
                 break
             if num_steps == 0:
-                task_runnablility = TaskRunnability.no_ready_tasks
+                task_runnability = TaskRunnability.no_ready_tasks
                 break
             elif num_steps == 1:
                 spiff_task = engine_steps[0]
@@ -164,11 +164,11 @@ class ExecutionStrategy:
                         self.delegate.did_complete_task(spiff_task)
             if self.should_break_after(engine_steps):
                 # we could call the stuff at the top of the loop again and find out, but let's not do that unless we need to
-                task_runnablility = TaskRunnability.unknown_if_ready_tasks
+                task_runnability = TaskRunnability.unknown_if_ready_tasks
                 break
 
         self.delegate.after_engine_steps(bpmn_process_instance)
-        return task_runnablility
+        return task_runnability
 
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.on_exception(bpmn_process_instance)
@@ -308,10 +308,8 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         tasks = bpmn_process_instance.get_tasks(
-            # state=TaskState.WAITING | TaskState.STARTED | TaskState.READY
             state=TaskState.WAITING
             | TaskState.READY
-            # state=TaskState.READY
         )
         for spiff_task in tasks:
             if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(

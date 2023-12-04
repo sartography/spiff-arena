@@ -485,3 +485,12 @@ export interface ProcessInstanceProgressResponse {
   process_instance?: ProcessInstance;
   task?: ProcessInstanceTask;
 }
+
+export interface KeyboardShortcut {
+  function: Function;
+  label: string;
+}
+
+export interface KeyboardShortcuts {
+  [key: string]: KeyboardShortcut;
+}
