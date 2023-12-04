@@ -57,6 +57,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   ErrorForDisplay,
   EventDefinition,
+  KeyboardShortcuts,
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
@@ -141,7 +142,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
     [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceActionPath]: ['DELETE', 'GET'],
+    [targetUris.processInstanceActionPath]: ['DELETE', 'GET', 'POST'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
@@ -174,21 +175,22 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const forceRunProcessInstance = () => {
-  console.log("WE RUN")
-    // HttpService.makeCallToBackend({
-    //   path: `${targetUris.processInstanceActionPath}/run?force_run=true`,
-    //   successCallback: onProcessInstanceRun,
-    //   httpMethod: 'POST',
-    // });
+    if (ability.can('POST', targetUris.processInstanceActionPath)) {
+      HttpService.makeCallToBackend({
+        path: `${targetUris.processInstanceActionPath}/run?force_run=true`,
+        successCallback: onProcessInstanceRun,
+        httpMethod: 'POST',
+      });
+    }
   };
 
-  const shortcuts = {
-    'g,r,enter': {
+  const keyboardShortcuts: KeyboardShortcuts = {
+    'f,r,enter': {
       function: forceRunProcessInstance,
       label: 'Force run process instance',
     },
   };
-  const keyboardShortcutStuff = useKeyboardShortcut(shortcuts);
+  const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
 
   let processInstanceShowPageBaseUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   const processInstanceShowPageBaseUrlAllVariant = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
@@ -1657,7 +1659,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
-        {keyboardShortcutStuff}
+        {keyboardShortcutArea}
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
         {viewMostRecentStateComponent()}

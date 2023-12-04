@@ -48,18 +48,36 @@ const useKeyboardShortcut = (
     const keyboardShortcutList = shortcutKeys.map((key: string) => {
       return (
         <p>
-          {keyboardShortcuts[key].label}: {key.split(',').join(' ')}
+          <div className="shortcut-description">
+            {keyboardShortcuts[key].label}:{' '}
+          </div>
+          <div className="shortcut-key-group">
+            {key.split(',').map((keyString) => (
+              <span className="shortcut-key">{keyString}</span>
+            ))}
+          </div>
         </p>
       );
     });
+
     return (
       <Modal
         open={helpControlOpen}
         passiveModal
         onRequestClose={() => setHelpControlOpen(false)}
+        size="sm"
       >
         <h2>Keyboard shortcuts</h2>
         <br />
+        <p>
+          <div className="shortcut-description">
+            Open keyboard shortcut help control:
+          </div>
+          <div className="shortcut-key-group">
+            <span className="shortcut-key">Shift</span>
+            <span className="shortcut-key">?</span>
+          </div>
+        </p>
         {keyboardShortcutList}
       </Modal>
     );
