@@ -29,3 +29,11 @@ class FeatureFlagModel(SpiffworkflowBaseDBModel):
 
         result = cls.query.filter_by(generation_id=cache_generation.id).first()
         return {} if result is None else result.value  # type: ignore
+
+    @classmethod
+    def set_most_recent_feature_flags(cls, value: dict[str, Any]) -> None:
+        cache_generation = CacheGenerationModel(cache_table="feature_flags")
+        feature_flags = FeatureFlagModel(generation=cache_generation, value=value)
+        db.session.add(cache_generation)
+        db.session.add(feature_flags)
+        db.session.commit()

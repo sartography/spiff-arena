@@ -17,7 +17,7 @@ class ElementUnitsService:
 
     @classmethod
     def _enabled(cls) -> bool:
-        enabled = FeatureFlagService.feature_enabled("element_units", True)
+        enabled = FeatureFlagService.feature_enabled("element_units", False)
         return enabled and cls._cache_dir() is not None
 
     @classmethod
