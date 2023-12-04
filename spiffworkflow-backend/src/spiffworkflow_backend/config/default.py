@@ -154,10 +154,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
 config_from_env("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
 
-### engine
-config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND", default="greedy")
-config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB", default="run_until_user_message")
-
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors
 config_from_env("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default=False)

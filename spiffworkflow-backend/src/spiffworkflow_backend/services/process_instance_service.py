@@ -275,7 +275,9 @@ class ProcessInstanceService:
         ):
             ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(
-                process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
+                process_instance,
+                workflow_completed_handler=cls.schedule_next_process_model_cycle,
+                additional_processing_identifier=additional_processing_identifier,
             )
 
         # if status_value is user_input_required (we are processing instances with that status from background processor),

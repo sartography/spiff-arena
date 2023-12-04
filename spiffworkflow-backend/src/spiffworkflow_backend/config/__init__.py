@@ -237,6 +237,13 @@ def setup_config(app: Flask) -> None:
             }
         ]
 
+    if app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
+        app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"] = "queue_instructions_for_end_user"
+        app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"] = "queue_instructions_for_end_user"
+    else:
+        app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"] = "greedy"
+        app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"] = "run_until_user_message"
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
