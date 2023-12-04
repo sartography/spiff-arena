@@ -156,7 +156,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB", defaul
 config_from_env("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default="src/instance/element-unit-cache")
 
-### cryptography or simple-crypt
+### cryptography (to encrypt) or no_op_cipher (to not encrypt)
 config_from_env(
     # "SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB", default="cryptography"
     "SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB",
