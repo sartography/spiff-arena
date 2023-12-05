@@ -109,5 +109,8 @@ from spiffworkflow_backend.models.service_account import (
 from spiffworkflow_backend.models.future_task import (
     FutureTaskModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.feature_flag import (
+    FeatureFlagModel,
+)  # noqa: F401
 
 add_listeners()

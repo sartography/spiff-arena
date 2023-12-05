@@ -156,10 +156,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
 
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors
-config_from_env("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default="src/instance/element-unit-cache")
 
-### cryptography or simple-crypt
+### cryptography (to encrypt) or no_op_cipher (to not encrypt)
 config_from_env(
     # "SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB", default="cryptography"
     "SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB",
