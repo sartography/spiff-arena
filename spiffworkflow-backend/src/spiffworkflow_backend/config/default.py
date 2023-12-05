@@ -153,7 +153,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB", defaul
 
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors
-config_from_env("SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default="src/instance/element-unit-cache")
 
 ### cryptography (to encrypt) or no_op_cipher (to not encrypt)
