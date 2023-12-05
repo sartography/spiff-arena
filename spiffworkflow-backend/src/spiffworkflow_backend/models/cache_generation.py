@@ -11,6 +11,7 @@ from spiffworkflow_backend.models.db import db
 
 class CacheGenerationTable(SpiffEnum):
     reference_cache = "reference_cache"
+    feature_flag = "feature_flag"
 
 
 class CacheGenerationModel(SpiffworkflowBaseDBModel):

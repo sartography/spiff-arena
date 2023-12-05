@@ -3,6 +3,8 @@ from typing import Any
 
 from flask import current_app
 
+from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
+
 BpmnSpecDict = dict[str, Any]
 
 
@@ -15,7 +17,7 @@ class ElementUnitsService:
 
     @classmethod
     def _enabled(cls) -> bool:
-        enabled = current_app.config["SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED"]
+        enabled = FeatureFlagService.feature_enabled("element_units", False)
         return enabled and cls._cache_dir() is not None
 
     @classmethod
