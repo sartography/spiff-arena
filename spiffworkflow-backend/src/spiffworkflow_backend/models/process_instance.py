@@ -30,13 +30,14 @@ class ProcessInstanceCannotBeDeletedError(Exception):
 
 
 class ProcessInstanceStatus(SpiffEnum):
-    not_started = "not_started"
-    user_input_required = "user_input_required"
-    waiting = "waiting"
     complete = "complete"
     error = "error"
+    not_started = "not_started"
+    running = "running"
     suspended = "suspended"
     terminated = "terminated"
+    user_input_required = "user_input_required"
+    waiting = "waiting"
 
 
 class ProcessInstanceModel(SpiffworkflowBaseDBModel):
@@ -58,9 +59,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     active_human_tasks = relationship(
         "HumanTaskModel",
-        primaryjoin=(
-            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)"
-        ),
+        primaryjoin="and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)",
     )  # type: ignore
 
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
@@ -103,10 +102,13 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     # full, none
     persistence_level: str = "full"
 
+    actions: dict | None = None
+
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         return {
             "id": self.id,
+            "actions": self.actions,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "bpmn_xml_file_contents_retrieval_error": self.bpmn_xml_file_contents_retrieval_error,
@@ -127,9 +129,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def serialized_with_metadata(self) -> dict[str, Any]:
         process_instance_attributes = self.serialized()
         process_instance_attributes["process_metadata"] = self.process_metadata
-        process_instance_attributes["process_model_with_diagram_identifier"] = (
-            self.process_model_with_diagram_identifier
-        )
+        process_instance_attributes["process_model_with_diagram_identifier"] = self.process_model_with_diagram_identifier
         return process_instance_attributes
 
     @validates("status")
@@ -146,6 +146,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def has_terminal_status(self) -> bool:
         return self.status in self.terminal_statuses()
 
+    def is_immediately_runnable(self) -> bool:
+        return self.status in self.immediately_runnable_statuses()
+
     @classmethod
     def terminal_statuses(cls) -> list[str]:
         return ["complete", "error", "terminated"]
@@ -157,7 +160,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def active_statuses(cls) -> list[str]:
-        return ["not_started", "user_input_required", "waiting"]
+        return cls.immediately_runnable_statuses() + ["user_input_required", "waiting"]
+
+    @classmethod
+    def immediately_runnable_statuses(cls) -> list[str]:
+        return ["not_started", "running"]
 
 
 class ProcessInstanceModelSchema(Schema):

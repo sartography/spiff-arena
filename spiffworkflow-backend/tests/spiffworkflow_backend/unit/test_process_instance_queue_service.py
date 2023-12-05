@@ -18,9 +18,7 @@ class TestProcessInstanceQueueService(BaseTest):
             bpmn_file_name="lanes.bpmn",
             process_model_source_directory="model_with_lanes",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         return process_instance
 
     def test_newly_created_process_instances_are_not_locked_when_added_to_the_queue(

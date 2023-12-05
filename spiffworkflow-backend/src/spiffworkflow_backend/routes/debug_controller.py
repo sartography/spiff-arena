@@ -3,8 +3,8 @@ from flask import make_response
 from flask import request
 from flask.wrappers import Response
 
-from spiffworkflow_backend import get_version_info_data
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.monitoring_service import get_version_info_data
 
 
 def test_raise_error() -> Response:

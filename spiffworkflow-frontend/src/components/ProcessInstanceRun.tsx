@@ -4,6 +4,7 @@ import { Can } from '@casl/react';
 import { useState } from 'react';
 import {
   PermissionsToCheck,
+  ProcessInstance,
   ProcessModel,
   RecentProcessModel,
 } from '../interfaces';
@@ -93,14 +94,20 @@ export default function ProcessInstanceRun({
 
   const { ability } = usePermissionFetcher(permissionRequestData);
 
-  const onProcessInstanceRun = (processInstance: any) => {
-    const processInstanceId = (processInstance as any).id;
-    navigate(
-      `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`
-    );
+  const onProcessInstanceRun = (processInstance: ProcessInstance) => {
+    const processInstanceId = processInstance.id;
+    if (processInstance.process_model_uses_queued_execution) {
+      navigate(
+        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`
+      );
+    } else {
+      navigate(
+        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`
+      );
+    }
   };
 
-  const processModelRun = (processInstance: any) => {
+  const processModelRun = (processInstance: ProcessInstance) => {
     removeError();
     if (processModel) {
       storeRecentProcessModelInLocalStorage(processModel);

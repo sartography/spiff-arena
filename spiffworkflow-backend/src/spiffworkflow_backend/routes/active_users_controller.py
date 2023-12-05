@@ -13,9 +13,7 @@ from spiffworkflow_backend.models.user import UserModel
 
 
 def active_user_updates(last_visited_identifier: str) -> Response:
-    active_user = ActiveUserModel.query.filter_by(
-        user_id=g.user.id, last_visited_identifier=last_visited_identifier
-    ).first()
+    active_user = ActiveUserModel.query.filter_by(user_id=g.user.id, last_visited_identifier=last_visited_identifier).first()
     if active_user is None:
         active_user = ActiveUserModel(
             user_id=g.user.id, last_visited_identifier=last_visited_identifier, last_seen_in_seconds=round(time.time())
@@ -39,9 +37,7 @@ def active_user_updates(last_visited_identifier: str) -> Response:
 
 
 def active_user_unregister(last_visited_identifier: str) -> flask.wrappers.Response:
-    active_user = ActiveUserModel.query.filter_by(
-        user_id=g.user.id, last_visited_identifier=last_visited_identifier
-    ).first()
+    active_user = ActiveUserModel.query.filter_by(user_id=g.user.id, last_visited_identifier=last_visited_identifier).first()
     if active_user is not None:
         db.session.delete(active_user)
         db.session.commit()

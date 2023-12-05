@@ -16,6 +16,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -75,9 +76,7 @@ class TestProcessInstanceProcessor(BaseTest):
             bpmn_file_name="lanes.bpmn",
             process_model_source_directory="model_with_lanes",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -87,9 +86,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(processor, spiff_task, {}, finance_user, human_task)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
@@ -100,9 +97,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
@@ -113,9 +108,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
@@ -143,9 +136,7 @@ class TestProcessInstanceProcessor(BaseTest):
             bpmn_file_name="lanes_with_owner_dict.bpmn",
             process_model_source_directory="model_with_lanes",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -155,9 +146,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(processor, spiff_task, {}, finance_user_three, human_task)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
@@ -169,9 +158,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 2
         assert human_task.potential_owners == [finance_user_three, finance_user_four]
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
@@ -184,9 +171,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user_four
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
@@ -198,16 +183,12 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, testadmin1, human_task)
@@ -226,9 +207,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/call_activity_nested",
             process_model_source_directory="call_activity_nested",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -236,9 +215,7 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
 
         # this task will be found within subprocesses
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            "level_3_script_task", processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("level_3_script_task", processor.bpmn_process_instance)
         assert spiff_task is not None
         assert spiff_task.state == TaskState.COMPLETED
 
@@ -262,9 +239,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/manual_task",
             process_model_source_directory="manual_task",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
@@ -316,9 +291,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/manual_task_with_subprocesses",
             process_model_source_directory="manual_task_with_subprocesses",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
@@ -333,9 +306,7 @@ class TestProcessInstanceProcessor(BaseTest):
 
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         assert len(process_instance.human_tasks) == 2, "expected 2 human tasks after first one is completed"
-        assert (
-            len(process_instance.active_human_tasks) == 1
-        ), "expected 1 active human tasks after 1st one is completed"
+        assert len(process_instance.active_human_tasks) == 1, "expected 1 active human tasks after 1st one is completed"
 
         # unnecessary lookup just in case on windows
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
@@ -366,9 +337,7 @@ class TestProcessInstanceProcessor(BaseTest):
 
         # make sure sqlalchemy session matches current db state
         db.session.expire_all()
-        assert (
-            len(process_instance.human_tasks) == 2
-        ), "still expected 3 human tasks after reset and session expire_all"
+        assert len(process_instance.human_tasks) == 2, "still expected 3 human tasks after reset and session expire_all"
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
@@ -386,9 +355,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
         assert len(ready_or_waiting_tasks) == 2
         ready_or_waiting_task_identifiers = [t.task_spec.name for t in ready_or_waiting_tasks]
-        assert sorted(["top_level_subprocess_script", "top_level_subprocess"]) == sorted(
-            ready_or_waiting_task_identifiers
-        )
+        assert sorted(["top_level_subprocess_script", "top_level_subprocess"]) == sorted(ready_or_waiting_task_identifiers)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
@@ -437,9 +404,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
-        assert (
-            len(process_instance.active_human_tasks) == 1
-        ), "expected 1 active human tasks after 2nd one is completed"
+        assert len(process_instance.active_human_tasks) == 1, "expected 1 active human tasks after 2nd one is completed"
         assert process_instance.active_human_tasks[0].task_title == "Final"
 
         # Reset the process back to the task within the call activity that contains a timer_boundary event.
@@ -453,9 +418,7 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_title == "Manual Task #1"
         processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(
-            str(human_task_one.task_id), execute=True, user=process_instance.process_initiator
-        )
+        processor.manual_complete_task(str(human_task_one.task_id), execute=True, user=process_instance.process_initiator)
         processor = ProcessInstanceProcessor(process_instance)
         processor.resume()
         processor.do_engine_steps(save=True)
@@ -489,9 +452,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
         processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.manual_complete_task(
-            str(human_task_one.task_id), execute=True, user=process_instance.process_initiator
-        )
+        processor.manual_complete_task(str(human_task_one.task_id), execute=True, user=process_instance.process_initiator)
         processor.save()
         processor = ProcessInstanceProcessor(process_instance)
         step1_task = processor.get_task_by_bpmn_identifier("step_1", processor.bpmn_process_instance)
@@ -534,9 +495,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/manual_task_with_subprocesses",
             process_model_source_directory="manual_task_with_subprocesses",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert len(process_instance.active_human_tasks) == 1
@@ -646,8 +605,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 expected_python_env_data = expected_task_data[expected_task_data_key]["data"]
 
                 base_failure_message = (
-                    f"Failed on {bpmn_process_identifier} - {spiff_task_identifier} - task data key"
-                    f" {expected_task_data_key}."
+                    f"Failed on {bpmn_process_identifier} - {spiff_task_identifier} - task data key {expected_task_data_key}."
                 )
 
                 count_failure_message = (
@@ -672,9 +630,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 task_definition = task_model.task_definition
                 assert task_definition.bpmn_identifier == spiff_task_identifier
                 assert task_definition.bpmn_name == spiff_task_identifier.replace("_", " ").title()
-                assert (
-                    task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
-                ), base_failure_message
+                assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier, base_failure_message
 
                 message = (
                     f"{base_failure_message} Expected: {sorted(expected_python_env_data)}. Received:"
@@ -716,9 +672,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert bpmn_process_definition is not None
                 assert bpmn_process_definition.bpmn_identifier == "test_process_to_call_subprocess"
                 assert bpmn_process.direct_parent_process_id is not None
-                direct_parent_process = BpmnProcessModel.query.filter_by(
-                    id=bpmn_process.direct_parent_process_id
-                ).first()
+                direct_parent_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
                 assert direct_parent_process is not None
                 assert direct_parent_process.bpmn_process_definition.bpmn_identifier == "test_process_to_call"
                 spiff_tasks_checked.append(spiff_task.task_spec.name)
@@ -764,9 +718,7 @@ class TestProcessInstanceProcessor(BaseTest):
             bpmn_file_name="lanes_with_owner_dict.bpmn",
             process_model_source_directory="model_with_lanes",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
@@ -790,9 +742,7 @@ class TestProcessInstanceProcessor(BaseTest):
             bpmn_file_name="loopback.bpmn",
             process_model_source_directory="loopback_to_manual_task",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
@@ -800,9 +750,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task_one.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task_one.task_name, processor.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_one)
 
         assert len(process_instance.active_human_tasks) == 1
@@ -822,9 +770,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/loopback_to_subprocess",
             process_model_source_directory="loopback_to_subprocess",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
@@ -872,9 +818,7 @@ class TestProcessInstanceProcessor(BaseTest):
         process_instance_final = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor_final = ProcessInstanceProcessor(process_instance_final)
 
-        spiff_task = processor_final.get_task_by_bpmn_identifier(
-            "script_task_two", processor_final.bpmn_process_instance
-        )
+        spiff_task = processor_final.get_task_by_bpmn_identifier("script_task_two", processor_final.bpmn_process_instance)
         assert spiff_task is not None
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         assert task_model is not None
@@ -883,9 +827,7 @@ class TestProcessInstanceProcessor(BaseTest):
 
         process_instance_events = process_instance.process_instance_events
         assert len(process_instance_events) == 4
-        error_events = [
-            e for e in process_instance_events if e.event_type == ProcessInstanceEventType.task_failed.value
-        ]
+        error_events = [e for e in process_instance_events if e.event_type == ProcessInstanceEventType.task_failed.value]
         assert len(error_events) == 1
         error_event = error_events[0]
         assert error_event.task_guid is not None
@@ -919,3 +861,45 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
+
+    def test_can_store_instructions_for_end_user(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/script_task_with_instruction",
+            bpmn_file_name="script_task_with_instruction.bpmn",
+            process_model_source_directory="script-task-with-instruction",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        user_instructions = TaskInstructionsForEndUserModel.entries_for_process_instance(process_instance.id)
+        assert len(user_instructions) == 1
+        assert user_instructions[0].instruction == "We run script one"
+        processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        user_instructions = TaskInstructionsForEndUserModel.entries_for_process_instance(process_instance.id)
+        assert len(user_instructions) == 2
+        # ensure ordering is correct
+        assert user_instructions[0].instruction == "We run script two"
+
+        assert process_instance.status == ProcessInstanceStatus.running.value
+        processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
+        assert process_instance.status == ProcessInstanceStatus.running.value
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
+        remaining_entries = TaskInstructionsForEndUserModel.query.all()
+        assert len(remaining_entries) == 2
+        user_instruction_list = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
+        user_instruction_strings = [ui.instruction for ui in user_instruction_list]
+        assert user_instruction_strings == ["We run script two", "We run script one"]
+        remaining_entries = TaskInstructionsForEndUserModel.query.all()
+        assert len(remaining_entries) == 2
+        for entry in remaining_entries:
+            assert entry.has_been_retrieved is True

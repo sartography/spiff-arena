@@ -20,9 +20,7 @@ def main():
         db.session.commit()
 
         """Print process instance count."""
-        process_instances = ProcessInstanceModel.query.filter_by(
-            process_model_identifier=process_model_identifier_ticket
-        ).all()
+        process_instances = ProcessInstanceModel.query.filter_by(process_model_identifier=process_model_identifier_ticket).all()
         process_instance_count = len(process_instances)
         print(f"process_instance_count: {process_instance_count}")
 

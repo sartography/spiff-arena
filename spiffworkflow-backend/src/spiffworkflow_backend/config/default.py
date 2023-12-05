@@ -49,9 +49,16 @@ config_from_env("SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP", 
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_ALLOW_OPTIMISTIC_CHECKS", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS", default=10)
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS", default=30)
-config_from_env(
-    "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS", default=120
-)
+config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS", default=120)
+
+### background with celery
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://localhost")
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default="redis://localhost")
+
+# give a little overlap to ensure we do not miss items although the query will handle it either way
+config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS", default=301)
+config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTION_INTERVAL_IN_SECONDS", default=300)
 
 ### frontend
 config_from_env("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", default="http://localhost:7001")
@@ -146,10 +153,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
 config_from_env("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
-
-### engine
-config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND", default="greedy")
-config_from_env("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB", default="run_until_user_message")
 
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors

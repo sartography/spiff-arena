@@ -273,9 +273,7 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
         id = capture_exception(exception)
 
         if isinstance(exception, ApiError):
-            current_app.logger.info(
-                f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}"
-            )
+            current_app.logger.info(f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}")
 
         organization_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG")
         project_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG")
@@ -308,9 +306,7 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     if isinstance(exception, ApiError):
         api_exception = exception
     elif isinstance(exception, SpiffWorkflowException):
-        api_exception = ApiError.from_workflow_exception(
-            "unexpected_workflow_exception", "Unexpected Workflow Error", exception
-        )
+        api_exception = ApiError.from_workflow_exception("unexpected_workflow_exception", "Unexpected Workflow Error", exception)
     else:
         api_exception = ApiError(
             error_code=error_code,

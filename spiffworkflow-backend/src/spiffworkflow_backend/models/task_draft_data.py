@@ -39,9 +39,7 @@ class TaskDraftDataModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    process_instance_id: int = db.Column(
-        ForeignKey(ProcessInstanceModel.id), nullable=False, index=True  # type: ignore
-    )
+    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False, index=True)  # type: ignore
 
     # a colon delimited path of bpmn_process_definition_ids for a given task
     task_definition_id_path: str = db.Column(db.String(255), nullable=False, index=True)

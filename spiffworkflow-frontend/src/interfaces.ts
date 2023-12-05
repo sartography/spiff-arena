@@ -84,6 +84,8 @@ export interface BasicTask {
   start_in_seconds: number;
   end_in_seconds: number;
   extensions?: any;
+
+  process_model_uses_queued_execution?: boolean;
 }
 
 // TODO: merge with ProcessInstanceTask
@@ -110,7 +112,7 @@ export interface ProcessInstanceTask {
   form_schema: any;
   form_ui_schema: any;
   lane_assignment_id: string;
-  name: string;
+  name: string; // bpmn_identifier
   process_identifier: string;
   process_initiator_username: string;
   process_instance_id: number;
@@ -119,7 +121,7 @@ export interface ProcessInstanceTask {
   process_model_identifier: string;
   properties: any;
   state: string;
-  title: string;
+  title: string; // bpmn_name
   type: string;
   updated_at_in_seconds: number;
 
@@ -199,12 +201,16 @@ export interface ProcessInstance {
   process_metadata?: ProcessInstanceMetadata[];
   process_model_with_diagram_identifier?: string;
   last_milestone_bpmn_name?: string;
+  actions?: ApiActions;
 
   // from tasks
   potential_owner_usernames?: string;
   task_id?: string;
   task_updated_at_in_seconds?: number;
   waiting_for?: string;
+
+  // from api instance
+  process_model_uses_queued_execution?: boolean;
 }
 
 export interface MessageCorrelationProperties {
@@ -466,4 +472,25 @@ export interface AuthenticationOption {
   identifier: string;
   label: string;
   uri: string;
+}
+
+export interface TaskInstructionForEndUser {
+  task_guid: string;
+  process_instance_id: number;
+  instruction: string;
+}
+
+export interface ProcessInstanceProgressResponse {
+  instructions: TaskInstructionForEndUser[];
+  process_instance?: ProcessInstance;
+  task?: ProcessInstanceTask;
+}
+
+export interface KeyboardShortcut {
+  function: Function;
+  label: string;
+}
+
+export interface KeyboardShortcuts {
+  [key: string]: KeyboardShortcut;
 }

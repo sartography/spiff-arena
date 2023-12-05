@@ -189,9 +189,7 @@ def _run_extension(
 
     if ui_schema_action:
         if "results_markdown_filename" in ui_schema_action:
-            file_contents = SpecFileService.get_data(
-                process_model, ui_schema_action["results_markdown_filename"]
-            ).decode("utf-8")
+            file_contents = SpecFileService.get_data(process_model, ui_schema_action["results_markdown_filename"]).decode("utf-8")
             form_contents = JinjaService.render_jinja_template(file_contents, task_data=task_data)
             result["rendered_results_markdown"] = form_contents
 

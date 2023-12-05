@@ -51,15 +51,11 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     status: str = db.Column(db.String(20), nullable=False, default="ready", index=True)
     user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
     user = relationship("UserModel")
-    counterpart_id: int = db.Column(
-        db.Integer
-    )  # Not enforcing self-referential foreign key so we can delete messages.
+    counterpart_id: int = db.Column(db.Integer)  # Not enforcing self-referential foreign key so we can delete messages.
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-    correlation_rules = relationship(
-        "MessageInstanceCorrelationRuleModel", back_populates="message_instance", cascade="delete"
-    )
+    correlation_rules = relationship("MessageInstanceCorrelationRuleModel", back_populates="message_instance", cascade="delete")
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:

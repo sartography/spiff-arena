@@ -110,9 +110,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         ).first()
 
         if process_instance_report is not None:
-            raise ProcessInstanceReportAlreadyExistsError(
-                f"Process instance report with identifier already exists: {identifier}"
-            )
+            raise ProcessInstanceReportAlreadyExistsError(f"Process instance report with identifier already exists: {identifier}")
 
         report_metadata_dict = typing.cast(dict[str, Any], report_metadata)
         json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata_dict)

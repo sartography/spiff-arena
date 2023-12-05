@@ -115,11 +115,9 @@ Cypress.Commands.add(
       cy.url().should('include', `/tasks/`);
       cy.contains('Task: ', { timeout: 30000 });
     } else {
-      cy.url().should('include', `/interstitial`);
-      // cy.contains('Status: Completed');
-      cy.contains(
-        'There are no additional instructions or information for this task.'
-      );
+      cy.url().should('include', `/process-instances`);
+      cy.contains('Process Instance Id');
+      cy.contains('complete');
       if (returnToProcessModelShow) {
         cy.getBySel('process-model-breadcrumb-link').click();
         cy.getBySel('process-model-show-permissions-loaded').should('exist');

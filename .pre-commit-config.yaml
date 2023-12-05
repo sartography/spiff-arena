@@ -18,7 +18,7 @@ repos:
         # --line-length because then we can avoid the fancy line wrapping in more instances and jason, kb, and elizabeth
         # kind of prefer long lines rather than cutely-formatted sets of lines.
         # TODO: enable when its safe to update the files
-        args: [--preview, --line-length, "119"]
+        args: [--preview, --line-length, "130"]
 
       - id: check-added-large-files
         files: ^spiffworkflow-backend/

@@ -117,9 +117,7 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
         location = _data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
             raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
-        contents = FileSystemService.contents_of_json_file_at_relative_path(
-            location, _data_store_filename(self.bpmn_id)
-        )
+        contents = FileSystemService.contents_of_json_file_at_relative_path(location, _data_store_filename(self.bpmn_id))
         my_task.data[self.bpmn_id] = contents
 
     def set(self, my_task: SpiffTask) -> None:

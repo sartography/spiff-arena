@@ -17,12 +17,12 @@ from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinitio
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
-from spiffworkflow_backend import db
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
@@ -42,6 +42,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
@@ -125,16 +126,12 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
-            process_model, user
-        )
+        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(process_model, user)
         cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         return process_instance_model
 
     @classmethod
-    def register_process_model_cycles(
-        cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int
-    ) -> None:
+    def register_process_model_cycles(cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int) -> None:
         # clean up old cycle record if it exists. event if the given cycle_count is 0 the previous version
         # of the model could have included a cycle timer start event
         cycles = ProcessModelCycleModel.query.filter(
@@ -230,6 +227,7 @@ class ProcessInstanceService:
 
         return False
 
+    # this is only used from background processor
     @classmethod
     def do_waiting(cls, status_value: str) -> None:
         run_at_in_seconds_threshold = round(time.time())
@@ -268,12 +266,18 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
-    ) -> ProcessInstanceProcessor | None:
+        additional_processing_identifier: str | None = None,
+    ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
         processor = None
-        with ProcessInstanceQueueService.dequeued(process_instance):
+        task_runnability = TaskRunnability.unknown_if_ready_tasks
+        with ProcessInstanceQueueService.dequeued(
+            process_instance, additional_processing_identifier=additional_processing_identifier
+        ):
             ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(
-                process_instance, workflow_completed_handler=cls.schedule_next_process_model_cycle
+                process_instance,
+                workflow_completed_handler=cls.schedule_next_process_model_cycle,
+                additional_processing_identifier=additional_processing_identifier,
             )
 
         # if status_value is user_input_required (we are processing instances with that status from background processor),
@@ -281,13 +285,16 @@ class ProcessInstanceService:
         # otherwise, in all cases, we should optimistically skip it.
         if status_value and cls.can_optimistically_skip(processor, status_value):
             current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
-            return None
+            return (processor, task_runnability)
 
         db.session.refresh(process_instance)
         if status_value is None or process_instance.status == status_value:
-            processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+            task_runnability = processor.do_engine_steps(
+                save=True,
+                execution_strategy_name=execution_strategy_name,
+            )
 
-        return processor
+        return (processor, task_runnability)
 
     @staticmethod
     def processor_to_process_instance_api(process_instance: ProcessInstanceModel) -> ProcessInstanceApi:
@@ -334,10 +341,7 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message=(
-                                "Spiff Task %s lane user dict must have a key called"
-                                " 'value' with the user's uid in it."
-                            )
+                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
                             % spiff_task.task_spec.name,
                             task=spiff_task,
                         )
@@ -425,9 +429,7 @@ class ProcessInstanceService:
         models: list[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
-            digest_reference = (
-                f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
-            )
+            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:

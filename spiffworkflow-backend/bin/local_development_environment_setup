@@ -15,6 +15,10 @@ fi
 port="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
 
 process_model_dir="${1:-}"
+if [[ -d "$process_model_dir" ]]; then
+  shift
+fi
+
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   if [[ -n "${process_model_dir}" ]] && [[ -d "${process_model_dir}" ]]; then

@@ -73,13 +73,14 @@ export const BACKEND_BASE_URL = backendBaseUrl;
 export const DOCUMENTATION_URL = documentationUrl;
 
 export const PROCESS_STATUSES = [
-  'not_started',
-  'user_input_required',
-  'waiting',
   'complete',
   'error',
+  'not_started',
+  'running',
   'suspended',
   'terminated',
+  'user_input_required',
+  'waiting',
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss

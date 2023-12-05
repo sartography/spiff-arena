@@ -20,9 +20,7 @@ class SetUserProperties(Script):
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         properties = args[0]
         if not isinstance(properties, dict):
-            raise InvalidArgsGivenToScriptError(
-                f"Args to set_user_properties must be a dict. '{properties}' is invalid."
-            )
+            raise InvalidArgsGivenToScriptError(f"Args to set_user_properties must be a dict. '{properties}' is invalid.")
         # consider using engine-specific insert or update metaphor in future: https://stackoverflow.com/a/68431412/6090676
         for property_key, property_value in properties.items():
             user_property = UserPropertyModel.query.filter_by(user_id=g.user.id, key=property_key).first()

@@ -66,9 +66,7 @@ class TaskModelError(Exception):
             self.line_number = exception.lineno
             self.offset = exception.offset
         elif isinstance(exception, NameError):
-            self.add_note(
-                WorkflowException.did_you_mean_from_name_error(exception, list(task_model.get_data().keys()))
-            )
+            self.add_note(WorkflowException.did_you_mean_from_name_error(exception, list(task_model.get_data().keys())))
 
         # If encountered in a sub-workflow, this traces back up the stack,
         # so we can tell how we got to this particular task, no matter how
@@ -163,9 +161,7 @@ class TaskService:
         """
         (parent_subprocess_guid, _parent_subprocess) = self.__class__._task_subprocess(spiff_task)
         if parent_subprocess_guid is not None:
-            spiff_task_of_parent_subprocess = spiff_task.workflow.top_workflow.get_task_from_id(
-                UUID(parent_subprocess_guid)
-            )
+            spiff_task_of_parent_subprocess = spiff_task.workflow.top_workflow.get_task_from_id(UUID(parent_subprocess_guid))
 
             if spiff_task_of_parent_subprocess is not None:
                 self.update_task_model_with_spiff_task(
@@ -196,15 +192,11 @@ class TaskService:
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
         bpmn_process = (
-            new_bpmn_process
-            or task_model.bpmn_process
-            or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
+            new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
         )
 
         self.update_task_model(task_model, spiff_task)
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
-            bpmn_process, bpmn_process_instance=spiff_task.workflow
-        )
+        bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
         self.task_models[task_model.guid] = task_model
@@ -248,18 +240,14 @@ class TaskService:
         new_properties_json["success"] = spiff_workflow.success
         bpmn_process.properties_json = new_properties_json
 
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
-            bpmn_process, bpmn_process_instance=spiff_workflow
-        )
+        bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
         if spiff_workflow.parent_task_id:
-            direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
-                id=bpmn_process.direct_parent_process_id
-            ).first()
+            direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
             self.update_bpmn_process(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
 
     def update_task_model(
@@ -396,9 +384,7 @@ class TaskService:
                 for subprocess_guid in list(subprocesses):
                     subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
-                        direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
-                            guid=str(subprocess_guid)
-                        ).first()
+                        direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(guid=str(subprocess_guid)).first()
                         if direct_bpmn_process_parent is None:
                             raise BpmnProcessNotFoundError(
                                 f"Could not find bpmn process with guid: {str(subprocess_guid)} "
@@ -406,9 +392,7 @@ class TaskService:
                             )
 
                 if direct_bpmn_process_parent is None:
-                    raise BpmnProcessNotFoundError(
-                        f"Could not find a direct bpmn process parent for guid: {bpmn_process_guid}"
-                    )
+                    raise BpmnProcessNotFoundError(f"Could not find a direct bpmn process parent for guid: {bpmn_process_guid}")
 
                 bpmn_process.direct_parent_process_id = direct_bpmn_process_parent.id
 
@@ -468,9 +452,7 @@ class TaskService:
         # Remove all the deleted/pruned tasks from the database.
         deleted_task_guids = [str(t.id) for t in deleted_spiff_tasks]
         tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
-        human_tasks_to_clear = HumanTaskModel.query.filter(
-            HumanTaskModel.task_id.in_(deleted_task_guids)  # type: ignore
-        ).all()
+        human_tasks_to_clear = HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(deleted_task_guids)).all()  # type: ignore
 
         # delete human tasks first to avoid potential conflicts when deleting tasks.
         # otherwise sqlalchemy returns several warnings.
@@ -587,25 +569,19 @@ class TaskService:
         return (bpmn_processes, task_models)
 
     @classmethod
-    def full_bpmn_process_path(
-        cls, bpmn_process: BpmnProcessModel, definition_column: str = "bpmn_identifier"
-    ) -> list[str]:
+    def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel, definition_column: str = "bpmn_identifier") -> list[str]:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
         bpmn_process_identifiers: list[str] = []
         if bpmn_process.guid:
             task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
             if task_model is None:
-                raise TaskNotFoundError(
-                    f"Cannot find the corresponding task for the bpmn process with guid {bpmn_process.guid}."
-                )
+                raise TaskNotFoundError(f"Cannot find the corresponding task for the bpmn process with guid {bpmn_process.guid}.")
             (
                 parent_bpmn_processes,
                 _task_models_of_parent_bpmn_processes,
             ) = TaskService.task_models_of_parent_bpmn_processes(task_model)
             for parent_bpmn_process in parent_bpmn_processes:
-                bpmn_process_identifiers.append(
-                    getattr(parent_bpmn_process.bpmn_process_definition, definition_column)
-                )
+                bpmn_process_identifiers.append(getattr(parent_bpmn_process.bpmn_process_definition, definition_column))
         bpmn_process_identifiers.append(getattr(bpmn_process.bpmn_process_definition, definition_column))
         return bpmn_process_identifiers
 
@@ -631,9 +607,7 @@ class TaskService:
 
     @classmethod
     def is_main_process_end_event(cls, spiff_task: SpiffTask) -> bool:
-        return (
-            cls.get_task_type_from_spiff_task(spiff_task) == "EndEvent" and spiff_task.workflow.parent_workflow is None
-        )
+        return cls.get_task_type_from_spiff_task(spiff_task) == "EndEvent" and spiff_task.workflow.parent_workflow is None
 
     @classmethod
     def bpmn_process_for_called_activity_or_top_level_process(cls, task_model: TaskModel) -> BpmnProcessModel:
@@ -668,16 +642,12 @@ class TaskService:
 
     @classmethod
     def get_ready_signals_with_button_labels(cls, process_instance_id: int, associated_task_guid: str) -> list[dict]:
-        waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(
-            state="WAITING", process_instance_id=process_instance_id
-        ).all()
+        waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(state="WAITING", process_instance_id=process_instance_id).all()
         result = []
         for task_model in waiting_tasks:
             task_definition = task_model.task_definition
             extensions: dict = (
-                task_definition.properties_json["extensions"]
-                if "extensions" in task_definition.properties_json
-                else {}
+                task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
             )
             event_definition: dict = (
                 task_definition.properties_json["event_definition"]
@@ -748,9 +718,7 @@ class TaskService:
         spiff_task: SpiffTask,
         bpmn_definition_to_task_definitions_mappings: dict,
     ) -> TaskModel:
-        task_definition = bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
-            spiff_task.task_spec.name
-        ]
+        task_definition = bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][spiff_task.task_spec.name]
         task_model = TaskModel(
             guid=str(spiff_task.id),
             bpmn_process_id=bpmn_process.id,
@@ -760,9 +728,7 @@ class TaskService:
         return task_model
 
     @classmethod
-    def _get_python_env_data_dict_from_spiff_task(
-        cls, spiff_task: SpiffTask, serializer: BpmnWorkflowSerializer
-    ) -> dict:
+    def _get_python_env_data_dict_from_spiff_task(cls, spiff_task: SpiffTask, serializer: BpmnWorkflowSerializer) -> dict:
         user_defined_state = spiff_task.workflow.script_engine.environment.user_defined_state()
         # this helps to convert items like datetime objects to be json serializable
         converted_data: dict = serializer.registry.convert(user_defined_state)

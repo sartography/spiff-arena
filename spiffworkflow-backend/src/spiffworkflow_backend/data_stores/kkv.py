@@ -38,11 +38,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         }
 
     def _get_model(self, top_level_key: str, secondary_key: str) -> KKVDataStoreModel | None:
-        model = (
-            db.session.query(KKVDataStoreModel)
-            .filter_by(top_level_key=top_level_key, secondary_key=secondary_key)
-            .first()
-        )
+        model = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key, secondary_key=secondary_key).first()
         return model
 
     def _delete_all_for_top_level_key(self, top_level_key: str) -> None:

@@ -26,6 +26,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -48,9 +54,11 @@ from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataDict
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
+from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -91,9 +99,7 @@ def task_allows_guest(
 
 
 # this is currently not used by the Frontend
-def task_list_my_tasks(
-    process_instance_id: int | None = None, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
+def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     assigned_user = aliased(UserModel)
     process_initiator_user = aliased(UserModel)
@@ -263,8 +269,7 @@ def task_data_update(
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
-                "The process instance needs to be suspended to update the task-data."
-                f" It is currently: {process_instance.status}"
+                f"The process instance needs to be suspended to update the task-data. It is currently: {process_instance.status}"
             )
 
         task_model = TaskModel.query.filter_by(guid=task_guid).first()
@@ -360,9 +365,7 @@ def task_assign(
     )
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    human_tasks = HumanTaskModel.query.filter_by(
-        process_instance_id=process_instance.id, task_id=task_model.guid
-    ).all()
+    human_tasks = HumanTaskModel.query.filter_by(process_instance_id=process_instance.id, task_id=task_model.guid).all()
 
     if len(human_tasks) > 1:
         raise ApiError(
@@ -463,15 +466,11 @@ def task_show(
             )
             relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
             process_model_relative_path = os.path.dirname(relative_path)
-            process_model_with_form = ProcessModelService.get_process_model_from_relative_path(
-                process_model_relative_path
-            )
+            process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
-        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
-            process_instance_id, task_model.guid
-        )
+        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id, task_model.guid)
 
         if "properties" in extensions:
             properties = extensions["properties"]
@@ -493,10 +492,7 @@ def task_show(
                 raise (
                     ApiError(
                         error_code="missing_form_file",
-                        message=(
-                            f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid:"
-                            f" {task_guid}"
-                        ),
+                        message=f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid: {task_guid}",
                         status_code=400,
                     )
                 )
@@ -541,6 +537,50 @@ def task_submit(
         return _task_submit_shared(process_instance_id, task_guid, body)
 
 
+def process_instance_progress(
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    response: dict[str, Task | ProcessInstanceModel | list] = {}
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id, include_actions=True)
+
+    principal = _find_principal_or_raise()
+    next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
+    if next_human_task_assigned_to_me:
+        response["task"] = HumanTaskModel.to_task(next_human_task_assigned_to_me)
+    # this may not catch all times we should redirect to instance show page
+    elif not process_instance.is_immediately_runnable():
+        # any time we assign this process_instance, the frontend progress page will redirect to process instance show
+        response["process_instance"] = process_instance
+
+    user_instructions = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
+    response["instructions"] = user_instructions
+
+    return make_response(jsonify(response), 200)
+
+
+def task_with_instruction(process_instance_id: int) -> Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.next_task()
+    task = None
+    if spiff_task is not None:
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        try:
+            instructions = _render_instructions(spiff_task)
+        except Exception as exception:
+            raise ApiError(
+                error_code="engine_steps_error",
+                message=f"Failed to complete an automated task. Error was: {str(exception)}",
+                status_code=400,
+            ) from exception
+        task.properties = {"instructionsForEndUser": instructions}
+    return make_response(jsonify({"task": task}), 200)
+
+
+def _render_instructions(spiff_task: SpiffTask) -> str:
+    return JinjaService.render_instructions_for_end_user(spiff_task)
+
+
 def _interstitial_stream(
     process_instance: ProcessInstanceModel,
     execute_tasks: bool = True,
@@ -550,12 +590,6 @@ def _interstitial_stream(
         return processor.bpmn_process_instance.get_tasks(
             state=TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
-
-    def render_instructions(spiff_task: SpiffTask) -> str:
-        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-        if task_model is None:
-            return ""
-        return JinjaService.render_instructions_for_end_user(task_model)
 
     # do not attempt to get task instructions if process instance is suspended or was terminated
     if process_instance.status in ["suspended", "terminated"]:
@@ -571,7 +605,7 @@ def _interstitial_stream(
             # ignore the instructions if they are on the EndEvent for the top level process
             if not TaskService.is_main_process_end_event(spiff_task):
                 try:
-                    instructions = render_instructions(spiff_task)
+                    instructions = _render_instructions(spiff_task)
                 except Exception as e:
                     api_error = ApiError(
                         error_code="engine_steps_error",
@@ -644,21 +678,20 @@ def _interstitial_stream(
         tasks = get_reportable_tasks(processor)
 
     spiff_task = processor.next_task()
-    if spiff_task is not None:
+    if spiff_task is not None and spiff_task.id not in reported_ids:
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-        if task.id not in reported_ids:
-            try:
-                instructions = render_instructions(spiff_task)
-            except Exception as e:
-                api_error = ApiError(
-                    error_code="engine_steps_error",
-                    message=f"Failed to complete an automated task. Error was: {str(e)}",
-                    status_code=400,
-                )
-                yield _render_data("error", api_error)
-                raise e
-            task.properties = {"instructionsForEndUser": instructions}
-            yield _render_data("task", task)
+        try:
+            instructions = _render_instructions(spiff_task)
+        except Exception as e:
+            api_error = ApiError(
+                error_code="engine_steps_error",
+                message=f"Failed to complete an automated task. Error was: {str(e)}",
+                status_code=400,
+            )
+            yield _render_data("error", api_error)
+            raise e
+        task.properties = {"instructionsForEndUser": instructions}
+        yield _render_data("task", task)
 
 
 def _get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
@@ -876,30 +909,28 @@ def _task_submit_shared(
         db.session.delete(task_draft_data)
         db.session.commit()
 
-    next_human_task_assigned_to_me = (
-        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
-        .order_by(asc(HumanTaskModel.id))  # type: ignore
-        .join(HumanTaskUserModel)
-        .filter_by(user_id=principal.user_id)
-        .first()
-    )
+    next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
+    queue_process_instance_if_appropriate(process_instance)
+
+    # a guest user completed a task, it has a guest_confirmation message to display to them,
+    # and there is nothing else for them to do
     spiff_task_extensions = spiff_task.task_spec.extensions
     if (
         "allowGuest" in spiff_task_extensions
         and spiff_task_extensions["allowGuest"] == "true"
         and "guestConfirmation" in spiff_task.task_spec.extensions
     ):
-        return make_response(
-            jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200
-        )
+        return make_response(jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200)
 
     if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        task.process_model_uses_queued_execution = queue_enabled_for_process_model(process_instance)
         return make_response(jsonify(task), 200)
 
+    # next_task always returns something, even if the instance is complete, so we never get here
     return Response(
         json.dumps(
             {
@@ -961,9 +992,7 @@ def _get_tasks(
             if user_group_identifier:
                 human_tasks_query = human_tasks_query.filter(GroupModel.identifier == user_group_identifier)
             else:
-                human_tasks_query = human_tasks_query.filter(
-                    HumanTaskModel.lane_assignment_id.is_not(None)  # type: ignore
-                )
+                human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_not(None))  # type: ignore
         else:
             human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
@@ -1147,15 +1176,15 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict)
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
-    potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
-        assigned_user.username.distinct()
-    ).label("potential_owner_usernames")
+    potential_owner_usernames_from_group_concat_or_similar = func.group_concat(assigned_user.username.distinct()).label(
+        "potential_owner_usernames"
+    )
     db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
 
     if db_type == "postgres":
-        potential_owner_usernames_from_group_concat_or_similar = func.string_agg(
-            assigned_user.username.distinct(), ", "
-        ).label("potential_owner_usernames")
+        potential_owner_usernames_from_group_concat_or_similar = func.string_agg(assigned_user.username.distinct(), ", ").label(
+            "potential_owner_usernames"
+        )
 
     return potential_owner_usernames_from_group_concat_or_similar
 
@@ -1179,10 +1208,7 @@ def _find_human_task_or_raise(
         raise (
             ApiError(
                 error_code="no_human_task",
-                message=(
-                    f"Cannot find a task to complete for task id '{task_guid}' and"
-                    f" process instance {process_instance_id}."
-                ),
+                message=f"Cannot find a task to complete for task id '{task_guid}' and process instance {process_instance_id}.",
                 status_code=500,
             )
         )
@@ -1206,9 +1232,7 @@ def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui_schema: di
 
 
 def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int) -> TaskModel:
-    task_model: TaskModel | None = TaskModel.query.filter_by(
-        guid=task_guid, process_instance_id=process_instance_id
-    ).first()
+    task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
     if task_model is None:
         raise ApiError(
             error_code="task_not_found",
@@ -1216,3 +1240,14 @@ def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int)
             status_code=400,
         )
     return task_model
+
+
+def _next_human_task_for_user(process_instance_id: int, user_id: int) -> HumanTaskModel | None:
+    next_human_task: HumanTaskModel | None = (
+        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+        .order_by(asc(HumanTaskModel.id))  # type: ignore
+        .join(HumanTaskUserModel)
+        .filter_by(user_id=user_id)
+        .first()
+    )
+    return next_human_task

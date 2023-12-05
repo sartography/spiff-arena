@@ -66,7 +66,15 @@ export default function TaskShow() {
       setBasicTask(result);
       setPageTitle([result.name_for_display]);
       if (!result.can_complete) {
-        navigateToInterstitial(result);
+        if (result.process_model_uses_queued_execution) {
+          navigate(
+            `/process-instances/${modifyProcessIdentifierForPathParam(
+              result.process_model_identifier
+            )}/${result.process_instance_id}/progress`
+          );
+        } else {
+          navigateToInterstitial(result);
+        }
       }
     };
     const processTaskWithDataResult = (result: Task) => {
@@ -156,6 +164,12 @@ export default function TaskShow() {
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+      } else if (result.process_model_uses_queued_execution) {
+        navigate(
+          `/process-instances/${modifyProcessIdentifierForPathParam(
+            result.process_model_identifier
+          )}/${result.process_instance_id}/progress`
+        );
       } else {
         navigateToInterstitial(result);
       }
