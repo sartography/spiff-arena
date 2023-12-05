@@ -61,9 +61,7 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
         return cls.find_object_by_hash(hash).data
 
     @classmethod
-    def insert_or_update_json_data_records(
-        cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]
-    ) -> None:
+    def insert_or_update_json_data_records(cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]) -> None:
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
             on_duplicate_key_stmt = None

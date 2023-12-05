@@ -1783,7 +1783,6 @@ export default function ProcessInstanceListTable({
         ) {
           hasAccessToCompleteTask = true;
         }
-        buttonElement = null;
         if (hasAccessToCompleteTask && processInstance.task_id) {
           buttonElement = (
             <Button
@@ -1797,12 +1796,12 @@ export default function ProcessInstanceListTable({
           );
         }
 
-        if (
-          processInstance.status === 'not_started' ||
-          processInstance.status === 'user_input_required' ||
-          processInstance.status === 'waiting' ||
-          processInstance.status === 'complete'
-        ) {
+        const statusesToExcludeTaskButton = [
+          'error',
+          'terminated',
+          'suspended',
+        ];
+        if (!(processInstance.status in statusesToExcludeTaskButton)) {
           currentRow.push(<td>{buttonElement}</td>);
         } else {
           currentRow.push(<td />);

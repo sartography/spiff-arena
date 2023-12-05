@@ -66,5 +66,10 @@ fi
 
 result=$(curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}/${process_instance_id}/run" -H "Authorization: Bearer $access_token")
 check_result_for_error "$result"
+if [[ "$(jq -r '.status' <<<"$result")" == "complete" ]]; then
+  echo "Process instance completed"
+  exit 0
+fi
+
 next_task=$(jq '.next_task' <<<"$result")
 process_next_task "$next_task"

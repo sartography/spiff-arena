@@ -57,6 +57,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   ErrorForDisplay,
   EventDefinition,
+  KeyboardShortcuts,
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
@@ -68,7 +69,6 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
-import ProcessInterstitial from '../components/ProcessInterstitial';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
 import MessageInstanceList from '../components/MessageInstanceList';
@@ -78,6 +78,8 @@ import {
 } from '../components/ErrorDisplay';
 import { Notification } from '../components/Notification';
 import DateAndTimeService from '../services/DateAndTimeService';
+import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
+import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 
 type OwnProps = {
   variant: string;
@@ -140,7 +142,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
     [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceActionPath]: ['DELETE', 'GET'],
+    [targetUris.processInstanceActionPath]: ['DELETE', 'GET', 'POST'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
@@ -158,6 +160,37 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       `/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
+
+  const onProcessInstanceRun = (processInstanceResult: ProcessInstance) => {
+    const processInstanceId = processInstanceResult.id;
+    if (processInstanceResult.process_model_uses_queued_execution) {
+      navigate(
+        `/process-instances/${modifiedProcessModelId}/${processInstanceId}/progress`
+      );
+    } else {
+      navigate(
+        `/process-instances/${modifiedProcessModelId}/${processInstanceId}/interstitial`
+      );
+    }
+  };
+
+  const forceRunProcessInstance = () => {
+    if (ability.can('POST', targetUris.processInstanceActionPath)) {
+      HttpService.makeCallToBackend({
+        path: `${targetUris.processInstanceActionPath}/run?force_run=true`,
+        successCallback: onProcessInstanceRun,
+        httpMethod: 'POST',
+      });
+    }
+  };
+
+  const keyboardShortcuts: KeyboardShortcuts = {
+    'f,r,enter': {
+      function: forceRunProcessInstance,
+      label: 'Force run process instance',
+    },
+  };
+  const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
 
   let processInstanceShowPageBaseUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   const processInstanceShowPageBaseUrlAllVariant = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
@@ -1626,6 +1659,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
+        {keyboardShortcutArea}
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
         {viewMostRecentStateComponent()}
@@ -1637,14 +1671,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Stack>
         {getInfoTag()}
         <br />
-        <ProcessInterstitial
-          processInstanceId={processInstance.id}
-          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
-          allowRedirect={false}
-          smallSpinner
-          collapsableInstructions
-          executeTasks={false}
-        />
+        <ProcessInstanceCurrentTaskInfo processInstance={processInstance} />
         <br />
         <TaskListTable
           apiPath="/tasks"

@@ -172,9 +172,7 @@ class GitService:
         my_env = os.environ.copy()
         my_env["GIT_COMMITTER_NAME"] = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME") or "unknown"
 
-        my_env["GIT_COMMITTER_EMAIL"] = (
-            current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL") or "unknown@example.org"
-        )
+        my_env["GIT_COMMITTER_EMAIL"] = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL") or "unknown@example.org"
 
         # SSH authentication can be also provided via gitconfig.
         ssh_key_path = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
@@ -206,9 +204,7 @@ class GitService:
     @classmethod
     def handle_web_hook(cls, webhook: dict) -> bool:
         if "repository" not in webhook or "clone_url" not in webhook["repository"]:
-            raise InvalidGitWebhookBodyError(
-                f"Cannot find required keys of 'repository:clone_url' from webhook body: {webhook}"
-            )
+            raise InvalidGitWebhookBodyError(f"Cannot find required keys of 'repository:clone_url' from webhook body: {webhook}")
         repo = webhook["repository"]
         valid_clone_urls = [repo["clone_url"], repo["git_url"], repo["ssh_url"]]
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
@@ -217,8 +213,7 @@ class GitService:
         )
         if config_clone_url not in valid_clone_urls:
             raise GitCloneUrlMismatchError(
-                f"Configured clone url does not match the repo URLs from webhook: {config_clone_url} =/="
-                f" {valid_clone_urls}"
+                f"Configured clone url does not match the repo URLs from webhook: {config_clone_url} =/= {valid_clone_urls}"
             )
 
         # Test webhook requests have a zen koan and hook info.
@@ -282,9 +277,7 @@ class GitService:
         if cls.run_shell_command_as_boolean(command, context_directory=destination_process_root):
             cls.run_shell_command(["checkout", branch_to_pull_request], context_directory=destination_process_root)
         else:
-            cls.run_shell_command(
-                ["checkout", "-b", branch_to_pull_request], context_directory=destination_process_root
-            )
+            cls.run_shell_command(["checkout", "-b", branch_to_pull_request], context_directory=destination_process_root)
 
         # copy files from process model into the new publish branch
         destination_process_model_path = os.path.join(destination_process_root, process_model_id)
@@ -294,8 +287,7 @@ class GitService:
 
         # add and commit files to branch_to_pull_request, then push
         commit_message = (
-            f"Request to publish changes to {process_model_id}, "
-            f"from {g.user.username} on {current_app.config['ENV_IDENTIFIER']}"
+            f"Request to publish changes to {process_model_id}, from {g.user.username} on {current_app.config['ENV_IDENTIFIER']}"
         )
         cls.commit(commit_message, destination_process_root, branch_to_pull_request)
 

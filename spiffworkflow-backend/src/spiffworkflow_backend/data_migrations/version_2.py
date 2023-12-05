@@ -31,9 +31,7 @@ class Version2(DataMigrationBase):
 
             task_service.save_objects_to_database(save_process_instance_events=False)
         except Exception as ex:
-            current_app.logger.warning(
-                f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}"
-            )
+            current_app.logger.warning(f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}")
 
     @classmethod
     def update_spiff_task_parents(cls, spiff_task: SpiffTask, task_service: TaskService) -> None:

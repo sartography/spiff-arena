@@ -36,9 +36,7 @@ class TestDotNotation(BaseTest):
             "invoice.invoiceAmount": "1000.00",
             "invoice.dueDate": "09/30/2022",
         }
-        ProcessInstanceService.complete_form_task(
-            processor, user_task, form_data, process_instance.process_initiator, human_task
-        )
+        ProcessInstanceService.complete_form_task(processor, user_task, form_data, process_instance.process_initiator, human_task)
 
         expected = {
             "contibutorName": "Elizabeth",

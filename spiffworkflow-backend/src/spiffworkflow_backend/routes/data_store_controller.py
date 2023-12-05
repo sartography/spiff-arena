@@ -43,9 +43,7 @@ def _build_response(data_store_class: Any, name: str, page: int, per_page: int) 
     return make_response(jsonify(response_json), 200)
 
 
-def data_store_item_list(
-    data_store_type: str, name: str, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
+def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
 
     if data_store_type == "typeahead":

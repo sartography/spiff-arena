@@ -340,9 +340,7 @@ class TestProcessInstanceReportService(BaseTest):
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(user=user_one)
         report_metadata = process_instance_report.report_metadata
-        report_metadata["filter_by"].append(
-            {"field_name": "with_relation_to_me", "field_value": True, "operator": "equals"}
-        )
+        report_metadata["filter_by"].append({"field_name": "with_relation_to_me", "field_value": True, "operator": "equals"})
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_metadata=report_metadata,
             user=user_one,

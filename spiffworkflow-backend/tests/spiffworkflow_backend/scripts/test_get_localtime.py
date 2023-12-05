@@ -46,16 +46,12 @@ class TestGetLocaltime(BaseTest):
             bpmn_file_name="get_localtime.bpmn",
             process_model_source_directory="get_localtime",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
 
         processor.do_engine_steps(save=True)
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
 
         ProcessInstanceService.complete_form_task(
             processor,
@@ -66,9 +62,7 @@ class TestGetLocaltime(BaseTest):
         )
 
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
 
         assert spiff_task
 

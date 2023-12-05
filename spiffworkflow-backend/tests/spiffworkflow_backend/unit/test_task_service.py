@@ -153,9 +153,7 @@ class TestTaskService(BaseTest):
         assert bpmn_process.bpmn_process_definition.bpmn_identifier == "Level2b"
 
         task_model_level_3 = (
-            TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task")
-            .first()
+            TaskModel.query.join(TaskDefinitionModel).filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task").first()
         )
         assert task_model_level_3 is not None
         bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model_level_3)

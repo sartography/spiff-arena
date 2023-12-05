@@ -104,9 +104,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             if sub_parser.process_executable:
                 executable_process = sub_parser.bpmn_id
         if executable_process is None:
-            raise BpmnFileMissingExecutableProcessError(
-                f"Executable process cannot be found in {bpmn_file}. Test cannot run."
-            )
+            raise BpmnFileMissingExecutableProcessError(f"Executable process cannot be found in {bpmn_file}. Test cannot run.")
 
         all_related = self._find_related_bpmn_files(bpmn_file)
         for related_file in all_related:
@@ -254,9 +252,7 @@ class ProcessModelTestRunner:
                 f" class '{process_model_test_runner_delegate_class}' does not"
             )
 
-        self.process_model_test_runner_delegate = process_model_test_runner_delegate_class(
-            process_model_directory_path
-        )
+        self.process_model_test_runner_delegate = process_model_test_runner_delegate_class(process_model_directory_path)
 
         self.test_mappings = self._discover_process_model_test_cases()
         self.test_case_results: list[TestCaseResult] = []
@@ -388,9 +384,7 @@ class ProcessModelTestRunner:
     def _get_relative_path_of_bpmn_file(self, bpmn_file: str) -> str:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
-    def _exception_to_test_case_error_details(
-        self, exception: Exception | WorkflowTaskException
-    ) -> TestCaseErrorDetails:
+    def _exception_to_test_case_error_details(self, exception: Exception | WorkflowTaskException) -> TestCaseErrorDetails:
         error_messages = str(exception).split("\n")
         test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
         if isinstance(exception, WorkflowTaskException):

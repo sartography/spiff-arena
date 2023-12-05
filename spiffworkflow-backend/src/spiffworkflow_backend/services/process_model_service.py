@@ -113,9 +113,7 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
-        process_model_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), process_model.id_for_file_path())
-        )
+        process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id_for_file_path()))
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE))
         json_data = cls.PROCESS_MODEL_SCHEMA.dump(process_model)
@@ -126,9 +124,7 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def process_model_delete(cls, process_model_id: str) -> None:
-        instances = ProcessInstanceModel.query.filter(
-            ProcessInstanceModel.process_model_identifier == process_model_id
-        ).all()
+        instances = ProcessInstanceModel.query.filter(ProcessInstanceModel.process_model_identifier == process_model_id).all()
         if len(instances) > 0:
             raise ProcessModelWithInstancesNotDeletableError(
                 f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it."
@@ -218,8 +214,7 @@ class ProcessModelService(FileSystemService):
     ) -> list[ProcessModelInfo]:
         if filter_runnable_as_extension and filter_runnable_by_user:
             raise Exception(
-                "It is not valid to filter process models by both filter_runnable_by_user and"
-                " filter_runnable_as_extension"
+                "It is not valid to filter process models by both filter_runnable_by_user and filter_runnable_as_extension"
             )
 
         # get the full list (before we filter it by the ones you are allowed to start)
@@ -277,13 +272,9 @@ class ProcessModelService(FileSystemService):
 
         permitted_process_model_identifiers = []
         for process_model_identifier in process_model_identifiers:
-            modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(
-                process_model_identifier
-            )
+            modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model_identifier)
             uri = f"{permission_base_uri}/{modified_process_model_id}"
-            has_permission = AuthorizationService.user_has_permission(
-                user=user, permission=permission_to_check, target_uri=uri
-            )
+            has_permission = AuthorizationService.user_has_permission(user=user, permission=permission_to_check, target_uri=uri)
             if has_permission:
                 permitted_process_model_identifiers.append(process_model_identifier)
 
@@ -351,9 +342,7 @@ class ProcessModelService(FileSystemService):
         for process_group in process_groups:
             modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group.id)
             uri = f"{permission_base_uri}/{modified_process_group_id}"
-            has_permission = AuthorizationService.user_has_permission(
-                user=user, permission=permission_to_check, target_uri=uri
-            )
+            has_permission = AuthorizationService.user_has_permission(user=user, permission=permission_to_check, target_uri=uri)
             if has_permission:
                 new_process_group_list.append(process_group)
         return new_process_group_list
@@ -490,9 +479,7 @@ class ProcessModelService(FileSystemService):
                         if cls.is_process_group(nested_item.path):
                             # This is a nested group
                             process_group.process_groups.append(
-                                cls.find_or_create_process_group(
-                                    nested_item.path, find_all_nested_items=find_all_nested_items
-                                )
+                                cls.find_or_create_process_group(nested_item.path, find_all_nested_items=find_all_nested_items)
                             )
                         elif ProcessModelService.is_process_model(nested_item.path):
                             process_group.process_models.append(

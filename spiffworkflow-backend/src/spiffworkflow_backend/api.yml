@@ -1200,10 +1200,10 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: do_engine_steps
+      - name: force_run
         in: query
         required: false
-        description: Defaults to true, can be set to false if you are just looking at the workflow not completeing it.
+        description: Force the process instance to run even if it has already been started.
         schema:
           type: boolean
     post:
@@ -1728,6 +1728,29 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /tasks/progress/{process_instance_id}:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.tasks_controller.process_instance_progress
+      summary: returns the list of instructions that have been queued for a process instance.
+      responses:
+        "200":
+          description: list of task instructions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskInstructionsForEndUser"
+
   /users/search:
     parameters:
       - name: username_prefix
@@ -2190,6 +2213,27 @@ paths:
               schema:
                  $ref: "#/components/schemas/Task"
 
+
+  /tasks/{process_instance_id}/instruction:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_with_instruction
+      summary: Gets the next task and its instructions
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
 
   /tasks/{process_instance_id}/{task_guid}:
     parameters:
@@ -3040,6 +3084,16 @@ components:
           documentation: "# Heading 1\n\nMarkdown documentation text goes here"
           type: form
           state: ready
+    TaskInstructionsForEndUser:
+      properties:
+        task_guid:
+          type: string
+        process_instance_id:
+          type: integer
+        instruction:
+          type: string
+        timestamp:
+          type: number
     TaskAllowsGuest:
       properties:
         allows_guest:

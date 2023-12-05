@@ -87,9 +87,7 @@ def token() -> Response | dict:
     code = request.values.get("code")
 
     if code is None:
-        return Response(
-            json.dumps({"error": "missing_code_value_in_token_request"}), status=400, mimetype="application/json"
-        )
+        return Response(json.dumps({"error": "missing_code_value_in_token_request"}), status=400, mimetype="application/json")
 
     """We just stuffed the user name on the front of the code, so grab it."""
     user_name, secret_hash = code.split(":")

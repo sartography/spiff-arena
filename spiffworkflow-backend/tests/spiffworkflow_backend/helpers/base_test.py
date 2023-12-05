@@ -316,9 +316,7 @@ class BaseTest:
         grant_type: str = "permit",
     ) -> UserModel:
         user = BaseTest.find_or_create_user(username=username)
-        return cls.add_permissions_to_user(
-            user, target_uri=target_uri, permission_names=permission_names, grant_type=grant_type
-        )
+        return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names, grant_type=grant_type)
 
     @classmethod
     def add_permissions_to_user(
@@ -518,9 +516,7 @@ class BaseTest:
             report_metadata=report_metadata,
             user=user,
         )
-        response = self.post_to_process_instance_list(
-            client, user, report_metadata=process_instance_report.get_report_metadata()
-        )
+        response = self.post_to_process_instance_list(client, user, report_metadata=process_instance_report.get_report_metadata())
 
         if expect_to_find_instance is True:
             assert len(response.json["results"]) == 1

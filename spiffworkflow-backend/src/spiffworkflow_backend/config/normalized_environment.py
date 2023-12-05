@@ -8,9 +8,7 @@ def normalized_environment(key_values: os._Environ) -> dict:
     results = _parse_environment(key_values)
     if isinstance(results, dict):
         return results
-    raise Exception(
-        f"results from parsing environment variables was not a dict. This is troubling. Results were: {results}"
-    )
+    raise Exception(f"results from parsing environment variables was not a dict. This is troubling. Results were: {results}")
 
 
 # source originally from: https://charemza.name/blog/posts/software-engineering/devops/structured-data-in-environment-variables/
@@ -78,9 +76,7 @@ def _parse_environment(key_values: os._Environ | dict) -> list | dict:
         )
 
     def items_with_first_component(items: Iterable, first_component: str) -> dict:
-        return {
-            get_later_components(key): value for key, value in items if get_first_component(key) == first_component
-        }
+        return {get_later_components(key): value for key, value in items if get_first_component(key) == first_component}
 
     nested_structured_dict = {
         **without_more_components,
@@ -101,8 +97,6 @@ def _parse_environment(key_values: os._Environ | dict) -> list | dict:
         return all(is_int(key) for key, value in nested_structured_dict.items())
 
     def list_sorted_by_int_key() -> list:
-        return [
-            value for key, value in sorted(nested_structured_dict.items(), key=lambda key_value: int(key_value[0]))
-        ]
+        return [value for key, value in sorted(nested_structured_dict.items(), key=lambda key_value: int(key_value[0]))]
 
     return list_sorted_by_int_key() if all_keys_are_ints() else nested_structured_dict

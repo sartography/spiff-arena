@@ -38,6 +38,4 @@ class Version3(DataMigrationBase):
                     db.session.add(bpmn_process)
 
         except Exception as ex:
-            current_app.logger.warning(
-                f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}"
-            )
+            current_app.logger.warning(f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}")

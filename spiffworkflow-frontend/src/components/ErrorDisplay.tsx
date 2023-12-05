@@ -129,20 +129,33 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   ];
 };
 
+export function ErrorDisplayStateless(
+  errorObject: ErrorForDisplay,
+  onClose?: Function
+) {
+  const title = 'Error:';
+  const hideCloseButton = !onClose;
+  console.log('hideCloseButton', hideCloseButton);
+
+  return (
+    <Notification
+      title={title}
+      onClose={onClose}
+      hideCloseButton={hideCloseButton}
+      type="error"
+    >
+      <>{childrenForErrorObject(errorObject)}</>
+    </Notification>
+  );
+}
+
 export default function ErrorDisplay() {
   const errorObject = useAPIError().error;
   const { removeError } = useAPIError();
   let errorTag = null;
 
   if (errorObject) {
-    const title = 'Error:';
-
-    errorTag = (
-      <Notification title={title} onClose={() => removeError()} type="error">
-        <>{childrenForErrorObject(errorObject)}</>
-      </Notification>
-    );
+    errorTag = ErrorDisplayStateless(errorObject, removeError);
   }
-
   return errorTag;
 }

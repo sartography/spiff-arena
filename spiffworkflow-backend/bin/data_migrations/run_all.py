@@ -67,9 +67,7 @@ def main() -> None:
         put_serializer_version_onto_numeric_track()
         process_instances = all_potentially_relevant_process_instances()
         potentially_relevant_instance_count = len(process_instances)
-        current_app.logger.debug(
-            f"Found potentially relevant process_instances: {potentially_relevant_instance_count}"
-        )
+        current_app.logger.debug(f"Found potentially relevant process_instances: {potentially_relevant_instance_count}")
         if potentially_relevant_instance_count > 0:
             run_version_1()
             # this will run while using the new per instance on demand data migration framework

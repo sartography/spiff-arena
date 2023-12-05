@@ -109,9 +109,7 @@ class TestProcessApi(BaseTest):
         self.add_permissions_to_principal(
             principal, target_uri="/v1.0/process-groups/deny_group:%", permission_names=["create"], grant_type="deny"
         )
-        self.add_permissions_to_principal(
-            principal, target_uri="/v1.0/process-groups/test_group:%", permission_names=["create"]
-        )
+        self.add_permissions_to_principal(principal, target_uri="/v1.0/process-groups/test_group:%", permission_names=["create"])
         request_body = {
             "requests_to_check": {
                 "/v1.0/process-groups": ["GET", "POST"],
@@ -354,9 +352,7 @@ class TestProcessApi(BaseTest):
         )
         headers = self.logged_in_headers(with_super_admin_user)
         # create an instance from a model
-        response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model_identifier, headers
-        )
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
 
         data = json.loads(response.get_data(as_text=True))
         # make sure the instance has the correct model
@@ -374,8 +370,7 @@ class TestProcessApi(BaseTest):
         assert data["error_code"] == "existing_instances"
         assert (
             data["message"]
-            == f"We cannot delete the model `{process_model_identifier}`, there are"
-            " existing instances that depend on it."
+            == f"We cannot delete the model `{process_model_identifier}`, there are existing instances that depend on it."
         )
 
     def test_process_model_update(
@@ -603,9 +598,7 @@ class TestProcessApi(BaseTest):
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
         assert len(ReferenceCacheModel.basic_query().all()) == 6
 
-        user_one = self.create_user_with_permission(
-            username="user_one", target_uri="/v1.0/process-groups/test_group_one:*"
-        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/test_group_one:*")
         self.add_permissions_to_user(user=user_one, target_uri="/v1.0/processes", permission_names=["read"])
         self.add_permissions_to_user(
             user=user_one, target_uri="/v1.0/process-instances/test_group_one:*", permission_names=["create"]
@@ -774,9 +767,7 @@ class TestProcessApi(BaseTest):
         for i in range(5):
             group_id = f"test_process_group_{i}"
             group_display_name = f"Test Group {i}"
-            self.create_process_group_with_api(
-                client, with_super_admin_user, group_id, display_name=group_display_name
-            )
+            self.create_process_group_with_api(client, with_super_admin_user, group_id, display_name=group_display_name)
 
         # get all groups
         response = client.get(
@@ -1233,9 +1224,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model = self.create_group_and_model_with_bpmn(
-            client, with_super_admin_user, bpmn_file_name="random_fact.bpmn"
-        )
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user, bpmn_file_name="random_fact.bpmn")
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         response = client.get(
@@ -1320,6 +1309,39 @@ class TestProcessApi(BaseTest):
         assert response.json["status"] == "complete"
         assert response.json["process_model_identifier"] == process_model.id
 
+    def test_process_instance_run_with_instructions(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        # process_model_id = "runs_without_input/sample"
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="runs_without_input",
+            process_model_id="sample",
+            bpmn_file_name=None,
+            bpmn_file_location="sample",
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert isinstance(response.json["updated_at_in_seconds"], int)
+        assert response.json["updated_at_in_seconds"] > 0
+        assert response.json["status"] == "complete"
+        assert response.json["process_model_identifier"] == process_model.id
+
     def test_process_instance_show(
         self,
         app: Flask,
@@ -1337,9 +1359,7 @@ class TestProcessApi(BaseTest):
         )
         modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model.id, headers
-        )
+        create_response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert create_response.json is not None
         process_instance_id = create_response.json["id"]
         client.post(
@@ -1377,9 +1397,7 @@ class TestProcessApi(BaseTest):
         assert spec_reference
         modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance_from_process_model_id_with_api(
-            client, process_model.id, headers
-        )
+        create_response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
         assert create_response.json is not None
         assert create_response.status_code == 201
         process_instance_id = create_response.json["id"]
@@ -1840,9 +1858,7 @@ class TestProcessApi(BaseTest):
             "columns": [],
             "order_by": [],
         }
-        response = self.post_to_process_instance_list(
-            client, with_super_admin_user, report_metadata=report_metadata_body
-        )
+        response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
         results = response.json["results"]
         assert len(results) == 5
 
@@ -1865,9 +1881,7 @@ class TestProcessApi(BaseTest):
                 "columns": [],
                 "order_by": [],
             }
-            response = self.post_to_process_instance_list(
-                client, with_super_admin_user, report_metadata=report_metadata_body
-            )
+            response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
             results = response.json["results"]
             assert len(results) == 1
             assert results[0]["status"] == ProcessInstanceStatus[statuses[i]].value
@@ -1884,9 +1898,7 @@ class TestProcessApi(BaseTest):
             "columns": [],
             "order_by": [],
         }
-        response = self.post_to_process_instance_list(
-            client, with_super_admin_user, report_metadata=report_metadata_body
-        )
+        response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
         results = response.json["results"]
         assert len(results) == 2
         assert results[0]["status"] in ["complete", "not_started"]
@@ -1899,9 +1911,7 @@ class TestProcessApi(BaseTest):
             "columns": [],
             "order_by": [],
         }
-        response = self.post_to_process_instance_list(
-            client, with_super_admin_user, report_metadata=report_metadata_body
-        )
+        response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
         results = response.json["results"]
         assert len(results) == 4
         for i in range(4):
@@ -1921,9 +1931,7 @@ class TestProcessApi(BaseTest):
             "columns": [],
             "order_by": [],
         }
-        response = self.post_to_process_instance_list(
-            client, with_super_admin_user, report_metadata=report_metadata_body
-        )
+        response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
         results = response.json["results"]
         assert len(results) == 2
         assert json.loads(results[0]["bpmn_version_control_identifier"]) in (2, 3)
@@ -1938,9 +1946,7 @@ class TestProcessApi(BaseTest):
             "columns": [],
             "order_by": [],
         }
-        response = self.post_to_process_instance_list(
-            client, with_super_admin_user, report_metadata=report_metadata_body
-        )
+        response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
         results = response.json["results"]
         assert len(results) == 2
         assert json.loads(results[0]["bpmn_version_control_identifier"]) in (1, 2)
@@ -1955,9 +1961,7 @@ class TestProcessApi(BaseTest):
             "columns": [],
             "order_by": [],
         }
-        response = self.post_to_process_instance_list(
-            client, with_super_admin_user, report_metadata=report_metadata_body
-        )
+        response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
         results = response.json["results"]
         assert len(results) == 3
         for i in range(3):
@@ -2865,9 +2869,7 @@ class TestProcessApi(BaseTest):
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_metadata) == 3
 
         report_metadata: ReportMetadata = {
@@ -3142,9 +3144,7 @@ class TestProcessApi(BaseTest):
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_metadata) == 2
 
         process_model = load_test_spec(
@@ -3168,9 +3168,7 @@ class TestProcessApi(BaseTest):
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_metadata) == 3
 
         response = client.get(

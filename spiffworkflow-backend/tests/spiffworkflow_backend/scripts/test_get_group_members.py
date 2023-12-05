@@ -33,9 +33,7 @@ class TestGetGroupMembers(BaseTest):
             bpmn_file_name="get_group_members.bpmn",
             process_model_source_directory="get_group_members",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 

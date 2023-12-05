@@ -112,10 +112,7 @@ class ServiceTaskDelegate:
         if code == 500:
             msg = "500 (Internal Server Error) - The service you called is experiencing technical difficulties."
         if code == 501:
-            msg = (
-                "501 (Not Implemented) - This service needs to be called with the"
-                " different method (like POST not GET)."
-            )
+            msg = "501 (Not Implemented) - This service needs to be called with the different method (like POST not GET)."
         return msg
 
     @classmethod
@@ -149,11 +146,7 @@ class ServiceTaskDelegate:
     ) -> None:
         # v2 support
         base_error = None
-        if (
-            "error" in parsed_response
-            and isinstance(parsed_response["error"], dict)
-            and "error_code" in parsed_response["error"]
-        ):
+        if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
             base_error = parsed_response["error"]
         # v1 support or something terrible happened with a v2 connector
         elif status_code >= 300:

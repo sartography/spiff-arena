@@ -136,16 +136,12 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
     authentication_identifier = state_dict["authentication_identifier"]
-    auth_token_object = AuthenticationService().get_auth_token_object(
-        code, authentication_identifier=authentication_identifier
-    )
+    auth_token_object = AuthenticationService().get_auth_token_object(code, authentication_identifier=authentication_identifier)
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
         user_info = _parse_id_token(id_token)
 
-        if AuthenticationService.validate_id_or_access_token(
-            id_token, authentication_identifier=authentication_identifier
-        ):
+        if AuthenticationService.validate_id_or_access_token(id_token, authentication_identifier=authentication_identifier):
             if user_info and "error" not in user_info:
                 user_model = AuthorizationService.create_user_from_sign_in(user_info)
                 g.user = user_model.id
@@ -180,9 +176,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
 def login_with_access_token(access_token: str, authentication_identifier: str) -> Response:
     user_info = _parse_id_token(access_token)
 
-    if AuthenticationService.validate_id_or_access_token(
-        access_token, authentication_identifier=authentication_identifier
-    ):
+    if AuthenticationService.validate_id_or_access_token(access_token, authentication_identifier=authentication_identifier):
         if user_info and "error" not in user_info:
             AuthorizationService.create_user_from_sign_in(user_info)
     else:
@@ -262,9 +256,7 @@ def _set_new_access_token_in_cookie(
         response.set_cookie("id_token", tld.new_id_token, domain=domain_for_frontend_cookie)
 
     if hasattr(tld, "new_authentication_identifier") and tld.new_authentication_identifier:
-        response.set_cookie(
-            "authentication_identifier", tld.new_authentication_identifier, domain=domain_for_frontend_cookie
-        )
+        response.set_cookie("authentication_identifier", tld.new_authentication_identifier, domain=domain_for_frontend_cookie)
 
     if hasattr(tld, "user_has_logged_out") and tld.user_has_logged_out:
         response.set_cookie("id_token", "", max_age=0, domain=domain_for_frontend_cookie)
@@ -347,9 +339,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                 try:
                     user_model = _get_user_from_decoded_internal_token(decoded_token)
                 except Exception as e:
-                    current_app.logger.error(
-                        f"Exception in verify_token getting user from decoded internal token. {e}"
-                    )
+                    current_app.logger.error(f"Exception in verify_token getting user from decoded internal token. {e}")
 
             # if the user is forced logged out then stop processing the token
             if _force_logout_user_if_necessary(user_model):
@@ -359,9 +349,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
             user_info = None
             authentication_identifier = _get_authentication_identifier_from_request()
             try:
-                if AuthenticationService.validate_id_or_access_token(
-                    token, authentication_identifier=authentication_identifier
-                ):
+                if AuthenticationService.validate_id_or_access_token(token, authentication_identifier=authentication_identifier):
                     user_info = decoded_token
             except TokenExpiredError as token_expired_error:
                 # Try to refresh the token
@@ -437,9 +425,7 @@ def _get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | No
     parts = sub.split("::")
     service = parts[0].split(":")[1]
     service_id = parts[1].split(":")[1]
-    user: UserModel = (
-        UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
-    )
+    user: UserModel = UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
     if user:
         return user
     user = UserService.create_user(service_id, service, service_id)

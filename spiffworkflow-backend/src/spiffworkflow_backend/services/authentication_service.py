@@ -48,9 +48,7 @@ class AuthenticationOptionNotFoundError(Exception):
 
 
 class AuthenticationService:
-    ENDPOINT_CACHE: dict[str, dict[str, str]] = (
-        {}
-    )  # We only need to find the openid endpoints once, then we can cache them.
+    ENDPOINT_CACHE: dict[str, dict[str, str]] = {}  # We only need to find the openid endpoints once, then we can cache them.
 
     @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
@@ -72,9 +70,7 @@ class AuthenticationService:
             if config["identifier"] == authentication_identifier:
                 return_config: AuthenticationOption = config
                 return return_config
-        raise AuthenticationOptionNotFoundError(
-            f"Could not find a config with identifier '{authentication_identifier}'"
-        )
+        raise AuthenticationOptionNotFoundError(f"Could not find a config with identifier '{authentication_identifier}'")
 
     @classmethod
     def client_id(cls, authentication_identifier: str) -> str:
@@ -119,9 +115,7 @@ class AuthenticationService:
         if redirect_url is None:
             redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
         request_url = (
-            self.__class__.open_id_endpoint_for_name(
-                "end_session_endpoint", authentication_identifier=authentication_identifier
-            )
+            self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
             + f"?post_logout_redirect_uri={redirect_url}&"
             + f"id_token_hint={id_token}"
         )
@@ -135,14 +129,10 @@ class AuthenticationService:
         )
         return state
 
-    def get_login_redirect_url(
-        self, state: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return"
-    ) -> str:
+    def get_login_redirect_url(self, state: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return") -> str:
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
-            self.__class__.open_id_endpoint_for_name(
-                "authorization_endpoint", authentication_identifier=authentication_identifier
-            )
+            self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
@@ -151,9 +141,7 @@ class AuthenticationService:
         )
         return login_redirect_url
 
-    def get_auth_token_object(
-        self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return"
-    ) -> dict:
+    def get_auth_token_object(self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return") -> dict:
         backend_basic_auth_string = (
             f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
         )
@@ -169,9 +157,7 @@ class AuthenticationService:
             "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
         }
 
-        request_url = self.open_id_endpoint_for_name(
-            "token_endpoint", authentication_identifier=authentication_identifier
-        )
+        request_url = self.open_id_endpoint_for_name("token_endpoint", authentication_identifier=authentication_identifier)
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
@@ -203,15 +189,13 @@ class AuthenticationService:
 
         if iss != cls.server_url(authentication_identifier):
             current_app.logger.error(
-                f"TOKEN INVALID because ISS '{iss}' does not match server url"
-                f" '{cls.server_url(authentication_identifier)}'"
+                f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url(authentication_identifier)}'"
             )
             valid = False
         # aud could be an array or a string
         elif len(overlapping_aud_values) < 1:
             current_app.logger.error(
-                f"TOKEN INVALID because audience '{aud}' does not match client id"
-                f" '{cls.client_id(authentication_identifier)}'"
+                f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         elif azp and azp not in (
@@ -219,15 +203,12 @@ class AuthenticationService:
             "account",
         ):
             current_app.logger.error(
-                f"TOKEN INVALID because azp '{azp}' does not match client id"
-                f" '{cls.client_id(authentication_identifier)}'"
+                f"TOKEN INVALID because azp '{azp}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         # make sure issued at time is not in the future
         elif now + iat_clock_skew_leeway < iat:
-            current_app.logger.error(
-                f"TOKEN INVALID because iat '{iat}' is in the future relative to server now '{now}'"
-            )
+            current_app.logger.error(f"TOKEN INVALID because iat '{iat}' is in the future relative to server now '{now}'")
             valid = False
 
         if valid and now > decoded_token["exp"]:
@@ -264,9 +245,7 @@ class AuthenticationService:
 
     @staticmethod
     def get_refresh_token(user_id: int) -> str | None:
-        refresh_token_object: RefreshTokenModel = RefreshTokenModel.query.filter(
-            RefreshTokenModel.user_id == user_id
-        ).first()
+        refresh_token_object: RefreshTokenModel = RefreshTokenModel.query.filter(RefreshTokenModel.user_id == user_id).first()
         if refresh_token_object:
             return refresh_token_object.token
         return None
@@ -274,9 +253,7 @@ class AuthenticationService:
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
         """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
-        backend_basic_auth_string = (
-            f"{cls.client_id(authentication_identifier)}:{cls.secret_key(authentication_identifier)}"
-        )
+        backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{cls.secret_key(authentication_identifier)}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
         headers = {
@@ -291,9 +268,7 @@ class AuthenticationService:
             "client_secret": cls.secret_key(authentication_identifier),
         }
 
-        request_url = cls.open_id_endpoint_for_name(
-            "token_endpoint", authentication_identifier=authentication_identifier
-        )
+        request_url = cls.open_id_endpoint_for_name("token_endpoint", authentication_identifier=authentication_identifier)
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)

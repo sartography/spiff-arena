@@ -173,9 +173,7 @@ class ProcessInstanceReportService:
             ),
             "system_report_completed_instances": system_report_completed_instances,
             "system_report_in_progress_instances_initiated_by_me": system_report_in_progress_instances_initiated_by_me,
-            "system_report_in_progress_instances_with_tasks_for_me": (
-                system_report_in_progress_instances_with_tasks_for_me
-            ),
+            "system_report_in_progress_instances_with_tasks_for_me": system_report_in_progress_instances_with_tasks_for_me,
             "system_report_in_progress_instances_with_tasks": system_report_in_progress_instances_with_tasks,
         }
         if metadata_key not in temp_system_metadata_map:
@@ -184,9 +182,7 @@ class ProcessInstanceReportService:
         return return_value
 
     @classmethod
-    def process_instance_metadata_as_columns(
-        cls, process_model_identifier: str | None = None
-    ) -> list[ReportMetadataColumn]:
+    def process_instance_metadata_as_columns(cls, process_model_identifier: str | None = None) -> list[ReportMetadataColumn]:
         columns_for_metadata_query = (
             db.session.query(ProcessInstanceMetadataModel.key)
             .order_by(ProcessInstanceMetadataModel.key)
@@ -226,9 +222,7 @@ class ProcessInstanceReportService:
         report_identifier: str | None = None,
     ) -> ProcessInstanceReportModel:
         if report_id is not None:
-            process_instance_report = ProcessInstanceReportModel.query.filter_by(
-                id=report_id, created_by_id=user.id
-            ).first()
+            process_instance_report = ProcessInstanceReportModel.query.filter_by(id=report_id, created_by_id=user.id).first()
             if process_instance_report is not None:
                 return process_instance_report  # type: ignore
 
@@ -269,14 +263,10 @@ class ProcessInstanceReportService:
             process_instance_dict = process_instance_row[0].serialized()
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
-                    process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
-                        metadata_column["accessor"]
-                    ]
+                    process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[metadata_column["accessor"]]
 
             if "last_milestone_bpmn_name" in process_instance_mapping:
-                process_instance_dict["last_milestone_bpmn_name"] = process_instance_mapping[
-                    "last_milestone_bpmn_name"
-                ]
+                process_instance_dict["last_milestone_bpmn_name"] = process_instance_mapping["last_milestone_bpmn_name"]
 
             results.append(process_instance_dict)
         return results
@@ -305,9 +295,7 @@ class ProcessInstanceReportService:
                 .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
             )
             if restrict_human_tasks_to_user is not None:
-                human_task_query = human_task_query.filter(
-                    HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id
-                )
+                human_task_query = human_task_query.filter(HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id)
             potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
             human_task = (
                 human_task_query.add_columns(
@@ -327,9 +315,9 @@ class ProcessInstanceReportService:
 
     @classmethod
     def _get_potential_owner_usernames(cls, assigned_user: AliasedClass) -> Any:
-        potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
-            assigned_user.username.distinct()
-        ).label("potential_owner_usernames")
+        potential_owner_usernames_from_group_concat_or_similar = func.group_concat(assigned_user.username.distinct()).label(
+            "potential_owner_usernames"
+        )
         db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
 
         if db_type == "postgres":
@@ -421,13 +409,9 @@ class ProcessInstanceReportService:
         if human_task_already_joined is False:
             process_instance_query = process_instance_query.join(HumanTaskModel)  # type: ignore
         if process_status is not None:
-            non_active_statuses = [
-                s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
-            ]
+            non_active_statuses = [s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()]
             if len(non_active_statuses) == 0:
-                process_instance_query = process_instance_query.filter(
-                    HumanTaskModel.completed.is_(False)  # type: ignore
-                )
+                process_instance_query = process_instance_query.filter(HumanTaskModel.completed.is_(False))  # type: ignore
                 # Check to make sure the task is not only available for the group but the user as well
                 if instances_with_tasks_waiting_for_me is not True:
                     human_task_user_alias = aliased(HumanTaskUserModel)
@@ -519,9 +503,7 @@ class ProcessInstanceReportService:
             and with_relation_to_me is True
         ):
             if user is None:
-                raise ProcessInstanceReportCannotBeRunError(
-                    "A user must be specified to run report with with_relation_to_me"
-                )
+                raise ProcessInstanceReportCannotBeRunError("A user must be specified to run report with with_relation_to_me")
             process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
                 HumanTaskUserModel,
                 and_(
@@ -550,9 +532,7 @@ class ProcessInstanceReportService:
                 raise ProcessInstanceReportCannotBeRunError(
                     "A user must be specified to run report with instances_with_tasks_completed_by_me."
                 )
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.process_initiator_id != user.id
-            )
+            process_instance_query = process_instance_query.filter(ProcessInstanceModel.process_initiator_id != user.id)
             process_instance_query = process_instance_query.join(
                 HumanTaskModel,
                 and_(
@@ -569,9 +549,7 @@ class ProcessInstanceReportService:
                 raise ProcessInstanceReportCannotBeRunError(
                     "A user must be specified to run report with instances_with_tasks_waiting_for_me."
                 )
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.process_initiator_id != user.id
-            )
+            process_instance_query = process_instance_query.filter(ProcessInstanceModel.process_initiator_id != user.id)
             process_instance_query = process_instance_query.join(
                 HumanTaskModel,
                 and_(
@@ -605,9 +583,7 @@ class ProcessInstanceReportService:
 
         if user_group_identifier is not None:
             if user is None:
-                raise ProcessInstanceReportCannotBeRunError(
-                    "A user must be specified to run report with a group identifier."
-                )
+                raise ProcessInstanceReportCannotBeRunError("A user must be specified to run report with a group identifier.")
             process_instance_query = cls.filter_by_user_group_identifier(
                 process_instance_query=process_instance_query,
                 user_group_identifier=user_group_identifier,
@@ -647,9 +623,7 @@ class ProcessInstanceReportService:
                     elif filter_for_column["operator"] == "less_than":
                         join_conditions.append(instance_metadata_alias.value < filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "contains":
-                        join_conditions.append(
-                            instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%")
-                        )
+                        join_conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
                     elif filter_for_column["operator"] == "is_empty":
                         # we still need to return results if the metadata value is null so make sure it's outer join
                         isouter = True

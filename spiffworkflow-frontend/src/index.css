@@ -883,3 +883,27 @@ div.onboarding {
 .login-page-spacer {
   padding-top: 110px;
 }
+
+.shortcut-key {
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 4px;
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  color: #333;
+}
+
+.shortcut-description {
+  width: 50%; /* Adjust width as needed */
+  float: left; /* Floats the description to the left */
+  margin-top: 10px;
+}
+
+.shortcut-key-group {
+  width: 50%; /* Adjust width as needed */
+  float: right; /* Floats the keys to the right */
+  text-align: right; /* Aligns text to the right within the container */
+}

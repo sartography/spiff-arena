@@ -50,9 +50,7 @@ class TestTasksController(BaseTest):
         # Call this to assure all engine-steps are fully processed.
         _dequeued_interstitial_stream(process_instance_id)
 
-        human_tasks = (
-            db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
-        )
+        human_tasks = db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
 
         {
             r.bpmn_identifier

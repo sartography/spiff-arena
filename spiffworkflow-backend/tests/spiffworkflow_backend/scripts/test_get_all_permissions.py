@@ -24,9 +24,7 @@ class TestGetAllPermissions(BaseTest):
         AuthorizationService.add_permission_from_uri_or_macro(
             permission="start", target="PG:hey:group", group_identifier="my_test_group"
         )
-        AuthorizationService.add_permission_from_uri_or_macro(
-            permission="all", target="/tasks", group_identifier="my_test_group"
-        )
+        AuthorizationService.add_permission_from_uri_or_macro(permission="all", target="/tasks", group_identifier="my_test_group")
 
         expected_permissions = [
             {

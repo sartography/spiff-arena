@@ -32,7 +32,7 @@ on:
     branches:
       - main
       - spiffdemo
-      - feature/no-data-for-finished-spiff-tasks
+      - feature/background-proc-with-celery
 
 jobs:
   create_frontend_docker_image:

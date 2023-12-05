@@ -12,9 +12,27 @@ if ! command -v pydeps >/dev/null 2>&1; then
   pip install pydeps
 fi
 
-more_args=''
+pydeps_args=()
+
 if [[ "${1:-}" == "r" ]]; then
-  more_args='--rankdir LR'
+  shift
+  pydeps_args+=("--rankdir" "LR")
 fi
 
-pydeps src/spiffworkflow_backend --display "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --only spiffworkflow_backend --rmprefix spiffworkflow_backend. --exclude-exact spiffworkflow_backend.services.custom_parser spiffworkflow_backend.specs spiffworkflow_backend.services spiffworkflow_backend spiffworkflow_backend.models spiffworkflow_backend.load_database_models spiffworkflow_backend.routes --exclude spiffworkflow_backend.config spiffworkflow_backend.interfaces spiffworkflow_backend.models.db $more_args
+# add other args to only
+# example usage:
+#   ./bin/run_pydeps spiffworkflow_backend.services.process_instance_processor spiffworkflow_backend.services.process_instance_service spiffworkflow_backend.background_processing spiffworkflow_backend.routes.tasks_controller spiffworkflow_backend.services.workflow_execution_service
+if [[ -n "${1:-}" ]]; then
+  pydeps_args+=("--only")
+  for arg in "$@"; do
+    pydeps_args+=("$arg")
+  done
+fi
+
+if [[ -f "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]]; then
+  pydeps_args+=("--display" "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+fi
+
+
+# the only at the end is specific to this branch
+pydeps src/spiffworkflow_backend --only spiffworkflow_backend --rmprefix spiffworkflow_backend. --exclude-exact spiffworkflow_backend.background_processing spiffworkflow_backend.services.custom_parser spiffworkflow_backend.specs spiffworkflow_backend.services spiffworkflow_backend spiffworkflow_backend.models spiffworkflow_backend.load_database_models spiffworkflow_backend.routes --exclude spiffworkflow_backend.config spiffworkflow_backend.interfaces spiffworkflow_backend.models.db "${pydeps_args[@]}"

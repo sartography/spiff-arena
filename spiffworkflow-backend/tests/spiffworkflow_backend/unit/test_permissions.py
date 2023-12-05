@@ -47,9 +47,7 @@ class TestPermissions(BaseTest):
         db.session.add(permission_assignment)
         db.session.commit()
 
-    def test_group_a_admin_needs_to_stay_away_from_group_b(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
-    ) -> None:
+    def test_group_a_admin_needs_to_stay_away_from_group_b(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_b_id = process_group_ids[1]
@@ -118,9 +116,7 @@ class TestPermissions(BaseTest):
 
         self.assert_user_has_permission(user, "update", f"/{process_group_a_id}")
 
-    def test_user_can_be_read_models_with_global_permission(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
-    ) -> None:
+    def test_user_can_be_read_models_with_global_permission(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_b_id = process_group_ids[1]

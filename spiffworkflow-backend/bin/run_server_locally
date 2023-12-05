@@ -10,15 +10,21 @@ set -o errtrace -o errexit -o nounset -o pipefail
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 . "${script_dir}/local_development_environment_setup"
 
-if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" ]]; then
-  ./bin/boot_server_in_docker
-else
-  export FLASK_DEBUG=1
+server_type="${1:-api}"
 
-  if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-    SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
-  fi
+if [[ "$server_type" == "celery_worker" ]]; then
+  "${script_dir}/start_celery_worker"
+else
+  if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" ]]; then
+    ./bin/boot_server_in_docker
+  else
+    export FLASK_DEBUG=1
+
+    if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
+      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
+    fi
 
   # this line blocks
   poetry run flask run -p "$port" --host=0.0.0.0
+  fi
 fi
