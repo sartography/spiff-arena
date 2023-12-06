@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+max_attempts="${1:-100}"
+port="${2:-7004}"
+
+echo "waiting for connector to come up..."
+attempts=0
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${port}/v1/liveness")" != "200" ]]; do
+  if [[ "$attempts" -gt "$max_attempts" ]]; then
+    >&2 echo "ERROR: Server not up after $max_attempts attempts. There is probably a problem"
+    exit 1
+  fi
+  attempts=$(( attempts + 1 ))
+  sleep 1
+done
+echo "connector up"
