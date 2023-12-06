@@ -89,7 +89,7 @@ typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.0.1"}
 pre-commit = "^2.20.0"
 black = ">=21.10b0"
-ruff = "^0.0.270"
+ruff = "^0.1.7"
 
 pytest-random-order = "^1.1.0"
 pytest-flask = "^1.2.0"
@@ -176,18 +176,24 @@ explicit_package_bases = false
 
 [tool.ruff]
 select = [
+  # "ANN", # flake8-annotations
+  "ASYNC", # flake8-async
   "B",   # flake8-bugbear
+  # "BLE", # flake8-blind-except
   "C",   # mccabe
+  # "D",   # pydocstyle
   "E",   # pycodestyle error
   # "ERA",  # eradicate
   "F",   # pyflakes
+  # "FBT", # flake8-boolean-trap
   "N",   # pep8-naming
   "PL",  # pylint
   "S",   # flake8-bandit
   "T",   # flake8-print
   "UP",  # pyupgrade
   "W",   # pycodestyle warning
-  "I001" # isort
+  "I",   # isort
+  "YTT",  # flake8-2020
 ]
 
 ignore = [
