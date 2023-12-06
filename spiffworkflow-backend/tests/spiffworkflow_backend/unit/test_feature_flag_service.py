@@ -6,7 +6,6 @@ from spiffworkflow_backend.services.feature_flag_service import FeatureFlagServi
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
-
 @pytest.fixture()
 def no_feature_flags(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
     yield
@@ -15,12 +14,18 @@ def no_feature_flags(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generat
 class TestFeatureFlagService(BaseTest):
     """Tests the FeatureFlagService."""
 
-    def test_default_enabled_is_respected_when_no_feature_flag_exists(
+    @pytest.mark.parametrize(
+        "default_enabled,expected", [
+            pytest.param(True, True),
+            pytest.param(False, False),
+        ])
+    def test_default_enabled_v0(
         self,
         no_feature_flags: None,
+            default_enabled,
+            expected,
     ) -> None:
-        assert FeatureFlagService.feature_enabled("some_feature", True)
-        assert not FeatureFlagService.feature_enabled("another_feature", False)
+        assert FeatureFlagService.feature_enabled("some_feature", default_enabled) == expected
 
     def test_default_feature_flag_value_overrides_passed_in_default_enabled(
         self,
