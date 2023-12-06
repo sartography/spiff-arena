@@ -226,7 +226,7 @@ jobs:
         env:
           SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
       - name: wait_for_backend
-        run: ./bin/wait_for_server_to_be_up 5
+        run: ./bin/wait_for_backend_to_be_up 5
 
   coverage:
     runs-on: ubuntu-latest
@@ -376,7 +376,7 @@ jobs:
         run: ./bin/build_and_run_with_docker_compose
       - name: wait_for_backend
         working-directory: ./spiffworkflow-backend
-        run: ./bin/wait_for_server_to_be_up 5
+        run: ./bin/wait_for_backend_to_be_up 5
       - name: wait_for_frontend
         # working-directory: ./spiffworkflow-frontend
         run: ./bin/wait_for_frontend_to_be_up 5

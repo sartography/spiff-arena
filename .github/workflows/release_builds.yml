@@ -115,10 +115,13 @@ jobs:
         run: ./bin/run_arena_with_docker_compose
       - name: wait_for_backend
         working-directory: ./spiffworkflow-backend
-        run: ./bin/wait_for_server_to_be_up 5 8000
+        run: ./bin/wait_for_backend_to_be_up 5 8000
       - name: wait_for_frontend
         working-directory: ./spiffworkflow-frontend
         run: ./bin/wait_for_frontend_to_be_up 5 8001
+      - name: wait_for_connector
+        working-directory: ./connector-proxy-demo
+        run: ./bin/wait_for_connector_to_be_up 5 8004
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:

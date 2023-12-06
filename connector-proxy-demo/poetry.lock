@@ -637,7 +637,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/spiffworkflow-proxy"
 reference = "HEAD"
-resolved_reference = "25afae5b4c703971aa7bb68030dc127ddb6bb920"
+resolved_reference = "d64ae29fcc911fefc1a6209bab76948e5e25f627"
 
 [[package]]
 name = "typing-extensions"
