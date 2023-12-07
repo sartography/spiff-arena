@@ -38,10 +38,13 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
                     future_task.completed = True
                     db.session.add(future_task)
                     db.session.commit()
-            if task_runnability == TaskRunnability.has_ready_tasks:
-                queue_process_instance_if_appropriate(process_instance)
-    except ProcessInstanceIsAlreadyLockedError:
-        pass
+        if task_runnability == TaskRunnability.has_ready_tasks:
+            queue_process_instance_if_appropriate(process_instance)
+    except ProcessInstanceIsAlreadyLockedError as exception:
+        current_app.logger.info(
+            f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
+            f" {str(exception)}"
+        )
     except Exception as e:
         db.session.rollback()  # in case the above left the database with a bad transaction
         error_message = (
