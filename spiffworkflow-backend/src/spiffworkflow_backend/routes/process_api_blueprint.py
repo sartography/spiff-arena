@@ -134,6 +134,7 @@ def _process_data_fetcher(
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     all_process_data = processor.get_data()
+    print(f"all_process_data: {all_process_data}")
     process_data_value = all_process_data.get(process_data_identifier)
 
     if process_data_value is None:
@@ -152,25 +153,27 @@ def _process_data_fetcher(
 
 
 def process_data_show(
+    category: str,
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     return _process_data_fetcher(
-        process_instance_id,
-        process_data_identifier,
+        process_instance_id=process_instance_id,
+        process_data_identifier=process_data_identifier,
         download_file_data=False,
     )
 
 
 def process_data_file_download(
+    category: str,
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     return _process_data_fetcher(
-        process_instance_id,
-        process_data_identifier,
+        process_instance_id=process_instance_id,
+        process_data_identifier=process_data_identifier,
         download_file_data=True,
     )
 

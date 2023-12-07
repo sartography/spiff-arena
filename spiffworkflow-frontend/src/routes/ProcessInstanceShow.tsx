@@ -711,7 +711,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (shapeElement.type === 'bpmn:DataObjectReference') {
       const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
       HttpService.makeCallToBackend({
-        path: `/process-data/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}`,
+        path: `/process-data/default/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}`,
         httpMethod: 'GET',
         successCallback: handleProcessDataShowResponse,
         onUnauthorized: (result: any) =>
