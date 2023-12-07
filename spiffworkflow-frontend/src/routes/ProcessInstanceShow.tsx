@@ -710,8 +710,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   ) => {
     if (shapeElement.type === 'bpmn:DataObjectReference') {
       const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
+      const parentProcess = shapeElement.businessObject.$parent;
+      const processIdentifier = parentProcess.id;
+      const matchingTask: Task | undefined = (tasks as any).find(
+        (task: Task) => {
+          return task.bpmn_identifier === processIdentifier;
+        }
+      );
+      let additionalParams = '';
+      if (matchingTask) {
+        additionalParams = `?process_identifier=${processIdentifier}&bpmn_process_guid=${
+          (matchingTask as any).guid
+        }`;
+      }
       HttpService.makeCallToBackend({
-        path: `/process-data/default/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}`,
+        path: `/process-data/default/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
         httpMethod: 'GET',
         successCallback: handleProcessDataShowResponse,
         onUnauthorized: (result: any) =>

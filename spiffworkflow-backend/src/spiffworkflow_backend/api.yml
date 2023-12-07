@@ -1921,7 +1921,13 @@ paths:
       - name: process_identifier
         in: query
         required: false
-        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
+        description: The identifier of the process the data object is in.
+        schema:
+          type: string
+      - name: bpmn_process_guid
+        in: query
+        required: false
+        description: The guid of the bpmn process to get the data object for.
         schema:
           type: string
     get:
@@ -1937,7 +1943,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-data-file-download/{category}/{modified_process_model_identifier}/{process_identifier}/{process_instance_id}/{process_data_identifier}:
+  /process-data-file-download/{category}/{modified_process_model_identifier}/{process_instance_id}/{process_data_identifier}:
     parameters:
       - name: category
         in: path
@@ -1966,7 +1972,13 @@ paths:
       - name: process_identifier
         in: query
         required: false
-        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
+        description: The identifier of the process the data object is in.
+        schema:
+          type: string
+      - name: bpmn_process_guid
+        in: query
+        required: false
+        description: The guid of the bpmn process to get the data object for.
         schema:
           type: string
     get:

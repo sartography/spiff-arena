@@ -110,6 +110,9 @@ def _process_data_fetcher(
     process_instance_id: int,
     process_data_identifier: str,
     download_file_data: bool,
+    category: str,
+    bpmn_process_guid: str | None = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     if download_file_data:
         file_data = ProcessInstanceFileDataModel.query.filter_by(
@@ -132,14 +135,39 @@ def _process_data_fetcher(
         )
 
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
-    all_process_data = processor.get_data()
-    print(f"all_process_data: {all_process_data}")
-    process_data_value = all_process_data.get(process_data_identifier)
 
-    if process_data_value is None:
-        script_engine_last_result = processor._script_engine.environment.last_result()
-        process_data_value = script_engine_last_result.get(process_data_identifier)
+    # FIXME: spiff shares the data dictionary across all processes so deserializing with spiff causes us to lose the values
+    # of data objects that were set in subprocesses and call activities. Attempting to use the raw dictionary to attempt to
+    # get these values if possible. This code however may be flakey because loading, running, and then saving the process
+    # instance may cause these data objects to be lost forever anyway.
+    bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(process_instance, {})
+    bpmn_process_spec = bpmn_process_dict["spec"]
+    if process_identifier and bpmn_process_spec["name"] != process_identifier:
+        bpmn_process_spec = bpmn_process_dict["subprocess_specs"].get(process_identifier)
+        if bpmn_process_spec is None:
+            raise Exception(
+                f"Cannot find a bpmn process with identifier '{process_identifier}' for process instance {process_instance.id}"
+            )
+        bpmn_process_dict = bpmn_process_dict["subprocesses"].get(bpmn_process_guid)
+        if bpmn_process_dict is None:
+            raise Exception(
+                f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}"
+            )
+
+    bpmn_process_data = bpmn_process_dict["data"]
+    data_objects = bpmn_process_spec["data_objects"]
+    data_object = data_objects.get(process_data_identifier)
+    if data_object is None:
+        raise Exception(
+            f"Cannot find a data object with identifier '{process_data_identifier}' for bpmn process '{process_identifier}' in"
+            f" process instance {process_instance.id}"
+        )
+
+    if hasattr(data_object, "category"):
+        if data_object.category != category:
+            raise Exception(f"The desired data object does not have category '{category}'")
+
+    process_data_value = bpmn_process_data.get(process_data_identifier)
 
     return make_response(
         jsonify(
@@ -157,11 +185,16 @@ def process_data_show(
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
+    bpmn_process_guid: str | None = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     return _process_data_fetcher(
         process_instance_id=process_instance_id,
         process_data_identifier=process_data_identifier,
         download_file_data=False,
+        category=category,
+        bpmn_process_guid=bpmn_process_guid,
+        process_identifier=process_identifier,
     )
 
 
@@ -170,11 +203,16 @@ def process_data_file_download(
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
+    bpmn_process_guid: str | None = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     return _process_data_fetcher(
         process_instance_id=process_instance_id,
         process_data_identifier=process_data_identifier,
         download_file_data=True,
+        category=category,
+        bpmn_process_guid=bpmn_process_guid,
+        process_identifier=process_identifier,
     )
 
 
