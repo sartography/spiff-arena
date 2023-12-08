@@ -25,6 +25,8 @@ RUN apt-get update \
  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
  && rm -rf /var/lib/apt/lists/*
 
+# keep pip up to date
+RUN pip install --upgrade pip
 RUN pip install poetry==1.6.1
 
 
