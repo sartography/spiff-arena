@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from uuid import UUID
 
 import flask.wrappers
 from flask import Blueprint
@@ -135,27 +136,19 @@ def _process_data_fetcher(
         )
 
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
 
-    # FIXME: spiff shares the data dictionary across all processes so deserializing with spiff causes us to lose the values
-    # of data objects that were set in subprocesses and call activities. Attempting to use the raw dictionary to attempt to
-    # get these values if possible. This code however may be flakey because loading, running, and then saving the process
-    # instance may cause these data objects to be lost forever anyway.
-    bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(process_instance, {})
-    bpmn_process_spec = bpmn_process_dict["spec"]
-    if process_identifier and bpmn_process_spec["name"] != process_identifier:
-        bpmn_process_spec = bpmn_process_dict["subprocess_specs"].get(process_identifier)
-        if bpmn_process_spec is None:
-            raise Exception(
-                f"Cannot find a bpmn process with identifier '{process_identifier}' for process instance {process_instance.id}"
-            )
-        bpmn_process_dict = bpmn_process_dict["subprocesses"].get(bpmn_process_guid)
-        if bpmn_process_dict is None:
+    bpmn_process_instance = processor.bpmn_process_instance
+    bpmn_process_data = processor.get_data()
+    if process_identifier and bpmn_process_instance.spec.name != process_identifier:
+        bpmn_process_instance = processor.bpmn_process_instance.subprocesses.get(UUID(bpmn_process_guid))
+        if bpmn_process_instance is None:
             raise Exception(
                 f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}"
             )
+        bpmn_process_data = bpmn_process_instance.data
 
-    bpmn_process_data = bpmn_process_dict["data"]
-    data_objects = bpmn_process_spec["data_objects"]
+    data_objects = bpmn_process_instance.spec.data_objects
     data_object = data_objects.get(process_data_identifier)
     if data_object is None:
         raise Exception(
@@ -163,7 +156,7 @@ def _process_data_fetcher(
             f" process instance {process_instance.id}"
         )
 
-    if hasattr(data_object, "category"):
+    if hasattr(data_object, "category") and data_object.category is not None:
         if data_object.category != category:
             raise Exception(f"The desired data object does not have category '{category}'")
 

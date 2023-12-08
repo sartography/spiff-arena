@@ -166,13 +166,13 @@ class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
         self,
         script: str,
         context: dict[str, Any],
-        external_methods: dict[str, Any] | None = None,
+        external_context: dict[str, Any] | None = None,
     ) -> bool:
-        super().execute(script, context, external_methods)
+        super().execute(script, context, external_context)
         self._last_result = context
         return True
 
-    def user_defined_state(self, external_methods: dict[str, Any] | None = None) -> dict[str, Any]:
+    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
         return {}
 
     def last_result(self) -> dict[str, Any]:
@@ -206,11 +206,11 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self,
         expression: str,
         context: dict[str, Any],
-        external_methods: dict[str, Any] | None = None,
+        external_context: dict[str, Any] | None = None,
     ) -> Any:
         state = {}
         state.update(self.globals)
-        state.update(external_methods or {})
+        state.update(external_context or {})
         state.update(self.state)
         state.update(context)
         return eval(expression, state)  # noqa
@@ -219,10 +219,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self,
         script: str,
         context: dict[str, Any],
-        external_methods: dict[str, Any] | None = None,
+        external_context: dict[str, Any] | None = None,
     ) -> bool:
         self.state.update(self.globals)
-        self.state.update(external_methods or {})
+        self.state.update(external_context or {})
         self.state.update(context)
         try:
             exec(script, self.state)  # noqa
@@ -235,16 +235,16 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             for key_to_drop in context_keys_to_drop:
                 context.pop(key_to_drop)
 
-            self.state = self.user_defined_state(external_methods)
+            self.state = self.user_defined_state(external_context)
 
             # the task data needs to be updated with the current state so data references can be resolved properly.
             # the state will be removed later once the task is completed.
             context.update(self.state)
 
-    def user_defined_state(self, external_methods: dict[str, Any] | None = None) -> dict[str, Any]:
+    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
-        if external_methods is not None:
-            keys_to_filter |= set(external_methods.keys())
+        if external_context is not None:
+            keys_to_filter |= set(external_context.keys())
 
         return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
 
@@ -346,24 +346,24 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         self,
         task: SpiffTask,
         expression: str,
-        external_methods: dict[str, Any] | None = None,
+        external_context: dict[str, Any] | None = None,
     ) -> Any:
-        return self._evaluate(expression, task.data, task, external_methods)
+        return self._evaluate(expression, task.data, task, external_context)
 
     def _evaluate(
         self,
         expression: str,
         context: dict[str, Any],
         task: SpiffTask | None = None,
-        external_methods: dict[str, Any] | None = None,
+        external_context: dict[str, Any] | None = None,
     ) -> Any:
         methods = self.__get_augment_methods(task)
-        if external_methods:
-            methods.update(external_methods)
+        if external_context:
+            methods.update(external_context)
 
         """Evaluate the given expression, within the context of the given task and return the result."""
         try:
-            return super()._evaluate(expression, context, external_methods=methods)
+            return super()._evaluate(expression, context, external_context=methods)
         except Exception as exception:
             if task is None:
                 raise WorkflowException(
@@ -376,12 +376,12 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                     exception=exception,
                 ) from exception
 
-    def execute(self, task: SpiffTask, script: str, external_methods: Any = None) -> bool:
+    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
         try:
             # reset failing task just in case
             methods = self.__get_augment_methods(task)
-            if external_methods:
-                methods.update(external_methods)
+            if external_context:
+                methods.update(external_context)
             # do not run script if it is blank
             if script:
                 super().execute(task, script, methods)
