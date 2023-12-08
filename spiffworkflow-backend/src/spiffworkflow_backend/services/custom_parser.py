@@ -12,8 +12,6 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 class MyCustomParser(SpiffBpmnParser):  # type: ignore
     """A BPMN and DMN parser that can also parse spiffworkflow-backend specific extensions."""
 
-    # OVERRIDE_PARSER_CLASSES = BpmnDmnParser.OVERRIDE_PARSER_CLASSES
-    # OVERRIDE_PARSER_CLASSES.update(SpiffBpmnParser.OVERRIDE_PARSER_CLASSES)
     OVERRIDE_PARSER_CLASSES = SpiffBpmnParser.OVERRIDE_PARSER_CLASSES
     OVERRIDE_PARSER_CLASSES.update({full_tag("serviceTask"): (ServiceTaskParser, CustomServiceTask)})
 
