@@ -11,11 +11,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 
 def main(process_instance_id: str) -> None:
     """Main."""
-    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
-    if os.environ.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR") is None:
-        os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = "hey"
-    flask_env_key = "FLASK_SESSION_SECRET_KEY"
-    os.environ[flask_env_key] = "whatevs"
     app = create_app()
     with app.app_context():
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
