@@ -2526,8 +2526,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "feature/data-object-category"
-resolved_reference = "a62fa979e5d2db0b0a98b9fe0d678f7e742ad80f"
+reference = "main"
+resolved_reference = "e4ceff40d9d8a0d182b19483b9f1e9d8850d5765"
 
 [[package]]
 name = "spiffworkflow-connector-command"
@@ -2996,4 +2996,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "5e7e6dae72520dabfb764a309d7915f9db5abf3bec68656f404fda9972582256"
+content-hash = "a4c3891581429bbf7ae788144de69bf7ea76184c27d339be5ef10d2f50096e31"
