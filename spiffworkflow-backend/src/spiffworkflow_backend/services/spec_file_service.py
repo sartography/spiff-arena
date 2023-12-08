@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os
 import shutil
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
@@ -12,13 +15,15 @@ from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import Reference
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
+if TYPE_CHECKING:
+    from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
 class ProcessModelFileInvalidError(Exception):
