@@ -390,8 +390,8 @@ class TestProcessApi(BaseTest):
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.id == process_model_identifier
         assert process_model.display_name == "Cooooookies"
-        assert process_model.primary_file_name is None
-        assert process_model.primary_process_id is None
+        assert process_model.primary_file_name is not None
+        assert process_model.primary_process_id is not None
 
         process_model.display_name = "Updated Display Name"
         process_model.primary_file_name = "superduper.bpmn"

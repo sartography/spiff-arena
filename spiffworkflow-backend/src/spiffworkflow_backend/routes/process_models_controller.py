@@ -77,6 +77,13 @@ def process_model_create(
         )
 
     ProcessModelService.add_process_model(process_model_info)
+    template_file = os.path.join(current_app.root_path, "templates", "bpmn_for_new_process_model.bpmn")
+    contents = ""
+    with open(template_file) as f:
+        contents = f.read()
+    process_model_id_for_bpmn_file = process_model_info.id.split("/")[-1]
+    SpecFileService.update_file(process_model_info, f"{process_model_id_for_bpmn_file}.bpmn", contents.encode())
+
     _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
