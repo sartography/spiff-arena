@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from uuid import UUID
 
 import flask.wrappers
 from flask import Blueprint
@@ -109,36 +110,59 @@ def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
 def _process_data_fetcher(
     process_instance_id: int,
     process_data_identifier: str,
-    download_file_data: bool,
+    category: str,
+    bpmn_process_guid: str | None = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    if download_file_data:
-        file_data = ProcessInstanceFileDataModel.query.filter_by(
-            digest=process_data_identifier,
-            process_instance_id=process_instance_id,
-        ).first()
-        if file_data is None:
-            raise ApiError(
-                error_code="process_instance_file_data_not_found",
-                message=f"Could not find file data related to the digest: {process_data_identifier}",
-            )
-        mimetype = file_data.mimetype
-        filename = file_data.filename
-        file_contents = file_data.contents
-
-        return Response(
-            file_contents,
-            mimetype=mimetype,
-            headers={"Content-disposition": f"attachment; filename={filename}"},
+    if process_identifier and bpmn_process_guid is None:
+        raise ApiError(
+            error_code="missing_required_parameter",
+            message="process_identifier was given but bpmn_process_guid was not. Both must be provided if either is required.",
+            status_code=404,
+        )
+    if process_identifier is None and bpmn_process_guid:
+        raise ApiError(
+            error_code="missing_required_parameter",
+            message="bpmn_process_guid was given but process_identifier was not. Both must be provided if either is required.",
+            status_code=404,
         )
 
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
-    all_process_data = processor.get_data()
-    process_data_value = all_process_data.get(process_data_identifier)
 
-    if process_data_value is None:
-        script_engine_last_result = processor._script_engine.environment.last_result()
-        process_data_value = script_engine_last_result.get(process_data_identifier)
+    bpmn_process_instance = processor.bpmn_process_instance
+    bpmn_process_data = processor.get_data()
+    if process_identifier and bpmn_process_instance.spec.name != process_identifier:
+        bpmn_process_instance = processor.bpmn_process_instance.subprocesses.get(UUID(bpmn_process_guid))
+        if bpmn_process_instance is None:
+            raise ApiError(
+                error_code="bpmn_process_not_found",
+                message=f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
+                status_code=404,
+            )
+        bpmn_process_data = bpmn_process_instance.data
+
+    data_objects = bpmn_process_instance.spec.data_objects
+    data_object = data_objects.get(process_data_identifier)
+    if data_object is None:
+        raise ApiError(
+            error_code="data_object_not_found",
+            message=(
+                f"Cannot find a data object with identifier '{process_data_identifier}' for bpmn process '{process_identifier}'"
+                f" in process instance {process_instance.id}"
+            ),
+            status_code=404,
+        )
+
+    if hasattr(data_object, "category") and data_object.category is not None:
+        if data_object.category != category:
+            raise ApiError(
+                error_code="data_object_category_mismatch",
+                message=f"The desired data object has category '{data_object.category}' instead of the expected '{category}'",
+                status_code=400,
+            )
+
+    process_data_value = bpmn_process_data.get(process_data_identifier)
 
     return make_response(
         jsonify(
@@ -152,26 +176,47 @@ def _process_data_fetcher(
 
 
 def process_data_show(
+    category: str,
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
+    bpmn_process_guid: str | None = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     return _process_data_fetcher(
-        process_instance_id,
-        process_data_identifier,
-        download_file_data=False,
+        process_instance_id=process_instance_id,
+        process_data_identifier=process_data_identifier,
+        category=category,
+        bpmn_process_guid=bpmn_process_guid,
+        process_identifier=process_identifier,
     )
 
 
 def process_data_file_download(
+    category: str,
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
+    bpmn_process_guid: str | None = None,
+    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    return _process_data_fetcher(
-        process_instance_id,
-        process_data_identifier,
-        download_file_data=True,
+    file_data = ProcessInstanceFileDataModel.query.filter_by(
+        digest=process_data_identifier,
+        process_instance_id=process_instance_id,
+    ).first()
+    if file_data is None:
+        raise ApiError(
+            error_code="process_instance_file_data_not_found",
+            message=f"Could not find file data related to the digest: {process_data_identifier}",
+        )
+    mimetype = file_data.mimetype
+    filename = file_data.filename
+    file_contents = file_data.contents
+
+    return Response(
+        file_contents,
+        mimetype=mimetype,
+        headers={"Content-disposition": f"attachment; filename={filename}"},
     )
 
 

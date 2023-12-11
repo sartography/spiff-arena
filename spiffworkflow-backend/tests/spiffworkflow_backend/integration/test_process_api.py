@@ -3316,7 +3316,7 @@ class TestProcessApi(BaseTest):
         assert process_instance_one.status == "user_input_required"
 
         response = client.get(
-            f"/v1.0/process-data/{self.modify_process_identifier_for_path_param(process_model.id)}/the_data_object_var/{process_instance_one.id}",
+            f"/v1.0/process-data/the_cat/{self.modify_process_identifier_for_path_param(process_model.id)}/the_data_object_var/{process_instance_one.id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 

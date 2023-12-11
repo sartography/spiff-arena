@@ -11,11 +11,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 
 def main(process_instance_id: str) -> None:
     """Main."""
-    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
-    if os.environ.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR") is None:
-        os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = "hey"
-    flask_env_key = "FLASK_SESSION_SECRET_KEY"
-    os.environ[flask_env_key] = "whatevs"
     app = create_app()
     with app.app_context():
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
@@ -24,9 +19,8 @@ def main(process_instance_id: str) -> None:
         if not process_instance:
             raise Exception(f"Could not find a process instance with id: {process_instance_id}")
 
-        bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(process_instance, {})
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(bpmn_process_dict, indent=2))
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.dump_to_disk(file_path)
         print(f"Saved to {file_path}")
 
 
