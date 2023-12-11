@@ -2527,7 +2527,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "c9786c543d3cd0ccffce35dfab115be0ee346f0b"
+resolved_reference = "e4ceff40d9d8a0d182b19483b9f1e9d8850d5765"
 
 [[package]]
 name = "spiffworkflow-connector-command"
