@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getCommonAttributes } from '../../helpers';
 import { FieldProps } from '@rjsf/utils';
 import { TextInput } from '@carbon/react';
+import { getCommonAttributes } from '../../helpers';
+
 export default function NumericRangeField({
   id,
   value,
@@ -73,7 +74,7 @@ export default function NumericRangeField({
   const onChangeLocal = (nameToChange: any) => {
     return (event: any) => {
       event.preventDefault();
-      let numberValue = parseNumberString(event.target.value);
+      const numberValue = parseNumberString(event.target.value);
       if (!disabled && !readonly) {
         if (
           numberValue > state[identifierToUse].max &&
@@ -131,7 +132,7 @@ export default function NumericRangeField({
     };
   };
 
-  let { min, max } = state[identifierToUse];
+  const { min, max } = state[identifierToUse];
   // create two number inputs for min and max compensation
 
   useEffect(() => {
@@ -157,7 +158,7 @@ export default function NumericRangeField({
           value={formatNumberString(min)}
           onChange={onChangeLocal('min')}
           defaultValue="0"
-          hideSteppers={true}
+          hideSteppers
           // helperText={helperText}
         />
         {/* <div className="numeric--range-field-separator"></div> */}
@@ -169,7 +170,7 @@ export default function NumericRangeField({
           value={formatNumberString(max)}
           onChange={onChangeLocal('max')}
           defaultValue="0"
-          hideSteppers={true}
+          hideSteppers
           // helperText={helperText}
         />
       </div>

@@ -1,12 +1,12 @@
 import validator from '@rjsf/validator-ajv8';
 import { ReactNode } from 'react';
+import { RegistryFieldsType } from '@rjsf/utils';
 import { Form } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
-import { RegistryFieldsType } from '@rjsf/utils';
 
 type OwnProps = {
   id: string;
