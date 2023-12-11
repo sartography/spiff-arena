@@ -704,19 +704,48 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setProcessDataToDisplay(processData);
   };
 
+  const makeProcessDataCallFromShapeElement = (shapeElement: any) => {
+    const { dataObjectRef } = shapeElement.businessObject;
+    let category = 'default';
+    if ('extensionElements' in dataObjectRef) {
+      const categoryExtension = dataObjectRef.extensionElements.values.find(
+        (extension: any) => {
+          return extension.$type === 'spiffworkflow:category';
+        }
+      );
+      if (categoryExtension) {
+        category = categoryExtension.$body;
+      }
+    }
+    const dataObjectIdentifer = dataObjectRef.id;
+    const parentProcess = shapeElement.businessObject.$parent;
+    const processIdentifier = parentProcess.id;
+
+    let additionalParams = '';
+    if (tasks) {
+      const matchingTask: Task | undefined = tasks.find((task: Task) => {
+        return task.bpmn_identifier === processIdentifier;
+      });
+      if (matchingTask) {
+        additionalParams = `?process_identifier=${processIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
+      }
+    }
+    HttpService.makeCallToBackend({
+      path: `/process-data/${category}/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
+      httpMethod: 'GET',
+      successCallback: handleProcessDataShowResponse,
+      failureCallback: addError,
+      onUnauthorized: (result: any) =>
+        handleProcessDataShowReponseUnauthorized(dataObjectIdentifer, result),
+    });
+  };
+
   const handleClickedDiagramTask = (
     shapeElement: any,
     bpmnProcessIdentifiers: any
   ) => {
     if (shapeElement.type === 'bpmn:DataObjectReference') {
-      const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
-      HttpService.makeCallToBackend({
-        path: `/process-data/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}`,
-        httpMethod: 'GET',
-        successCallback: handleProcessDataShowResponse,
-        onUnauthorized: (result: any) =>
-          handleProcessDataShowReponseUnauthorized(dataObjectIdentifer, result),
-      });
+      makeProcessDataCallFromShapeElement(shapeElement);
     } else if (tasks) {
       const matchingTask: Task | undefined = tasks.find((task: Task) => {
         return (
