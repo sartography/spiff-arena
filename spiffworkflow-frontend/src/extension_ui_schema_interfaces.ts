@@ -51,6 +51,7 @@ export interface UiSchemaPageDefinition {
   markdown_instruction_filename?: string;
   navigate_instead_of_post_to_api?: boolean;
   navigate_to_on_form_submit?: string;
+  navigate_to_on_load?: string;
   on_form_submit?: UiSchemaAction;
   on_load?: UiSchemaAction;
   open_links_in_new_tab?: boolean;
@@ -69,4 +70,11 @@ export interface ExtensionUiSchema {
 export interface ExtensionPostBody {
   extension_input: any;
   ui_schema_action?: UiSchemaAction;
+}
+
+export interface ExtensionApiResponse {
+  task_data: any;
+
+  rendered_results_markdown?: string;
+  redirect_to?: string;
 }
