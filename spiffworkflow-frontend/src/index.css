@@ -1,7 +1,8 @@
 /* site is mainly using white theme. */
 /* header is mainly using g100 */
 /* mockup wanted white, not grey, text */
-.cds--header, a.cds--header__menu-item {
+.cds--header,
+a.cds--header__menu-item {
   color: white;
 }
 
@@ -36,7 +37,7 @@
 
 /* make this a little less prominent so the actual human beings completing tasks stand out */
 .system-user-log-entry {
-  color: #B0B0B0;
+  color: #b0b0b0;
   font-style: italic;
 }
 
@@ -45,7 +46,7 @@ h1 {
   font-size: 28px;
   line-height: 36px;
   color: #161616;
-  margin-bottom: 1rem
+  margin-bottom: 1rem;
 }
 
 h2 {
@@ -69,7 +70,7 @@ h3 {
 
 .cds--btn.button-white-background {
   color: #393939;
-  background: #FFFFFF;
+  background: #ffffff;
   background-blend-mode: multiply;
   border: 1px solid #393939;
 }
@@ -158,7 +159,7 @@ h3 {
 }
 
 .cds--header__global .cds--btn--primary {
-  background-color: #161616
+  background-color: #161616;
 }
 .cds--btn--primary {
   background-color: #393939;
@@ -168,7 +169,7 @@ h3 {
 }
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-  monospace;
+    monospace;
 }
 
 .app-logo {
@@ -184,20 +185,20 @@ code {
 
 .active-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
   fill: yellow !important;
-  opacity: .6;
+  opacity: 0.6;
 }
 
 .completed-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
   fill: grey !important;
-  opacity: .4;
+  opacity: 0.4;
 }
 .cancelled-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
   fill: blue !important;
-  opacity: .2;
+  opacity: 0.2;
 }
 .errored-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
   fill: red !important;
-  opacity: .2;
+  opacity: 0.2;
 }
 
 .accordion-item-label {
@@ -255,9 +256,9 @@ dl dd {
 }
 
 .diagram-editor-canvas {
-  border:1px solid #000000;
-  height:78vh;
-  width:90vw;
+  border: 1px solid #000000;
+  height: 78vh;
+  width: 90vw;
   margin: 0 auto;
 }
 
@@ -299,7 +300,9 @@ dl dd {
   content: none;
 }
 
-#user-profile-toggletip .cds--popover--tab-tip.cds--popover--open .cds--popover--tab-tip__button{
+#user-profile-toggletip
+  .cds--popover--tab-tip.cds--popover--open
+  .cds--popover--tab-tip__button {
   background-color: #161616;
 }
 
@@ -332,18 +335,18 @@ dl dd {
 }
 
 .with-half-rem-bottom-margin {
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 }
 
 .with-half-rem-top-margin {
-  margin-top: .5rem;
+  margin-top: 0.5rem;
 }
 
 .diagram-viewer-canvas {
-  border:1px solid #000000;
-  height:70vh;
-  width:90vw;
-  margin:auto;
+  border: 1px solid #000000;
+  height: 70vh;
+  width: 90vw;
+  margin: auto;
 }
 
 .breadcrumb {
@@ -358,7 +361,6 @@ dl dd {
   margin-top: 1rem;
 }
 
-
 /* Markdown Tables */
 .markdown table {
   color: #333;
@@ -369,16 +371,16 @@ dl dd {
 .markdown table thead th,
 .markdown table tfoot th {
   color: #777;
-  background: rgba(0,0,0,.1);
+  background: rgba(0, 0, 0, 0.1);
 }
 .markdown table th,
 .markdown table td {
-  padding: .5rem;
+  padding: 0.5rem;
   border: 1px solid lightgrey;
 }
 /* Zebra Table Style */
 .markdown tbody tr:nth-of-type(odd) {
-  background: rgba(0,0,0,.05);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .form-instructions {
@@ -387,7 +389,7 @@ dl dd {
 
 /* Json Web Form CSS Fix - Bootstrap now requries that each li have a "list-inline-item." Also have a PR
 in on this with the react-jsonschema-form repo. This is just a patch fix to allow date inputs to layout a little more cleanly */
-.list-inline>li {
+.list-inline > li {
   display: inline-block;
   padding-right: 5px;
   padding-left: 5px;
@@ -398,7 +400,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   margin: 12px 24px 12px 0px;
   width: 320px;
   height: 264px;
-  background: #F4F4F4;
+  background: #f4f4f4;
   order: 1;
   float: left;
 }
@@ -484,7 +486,8 @@ td.actions-cell {
   font-size: 14px;
 }
 
-th.table-header-right-align .cds--data-table, th.table-header-right-align .cds--table-header-label{
+th.table-header-right-align .cds--data-table,
+th.table-header-right-align .cds--table-header-label {
   text-align: right;
 }
 
@@ -553,7 +556,7 @@ svg.notification-icon {
 }
 
 /* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */
-.no-wrap .cds--label--inline{
+.no-wrap .cds--label--inline {
   word-break: normal;
 }
 
@@ -577,7 +580,7 @@ svg.notification-icon {
 
 /* lime green */
 .tag-type-green:hover {
-  background-color:	#80ee90;
+  background-color: #80ee90;
 }
 
 /* reset to initial modal css and avoid table specific css */
@@ -702,7 +705,7 @@ svg.notification-icon {
 }
 
 /* Default to first color if more than 10 users */
-.user-circle:nth-child(n+11) {
+.user-circle:nth-child(n + 11) {
   background-color: #8e8e8e;
 }
 
@@ -716,11 +719,11 @@ svg.notification-icon {
 * and from markdown it's a little darker.
 */
 hr {
-    border: 0;
-    border-top: 1px solid;
-    color: inherit;
-    margin: 1rem 0;
-    opacity: .25;
+  border: 0;
+  border-top: 1px solid;
+  color: inherit;
+  margin: 1rem 0;
+  opacity: 0.25;
 }
 
 .primary-file-text-suffix {
@@ -734,7 +737,7 @@ hr {
 
 .task-data-details-header {
   margin-top: 1.5rem;
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 }
 
 .explanatory-message {
@@ -780,7 +783,16 @@ fieldset fieldset fieldset legend.header {
   }
 }
 
-p, li, h1, h2, h3, h4, h5, h6, blockquote, hr {
+p,
+li,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+blockquote,
+hr {
   max-width: 640px;
 }
 li.cds--accordion__item {
@@ -796,16 +808,19 @@ div.markdown-collapsed {
   max-height: 200px;
   overflow: hidden;
 
-  --mask: linear-gradient(to bottom,
-          rgba(0,0,0, 1) 0,   rgba(0,0,0, 1) 40%,
-          rgba(0,0,0, 0) 95%, rgba(0,0,0, 0) 0
-  ) 100% 50% / 100% 100% repeat-x;
+  --mask: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0,
+      rgba(0, 0, 0, 1) 40%,
+      rgba(0, 0, 0, 0) 95%,
+      rgba(0, 0, 0, 0) 0
+    )
+    100% 50% / 100% 100% repeat-x;
 
   font: 2em/1.6em Arial;
   -webkit-mask: var(--mask);
   mask: var(--mask);
 }
-
 
 .cds--data-table-content {
   overflow-x: auto;
@@ -843,18 +858,18 @@ div.onboarding {
 
 /* makde the completed user form modal more readable */
 .completed-task-modal .cds--modal-container {
-  background-color: #ffffff
+  background-color: #ffffff;
 }
 .completed-task-modal .cds--text-input:disabled,
 .completed-task-modal .cds--text-area:disabled,
 .completed-task-modal .cds--date-picker__input:disabled,
 .completed-task-modal .cds--select-input:disabled,
 .completed-task-modal .cds--select-input:hover:disabled {
-  --cds-text-disabled: rgba(22, 22, 22, .5);
-  background-color: var(--cds-field)
+  --cds-text-disabled: rgba(22, 22, 22, 0.5);
+  background-color: var(--cds-field);
 }
 .completed-task-modal .cds--form__helper-text--disabled {
-  --cds-text-disabled: rgba(22, 22, 22, .5);
+  --cds-text-disabled: rgba(22, 22, 22, 0.5);
 }
 
 .process-model-file-table {
@@ -906,4 +921,36 @@ div.onboarding {
   width: 50%; /* Adjust width as needed */
   float: right; /* Floats the keys to the right */
   text-align: right; /* Aligns text to the right within the container */
+}
+
+.numeric--range-field-wrapper input {
+  width: auto;
+}
+
+.numeric--range-field-inputs {
+  margin: 0.33rem 0 0 0;
+  display: flex;
+  align-items: center;
+}
+
+.numeric--range-field-separator {
+  width: 20px;
+  height: 1px;
+  background-color: #000;
+  text-align: center;
+}
+
+#numeric--range-field-desc-text {
+  font-size: 13px;
+}
+
+#numeric--range-field-help-text {
+  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
+  line-height: var(--cds-helper-text-01-line-height, 1.33333);
+  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
+  z-index: 0;
+  color: var(--cds-text-secondary, #525252);
+  inline-size: 100%;
+  margin-block-start: 0.25rem;
+  opacity: 1;
 }

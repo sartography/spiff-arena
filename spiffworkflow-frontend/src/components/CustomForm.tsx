@@ -5,6 +5,8 @@ import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
+import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import { RegistryFieldsType } from '@rjsf/utils';
 
 type OwnProps = {
   id: string;
@@ -34,6 +36,10 @@ export default function CustomForm({
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: TypeaheadWidget,
+  };
+
+  const fields: RegistryFieldsType = {
+    numeric_range: NumericRangeField,
   };
 
   const formatDateString = (dateString?: string) => {
@@ -264,6 +270,7 @@ export default function CustomForm({
       validator={validator}
       customValidate={customValidate}
       noValidate={noValidate}
+      fields={fields}
       omitExtraData
     >
       {children}
