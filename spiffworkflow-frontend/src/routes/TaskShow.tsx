@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
@@ -16,6 +16,7 @@ import {
   BasicTask,
   ErrorForDisplay,
   EventDefinition,
+  HotCrumbItem,
   Task,
 } from '../interfaces';
 import CustomForm from '../components/CustomForm';
@@ -30,6 +31,14 @@ export default function TaskShow() {
   // this was mainly to help with loading form data with large files attached to it
   const [basicTask, setBasicTask] = useState<BasicTask | null>(null);
   const [taskWithTaskData, setTaskWithTaskData] = useState<Task | null>(null);
+
+  // put this in a state so ProcessBreadCrumb does not attempt to re-render
+  // since javascript cannot tell if an array or object has changed
+  // but react states can. If we simply initialize a ProcessBreadCrumb when
+  // this parent component renders, we get a request to process model show
+  // every time someone types a character into a user task form (because we change ANY
+  // state. in this case, setTaskData).
+  const [hotCrumbs, setHotCrumbs] = useState<HotCrumbItem[]>([]);
 
   const params = useParams();
   const navigate = useNavigate();
@@ -49,20 +58,23 @@ export default function TaskShow() {
 
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
-  const navigateToInterstitial = (myTask: BasicTask) => {
-    if (UserService.onlyGuestTaskCompletion()) {
-      setGuestConfirmationText('Thank you!');
-    } else {
-      navigate(
-        `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-          myTask.process_model_identifier
-        )}/${myTask.process_instance_id}/interstitial`
-      );
-    }
-  };
+  const navigateToInterstitial = useCallback(
+    (myTask: BasicTask) => {
+      if (UserService.onlyGuestTaskCompletion()) {
+        setGuestConfirmationText('Thank you!');
+      } else {
+        navigate(
+          `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+            myTask.process_model_identifier
+          )}/${myTask.process_instance_id}/interstitial`
+        );
+      }
+    },
+    [navigate]
+  );
 
-  useEffect(() => {
-    const processBasicTaskResult = (result: BasicTask) => {
+  const processBasicTaskResult = useCallback(
+    (result: BasicTask) => {
       setBasicTask(result);
       setPageTitle([result.name_for_display]);
       if (!result.can_complete) {
@@ -76,7 +88,28 @@ export default function TaskShow() {
           navigateToInterstitial(result);
         }
       }
-    };
+      const hotCrumbList: HotCrumbItem[] = [
+        ['Process Groups', '/process-groups'],
+        {
+          entityToExplode: result.process_model_identifier,
+          entityType: 'process-model-id',
+          linkLastItem: true,
+          checkPermission: true,
+        },
+        [
+          `Process Instance Id: ${result.process_instance_id}`,
+          `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+            result.process_model_identifier
+          )}/${result.process_instance_id}`,
+        ],
+        [`Task: ${result.name_for_display || result.id}`],
+      ];
+      setHotCrumbs(hotCrumbList);
+    },
+    [navigateToInterstitial, navigate]
+  );
+
+  useEffect(() => {
     const processTaskWithDataResult = (result: Task) => {
       setTaskWithTaskData(result);
 
@@ -102,7 +135,7 @@ export default function TaskShow() {
     });
     // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params]);
+  }, [params, processBasicTaskResult]);
 
   // Before we auto-saved form data, we remembered what data was in the form, and then created a synthetic submit event
   // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
@@ -422,26 +455,7 @@ export default function TaskShow() {
       !('allowGuest' in basicTask.extensions) ||
       basicTask.extensions.allowGuest !== 'true'
     ) {
-      pageElements.push(
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            ['Process Groups', '/process-groups'],
-            {
-              entityToExplode: basicTask.process_model_identifier,
-              entityType: 'process-model-id',
-              linkLastItem: true,
-              checkPermission: true,
-            },
-            [
-              `Process Instance Id: ${basicTask.process_instance_id}`,
-              `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-                basicTask.process_model_identifier
-              )}/${basicTask.process_instance_id}`,
-            ],
-            [`Task: ${basicTask.name_for_display || basicTask.id}`],
-          ]}
-        />
-      );
+      pageElements.push(<ProcessBreadcrumb hotCrumbs={hotCrumbs} />);
       pageElements.push(
         <h3>
           Task: {basicTask.name_for_display} (

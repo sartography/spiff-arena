@@ -266,7 +266,7 @@ class GitService:
         cls.run_shell_command(cmd)
         # create publish branch from branch_to_update
         cls.run_shell_command(["checkout", branch_to_update], context_directory=destination_process_root)
-        branch_to_pull_request = f"publish-{process_model_id}"
+        branch_to_pull_request = f"publish-{process_model_id}-to-{branch_to_update}"
 
         # check if branch exists and checkout appropriately
         command = [
@@ -274,6 +274,8 @@ class GitService:
             "--verify",
             f"refs/remotes/origin/{branch_to_pull_request}",
         ]
+
+        # to -b or not to -b
         if cls.run_shell_command_as_boolean(command, context_directory=destination_process_root):
             cls.run_shell_command(["checkout", branch_to_pull_request], context_directory=destination_process_root)
         else:

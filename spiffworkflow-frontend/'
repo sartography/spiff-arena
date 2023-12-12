@@ -1,6 +1,6 @@
 // @ts-ignore
 import { Breadcrumb, BreadcrumbItem } from '@carbon/react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   HotCrumbItem,
@@ -12,17 +12,12 @@ import {
 } from '../interfaces';
 import HttpService from '../services/HttpService';
 
-// it is recommend to use a state for hotCrumbs so ProcessBreadCrumb does not attmept
-// to re-render. This is because javascript cannot tell if an array or object has changed
-// but react states can. If we simply initialize a ProcessBreadCrumb when
-// the component that uses it renders, we may get a request to process model show
-// every time a state changes in the parent component (any state, not even a related state).
-// For an example of usage see TaskShow.
 type OwnProps = {
   hotCrumbs?: HotCrumbItem[];
 };
 
-export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
+// export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
+export const default ProcessBreadcrumb = React.memo(({ hotCrumbs }: OwnProps) => {
   const [processEntity, setProcessEntity] = useState<
     ProcessGroup | ProcessModel | null
   >(null);
@@ -55,7 +50,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
     if (hotCrumbs) {
       hotCrumbs.forEach(explodeCrumbItemObject);
     }
-  }, [setProcessEntity, hotCrumbs]);
+  }, [hotCrumbs]);
 
   const checkPermissions = (crumb: HotCrumbItemObject) => {
     if (!crumb.checkPermission) {
@@ -148,4 +143,4 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
   };
 
   return <Breadcrumb noTrailingSlash>{hotCrumbElement()}</Breadcrumb>;
-}
+})
