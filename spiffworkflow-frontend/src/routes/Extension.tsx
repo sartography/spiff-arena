@@ -60,20 +60,55 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     MarkdownRenderer,
   };
 
+  const interpolateNavigationString = useCallback(
+    (navigationString: string, baseData: any) => {
+      let isValid = true;
+      const data = { backend_base_url: BACKEND_BASE_URL, ...baseData };
+      const optionString = navigationString.replace(/{(\w+)}/g, (_, k) => {
+        const value = data[k];
+        if (value === undefined) {
+          isValid = false;
+          addError({
+            message: `Could not find a value for ${k} in form data.`,
+          });
+        }
+        return value;
+      });
+      if (!isValid) {
+        return null;
+      }
+      return optionString;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+  const processLoadResult = useCallback(
+    (result: any, pageDefinition: UiSchemaPageDefinition) => {
+      setFormData(result.task_data);
+      console.log('pageDefinition', pageDefinition);
+      if (pageDefinition.navigate_to_on_load) {
+        const optionString = interpolateNavigationString(
+          pageDefinition.navigate_to_on_load,
+          result.task_data
+        );
+        if (optionString !== null) {
+          window.location.href = optionString;
+        }
+      }
+      if (result.rendered_results_markdown) {
+        const newMarkdown = FormattingService.checkForSpiffFormats(
+          result.rendered_results_markdown
+        );
+        setMarkdownToRenderOnLoad(newMarkdown);
+      }
+      setReadyForComponentsToDisplay(true);
+    },
+    [interpolateNavigationString]
+  );
+
   const setConfigsIfDesiredSchemaFile = useCallback(
     // eslint-disable-next-line sonarjs/cognitive-complexity
     (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
-      const processLoadResult = (result: any) => {
-        setFormData(result.task_data);
-        if (result.rendered_results_markdown) {
-          const newMarkdown = FormattingService.checkForSpiffFormats(
-            result.rendered_results_markdown
-          );
-          setMarkdownToRenderOnLoad(newMarkdown);
-        }
-        setReadyForComponentsToDisplay(true);
-      };
-
       if (
         extensionUiSchemaFile &&
         (extensionUiSchemaFile as ProcessFile).file_contents
@@ -109,7 +144,8 @@ export default function Extension({ displayErrors = true }: OwnProps) {
             postBody.ui_schema_action = pageDefinition.on_load;
             HttpService.makeCallToBackend({
               path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
-              successCallback: processLoadResult,
+              successCallback: (result: any) =>
+                processLoadResult(result, pageDefinition),
               httpMethod: 'POST',
               postBody,
             });
@@ -124,6 +160,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
       params.page_identifier,
       searchParams,
       filesByName,
+      processLoadResult,
     ]
   );
 
@@ -149,28 +186,6 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     targetUris.extensionListPath,
     targetUris.extensionPath,
   ]);
-
-  const interpolateNavigationString = (
-    navigationString: string,
-    baseData: any
-  ) => {
-    let isValid = true;
-    const data = { backend_base_url: BACKEND_BASE_URL, ...baseData };
-    const optionString = navigationString.replace(/{(\w+)}/g, (_, k) => {
-      const value = data[k];
-      if (value === undefined) {
-        isValid = false;
-        addError({
-          message: `Could not find a value for ${k} in form data.`,
-        });
-      }
-      return value;
-    });
-    if (!isValid) {
-      return null;
-    }
-    return optionString;
-  };
 
   const processSubmitResult = (result: any) => {
     if (
