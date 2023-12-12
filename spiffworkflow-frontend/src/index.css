@@ -922,35 +922,3 @@ div.onboarding {
   float: right; /* Floats the keys to the right */
   text-align: right; /* Aligns text to the right within the container */
 }
-
-.numeric--range-field-wrapper input {
-  width: auto;
-}
-
-.numeric--range-field-inputs {
-  margin: 0.33rem 0 0 0;
-  display: flex;
-  align-items: center;
-}
-
-.numeric--range-field-separator {
-  width: 20px;
-  height: 1px;
-  background-color: #000;
-  text-align: center;
-}
-
-#numeric--range-field-desc-text {
-  font-size: 13px;
-}
-
-#numeric--range-field-help-text {
-  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
-  line-height: var(--cds-helper-text-01-line-height, 1.33333);
-  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
-  z-index: 0;
-  color: var(--cds-text-secondary, #525252);
-  inline-size: 100%;
-  margin-block-start: 0.25rem;
-  opacity: 1;
-}

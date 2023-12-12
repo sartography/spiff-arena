@@ -204,7 +204,7 @@ export default function TaskShow() {
     }
     const queryParams = '';
 
-    setFormButtonsDisabled(true);
+    // setFormButtonsDisabled(true);
     removeError();
     delete dataToSubmit.isManualTask;
 
@@ -212,15 +212,15 @@ export default function TaskShow() {
     // so we convert undefined values to null recursively so that we can unset values in form fields
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
 
-    HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
-      successCallback: processSubmitResult,
-      failureCallback: (error: any) => {
-        addError(error);
-      },
-      httpMethod: 'PUT',
-      postBody: dataToSubmit,
-    });
+    // HttpService.makeCallToBackend({
+    //   path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
+    //   successCallback: processSubmitResult,
+    //   failureCallback: (error: any) => {
+    //     addError(error);
+    //   },
+    //   httpMethod: 'PUT',
+    //   postBody: dataToSubmit,
+    // });
   };
 
   const handleSignalSubmit = (event: EventDefinition) => {

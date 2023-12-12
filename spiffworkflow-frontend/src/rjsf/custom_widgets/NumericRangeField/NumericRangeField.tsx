@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
-import { FieldProps } from '@rjsf/utils';
+import {
+  descriptionId,
+  FieldProps,
+  getTemplate,
+  getUiOptions,
+} from '@rjsf/utils';
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function NumericRangeField({
   id,
-  value,
   schema,
   uiSchema,
+  idSchema,
   disabled,
   readonly,
   onChange,
@@ -15,138 +20,106 @@ export default function NumericRangeField({
   label,
   rawErrors = [],
   formData,
+  registry,
+  errorSchema = {},
+  ...args
 }: FieldProps) {
-  const commonAttributes = getCommonAttributes(
-    label,
-    schema,
-    uiSchema,
-    rawErrors
-  );
-
-  let invalid = false;
-  let errorMessageForField = null;
-
-  let labelToUse = label;
-  if (uiSchema && uiSchema['ui:title']) {
-    labelToUse = uiSchema['ui:title'];
-  } else if (schema && schema.title) {
-    labelToUse = schema.title;
-  }
-
-  let helperText = null;
-  if (uiSchema && uiSchema['ui:help']) {
-    helperText = uiSchema['ui:help'];
-  }
-
-  if (!invalid && rawErrors && rawErrors.length > 0) {
-    invalid = true;
-    if ('validationErrorMessage' in schema) {
-      errorMessageForField = (schema as any).validationErrorMessage;
-    } else {
-      errorMessageForField = `${(labelToUse || '').replace(/\*$/, '')} ${
-        rawErrors[0]
-      }`;
-    }
-  }
-
   const identifierToUse = Object.keys(
     schema.properties || { numericRange: {} }
   )[0];
 
-  const [state, setState] = useState(
-    formData || {
-      [identifierToUse]: {
-        min: 0,
-        max: 0,
-      },
-    }
+  // console.log('errorSchema', errorSchema);
+
+  const additionalErrors: any = rawErrors;
+  // if (identifierToUse in errorSchema) {
+  //   if (errorSchema[identifierToUse]?.min?.__errors) {
+  //     additionalErrors = additionalErrors.concat(
+  //       errorSchema[identifierToUse]?.min?.__errors || []
+  //     );
+  //   }
+  //   if (errorSchema[identifierToUse]?.max?.__errors) {
+  //     additionalErrors = additionalErrors.concat(
+  //       errorSchema[identifierToUse]?.max?.__errors || []
+  //     );
+  //   }
+  // }
+  console.log('additionalErrors', additionalErrors);
+  const commonAttributes = getCommonAttributes(
+    label,
+    schema,
+    uiSchema,
+    additionalErrors
   );
 
-  const formatNumberString = (value: string): string => {
-    if (value) {
-      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const description = schema?.description || uiSchema?.['ui:description'];
+
+  const uiOptions = getUiOptions(uiSchema || {});
+  const DescriptionFieldTemplate = getTemplate(
+    'DescriptionFieldTemplate',
+    registry,
+    uiOptions
+  );
+
+  const formatNumberString = (numberString: string): string => {
+    if (numberString) {
+      return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
     return '0';
   };
 
-  const parseNumberString = (value: string) => Number(value.replace(/,/g, ''));
+  const parseNumberString = (numberString: string) =>
+    Number(numberString.replace(/,/g, ''));
 
-  const onChangeLocal = (nameToChange: any) => {
-    return (event: any) => {
-      event.preventDefault();
-      const numberValue = parseNumberString(event.target.value);
-      if (!disabled && !readonly) {
-        if (
-          numberValue > state[identifierToUse].max &&
-          nameToChange === 'min'
-        ) {
-          setState({
-            ...state,
-            [identifierToUse]: {
-              min: state[identifierToUse].max,
-              max: numberValue,
-            },
-          });
-          onChange({
-            ...state,
-            [identifierToUse]: {
-              min: state[identifierToUse].max,
-              max: numberValue,
-            },
-          });
-        } else if (
-          numberValue < state[identifierToUse].min &&
-          nameToChange === 'max'
-        ) {
-          setState({
-            ...state,
-            [identifierToUse]: {
-              max: state[identifierToUse].min,
-              min: numberValue,
-            },
-          });
-          onChange({
-            ...state,
-            [identifierToUse]: {
-              max: state[identifierToUse].min,
-              min: numberValue,
-            },
-          });
-        } else {
-          setState({
-            ...state,
-            [identifierToUse]: {
-              ...state[identifierToUse],
-              [nameToChange]: numberValue,
-            },
-          });
-          onChange({
-            ...state,
-            [identifierToUse]: {
-              ...state[identifierToUse],
-              [nameToChange]: numberValue,
-            },
-          });
-        }
+  // create two number inputs for min and max compensation
+  const { min, max } = formData
+    ? formData[identifierToUse]
+    : { min: 0, max: 0 };
+
+  const maxNumber = 999_999_999_999;
+
+  const onChangeLocal = (nameToChange: any, event: any) => {
+    event.preventDefault();
+    const numberValue = parseNumberString(event.target.value);
+    if (numberValue > maxNumber) {
+      return;
+    }
+    if (!disabled && !readonly) {
+      if (nameToChange === 'min' && numberValue > max) {
+        onChange({
+          ...(formData || {}),
+          [identifierToUse]: {
+            min: numberValue,
+            max: numberValue,
+          },
+        });
+      } else {
+        onChange({
+          ...(formData || {}),
+          [identifierToUse]: {
+            ...{ max, min },
+            [nameToChange]: numberValue,
+          },
+        });
       }
-    };
+    }
   };
 
-  const { min, max } = state[identifierToUse];
-  // create two number inputs for min and max compensation
-
-  useEffect(() => {
-    console.log('formData', formData);
-  }, [formData]);
+  // console.log('commonAttributes', commonAttributes);
 
   return (
     <div className="numeric--range-field-wrapper">
       <div className="numeric--range-field-label">
         <h5>{commonAttributes.label}</h5>
-        {uiSchema?.['ui:description'] && (
-          <p id="numeric--range-field-desc-text">
-            {uiSchema?.['ui:description']}
-          </p>
+        {description && (
+          <div className="markdown-field-desc-text">
+            <DescriptionFieldTemplate
+              id={descriptionId(idSchema)}
+              description={description}
+              schema={schema}
+              uiSchema={uiSchema}
+              registry={registry}
+            />
+          </div>
         )}
       </div>
       <div className="numeric--range-field-inputs">
@@ -156,28 +129,32 @@ export default function NumericRangeField({
           disabled={disabled}
           readonly={readonly}
           value={formatNumberString(min)}
-          onChange={onChangeLocal('min')}
+          onChange={(values: any) => {
+            onChangeLocal('min', values);
+          }}
           defaultValue="0"
-          hideSteppers
-          // helperText={helperText}
+          autofocus={autofocus}
         />
-        {/* <div className="numeric--range-field-separator"></div> */}
         <TextInput
           id={`${id}-max`}
           labelText={`Maximum ${schema.title || ''}`}
           disabled={disabled}
           readonly={readonly}
           value={formatNumberString(max)}
-          onChange={onChangeLocal('max')}
+          onChange={(values: any) => onChangeLocal('max', values)}
           defaultValue="0"
-          hideSteppers
-          // helperText={helperText}
         />
       </div>
-      {errorMessageForField && (
-        <div className={`${id}-error`}>{errorMessageForField}</div>
+      {commonAttributes.errorMessageForField && (
+        <div className={`${id}-error`}>
+          {commonAttributes.errorMessageForField}
+        </div>
       )}
-      {helperText && <p id="numeric--range-field-help-text">{helperText}</p>}
+      {commonAttributes.helperText && (
+        <p className="numeric--range-field-help-text">
+          {commonAttributes.helperText}
+        </p>
+      )}
     </div>
   );
 }
