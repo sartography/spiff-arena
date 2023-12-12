@@ -23,7 +23,7 @@ import { getCommonAttributes } from '../../helpers';
 //
 //  Example uiSchema:
 //    "compensation": {
-//      "ui:field": "numeric_range",
+//      "ui:field": "numeric-range",
 //    }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity

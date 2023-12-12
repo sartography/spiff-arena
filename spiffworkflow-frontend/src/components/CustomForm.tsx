@@ -41,7 +41,7 @@ export default function CustomForm({
 
   // set in uiSchema using the "ui:field" key for a property
   const fields: RegistryFieldsType = {
-    numeric_range: NumericRangeField,
+    'numeric-range': NumericRangeField,
   };
 
   const formatDateString = (dateString?: string) => {
@@ -248,7 +248,7 @@ export default function CustomForm({
         if (
           currentUiSchema &&
           'ui:field' in currentUiSchema &&
-          currentUiSchema['ui:field'] === 'numeric_range'
+          currentUiSchema['ui:field'] === 'numeric-range'
         ) {
           checkNumericRange(
             formDataToCheck,

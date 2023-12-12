@@ -226,3 +226,52 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 "ui:widget": "markdown"
 ```
 ![rsjf markdown](images/rsjf_markdown.png)
+
+### Numeric Range Field
+
+#### Overview
+
+The `NumericRangeField` component is a new feature in the `spiffworkflow-frontend` that allows users to input numeric ranges. This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
+
+#### JSON Schema Example
+
+Below is an example JSON schema that includes the numeric range field:
+
+```json
+{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "numericRange": {
+      "type": "object",
+      "title": "Numeric Range",
+      "properties": {
+        "min": {
+          "type": "number",
+          "title": "Minimum Value"
+        },
+        "max": {
+          "type": "number",
+          "title": "Maximum Value"
+        }
+      }
+    }
+  }
+}
+```
+
+This schema defines a numeric range object with `min` and `max` properties, both of which are required.
+
+#### Ui Schema Example
+
+```json
+{
+    "numericRange": {
+        "ui:field": "numeric-range"
+    }
+}
+```
+
+#### Validation
+
+This will automatically validate that the max value cannot be less than the min value.
