@@ -181,16 +181,20 @@ export default function CustomForm({
       );
     }
   };
-  //
-  // const checkNumericRange = (
-  //   formDataToCheck: any,
-  //   propertyKey: string,
-  //   errors: any,
-  //   jsonSchema: any,
-  //   uiSchemaPassedIn?: any
-  // ) => {
-  // formData
-  // };
+
+  const checkNumericRange = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    _jsonSchema: any,
+    _uiSchemaPassedIn?: any
+  ) => {
+    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+      errors[propertyKey].addError(
+        `must have min less than max on numeric range`
+      );
+    }
+  };
 
   const checkFieldsWithCustomValidations = (
     jsonSchema: any,
@@ -239,19 +243,19 @@ export default function CustomForm({
           );
         }
 
-        // if (
-        //   currentUiSchema &&
-        //   'ui:field' in currentUiSchema &&
-        //   currentUiSchema['ui:field'] === 'numeric_range'
-        // ) {
-        //   checkNumericRange(
-        //     formDataToCheck,
-        //     propertyKey,
-        //     errors,
-        //     jsonSchemaToUse,
-        //     currentUiSchema
-        //   );
-        // }
+        if (
+          currentUiSchema &&
+          'ui:field' in currentUiSchema &&
+          currentUiSchema['ui:field'] === 'numeric_range'
+        ) {
+          checkNumericRange(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse,
+            currentUiSchema
+          );
+        }
 
         // recurse through all nested properties as well
         let formDataToSend = formDataToCheck[propertyKey];

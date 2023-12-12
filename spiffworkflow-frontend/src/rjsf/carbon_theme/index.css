@@ -97,3 +97,10 @@
   margin-block-start: 0.25rem;
   opacity: 1;
 }
+
+.rjsf .error-message {
+  color: var(--cds-text-error);
+  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
+  line-height: var(--cds-helper-text-01-line-height, 1.33333);
+  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
+}

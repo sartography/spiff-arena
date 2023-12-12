@@ -21,34 +21,12 @@ export default function NumericRangeField({
   rawErrors = [],
   formData,
   registry,
-  errorSchema = {},
-  ...args
 }: FieldProps) {
-  const identifierToUse = Object.keys(
-    schema.properties || { numericRange: {} }
-  )[0];
-
-  // console.log('errorSchema', errorSchema);
-
-  const additionalErrors: any = rawErrors;
-  // if (identifierToUse in errorSchema) {
-  //   if (errorSchema[identifierToUse]?.min?.__errors) {
-  //     additionalErrors = additionalErrors.concat(
-  //       errorSchema[identifierToUse]?.min?.__errors || []
-  //     );
-  //   }
-  //   if (errorSchema[identifierToUse]?.max?.__errors) {
-  //     additionalErrors = additionalErrors.concat(
-  //       errorSchema[identifierToUse]?.max?.__errors || []
-  //     );
-  //   }
-  // }
-  console.log('additionalErrors', additionalErrors);
   const commonAttributes = getCommonAttributes(
     label,
     schema,
     uiSchema,
-    additionalErrors
+    rawErrors
   );
 
   const description = schema?.description || uiSchema?.['ui:description'];
@@ -71,9 +49,8 @@ export default function NumericRangeField({
     Number(numberString.replace(/,/g, ''));
 
   // create two number inputs for min and max compensation
-  const { min, max } = formData
-    ? formData[identifierToUse]
-    : { min: 0, max: 0 };
+  const min = formData.min || 0;
+  const max = formData.max || 0;
 
   const maxNumber = 999_999_999_999;
 
@@ -87,24 +64,18 @@ export default function NumericRangeField({
       if (nameToChange === 'min' && numberValue > max) {
         onChange({
           ...(formData || {}),
-          [identifierToUse]: {
-            min: numberValue,
-            max: numberValue,
-          },
+          min: numberValue,
+          max: numberValue,
         });
       } else {
         onChange({
           ...(formData || {}),
-          [identifierToUse]: {
-            ...{ max, min },
-            [nameToChange]: numberValue,
-          },
+          ...{ max, min },
+          [nameToChange]: numberValue,
         });
       }
     }
   };
-
-  // console.log('commonAttributes', commonAttributes);
 
   return (
     <div className="numeric--range-field-wrapper">
@@ -132,6 +103,7 @@ export default function NumericRangeField({
           onChange={(values: any) => {
             onChangeLocal('min', values);
           }}
+          invalid={commonAttributes.invalid}
           defaultValue="0"
           autofocus={autofocus}
         />
@@ -143,10 +115,11 @@ export default function NumericRangeField({
           value={formatNumberString(max)}
           onChange={(values: any) => onChangeLocal('max', values)}
           defaultValue="0"
+          invalid={commonAttributes.invalid}
         />
       </div>
       {commonAttributes.errorMessageForField && (
-        <div className={`${id}-error`}>
+        <div className="error-message">
           {commonAttributes.errorMessageForField}
         </div>
       )}
