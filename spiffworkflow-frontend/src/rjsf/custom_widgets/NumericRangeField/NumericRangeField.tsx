@@ -7,6 +7,25 @@ import {
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
 
+// Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
+//    compensation":{
+//      "title": "Compensation (yearly), USD",
+//      "type": "object",
+//      "properties": {
+//        "min": {
+//          "type": "number"
+//        },
+//        "max": {
+//          "type": "number"
+//        }
+//      }
+//    }
+//
+//  Example uiSchema:
+//    "compensation": {
+//      "ui:field": "numeric_range",
+//    }
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function NumericRangeField({
   id,
@@ -49,9 +68,12 @@ export default function NumericRangeField({
     Number(numberString.replace(/,/g, ''));
 
   // create two number inputs for min and max compensation
-  const min = formData.min || 0;
-  const max = formData.max || 0;
+  const min = formData?.min || 0;
+  const max = formData?.max || 0;
 
+  // the text input eventually breaks when the number gets too big.
+  // we are not sure what the cut off really is but seems unlikely
+  // people will need to go this high.
   const maxNumber = 999_999_999_999;
 
   const onChangeLocal = (nameToChange: any, event: any) => {

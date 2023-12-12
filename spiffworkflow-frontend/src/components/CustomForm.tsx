@@ -32,12 +32,14 @@ export default function CustomForm({
   children,
   noValidate = false,
 }: OwnProps) {
+  // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: TypeaheadWidget,
   };
 
+  // set in uiSchema using the "ui:field" key for a property
   const fields: RegistryFieldsType = {
     numeric_range: NumericRangeField,
   };
