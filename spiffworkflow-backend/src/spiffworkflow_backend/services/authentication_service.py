@@ -1,12 +1,18 @@
 import base64
 import enum
 import json
+import sys
 import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
-from typing import NotRequired
-from typing import TypedDict
+
+if sys.version_info < (3, 11):
+    from typing_extensions import NotRequired
+    from typing_extensions import TypedDict
+else:
+    from typing import NotRequired
+    from typing import TypedDict
 
 import jwt
 import requests
