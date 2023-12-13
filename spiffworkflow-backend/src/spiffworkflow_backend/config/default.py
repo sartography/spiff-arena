@@ -106,6 +106,15 @@ else:
         SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = url_config
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q")
+
+        # comma-separated list of client ids that can be successfully validated against.
+        # useful for api users that will login to a different client on the same realm but from something external to backend.
+        # Example:
+        #       client-A is configured as the main client id in backend
+        #       client-B is for api users who will authenticate directly with keycloak
+        #       if client-B is added to this list, then an api user can auth with keycloak
+        #           and use that token successfully with backend
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS")
     else:
         SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = [
             {
@@ -114,6 +123,7 @@ else:
                 "uri": "http://localhost:7002/realms/spiffworkflow",
                 "client_id": "spiffworkflow-backend",
                 "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
+                "additional_valid_client_ids": None,
             }
         ]
 

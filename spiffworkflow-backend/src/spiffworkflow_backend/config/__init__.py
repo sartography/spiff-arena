@@ -234,6 +234,7 @@ def setup_config(app: Flask) -> None:
                 "uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"),
                 "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
                 "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
+                "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
             }
         ]
 
