@@ -5,6 +5,7 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from typing import NotRequired
 from typing import TypedDict
 
 import jwt
@@ -36,6 +37,7 @@ class AuthenticationOptionForApi(TypedDict):
     identifier: str
     label: str
     uri: str
+    additional_valid_client_ids: NotRequired[str]
 
 
 class AuthenticationOption(AuthenticationOptionForApi):
@@ -164,6 +166,24 @@ class AuthenticationService:
         return auth_token_object
 
     @classmethod
+    def is_valid_azp(cls, authentication_identifier: str, azp: str | None) -> bool:
+        # not all open id token include an azp so only check if present
+        if azp is None:
+            return True
+
+        valid_client_ids = [cls.client_id(authentication_identifier), "account"]
+        if (
+            "additional_valid_client_ids" in cls.authentication_option_for_identifier(authentication_identifier)
+            and cls.authentication_option_for_identifier(authentication_identifier)["additional_valid_client_ids"] is not None
+        ):
+            additional_valid_client_ids = cls.authentication_option_for_identifier(authentication_identifier)[
+                "additional_valid_client_ids"
+            ].split(",")
+            additional_valid_client_ids = [value.strip() for value in additional_valid_client_ids]
+            valid_client_ids = valid_client_ids + additional_valid_client_ids
+        return azp in valid_client_ids
+
+    @classmethod
     def validate_id_or_access_token(cls, token: str, authentication_identifier: str) -> bool:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
@@ -198,10 +218,7 @@ class AuthenticationService:
                 f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
-        elif azp and azp not in (
-            cls.client_id(authentication_identifier),
-            "account",
-        ):
+        elif not cls.is_valid_azp(authentication_identifier, azp):
             current_app.logger.error(
                 f"TOKEN INVALID because azp '{azp}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
