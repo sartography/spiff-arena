@@ -45,7 +45,7 @@ class CatchingEvent(TaskSpec):
         definition, at which point we can update our task's state.
         """
         self.event_definition.catch(my_task, event)
-        my_task.last_update_time = time.time()
+        my_task.last_state_change = time.time()
         my_task._set_state(TaskState.WAITING)
 
     def _update_hook(self, my_task):
@@ -57,15 +57,16 @@ class CatchingEvent(TaskSpec):
 
         if self.event_definition.has_fired(my_task):
             return True
-        elif isinstance(self.event_definition, CycleTimerEventDefinition):
-            if self.event_definition.cycle_complete(my_task):
-                for output in self.outputs:
-                    child = my_task._add_child(output, TaskState.READY)
-                    child.task_spec._predict(child, mask=TaskState.READY|TaskState.PREDICTED_MASK)
-                if my_task.state != TaskState.WAITING:
-                    my_task._set_state(TaskState.WAITING)
         elif my_task.state != TaskState.WAITING:
             my_task._set_state(TaskState.WAITING)
+
+        if isinstance(self.event_definition, CycleTimerEventDefinition):
+            if self.event_definition.cycle_complete(my_task):
+                for output in self.outputs:
+                    child = my_task._add_child(output, TaskState.FUTURE)
+                    child.task_spec._predict(child, mask=TaskState.NOT_FINISHED_MASK)
+                    child.task_spec._update(child)
+
 
     def _run_hook(self, my_task):
 
