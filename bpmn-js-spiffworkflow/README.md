@@ -4,8 +4,6 @@
 # SpiffWorkflow Extensions for BPMN.js
 This package provides extensions that can be applied to BPMN.js that will enable some important features of [SpiffWorkflow](https://github.com/sartography/SpiffWorkflow) - the Python BPMN Library for executing business processes.  See below for more information.
 
-**IMPORTANT**:  This is a work in progress, and is not yet released.
-
 # About
 
 This extension creates a BPMN editor with all the capabilities of [BPMN.js](https://github.com/bpmn-io/bpmn-js) and the following additions / modifications:
@@ -96,10 +94,3 @@ Below is a table of all the events that are sent and accepted:
 | spff.dmn\_files.requested      | request of list of local dmn files.                              |         |                      |                                                                          |
 | spiff.json\_files.returned     | Return a list of available json files                            | Recieved | options              | \[{lable:'My Label', value:'1'}\]                                        |
 | spff.dmn\_files.returned       | Return a list of available dmn files.                            | Recieved | options              | \[{lable:'My Label', value:'1'}\]                                        |
-
-
-
-
-
-## License
-MIT
