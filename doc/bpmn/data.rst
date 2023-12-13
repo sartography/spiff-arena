@@ -28,7 +28,7 @@ Data Objects
 When a Data Output association (a line) is drawn from a task to a Data Object Reference, the value is copied
 from the task data to the workflow data and removed from the task.  If a Data Input Association is created from
 a Data Object Reference, the value is temporarily copied into the task data while the task is being executed,
-and immediate removed afterwards.
+and immediately removed afterwards.
 
 This allows sensitive data to be removed from individual tasks (in our example, the customer's credit card
 number).  It can also be used to prevent large objects from being repeatedly copied from task to task.
@@ -78,7 +78,7 @@ name and quantity.  We can add corresponding Data Outputs for those.
    Data Outputs in a Call Activity
 
 If you use this version of the Call Activity and choose a product that has customizations, when you inspect the data
-after the Call Activity completes, you'll see that the cutomizations have been removed.  We won't continue to use this
+after the Call Activity completes, you'll see that the customizations have been removed.  We won't continue to use this
 version of the Call Activity, because we want to preserve all the data.
 
 .. note::
