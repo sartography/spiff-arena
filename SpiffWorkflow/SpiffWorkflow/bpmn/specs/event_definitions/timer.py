@@ -1,12 +1,12 @@
 import re
 from datetime import datetime, timedelta, timezone
 from calendar import monthrange
-from time import timezone as tzoffset, altzone as dstoffset, daylight as isdst
+from time import timezone as tzoffset, altzone as dstoffset, struct_time, localtime
 
 from SpiffWorkflow.bpmn.event import PendingBpmnEvent
 from .base import EventDefinition
 
-seconds_from_utc = dstoffset if isdst else tzoffset
+seconds_from_utc = dstoffset if struct_time(localtime()).tm_isdst else tzoffset
 LOCALTZ = timezone(timedelta(seconds=-1 * seconds_from_utc))
 
 class TimerEventDefinition(EventDefinition):
@@ -37,11 +37,14 @@ class TimerEventDefinition(EventDefinition):
         months += years * 12
 
         for idx in range(int(months)):
-            year, month = start.year + idx // 12, start.month + idx % 12
+            year = start.year + (start.month + idx - 1) // 12
+            month = (start.month + idx) % 12 or 12
             days += monthrange(year, month)[1]
 
-        year, month = start.year + months // 12, start.month + months % 12
+        year = start.year + (start.month + months - 1) // 12
+        month = (start.month + months) % 12 or 12
         days += (months - int(months)) * monthrange(year, month)[1]
+
         parsed_duration['days'] = days
         return timedelta(**parsed_duration)
 
@@ -53,12 +56,13 @@ class TimerEventDefinition(EventDefinition):
 
         for idx in range(1, int(months) + 1):
             year = end.year - (1 + (idx - end.month) // 12)
-            month = 1 + (end.month - idx - 1) % 12
+            month = (end.month - idx) % 12 or 12
             days += monthrange(year, month)[1]
 
-        days += (months - int(months)) * monthrange(
-            end.year - (1 + (int(months)- end.month) // 12),
-            1 + (end.month - months - 1) % 12)[1]
+        year = end.year - (1 + (months - end.month) // 12)
+        month = (end.month - months) % 12 or 12
+        days += (months - int(months)) * monthrange(year, month)[1]
+
         parsed_duration['days'] = days
         return timedelta(**parsed_duration)
 
@@ -125,9 +129,9 @@ class TimerEventDefinition(EventDefinition):
             duration = TimerEventDefinition.get_timedelta_from_end(start_or_duration, end_or_duration)
             start = end_or_duration - duration
         elif end_or_duration is None:
-            # Just an interval duration, assume a start time of now
-            start = datetime.now(timezone.utc)
-            duration = TimeDateEventDefinition.get_timedelta_from_start(start_or_duration, start)
+            # Just an interval duration, assume a start time of now + duration
+            duration = TimeDateEventDefinition.get_timedelta_from_start(start_or_duration)
+            start = datetime.now(timezone.utc) + duration
         else:
             raise Exception("Invalid recurring interval")
         return cycles, start, duration
