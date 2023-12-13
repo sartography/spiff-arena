@@ -21,17 +21,15 @@ import {
  * @returns {string|null|*}
  */
 export function SpiffExtensionTextInput(props) {
-  const element = props.element;
-  const commandStack = props.commandStack, moddle = props.moddle;
-  const name = props.name, label = props.label, description = props.description;
+  const { element, commandStack, moddle, name, label, description, businessObject } = props;
   const debounce = useService('debounceInput');
 
   const getValue = () => {
-    return getExtensionValue(element, name)
+    return getExtensionValue(businessObject, name)
   }
 
   const setValue = value => {
-    setExtensionValue(element, name, value, moddle, commandStack)
+    setExtensionValue(element, name, value, moddle, commandStack, businessObject)
   };
 
   return <TextFieldEntry

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1qnx3d3" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="Process_16xfaqc" isExecutable="true" camunda:versionTag="1">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0vt1twq</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_0yxpeto">
+      <bpmn:incoming>Flow_1udyjxo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0vt1twq" sourceRef="StartEvent_1" targetRef="my_user_task" />
+    <bpmn:sequenceFlow id="Flow_1udyjxo" sourceRef="my_user_task" targetRef="Event_0yxpeto" />
+    <bpmn:userTask id="my_user_task" name="Complete Web Form">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField type="boolean">
+            <camunda:properties>
+              <camunda:property />
+            </camunda:properties>
+            <camunda:validation>
+              <camunda:constraint />
+            </camunda:validation>
+          </camunda:formField>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0vt1twq</bpmn:incoming>
+      <bpmn:outgoing>Flow_1udyjxo</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1nwrgyb">
+        <bpmn:targetRef>DataStoreReference_0eqeh4p</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:userTask>
+    <bpmn:dataStoreReference id="DataStoreReference_0eqeh4p" dataStoreRef="countries" />
+  </bpmn:process>
+  <bpmn:dataStore id="countries" name="DataStore_countries" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_16xfaqc">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="142" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0yxpeto_di" bpmnElement="Event_0yxpeto">
+        <dc:Bounds x="422" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0096bsk_di" bpmnElement="my_user_task">
+        <dc:Bounds x="260" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_0eqeh4p_di" bpmnElement="DataStoreReference_0eqeh4p">
+        <dc:Bounds x="345" y="265" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0vt1twq_di" bpmnElement="Flow_0vt1twq">
+        <di:waypoint x="178" y="100" />
+        <di:waypoint x="260" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1udyjxo_di" bpmnElement="Flow_1udyjxo">
+        <di:waypoint x="360" y="100" />
+        <di:waypoint x="422" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1nwrgyb_di" bpmnElement="DataOutputAssociation_1nwrgyb">
+        <di:waypoint x="323" y="140" />
+        <di:waypoint x="364" y="265" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

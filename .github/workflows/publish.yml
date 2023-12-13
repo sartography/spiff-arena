@@ -13,12 +13,12 @@ jobs:
     steps:
 
       - uses: actions/checkout@v4 #Checkout Repo
-      - uses: actions/setup-node@v3 #Setup Node
+      - uses: actions/setup-node@v4 #Setup Node
         with:
           node-version: 18
       - run: npm install
       - run: npm test
-      - uses: JS-DevTools/npm-publish@v2
+      - uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public

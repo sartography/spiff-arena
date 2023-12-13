@@ -5,7 +5,7 @@
  */
 
 export function findDataObjects(parent, dataObjects) {
-  if (typeof(dataObjects) === 'undefined')
+  if (typeof (dataObjects) === 'undefined')
     dataObjects = [];
   let process;
   if (!parent) {
@@ -18,7 +18,7 @@ export function findDataObjects(parent, dataObjects) {
     if (process.$type === 'bpmn:SubProcess')
       findDataObjects(process.$parent, dataObjects);
   }
-  if (typeof(process.flowElements) !== 'undefined') {
+  if (typeof (process.flowElements) !== 'undefined') {
     for (const element of process.flowElements) {
       if (element.$type === 'bpmn:DataObject')
         dataObjects.push(element);
@@ -66,5 +66,21 @@ export function idToHumanReadableName(id) {
 
   function capitalize(word) {
     return word.charAt(0).toUpperCase() + word.substring(1);
+  }
+}
+
+export function updateDataObjectReferencesName(parent, nameValue, dataObjectId, commandStack) {
+  const references = findDataObjectReferenceShapes(parent.children, dataObjectId);
+  for (const ref of references) {
+    const stateName = ref.businessObject.dataState && ref.businessObject.dataState.name ? ref.businessObject.dataState.name : '';
+    const newName = stateName ? `${nameValue} [${stateName}]` : nameValue;
+    commandStack.execute('element.updateProperties', {
+      element: ref,
+      moddleElement: ref.businessObject,
+      properties: {
+        name: newName,
+      },
+      changed: [ref],
+    });
   }
 }

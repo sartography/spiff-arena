@@ -10,7 +10,7 @@ import {
   idToHumanReadableName,
 } from '../../app/spiffworkflow/DataObject/DataObjectHelpers';
 
-describe('DataObject Interceptor', function() {
+describe('DataObject Interceptor', function () {
 
   let xml = require('./bpmn/empty_diagram.bpmn').default;
 
@@ -23,7 +23,7 @@ describe('DataObject Interceptor', function() {
     ]
   }));
 
-  it('New Data Object References should create a data object if none exist.', inject(function(canvas, modeling) {
+  it('New Data Object References should create a data object if none exist.', inject(function (canvas, modeling) {
 
     // IF - a new dataObjectReference is created
     let rootShape = canvas.getRootElement();
@@ -37,7 +37,7 @@ describe('DataObject Interceptor', function() {
 
   }));
 
-  it('New Data Object References should connect to the first available data Object if it exists', inject(function(canvas, modeling) {
+  it('New Data Object References should connect to the first available data Object if it exists', inject(function (canvas, modeling) {
 
     // IF - two dataObjectReferences are created
     let rootShape = canvas.getRootElement();
@@ -54,7 +54,7 @@ describe('DataObject Interceptor', function() {
 
   }));
 
-  it('Deleting a data object reference does not delete the data object, unless it is the last reference', inject(function(canvas, modeling) {
+  it('Deleting a data object reference does not delete the data object, unless it is the last reference', inject(function (canvas, modeling) {
 
     // IF - two dataObjectReferences are created
     let rootShape = canvas.getRootElement();
@@ -71,7 +71,7 @@ describe('DataObject Interceptor', function() {
     expect(dataObjects.length).to.equal(1);
   }));
 
-  it('Deleting all the data references will also delete the data object', inject(function(canvas, modeling) {
+  it('Deleting all the data references will also delete the data object', inject(function (canvas, modeling) {
 
     // IF - two dataObjectReferences are created
     let rootShape = canvas.getRootElement();
@@ -89,7 +89,7 @@ describe('DataObject Interceptor', function() {
     expect(dataObjects.length).to.equal(0);
   }));
 
-  it('Creating a new Reference will update the name to match the DataObject', inject(function(canvas, modeling) {
+  it('Creating a new Reference will update the name to match the DataObject', inject(function (canvas, modeling) {
 
     // IF - a Data Reference Exists
     let rootShape = canvas.getRootElement();
@@ -101,7 +101,7 @@ describe('DataObject Interceptor', function() {
     expect(dataObjectRefShape1.businessObject.name).to.equal(human_readable_name);
   }));
 
-  it('should allow you to add a data object to a subprocess', inject(function(canvas, modeling, elementRegistry) {
+  it('should allow you to add a data object to a subprocess', inject(function (canvas, modeling, elementRegistry) {
 
     // IF - A data object reference is added to a sup-process
     let subProcessShape = elementRegistry.get('my_subprocess');
@@ -117,7 +117,7 @@ describe('DataObject Interceptor', function() {
     expect(dataObjects.length).to.equal(1);
   }));
 
-  it('Data objects in a process should be visible in a subprocess', inject(function(canvas, modeling, elementRegistry) {
+  it('Data objects in a process should be visible in a subprocess', inject(function (canvas, modeling, elementRegistry) {
 
     let subProcessShape = elementRegistry.get('my_subprocess');
     let subProcess = subProcessShape.businessObject;
@@ -132,7 +132,7 @@ describe('DataObject Interceptor', function() {
     expect(dataObjects.length).to.equal(1);
   }));
 
-  it('Data objects in a subprocess should not be visible in a process', inject(function(canvas, modeling, elementRegistry) {
+  it('Data objects in a subprocess should not be visible in a process', inject(function (canvas, modeling, elementRegistry) {
 
     let subProcessShape = elementRegistry.get('my_subprocess');
     let subProcess = subProcessShape.businessObject;
@@ -147,7 +147,7 @@ describe('DataObject Interceptor', function() {
     expect(dataObjects.length).to.equal(0);
   }));
 
-  it('References inside subprocesses should be visible in a process', inject(function(canvas, modeling, elementRegistry) {
+  it('References inside subprocesses should be visible in a process', inject(function (canvas, modeling, elementRegistry) {
 
     let rootShape = canvas.getRootElement();
     const refOne = modeling.createShape({ type: 'bpmn:DataObjectReference' },

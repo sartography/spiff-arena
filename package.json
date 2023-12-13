@@ -8,8 +8,8 @@
     "build:watch": "webpack --watch",
     "dev": "run-p build:watch serve",
     "serve": "sirv public --dev",
-    "lint": "./node_modules/.bin/eslint src *.js",
-    "lint:fix": "./node_modules/.bin/eslint --fix src *.js",
+    "lint": "./node_modules/.bin/eslint app *.js",
+    "lint:fix": "./node_modules/.bin/eslint --fix app *.js",
     "start": "run-s build serve",
     "test": "karma start karma.conf.js"
   },

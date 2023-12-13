@@ -38,7 +38,7 @@
       <bpmn:script>elizabeth="awesome"</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:dataObject id="my_other_data_object" />
-    <bpmn:dataObject id="my_third_data_object" />
+    <bpmn:dataObject id="my_third_data_object" name="D3" />
     <bpmn:dataObjectReference id="my_data_ref_1" name="my_data_object" dataObjectRef="my_data_object" />
     <bpmn:sequenceFlow id="Flow_132laxn" sourceRef="task_confirm" targetRef="business_rule_task" />
     <bpmn:userTask id="task_confirm" name="confirm contentment">
@@ -61,6 +61,11 @@
         </camunda:properties>
       </bpmn:extensionElements>
     </bpmn:dataObjectReference>
+    
+    <bpmn:dataObjectReference id="my_data_ref_3" name="my_data_object" dataObjectRef="my_data_object">
+      <bpmn:dataState id="DataState_my_data_ref_3" name="OK" />
+    </bpmn:dataObjectReference>
+
     <bpmn:dataObject id="my_data_object" />
     <bpmn:sequenceFlow id="Flow_1lu1qyz" sourceRef="business_rule_task" targetRef="Event_14wzv4j" />
     <bpmn:businessRuleTask id="business_rule_task">
@@ -114,6 +119,12 @@
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="DataObjectReference_08bm72g_di" bpmnElement="my_data_ref_2">
+        <dc:Bounds x="472" y="265" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="451" y="322" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_08bm73g_di" bpmnElement="my_data_ref_3">
         <dc:Bounds x="472" y="265" width="36" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="451" y="322" width="78" height="14" />

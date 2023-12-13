@@ -33,14 +33,14 @@ const PREFIX = 'spiffworkflow:';
  * @param element
  * @param name
  */
-export function getExtensionValue(element, name) {
+export function getExtensionValue(businessObject, name) {
 
   const useProperties = !name.startsWith(PREFIX);
   let extension;
   if (useProperties) {
-    extension = getExtensionProperty(element, name);
+    extension = getExtensionProperty(businessObject, name);
   } else {
-    extension = getExtension(element, name);
+    extension = getExtension(businessObject, name);
   }
   if (extension) {
     return extension.value;
@@ -48,20 +48,24 @@ export function getExtensionValue(element, name) {
   return '';
 }
 
-export function setExtensionValue(element, name, value, moddle, commandStack) {
+export function setExtensionValue(element, name, value, moddle, commandStack, businessObject) {
 
   const useProperties = !name.startsWith(PREFIX)
-  const { businessObject } = element;
+
+  let businessObjectToUse = businessObject
+  if (!businessObjectToUse) {
+    businessObjectToUse = element.businessObject;
+  }
 
   // Assure we have extensions
-  let extensions = businessObject.extensionElements;
+  let extensions = businessObjectToUse.extensionElements;
   if (!extensions) {
     extensions = moddle.create('bpmn:ExtensionElements');
   }
 
   if (useProperties) {
-    let properties = getExtension(element, SPIFF_PARENT_PROP);
-    let property = getExtensionProperty(element, name);
+    let properties = getExtension(businessObjectToUse, SPIFF_PARENT_PROP);
+    let property = getExtensionProperty(businessObjectToUse, name);
     if (!properties) {
       properties = moddle.create(SPIFF_PARENT_PROP);
       extensions.get('values').push(properties);
@@ -73,7 +77,7 @@ export function setExtensionValue(element, name, value, moddle, commandStack) {
     property.value = value;
     property.name = name;
   } else {
-    let extension = getExtension(element, name);
+    let extension = getExtension(businessObjectToUse, name);
     if (!extension) {
       extension = moddle.create(name);
       extensions.get('values').push(extension)
@@ -83,19 +87,18 @@ export function setExtensionValue(element, name, value, moddle, commandStack) {
 
   commandStack.execute('element.updateModdleProperties', {
     element,
-    moddleElement: businessObject,
+    moddleElement: businessObjectToUse,
     properties: {
       extensionElements: extensions,
     },
   });
 }
 
-function getExtension(element, name) {
-  const bizObj = element.businessObject;
-  if (!bizObj.extensionElements) {
+function getExtension(businessObject, name) {
+  if (!businessObject.extensionElements) {
     return null;
   }
-  const extensionElements = bizObj.extensionElements.get('values');
+  const extensionElements = businessObject.extensionElements.get('values');
   return extensionElements.filter(function (extensionElement) {
     if (extensionElement.$instanceOf(name)) {
       return true;
@@ -104,8 +107,8 @@ function getExtension(element, name) {
 }
 
 
-function getExtensionProperty(element, name) {
-  const parentElement = getExtension(element, SPIFF_PARENT_PROP);
+function getExtensionProperty(businessObject, name) {
+  const parentElement = getExtension(businessObject, SPIFF_PARENT_PROP);
   if (parentElement) {
     return parentElement.get('properties').filter(function (propertyElement) {
       return (

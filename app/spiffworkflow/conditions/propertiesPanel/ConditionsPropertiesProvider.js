@@ -1,7 +1,6 @@
 import { is } from 'bpmn-js/lib/util/ModelUtil';
 import {
-  isTextFieldEntryEdited,
-  TextFieldEntry,
+  TextAreaEntry
 } from '@bpmn-io/properties-panel';
 import { useService } from 'bpmn-js-properties-panel';
 
@@ -18,7 +17,14 @@ export default function ConditionsPropertiesProvider(
     return function pushGroup(groups) {
       if (is(element, 'bpmn:SequenceFlow')) {
         const { source } = element;
-        if (is(source, 'bpmn:ExclusiveGateway')) {
+        if (is(source, 'bpmn:ExclusiveGateway') || is(source, 'bpmn:InclusiveGateway')) {
+          groups.push(
+            createConditionsGroup(element, translate, moddle, commandStack)
+          );
+        }
+      } else if (is(element, 'bpmn:Event')) {
+        const eventDefinitions = element.businessObject.eventDefinitions;
+        if (eventDefinitions.filter(ev => is(ev, 'bpmn:ConditionalEventDefinition')).length > 0) {
           groups.push(
             createConditionsGroup(element, translate, moddle, commandStack)
           );
@@ -73,7 +79,13 @@ function ConditionExpressionTextField(props) {
 
   const debounce = useService('debounceInput');
   const getValue = () => {
-    const { conditionExpression } = element.businessObject;
+    let conditionExpression;
+    if (is(element, 'bpmn:SequenceFlow')) {
+      conditionExpression = element.businessObject.conditionExpression;
+    } else if (is(element, 'bpmn:Event')) {
+      const eventDef = element.businessObject.eventDefinitions.find(ev => is(ev, 'bpmn:ConditionalEventDefinition'));
+      conditionExpression = eventDef.condition;
+    }
     if (conditionExpression) {
       return conditionExpression.body;
     }
@@ -86,11 +98,15 @@ function ConditionExpressionTextField(props) {
       conditionExpressionModdleElement = moddle.create('bpmn:Expression');
     }
     conditionExpressionModdleElement.body = value;
-    element.businessObject.conditionExpression =
-      conditionExpressionModdleElement;
+    if (is(element, 'bpmn:SequenceFlow')) {
+      element.businessObject.conditionExpression = conditionExpressionModdleElement;
+    } else if (is(element, 'bpmn:Event')) {
+      const eventDef = element.businessObject.eventDefinitions.find(ev => is(ev, 'bpmn:ConditionalEventDefinition'));
+      eventDef.condition = conditionExpressionModdleElement;
+    }
   };
 
-  return TextFieldEntry({
+  return TextAreaEntry({
     element,
     id: `the-id`,
     label,

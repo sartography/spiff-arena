@@ -15,7 +15,7 @@ export function SpiffExtensionCheckboxEntry(props) {
   const debounce = useService('debounceInput');
 
   const getValue = () => {
-    return getExtensionValue(element, name)
+    return getExtensionValue(element.businessObject, name)
   }
 
   const setValue = value => {

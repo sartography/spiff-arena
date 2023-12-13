@@ -179,6 +179,15 @@ bpmnModeler.on('spiff.dmn_files.requested', (event) => {
   });
 });
 
+bpmnModeler.on('spiff.data_stores.requested', (event) => {
+  event.eventBus.fire('spiff.data_stores.returned', {
+    options: [
+      { type: 'typeahead', name: 'countries' },
+      { type: 'kkv', name: 'foods' }
+    ],
+  });
+});
+
 // As call activites might refernce processes across the system
 // it should be possible to search for a paticular call activity.
 bpmnModeler.on('spiff.callactivity.search', (event) => {
