@@ -94,6 +94,17 @@
       ]
     },
     {
+      "name": "Category",
+      "superClass": [ "Element" ],
+      "properties": [
+        {
+          "name": "value",
+          "isBody": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
       "name": "SignalButtonLabel",
       "superClass": [ "Element" ],
       "properties": [

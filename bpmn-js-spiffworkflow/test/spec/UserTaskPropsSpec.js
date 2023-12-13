@@ -131,8 +131,8 @@ describe('Properties Panel for User Tasks', function () {
     eventBus.fire('spiff.jsonSchema.update', {
       value: 'new-schema.json',
     });
-    const jsonFile = getExtensionValue(userElement, 'formJsonSchemaFilename');
-    const uiFile = getExtensionValue(userElement, 'formUiSchemaFilename');
+    const jsonFile = getExtensionValue(userElement.businessObject, 'formJsonSchemaFilename');
+    const uiFile = getExtensionValue(userElement.businessObject, 'formUiSchemaFilename');
     expect(jsonFile).to.equal('new-schema.json');
     expect(uiFile).to.equal('new-uischema.json');
 
@@ -155,7 +155,7 @@ describe('Properties Panel for User Tasks', function () {
     const businessObject = getBusinessObject(userElement);
     // The change is reflected in the business object
     let instructions = getExtensionValue(
-      userElement,
+      businessObject,
       'spiffworkflow:InstructionsForEndUser'
     );
     expect(instructions).to.equal('#Hello!');

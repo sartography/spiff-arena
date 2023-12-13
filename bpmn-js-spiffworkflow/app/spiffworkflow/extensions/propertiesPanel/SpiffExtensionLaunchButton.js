@@ -14,7 +14,7 @@ export function SpiffExtensionLaunchButton(props) {
     className: 'spiffworkflow-properties-panel-button',
     id: `launch_editor_button_${name}`,
     onClick: () => {
-      const value = getExtensionValue(element, name);
+      const value = getExtensionValue(element.businessObject, name);
       eventBus.fire(event, {
         value,
         eventBus,

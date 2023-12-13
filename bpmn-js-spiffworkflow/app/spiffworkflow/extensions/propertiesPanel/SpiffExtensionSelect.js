@@ -36,7 +36,7 @@ export function SpiffExtensionSelect(props) {
   const eventBus = useService('eventBus');
 
   const getValue = () => {
-    return getExtensionValue(element, name);
+    return getExtensionValue(element.businessObject, name);
   };
 
   const setValue = (value) => {

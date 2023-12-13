@@ -1,4 +1,5 @@
 import { useService } from 'bpmn-js-properties-panel';
+import {SpiffExtensionTextInput} from '../../extensions/propertiesPanel/SpiffExtensionTextInput';
 import {
   isTextFieldEntryEdited,
   TextFieldEntry,
@@ -8,7 +9,9 @@ import { is } from 'bpmn-js/lib/util/ModelUtil';
 import {
   findDataObjects,
   findDataObjectReferenceShapes,
+  updateDataObjectReferencesName,
   idToHumanReadableName,
+  findDataObject,
 } from '../DataObjectHelpers';
 
 /**
@@ -40,6 +43,8 @@ export function DataObjectArray(props) {
         idPrefix: id,
         element,
         dataObject,
+        commandStack,
+        moddle,
       }),
       autoFocusEntry: `${id}-dataObject`,
       remove: removeFactory({
@@ -57,6 +62,7 @@ export function DataObjectArray(props) {
     const newDataObject = moddle.create('bpmn:DataObject');
     const newElements = process.get('flowElements');
     newDataObject.id = moddle.ids.nextPrefixed('DataObject_');
+    newDataObject.name = idToHumanReadableName(newDataObject.id);
     newDataObject.$parent = process;
     newElements.push(newDataObject);
     commandStack.execute('element.updateModdleProperties', {
@@ -92,7 +98,7 @@ function removeFactory(props) {
 }
 
 function DataObjectGroup(props) {
-  const { idPrefix, dataObject } = props;
+  const { idPrefix, dataObject, element, moddle, commandStack } = props;
 
   return [
     {
@@ -101,6 +107,22 @@ function DataObjectGroup(props) {
       isEdited: isTextFieldEntryEdited,
       idPrefix,
       dataObject,
+    },
+    {
+      id: `${idPrefix}-dataObjectName`,
+      component: DataObjectNameTextField,
+      isEdited: isTextFieldEntryEdited,
+      idPrefix,
+      dataObject,
+    },
+    {
+      businessObject: dataObject,
+      commandStack: commandStack,
+      moddle: moddle,
+      component: SpiffExtensionTextInput,
+      name: 'spiffworkflow:Category',
+      label: 'Data Object Category',
+      description: 'Useful for setting permissions on groups of data objects.',
     },
   ];
 }
@@ -112,25 +134,26 @@ function DataObjectTextField(props) {
   const debounce = useService('debounceInput');
 
   const setValue = (value) => {
-    commandStack.execute('element.updateModdleProperties', {
-      element,
-      moddleElement: dataObject,
-      properties: {
-        id: value,
-      },
-    });
+    try {
+      // Check if new dataObject Id is not unique
+      if(findDataObject(element.businessObject, value) !== undefined){
+        alert('Data Object ID Should be unique');
+        return;
+      }
 
-    // Also update the label of all the references
-    const references = findDataObjectReferenceShapes(element.children, dataObject.id);
-    for (const ref of references) {
-      commandStack.execute('element.updateProperties', {
-        element: ref,
-        moddleElement: ref.businessObject,
+      // let doName = idToHumanReadableName(value);
+      commandStack.execute('element.updateModdleProperties', {
+        element,
+        moddleElement: dataObject,
         properties: {
-          name: idToHumanReadableName(value),
+          id: value,
+          // name: doName
         },
-        changed: [ref], // everything is already marked as changed, don't recalculate.
       });
+      // Update references name
+      // updateDataObjectReferencesName(element, doName, value, commandStack);
+    } catch (error) {
+      console.log('Set Value Error : ', error);
     }
   };
 
@@ -142,6 +165,41 @@ function DataObjectTextField(props) {
     element: parameter,
     id: `${idPrefix}-id`,
     label: 'Data Object Id',
+    getValue,
+    setValue,
+    debounce,
+  });
+}
+
+function DataObjectNameTextField(props) {
+  const { idPrefix, element, parameter, dataObject } = props;
+
+  const commandStack = useService('commandStack');
+  const debounce = useService('debounceInput');
+
+  const setValue = (value) => {
+
+    // Update references name
+    updateDataObjectReferencesName(element, value, dataObject.id, commandStack);
+
+    // Update dataObject name
+    commandStack.execute('element.updateModdleProperties', {
+      element,
+      moddleElement: dataObject,
+      properties: {
+        name: value,
+      },
+    });
+  };
+
+  const getValue = () => {
+    return dataObject.name;
+  };
+
+  return TextFieldEntry({
+    element: parameter,
+    id: `${idPrefix}-name`,
+    label: 'Data Object Name',
     getValue,
     setValue,
     debounce,
