@@ -1,10 +1,12 @@
 import validator from '@rjsf/validator-ajv8';
 import { ReactNode } from 'react';
+import { RegistryFieldsType } from '@rjsf/utils';
 import { Form } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
+import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 
 type OwnProps = {
   id: string;
@@ -30,10 +32,16 @@ export default function CustomForm({
   children,
   noValidate = false,
 }: OwnProps) {
+  // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: TypeaheadWidget,
+  };
+
+  // set in uiSchema using the "ui:field" key for a property
+  const fields: RegistryFieldsType = {
+    'numeric-range': NumericRangeField,
   };
 
   const formatDateString = (dateString?: string) => {
@@ -176,6 +184,20 @@ export default function CustomForm({
     }
   };
 
+  const checkNumericRange = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    _jsonSchema: any,
+    _uiSchemaPassedIn?: any
+  ) => {
+    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+      errors[propertyKey].addError(
+        `must have min less than max on numeric range`
+      );
+    }
+  };
+
   const checkFieldsWithCustomValidations = (
     jsonSchema: any,
     formDataToCheck: any,
@@ -215,6 +237,20 @@ export default function CustomForm({
 
         if (propertyMetadata.type === 'boolean') {
           checkBooleanField(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse,
+            currentUiSchema
+          );
+        }
+
+        if (
+          currentUiSchema &&
+          'ui:field' in currentUiSchema &&
+          currentUiSchema['ui:field'] === 'numeric-range'
+        ) {
+          checkNumericRange(
             formDataToCheck,
             propertyKey,
             errors,
@@ -264,6 +300,7 @@ export default function CustomForm({
       validator={validator}
       customValidate={customValidate}
       noValidate={noValidate}
+      fields={fields}
       omitExtraData
     >
       {children}
