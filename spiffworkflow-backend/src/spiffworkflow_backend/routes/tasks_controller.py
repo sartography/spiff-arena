@@ -503,11 +503,8 @@ def task_show(
                 process_model=process_model_with_form,
                 revision=process_instance.bpmn_version_control_identifier,
             )
-
             _update_form_schema_with_task_data_as_needed(form_dict, task_model.data)
-
-            if form_dict:
-                task_model.form_schema = form_dict
+            task_model.form_schema = form_dict
 
             if form_ui_schema_file_name:
                 ui_form_contents = _prepare_form_data(
@@ -516,8 +513,7 @@ def task_show(
                     process_model=process_model_with_form,
                     revision=process_instance.bpmn_version_control_identifier,
                 )
-                if ui_form_contents is not None:
-                    task_model.form_ui_schema = ui_form_contents
+                task_model.form_ui_schema = ui_form_contents
             else:
                 task_model.form_ui_schema = {}
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model.form_ui_schema, task_model.data)
