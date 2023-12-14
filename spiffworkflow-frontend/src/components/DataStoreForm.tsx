@@ -74,7 +74,7 @@ export default function DataStoreForm({
       hasErrors = true;
     }
     if (selectedDataStoreType === null) {
-      setTypeInvalid(true)
+      setTypeInvalid(true);
       hasErrors = true;
     }
     if (hasErrors) {
@@ -182,13 +182,16 @@ export default function DataStoreForm({
         items={dataStoreTypes}
         itemToString={(dataStoreType: DataStoreType) => {
           if (dataStoreType) {
-            return `${dataStoreType.name} (${truncateString(dataStoreType.description, 75)})`;
+            return `${dataStoreType.name} (${truncateString(
+              dataStoreType.description,
+              75
+            )})`;
           }
           return null;
         }}
         titleText="Type*"
         invalidText="Type is required."
-	invalid={typeInvalid}
+        invalid={typeInvalid}
         placeholder="Choose the data store type"
         selectedItem={selectedDataStoreType}
       />
