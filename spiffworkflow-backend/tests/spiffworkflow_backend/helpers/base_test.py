@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import shutil
 import time
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -547,3 +548,9 @@ class BaseTest:
             yield
         finally:
             app.config[config_identifier] = initial_value
+
+    @staticmethod
+    def copy_example_process_models() -> None:
+        source = os.path.abspath(os.path.join(FileSystemService.root_path(), "..", "..", "..", "process_models_example_dir", "examples"))
+        destination = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        shutil.copytree(source, destination)

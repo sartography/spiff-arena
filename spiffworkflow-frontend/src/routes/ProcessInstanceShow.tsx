@@ -71,7 +71,7 @@ import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
-import MessageInstanceList from '../components/MessageInstanceList';
+import MessageInstanceList from '../components/messages/MessageInstanceList';
 import {
   childrenForErrorObject,
   errorForDisplayFromString,

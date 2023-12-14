@@ -11,6 +11,7 @@ from marshmallow import Schema
 from marshmallow import post_load
 
 from spiffworkflow_backend.interfaces import ProcessGroupLite
+from spiffworkflow_backend.models.message_model import MessageModel, CorrelationKey, CorrelationProperty
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 # we only want to save these items to the json file
@@ -30,6 +31,10 @@ class ProcessGroup:
     process_models: list[ProcessModelInfo] = field(default_factory=list[ProcessModelInfo])
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
     parent_groups: list[ProcessGroupLite] | None = None
+    messages: list[MessageModel] | None = None
+    correlation_keys: list[CorrelationKey] | None = None
+    correlation_properties: list[CorrelationProperty] | None = None
+
 
     # TODO: delete these once they no no longer mentioned in current
     # process_group.json files
@@ -64,10 +69,16 @@ class ProcessGroupSchema(Schema):
             "process_models",
             "description",
             "process_groups",
+            "messages",
+            "correlation_keys",
+            "correlation_properties"
         ]
 
     process_models = marshmallow.fields.List(marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False))
     process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
+    messages = marshmallow.fields.List(marshmallow.fields.Nested("MessageSchema", dump_only=True, required=False))
+    correlation_keys = marshmallow.fields.List(marshmallow.fields.Nested("CorrelationKeySchema", dump_only=True, required=False))
+    correlation_properties = marshmallow.fields.List(marshmallow.fields.Nested("CorrelationPropertySchema", dump_only=True, required=False))
 
     @post_load
     def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:

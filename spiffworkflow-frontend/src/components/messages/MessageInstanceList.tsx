@@ -4,16 +4,16 @@ import { ErrorOutline } from '@carbon/icons-react';
 // @ts-ignore
 import { Table, Modal, Button } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
-import PaginationForTable from './PaginationForTable';
-import ProcessBreadcrumb from './ProcessBreadcrumb';
+import PaginationForTable from '../PaginationForTable';
+import ProcessBreadcrumb from '../ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
-} from '../helpers';
-import HttpService from '../services/HttpService';
-import { FormatProcessModelDisplayName } from './MiniComponents';
-import { MessageInstance } from '../interfaces';
-import DateAndTimeService from '../services/DateAndTimeService';
+} from '../../helpers';
+import HttpService from '../../services/HttpService';
+import { FormatProcessModelDisplayName } from '../MiniComponents';
+import { MessageInstance } from '../../interfaces';
+import DateAndTimeService from '../../services/DateAndTimeService';
 
 type OwnProps = {
   processInstanceId?: number;
@@ -181,7 +181,6 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     return (
       <>
         {breadcrumbElement}
-        {correlationsDisplayModal()}
         <PaginationForTable
           page={page}
           perPage={perPage}

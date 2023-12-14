@@ -13,7 +13,58 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel, ReferenceSchema, ReferenceType
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
+
+
+def reference_cache_list(
+        cache_type: str,
+        relative_location: str | None = None,
+        page: int = 1,
+        per_page: int = 100,
+) -> flask.wrappers.Response:
+    query = ReferenceCacheModel.basic_query().filter_by(type=cache_type)
+    if relative_location:
+        locations = ReferenceCacheService.upsearch_locations(relative_location)
+        query = query.filter(ReferenceCacheModel.relative_location.in_(locations))
+
+    results = query.paginate(page=page, per_page=per_page, error_out=False)
+    response_json = {
+        "results": ReferenceSchema(many=True).dump(results.items),
+        "pagination": {
+            "count": len(results.items),
+            "total": results.total,
+            "pages": results.pages,
+        },
+    }
+    return make_response(jsonify(response_json), 200)
+
+
+def message_model_list(
+        relative_location: str | None = None,
+        page: int = 1,
+        per_page: int = 100,
+) -> flask.wrappers.Response:
+    return reference_cache_list(
+        cache_type=ReferenceType.message.value,
+        relative_location=relative_location,
+        page=page,
+        per_page=per_page,
+    )
+
+
+def correlation_key_list(
+        relative_location: str | None = None,
+        page: int = 1,
+        per_page: int = 100,
+) -> flask.wrappers.Response:
+    return reference_cache_list(
+        cache_type=ReferenceType.correlation_key.value,
+        relative_location=relative_location,
+        page=page,
+        per_page=per_page,
+    )
 
 
 def message_instance_list(

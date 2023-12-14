@@ -51,3 +51,4 @@ class TestProcessModelService(BaseTest):
         assert len(pm_dict["files"]) == 1
         file = pm_dict["files"][0]
         assert re.search("hello", file["file_contents"]) is not None
+

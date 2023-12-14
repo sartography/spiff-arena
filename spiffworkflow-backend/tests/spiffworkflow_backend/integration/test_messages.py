@@ -4,7 +4,9 @@ from flask import g
 from flask.testing import FlaskClient
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -61,3 +63,48 @@ class TestMessages(BaseTest):
         assert len(waiting_messages) == 0
         # The process has completed
         assert process_instance.status == "complete"
+
+    def test_message_model_list(
+            self,
+            app: Flask,
+            client: FlaskClient,
+            with_db_and_bpmn_file_cleanup: None,
+            with_super_admin_user: UserModel,
+    ) -> None:
+        self.copy_example_process_models()
+        DataSetupService.save_all_process_models()
+        response = client.get(
+            f"/v1.0/message-models?page=2&per_page=2",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json is not None
+        assert len(response.json["results"]) == 2
+        assert response.json["pagination"]["count"] == 2
+        assert response.json["pagination"]["total"] == 4
+        assert response.json["pagination"]["pages"] == 2
+
+    def test_message_model_list_up_search(
+            self,
+            app: Flask,
+            client: FlaskClient,
+            with_db_and_bpmn_file_cleanup: None,
+            with_super_admin_user: UserModel,
+    ) -> None:
+        self.copy_example_process_models()
+        DataSetupService.save_all_process_models()
+        response = client.get(
+            f"/v1.0/message-models?relative_location=1-basic-concepts",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json is not None
+        assert len(response.json["results"]) == 4
+
+        response = client.get(
+            f"/v1.0/message-models?relative_location=0-1-minimal-example",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json is not None
+        assert len(response.json["results"]) == 3, "the minimal example should not have access to messages defined in a parallel directory"

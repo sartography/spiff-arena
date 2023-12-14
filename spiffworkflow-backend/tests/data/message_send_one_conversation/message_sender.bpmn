@@ -2,15 +2,6 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:collaboration id="Collaboration_0oye1os">
     <bpmn:participant id="message_initiator" name="Message Initiator" processRef="message_send_process" />
-    <bpmn:participant id="message-receiver" name="Message Receiver" />
-    <bpmn:messageFlow id="message_send_flow" name="Message Send Flow" sourceRef="send_message" targetRef="message-receiver" />
-    <bpmn:messageFlow id="message_response_flow" name="Message Response Flow" sourceRef="message-receiver" targetRef="receive_message_response" />
-    <bpmn:textAnnotation id="TextAnnotation_0oxbpew">
-      <bpmn:text>The messages sent here are about an Invoice that can be uniquely identified by the customer_id ("sartography") and a purchase order number (1001)
-
-It will fire a message connected to the invoice keys above, starting another process, which can communicate back to this specific process instance using the correct key.</bpmn:text>
-    </bpmn:textAnnotation>
-    <bpmn:association id="Association_1d6q7zd" sourceRef="message_initiator" targetRef="TextAnnotation_0oxbpew" />
     <bpmn:correlationKey name="invoice">
       <bpmn:correlationPropertyRef>po_number</bpmn:correlationPropertyRef>
       <bpmn:correlationPropertyRef>customer_id</bpmn:correlationPropertyRef>

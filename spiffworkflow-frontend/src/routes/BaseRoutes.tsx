@@ -14,6 +14,7 @@ import Page404 from './Page404';
 import AdminRedirect from './AdminRedirect';
 import RootRoute from './RootRoute';
 import LoginHandler from '../components/LoginHandler';
+import ProcessInstanceList from "./ProcessInstanceList";
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;

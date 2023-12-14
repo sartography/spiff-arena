@@ -922,3 +922,11 @@ div.onboarding {
   float: right; /* Floats the keys to the right */
   text-align: right; /* Aligns text to the right within the container */
 }
+
+div.retrievalExpressionsForm {
+  border: 1px solid #999;
+  border-radius: 15px;
+  background: #ddd;
+  padding: 20px;
+  margin: 20px;
+}

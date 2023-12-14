@@ -1,0 +1,43 @@
+{
+  "admin": false,
+  "description": "Move Message Definition into a json file, remove replication in BPMNs",
+  "display_name": "Message Test",
+  "display_order": 40,
+  "messages": [
+    { "id": "request_approval"},
+    { "id": "approval_result" }
+  ],
+  "conversation": {
+    "correlation_key": [
+      { "id": "customer_id" },
+      { "id": "po_number" }
+    ]
+  },
+  "correlation_properties": [
+    { "id": "customer_id",
+      "retrieval_expressions": [
+        {
+          "messageRef": "request_approval",
+          "formalExpression": "customer['id']"
+        },
+        {
+          "messageRef": "approval_result",
+          "formalExpression": "customer_id"
+        }
+      ]
+    },
+    { "id": "po_number",
+      "retrieval_expressions": [
+        {
+          "messageRef": "request_approval",
+          "formalExpression": "po_number"
+        },
+        {
+          "messageRef": "approval_result",
+          "formalExpression": "po_number"
+        }
+      ]
+    }
+  ]
+}
+

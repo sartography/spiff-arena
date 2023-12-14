@@ -24,6 +24,8 @@ class ReferenceType(SpiffEnum):
     decision = "decision"
     process = "process"
     data_store = "data_store"
+    message = "message"
+    correlation_key = "correlation_key"
 
 
 # SpecReference

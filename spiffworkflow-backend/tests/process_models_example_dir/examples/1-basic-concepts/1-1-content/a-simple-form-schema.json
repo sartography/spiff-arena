@@ -1,0 +1,41 @@
+{
+  "title": "A Simple Form",
+  "description": "Provide a little information, and we will display it back to you in a second",
+  "properties": {
+    "first_name": {
+      "type": "string",
+      "title": "First Name"
+    },
+    "is_joke": {
+      "type": "boolean",
+      "title": "Would you like to hear a Chuck Norris joke?"
+    },
+    "color": {
+      "type": "string",
+      "title": "What is your favorite color?",
+      "enum": [
+        "Midnight Blue",
+        "Crimson Red",
+        "Emerald Green",
+        "Sunflower Yellow",
+        "Mauve Mist",
+        "Mint Ice",
+        "Burnt Sienna",
+        "Powder Pink",
+        "Royal Purple",
+        "Peach Fuzz",
+        "Goldenrod",
+        "Turquoise Splash",
+        "Tangerine Tango",
+        "Cerulean Sky",
+        "Sagebrush Green",
+        "Lavender Blush",
+        "Cocoa Bean Brown",
+        "Teal Lagoon",
+        "Electric Indigo",
+        "Antique Brass"
+      ]
+    }
+  },
+  "required": ["first_name","is_joke","color"]
+  }

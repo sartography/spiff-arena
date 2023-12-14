@@ -2,9 +2,6 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:collaboration id="Collaboration_0oye1os">
     <bpmn:participant id="message_receiver" name="Message Receiver (invoice approver)" processRef="message_receiver_process" />
-    <bpmn:participant id="message_sender" name="Message Sender" />
-    <bpmn:messageFlow id="message_send_flow" name="Message Send Flow" sourceRef="message_sender" targetRef="receive_message" />
-    <bpmn:messageFlow id="Flow_0ds946g" sourceRef="send_message_response" targetRef="message_sender" />
     <bpmn:correlationKey name="invoice">
       <bpmn:correlationPropertyRef>customer_id</bpmn:correlationPropertyRef>
       <bpmn:correlationPropertyRef>po_number</bpmn:correlationPropertyRef>

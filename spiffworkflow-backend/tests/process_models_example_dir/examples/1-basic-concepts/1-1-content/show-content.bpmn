@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_puxk39c" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1wvtd9f</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1wvtd9f" sourceRef="StartEvent_1" targetRef="Activity_1f9v5wa" />
+    <bpmn:endEvent id="Event_1wckt3w">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>### Checkout the BPMN! 
+
+Open up this diagram in edit mode where you can move things around and view task properties, but you won't be able to save these demos.   To do this, click on "Displaying Content" in the Breadcrumbs above, then open the file "show-content.bpmn".  Click on the manual tasks and will see they each have content in their "Instructions" in the properties panel on the right.  You can open these instructions in the markdown editor by clicking on the "Launch Editor" button which provides a great way to see how Markdown and Jinja can be used to create content.
+
+### Build a BPMN process yourself! 
+Complete the [Request a Playground](/process-models/examples:0-4-request-permissions) task to get access to your own private area of this Demo SpiffWorkflow instance.  There you can build your own documentation! 
+
+### Get Involved!
+Please get in touch with us!  We would love to help you build beautiful documentation into your workflows.  There is no end to what we can accomplish if we work together.  Please reach out to Dan at  [dan@sartography.com](mailto:dan@sartography.com)  to get started.
+
+### What's Next?
+Check out the some of the other [basic examples](/process-groups/examples:1-basic-concepts) to learn more. 
+
+</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1thoqro</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0r9coud" sourceRef="Activity_1f9v5wa" targetRef="Activity_1r4u2ny" />
+    <bpmn:manualTask id="Activity_1f9v5wa" name="Introduction">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>We use two open standards for displaying content.
+
+### 1. Markdown
+Markdown provides some minimal tools for formatting text.  It can handle basic formatting from **bold text** to headings, tables, lists, etc...  It is not the most expressive possible way of writing content, but it does help standardize your documentation and assure it can be easily updated by anyone else.   The [Markdown Guilde](https://www.markdownguide.org/getting-started/) provides excellent information on the standard, how to use it, and why it is useful.  
+
+### 2. Jinja  
+As a workflow process runs, it collects information from many sources.  User Tasks collect information from Web Forms, Service Tasks can pull information from other applications - these are just two examples of many.  This data is collected and can be used in later tasks in the process.  One way to use the information is to display it, which is where Jinja comes into play.  While there is a lot that can be done in Jinja, you can go a very long way knowing one simple rule:
+
+&gt; Wrap variables you want to display in double curly brackets like this \{\{my_variable\}\}
+
+This will allow you to take any information you have available and present it back to the end user.  You can learn more about the Jinja syntax in the [official documentation](https://jinja.palletsprojects.com/en/3.1.x/templates/).  It isn't just variable replacement.  You can use it to hide information under certain circumstances, or display lots of data in a list or table.  It is very powerful. 
+
+## Whats Next:
+Let's complete a simple form so you can enter some information.  We'll also run a script in the background that will generate some additional variables.  We'll take this data, and present it in another manual task.</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1wvtd9f</bpmn:incoming>
+      <bpmn:outgoing>Flow_0r9coud</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0796xeb" sourceRef="Activity_1r4u2ny" targetRef="Activity_0pdnphi" />
+    <bpmn:userTask id="Activity_1r4u2ny" name="A Simple Form">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Please complete the simple form below. We'll show you these values in the next manual task.</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="a-simple-form-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="a-simple-form-uischema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0r9coud</bpmn:incoming>
+      <bpmn:outgoing>Flow_0796xeb</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0wr8gfr" sourceRef="Activity_0pdnphi" targetRef="Activity_0l7raxy" />
+    <bpmn:sequenceFlow id="Flow_1thoqro" sourceRef="Activity_1jr7x9o" targetRef="Event_1wckt3w" />
+    <bpmn:scriptTask id="Activity_0pdnphi" name="Create more content">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Generating some colors for you, give us just a second ....</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0796xeb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wr8gfr</bpmn:outgoing>
+      <bpmn:script>time.sleep(3)
+colors = {
+    "Ninja Black": "#1E1E1E",
+    "Zombie Green": "#6ACD58",
+    "Toasted Marshmallow": "#F9E5C6",
+    "Alien Armpit": "#84D314",
+    "Granny Smith Apple Accident": "#A8E4A0",
+    "Teleportation Blue": "#7FDBFF",
+    "Invisible Pink Unicorn": "#FF77A9",
+    "Flamingo Fandango": "#F6A8D6",
+    "Laser Lemon": "#FFFF66",
+    "Yeti Frostbite": "#D5F2E3"
+}</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:manualTask id="Activity_1jr7x9o" name="Displaying Data">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>We just did two things:
+
+1. Completed a form, which allowed us to collect some information from you.
+2. We ran a script, that created a list of colors for us to display.
+
+Now we can present that information back to you using Markdown and Jinja .....
+
+### Form Data
+You provided the following information the form:
+
+**Your Name**: {{first_name}}
+
+**Favorite Color**: {{color}}
+
+{% if is_joke %}
+You said you would like to hear a joke about Chuck Norris, so here you go:
+
+&gt; When Chuck Norris falls into the water, Chuck Norris doesn’t get wet. Water gets Chuck Norris.
+
+{% else %}
+You said you didn't want to year a joke about Chuck Norris, so here is a joke that does not include old Chuck.
+
+&gt; What is an astronaut's favorite part on a computer? The space bar.
+{% endif %}
+
+### Automatic Task Messages
+We also created a list of silly color names in a script task.  You should have seen that flash by as it was happening. We intentionally made it slow (we ask Python to sleep for 2 seconds), so you could see that even automatic tasks (if they take a long time) can be configured to display a message as they run in the background.  Here is the list of colors we created rendered as a table :
+
+| Color Name | Color Hex Value | Color |
+|----------|-----------|-----|
+| Blue | #0000ff |  &lt;div style="background-color:blue; color:blue"&gt; blue &lt;/div&gt; |
+{%- for name, hex in colors.items() %}
+
+| {{name}}  | {{hex}} | &lt;div style="background-color:{{hex}}; color:{{hex}}"&gt; {{name}} &lt;/div&gt; |
+{%- endfor %}
+
+
+
+</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0fdwa26</bpmn:incoming>
+      <bpmn:outgoing>Flow_1thoqro</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_1rgip89" sourceRef="Activity_0l7raxy" targetRef="Activity_0jfo38l" />
+    <bpmn:sequenceFlow id="Flow_0fdwa26" sourceRef="Activity_0jfo38l" targetRef="Activity_1jr7x9o" />
+    <bpmn:scriptTask id="Activity_0l7raxy" name="More processing">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Making the colors more silly ...</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0wr8gfr</bpmn:incoming>
+      <bpmn:outgoing>Flow_1rgip89</bpmn:outgoing>
+      <bpmn:script>time.sleep(1)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="Activity_0jfo38l" name="Even More Processing">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Turning the silly level all the way up to 11, almost done ....</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1rgip89</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fdwa26</bpmn:outgoing>
+      <bpmn:script>time.sleep(2)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:textAnnotation id="TextAnnotation_05wkdje">
+      <bpmn:text>These three script tasks would execute nearly instantly, we are forcing them to run slowly (asking python to go to sleep for a few seconds) to demonstrate long running background tasks, so you can see how to let your end users know what is going on when you are doing complex things in the background.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1cnnzc4" sourceRef="Activity_0l7raxy" targetRef="TextAnnotation_05wkdje" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_puxk39c">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="-38" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1wckt3w_di" bpmnElement="Event_1wckt3w">
+        <dc:Bounds x="932" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0rez9jv_di" bpmnElement="Activity_1f9v5wa">
+        <dc:Bounds x="50" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0i1lx1p_di" bpmnElement="Activity_1r4u2ny">
+        <dc:Bounds x="200" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0atremz_di" bpmnElement="Activity_0pdnphi">
+        <dc:Bounds x="360" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0q99tkd_di" bpmnElement="Activity_1jr7x9o">
+        <dc:Bounds x="800" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0e1jkdk_di" bpmnElement="Activity_0l7raxy">
+        <dc:Bounds x="500" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_072c998_di" bpmnElement="Activity_0jfo38l">
+        <dc:Bounds x="650" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_05wkdje_di" bpmnElement="TextAnnotation_05wkdje">
+        <dc:Bounds x="420" y="0" width="320" height="98" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1wvtd9f_di" bpmnElement="Flow_1wvtd9f">
+        <di:waypoint x="-2" y="177" />
+        <di:waypoint x="50" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0r9coud_di" bpmnElement="Flow_0r9coud">
+        <di:waypoint x="150" y="177" />
+        <di:waypoint x="200" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0796xeb_di" bpmnElement="Flow_0796xeb">
+        <di:waypoint x="300" y="177" />
+        <di:waypoint x="360" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wr8gfr_di" bpmnElement="Flow_0wr8gfr">
+        <di:waypoint x="460" y="177" />
+        <di:waypoint x="500" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1thoqro_di" bpmnElement="Flow_1thoqro">
+        <di:waypoint x="900" y="177" />
+        <di:waypoint x="932" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rgip89_di" bpmnElement="Flow_1rgip89">
+        <di:waypoint x="600" y="177" />
+        <di:waypoint x="650" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fdwa26_di" bpmnElement="Flow_0fdwa26">
+        <di:waypoint x="750" y="177" />
+        <di:waypoint x="800" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1cnnzc4_di" bpmnElement="Association_1cnnzc4">
+        <di:waypoint x="530" y="137" />
+        <di:waypoint x="511" y="98" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

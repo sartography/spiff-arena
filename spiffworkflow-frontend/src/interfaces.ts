@@ -221,6 +221,17 @@ export interface MessageCorrelations {
   [key: string]: MessageCorrelationProperties;
 }
 
+type ReferenceCacheType = 'decision' | 'process' | 'data_store' | 'message';
+
+export interface ReferenceCache {
+  identifier: string;
+  display_name: string;
+  relative_location: string;
+  type: ReferenceCacheType;
+  file_name: string;
+  properties: any;
+}
+
 export interface MessageInstance {
   id: number;
   process_model_identifier: string;
