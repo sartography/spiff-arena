@@ -30,6 +30,7 @@ export default function ProcessGroupShow() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['POST'],
     [targetUris.processGroupListPath]: ['POST'],
     [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelCreatePath]: ['POST'],
@@ -129,6 +130,13 @@ export default function ProcessGroupShow() {
             >
               <Button href={`/process-models/${modifiedProcessGroupId}/new`}>
                 Add a process model
+              </Button>
+            </Can>
+            <Can I="POST" a={targetUris.dataStoreListPath} ability={ability}>
+              <Button
+                href={`/data-stores/new?parentGroupId=${processGroup.id}`}
+              >
+                Add a data store
               </Button>
             </Can>
           </Stack>

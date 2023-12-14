@@ -25,6 +25,19 @@ def data_store_list() -> flask.wrappers.Response:
     return make_response(jsonify(data_stores), 200)
 
 
+def data_store_types() -> flask.wrappers.Response:
+    """Returns a list of the types of available data stores."""
+
+    # TODO: get this from the data stores
+    data_store_types = [
+        {"type": "json", "name": "JSONDataStore", "description": "JSON Data Store"},
+        {"type": "typeahead", "name": "TypeaheadDataStore", "description": "Typeahead Data Store"},
+        {"type": "kkv", "name": "KKVDataStore", "description": "Keyed Key-Value DataStore"},
+    ]
+
+    return make_response(jsonify(data_store_types), 200)
+
+
 def _build_response(data_store_class: Any, name: str, page: int, per_page: int) -> flask.wrappers.Response:
     data_store_query = data_store_class.query_data_store(name)
     data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
@@ -56,3 +69,7 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
         return _build_response(JSONDataStore, name, page, per_page)
 
     raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+
+def data_store_create(body: dict) -> flask.wrappers.Response:
+    print(body)
+    return make_response(jsonify({"ok": True}), 200)

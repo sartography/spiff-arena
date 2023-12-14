@@ -460,6 +460,14 @@ export interface DataStoreRecords {
 export interface DataStore {
   name: string;
   type: string;
+  id: string;
+  description?: string | null;
+}
+
+export interface DataStoreType {
+  type: string;
+  name: string;
+  description: string;
 }
 
 export interface JsonSchemaExample {
