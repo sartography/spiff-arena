@@ -319,7 +319,23 @@ def task_instance_list(
     task_guid: str,
 ) -> Response:
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    task_model_instances = TaskModel.query.filter_by(task_definition_id=task_model.task_definition.id, bpmn_process_id=task_model.bpmn_process_id).all()
+    # task_model_instances = TaskModel.query.filter_by(task_definition_id=task_model.task_definition.id, bpmn_process_id=task_model.bpmn_process_id).all()
+    task_model_instances = (
+        TaskModel.query.filter_by(task_definition_id=task_model.task_definition.id, bpmn_process_id=task_model.bpmn_process_id).order_by(TaskModel.id.desc())  # type: ignore
+        .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        .add_columns(
+            TaskDefinitionModel.bpmn_identifier,
+            TaskDefinitionModel.bpmn_name,
+            TaskDefinitionModel.typename,
+            TaskDefinitionModel.properties_json.label("task_definition_properties_json"),  # type: ignore
+            TaskModel.guid,
+            TaskModel.state,
+            TaskModel.end_in_seconds,
+            TaskModel.start_in_seconds,
+            TaskModel.runtime_info,
+            TaskModel.properties_json,
+        )
+    ).all()
     return make_response(jsonify(task_model_instances), 200)
 
 
