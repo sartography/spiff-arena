@@ -101,6 +101,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     null
   );
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [taskInstancesToDisplay, setTaskInstancesToDisplay] = useState<Task[]>(
+    []
+  );
   const [showTaskDataLoading, setShowTaskDataLoading] =
     useState<boolean>(false);
 
@@ -620,6 +623,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return <div />;
   };
 
+  const initializeTaskInstancesToDisplay = (task: Task | null) => {
+    if (!task) {
+      return;
+    }
+    HttpService.makeCallToBackend({
+      path: `/tasks/${params.process_instance_id}/${task.guid}/task-instances`,
+      httpMethod: 'GET',
+      successCallback: setTaskInstancesToDisplay,
+      failureCallback: (error: any) => {
+        setTaskDataToDisplay(`ERROR: ${error.message}`);
+      },
+    });
+  };
+
   const processTaskResult = (result: Task) => {
     if (result == null) {
       setTaskDataToDisplay('');
@@ -758,6 +775,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
         initializeTaskDataToDisplay(matchingTask);
+        initializeTaskInstancesToDisplay(matchingTask);
       }
     }
   };
@@ -767,6 +785,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setSelectingEvent(false);
     setAddingPotentialOwners(false);
     initializeTaskDataToDisplay(taskToDisplay);
+    initializeTaskInstancesToDisplay(taskToDisplay);
     setEventPayload('{}');
     setAdditionalPotentialOwners(null);
     removeError();
@@ -775,6 +794,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
+    initializeTaskInstancesToDisplay(null);
     if (editingTaskData || selectingEvent || addingPotentialOwners) {
       resetTaskActionDetails();
     }
@@ -1255,12 +1275,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       if (task) {
         setTaskToDisplay(task);
         initializeTaskDataToDisplay(task);
+        initializeTaskInstancesToDisplay(task);
       }
     }
   };
 
   const multiInstanceSelector = () => {
-    if (!taskToDisplay || !taskToDisplay.runtime_info) {
+    if (!taskToDisplay) {
       return null;
     }
 
@@ -1281,6 +1302,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     };
 
+    const accordionItems = [];
+
+    if (taskInstancesToDisplay.length > 0) {
+      accordionItems.push(
+        <AccordionItem title="Completed instances">
+          {createButtonSet([taskInstancesToDisplay[0].guid])}
+        </AccordionItem>
+      );
+    }
+
     if (
       taskToDisplay.typename === 'ParallelMultiInstanceTask' ||
       taskToDisplay.typename === 'SequentialMultiInstanceTask'
@@ -1300,18 +1331,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         futureInstances = createButtonSet(taskToDisplay.runtime_info.future);
       }
 
-      return (
-        <Accordion>
-          <AccordionItem title="Completed instances">
-            {completedInstances}
-          </AccordionItem>
-          <AccordionItem title="Running instances">
-            {runningInstances}
-          </AccordionItem>
-          <AccordionItem title="Future instances">
-            {futureInstances}
-          </AccordionItem>
-        </Accordion>
+      accordionItems.push(
+        <AccordionItem title="Completed instances">
+          {completedInstances}
+        </AccordionItem>
+      );
+      accordionItems.push(
+        <AccordionItem title="Running instances">
+          {runningInstances}
+        </AccordionItem>
+      );
+      accordionItems.push(
+        <AccordionItem title="Future instances">
+          {futureInstances}
+        </AccordionItem>
       );
     }
     if (taskToDisplay.typename === 'StandardLoopTask') {
@@ -1326,17 +1359,22 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             {i}
           </Button>
         );
-      let text = 'Loop iterations';
+      let text = '';
       if (
-        typeof taskToDisplay.runtime_info.iterations_remaining !== 'undefined'
+        typeof taskToDisplay.runtime_info.iterations_remaining !==
+          'undefined' &&
+        taskToDisplay.state !== 'COMPLETED'
       )
-        text += ` (${taskToDisplay.runtime_info.iterations_remaining} remaining)`;
-      return (
-        <div>
+        text += `${taskToDisplay.runtime_info.iterations_remaining} remaining`;
+      accordionItems.push(
+        <AccordionItem title="Loop iterations">
           <div>{text}</div>
           <div>{buttons}</div>
-        </div>
+        </AccordionItem>
       );
+    }
+    if (accordionItems.length > 0) {
+      return <Accordion>{accordionItems}</Accordion>;
     }
     return null;
   };
