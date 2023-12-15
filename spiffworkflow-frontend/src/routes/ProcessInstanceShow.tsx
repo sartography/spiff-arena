@@ -51,6 +51,8 @@ import {
   truncateString,
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
+  MULTI_INSTANCE_TASK_TYPES,
+  LOOP_TASK_TYPES,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -1269,9 +1271,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
-  const switchToTask = (taskId: string) => {
-    if (tasks) {
-      const task = tasks.find((t: Task) => t.guid === taskId);
+  const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
+    if (taskListToUse) {
+      const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
       if (task) {
         setTaskToDisplay(task);
         initializeTaskDataToDisplay(task);
@@ -1285,16 +1287,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    const clickAction = (item: any) => {
+    const clickAction = (
+      index: number,
+      taskGuidList: string[],
+      taskListToUse: Task[] | null
+    ) => {
       return () => {
-        switchToTask(taskToDisplay.runtime_info.instance_map[item]);
+        switchToTask(taskGuidList[index], taskListToUse);
       };
     };
-    const createButtonSet = (instances: string[]) => {
+    const createButtonSet = (
+      instances: number[],
+      taskGuidList: string[],
+      taskListToUse: Task[] | null
+    ) => {
       return (
         <ButtonSet stacked>
           {instances.map((v: any) => (
-            <Button kind="ghost" onClick={clickAction(v)}>
+            <Button
+              kind="ghost"
+              onClick={clickAction(v, taskGuidList, taskListToUse)}
+            >
               {v}
             </Button>
           ))}
@@ -1305,30 +1318,51 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const accordionItems = [];
 
     if (taskInstancesToDisplay.length > 0) {
+      const taskInstancesCollection = taskInstancesToDisplay.map(
+        (task: Task) => {
+          return task.guid;
+        }
+      );
+      const taskInstancesRange = [
+        ...Array(taskInstancesToDisplay.length).keys(),
+      ];
       accordionItems.push(
-        <AccordionItem title="Completed instances">
-          {createButtonSet([taskInstancesToDisplay[0].guid])}
+        <AccordionItem title="Task instances">
+          {createButtonSet(
+            taskInstancesRange,
+            taskInstancesCollection,
+            taskInstancesToDisplay
+          )}
         </AccordionItem>
       );
     }
 
     if (
-      taskToDisplay.typename === 'ParallelMultiInstanceTask' ||
-      taskToDisplay.typename === 'SequentialMultiInstanceTask'
+      MULTI_INSTANCE_TASK_TYPES.includes(taskToDisplay.typename)
     ) {
       let completedInstances = null;
       if (taskToDisplay.runtime_info.completed.length > 0) {
         completedInstances = createButtonSet(
-          taskToDisplay.runtime_info.completed
+          taskToDisplay.runtime_info.completed,
+          taskToDisplay.runtime_info.instance_map,
+          tasks
         );
       }
       let runningInstances = null;
       if (taskToDisplay.runtime_info.running.length > 0) {
-        runningInstances = createButtonSet(taskToDisplay.runtime_info.running);
+        runningInstances = createButtonSet(
+          taskToDisplay.runtime_info.running,
+          taskToDisplay.runtime_info.instance_map,
+          tasks
+        );
       }
       let futureInstances = null;
       if (taskToDisplay.runtime_info.future.length > 0) {
-        futureInstances = createButtonSet(taskToDisplay.runtime_info.future);
+        futureInstances = createButtonSet(
+          taskToDisplay.runtime_info.future,
+          taskToDisplay.runtime_info.instance_map,
+          tasks
+        );
       }
 
       accordionItems.push(
@@ -1347,7 +1381,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </AccordionItem>
       );
     }
-    if (taskToDisplay.typename === 'StandardLoopTask') {
+    if (LOOP_TASK_TYPES.includes(taskToDisplay.typename)) {
       const buttons = [];
       for (
         let i = 0;
@@ -1355,7 +1389,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         i += 1
       )
         buttons.push(
-          <Button kind="ghost" onClick={clickAction(i)}>
+          <Button
+            kind="ghost"
+            onClick={clickAction(
+              i,
+              taskToDisplay.runtime_info.instance_map,
+              tasks
+            )}
+          >
             {i}
           </Button>
         );
@@ -1413,12 +1454,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       if (typeof taskToUse.runtime_info.instance !== 'undefined') {
         secondaryButtonText = 'Return to MultiInstance Task';
         onSecondarySubmit = () => {
-          switchToTask(taskToUse.properties_json.parent);
+          switchToTask(taskToUse.properties_json.parent, tasks);
         };
       } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
         secondaryButtonText = 'Return to Loop Task';
         onSecondarySubmit = () => {
-          switchToTask(taskToUse.properties_json.parent);
+          switchToTask(taskToUse.properties_json.parent, tasks);
         };
       }
     }
