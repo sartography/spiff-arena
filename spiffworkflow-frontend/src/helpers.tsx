@@ -30,12 +30,10 @@ export const HUMAN_TASK_TYPES = [
 
 export const MULTI_INSTANCE_TASK_TYPES = [
   'ParallelMultiInstanceTask',
-  'SequentialMultiInstanceTask'
-]
+  'SequentialMultiInstanceTask',
+];
 
-export const LOOP_TASK_TYPES = [
-  'StandardLoopTask'
-]
+export const LOOP_TASK_TYPES = ['StandardLoopTask'];
 
 export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');

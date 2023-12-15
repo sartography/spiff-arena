@@ -922,3 +922,11 @@ div.onboarding {
   float: right; /* Floats the keys to the right */
   text-align: right; /* Aligns text to the right within the container */
 }
+
+.task-info-modal-accordion .cds--accordion__content {
+  padding-right: 1rem;
+}
+.task-instance-modal-row-item {
+  height: 48px;
+  line-height: 48px;
+}

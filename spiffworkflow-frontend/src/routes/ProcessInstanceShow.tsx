@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   useParams,
@@ -22,6 +22,7 @@ import {
   TrashCan,
   Warning,
   Link as LinkIcon,
+  View,
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -29,7 +30,6 @@ import {
   Grid,
   Column,
   Button,
-  ButtonSet,
   Tag,
   Modal,
   Dropdown,
@@ -53,6 +53,7 @@ import {
   setPageTitle,
   MULTI_INSTANCE_TASK_TYPES,
   LOOP_TASK_TYPES,
+  titleizeString,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -918,11 +919,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     };
     const eventDefinition =
       task.task_definition_properties_json.event_definition;
-    if (eventDefinition && eventDefinition.event_definitions)
+    if (eventDefinition && eventDefinition.event_definitions) {
       return eventDefinition.event_definitions.map((e: EventDefinition) =>
         handleMessage(e)
       );
-    if (eventDefinition) return [handleMessage(eventDefinition)];
+    }
+    if (eventDefinition) {
+      return [handleMessage(eventDefinition)];
+    }
     return [];
   };
 
@@ -984,8 +988,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const sendEvent = () => {
-    if ('payload' in eventToSend)
+    if ('payload' in eventToSend) {
       eventToSend.payload = JSON.parse(eventPayload);
+    }
     HttpService.makeCallToBackend({
       path: targetUris.processInstanceSendEventPath,
       httpMethod: 'POST',
@@ -1257,6 +1262,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const taskIsInstanceOfMultiInstanceTask = (task: Task) => {
+    // this is the same check made in the backend in the _process_instance_task_list method to determine
+    // if the given task is an instance of a multi-instance or loop task.
+    // we need to avoid resetting the task instance list since the list may not be the same as we need
+    return 'instance' in task.runtime_info || 'iteration' in task.runtime_info;
+  };
+
   const taskActionDetails = () => {
     if (!taskToDisplay) {
       return null;
@@ -1272,14 +1284,69 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
-    if (taskListToUse) {
+    if (taskListToUse && taskToDisplay) {
       const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
       if (task) {
         setTaskToDisplay(task);
         initializeTaskDataToDisplay(task);
-        initializeTaskInstancesToDisplay(task);
+        if (!taskIsInstanceOfMultiInstanceTask(task)) {
+          initializeTaskInstancesToDisplay(task);
+        }
       }
     }
+  };
+  const createButtonSetForTaskInstances = () => {
+    if (!taskInstancesToDisplay) {
+      return null;
+    }
+    return (
+      <>
+        {taskInstancesToDisplay.reverse().map((task: Task, index: number) => (
+          <Grid condensed fullWidth>
+            <Column md={1} lg={1} sm={1}>
+              <Button
+                kind="ghost"
+                renderIcon={View}
+                iconDescription="View"
+                tooltipPosition="right"
+                hasIconOnly
+                onClick={() => switchToTask(task.guid, taskInstancesToDisplay)}
+              >
+                View
+              </Button>
+            </Column>
+            <Column md={1} lg={1} sm={1}>
+              <div className="task-instance-modal-row-item">{index + 1}</div>
+            </Column>
+            <Column md={3} lg={5} sm={1}>
+              <div className="task-instance-modal-row-item">
+                {DateAndTimeService.convertSecondsToFormattedDateTime(
+                  task.properties_json.last_state_change
+                )}
+              </div>
+            </Column>
+          </Grid>
+        ))}
+      </>
+    );
+  };
+
+  const createButtonsForMultiTasks = (instances: number[]) => {
+    if (!tasks || !taskToDisplay) {
+      return [];
+    }
+    return instances.map((v: any) => {
+      return (
+        <Button
+          kind="ghost"
+          onClick={() =>
+            switchToTask(taskToDisplay.runtime_info.instance_map[v], tasks)
+          }
+        >
+          {v + 1}
+        </Button>
+      );
+    });
   };
 
   const multiInstanceSelector = () => {
@@ -1287,135 +1354,62 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    const clickAction = (
-      index: number,
-      taskGuidList: string[],
-      taskListToUse: Task[] | null
-    ) => {
-      return () => {
-        switchToTask(taskGuidList[index], taskListToUse);
-      };
-    };
-    const createButtonSet = (
-      instances: number[],
-      taskGuidList: string[],
-      taskListToUse: Task[] | null
-    ) => {
-      return (
-        <ButtonSet stacked>
-          {instances.map((v: any) => (
-            <Button
-              kind="ghost"
-              onClick={clickAction(v, taskGuidList, taskListToUse)}
-            >
-              {v}
-            </Button>
-          ))}
-        </ButtonSet>
-      );
-    };
-
     const accordionItems = [];
 
-    if (taskInstancesToDisplay.length > 0) {
-      const taskInstancesCollection = taskInstancesToDisplay.map(
-        (task: Task) => {
-          return task.guid;
-        }
-      );
-      const taskInstancesRange = [
-        ...Array(taskInstancesToDisplay.length).keys(),
-      ];
+    if (
+      !taskIsInstanceOfMultiInstanceTask(taskToDisplay) &&
+      taskInstancesToDisplay.length > 0
+    ) {
       accordionItems.push(
-        <AccordionItem title="Task instances">
-          {createButtonSet(
-            taskInstancesRange,
-            taskInstancesCollection,
-            taskInstancesToDisplay
-          )}
+        <AccordionItem
+          title={`Task instances (${taskInstancesToDisplay.length})`}
+          className="task-info-modal-accordion"
+        >
+          {createButtonSetForTaskInstances()}
         </AccordionItem>
       );
     }
 
-    if (
-      MULTI_INSTANCE_TASK_TYPES.includes(taskToDisplay.typename)
-    ) {
-      let completedInstances = null;
-      if (taskToDisplay.runtime_info.completed.length > 0) {
-        completedInstances = createButtonSet(
-          taskToDisplay.runtime_info.completed,
-          taskToDisplay.runtime_info.instance_map,
-          tasks
-        );
-      }
-      let runningInstances = null;
-      if (taskToDisplay.runtime_info.running.length > 0) {
-        runningInstances = createButtonSet(
-          taskToDisplay.runtime_info.running,
-          taskToDisplay.runtime_info.instance_map,
-          tasks
-        );
-      }
-      let futureInstances = null;
-      if (taskToDisplay.runtime_info.future.length > 0) {
-        futureInstances = createButtonSet(
-          taskToDisplay.runtime_info.future,
-          taskToDisplay.runtime_info.instance_map,
-          tasks
-        );
-      }
-
-      accordionItems.push(
-        <AccordionItem title="Completed instances">
-          {completedInstances}
-        </AccordionItem>
-      );
-      accordionItems.push(
-        <AccordionItem title="Running instances">
-          {runningInstances}
-        </AccordionItem>
-      );
-      accordionItems.push(
-        <AccordionItem title="Future instances">
-          {futureInstances}
-        </AccordionItem>
-      );
+    if (MULTI_INSTANCE_TASK_TYPES.includes(taskToDisplay.typename)) {
+      ['completed', 'running', 'future'].forEach((infoType: string) => {
+        let taskInstances: ReactElement[] = [];
+        const infoArray = taskToDisplay.runtime_info[infoType];
+        if (taskToDisplay.runtime_info.completed.length > 0) {
+          taskInstances = createButtonsForMultiTasks(infoArray);
+          accordionItems.push(
+            <AccordionItem
+              title={`${titleizeString(infoType)} instances (${
+                taskInstances.length
+              })`}
+            >
+              {taskInstances}
+            </AccordionItem>
+          );
+        }
+      });
     }
     if (LOOP_TASK_TYPES.includes(taskToDisplay.typename)) {
-      const buttons = [];
-      for (
-        let i = 0;
-        i < taskToDisplay.runtime_info.iterations_completed;
-        i += 1
-      )
-        buttons.push(
-          <Button
-            kind="ghost"
-            onClick={clickAction(
-              i,
-              taskToDisplay.runtime_info.instance_map,
-              tasks
-            )}
-          >
-            {i}
-          </Button>
-        );
+      const loopTaskInstanceIndexes = [
+        ...Array(taskToDisplay.runtime_info.iterations_completed).keys(),
+      ];
+      const buttons = createButtonsForMultiTasks(loopTaskInstanceIndexes);
       let text = '';
       if (
         typeof taskToDisplay.runtime_info.iterations_remaining !==
           'undefined' &&
         taskToDisplay.state !== 'COMPLETED'
-      )
+      ) {
         text += `${taskToDisplay.runtime_info.iterations_remaining} remaining`;
+      }
       accordionItems.push(
-        <AccordionItem title="Loop iterations">
+        <AccordionItem title={`Loop iterations (${buttons.length})`}>
           <div>{text}</div>
           <div>{buttons}</div>
         </AccordionItem>
       );
     }
     if (accordionItems.length > 0) {
-      return <Accordion>{accordionItems}</Accordion>;
+      return <Accordion size="lg">{accordionItems}</Accordion>;
     }
     return null;
   };
@@ -1454,12 +1448,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       if (typeof taskToUse.runtime_info.instance !== 'undefined') {
         secondaryButtonText = 'Return to MultiInstance Task';
         onSecondarySubmit = () => {
-          switchToTask(taskToUse.properties_json.parent, tasks);
+          switchToTask(taskToUse.properties_json.parent, [
+            ...(tasks || []),
+            ...taskInstancesToDisplay,
+          ]);
         };
       } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
         secondaryButtonText = 'Return to Loop Task';
         onSecondarySubmit = () => {
-          switchToTask(taskToUse.properties_json.parent, tasks);
+          switchToTask(taskToUse.properties_json.parent, [
+            ...(tasks || []),
+            ...taskInstancesToDisplay,
+          ]);
         };
       }
     }
