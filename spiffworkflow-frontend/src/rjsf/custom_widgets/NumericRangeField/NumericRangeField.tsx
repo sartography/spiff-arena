@@ -118,7 +118,7 @@ export default function NumericRangeField({
       <div className="numeric--range-field-inputs">
         <TextInput
           id={`${id}-min`}
-          labelText={`Minimum ${schema.title || ''}`}
+          labelText={(schema as any).properties?.min?.title || `Minimum`}
           disabled={disabled}
           readonly={readonly}
           value={formatNumberString(min)}
@@ -131,7 +131,7 @@ export default function NumericRangeField({
         />
         <TextInput
           id={`${id}-max`}
-          labelText={`Maximum ${schema.title || ''}`}
+          labelText={(schema as any).properties?.max?.title || `Maximum`}
           disabled={disabled}
           readonly={readonly}
           value={formatNumberString(max)}
