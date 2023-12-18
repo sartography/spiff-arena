@@ -1355,7 +1355,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
-  const multiInstanceSelector = () => {
+  const taskInstanceSelector = () => {
     if (!taskToDisplay) {
       return null;
     }
@@ -1384,7 +1384,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           taskInstances = createButtonsForMultiTasks(infoArray);
           accordionItems.push(
             <AccordionItem
-              title={`${titleizeString(infoType)} instances (${
+              title={`${titleizeString(infoType)} instances for MI task (${
                 taskInstances.length
               })`}
             >
@@ -1479,8 +1479,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         onRequestClose={handleTaskDataDisplayClose}
         onSecondarySubmit={onSecondarySubmit}
         onRequestSubmit={onRequestSubmit}
-        modalHeading={`${taskToUse.bpmn_identifier} (${taskToUse.typename}
-              ): ${taskToUse.state}`}
+        modalHeading={`${taskToUse.bpmn_identifier} (${taskToUse.typename}): ${taskToUse.state}`}
       >
         <div className="indented-content explanatory-message">
           {taskToUse.bpmn_name ? (
@@ -1511,7 +1510,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         ) : null}
         <br />
         {taskActionDetails()}
-        {multiInstanceSelector()}
+        {taskInstanceSelector()}
       </Modal>
     );
   };
