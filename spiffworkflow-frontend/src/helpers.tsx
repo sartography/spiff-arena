@@ -10,7 +10,7 @@ export const doNothing = () => {
 };
 
 // https://www.30secondsofcode.org/js/s/slugify
-export const slugifyString = (str: any) => {
+export const slugifyString = (str: string) => {
   return str
     .toLowerCase()
     .trim()

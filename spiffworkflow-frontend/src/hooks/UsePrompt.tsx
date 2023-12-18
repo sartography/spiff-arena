@@ -20,7 +20,7 @@ export function useBlocker(blocker: any, when: any = true) {
 
   useEffect(() => {
     if (!when) {
-      return null;
+      return undefined;
     }
 
     const unblock = (navigator as any).block((tx: any) => {

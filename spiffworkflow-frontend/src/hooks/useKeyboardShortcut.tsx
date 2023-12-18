@@ -10,8 +10,6 @@ export const overrideSystemHandling = (e: KeyboardEvent) => {
     }
     if (e.stopPropagation) {
       e.stopPropagation();
-    } else if (window.event) {
-      window.event.cancelBubble = true;
     }
   }
 };
