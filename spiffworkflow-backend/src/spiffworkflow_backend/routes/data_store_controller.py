@@ -71,6 +71,7 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
 
     raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
+
 def data_store_create(body: dict) -> flask.wrappers.Response:
     parent_group_id = body.get("parent_group_id", None)
     if parent_group_id is not None:
