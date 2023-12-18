@@ -1285,6 +1285,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
     if (taskListToUse && taskToDisplay) {
+      // set to null right away to hopefully avoid using the incorrect task later
+      setTaskToDisplay(null);
+      setTaskInstancesToDisplay([])
       const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
       if (task) {
         setTaskToDisplay(task);
@@ -1296,37 +1299,43 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
   const createButtonSetForTaskInstances = () => {
-    if (!taskInstancesToDisplay) {
+    if (taskInstancesToDisplay.length === 0 || !taskToDisplay) {
       return null;
     }
     return (
       <>
-        {taskInstancesToDisplay.reverse().map((task: Task, index: number) => (
-          <Grid condensed fullWidth>
-            <Column md={1} lg={1} sm={1}>
-              <Button
-                kind="ghost"
-                renderIcon={View}
-                iconDescription="View"
-                tooltipPosition="right"
-                hasIconOnly
-                onClick={() => switchToTask(task.guid, taskInstancesToDisplay)}
-              >
-                View
-              </Button>
-            </Column>
-            <Column md={1} lg={1} sm={1}>
-              <div className="task-instance-modal-row-item">{index + 1}</div>
-            </Column>
-            <Column md={3} lg={5} sm={1}>
-              <div className="task-instance-modal-row-item">
-                {DateAndTimeService.convertSecondsToFormattedDateTime(
-                  task.properties_json.last_state_change
-                )}
-              </div>
-            </Column>
-          </Grid>
-        ))}
+        {taskInstancesToDisplay.reverse().map((task: Task, index: number) => {
+          const buttonClass =
+            task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
+          return (
+            <Grid condensed fullWidth className={buttonClass}>
+              <Column md={1} lg={1} sm={1}>
+                <Button
+                  kind="ghost"
+                  renderIcon={View}
+                  iconDescription="View"
+                  tooltipPosition="right"
+                  hasIconOnly
+                  onClick={() =>
+                    switchToTask(task.guid, taskInstancesToDisplay)
+                  }
+                >
+                  View
+                </Button>
+              </Column>
+              <Column md={1} lg={1} sm={1}>
+                <div className="task-instance-modal-row-item">{index + 1}</div>
+              </Column>
+              <Column md={4} lg={6} sm={1}>
+                <div className="task-instance-modal-row-item">
+                  {DateAndTimeService.convertSecondsToFormattedDateTime(
+                    task.properties_json.last_state_change
+                  )} {" - "} {task.state}
+                </div>
+              </Column>
+            </Grid>
+          );
+        })}
       </>
     );
   };

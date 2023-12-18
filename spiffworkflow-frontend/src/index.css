@@ -41,6 +41,11 @@ a.cds--header__menu-item {
   font-style: italic;
 }
 
+.selected-task-instance {
+  color: #b0b0b0;
+  font-style: italic;
+}
+
 h1 {
   font-weight: 400;
   font-size: 28px;
