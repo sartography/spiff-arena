@@ -82,6 +82,6 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
             status_code=400,
         ) from e
 
-    location = body.get("location", "/")
+    location = body["location"]
 
     return make_response(jsonify({"ok": True}), 200)
