@@ -11,8 +11,13 @@ ignore:
   SNYK-PYTHON-CRYPTOGRAPHY-6050294:
     - '*':
         reason: No current resolution
-        expires: 2023-12-15T19:52:08.948Z
+        expires: 2024-12-15T19:52:08.948Z
         created: 2023-11-15T19:52:08.954Z
+  SNYK-PYTHON-CRYPTOGRAPHY-6126975:
+    - '*':
+        reason: No current resolution
+        expires: 2024-12-15T19:52:08.948Z
+        created: 2023-12-18T19:52:08.954Z
 
 patch: {}
 
