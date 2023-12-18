@@ -212,6 +212,7 @@ class UserService:
     def all_principals_for_user(cls, user: UserModel) -> list[PrincipalModel]:
         if user.principal is None:
             raise MissingPrincipalError(f"Missing principal for user with id: {user.id}")
+
         principals = [user.principal]
 
         for group in user.groups:
