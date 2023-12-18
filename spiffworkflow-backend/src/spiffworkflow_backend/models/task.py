@@ -49,8 +49,7 @@ class MultiInstanceType(enum.Enum):
 class TaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "task"
     __allow_unmapped__ = True
-    id: int = db.Column(db.Integer, primary_key=True)
-    guid: str = db.Column(db.String(36), nullable=False, unique=True)
+    guid: str = db.Column(db.String(36), nullable=False, index=True, primary_key=True, unique=True)
     bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
     human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
@@ -98,6 +97,13 @@ class TaskModel(SpiffworkflowBaseDBModel):
             return None
         task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
         return task_model
+
+    @classmethod
+    def sort_by_last_state_changed(cls, task_models: list[TaskModel]) -> list[TaskModel]:
+        def sort_function(task: TaskModel) -> float:
+            state_change: float = task.properties['last_state_change']
+            return state_change
+        return sorted(task_models, key=sort_function)
 
     # this will redirect to login if the task does not allow guest access.
     # so if you already completed the task, and you are not signed in, you will get sent to a login page.

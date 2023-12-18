@@ -367,6 +367,10 @@ def _process_instance_task_list(
     to_task_guid: str | None = None,
     most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
+    """This is only used on the Process Instance Show page on the frontend.
+
+    This is how we know what the state of each task is and how to color things.
+    """
     bpmn_process_ids = []
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
@@ -429,8 +433,7 @@ def _process_instance_task_list(
     direct_parent_bpmn_process_definition_alias = aliased(BpmnProcessDefinitionModel)
 
     task_model_query = (
-        task_model_query.order_by(TaskModel.id.desc())  # type: ignore
-        .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        task_model_query.join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)  # type: ignore
         .join(bpmn_process_alias, bpmn_process_alias.id == TaskModel.bpmn_process_id)
         .outerjoin(
             direct_parent_bpmn_process_alias,

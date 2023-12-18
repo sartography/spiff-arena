@@ -320,7 +320,6 @@ def task_instance_list(
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_model_instances = (
         TaskModel.query.filter_by(task_definition_id=task_model.task_definition.id, bpmn_process_id=task_model.bpmn_process_id)
-        .order_by(TaskModel.id.desc())  # type: ignore
         .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
         .add_columns(
             TaskDefinitionModel.bpmn_identifier,
@@ -335,7 +334,9 @@ def task_instance_list(
             TaskModel.properties_json,
         )
     ).all()
-    return make_response(jsonify(task_model_instances), 200)
+
+    sorted_task_models = TaskModel.sort_by_last_state_changed(task_model_instances)
+    return make_response(jsonify(sorted_task_models), 200)
 
 
 def manual_complete_task(
