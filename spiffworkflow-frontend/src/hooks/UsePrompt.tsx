@@ -19,7 +19,9 @@ export function useBlocker(blocker: any, when: any = true) {
   const { navigator } = useContext(NavigationContext);
 
   useEffect(() => {
-    if (!when) return null;
+    if (!when) {
+      return undefined;
+    }
 
     const unblock = (navigator as any).block((tx: any) => {
       const autoUnblockingTx = {
@@ -49,7 +51,9 @@ export function usePrompt(message: any, when: any = true) {
   const blocker = useCallback(
     (tx: any) => {
       // eslint-disable-next-line no-alert
-      if (window.confirm(message)) tx.retry();
+      if (window.confirm(message)) {
+        tx.retry();
+      }
     },
     [message]
   );

@@ -5,11 +5,11 @@ import { KeyboardShortcuts } from '../interfaces';
 
 export const overrideSystemHandling = (e: KeyboardEvent) => {
   if (e) {
-    if (e.preventDefault) e.preventDefault();
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
     if (e.stopPropagation) {
       e.stopPropagation();
-    } else if (window.event) {
-      window.event.cancelBubble = true;
     }
   }
 };

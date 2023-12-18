@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 from flask.app import Flask
 from flask.testing import FlaskClient
@@ -14,8 +15,10 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestTasksController(BaseTest):
@@ -529,3 +532,76 @@ class TestTasksController(BaseTest):
         cookie = headers_dict["Set-Cookie"]
         access_token = cookie.split(";")[0].split("=")[1]
         assert access_token == ""
+
+    def test_task_instance_list(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/loopback_to_manual_task",
+            process_model_source_directory="loopback_to_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+        )
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+        )
+        assert process_instance.status == ProcessInstanceStatus.user_input_required.value
+
+        response = client.get(
+            f"/v1.0/tasks/{process_instance.id}/{human_task_one.task_id}/task-instances",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.content_type == "application/json"
+        assert isinstance(response.json, list)
+
+        expected_states = sorted(["COMPLETED", "COMPLETED", "MAYBE", "READY"])
+        actual_states = sorted([t["state"] for t in response.json])
+        assert actual_states == expected_states
+
+    def test_task_instance_list_returns_only_for_same_bpmn_process(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/loopback_to_subprocess",
+            process_model_source_directory="loopback_to_subprocess",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+        )
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+        )
+        assert process_instance.status == ProcessInstanceStatus.user_input_required.value
+
+        response = client.get(
+            f"/v1.0/tasks/{process_instance.id}/{human_task_one.task_id}/task-instances",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.content_type == "application/json"
+        assert isinstance(response.json, list)
+        assert len(response.json) == 1
