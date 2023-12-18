@@ -633,7 +633,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${task.guid}/task-instances`,
       httpMethod: 'GET',
-      successCallback: setTaskInstancesToDisplay,
+      // reverse operates on self as well as return the new ordered array so reverse it right away
+      successCallback: (results: Task[]) =>
+        setTaskInstancesToDisplay(results.reverse()),
       failureCallback: (error: any) => {
         setTaskDataToDisplay(`ERROR: ${error.message}`);
       },
@@ -1287,14 +1289,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (taskListToUse && taskToDisplay) {
       // set to null right away to hopefully avoid using the incorrect task later
       setTaskToDisplay(null);
-      setTaskInstancesToDisplay([])
       const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
       if (task) {
         setTaskToDisplay(task);
         initializeTaskDataToDisplay(task);
-        if (!taskIsInstanceOfMultiInstanceTask(task)) {
-          initializeTaskInstancesToDisplay(task);
-        }
       }
     }
   };
@@ -1304,12 +1302,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     return (
       <>
-        {taskInstancesToDisplay.reverse().map((task: Task, index: number) => {
+        {taskInstancesToDisplay.map((task: Task, index: number) => {
           const buttonClass =
             task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
           return (
             <Grid condensed fullWidth className={buttonClass}>
-              <Column md={1} lg={1} sm={1}>
+              <Column md={1} lg={2} sm={1}>
                 <Button
                   kind="ghost"
                   renderIcon={View}
@@ -1323,14 +1321,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   View
                 </Button>
               </Column>
-              <Column md={1} lg={1} sm={1}>
-                <div className="task-instance-modal-row-item">{index + 1}</div>
-              </Column>
-              <Column md={4} lg={6} sm={1}>
+              <Column md={7} lg={14} sm={3}>
                 <div className="task-instance-modal-row-item">
+                  {index + 1} {': '}
                   {DateAndTimeService.convertSecondsToFormattedDateTime(
                     task.properties_json.last_state_change
-                  )} {" - "} {task.state}
+                  )}{' '}
+                  {' - '} {task.state}
                 </div>
               </Column>
             </Grid>
@@ -1502,7 +1499,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </div>
         {taskDisplayButtons(taskToUse)}
         {taskToUse.state === 'COMPLETED' ? (
-          <div>
+          <div className="indented-content">
             <Stack orientation="horizontal" gap={2}>
               {completionViewLink(
                 'View process instance at the time when this task was active.',
@@ -1510,9 +1507,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               )}
             </Stack>
             <br />
-            <br />
           </div>
         ) : null}
+        <br />
         {taskActionDetails()}
         {multiInstanceSelector()}
       </Modal>
