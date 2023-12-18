@@ -11,7 +11,7 @@ import {
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreType } from '../interfaces';
-import { truncateString } from '../helpers';
+import { modifyProcessIdentifierForPathParam, truncateString } from '../helpers';
 
 type OwnProps = {
   mode: string;
@@ -38,6 +38,13 @@ export default function DataStoreForm({
   const navigate = useNavigate();
   const newDataStoreId = dataStore.id;
 
+const dataStoreLocation = () => {
+    const searchParams = new URLSearchParams(document.location.search);
+    const parentGroupId = searchParams.get('parentGroupId');
+
+return parentGroupId ?? "/";
+};
+
   useEffect(() => {
     const handleSetDataStoreTypesCallback = (result: any) => {
       setDataStoreTypes(result);
@@ -51,8 +58,11 @@ export default function DataStoreForm({
   }, [setDataStoreTypes]);
 
   const navigateToDataStores = (_result: any) => {
-    if (newDataStoreId) {
-      navigate(`/dataStores/${newDataStoreId}`);
+  const location = dataStoreLocation();
+    if (location != "/") {
+      navigate(`/process-groups/${modifyProcessIdentifierForPathParam(location)}`);
+    } else {
+      navigate(`/process-groups`);
     }
   };
 
@@ -97,7 +107,7 @@ export default function DataStoreForm({
       description: dataStore.description,
       type: dataStore.type,
       schema: dataStore.schema,
-      location: parentGroupId,
+      location: parentGroupId ?? "/",
     };
 
     HttpService.makeCallToBackend({
