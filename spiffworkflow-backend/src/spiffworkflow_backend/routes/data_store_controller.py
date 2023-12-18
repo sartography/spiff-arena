@@ -10,6 +10,7 @@ from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 
 def data_store_list() -> flask.wrappers.Response:
@@ -71,5 +72,9 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
     raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
 def data_store_create(body: dict) -> flask.wrappers.Response:
+    parent_group_id = body.get("parent_group_id", None)
+    if parent_group_id is not None:
+        contents = FileSystemService.contents_of_process_group_json_file_at_relative_path(parent_group_id)
+        print(contents)
     print(body)
     return make_response(jsonify({"ok": True}), 200)

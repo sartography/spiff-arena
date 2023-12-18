@@ -3003,6 +3003,10 @@ components:
           type: string
           x-nullable: true
           example: This data store contains all the employees
+        parent_group_id:
+          type: string
+          x-nullable: true
+          example: Optional parent group id to specify the location of this data store
     Process:
       properties:
         identifier:

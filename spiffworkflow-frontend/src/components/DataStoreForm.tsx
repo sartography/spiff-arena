@@ -60,8 +60,8 @@ export default function DataStoreForm({
   };
 
   const handleFormSubmission = (event: any) => {
-    // const searchParams = new URLSearchParams(document.location.search);
-    // const parentGroupId = searchParams.get('parentGroupId');
+    const searchParams = new URLSearchParams(document.location.search);
+    const parentGroupId = searchParams.get('parentGroupId');
 
     event.preventDefault();
     let hasErrors = false;
@@ -91,20 +91,8 @@ export default function DataStoreForm({
       name: dataStore.name,
       description: dataStore.description,
       type: dataStore.type,
+      parent_group_id: parentGroupId,
     };
-    console.log(postBody);
-    /*
-    if (mode === 'new') {
-      if (parentGroupId) {
-        newProcessGroupId = `${parentGroupId}/${processGroup.id}`;
-      }
-      Object.assign(postBody, {
-        id: parentGroupId
-          ? `${parentGroupId}/${processGroup.id}`
-          : `${processGroup.id}`,
-      });
-    }
-    */
 
     HttpService.makeCallToBackend({
       path,
