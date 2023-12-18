@@ -12,6 +12,11 @@ from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 
+DATA_STORES = {
+    "json": (JSONDataStore, "JSON Data Store"),
+    "kkv": (KKVDataStore, "Keyed Key-Value Data Store"),
+    "typehead": (TypeaheadDataStore, "Typeahead Data Store"),
+}
 
 def data_store_list() -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
@@ -29,12 +34,7 @@ def data_store_list() -> flask.wrappers.Response:
 def data_store_types() -> flask.wrappers.Response:
     """Returns a list of the types of available data stores."""
 
-    # TODO: get this from the data stores
-    data_store_types = [
-        {"type": "json", "name": "JSONDataStore", "description": "JSON Data Store"},
-        {"type": "typeahead", "name": "TypeaheadDataStore", "description": "Typeahead Data Store"},
-        {"type": "kkv", "name": "KKVDataStore", "description": "Keyed Key-Value DataStore"},
-    ]
+    data_store_types = [{"type": k, "name": v[0].__name__, "description": v[1]} for k, v in DATA_STORES.items()]
 
     return make_response(jsonify(data_store_types), 200)
 
@@ -60,16 +60,12 @@ def _build_response(data_store_class: Any, name: str, page: int, per_page: int) 
 def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
 
-    if data_store_type == "typeahead":
-        return _build_response(TypeaheadDataStore, name, page, per_page)
+    if data_store_type not in DATA_STORES:
+        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
-    if data_store_type == "kkv":
-        return _build_response(KKVDataStore, name, page, per_page)
+    data_store_class, _ = DATA_STORES[data_store_type]
+    return _build_response(data_store_class, name, page, per_page)
 
-    if data_store_type == "json":
-        return _build_response(JSONDataStore, name, page, per_page)
-
-    raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
 
 def data_store_create(body: dict) -> flask.wrappers.Response:
@@ -85,3 +81,5 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
     location = body["location"]
 
     return make_response(jsonify({"ok": True}), 200)
+    raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+
