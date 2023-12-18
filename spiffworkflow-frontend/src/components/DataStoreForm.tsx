@@ -97,7 +97,7 @@ export default function DataStoreForm({
       description: dataStore.description,
       type: dataStore.type,
       schema: dataStore.schema,
-      parent_group_id: parentGroupId,
+      location: parentGroupId,
     };
 
     HttpService.makeCallToBackend({

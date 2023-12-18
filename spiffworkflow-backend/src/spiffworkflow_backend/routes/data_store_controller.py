@@ -1,5 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
-
+import json
 from typing import Any
 
 import flask.wrappers
@@ -73,9 +73,15 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
 
 
 def data_store_create(body: dict) -> flask.wrappers.Response:
-    parent_group_id = body.get("parent_group_id", None)
-    if parent_group_id is not None:
-        contents = FileSystemService.contents_of_process_group_json_file_at_relative_path(parent_group_id)
-        print(contents)
-    print(body)
+    try:
+        json.loads(body["schema"])
+    except Exception as e:
+        raise ApiError(
+            "data_store_schema_required",
+            "A JSON Schema is required when creating a new data store instance.",
+            status_code=400,
+        ) from e
+
+    location = body.get("location", "/")
+
     return make_response(jsonify({"ok": True}), 200)
