@@ -267,14 +267,22 @@ class ProcessModelService(FileSystemService):
             permission=permission_to_check,
             target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
         )
+
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
         if has_permission:
             return process_model_identifiers
+
+        permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
 
         permitted_process_model_identifiers = []
         for process_model_identifier in process_model_identifiers:
             modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model_identifier)
             uri = f"{permission_base_uri}/{modified_process_model_id}"
-            has_permission = AuthorizationService.user_has_permission(user=user, permission=permission_to_check, target_uri=uri)
+            has_permission = AuthorizationService.permission_assignments_include(
+                permission_assignments=permission_assignments,
+                permission=permission_to_check,
+                target_uri=uri,
+            )
             if has_permission:
                 permitted_process_model_identifiers.append(process_model_identifier)
 

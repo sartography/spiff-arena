@@ -15,10 +15,8 @@ from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
@@ -31,7 +29,6 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.user_service import UserService
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
@@ -49,14 +46,7 @@ def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.R
     requests_to_check = body["requests_to_check"]
 
     user = g.user
-    principals = UserService.all_principals_for_user(user)
-    principal_ids = [p.id for p in principals]
-
-    permission_assignments = (
-        PermissionAssignmentModel.query.filter(PermissionAssignmentModel.principal_id.in_(principal_ids))
-        .options(db.joinedload(PermissionAssignmentModel.permission_target))
-        .all()
-    )
+    permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
 
     for target_uri, http_methods in requests_to_check.items():
         if target_uri not in response_dict:
