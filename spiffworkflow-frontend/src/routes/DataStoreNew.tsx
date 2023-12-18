@@ -11,6 +11,7 @@ export default function DataStoreNew() {
     id: '',
     name: '',
     type: '',
+    schema: '',
     description: '',
   });
   setPageTitle(['New Data Store']);

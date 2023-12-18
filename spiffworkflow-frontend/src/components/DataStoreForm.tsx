@@ -29,6 +29,7 @@ export default function DataStoreForm({
     useState<boolean>(false);
   const [nameInvalid, setNameInvalid] = useState<boolean>(false);
   const [typeInvalid, setTypeInvalid] = useState<boolean>(false);
+  const [schemaInvalid, setSchemaInvalid] = useState<boolean>(false);
   const [dataStoreTypes, setDataStoreTypes] = useState<[DataStoreType] | []>(
     []
   );
@@ -77,6 +78,10 @@ export default function DataStoreForm({
       setTypeInvalid(true);
       hasErrors = true;
     }
+    if (dataStore.schema === '') {
+      setSchemaInvalid(true);
+      hasErrors = true;
+    }
     if (hasErrors) {
       return;
     }
@@ -91,6 +96,7 @@ export default function DataStoreForm({
       name: dataStore.name,
       description: dataStore.description,
       type: dataStore.type,
+      schema: dataStore.schema,
       parent_group_id: parentGroupId,
     };
 
@@ -125,6 +131,12 @@ export default function DataStoreForm({
     const updateDict = { type: newTypeSelection.name };
     updateDataStore(updateDict);
     setSelectedDataStoreType(newTypeSelection);
+  };
+
+  const onSchemaChanged = (newSchema: any) => {
+    setSchemaInvalid(false);
+    const updateDict = { schema: newSchema };
+    updateDataStore(updateDict);
   };
 
   const formElements = () => {
@@ -182,6 +194,18 @@ export default function DataStoreForm({
         invalid={typeInvalid}
         placeholder="Choose the data store type"
         selectedItem={selectedDataStoreType}
+      />
+    );
+
+    textInputs.push(
+      <TextArea
+        id="data-store-schema"
+        name="schema"
+        invalidText="Schema is required and must be valid JSON."
+        invalid={schemaInvalid}
+        labelText="Schema"
+        value={dataStore.schema}
+        onChange={(event: any) => onSchemaChanged(event.target.value)}
       />
     );
 
