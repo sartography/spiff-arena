@@ -34,7 +34,7 @@ def _data_store_location_for_task(spiff_task: SpiffTask, identifier: str, check_
     if _data_store_exists_at_location(location, identifier):
         return location
     location = ReferenceCacheService.upsearch(location, identifier, "data_store")
-    if location is None
+    if location is None:
         return None
     if check_disk and not _data_store_exists_at_location(location, identifier):
         return None
