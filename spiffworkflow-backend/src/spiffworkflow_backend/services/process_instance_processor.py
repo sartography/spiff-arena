@@ -1094,7 +1094,7 @@ class ProcessInstanceProcessor:
                         bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
-                        task_model_id=task_model.id,
+                        task_guid=task_model.guid,
                         task_id=task_guid,
                         task_name=ready_or_waiting_task.task_spec.bpmn_id,
                         task_title=ready_or_waiting_task.task_spec.bpmn_name,

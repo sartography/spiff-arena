@@ -61,9 +61,9 @@ class TestProcessInstanceMigrator(BaseTest):
         task_model.properties_json = new_properties_json
         db.session.add(task_model)
         db.session.commit()
-        task_model = TaskModel.query.filter_by(id=task_model.id).first()
+        task_model = TaskModel.query.filter_by(guid=task_model.guid).first()
         assert task_model.properties_json["last_state_change"] is None
 
         VersionOneThree().run()
-        task_model = TaskModel.query.filter_by(id=task_model.id).first()
+        task_model = TaskModel.query.filter_by(guid=task_model.guid).first()
         assert task_model.properties_json["last_state_change"] is not None

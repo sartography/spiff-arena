@@ -88,7 +88,6 @@ class TestTaskService(BaseTest):
         task_model_level_2b = (
             TaskModel.query.join(TaskDefinitionModel)
             .filter(TaskDefinitionModel.bpmn_identifier == "level_2b_subprocess_script_task")
-            .order_by(TaskModel.id)
             .first()
         )
         assert task_model_level_2b is not None
@@ -101,10 +100,7 @@ class TestTaskService(BaseTest):
         assert task_models[0].task_definition.bpmn_identifier == "level2b_second_call"
 
         task_model_level_3 = (
-            TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task")
-            .order_by(TaskModel.id)
-            .first()
+            TaskModel.query.join(TaskDefinitionModel).filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task").first()
         )
         assert task_model_level_3 is not None
         (bpmn_processes, task_models) = TaskService.task_models_of_parent_bpmn_processes(
