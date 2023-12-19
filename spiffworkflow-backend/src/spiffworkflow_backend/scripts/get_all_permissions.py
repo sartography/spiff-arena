@@ -33,7 +33,7 @@ class GetAllPermissions(Script):
                 PermissionAssignmentModel.permission,
                 PermissionTargetModel.uri,
                 GroupModel.identifier.label("group_identifier"),
-            )
+            ).all()
         )
 
         permissions: OrderedDict[tuple[str, str], list[str]] = OrderedDict()

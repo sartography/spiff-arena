@@ -144,7 +144,7 @@ class UserService:
         wildcard_pattern = wugam.pattern_from_wildcard_username()
         user_to_group_identifiers: list[UserToGroupDict] = []
         if wildcard_pattern is not None:
-            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))  # type: ignore
+            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern)).all()  # type: ignore
             for user in users:
                 cls.add_user_to_group(user, group)
                 user_to_group_identifiers.append({"username": user.username, "group_identifier": group.identifier})

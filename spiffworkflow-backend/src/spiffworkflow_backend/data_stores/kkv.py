@@ -17,7 +17,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         data_stores = []
 
         keys = (
-            db.session.query(KKVDataStoreModel.top_level_key).distinct().order_by(KKVDataStoreModel.top_level_key)  # type: ignore
+            db.session.query(KKVDataStoreModel.top_level_key).distinct().order_by(KKVDataStoreModel.top_level_key).all()  # type: ignore
         )
         for key in keys:
             data_stores.append({"name": key[0], "type": "kkv"})

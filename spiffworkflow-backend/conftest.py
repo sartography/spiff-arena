@@ -11,6 +11,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from nplusone.ext.flask_sqlalchemy import NPlusOne
 
 # We need to call this before importing spiffworkflow_backend
 # otherwise typeguard cannot work. hence the noqa: E402
@@ -30,6 +31,11 @@ def app() -> Flask:  # noqa
         "e7711a3ba96c46c68e084a86952de16f"  # noqa: S105, do not care about security when running unit tests
     )
     app = create_app()
+
+    # commented out because this fails in: test_returns_403_if_user_does_not_have_permission
+    # and test_task_models_of_parent_bpmn_processes_stop_on_first_call_activity (maybe just flaky)
+    # app.config['NPLUSONE_RAISE'] = True
+    # NPlusOne(app)
 
     return app
 

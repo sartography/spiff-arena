@@ -55,16 +55,6 @@ class TestTasksController(BaseTest):
 
         human_tasks = db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
 
-        {
-            r.bpmn_identifier
-            for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
-            .join(TaskDefinitionModel)
-            .join(TaskModel)
-            .filter(TaskModel.process_instance_id == process_instance_id)
-            .filter(TaskModel.state == "READY")
-            .distinct()
-        }
-
         assert len(human_tasks) == 1
         human_task = human_tasks[0]
         response = client.get(
