@@ -23,19 +23,19 @@ def _data_store_filename(name: str) -> str:
     return f"{name}.json"
 
 
-def _data_store_exists_at_location(location: str, name: str) -> bool:
-    return FileSystemService.file_exists_at_relative_path(location, _data_store_filename(name))
+def _data_store_exists_at_location(location: str, identifier: str) -> bool:
+    return FileSystemService.file_exists_at_relative_path(location, _data_store_filename(identifier))
 
 
-def _data_store_location_for_task(spiff_task: SpiffTask, name: str) -> str | None:
+def _data_store_location_for_task(spiff_task: SpiffTask, identifier: str) -> str | None:
     location = _process_model_location_for_task(spiff_task)
     if location is None:
         return None
-    if _data_store_exists_at_location(location, name):
+    if _data_store_exists_at_location(location, identifier):
         return location
-    location = ReferenceCacheService.upsearch(location, name, "data_store")
-    if location is None or not _data_store_exists_at_location(location, name):
-        return None
+    location = ReferenceCacheService.upsearch(location, identifier, "data_store")
+    #if location is None or not _data_store_exists_at_location(location, identifier):
+    #    return None
     return location
 
 
@@ -71,14 +71,14 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:
-        return {"location": model.location, "data": model.data}
+        return {"location": model.location, "identifier": model.identifier, "data": model.data}
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
         model: JSONDataStoreModel | None = None
         location = _data_store_location_for_task(my_task, self.bpmn_id)
         if location is not None:
-            model = db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).first()
+            model = db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
         if model is None:
             raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
         my_task.data[self.bpmn_id] = model.data
@@ -90,12 +90,12 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
         data = my_task.data[self.bpmn_id]
         model = JSONDataStoreModel(
-            name=self.bpmn_id,
+            identifier=self.bpmn_id,
             location=location,
             data=data,
         )
 
-        db.session.query(JSONDataStoreModel).filter_by(name=self.bpmn_id, location=location).delete()
+        db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).delete()
         db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
