@@ -34,7 +34,7 @@ def _data_store_location_for_task(spiff_task: SpiffTask, identifier: str) -> str
     if _data_store_exists_at_location(location, identifier):
         return location
     location = ReferenceCacheService.upsearch(location, identifier, "data_store")
-    #if location is None or not _data_store_exists_at_location(location, identifier):
+    # if location is None or not _data_store_exists_at_location(location, identifier):
     #    return None
     return location
 
@@ -43,7 +43,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
 
     @staticmethod
-    def create_instance(name: str, identifier: str, location: str, schema: dict[str, Any], description: str | None):
+    def create_instance(name: str, identifier: str, location: str, schema: dict[str, Any], description: str | None) -> None:
         model = JSONDataStoreModel(
             name=name,
             identifier=identifier,
@@ -54,7 +54,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         )
         db.session.add(model)
         db.session.commit()
-    
+
     @staticmethod
     def existing_data_stores() -> list[dict[str, Any]]:
         data_stores = []

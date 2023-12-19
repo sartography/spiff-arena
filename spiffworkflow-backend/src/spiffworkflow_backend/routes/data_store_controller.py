@@ -83,7 +83,7 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
             "A valid JSON Schema is required when creating a new data store instance.",
             status_code=400,
         ) from e
-    
+
     try:
         schema = json.loads(schema)
     except Exception as e:
