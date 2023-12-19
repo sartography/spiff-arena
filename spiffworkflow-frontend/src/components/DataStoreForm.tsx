@@ -11,7 +11,10 @@ import {
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreType } from '../interfaces';
-import { modifyProcessIdentifierForPathParam, truncateString, slugifyString } from '../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  truncateString,
+} from '../helpers';
 
 type OwnProps = {
   mode: string;
@@ -36,14 +39,13 @@ export default function DataStoreForm({
   const [selectedDataStoreType, setSelectedDataStoreType] =
     useState<DataStoreType | null>(null);
   const navigate = useNavigate();
-  const newDataStoreId = dataStore.id;
 
-const dataStoreLocation = () => {
+  const dataStoreLocation = () => {
     const searchParams = new URLSearchParams(document.location.search);
     const parentGroupId = searchParams.get('parentGroupId');
 
-return parentGroupId ?? "/";
-};
+    return parentGroupId ?? '/';
+  };
 
   useEffect(() => {
     const handleSetDataStoreTypesCallback = (result: any) => {
@@ -58,9 +60,11 @@ return parentGroupId ?? "/";
   }, [setDataStoreTypes]);
 
   const navigateToDataStores = (_result: any) => {
-  const location = dataStoreLocation();
-    if (location != "/") {
-      navigate(`/process-groups/${modifyProcessIdentifierForPathParam(location)}`);
+    const location = dataStoreLocation();
+    if (location !== '/') {
+      navigate(
+        `/process-groups/${modifyProcessIdentifierForPathParam(location)}`
+      );
     } else {
       navigate(`/process-groups`);
     }
@@ -107,7 +111,7 @@ return parentGroupId ?? "/";
       description: dataStore.description,
       type: dataStore.type,
       schema: dataStore.schema,
-      location: parentGroupId ?? "/",
+      location: parentGroupId ?? '/',
     };
 
     HttpService.makeCallToBackend({
@@ -126,16 +130,15 @@ return parentGroupId ?? "/";
     setDataStore(dataStoreToCopy);
   };
 
-
-const makeIdentifier = (str: any) => {
-  return str
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s-]+/g, '_')
-    .replace(/^[-\d]+/g, '')
-    .replace(/-+$/g, '');
-};
+  const makeIdentifier = (str: any) => {
+    return str
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s-]+/g, '_')
+      .replace(/^[-\d]+/g, '')
+      .replace(/-+$/g, '');
+  };
 
   const onNameChanged = (newName: any) => {
     setNameInvalid(false);
