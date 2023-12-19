@@ -3,6 +3,7 @@ from __future__ import annotations
 import enum
 import time
 from typing import Any
+from typing import cast
 
 from flask_migrate import Migrate  # type: ignore
 from flask_sqlalchemy import SQLAlchemy
@@ -17,6 +18,10 @@ migrate = Migrate()
 # NOTE: ensure all db models are added to src/spiffworkflow_backend/load_database_models.py so that:
 # 1) they will be loaded in time for add_listeners. otherwise they may not auto-update created_at and updated_at times
 # 2) database migration code picks them up when migrations are automatically generated
+
+
+def dialect_name() -> str:
+    return cast(str, db.engine.dialect.name)
 
 
 class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
