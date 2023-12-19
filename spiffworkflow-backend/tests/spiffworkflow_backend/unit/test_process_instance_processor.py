@@ -323,7 +323,6 @@ class TestProcessInstanceProcessor(BaseTest):
         all_task_models_matching_top_level_subprocess_script = (
             TaskModel.query.join(TaskDefinitionModel)
             .filter(TaskDefinitionModel.bpmn_identifier == "top_level_subprocess_script")
-            .order_by(TaskModel.id.desc())  # type: ignore
             .all()
         )
         assert len(all_task_models_matching_top_level_subprocess_script) == 1

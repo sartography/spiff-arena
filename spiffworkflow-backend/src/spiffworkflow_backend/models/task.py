@@ -101,7 +101,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     @classmethod
     def sort_by_last_state_changed(cls, task_models: list[TaskModel]) -> list[TaskModel]:
         def sort_function(task: TaskModel) -> float:
-            state_change: float = task.properties["last_state_change"]
+            state_change: float = task.properties_json["last_state_change"]
             return state_change
 
         return sorted(task_models, key=sort_function)
