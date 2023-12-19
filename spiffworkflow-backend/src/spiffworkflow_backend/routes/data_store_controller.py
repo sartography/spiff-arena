@@ -69,15 +69,32 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
 
 def data_store_create(body: dict) -> flask.wrappers.Response:
     try:
-        json.loads(body["schema"])
+        data_store_type = body["type"]
+        name = body["name"]
+        identifier = body["id"]
+        location = body["location"]
+        description = body.get("description")
+        schema = body["schema"]
     except Exception as e:
         raise ApiError(
-            "data_store_schema_required",
-            "A JSON Schema is required when creating a new data store instance.",
+            "data_store_required_key_missing",
+            "A valid JSON Schema is required when creating a new data store instance.",
+            status_code=400,
+        ) from e
+    
+    try:
+        schema = json.loads(schema)
+    except Exception as e:
+        raise ApiError(
+            "data_store_invalid_schema",
+            "A valid JSON Schema is required when creating a new data store instance.",
             status_code=400,
         ) from e
 
-    data_store_type = body["type"]
+    if data_store_type not in DATA_STORES:
+        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
-    # return make_response(jsonify({"ok": True}), 200)
-    raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+    data_store_class, _ = DATA_STORES[data_store_type]
+    data_store_class.create_instance(name, identifier, location, schema, description)
+
+    return make_response(jsonify({"ok": True}), 200)

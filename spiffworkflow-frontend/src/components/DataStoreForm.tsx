@@ -71,7 +71,7 @@ export default function DataStoreForm({
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
-    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]*[a-z0-9]$/);
+    return identifierToCheck.match(/^[a-z][0-9a-z_]*[a-z0-9]$/);
   };
 
   const handleFormSubmission = (event: any) => {
@@ -152,7 +152,7 @@ export default function DataStoreForm({
   const onTypeChanged = (newType: any) => {
     setTypeInvalid(false);
     const newTypeSelection = newType.selectedItem;
-    const updateDict = { type: newTypeSelection.name };
+    const updateDict = { type: newTypeSelection.type };
     updateDataStore(updateDict);
     setSelectedDataStoreType(newTypeSelection);
   };
