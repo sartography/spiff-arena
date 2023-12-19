@@ -34,7 +34,9 @@ def data_store_list() -> flask.wrappers.Response:
 def data_store_types() -> flask.wrappers.Response:
     """Returns a list of the types of available data stores."""
 
-    data_store_types = [{"type": k, "name": v[0].__name__, "description": v[1]} for k, v in DATA_STORES.items()]
+    # this if == "json" check is temporary while we roll out support for other data stores
+    # being created with locations, identifiers and schemas
+    data_store_types = [{"type": k, "name": v[0].__name__, "description": v[1]} for k, v in DATA_STORES.items() if k == "json"]
 
     return make_response(jsonify(data_store_types), 200)
 
