@@ -43,6 +43,19 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
 
     @staticmethod
+    def create_instance(name: str, identifier: str, location: str, schema: dict[str, Any], description: str | None):
+        model = JSONDataStoreModel(
+            name=name,
+            identifier=identifier,
+            location=location,
+            schema=schema,
+            description=description,
+            data={},
+        )
+        db.session.add(model)
+        db.session.commit()
+    
+    @staticmethod
     def existing_data_stores() -> list[dict[str, Any]]:
         data_stores = []
 
