@@ -11,7 +11,7 @@ import {
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreType } from '../interfaces';
-import { modifyProcessIdentifierForPathParam, truncateString } from '../helpers';
+import { modifyProcessIdentifierForPathParam, truncateString, slugifyString } from '../helpers';
 
 type OwnProps = {
   mode: string;
@@ -126,11 +126,22 @@ return parentGroupId ?? "/";
     setDataStore(dataStoreToCopy);
   };
 
+
+const makeIdentifier = (str: any) => {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s-]+/g, '_')
+    .replace(/^[-\d]+/g, '')
+    .replace(/-+$/g, '');
+};
+
   const onNameChanged = (newName: any) => {
     setNameInvalid(false);
     const updateDict = { name: newName };
     if (!idHasBeenUpdatedByUser && mode === 'new') {
-      Object.assign(updateDict, { id: newName });
+      Object.assign(updateDict, { id: makeIdentifier(newName) });
     }
     updateDataStore(updateDict);
   };
