@@ -73,6 +73,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         overlaps="active_human_tasks",
     )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
+    task_instructions_for_end_user = relationship("TaskInstructionsForEndUserModel", cascade="delete")  # type: ignore
     process_metadata = relationship(
         "ProcessInstanceMetadataModel",
         cascade="delete",

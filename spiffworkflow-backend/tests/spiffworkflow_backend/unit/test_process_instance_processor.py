@@ -902,3 +902,6 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(remaining_entries) == 2
         for entry in remaining_entries:
             assert entry.has_been_retrieved is True
+
+        db.session.delete(process_instance)
+        db.session.commit()
