@@ -97,7 +97,9 @@ class TestTaskService(BaseTest):
         assert len(bpmn_processes) == 2
         assert len(task_models) == 2
         assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == "Level2b"
-        assert task_models[0].task_definition.bpmn_identifier == "level2b_second_call"
+        # either of these is valid since we are not pinning the task model query to one or the other
+        # and they are both call activities and not the top level process
+        assert task_models[0].task_definition.bpmn_identifier in ["level2b_second_call", "Level1_CallLevel_2B"]
 
         task_model_level_3 = (
             TaskModel.query.join(TaskDefinitionModel).filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task").first()

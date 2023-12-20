@@ -3,14 +3,12 @@ from uuid import UUID
 
 from flask.app import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -54,16 +52,6 @@ class TestTasksController(BaseTest):
         _dequeued_interstitial_stream(process_instance_id)
 
         human_tasks = db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
-
-        {
-            r.bpmn_identifier
-            for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
-            .join(TaskDefinitionModel)
-            .join(TaskModel)
-            .filter(TaskModel.process_instance_id == process_instance_id)
-            .filter(TaskModel.state == "READY")
-            .distinct()
-        }
 
         assert len(human_tasks) == 1
         human_task = human_tasks[0]
