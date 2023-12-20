@@ -4,7 +4,6 @@ import shutil
 
 import pytest
 from flask.app import Flask
-from nplusone.ext.flask_sqlalchemy import NPlusOne
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
@@ -32,8 +31,10 @@ def app() -> Flask:  # noqa
     )
     app = create_app()
 
-    app.config["NPLUSONE_RAISE"] = True
-    NPlusOne(app)
+    # to screw with this, poet add nplusone --group dev
+    # from nplusone.ext.flask_sqlalchemy import NPlusOne
+    # app.config["NPLUSONE_RAISE"] = True
+    # NPlusOne(app)
 
     return app
 

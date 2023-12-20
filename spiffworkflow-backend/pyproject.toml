@@ -114,8 +114,6 @@ types-Flask = "^1.1.6"
 types-requests = "^2.28.6"
 types-pytz = "^2022.1.1"
 
-nplusone = "^1.0.0"
-
 [tool.pytest.ini_options]
 # ignore deprecation warnings from various packages that we don't control
 filterwarnings = [
