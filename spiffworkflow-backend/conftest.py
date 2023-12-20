@@ -32,8 +32,6 @@ def app() -> Flask:  # noqa
     )
     app = create_app()
 
-    # commented out because this fails in: test_returns_403_if_user_does_not_have_permission
-    # and test_task_models_of_parent_bpmn_processes_stop_on_first_call_activity (maybe just flaky)
     app.config["NPLUSONE_RAISE"] = True
     NPlusOne(app)
 
