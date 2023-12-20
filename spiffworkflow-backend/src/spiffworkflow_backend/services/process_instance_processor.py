@@ -424,6 +424,7 @@ class ProcessInstanceProcessor:
         workflow_completed_handler: WorkflowCompletedHandler | None = None,
         process_id_to_run: str | None = None,
         additional_processing_identifier: str | None = None,
+        include_task_data_for_completed_tasks: bool = False,
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine
@@ -433,6 +434,7 @@ class ProcessInstanceProcessor:
             process_instance_model=process_instance_model,
             validate_only=validate_only,
             process_id_to_run=process_id_to_run,
+            include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
         )
 
     def setup_processor_with_process_instance(
@@ -440,6 +442,7 @@ class ProcessInstanceProcessor:
         process_instance_model: ProcessInstanceModel,
         validate_only: bool = False,
         process_id_to_run: str | None = None,
+        include_task_data_for_completed_tasks: bool = False,
     ) -> None:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.process_instance_id = process_instance_model.id
@@ -623,13 +626,20 @@ class ProcessInstanceProcessor:
             ] = task_definition.properties_json
 
     @classmethod
-    def _get_bpmn_process_dict(cls, bpmn_process: BpmnProcessModel, get_tasks: bool = False) -> dict:
+    def _get_bpmn_process_dict(
+        cls,
+        bpmn_process: BpmnProcessModel,
+        get_tasks: bool = False,
+        include_task_data_for_completed_tasks: bool = False,
+    ) -> dict:
         json_data = JsonDataModel.query.filter_by(hash=bpmn_process.json_data_hash).first()
         bpmn_process_dict = {"data": json_data.data, "tasks": {}}
         bpmn_process_dict.update(bpmn_process.properties_json)
         if get_tasks:
             tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
-            cls._get_tasks_dict(tasks, bpmn_process_dict)
+            cls._get_tasks_dict(
+                tasks, bpmn_process_dict, include_task_data_for_completed_tasks=include_task_data_for_completed_tasks
+            )
         return bpmn_process_dict
 
     @classmethod
@@ -638,11 +648,12 @@ class ProcessInstanceProcessor:
         tasks: list[TaskModel],
         spiff_bpmn_process_dict: dict,
         bpmn_subprocess_id_to_guid_mappings: dict | None = None,
+        include_task_data_for_completed_tasks: bool = False,
     ) -> None:
         json_data_hashes = set()
-        # disable this while we investigate https://github.com/sartography/spiff-arena/issues/705
-        # states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
         states_to_not_rehydrate_data: list[str] = []
+        if include_task_data_for_completed_tasks:
+            states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
         for task in tasks:
             if task.state not in states_to_not_rehydrate_data:
                 json_data_hashes.add(task.json_data_hash)
@@ -666,6 +677,7 @@ class ProcessInstanceProcessor:
         cls,
         process_instance_model: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
+        include_task_data_for_completed_tasks: bool = False,
     ) -> dict:
         if process_instance_model.bpmn_process_definition_id is None:
             return {}
@@ -726,7 +738,9 @@ class ProcessInstanceProcessor:
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
-                single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process, get_tasks=True)
+                single_bpmn_process_dict = cls._get_bpmn_process_dict(
+                    bpmn_process, get_tasks=True, include_task_data_for_completed_tasks=include_task_data_for_completed_tasks
+                )
                 spiff_bpmn_process_dict.update(single_bpmn_process_dict)
 
                 bpmn_subprocesses = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id).all()
@@ -743,7 +757,12 @@ class ProcessInstanceProcessor:
                 tasks = TaskModel.query.filter(
                     TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
                 ).all()
-                cls._get_tasks_dict(tasks, spiff_bpmn_process_dict, bpmn_subprocess_id_to_guid_mappings)
+                cls._get_tasks_dict(
+                    tasks,
+                    spiff_bpmn_process_dict,
+                    bpmn_subprocess_id_to_guid_mappings,
+                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                )
 
         return spiff_bpmn_process_dict
 
@@ -777,6 +796,7 @@ class ProcessInstanceProcessor:
         spec: BpmnProcessSpec | None = None,
         validate_only: bool = False,
         subprocesses: IdToBpmnProcessSpecMapping | None = None,
+        include_task_data_for_completed_tasks: bool = False,
     ) -> tuple[BpmnWorkflow, dict, dict]:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
@@ -790,6 +810,7 @@ class ProcessInstanceProcessor:
                 full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
                     process_instance_model,
                     bpmn_definition_to_task_definitions_mappings,
+                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
@@ -1195,7 +1216,7 @@ class ProcessInstanceProcessor:
         ProcessInstanceTmpService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
         deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
         spiff_tasks = processor.bpmn_process_instance.get_tasks()
 
