@@ -31,6 +31,11 @@ def app() -> Flask:  # noqa
     )
     app = create_app()
 
+    # to screw with this, poet add nplusone --group dev
+    # from nplusone.ext.flask_sqlalchemy import NPlusOne
+    # app.config["NPLUSONE_RAISE"] = True
+    # NPlusOne(app)
+
     return app
 
 

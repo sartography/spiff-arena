@@ -34,6 +34,7 @@ class GetAllPermissions(Script):
                 PermissionTargetModel.uri,
                 GroupModel.identifier.label("group_identifier"),
             )
+            .all()
         )
 
         permissions: OrderedDict[tuple[str, str], list[str]] = OrderedDict()
