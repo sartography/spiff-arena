@@ -288,7 +288,7 @@ responsible for triggering workflows based on the timer values set in the Timer 
 functions correctly, you need to start an instance of the process, which will then schedule the event for the appropriate time 
 based on the timer. 
 Additionally, there are environment variables like `SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS` that control the polling time for the 
-scheduler. For more details, you can refer to the [SpiffWorkflow Backend Initialization Code](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/__init__.py#L60).
+scheduler. For more details, you can refer to the [SpiffWorkflow Backend Initialization Code](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/__init__.py).
 
 ### **37: Authentication tokens in SpiffWorkflow**
 **Q:** How does authentication work in SpiffWorkflow, particularly regarding the use of authentication tokens?
@@ -297,7 +297,7 @@ scheduler. For more details, you can refer to the [SpiffWorkflow Backend Initial
 requests. If you encounter issues like "token invalid" responses, it's recommended to inspect the network traffic using your 
 browser's developer tools. This can help you understand how the token is being passed and whether it's correctly formatted. You 
 can copy any request to the backend as a curl command or inspect the headers to see how the bearer token is being used. 
-Keep an eye on the [SpiffWorkflow documentation](https://spiff-arena.readthedocs.io/en/latest/wish_list/wish_list.html#authentication-keys) for updates on this feature.
+If the standard openid flow is not ideal for your use case, Service Account / API Token management can be implemented using a process model.
 
 ### **38: Configure Spiff Arena to run behind a proxy server**
 **Q:** How can I configure Spiff Arena to run behind a proxy server, such as Traefik, and resolve issues with redirects and OpenID provider authentication?
@@ -310,13 +310,13 @@ Keep an eye on the [SpiffWorkflow documentation](https://spiff-arena.readthedocs
 
 3. **Compatibility Check:** The `SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY` environment variable is used to ensure that the frontend and backend URLs are compatible, particularly for cookie sharing. If you encounter issues with this check, you might need to adjust your domain setup to ensure that the frontend and backend are on the same domain or subdomain structure.
 
-4. **Domain Structure:** A common setup involves having the frontend on `example.com` and the backend on `api.example.com`. This structure allows for seamless cookie sharing and authentication. If you initially set up different subdomains (e.g., `workflow.<domain_name>.com` and `workflow-backend.<domain_name>.com`) and face issues, consider switching to a structure like `api.workflow.<domain_name>.com` for the backend.
+4. **Domain Structure:** A common setup involves having the frontend on `example.com` and the backend on `api.example.com`. This structure allows for seamless cookie sharing and authentication. If you initially set up different subdomains (e.g., `workflow.<domain_name>.com` and `workflow-backend.<domain_name>.com`) and face issues, consider switching to a structure like `api.workflow.<domain_name>.com` for the backend, or consider using path-based routing, where the same host is used for both frontend and backend, but the proxy server routes a specific path prefix (/api, /frontend) to each app as needed.
 
-5. **Debugging and Testing:** Utilize the new API endpoint `/v1.0/debug/url-info` on the backend to verify how Flask perceives the URL. This can help identify any mismatches or misconfigurations in your setup.
+5. **Debugging and Testing:** Utilize the new API endpoint `/v1.0/debug/url-info` on the backend to verify how Flask perceives the URL. This can help identify any mismatches or misconfigurations in your setup, specifically if you access the app using https but the correct information from the request does not make it all the way to the flask application, and it therefore thinks it using running on http without SSL.
 
 6. **Community Support:** If you encounter specific issues or need further assistance, consider reaching out to the community on platforms like GitHub or Discord. Sharing your configuration and experiments in detail can help others provide more targeted advice.
 
-For more detailed guidance and examples of Spiff Arena deployment configurations, you can refer to resources like the [Terraform Kubernetes Modules](https://github.com/mingfang/terraform-k8s-modules/blob/master/examples/spiffworkflow/README.md) and [infra-spiff-workflow](https://github.com/status-im/infra-spiff-workflow).
+For more detailed guidance and examples of Spiff Arena deployment configurations, you can refer to resources like the [Terraform Kubernetes Modules](https://github.com/mingfang/terraform-k8s-modules/blob/master/examples/spiffworkflow/README.md).
 
 Remember, each deployment scenario can be unique, so it's important to tailor these guidelines to your specific setup and
 requirements.
@@ -339,18 +339,11 @@ can I resolve this?
 
 By adjusting the return value of your script task's `execute` method and understanding the underlying mechanics of task state management in SpiffWorkflow, you can effectively control the flow of your workflow processes.
 
-### **40: Handling Cycle Timer Events and Event Design in SpiffWorkflow**
-**Q:** How does SpiffWorkflow handle cycle timer events, particularly in the context of child script tasks not inheriting parent task data? Also, how are internal and external events managed within SpiffWorkflow?
+### **40: Event Design in SpiffWorkflow**
+**Q:** How are internal and external events managed within SpiffWorkflow?
 
-**A:**  1. **Cycle Timer Events and Data Inheritance:**
-   - **Issue:** When a cycle timer, wrapped in a Boundary Event, fires, a new child task is created. However, there's an observation that the child script task does not inherit the parent task's data.
-   - **Response:** This behavior is not necessarily intended. It would be reasonable to expect that the data should be inherited. A review of the issue and potential modifications to the workflow engine might be needed to address this. An issue has been opened on GitHub for further investigation and resolution ([GitHub Issue #368](https://github.com/sartography/SpiffWorkflow/issues/368)).
-
-2. **Event Handling in SpiffWorkflow:**
+**A:** **Event Handling in SpiffWorkflow:**
    - **Internal vs. External Events:** The distinction between internal and external events in SpiffWorkflow is primarily for deciding whether an event should be handled within the workflow or passed up to a parent workflow from a subprocess. This is now managed by targeting a particular subworkflow or leaving the target as None for internal handling.
    - **External Event Management:** For real external events, SpiffWorkflow allows the creation of an event object and passing it to the `send_event` function. This approach is used for events that need to be handled outside the workflow system.
    - **Event Translation and Messaging:** External systems should translate their events into SpiffWorkflow's format and call `send_events` to trigger the workflow. SpiffWorkflow collects all unhandled events, which the workflow system should periodically check using `get_events`. This process allows for the translation and sending of these events to external systems.
    - **Practical Application:** In real-world applications, tasks like UserTasks can be mapped to ApprovalTasks or FormTasks, and ServiceTasks can be mapped to API calls to external systems. The approach to handling events or messages, such as using RabbitMQ for pub/sub events or direct messaging via email or SMS, depends on the specific requirements and design of the workflow system.
-
-3. **Adherence to BPMN Spec:**
-   - **Flexibility:** While SpiffWorkflow aims to understand and adhere to the BPMN specification, there is flexibility in how closely one sticks to the spec, especially when building a BPMN engine or integrating SpiffWorkflow into a larger system. The complexity of the BPMN spec might sometimes be bypassed for more practical and tailored solutions, depending on the goals and control over the processes and execution environment.
