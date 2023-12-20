@@ -463,7 +463,7 @@ class ProcessInstanceProcessor:
         self.bpmn_definition_to_task_definitions_mappings: dict = {}
 
         subprocesses: IdToBpmnProcessSpecMapping | None = None
-        if process_instance_model.bpmn_process_definition_id is None:
+        if not process_instance_model.spiffworkflow_fully_initialized():
             (
                 bpmn_process_spec,
                 subprocesses,
@@ -780,7 +780,7 @@ class ProcessInstanceProcessor:
     ) -> tuple[BpmnWorkflow, dict, dict]:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
-        if process_instance_model.bpmn_process_definition_id is not None:
+        if process_instance_model.spiffworkflow_fully_initialized():
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
@@ -981,7 +981,7 @@ class ProcessInstanceProcessor:
 
         Expects the calling method to commit it.
         """
-        if self.process_instance_model.bpmn_process_definition_id is not None:
+        if self.process_instance_model.spiffworkflow_fully_initialized():
             return None
 
         bpmn_dict = self.serialize()
