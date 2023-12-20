@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 from flask.app import Flask
+from nplusone.ext.flask_sqlalchemy import NPlusOne
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
@@ -11,7 +12,6 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from nplusone.ext.flask_sqlalchemy import NPlusOne
 
 # We need to call this before importing spiffworkflow_backend
 # otherwise typeguard cannot work. hence the noqa: E402
@@ -34,8 +34,8 @@ def app() -> Flask:  # noqa
 
     # commented out because this fails in: test_returns_403_if_user_does_not_have_permission
     # and test_task_models_of_parent_bpmn_processes_stop_on_first_call_activity (maybe just flaky)
-    # app.config['NPLUSONE_RAISE'] = True
-    # NPlusOne(app)
+    app.config["NPLUSONE_RAISE"] = True
+    NPlusOne(app)
 
     return app
 
