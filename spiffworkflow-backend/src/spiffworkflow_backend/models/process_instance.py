@@ -105,6 +105,18 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     actions: dict | None = None
 
+    def spiffworkflow_fully_initialized(self) -> bool:
+        """We have created process definitions and processes.
+
+        Up until Dec 2023, we thought it was not possible for bpmn_process_definition_id to be populated and for
+        bpmn_process_id to be null. It is still not expected in normal operation, but if something really awful
+        happens while saving tasks to the database (we observed a case where the background processor was running
+        old code and thought it had a task.id column that actually didn't exist), it is possible for bpmn_process_id
+        to be null. In those cases, we basically treat things as if it is a fresh instance in terms of how we
+        generate the serialization to give to spiff lib.
+        """
+        return self.bpmn_process_definition_id is not None and self.bpmn_process_id is not None
+
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         return {

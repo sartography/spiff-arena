@@ -6,6 +6,7 @@ from spiffworkflow_backend.data_migrations.process_instance_migrator import Proc
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -51,7 +52,12 @@ class TestProcessInstanceMigrator(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        task_model = TaskModel.query.filter_by(process_instance_id=process_instance.id).all()[-1]
+        task_model = (
+            TaskModel.query.filter_by(process_instance_id=process_instance.id)
+            .join(TaskDefinitionModel)
+            .filter(TaskDefinitionModel.bpmn_identifier == "finance_approval")
+            .first()
+        )
         assert task_model is not None
         assert task_model.parent_task_model() is not None
         assert task_model.parent_task_model().properties_json["last_state_change"] is not None
