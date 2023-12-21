@@ -6,7 +6,6 @@ import {
 } from '@rjsf/utils';
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
-import { useEffect } from 'react';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
 //    compensation":{
