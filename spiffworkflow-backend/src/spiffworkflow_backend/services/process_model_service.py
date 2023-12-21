@@ -401,6 +401,7 @@ class ProcessModelService(FileSystemService):
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = FileSystemService.full_path_from_id(process_group_id)
+            print(f"process_group_path: {process_group_path}")
             if cls.is_process_group(process_group_path):
                 return cls.find_or_create_process_group(
                     process_group_path,
@@ -516,10 +517,14 @@ class ProcessModelService(FileSystemService):
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
 
-        if find_direct_nested_items or find_all_nested_items:
+        process_group.process_models = []
+        process_group.process_groups = []
+
+        if find_direct_nested_items is False:
+            return process_group
+
+        if find_all_nested_items:
             with os.scandir(dir_path) as nested_items:
-                process_group.process_models = []
-                process_group.process_groups = []
                 for nested_item in nested_items:
                     if nested_item.is_dir():
                         # TODO: check whether this is a group or model
