@@ -40,6 +40,7 @@ export default function NumericRangeField({
   rawErrors = [],
   formData,
   registry,
+  required,
 }: FieldProps) {
   const commonAttributes = getCommonAttributes(
     label,
@@ -61,7 +62,7 @@ export default function NumericRangeField({
     if (numberString) {
       return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
-    return '0';
+    return '';
   };
 
   const parseNumberString = (numberString: string) =>
@@ -102,7 +103,9 @@ export default function NumericRangeField({
   return (
     <div className="numeric--range-field-wrapper">
       <div className="numeric--range-field-label">
-        <h5>{commonAttributes.label}</h5>
+        <h5>
+          {required ? `${commonAttributes.label} *` : commonAttributes.label}
+        </h5>
         {description && (
           <div className="markdown-field-desc-text">
             <DescriptionFieldTemplate
@@ -126,7 +129,6 @@ export default function NumericRangeField({
             onChangeLocal('min', values);
           }}
           invalid={commonAttributes.invalid}
-          defaultValue="0"
           autofocus={autofocus}
         />
         <TextInput
@@ -136,7 +138,6 @@ export default function NumericRangeField({
           readonly={readonly}
           value={formatNumberString(max)}
           onChange={(values: any) => onChangeLocal('max', values)}
-          defaultValue="0"
           invalid={commonAttributes.invalid}
         />
       </div>
