@@ -16,6 +16,7 @@ from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
@@ -258,6 +259,7 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
 
     try:
         SpecFileService.delete_file(process_model, file_name)
+        db.session.commit()
     except FileNotFoundError as exception:
         raise (
             ApiError(
