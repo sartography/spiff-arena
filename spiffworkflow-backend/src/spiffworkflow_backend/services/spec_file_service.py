@@ -231,7 +231,6 @@ class SpecFileService(FileSystemService):
     @classmethod
     def delete_file(cls, process_model: ProcessModelInfo, file_name: str) -> None:
         cls.clear_caches_for_file(file_name, process_model)
-        db.session.commit()
         full_file_path = SpecFileService.full_file_path(process_model, file_name)
         os.remove(full_file_path)
 
