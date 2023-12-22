@@ -92,14 +92,14 @@ if (
   generalDateFormat = window.spiffworkflowFrontendJsenv.DATE_FORMAT;
 }
 
-const splitDataFormat = generalDateFormat.split('-');
+const splitDateFormat = generalDateFormat.split('-');
 const supportedDateFormatTypes = ['yyyy', 'MM', 'MMM', 'MMMM', 'dd'];
-const unsupportedFormattedTyps = splitDataFormat.filter(
+const unsupportedFormatTypes = splitDateFormat.filter(
   (x) => !supportedDateFormatTypes.includes(x)
 );
-if (unsupportedFormattedTyps.length > 0) {
+if (unsupportedFormatTypes.length > 0) {
   throw new Error(
-    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat} with invalid options: ${unsupportedFormattedTyps.join(
+    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat} with invalid options: ${unsupportedFormatTypes.join(
       ', '
     )}. Valid options are: ${supportedDateFormatTypes.join(', ')}`
   );
