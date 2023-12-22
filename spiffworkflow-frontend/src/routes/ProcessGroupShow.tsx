@@ -20,8 +20,6 @@ export default function ProcessGroupShow() {
   const params = useParams();
   const navigate = useNavigate();
 
-  // const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
-
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.processGroupListPath]: ['POST'],
@@ -34,19 +32,7 @@ export default function ProcessGroupShow() {
   const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
     `${params.process_group_id}`
   );
-  const processGroup = useProcessGroupFetcher(unModifiedProcessGroupId);
-  console.log('processGroup', processGroup);
-  //
-  // useEffect(() => {
-  //   const processResult = (result: any) => {
-  //     setProcessGroup(result);
-  //     setPageTitle([result.display_name]);
-  //   };
-  //   HttpService.makeCallToBackend({
-  //     path: `/process-groups/${params.process_group_id}`,
-  //     successCallback: processResult,
-  //   });
-  // }, [params.process_group_id]);
+  const { processGroup } = useProcessGroupFetcher(unModifiedProcessGroupId);
 
   const navigateToProcessGroups = (_result: any) => {
     navigate(`/process-groups`);

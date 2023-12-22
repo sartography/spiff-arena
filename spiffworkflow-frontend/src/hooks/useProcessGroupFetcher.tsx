@@ -1,21 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ProcessGroup } from '../interfaces';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from './UriListForPermissions';
+
+// cache will only help if user is clicking around a lot but we need to avoid issues
+// where if a user updates a process group another user cannot see the update.
+const CACHE_DURATION_MS = 60 * 1000;
+
+const LOCAL_STORAGE_PROCESS_GROUP_CACHE_KEY = 'processGroupCache';
 
 export default function useProcessGroupFetcher(processGroupIdentifier: string) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const { targetUris } = useUriListForPermissions();
 
-  useEffect(() => {
-    const storedProcessGroups = JSON.parse(
-      localStorage.getItem('storedProcessGroups') || '{}'
+  const getProcessGroupCache = useCallback(() => {
+    return JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_PROCESS_GROUP_CACHE_KEY) || '{}'
     );
+  }, []);
+
+  useEffect(() => {
+    const storedProcessGroups = getProcessGroupCache();
+
     const handleProcessGroupResponse = (result: any) => {
       const timestamp = Date.now();
-
       const processGroups = result.results;
-
       processGroups.forEach((pg: ProcessGroup) => {
         storedProcessGroups[pg.id] = { processGroup: pg, timestamp };
         if (pg.id === processGroupIdentifier) {
@@ -39,15 +48,12 @@ export default function useProcessGroupFetcher(processGroupIdentifier: string) {
         successCallback: handleProcessGroupResponse,
       });
     };
+
     if (processGroupIdentifier in storedProcessGroups) {
       const pg = storedProcessGroups[processGroupIdentifier].processGroup;
       const { timestamp } = storedProcessGroups[processGroupIdentifier];
 
-      // cache will only help if user is clicking around a lot but we need to avoid issues
-      // where if a user updates a process group another user cannot see the update.
-      const cacheDuration = 60 * 1000;
-
-      if (Date.now() - timestamp < cacheDuration) {
+      if (Date.now() - timestamp < CACHE_DURATION_MS) {
         setProcessGroup(pg);
       } else {
         fetchProcessGroups();
@@ -55,7 +61,25 @@ export default function useProcessGroupFetcher(processGroupIdentifier: string) {
     } else {
       fetchProcessGroups();
     }
-  }, [processGroupIdentifier, targetUris.processGroupListPath]);
+  }, [
+    processGroupIdentifier,
+    targetUris.processGroupListPath,
+    getProcessGroupCache,
+  ]);
 
-  return processGroup;
+  const updateProcessGroupCache = (updatedProcessGroup: ProcessGroup) => {
+    const storedProcessGroups = getProcessGroupCache();
+    const timestamp = Date.now();
+
+    storedProcessGroups[updatedProcessGroup.id] = {
+      processGroup: updatedProcessGroup,
+      timestamp,
+    };
+    localStorage.setItem(
+      LOCAL_STORAGE_PROCESS_GROUP_CACHE_KEY,
+      JSON.stringify(storedProcessGroups)
+    );
+  };
+
+  return { processGroup, updateProcessGroupCache };
 }
