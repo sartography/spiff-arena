@@ -91,16 +91,25 @@ if (
 ) {
   generalDateFormat = window.spiffworkflowFrontendJsenv.DATE_FORMAT;
 }
-const supportedDateFormats = ['yyyy-MM-dd', 'dd-MM-yyyy', 'MM-dd-yyyy'];
-if (!supportedDateFormats.includes(generalDateFormat)) {
+
+const splitDataFormat = generalDateFormat.split('-');
+const supportedDateFormatTypes = ['yyyy', 'MM', 'MMM', 'MMMM', 'dd'];
+const unsupportedFormattedTyps = splitDataFormat.filter(
+  (x) => !supportedDateFormatTypes.includes(x)
+);
+if (unsupportedFormattedTyps.length > 0) {
   throw new Error(
-    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat}. Valid options are: ${supportedDateFormats}`
+    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat} with invalid options: ${unsupportedFormattedTyps.join(
+      ', '
+    )}. Valid options are: ${supportedDateFormatTypes.join(', ')}`
   );
 }
 const carbonDateFormat = generalDateFormat
-  .replace('yyyy', 'Y')
-  .replace('MM', 'm')
-  .replace('dd', 'd');
+  .replace(/\byyyy\b/, 'Y')
+  .replace(/\bMM\b/, 'm')
+  .replace(/\bMMM\b/, 'M')
+  .replace(/\bMMMM\b/, 'F')
+  .replace(/\bdd\b/, 'd');
 export const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
 export const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
 export const DATE_FORMAT = generalDateFormat;
