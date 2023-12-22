@@ -160,6 +160,7 @@ class MissingProcessInfoError(Exception):
 class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
         self._last_result: dict[str, Any] = {}
+        self._non_user_defined_keys = {"__annotations__"}
         super().__init__(environment_globals)
 
     def execute(
@@ -169,6 +170,9 @@ class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
         external_context: dict[str, Any] | None = None,
     ) -> bool:
         super().execute(script, context, external_context)
+        for key in self._non_user_defined_keys:
+            if key in context:
+                context.pop(key)
         self._last_result = context
         return True
 
@@ -199,7 +203,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
 
     def __init__(self, environment_globals: dict[str, Any]):
         self.state: dict[str, Any] = {}
-        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__"])
+        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
         super().__init__(environment_globals)
 
     def evaluate(
