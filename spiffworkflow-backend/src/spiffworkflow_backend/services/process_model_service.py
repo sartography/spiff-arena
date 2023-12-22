@@ -401,7 +401,6 @@ class ProcessModelService(FileSystemService):
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = FileSystemService.full_path_from_id(process_group_id)
-            print(f"process_group_path: {process_group_path}")
             if cls.is_process_group(process_group_path):
                 return cls.find_or_create_process_group(
                     process_group_path,
