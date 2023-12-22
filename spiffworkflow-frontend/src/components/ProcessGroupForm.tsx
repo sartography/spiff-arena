@@ -5,6 +5,7 @@ import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
+import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 type OwnProps = {
   mode: string;
@@ -24,8 +25,11 @@ export default function ProcessGroupForm({
   const navigate = useNavigate();
   let newProcessGroupId = processGroup.id;
 
-  const navigateToProcessGroup = (_result: any) => {
+  const { updateProcessGroupCache } = useProcessGroupFetcher(processGroup.id);
+
+  const handleProcessGroupUpdateResponse = (_result: any) => {
     if (newProcessGroupId) {
+      updateProcessGroupCache(processGroup);
       navigate(
         `/process-groups/${modifyProcessIdentifierForPathParam(
           newProcessGroupId
@@ -82,7 +86,7 @@ export default function ProcessGroupForm({
 
     HttpService.makeCallToBackend({
       path,
-      successCallback: navigateToProcessGroup,
+      successCallback: handleProcessGroupUpdateResponse,
       httpMethod,
       postBody,
     });

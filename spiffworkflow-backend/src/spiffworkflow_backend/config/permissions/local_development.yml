@@ -35,3 +35,12 @@ permissions:
     groups: [group2]
     actions: [read]
     uri: PG:ALL
+
+  pm-read:
+    groups: [group3]
+    actions: [read]
+    uri: PM:site-administration:set-permissions
+  pg-read:
+    groups: [group3]
+    actions: [read]
+    uri: PG:misc

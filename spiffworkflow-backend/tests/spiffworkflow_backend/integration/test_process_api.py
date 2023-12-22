@@ -1186,7 +1186,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["id"] == process_group_id
-        assert response.json["process_models"][0]["id"] == process_model.id
+        assert response.json["process_models"] == []
         assert response.json["parent_groups"] == []
 
     def test_get_process_group_show_when_nested(
