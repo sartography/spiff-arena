@@ -83,6 +83,7 @@ import { Notification } from '../components/Notification';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
+import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
 
 type OwnProps = {
   variant: string;
@@ -92,6 +93,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { navigateToInstance } = useProcessInstanceNavigate();
 
   const eventsThatNeedPayload = ['MessageEventDefinition'];
 
@@ -167,16 +169,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const onProcessInstanceRun = (processInstanceResult: ProcessInstance) => {
-    const processInstanceId = processInstanceResult.id;
+  const onProcessInstanceForceRun = (
+    processInstanceResult: ProcessInstance
+  ) => {
     if (processInstanceResult.process_model_uses_queued_execution) {
-      navigate(
-        `/process-instances/${modifiedProcessModelId}/${processInstanceId}/progress`
-      );
+      navigateToInstance({
+        processInstanceId: processInstanceResult.id,
+        suffix: '/progress',
+      });
     } else {
-      navigate(
-        `/process-instances/${modifiedProcessModelId}/${processInstanceId}/interstitial`
-      );
+      navigateToInstance({
+        processInstanceId: processInstanceResult.id,
+        suffix: '/interstitial',
+      });
     }
   };
 
@@ -184,7 +189,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (ability.can('POST', targetUris.processInstanceActionPath)) {
       HttpService.makeCallToBackend({
         path: `${targetUris.processInstanceActionPath}/run?force_run=true`,
-        successCallback: onProcessInstanceRun,
+        successCallback: onProcessInstanceForceRun,
         httpMethod: 'POST',
       });
     }
