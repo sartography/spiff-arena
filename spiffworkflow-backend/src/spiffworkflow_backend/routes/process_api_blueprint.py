@@ -183,7 +183,6 @@ def process_data_show(
 
 
 def process_data_file_download(
-    category: str,
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
