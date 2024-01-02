@@ -46,29 +46,27 @@ class ProcessInstanceLockService:
         cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel, additional_processing_identifier: str | None = None
     ) -> None:
         ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
-        ctx["locks"][process_instance_id] = queue_entry
+        ctx["locks"][process_instance_id] = queue_entry.id
 
     @classmethod
     def lock_many(
         cls, queue_entries: list[ProcessInstanceQueueModel], additional_processing_identifier: str | None = None
     ) -> list[int]:
         ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
-        new_locks = {entry.process_instance_id: entry for entry in queue_entries}
+        new_locks = {entry.process_instance_id: entry.id for entry in queue_entries}
         new_lock_ids = list(new_locks.keys())
         ctx["locks"].update(new_locks)
         return new_lock_ids
 
     @classmethod
-    def unlock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> ProcessInstanceQueueModel:
-        queue_model = cls.try_unlock(process_instance_id, additional_processing_identifier=additional_processing_identifier)
-        if queue_model is None:
+    def unlock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> int:
+        queue_model_id = cls.try_unlock(process_instance_id, additional_processing_identifier=additional_processing_identifier)
+        if queue_model_id is None:
             raise ExpectedLockNotFoundError(f"Could not find a lock for process instance: {process_instance_id}")
-        return queue_model
+        return queue_model_id
 
     @classmethod
-    def try_unlock(
-        cls, process_instance_id: int, additional_processing_identifier: str | None = None
-    ) -> ProcessInstanceQueueModel | None:
+    def try_unlock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> int | None:
         ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
         return ctx["locks"].pop(process_instance_id, None)  # type: ignore
 

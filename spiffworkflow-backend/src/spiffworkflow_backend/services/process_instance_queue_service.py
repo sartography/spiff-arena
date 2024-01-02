@@ -40,9 +40,10 @@ class ProcessInstanceQueueService:
 
     @classmethod
     def _enqueue(cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None) -> None:
-        queue_entry = ProcessInstanceLockService.unlock(
+        queue_entry_id = ProcessInstanceLockService.unlock(
             process_instance.id, additional_processing_identifier=additional_processing_identifier
         )
+        queue_entry = ProcessInstanceQueueModel.query.filter_by(id=queue_entry_id).first()
         current_time = round(time.time())
         if current_time > queue_entry.run_at_in_seconds:
             queue_entry.run_at_in_seconds = current_time
