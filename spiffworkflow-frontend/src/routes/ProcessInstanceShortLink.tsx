@@ -1,16 +1,16 @@
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import ProcessInstanceService from '../services/ProcessInstanceService';
+import { useParams } from 'react-router-dom';
+import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
 
 export default function ProcessInstanceShortLink() {
   const params = useParams();
-  const navigate = useNavigate();
+  const { navigateToInstance } = useProcessInstanceNavigate();
 
   useEffect(() => {
-    ProcessInstanceService.navigate({
+    navigateToInstance({
       processInstanceId: parseInt(params.process_instance_id || '0', 10),
     });
-  }, [params.process_instance_id, navigate]);
+  }, [params.process_instance_id, navigateToInstance]);
 
   return null;
 }

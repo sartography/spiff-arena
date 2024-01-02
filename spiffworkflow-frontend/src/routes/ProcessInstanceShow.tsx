@@ -83,7 +83,7 @@ import { Notification } from '../components/Notification';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
-import ProcessInstanceService from '../services/ProcessInstanceService';
+import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
 
 type OwnProps = {
   variant: string;
@@ -93,6 +93,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { navigateToInstance } = useProcessInstanceNavigate();
 
   const eventsThatNeedPayload = ['MessageEventDefinition'];
 
@@ -172,12 +173,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     processInstanceResult: ProcessInstance
   ) => {
     if (processInstanceResult.process_model_uses_queued_execution) {
-      ProcessInstanceService.navigate({
+      navigateToInstance({
         processInstanceId: processInstanceResult.id,
         suffix: '/progress',
       });
     } else {
-      ProcessInstanceService.navigate({
+      navigateToInstance({
         processInstanceId: processInstanceResult.id,
         suffix: '/interstitial',
       });
