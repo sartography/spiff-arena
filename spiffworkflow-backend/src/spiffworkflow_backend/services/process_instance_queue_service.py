@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.process_instance_lock_service import ExpectedLockNotFoundError
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -44,6 +45,8 @@ class ProcessInstanceQueueService:
             process_instance.id, additional_processing_identifier=additional_processing_identifier
         )
         queue_entry = ProcessInstanceQueueModel.query.filter_by(id=queue_entry_id).first()
+        if queue_entry is None:
+            raise ExpectedLockNotFoundError(f"Could not find a lock for process instance: {process_instance.id}")
         current_time = round(time.time())
         if current_time > queue_entry.run_at_in_seconds:
             queue_entry.run_at_in_seconds = current_time
