@@ -8,6 +8,11 @@ import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWid
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 
+enum DateCheckType {
+  minimum = 'minimum',
+  maximuim = 'maximum',
+}
+
 type OwnProps = {
   id: string;
   formData: any;
@@ -53,9 +58,10 @@ export default function CustomForm({
   };
 
   const checkFieldComparisons = (
+    checkType: DateCheckType,
     formDataToCheck: any,
     propertyKey: string,
-    minimumDateCheck: string,
+    dateCheck: string,
     formattedDateString: string,
     errors: any,
     jsonSchema: any
@@ -67,8 +73,7 @@ export default function CustomForm({
     //    field:[field_name_to_use]:[start or end]
     //
     // defaults to "start" in all cases
-    const [_, fieldIdentifierToCompareWith, startOrEnd] =
-      minimumDateCheck.split(':');
+    const [_, fieldIdentifierToCompareWith, startOrEnd] = dateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formDataToCheck)) {
       errors[propertyKey].addError(
         `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
@@ -100,23 +105,72 @@ export default function CustomForm({
       return;
     }
 
+    let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+    if (
+      fieldIdentifierToCompareWith in jsonSchema.properties &&
+      jsonSchema.properties[fieldIdentifierToCompareWith].title
+    ) {
+      fieldToCompareWithTitle =
+        jsonSchema.properties[fieldIdentifierToCompareWith].title;
+    }
+
     const dateStringToCompareWith = formatDateString(dateToCompareWith);
-    if (dateStringToCompareWith > formattedDateString) {
-      let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
-      if (
-        fieldIdentifierToCompareWith in jsonSchema.properties &&
-        jsonSchema.properties[fieldIdentifierToCompareWith].title
-      ) {
-        fieldToCompareWithTitle =
-          jsonSchema.properties[fieldIdentifierToCompareWith].title;
+    if (checkType === 'minimum') {
+      if (dateStringToCompareWith > formattedDateString) {
+        errors[propertyKey].addError(
+          `must be equal to or greater than '${fieldToCompareWithTitle}'`
+        );
       }
-      errors[propertyKey].addError(
-        `must be equal to or greater than '${fieldToCompareWithTitle}'`
-      );
+      // best NOT to merge this with nested if statement in case we add more or move code around
+      // eslint-disable-next-line sonarjs/no-collapsible-if
+    } else if (checkType === 'maximum') {
+      if (dateStringToCompareWith < formattedDateString) {
+        errors[propertyKey].addError(
+          `must be equal to or less than '${fieldToCompareWithTitle}'`
+        );
+      }
     }
   };
 
-  const checkMinimumDate = (
+  const runDateChecks = (
+    checkType: DateCheckType,
+    dateChecks: string[],
+    formDataToCheck: any,
+    propertyKey: string,
+    formattedDateString: string,
+    errors: any,
+    jsonSchema: any
+  ) => {
+    dateChecks.forEach((mdc: string) => {
+      if (mdc === 'today') {
+        const dateTodayString = formatDateString();
+        if (checkType === 'minimum') {
+          if (dateTodayString > formattedDateString) {
+            errors[propertyKey].addError('must be today or after');
+          }
+          // best NOT to merge this with nested if statement in case we add more or move code around
+          // eslint-disable-next-line sonarjs/no-collapsible-if
+        } else if (checkType === 'maximum') {
+          if (dateTodayString < formattedDateString) {
+            errors[propertyKey].addError('must be today or before');
+          }
+        }
+      } else if (mdc.startsWith('field:')) {
+        checkFieldComparisons(
+          checkType,
+          formDataToCheck,
+          propertyKey,
+          mdc,
+          formattedDateString,
+          errors,
+          jsonSchema
+        );
+      }
+    });
+  };
+
+  const checkDateValidations = (
+    checkType: DateCheckType,
     formDataToCheck: any,
     propertyKey: string,
     propertyMetadata: any,
@@ -131,24 +185,21 @@ export default function CustomForm({
         [dateString] = dateString.split(DATE_RANGE_DELIMITER);
       }
       const formattedDateString = formatDateString(dateString);
-      const minimumDateChecks = propertyMetadata.minimumDate.split(',');
-      minimumDateChecks.forEach((mdc: string) => {
-        if (mdc === 'today') {
-          const dateTodayString = formatDateString();
-          if (dateTodayString > formattedDateString) {
-            errors[propertyKey].addError('must be today or after');
-          }
-        } else if (mdc.startsWith('field:')) {
-          checkFieldComparisons(
-            formDataToCheck,
-            propertyKey,
-            mdc,
-            formattedDateString,
-            errors,
-            jsonSchema
-          );
-        }
-      });
+      let dateChecks = null;
+      if (checkType === 'minimum') {
+        dateChecks = propertyMetadata.minimumDate.split(',');
+      } else if (checkType === 'maximum') {
+        dateChecks = propertyMetadata.maximumDate.split(',');
+      }
+      runDateChecks(
+        checkType,
+        dateChecks,
+        formDataToCheck,
+        propertyKey,
+        formattedDateString,
+        errors,
+        jsonSchema
+      );
     }
   };
 
@@ -226,7 +277,18 @@ export default function CustomForm({
           currentUiSchema = uiSchemaToUse[propertyKey];
         }
         if ('minimumDate' in propertyMetadata) {
-          checkMinimumDate(
+          checkDateValidations(
+            DateCheckType.minimum,
+            formDataToCheck,
+            propertyKey,
+            propertyMetadata,
+            errors,
+            jsonSchemaToUse
+          );
+        }
+        if ('maximumDate' in propertyMetadata) {
+          checkDateValidations(
+            DateCheckType.maximuim,
             formDataToCheck,
             propertyKey,
             propertyMetadata,
