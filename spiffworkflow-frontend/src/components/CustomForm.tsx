@@ -288,7 +288,7 @@ export default function CustomForm({
         }
         if ('maximumDate' in propertyMetadata) {
           checkDateValidations(
-            DateCheckType.maximuim,
+            DateCheckType.maximum,
             formDataToCheck,
             propertyKey,
             propertyMetadata,
