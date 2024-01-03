@@ -25,75 +25,10 @@ export default function MessageModal({
   onClose,
   onSave,
 }: OwnProps) {
-  const [identifierInvalid, setIdentifierInvalid] = useState<boolean>(false);
-
-  const updatedProcessGroup: ProcessGroup = JSON.parse(
-    JSON.stringify(processGroup)
-  );
-  console.log('updatedProcessGroup', updatedProcessGroup);
-
-  const findMessageInGroup = (): Message => {
-    const message = updatedProcessGroup.messages?.find((msg: Message) => {
-      return msg.id === messageModel.id;
-    });
-    if (message) {
-      return message;
-    }
-    throw new Error(`Message ${messageModel.id} not found in group`);
-  };
-  const updatedMessage: Message = findMessageInGroup();
-
-  const onMessageNameChange = (event: any) => {
-    if (messageModel.id.length < 3 || !/^[a-z0-9_]+$/.test(messageModel.id)) {
-      setIdentifierInvalid(true);
-    } else {
-      const originalId = updatedMessage.id;
-      updatedMessage.id = event.target.value;
-      if (updatedProcessGroup.correlation_properties) {
-        updatedProcessGroup.correlation_properties.forEach(
-          (prop: CorrelationProperty) => {
-            prop.retrieval_expressions.forEach((re: any) => {
-              if (re.message_ref === originalId) {
-                console.log('updating message_ref', re);
-                // eslint-disable-next-line no-param-reassign
-                re.message_ref = updatedMessage.id;
-              }
-            });
-          }
-        );
-      }
-      console.log("updated Process Group name change", updatedProcessGroup);
-    }
-  };
-
-  const updateRetrievalExpression = (prop: string, value: string) => {
-    if (!updatedProcessGroup.correlation_properties) {
-      updatedProcessGroup.correlation_properties = [];
-    }
-    let cp: CorrelationProperty | undefined =
-      updatedProcessGroup.correlation_properties.find((ecp) => {
-        return ecp.id === prop;
-      });
-    if (!cp) {
-      cp = { id: prop, retrieval_expressions: [] };
-      updatedProcessGroup.correlation_properties.push(cp);
-    }
-    let re: RetrievalExpression | undefined = cp.retrieval_expressions.find(
-      (ere) => {
-        return ere.message_ref === messageModel.id;
-      }
-    );
-    if (!re) {
-      re = { message_ref: messageModel.id, formal_expression: value };
-      cp.retrieval_expressions.push(re);
-    }
-    re.formal_expression = value;
-  };
-
   const getRetrievalExpression = (propertyName: string) => {
-    if (updatedProcessGroup.correlation_properties) {
+    if (processGroup.correlation_properties) {
       const cp: CorrelationProperty | undefined =
-        updatedProcessGroup.correlation_properties.find((ecp) => {
+        processGroup.correlation_properties.find((ecp) => {
           return ecp.id === propertyName;
         });
       if (cp) {
@@ -106,23 +41,142 @@ export default function MessageModal({
         }
       }
     }
-    return '';
+    return propertyName;
+  };
+
+  const getExpressions = () => {
+    const expressions: Map<string, string> = new Map();
+    if (correlationKey) {
+      correlationKey.correlation_properties.forEach((prop: string) => {
+        expressions.set(prop, getRetrievalExpression(prop));
+      });
+    }
+    return expressions;
+  };
+
+  const [messageId, setMessageId] = useState<string>(messageModel.id);
+  const [messageExpressions, setMessageExpressions] =
+    useState<Map<string, string>>(getExpressions);
+  const [invalidMessageName, setInvalidMessageName] = useState<boolean>(false);
+  const [invalidExpressions, setInvalidExpressions] = useState<boolean>(false);
+
+  let existingNames: string[] = [];
+  if (processGroup.messages) {
+    existingNames = processGroup.messages
+      .filter((msg: Message) => {
+        return msg.id !== messageModel.id;
+      })
+      .map((msg: Message) => {
+        return msg.id;
+      });
+  }
+
+  const validMessageName = (name: string): boolean => {
+    return (
+      name.length >= 3 &&
+      /^[a-z0-9_]+$/.test(name) &&
+      !existingNames.includes(name)
+    );
+  };
+
+  const validExpression = (value: any): boolean => {
+    return (
+      (typeof value === 'string' || value instanceof String) && value.length > 0
+    );
+  };
+
+  const updateMessageExpression = (prop: string, value: string) => {
+    console.log("Updating message expression", prop, value);
+    setMessageExpressions(new Map(messageExpressions.set(prop, value)));
+    let ie = false;
+    messageExpressions.forEach((v: string, k: string) => {
+      console.log("valid expression", v, validExpression(v));
+      if (!validExpression(v)) {
+        ie = true;
+      }
+    });
+    console.log("Setting invalid exressions to ", ie)
+    setInvalidExpressions(ie);
+  };
+
+
+
+  const saveModel = () => {
+    if (invalidMessageName || invalidExpressions) {
+      console.log("Something isn't right!");
+      return;
+    }
+    const updatedProcessGroup = JSON.parse(JSON.stringify(processGroup));
+
+    // Update the message.id in this modified process group.
+    if (!updatedProcessGroup.messages) {
+      updatedProcessGroup.messages = [];
+    }
+    let message = updatedProcessGroup.messages?.find((msg: Message) => {
+      return msg.id === messageModel.id;
+    });
+    if (!message) {
+      updatedProcessGroup.messages.push(messageModel);
+      message = messageModel;
+    }
+    message.id = messageId;
+    console.log('messageExpressions', messageExpressions);
+
+    // create or update the correlation properties
+    correlationKey?.correlation_properties.forEach((prop: string) => {
+      const value = messageExpressions.get(prop);
+      console.log(
+        'Updating correlation property',
+        prop,
+        value,
+        'for',
+        messageId
+      );
+      if (!value) {
+        throw new Error(`No value for ${prop}`); // This should not happen, the form would be invalid.
+      }
+      let cp: CorrelationProperty | undefined =
+        updatedProcessGroup.correlation_properties.find(
+          (ecp: CorrelationProperty) => {
+            return ecp.id === prop;
+          }
+        );
+      if (!cp) {
+        cp = { id: prop, retrieval_expressions: [] };
+        updatedProcessGroup.correlation_properties.push(cp);
+      }
+      let re: RetrievalExpression | undefined = cp.retrieval_expressions.find(
+        (ere) => {
+          return ere.message_ref === messageModel.id;
+        }
+      );
+      if (!re) {
+        re = { message_ref: messageId, formal_expression: value };
+        cp.retrieval_expressions.push(re);
+      }
+      re.formal_expression = value;
+      re.message_ref = messageId;
+    });
+    console.log('updatedProcessGroup', updatedProcessGroup);
+    onSave(updatedProcessGroup);
   };
 
   const retrievalExpressionFields = () => {
     if (correlationKey) {
       const fields = correlationKey.correlation_properties.map((prop: any) => {
         const label = `Extraction Expression for ${prop}`;
-        const value = getRetrievalExpression(prop);
+        const defaultValue = messageExpressions.get(prop) || prop;
         return (
           <TextInput
             id={prop}
             name={prop}
-            invalid={identifierInvalid}
             labelText={label}
-            defaultValue={value}
+            defaultValue={defaultValue}
+            errorMessage="Please enter a valid expression for all properties."
+            invalid={invalidExpressions}
             onChange={(event: any) => {
-              updateRetrievalExpression(prop, event.target.value);
+              console.log("The Event Value is ", event.target.value);
+              updateMessageExpression(prop, event.target.value);
             }}
           />
         );
@@ -148,20 +202,20 @@ export default function MessageModal({
             id="message_name"
             name="message_name"
             placeholder="food_is_ready"
-            invalidText='Minimum of 3 letters, please use only letters and underscores, ie "food_is_ready"'
-            invalid={identifierInvalid}
+            invalidText='Must be unique, have a minimum of 3 letters, please use only letters and underscores, ie "food_is_ready"'
+            invalid={invalidMessageName}
             labelText="Message Name*"
-            defaultValue={updatedMessage.id}
-            onChange={onMessageNameChange}
+            defaultValue={messageId}
+            onChange={(event: any) => {
+              setMessageId(event.target.value);
+              console.log("It's changing to ",event.target.value, !validMessageName(event.target.value));
+              setInvalidMessageName(!validMessageName(event.target.value));
+            }}
           />
           {retrievalExpressionFields()}
         </Stack>
       </Form>
     );
-  };
-
-  const saveModel = () => {
-    onSave(updatedProcessGroup);
   };
 
   return (
@@ -173,6 +227,7 @@ export default function MessageModal({
       primaryButtonText="Save"
       secondaryButtonText="Cancel"
       onSecondarySubmit={onClose}
+      primaryButtonDisabled={invalidExpressions || invalidMessageName}
       onRequestSubmit={saveModel}
     >
       {createMessageForm()}

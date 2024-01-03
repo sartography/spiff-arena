@@ -1,0 +1,773 @@
+From f813fe329a35e63473e8d2375e156a4bd4a71a9d Mon Sep 17 00:00:00 2001
+From: danfunk <daniel.h.funk@gmail.com>
+Date: Wed, 20 Dec 2023 15:07:47 -0500
+Subject: [PATCH 2/4] UI for editing process group to include messages
+
+---
+ .../models/process_group.py                   |   3 +
+ .../routes/process_groups_controller.py       |   2 +-
+ .../src/components/ProcessGroupForm.tsx       | 198 +++++++++++++++++-
+ .../src/components/messages/MessageModal.tsx  | 190 +++++++++--------
+ .../components/messages/MessageModelList.tsx  |  88 ++------
+ spiffworkflow-frontend/src/interfaces.ts      |  24 ++-
+ .../src/routes/ProcessGroupShow.tsx           |  11 +-
+ 7 files changed, 351 insertions(+), 165 deletions(-)
+
+diff --git a/spiffworkflow-backend/src/spiffworkflow_backend/models/process_group.py b/spiffworkflow-backend/src/spiffworkflow_backend/models/process_group.py
+index c98f35f6..f44ba49e 100644
+--- a/spiffworkflow-backend/src/spiffworkflow_backend/models/process_group.py
++++ b/spiffworkflow-backend/src/spiffworkflow_backend/models/process_group.py
+@@ -18,6 +18,9 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
+ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
+     "display_name",
+     "description",
++    "messages",
++    "correlation_keys",
++    "correlation_properties"
+ ]
+ 
+ 
+diff --git a/spiffworkflow-backend/src/spiffworkflow_backend/routes/process_groups_controller.py b/spiffworkflow-backend/src/spiffworkflow_backend/routes/process_groups_controller.py
+index 8ecd9034..f51d9eba 100644
+--- a/spiffworkflow-backend/src/spiffworkflow_backend/routes/process_groups_controller.py
++++ b/spiffworkflow-backend/src/spiffworkflow_backend/routes/process_groups_controller.py
+@@ -58,7 +58,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
+ 
+ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
+     """Process Group Update."""
+-    body_include_list = ["display_name", "description"]
++    body_include_list = ["display_name", "description", "messages", "correlation_keys", "correlation_properties"]
+     body_filtered = {include_item: body[include_item] for include_item in body_include_list if include_item in body}
+ 
+     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+diff --git a/spiffworkflow-frontend/src/components/ProcessGroupForm.tsx b/spiffworkflow-frontend/src/components/ProcessGroupForm.tsx
+index d02d61f8..536cb843 100644
+--- a/spiffworkflow-frontend/src/components/ProcessGroupForm.tsx
++++ b/spiffworkflow-frontend/src/components/ProcessGroupForm.tsx
+@@ -1,10 +1,29 @@
+-import { useState } from 'react';
++import React, { useState } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ // @ts-ignore
+-import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
++import {
++  Button,
++  Form,
++  Stack,
++  TextInput,
++  TextArea,
++  Table,
++  TableHead,
++  TableRow,
++  TableHeader,
++} from '@carbon/react';
++import { Edit, TrashCan } from '@carbon/icons-react';
+ import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
+ import HttpService from '../services/HttpService';
+-import { ProcessGroup } from '../interfaces';
++import {
++  CorrelationKey,
++  CorrelationProperty,
++  Message,
++  ProcessGroup,
++  RetrievalExpression,
++} from '../interfaces';
++import ButtonWithConfirmation from './ButtonWithConfirmation';
++import MessageModal from './messages/MessageModal';
+ 
+ type OwnProps = {
+   mode: string;
+@@ -68,6 +87,9 @@ export default function ProcessGroupForm({
+     const postBody = {
+       display_name: processGroup.display_name,
+       description: processGroup.description,
++      messages: processGroup.messages,
++      correlation_keys: processGroup.correlation_keys,
++      correlation_properties: processGroup.correlation_properties,
+     };
+     if (mode === 'new') {
+       if (parentGroupId) {
+@@ -151,10 +173,177 @@ export default function ProcessGroupForm({
+         }
+       />
+     );
+-
+     return textInputs;
+   };
+ 
++  const [messageModelForModal, setMessageModelForModal] =
++    useState<Message | null>(null);
++  const [correlationKeyForModal, setCorrelationKeyForModal] = useState<
++    CorrelationKey | undefined
++  >(undefined);
++
++  const messageEditModal = () => {
++    console.log('Message Model for Modal', messageModelForModal);
++    if (messageModelForModal) {
++      return (
++        <MessageModal
++          messageModel={messageModelForModal}
++          open={!!messageModelForModal}
++          correlationKey={correlationKeyForModal}
++          processGroup={processGroup}
++          onClose={() => {
++            setMessageModelForModal(null);
++            setCorrelationKeyForModal(undefined);
++          }}
++          onSave={(updatedProcessGroup) => {
++            setMessageModelForModal(null);
++            setCorrelationKeyForModal(undefined);
++            setProcessGroup(updatedProcessGroup);
++          }}
++        />
++      );
++    }
++    return null;
++  };
++
++  const getPropertiesForMessage = (message: Message) => {
++    const properties: CorrelationProperty[] = [];
++    if (processGroup.correlation_properties) {
++      processGroup.correlation_properties.forEach((cp: CorrelationProperty) => {
++        cp.retrieval_expressions.forEach((re: RetrievalExpression) => {
++          if (re.message_ref === message.id) {
++            properties.push(cp);
++          }
++        });
++      });
++    }
++    return properties;
++  };
++
++  const arrayCompare = (array1: string[], array2: string[]) => {
++    return (
++      array1.length === array2.length &&
++      array1.every((value, index) => value === array2[index])
++    );
++  };
++
++  const findMessagesForCorrelationKey = (
++    correlationKey?: CorrelationKey
++  ): Message[] => {
++    const messages: Message[] = [];
++    if (processGroup.messages) {
++      processGroup.messages.forEach((msg: Message) => {
++        const correlationProperties = getPropertiesForMessage(msg);
++        const propIds: string[] = correlationProperties.map(
++          (cp: CorrelationProperty) => {
++            return cp.id;
++          }
++        );
++        propIds.sort();
++        if (correlationKey) {
++          if (
++            arrayCompare(propIds, correlationKey.correlation_properties.sort())
++          ) {
++            messages.push(msg);
++          }
++        } else if (propIds.length === 0) {
++          messages.push(msg);
++        }
++      });
++    }
++    return messages;
++  };
++
++  const messageDisplay = (correlationKey?: CorrelationKey) => {
++    let body = <p>No messages defined.</p>;
++    const messages = findMessagesForCorrelationKey(correlationKey);
++    const items: any[] = messages.map((msg: Message) => {
++      return (
++        <TableRow>
++          <td>{msg.id}</td>
++          <td>&nbsp</td>
++          <td>&nbsp</td>
++          <td>&nbsp</td>
++          <td>
++            <Button
++              kind="ghost"
++              data-qa="edit-process-group-button"
++              renderIcon={Edit}
++              iconDescription="Edit Process Group"
++              hasIconOnly
++              onClick={() => {
++                setMessageModelForModal(msg);
++                setCorrelationKeyForModal(correlationKey);
++              }}
++            >
++              Edit process group
++            </Button>
++            <ButtonWithConfirmation
++              kind="ghost"
++              data-qa="delete-process-group-button"
++              renderIcon={TrashCan}
++              iconDescription="Delete Process Group"
++              hasIconOnly
++              description={`Delete process group: ${processGroup.display_name}`}
++              onConfirmation={() => {}}
++              confirmButtonLabel="Delete"
++            />
++          </td>
++        </TableRow>
++      );
++    });
++    if (items.length > 0) {
++      body = (
++        <Table>
++          <TableHead>
++            <TableRow>
++              <TableHeader>Name</TableHeader>
++              <TableHeader>Sending</TableHeader>
++              <TableHeader>Receiving</TableHeader>
++              <TableHeader>Api</TableHeader>
++              <TableHeader>Actions</TableHeader>
++            </TableRow>
++            {items}
++          </TableHead>
++        </Table>
++      );
++    }
++    return <div className="processGroupMessages">{body}</div>;
++  };
++
++  const messageSection = () => {
++    let items: any[] = [];
++    if (
++      processGroup.correlation_keys &&
++      processGroup.correlation_keys.length > 0
++    ) {
++      items = processGroup.correlation_keys.map((ck: CorrelationKey) => {
++        return (
++          <>
++            <br />
++            <br />
++            <h3>Correlation {ck.id}</h3>
++            {messageDisplay(ck)}
++          </>
++        );
++      });
++    }
++    const body = (
++      <>
++        <h3>Uncorrelated Messages</h3>
++        {messageDisplay()}
++        {items}
++      </>
++    );
++    return (
++      <div className="processGroupMessages">
++        {messageEditModal()}
++        <h2>Messages</h2>
++        {body}
++      </div>
++    );
++  };
++
+   const formButtons = () => {
+     return <Button type="submit">Submit</Button>;
+   };
+@@ -163,6 +352,7 @@ export default function ProcessGroupForm({
+     <Form onSubmit={handleFormSubmission}>
+       <Stack gap={5}>
+         {formElements()}
++        {messageSection()}
+         {formButtons()}
+       </Stack>
+     </Form>
+diff --git a/spiffworkflow-frontend/src/components/messages/MessageModal.tsx b/spiffworkflow-frontend/src/components/messages/MessageModal.tsx
+index c13f4716..3d13bf43 100644
+--- a/spiffworkflow-frontend/src/components/messages/MessageModal.tsx
++++ b/spiffworkflow-frontend/src/components/messages/MessageModal.tsx
+@@ -1,107 +1,141 @@
++import { Form, Modal, Stack, TextInput } from '@carbon/react';
++import { useState } from 'react';
+ import {
+-  Form,
+-  Modal,
+-  Stack,
+-  TextInput,
+-  Checkbox,
+-  Select,
+-  SelectItem,
+-} from '@carbon/react';
+-import { useEffect, useState } from 'react';
+-import { ReferenceCache } from '../../interfaces';
+-import HttpService from '../../services/HttpService';
++  CorrelationKey,
++  CorrelationProperty,
++  Message,
++  ProcessGroup,
++  RetrievalExpression,
++} from '../../interfaces';
+ 
+ type OwnProps = {
+-  messageModel: ReferenceCache;
++  messageModel: Message;
++  correlationKey?: CorrelationKey;
++  processGroup: ProcessGroup;
+   open: boolean;
+   onClose: () => void;
++  onSave: (updatedProcessGroup: ProcessGroup) => void;
+ };
+ 
+ export default function MessageModal({
+   messageModel,
++  correlationKey,
++  processGroup,
+   open,
+   onClose,
++  onSave,
+ }: OwnProps) {
+-  const updatedModel: ReferenceCache = { ...messageModel };
+   const [identifierInvalid, setIdentifierInvalid] = useState<boolean>(false);
+-  const [showCorrelations, setShowCorrelations] = useState<boolean>(false);
+-  const [correlationKeys, setCorrelationKeys] = useState<any>({ results: [] });
+-  const [correlationKey, setCorrelationKey] = useState<ReferenceCache | null>(
+-    null
+-  );
+-
+-  setShowCorrelations(messageModel.properties.correlations.length > 0);
+ 
+-  useEffect(() => {
+-    let queryParamString = `per_page=100&page=1`;
+-    queryParamString += `&relative_location=${messageModel.relative_location}`;
+-
+-    const updateKeys = (result: any) => {
+-      setCorrelationKeys(result);
+-      result.results.forEach((key: any) => {
+-        console.log("Has Key?", key.identifier, messageModel.properties.correlation_keys);
+-        if (messageModel.properties.correlation_keys.includes(key.identifier)) {
+-          console.log("Huston we have a match", key);
+-          setCorrelationKey(key);
+-          setShowCorrelations(true);
+-        }
+-      });
+-    };
++  const updatedProcessGroup: ProcessGroup = JSON.parse(
++    JSON.stringify(processGroup)
++  );
++  console.log('updatedProcessGroup', updatedProcessGroup);
+ 
+-    HttpService.makeCallToBackend({
+-      path: `/correlation-keys?${queryParamString}`,
+-      successCallback: updateKeys,
++  const findMessageInGroup = (): Message => {
++    const message = updatedProcessGroup.messages?.find((msg: Message) => {
++      return msg.id === messageModel.id;
+     });
+-  }, [messageModel]);
++    if (message) {
++      return message;
++    }
++    throw new Error(`Message ${messageModel.id} not found in group`);
++  };
++  const updatedMessage: Message = findMessageInGroup();
+ 
+   const onMessageNameChange = (event: any) => {
+-    updatedModel.identifier = event.target.value;
+-    setIdentifierInvalid(
+-      updatedModel.identifier.length < 3 ||
+-        !/^[a-z0-9_]+$/.test(updatedModel.identifier)
+-    );
++    if (messageModel.id.length < 3 || !/^[a-z0-9_]+$/.test(messageModel.id)) {
++      setIdentifierInvalid(true);
++    } else {
++      const originalId = updatedMessage.id;
++      updatedMessage.id = event.target.value;
++      if (updatedProcessGroup.correlation_properties) {
++        updatedProcessGroup.correlation_properties.forEach(
++          (prop: CorrelationProperty) => {
++            prop.retrieval_expressions.forEach((re: any) => {
++              if (re.message_ref === originalId) {
++                console.log('updating message_ref', re);
++                // eslint-disable-next-line no-param-reassign
++                re.message_ref = updatedMessage.id;
++              }
++            });
++          }
++        );
++      }
++      console.log("updated Process Group name change", updatedProcessGroup);
++    }
+   };
+ 
+-  const correlationKeyOptions = () => {
+-    return correlationKeys.results.map((key: any) => {
+-      return <SelectItem value={key.identifier} text={key.identifier} />;
+-    });
++  const updateRetrievalExpression = (prop: string, value: string) => {
++    if (!updatedProcessGroup.correlation_properties) {
++      updatedProcessGroup.correlation_properties = [];
++    }
++    let cp: CorrelationProperty | undefined =
++      updatedProcessGroup.correlation_properties.find((ecp) => {
++        return ecp.id === prop;
++      });
++    if (!cp) {
++      cp = { id: prop, retrieval_expressions: [] };
++      updatedProcessGroup.correlation_properties.push(cp);
++    }
++    let re: RetrievalExpression | undefined = cp.retrieval_expressions.find(
++      (ere) => {
++        return ere.message_ref === messageModel.id;
++      }
++    );
++    if (!re) {
++      re = { message_ref: messageModel.id, formal_expression: value };
++      cp.retrieval_expressions.push(re);
++    }
++    re.formal_expression = value;
+   };
+ 
+-  const onCorrelationKeySelected = (event: any) => {
+-    correlationKeys.results.forEach((key: any) => {
+-      if (key.identifier === event.target.value) {
+-        console.log('Key updated', key);
+-        setCorrelationKey(key);
++  const getRetrievalExpression = (propertyName: string) => {
++    if (updatedProcessGroup.correlation_properties) {
++      const cp: CorrelationProperty | undefined =
++        updatedProcessGroup.correlation_properties.find((ecp) => {
++          return ecp.id === propertyName;
++        });
++      if (cp) {
++        const re: RetrievalExpression | undefined =
++          cp.retrieval_expressions.find((ere) => {
++            return ere.message_ref === messageModel.id;
++          });
++        if (re) {
++          return re.formal_expression;
++        }
+       }
+-    });
++    }
++    return '';
+   };
+ 
+   const retrievalExpressionFields = () => {
+-    console.log('Correlation Key', correlationKey, showCorrelations);
+-    if (correlationKey && showCorrelations) {
+-      const fields = correlationKey.properties.map((prop: any) => {
++    if (correlationKey) {
++      const fields = correlationKey.correlation_properties.map((prop: any) => {
+         const label = `Extraction Expression for ${prop}`;
++        const value = getRetrievalExpression(prop);
+         return (
+           <TextInput
+             id={prop}
+             name={prop}
+             invalid={identifierInvalid}
+             labelText={label}
+-            defaultValue={prop}
+-//            onChange={}
++            defaultValue={value}
++            onChange={(event: any) => {
++              updateRetrievalExpression(prop, event.target.value);
++            }}
+           />
+         );
+       });
+       return (
+-        <div className={'retrievalExpressionsForm'}>
++        <div className="retrievalExpressionsForm">
+           <h2>Retrieval Expressions:</h2>
+-          The body of the message should be a JSON object that includes these properties.  The value
+-          of each property will be extracted from the message and used to correlate the message to a
+-          running process.
++          The body of the message should be a JSON object that includes these
++          properties. The value of each property will be extracted from the
++          message and used to correlate the message to a running process.
+           {fields}
+         </div>
+-      )
++      );
+     }
+     return null;
+   };
+@@ -117,37 +151,29 @@ export default function MessageModal({
+             invalidText='Minimum of 3 letters, please use only letters and underscores, ie "food_is_ready"'
+             invalid={identifierInvalid}
+             labelText="Message Name*"
+-            defaultValue={updatedModel.identifier}
++            defaultValue={updatedMessage.id}
+             onChange={onMessageNameChange}
+           />
+-          <Checkbox
+-            id="show_correlations"
+-            labelText="Correlate this message"
+-            checked={showCorrelations}
+-            helperText="Correlations are used to assure that messages are delivered only to those process
+-            instances that are related. For example a process instance that prepares food for table 12 would
+-            not receive a message about table 11, because it is CORRELATED to a specific table number."
+-          />
+-          <Select
+-            id="correlation_key"
+-            labelText="Select a correlation"
+-            onChange={onCorrelationKeySelected}
+-            visible={showCorrelations}
+-          >
+-            {correlationKeyOptions()}
+-          </Select>
+           {retrievalExpressionFields()}
+         </Stack>
+       </Form>
+     );
+   };
+ 
++  const saveModel = () => {
++    onSave(updatedProcessGroup);
++  };
++
+   return (
+     <Modal
+       open={open}
+       onRequestClose={onClose}
+-      modalHeading={`${messageModel.identifier}`}
++      modalHeading={`${messageModel.id}`}
+       modalLabel="Details"
++      primaryButtonText="Save"
++      secondaryButtonText="Cancel"
++      onSecondarySubmit={onClose}
++      onRequestSubmit={saveModel}
+     >
+       {createMessageForm()}
+     </Modal>
+diff --git a/spiffworkflow-frontend/src/components/messages/MessageModelList.tsx b/spiffworkflow-frontend/src/components/messages/MessageModelList.tsx
+index 424dbf10..bd570e63 100644
+--- a/spiffworkflow-frontend/src/components/messages/MessageModelList.tsx
++++ b/spiffworkflow-frontend/src/components/messages/MessageModelList.tsx
+@@ -1,14 +1,15 @@
+ import React, { useEffect, useState } from 'react';
+ // @ts-ignore
+ // @ts-ignore
+-import { Table, Button } from '@carbon/react';
++import { Table } from '@carbon/react';
+ import { useSearchParams } from 'react-router-dom';
+ import PaginationForTable from '../PaginationForTable';
+-import ProcessBreadcrumb from '../ProcessBreadcrumb';
+-import { getPageInfoFromSearchParams } from '../../helpers';
++import {
++  getPageInfoFromSearchParams,
++  modifyProcessIdentifierForPathParam,
++} from '../../helpers';
+ import HttpService from '../../services/HttpService';
+ import { ReferenceCache } from '../../interfaces';
+-import MessageModal from './MessageModal';
+ 
+ type OwnProps = {
+   processGroupId?: string;
+@@ -19,9 +20,6 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
+   const [pagination, setPagination] = useState(null);
+   const [searchParams] = useSearchParams();
+ 
+-  const [messageModelForModal, setMessageModelForModal] =
+-    useState<ReferenceCache | null>(null);
+-
+   useEffect(() => {
+     const setMessageInstanceListFromResult = (result: any) => {
+       setMessageModels(result.results);
+@@ -39,24 +37,6 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
+     });
+   }, [processGroupId, searchParams]);
+ 
+-  const handleMessageEditClose = () => {
+-    setMessageModelForModal(null);
+-  };
+-
+-  const messageEditModal = () => {
+-    console.log('Message Model for Modal', messageModelForModal);
+-    if (messageModelForModal) {
+-      return (
+-        <MessageModal
+-          messageModel={messageModelForModal}
+-          open={!!messageModelForModal}
+-          onClose={handleMessageEditClose}
+-        />
+-      );
+-    }
+-    return null;
+-  };
+-
+   const correlation = (row: ReferenceCache): string => {
+     let keys = '';
+     const cProps: string[] = [];
+@@ -79,19 +59,16 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
+       return (
+         <tr key={row.identifier}>
+           <td>{row.identifier}</td>
+-          <td>{row.relative_location}</td>
+-          <td>{correlation(row)}</td>
+           <td>
+-            <Button
+-              className="button-link"
+-              kind="secondary"
+-              style={{ width: '60px' }}
+-              size="sm"
+-              onClick={() => setMessageModelForModal(row)}
++            <a
++              href={`/process-groups/${modifyProcessIdentifierForPathParam(
++                row.relative_location
++              )}`}
+             >
+-              Edit
+-            </Button>
++              {row.relative_location}
++            </a>
+           </td>
++          <td>{correlation(row)}</td>
+         </tr>
+       );
+     });
+@@ -102,7 +79,6 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
+             <th>Id</th>
+             <th>Location</th>
+             <th>Correlation</th>
+-            <th>Edit</th>
+           </tr>
+         </thead>
+         <tbody>{rows}</tbody>
+@@ -111,40 +87,14 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
+   };
+   if (pagination) {
+     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+-    let breadcrumbElement = null;
+-    if (searchParams.get('process_instance_id')) {
+-      breadcrumbElement = (
+-        <ProcessBreadcrumb
+-          hotCrumbs={[
+-            ['Process Groups', '/process-groups'],
+-            {
+-              entityToExplode: searchParams.get('process_model_id') || '',
+-              entityType: 'process-model-id',
+-              linkLastItem: true,
+-            },
+-            [
+-              `Process Instance: ${searchParams.get('process_instance_id')}`,
+-              `/process-instances/${searchParams.get(
+-                'process_model_id'
+-              )}/${searchParams.get('process_instance_id')}`,
+-            ],
+-            ['Messages'],
+-          ]}
+-        />
+-      );
+-    }
+     return (
+-      <>
+-        {messageEditModal()}
+-        {breadcrumbElement}
+-        <PaginationForTable
+-          page={page}
+-          perPage={perPage}
+-          pagination={pagination}
+-          tableToDisplay={buildTable()}
+-          paginationQueryParamPrefix="message-list"
+-        />
+-      </>
++      <PaginationForTable
++        page={page}
++        perPage={perPage}
++        pagination={pagination}
++        tableToDisplay={buildTable()}
++        paginationQueryParamPrefix="message-list"
++      />
+     );
+   }
+   return null;
+diff --git a/spiffworkflow-frontend/src/interfaces.ts b/spiffworkflow-frontend/src/interfaces.ts
+index fc591e09..6c184d0f 100644
+--- a/spiffworkflow-frontend/src/interfaces.ts
++++ b/spiffworkflow-frontend/src/interfaces.ts
+@@ -213,12 +213,23 @@ export interface ProcessInstance {
+   process_model_uses_queued_execution?: boolean;
+ }
+ 
+-export interface MessageCorrelationProperties {
+-  [key: string]: string;
++export interface Message {
++  id: string;
++}
++
++export interface RetrievalExpression {
++  message_ref: string;
++  formal_expression: string;
+ }
+ 
+-export interface MessageCorrelations {
+-  [key: string]: MessageCorrelationProperties;
++export interface CorrelationProperty {
++  id: string;
++  retrieval_expressions: RetrievalExpression[];
++}
++
++export interface CorrelationKey {
++  id: string;
++  correlation_properties: string[];
+ }
+ 
+ type ReferenceCacheType = 'decision' | 'process' | 'data_store' | 'message';
+@@ -242,7 +253,7 @@ export interface MessageInstance {
+   failure_cause: string;
+   status: string;
+   created_at_in_seconds: number;
+-  message_correlations?: MessageCorrelations;
++  message_correlations?: CorrelationProperty;
+   correlation_keys: any;
+ }
+ 
+@@ -310,6 +321,9 @@ export interface ProcessGroup {
+   process_models?: ProcessModel[];
+   process_groups?: ProcessGroup[];
+   parent_groups?: ProcessGroupLite[];
++  messages?: Message[];
++  correlation_keys?: CorrelationKey[];
++  correlation_properties?: CorrelationProperty[];
+ }
+ 
+ export interface HotCrumbItemObject {
+diff --git a/spiffworkflow-frontend/src/routes/ProcessGroupShow.tsx b/spiffworkflow-frontend/src/routes/ProcessGroupShow.tsx
+index 89d9935a..b6072c61 100644
+--- a/spiffworkflow-frontend/src/routes/ProcessGroupShow.tsx
++++ b/spiffworkflow-frontend/src/routes/ProcessGroupShow.tsx
+@@ -21,6 +21,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
+ import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+ import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+ import ProcessModelListTiles from '../components/ProcessModelListTiles';
++import MessageModelList from "../components/messages/MessageModelList";
+ 
+ export default function ProcessGroupShow() {
+   const params = useParams();
+@@ -38,6 +39,8 @@ export default function ProcessGroupShow() {
+     permissionRequestData
+   );
+ 
++
++
+   useEffect(() => {
+     const processResult = (result: any) => {
+       setProcessGroup(result);
+@@ -132,8 +135,8 @@ export default function ProcessGroupShow() {
+               </Button>
+             </Can>
+           </Stack>
+-          <br />
+-          <br />
++          <br/>
++          <br/>
+           <ProcessModelListTiles
+             headerElement={<h2>Process Models</h2>}
+             processGroup={processGroup}
+@@ -144,8 +147,8 @@ export default function ProcessGroupShow() {
+               targetUris.processModelCreatePath
+             )}
+           />
+-          <br />
+-          <br />
++          <br/>
++          <br/>
+           <ProcessGroupListTiles
+             processGroup={processGroup}
+             headerElement={<h2 className="clear-left">Process Groups</h2>}
+-- 
+2.25.1
+

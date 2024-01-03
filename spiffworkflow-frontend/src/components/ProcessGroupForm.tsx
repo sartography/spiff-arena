@@ -12,7 +12,7 @@ import {
   TableRow,
   TableHeader,
 } from '@carbon/react';
-import { Edit, TrashCan } from '@carbon/icons-react';
+import { Edit, TrashCan, Add } from '@carbon/icons-react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import {
@@ -132,6 +132,30 @@ export default function ProcessGroupForm({
     updateProcessGroup(updateDict);
   };
 
+  const onDeleteMessage = (messageToDelete: Message) => {
+    // Remove message from process group
+    const newMessages = processGroup.messages?.filter((msg: Message) => {
+      return msg.id !== messageToDelete.id;
+    });
+
+    // Remove retrieval expressions from correlation properties related to message
+    const newCorrelationProperties: CorrelationProperty[] = JSON.parse(
+      JSON.stringify(processGroup.correlation_properties || [])
+    );
+    newCorrelationProperties.forEach((cp: CorrelationProperty) => {
+      // eslint-disable-next-line no-param-reassign
+      cp.retrieval_expressions = cp.retrieval_expressions.filter(
+        (re: RetrievalExpression) => {
+          return re.message_ref !== messageToDelete.id;
+        }
+      );
+    });
+    updateProcessGroup({
+      messages: newMessages,
+      correlation_properties: newCorrelationProperties,
+    });
+  };
+
   const formElements = () => {
     const textInputs = [
       <TextInput
@@ -183,7 +207,7 @@ export default function ProcessGroupForm({
 
   const [messageModelForModal, setMessageModelForModal] =
     useState<Message | null>(null);
-  const [correlationKeyForModal, setCorrelationKeyForModal] = useState<
+  const [correlationKeyForModal, setCorrelationKeyForMessageModal] = useState<
     CorrelationKey | undefined
   >(undefined);
 
@@ -198,11 +222,11 @@ export default function ProcessGroupForm({
           processGroup={processGroup}
           onClose={() => {
             setMessageModelForModal(null);
-            setCorrelationKeyForModal(undefined);
+            setCorrelationKeyForMessageModal(undefined);
           }}
           onSave={(updatedProcessGroup) => {
             setMessageModelForModal(null);
-            setCorrelationKeyForModal(undefined);
+            setCorrelationKeyForMessageModal(undefined);
             setProcessGroup(updatedProcessGroup);
           }}
         />
@@ -272,25 +296,27 @@ export default function ProcessGroupForm({
           <td>
             <Button
               kind="ghost"
-              data-qa="edit-process-group-button"
+              data-qa="edit-message-button"
               renderIcon={Edit}
-              iconDescription="Edit Process Group"
+              iconDescription="Edit Message"
               hasIconOnly
               onClick={() => {
                 setMessageModelForModal(msg);
-                setCorrelationKeyForModal(correlationKey);
+                setCorrelationKeyForMessageModal(correlationKey);
               }}
             >
               Edit process group
             </Button>
             <ButtonWithConfirmation
               kind="ghost"
-              data-qa="delete-process-group-button"
+              data-qa="delete-message-button"
               renderIcon={TrashCan}
-              iconDescription="Delete Process Group"
+              iconDescription="Delete Message"
               hasIconOnly
-              description={`Delete process group: ${processGroup.display_name}`}
-              onConfirmation={() => {}}
+              description={`Delete message: ${msg.id}`}
+              onConfirmation={() => {
+                onDeleteMessage(msg);
+              }}
               confirmButtonLabel="Delete"
             />
           </td>
@@ -322,29 +348,51 @@ export default function ProcessGroupForm({
       processGroup.correlation_keys &&
       processGroup.correlation_keys.length > 0
     ) {
-      items = processGroup.correlation_keys.map((ck: CorrelationKey) => {
+      // @ts-ignore
+      const keys = [undefined].concat(processGroup.correlation_keys);
+      items = keys.map((ck: CorrelationKey | undefined) => {
+        const id = ck?.id || 'uncorrelated';
+        const dataQA = `add-message-button-${id}`;
         return (
           <>
             <br />
             <br />
-            <h3>Correlation {ck.id}</h3>
+            <h3>
+              <b>{id}</b> Messages
+              <Button
+                kind="ghost"
+                data-qa={dataQA}
+                renderIcon={Add}
+                iconDescription="Add Message"
+                hasIconOnly
+                onClick={() => {
+                  setMessageModelForModal({ id: '' });
+                  setCorrelationKeyForMessageModal(ck);
+                }}
+              >
+                Edit process group
+              </Button>
+            </h3>
+
             {messageDisplay(ck)}
           </>
         );
       });
     }
-    const body = (
-      <>
-        <h3>Uncorrelated Messages</h3>
-        {messageDisplay()}
-        {items}
-      </>
-    );
     return (
       <div className="processGroupMessages">
         {messageEditModal()}
         <h2>Messages</h2>
-        {body}
+        {items}
+        <Button
+          kind="ghost"
+          data-qa="add-correlation-button"
+          renderIcon={Add}
+          iconDescription="Add Correlation"
+          hasIconOnly
+        >
+          Edit process group
+        </Button>
       </div>
     );
   };
