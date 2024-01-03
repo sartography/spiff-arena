@@ -1,10 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
-import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
+import {
+  Button,
+  Form,
+  Stack,
+  TextInput,
+  TextArea,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeader,
+} from '@carbon/react';
+import { Edit, TrashCan } from '@carbon/icons-react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
-import { ProcessGroup } from '../interfaces';
+import {
+  CorrelationKey,
+  CorrelationProperty,
+  Message,
+  ProcessGroup,
+  RetrievalExpression,
+} from '../interfaces';
+import ButtonWithConfirmation from './ButtonWithConfirmation';
+import MessageModal from './messages/MessageModal';
+
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 type OwnProps = {
@@ -72,6 +92,9 @@ export default function ProcessGroupForm({
     const postBody = {
       display_name: processGroup.display_name,
       description: processGroup.description,
+      messages: processGroup.messages,
+      correlation_keys: processGroup.correlation_keys,
+      correlation_properties: processGroup.correlation_properties,
     };
     if (mode === 'new') {
       if (parentGroupId) {
@@ -155,8 +178,175 @@ export default function ProcessGroupForm({
         }
       />
     );
-
     return textInputs;
+  };
+
+  const [messageModelForModal, setMessageModelForModal] =
+    useState<Message | null>(null);
+  const [correlationKeyForModal, setCorrelationKeyForModal] = useState<
+    CorrelationKey | undefined
+  >(undefined);
+
+  const messageEditModal = () => {
+    console.log('Message Model for Modal', messageModelForModal);
+    if (messageModelForModal) {
+      return (
+        <MessageModal
+          messageModel={messageModelForModal}
+          open={!!messageModelForModal}
+          correlationKey={correlationKeyForModal}
+          processGroup={processGroup}
+          onClose={() => {
+            setMessageModelForModal(null);
+            setCorrelationKeyForModal(undefined);
+          }}
+          onSave={(updatedProcessGroup) => {
+            setMessageModelForModal(null);
+            setCorrelationKeyForModal(undefined);
+            setProcessGroup(updatedProcessGroup);
+          }}
+        />
+      );
+    }
+    return null;
+  };
+
+  const getPropertiesForMessage = (message: Message) => {
+    const properties: CorrelationProperty[] = [];
+    if (processGroup.correlation_properties) {
+      processGroup.correlation_properties.forEach((cp: CorrelationProperty) => {
+        cp.retrieval_expressions.forEach((re: RetrievalExpression) => {
+          if (re.message_ref === message.id) {
+            properties.push(cp);
+          }
+        });
+      });
+    }
+    return properties;
+  };
+
+  const arrayCompare = (array1: string[], array2: string[]) => {
+    return (
+      array1.length === array2.length &&
+      array1.every((value, index) => value === array2[index])
+    );
+  };
+
+  const findMessagesForCorrelationKey = (
+    correlationKey?: CorrelationKey
+  ): Message[] => {
+    const messages: Message[] = [];
+    if (processGroup.messages) {
+      processGroup.messages.forEach((msg: Message) => {
+        const correlationProperties = getPropertiesForMessage(msg);
+        const propIds: string[] = correlationProperties.map(
+          (cp: CorrelationProperty) => {
+            return cp.id;
+          }
+        );
+        propIds.sort();
+        if (correlationKey) {
+          if (
+            arrayCompare(propIds, correlationKey.correlation_properties.sort())
+          ) {
+            messages.push(msg);
+          }
+        } else if (propIds.length === 0) {
+          messages.push(msg);
+        }
+      });
+    }
+    return messages;
+  };
+
+  const messageDisplay = (correlationKey?: CorrelationKey) => {
+    let body = <p>No messages defined.</p>;
+    const messages = findMessagesForCorrelationKey(correlationKey);
+    const items: any[] = messages.map((msg: Message) => {
+      return (
+        <TableRow>
+          <td>{msg.id}</td>
+          <td>&nbsp</td>
+          <td>&nbsp</td>
+          <td>&nbsp</td>
+          <td>
+            <Button
+              kind="ghost"
+              data-qa="edit-process-group-button"
+              renderIcon={Edit}
+              iconDescription="Edit Process Group"
+              hasIconOnly
+              onClick={() => {
+                setMessageModelForModal(msg);
+                setCorrelationKeyForModal(correlationKey);
+              }}
+            >
+              Edit process group
+            </Button>
+            <ButtonWithConfirmation
+              kind="ghost"
+              data-qa="delete-process-group-button"
+              renderIcon={TrashCan}
+              iconDescription="Delete Process Group"
+              hasIconOnly
+              description={`Delete process group: ${processGroup.display_name}`}
+              onConfirmation={() => {}}
+              confirmButtonLabel="Delete"
+            />
+          </td>
+        </TableRow>
+      );
+    });
+    if (items.length > 0) {
+      body = (
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Sending</TableHeader>
+              <TableHeader>Receiving</TableHeader>
+              <TableHeader>Api</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </TableRow>
+            {items}
+          </TableHead>
+        </Table>
+      );
+    }
+    return <div className="processGroupMessages">{body}</div>;
+  };
+
+  const messageSection = () => {
+    let items: any[] = [];
+    if (
+      processGroup.correlation_keys &&
+      processGroup.correlation_keys.length > 0
+    ) {
+      items = processGroup.correlation_keys.map((ck: CorrelationKey) => {
+        return (
+          <>
+            <br />
+            <br />
+            <h3>Correlation {ck.id}</h3>
+            {messageDisplay(ck)}
+          </>
+        );
+      });
+    }
+    const body = (
+      <>
+        <h3>Uncorrelated Messages</h3>
+        {messageDisplay()}
+        {items}
+      </>
+    );
+    return (
+      <div className="processGroupMessages">
+        {messageEditModal()}
+        <h2>Messages</h2>
+        {body}
+      </div>
+    );
   };
 
   const formButtons = () => {
@@ -167,6 +357,7 @@ export default function ProcessGroupForm({
     <Form onSubmit={handleFormSubmission}>
       <Stack gap={5}>
         {formElements()}
+        {messageSection()}
         {formButtons()}
       </Stack>
     </Form>

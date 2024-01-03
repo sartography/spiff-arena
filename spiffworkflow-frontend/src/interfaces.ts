@@ -213,12 +213,23 @@ export interface ProcessInstance {
   process_model_uses_queued_execution?: boolean;
 }
 
-export interface MessageCorrelationProperties {
-  [key: string]: string;
+export interface Message {
+  id: string;
 }
 
-export interface MessageCorrelations {
-  [key: string]: MessageCorrelationProperties;
+export interface RetrievalExpression {
+  message_ref: string;
+  formal_expression: string;
+}
+
+export interface CorrelationProperty {
+  id: string;
+  retrieval_expressions: RetrievalExpression[];
+}
+
+export interface CorrelationKey {
+  id: string;
+  correlation_properties: string[];
 }
 
 type ReferenceCacheType = 'decision' | 'process' | 'data_store' | 'message';
@@ -242,7 +253,7 @@ export interface MessageInstance {
   failure_cause: string;
   status: string;
   created_at_in_seconds: number;
-  message_correlations?: MessageCorrelations;
+  message_correlations?: CorrelationProperty;
   correlation_keys: any;
 }
 
@@ -310,6 +321,9 @@ export interface ProcessGroup {
   process_models?: ProcessModel[];
   process_groups?: ProcessGroup[];
   parent_groups?: ProcessGroupLite[];
+  messages?: Message[];
+  correlation_keys?: CorrelationKey[];
+  correlation_properties?: CorrelationProperty[];
 }
 
 export interface HotCrumbItemObject {
