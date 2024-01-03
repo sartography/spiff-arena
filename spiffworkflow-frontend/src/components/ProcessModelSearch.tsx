@@ -79,6 +79,7 @@ export default function ProcessModelSearch({
       placeholder="Choose a process model"
       titleText={titleText}
       selectedItem={selectedItem}
+      className="process-model-search-combobox"
     />
   );
 }

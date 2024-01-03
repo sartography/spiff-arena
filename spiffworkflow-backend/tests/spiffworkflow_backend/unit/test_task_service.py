@@ -88,7 +88,6 @@ class TestTaskService(BaseTest):
         task_model_level_2b = (
             TaskModel.query.join(TaskDefinitionModel)
             .filter(TaskDefinitionModel.bpmn_identifier == "level_2b_subprocess_script_task")
-            .order_by(TaskModel.id)
             .first()
         )
         assert task_model_level_2b is not None
@@ -98,13 +97,12 @@ class TestTaskService(BaseTest):
         assert len(bpmn_processes) == 2
         assert len(task_models) == 2
         assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == "Level2b"
-        assert task_models[0].task_definition.bpmn_identifier == "level2b_second_call"
+        # either of these is valid since we are not pinning the task model query to one or the other
+        # and they are both call activities and not the top level process
+        assert task_models[0].task_definition.bpmn_identifier in ["level2b_second_call", "Level1_CallLevel_2B"]
 
         task_model_level_3 = (
-            TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task")
-            .order_by(TaskModel.id)
-            .first()
+            TaskModel.query.join(TaskDefinitionModel).filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task").first()
         )
         assert task_model_level_3 is not None
         (bpmn_processes, task_models) = TaskService.task_models_of_parent_bpmn_processes(

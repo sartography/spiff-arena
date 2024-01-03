@@ -29,7 +29,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
-from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -118,17 +117,19 @@ class AuthorizationService:
 
     @classmethod
     def user_has_permission(cls, user: UserModel, permission: str, target_uri: str) -> bool:
-        if user.principal is None:
-            raise MissingPrincipalError(f"Missing principal for user with id: {user.id}")
-
-        principals = [user.principal]
-
-        for group in user.groups:
-            if group.principal is None:
-                raise MissingPrincipalError(f"Missing principal for group with id: {group.id}")
-            principals.append(group.principal)
-
+        principals = UserService.all_principals_for_user(user)
         return cls.has_permission(principals, permission, target_uri)
+
+    @classmethod
+    def all_permission_assignments_for_user(cls, user: UserModel) -> list[PermissionAssignmentModel]:
+        principals = UserService.all_principals_for_user(user)
+        principal_ids = [p.id for p in principals]
+        permission_assignments: list[PermissionAssignmentModel] = (
+            PermissionAssignmentModel.query.filter(PermissionAssignmentModel.principal_id.in_(principal_ids))
+            .options(db.joinedload(PermissionAssignmentModel.permission_target))
+            .all()
+        )
+        return permission_assignments
 
     @classmethod
     def permission_assignments_include(
@@ -155,8 +156,11 @@ class AuthorizationService:
     @classmethod
     def target_uri_matches_actual_uri(cls, target_uri: str, actual_uri: str) -> bool:
         if target_uri.endswith("%"):
-            target_uri_without_suffix = target_uri.removesuffix("%").removesuffix(":").removesuffix("/")
-            return actual_uri.startswith(target_uri_without_suffix) or actual_uri == target_uri_without_suffix
+            target_uri_without_wildcard = target_uri.removesuffix("%")
+            target_uri_without_wildcard_and_without_delimiters = target_uri_without_wildcard.removesuffix(":").removesuffix("/")
+            return actual_uri == target_uri_without_wildcard_and_without_delimiters or actual_uri.startswith(
+                target_uri_without_wildcard
+            )
         return actual_uri == target_uri
 
     @classmethod

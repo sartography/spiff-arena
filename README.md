@@ -61,7 +61,8 @@ We use https://github.com/sartography/SpiffWorkflow instead.
 
 ## Monorepo
 
-This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects. FYI, some scripts:
+This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects.
+FYI, some scripts:
 
     ls bin | grep subtree
 

@@ -91,16 +91,37 @@ if (
 ) {
   generalDateFormat = window.spiffworkflowFrontendJsenv.DATE_FORMAT;
 }
-const supportedDateFormats = ['yyyy-MM-dd', 'dd-MM-yyyy', 'MM-dd-yyyy'];
-if (!supportedDateFormats.includes(generalDateFormat)) {
+
+const splitDateFormat = generalDateFormat.split('-');
+
+// https://date-fns.org/v3.0.6/docs/format
+const supportedDateFormatTypes = {
+  yyyy: '2024',
+  MM: '01',
+  MMM: 'Jan',
+  MMMM: 'January',
+  dd: '01',
+};
+const unsupportedFormatTypes = splitDateFormat.filter(
+  (x) => !Object.keys(supportedDateFormatTypes).includes(x)
+);
+const formattedSupportedDateTypes: string[] = [];
+Object.entries(supportedDateFormatTypes).forEach(([key, value]) => {
+  formattedSupportedDateTypes.push(`${key}: ${value}`);
+});
+if (unsupportedFormatTypes.length > 0) {
   throw new Error(
-    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat}. Valid options are: ${supportedDateFormats}`
+    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat} with invalid options: ${unsupportedFormatTypes.join(
+      ', '
+    )}. Valid options are: ${formattedSupportedDateTypes.join(', ')}`
   );
 }
 const carbonDateFormat = generalDateFormat
-  .replace('yyyy', 'Y')
-  .replace('MM', 'm')
-  .replace('dd', 'd');
+  .replace(/\byyyy\b/, 'Y')
+  .replace(/\bMM\b/, 'm')
+  .replace(/\bMMM\b/, 'M')
+  .replace(/\bMMMM\b/, 'F')
+  .replace(/\bdd\b/, 'd');
 export const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
 export const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
 export const DATE_FORMAT = generalDateFormat;

@@ -1,4 +1,4 @@
-import { Duration, format } from 'date-fns';
+import { Duration, format, parse } from 'date-fns';
 import {
   DATE_TIME_FORMAT,
   DATE_FORMAT,
@@ -41,17 +41,8 @@ const convertDateObjectToFormattedString = (dateObject: Date) => {
 };
 
 const dateStringToYMDFormat = (dateString: string) => {
-  if (dateString && dateString.match(/^\d{2}-\d{2}-\d{4}$/)) {
-    if (DATE_FORMAT.startsWith('dd')) {
-      const d = dateString.split('-');
-      return `${d[2]}-${d[1]}-${d[0]}`;
-    }
-    if (DATE_FORMAT.startsWith('MM')) {
-      const d = dateString.split('-');
-      return `${d[2]}-${d[0]}-${d[1]}`;
-    }
-  }
-  return dateString;
+  const newDate = parse(dateString, DATE_FORMAT, new Date());
+  return format(newDate, 'yyyy-MM-dd');
 };
 
 const convertDateAndTimeStringsToDate = (

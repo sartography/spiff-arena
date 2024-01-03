@@ -41,6 +41,11 @@ a.cds--header__menu-item {
   font-style: italic;
 }
 
+.selected-task-instance {
+  color: #b0b0b0;
+  font-style: italic;
+}
+
 h1 {
   font-weight: 400;
   font-size: 28px;
@@ -799,6 +804,10 @@ li.cds--accordion__item {
   max-width: 100%;
 }
 
+.process-model-search-combobox li{
+  max-width: 100%;
+}
+
 div.markdown {
   padding: 15px 0 15px 0;
   overflow: visible;
@@ -929,4 +938,13 @@ div.retrievalExpressionsForm {
   background: #ddd;
   padding: 20px;
   margin: 20px;
+}
+
+.task-info-modal-accordion .cds--accordion__content {
+  padding-right: 1rem;
+}
+
+.task-instance-modal-row-item {
+  height: 48px;
+  line-height: 48px;
 }

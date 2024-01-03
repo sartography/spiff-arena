@@ -39,9 +39,9 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
-    # task_id came first which is why it's a string and task_model_id is the int and foreignkey
-    task_model_id: int = db.Column(ForeignKey(TaskModel.id), nullable=True, index=True)  # type: ignore
+    task_guid: str = db.Column(ForeignKey(TaskModel.guid), nullable=True, index=True)
     task_model = relationship(TaskModel)
+
     task_id: str = db.Column(db.String(50))
     task_name: str = db.Column(db.String(255))
     task_title: str = db.Column(db.String(50))

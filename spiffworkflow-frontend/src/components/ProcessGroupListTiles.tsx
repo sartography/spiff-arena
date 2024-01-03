@@ -1,13 +1,7 @@
 import { ReactElement, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  ArrowRight,
-  // @ts-ignore
-} from '@carbon/icons-react';
-import {
-  ClickableTile,
-  // @ts-ignore
-} from '@carbon/react';
+import { ArrowRight } from '@carbon/icons-react';
+import { ClickableTile } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
 import {
