@@ -93,15 +93,27 @@ if (
 }
 
 const splitDateFormat = generalDateFormat.split('-');
-const supportedDateFormatTypes = ['yyyy', 'MM', 'MMM', 'MMMM', 'dd'];
+
+// https://date-fns.org/v3.0.6/docs/format
+const supportedDateFormatTypes = {
+  yyyy: '2024',
+  MM: '01',
+  MMM: 'Jan',
+  MMMM: 'January',
+  dd: '01',
+};
 const unsupportedFormatTypes = splitDateFormat.filter(
-  (x) => !supportedDateFormatTypes.includes(x)
+  (x) => !Object.keys(supportedDateFormatTypes).includes(x)
 );
+const formattedSupportedDateTypes: string[] = [];
+Object.entries(supportedDateFormatTypes).forEach(([key, value]) => {
+  formattedSupportedDateTypes.push(`${key}: ${value}`);
+});
 if (unsupportedFormatTypes.length > 0) {
   throw new Error(
     `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat} with invalid options: ${unsupportedFormatTypes.join(
       ', '
-    )}. Valid options are: ${supportedDateFormatTypes.join(', ')}`
+    )}. Valid options are: ${formattedSupportedDateTypes.join(', ')}`
   );
 }
 const carbonDateFormat = generalDateFormat
