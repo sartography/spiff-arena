@@ -49,16 +49,6 @@ class ProcessInstanceLockService:
         ctx["locks"][process_instance_id] = queue_entry.id
 
     @classmethod
-    def lock_many(
-        cls, queue_entries: list[ProcessInstanceQueueModel], additional_processing_identifier: str | None = None
-    ) -> list[int]:
-        ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
-        new_locks = {entry.process_instance_id: entry.id for entry in queue_entries}
-        new_lock_ids = list(new_locks.keys())
-        ctx["locks"].update(new_locks)
-        return new_lock_ids
-
-    @classmethod
     def unlock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> int:
         queue_model_id = cls.try_unlock(process_instance_id, additional_processing_identifier=additional_processing_identifier)
         if queue_model_id is None:
