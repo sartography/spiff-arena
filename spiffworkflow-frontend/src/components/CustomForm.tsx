@@ -10,7 +10,7 @@ import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericR
 
 enum DateCheckType {
   minimum = 'minimum',
-  maximuim = 'maximum',
+  maximum = 'maximum',
 }
 
 type OwnProps = {
