@@ -30,11 +30,15 @@
 
 /* for some reason it wraps the entire form using FieldTemplate.jsx, which is where we added the rjsf-field thing (which is only intended for fields, not entire forms. hence the double rjsf-field reference, only for rjsf-fields inside rjsf-fields, so we don't get double margin after the last field */
 .rjsf .rjsf-field .rjsf-field {
-  margin-bottom: 2em;
+  margin-bottom: 2rem;
+}
+/* only the outter rjsf-field gets the margin from the rule above but not its contents like the array-item so mention it explicitly */
+.rjsf .array-item .rjsf-field .rjsf-field {
+  margin-bottom: 2rem;
 }
 
 .array-item-toolbox {
-  margin-left: 2em;
+  margin-left: 2rem;
 }
 
 .rjsf .text-input {
