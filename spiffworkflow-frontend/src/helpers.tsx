@@ -26,6 +26,9 @@ export const HUMAN_TASK_TYPES = [
   'UserTask',
   'ManualTask',
   'Task',
+
+  // HumanTaskModel.task_type is sometimes set to this and it is the same as "Task"
+  'NoneTask',
 ];
 
 export const MULTI_INSTANCE_TASK_TYPES = [
