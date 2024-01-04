@@ -42,7 +42,7 @@ const convertDateObjectToFormattedString = (dateObject: Date) => {
 
 const dateStringToYMDFormat = (dateString: string) => {
   // if the date looks like it's already in yyyy-MM--dd format then just return it
-  if (dateString.match(/\d{4}-\d{2}-\d{2}/)) {
+  if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateString;
   }
   const newDate = parse(dateString, DATE_FORMAT, new Date());
