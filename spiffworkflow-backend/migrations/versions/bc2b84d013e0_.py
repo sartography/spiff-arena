@@ -22,6 +22,7 @@ def upgrade():
         batch_op.drop_column('identifier')
         batch_op.drop_column('list_index')
 
+    # originally changed in 3191627ae224 but not as a unique key. this will make it unique
     with op.batch_alter_table('task', schema=None) as batch_op:
         batch_op.drop_index('ix_task_guid')
         batch_op.create_index(batch_op.f('ix_task_guid'), ['guid'], unique=True)
