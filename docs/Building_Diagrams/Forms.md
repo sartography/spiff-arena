@@ -170,6 +170,59 @@ This is an example where end_date must be after start_date:
 These enhancements provide you with more flexibility and control when building forms in SpiffArena.
 By using these features, you can create dynamic, validated forms that enhance the user experience and support your business processes effectively.
 
+### Display Fields Side-By-Side on Same Row
+
+By default, all form fields will be laid out one on top of the other.
+In some cases, it might be more user-friendly to put two or more fields next to each other on the same conceptual "row."
+Perhaps, you want to let a user fill out a name, and have First Name and Last Name next to each other.
+Don't actually do this; use Full name as a single field. :)
+But in some other case where you actually want to have fields laid out horizontally instead of vertically, do the following:
+
+   Example form schema:
+
+    {
+      "firstName": {
+        "type": "string",
+      },
+      lastName": {
+        "type": "string",
+      }
+    }
+
+   Example uiSchema:
+
+    {
+      "ui:layout": [
+        {
+          "firstName": {
+            "sm": 2,
+            "md": 2,
+            "lg": 4
+          },
+          "lastName": {
+            "sm": 2,
+            "md": 2,
+            "lg": 4
+          }
+        }
+      ]
+    }
+
+In this case, we are saying that we want firstName and lastName in the same row, since there is only one "row" in the UI layout (one element of the array).
+We are saying that firstName should take up 4 columns when a large display is used.
+The lastName also takes up 4 columns, which fills up the whole row, which has 8 columns available for large displays.
+Medium displays have 5 columns available and small displays have 4.
+If you just specific a uiSchema like this, it will figure out the column widths for you:
+
+    {
+      "ui:layout": [
+        {
+          "firstName": {},
+          "lastName": {}
+        }
+      ]
+    }
+
 ### Display UI Help in Web Forms
 
 When designing web forms, it's essential to provide users with contextual help to ensure they understand the purpose and requirements of each field.

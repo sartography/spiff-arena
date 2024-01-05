@@ -122,7 +122,7 @@ export default function ObjectFieldTemplate<
             }
             return (
               <div className="error-message">
-                {`'${name}' property was specified in ui:layout but it does not exist in the jsonschema.`}
+                {`ERROR: '${name}' property was specified in the UI Schema's ui:layout, but property does not exist in the json schema.`}
               </div>
             );
           })}
