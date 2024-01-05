@@ -64,17 +64,17 @@ export default function ObjectFieldTemplate<
 ) {
   const {
     description,
+    disabled,
+    formData,
+    idSchema,
+    onAddClick,
     properties,
+    readonly,
+    registry,
+    required,
     schema,
     title,
     uiSchema,
-    idSchema,
-    formData,
-    registry,
-    required,
-    disabled,
-    readonly,
-    onAddClick,
   } = props;
   const options = getUiOptions<T, S, F>(uiSchema);
   const TitleFieldTemplate = getTemplate<'TitleFieldTemplate', T, S, F>(
@@ -120,10 +120,11 @@ export default function ObjectFieldTemplate<
                 </Column>
               );
             }
-            console.error(
-              `'${name}' property was specified in ui:layout but it does not exist in the jsonschema.`
+            return (
+              <div className="error-message">
+                {`'${name}' property was specified in ui:layout but it does not exist in the jsonschema.`}
+              </div>
             );
-            return null;
           })}
         </Grid>
       );
