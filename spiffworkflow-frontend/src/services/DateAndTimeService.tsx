@@ -41,8 +41,11 @@ const convertDateObjectToFormattedString = (dateObject: Date) => {
 };
 
 const dateStringToYMDFormat = (dateString: string) => {
-  const newDate = parse(dateString, DATE_FORMAT, new Date());
-  return format(newDate, 'yyyy-MM-dd');
+  if (dateString && dateString.match(/^\d{2}-\d{2}-\d{4}$/)) {
+    const newDate = parse(dateString, DATE_FORMAT, new Date());
+    return format(newDate, 'yyyy-MM-dd');
+  }
+  return dateString;
 };
 
 const convertDateAndTimeStringsToDate = (

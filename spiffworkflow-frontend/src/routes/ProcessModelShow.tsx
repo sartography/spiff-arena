@@ -492,6 +492,7 @@ export default function ProcessModelShow() {
         open={showFileUploadModal}
         modalHeading="Upload File"
         primaryButtonText="Upload"
+        primaryButtonDisabled={filesToUpload === null}
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileUploadCancel}
         onRequestClose={handleFileUploadCancel}
