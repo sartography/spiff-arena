@@ -26,6 +26,8 @@ import ButtonWithConfirmation from './ButtonWithConfirmation';
 import MessageModal from './messages/MessageModal';
 
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
+import CorrelationModal from './messages/CorrelationModal';
+import { findMessagesForCorrelationKey } from './messages/MessageHelper';
 
 type OwnProps = {
   mode: string;
@@ -132,16 +134,13 @@ export default function ProcessGroupForm({
     updateProcessGroup(updateDict);
   };
 
-  const onDeleteMessage = (messageToDelete: Message) => {
-    // Remove message from process group
-    const newMessages = processGroup.messages?.filter((msg: Message) => {
-      return msg.id !== messageToDelete.id;
-    });
-
-    // Remove retrieval expressions from correlation properties related to message
-    const newCorrelationProperties: CorrelationProperty[] = JSON.parse(
-      JSON.stringify(processGroup.correlation_properties || [])
-    );
+  const correlationPropertiesWithoutMessage = (
+    messageToDelete: Message,
+    correlationProperties: CorrelationProperty[] | null = null
+  ) => {
+    const newCorrelationProperties =
+      correlationProperties ||
+      JSON.parse(JSON.stringify(processGroup.correlation_properties || []));
     newCorrelationProperties.forEach((cp: CorrelationProperty) => {
       // eslint-disable-next-line no-param-reassign
       cp.retrieval_expressions = cp.retrieval_expressions.filter(
@@ -150,8 +149,51 @@ export default function ProcessGroupForm({
         }
       );
     });
+    return newCorrelationProperties;
+  };
+
+  const onDeleteMessage = (messageToDelete: Message) => {
+    // Remove message from process group
+    const newMessages = processGroup.messages?.filter((msg: Message) => {
+      return msg.id !== messageToDelete.id;
+    });
+    // Remove retrieval expressions from correlation properties related to message
+    const newCorrelationProperties = correlationPropertiesWithoutMessage(messageToDelete);
+
     updateProcessGroup({
       messages: newMessages,
+      correlation_properties: newCorrelationProperties,
+    });
+  };
+
+  const onDeleteCorrelation = (ckToDelete: CorrelationKey) => {
+    // Remove correlation key from process group
+    const newkeys = processGroup.correlation_keys?.filter(
+      (ck: CorrelationKey) => {
+        return ck.id !== ckToDelete.id;
+      }
+    );
+
+    // remove all connected messages
+    const connectedMessages = findMessagesForCorrelationKey(
+      processGroup,
+      ckToDelete
+    );
+    const newMessages = processGroup.messages?.filter((msg: Message) => {
+      return !connectedMessages.includes(msg);
+    });
+    let newCorrelationProperties = JSON.parse(
+      JSON.stringify(processGroup.correlation_properties || [])
+    );
+    connectedMessages.forEach((msg: Message) => {
+      newCorrelationProperties = correlationPropertiesWithoutMessage(
+        msg,
+        newCorrelationProperties
+      );
+    });
+    updateProcessGroup({
+      messages: newMessages,
+      correlation_keys: newkeys,
       correlation_properties: newCorrelationProperties,
     });
   };
@@ -207,18 +249,16 @@ export default function ProcessGroupForm({
 
   const [messageModelForModal, setMessageModelForModal] =
     useState<Message | null>(null);
-  const [correlationKeyForModal, setCorrelationKeyForMessageModal] = useState<
-    CorrelationKey | undefined
-  >(undefined);
+  const [correlationKeyForMessageModal, setCorrelationKeyForMessageModal] =
+    useState<CorrelationKey | undefined>(undefined);
 
   const messageEditModal = () => {
-    console.log('Message Model for Modal', messageModelForModal);
     if (messageModelForModal) {
       return (
         <MessageModal
           messageModel={messageModelForModal}
           open={!!messageModelForModal}
-          correlationKey={correlationKeyForModal}
+          correlationKey={correlationKeyForMessageModal}
           processGroup={processGroup}
           onClose={() => {
             setMessageModelForModal(null);
@@ -235,57 +275,34 @@ export default function ProcessGroupForm({
     return null;
   };
 
-  const getPropertiesForMessage = (message: Message) => {
-    const properties: CorrelationProperty[] = [];
-    if (processGroup.correlation_properties) {
-      processGroup.correlation_properties.forEach((cp: CorrelationProperty) => {
-        cp.retrieval_expressions.forEach((re: RetrievalExpression) => {
-          if (re.message_ref === message.id) {
-            properties.push(cp);
-          }
-        });
-      });
-    }
-    return properties;
-  };
+  const [correlationKeyForModal, setCorrelationKeyForModal] = useState<
+    CorrelationKey | undefined
+  >(undefined);
 
-  const arrayCompare = (array1: string[], array2: string[]) => {
-    return (
-      array1.length === array2.length &&
-      array1.every((value, index) => value === array2[index])
-    );
-  };
-
-  const findMessagesForCorrelationKey = (
-    correlationKey?: CorrelationKey
-  ): Message[] => {
-    const messages: Message[] = [];
-    if (processGroup.messages) {
-      processGroup.messages.forEach((msg: Message) => {
-        const correlationProperties = getPropertiesForMessage(msg);
-        const propIds: string[] = correlationProperties.map(
-          (cp: CorrelationProperty) => {
-            return cp.id;
-          }
-        );
-        propIds.sort();
-        if (correlationKey) {
-          if (
-            arrayCompare(propIds, correlationKey.correlation_properties.sort())
-          ) {
-            messages.push(msg);
-          }
-        } else if (propIds.length === 0) {
-          messages.push(msg);
-        }
-      });
+  const correlationEditModal = () => {
+    if (correlationKeyForModal) {
+      return (
+        <CorrelationModal
+          open={!!correlationKeyForModal}
+          correlationKey={correlationKeyForModal}
+          processGroup={processGroup}
+          onClose={() => {
+            setCorrelationKeyForModal(undefined);
+          }}
+          onSave={(updatedProcessGroup) => {
+            setCorrelationKeyForModal(undefined);
+            setProcessGroup(updatedProcessGroup);
+          }}
+        />
+      );
     }
-    return messages;
+    return null;
   };
 
   const messageDisplay = (correlationKey?: CorrelationKey) => {
     let body = <p>No messages defined.</p>;
-    const messages = findMessagesForCorrelationKey(correlationKey);
+    let messages: Message[] = [];
+    messages = findMessagesForCorrelationKey(processGroup, correlationKey);
     const items: any[] = messages.map((msg: Message) => {
       return (
         <TableRow>
@@ -342,6 +359,55 @@ export default function ProcessGroupForm({
     return <div className="processGroupMessages">{body}</div>;
   };
 
+  const correlationButtons = (ck?: CorrelationKey) => {
+    const buttons = [];
+    const id = ck?.id || 'uncorrelated';
+    if (ck) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          data-qa="edit-correlation-button"
+          renderIcon={Edit}
+          iconDescription="Edit Correlation"
+          hasIconOnly
+          onClick={() => {
+            setCorrelationKeyForModal(ck);
+          }}
+        />
+      );
+      buttons.push(
+        <ButtonWithConfirmation
+          kind="ghost"
+          data-qa="delete-correlation-button"
+          renderIcon={TrashCan}
+          iconDescription="Delete Correlation"
+          hasIconOnly
+          description={`Delete Correlation: ${id}`}
+          onConfirmation={() => {
+            onDeleteCorrelation(ck);
+          }}
+          confirmButtonLabel="Delete"
+        />
+      );
+    }
+    const dataQA = `add-message-button-${id}`;
+    buttons.push(
+      <Button
+        visible={!!ck}
+        kind="ghost"
+        data-qa={dataQA}
+        renderIcon={Add}
+        iconDescription="Add Message"
+        hasIconOnly
+        onClick={() => {
+          setMessageModelForModal({ id: '' });
+          setCorrelationKeyForMessageModal(ck);
+        }}
+      />
+    );
+    return buttons;
+  };
+
   const messageSection = () => {
     let items: any[] = [];
     if (
@@ -352,28 +418,14 @@ export default function ProcessGroupForm({
       const keys = [undefined].concat(processGroup.correlation_keys);
       items = keys.map((ck: CorrelationKey | undefined) => {
         const id = ck?.id || 'uncorrelated';
-        const dataQA = `add-message-button-${id}`;
         return (
           <>
-            <br />
-            <br />
-            <h3>
-              <b>{id}</b> Messages
-              <Button
-                kind="ghost"
-                data-qa={dataQA}
-                renderIcon={Add}
-                iconDescription="Add Message"
-                hasIconOnly
-                onClick={() => {
-                  setMessageModelForModal({ id: '' });
-                  setCorrelationKeyForMessageModal(ck);
-                }}
-              >
-                Edit process group
-              </Button>
-            </h3>
-
+            <Stack orientation="horizontal" gap={1}>
+              <h3 className="with-icons">
+                <b>{id}</b> Messages
+              </h3>
+              {correlationButtons(ck)}
+            </Stack>
             {messageDisplay(ck)}
           </>
         );
@@ -382,6 +434,7 @@ export default function ProcessGroupForm({
     return (
       <div className="processGroupMessages">
         {messageEditModal()}
+        {correlationEditModal()}
         <h2>Messages</h2>
         {items}
         <Button
@@ -389,9 +442,11 @@ export default function ProcessGroupForm({
           data-qa="add-correlation-button"
           renderIcon={Add}
           iconDescription="Add Correlation"
-          hasIconOnly
+          onClick={() => {
+            setCorrelationKeyForModal({ id: '', correlation_properties: [] });
+          }}
         >
-          Edit process group
+          Add Correlation Key
         </Button>
       </div>
     );
