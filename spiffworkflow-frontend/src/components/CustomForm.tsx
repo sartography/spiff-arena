@@ -7,6 +7,7 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 
 enum DateCheckType {
   minimum = 'minimum',
@@ -24,6 +25,7 @@ type OwnProps = {
   onSubmit?: any;
   children?: ReactNode;
   noValidate?: boolean;
+  restrictedWidth?: boolean;
 };
 
 export default function CustomForm({
@@ -36,6 +38,7 @@ export default function CustomForm({
   onSubmit,
   children,
   noValidate = false,
+  restrictedWidth = false,
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -48,6 +51,11 @@ export default function CustomForm({
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
   };
+
+  const rjsfTemplates: any = {};
+  if (restrictedWidth) {
+    rjsfTemplates.ObjectFieldTemplate = ObjectFieldRestrictedGridTemplate;
+  }
 
   const formatDateString = (dateString?: string) => {
     let dateObject = new Date();
@@ -363,6 +371,7 @@ export default function CustomForm({
       customValidate={customValidate}
       noValidate={noValidate}
       fields={rjsfFields}
+      templates={rjsfTemplates}
       omitExtraData
     >
       {children}

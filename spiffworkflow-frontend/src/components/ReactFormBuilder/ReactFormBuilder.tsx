@@ -499,6 +499,7 @@ export default function ReactFormBuilder({
             onChange={(e: any) => updateData(e.formData)}
             schema={postJsonSchema}
             uiSchema={postJsonUI}
+            restrictedWidth
           />
         </ErrorBoundary>
       </Column>

@@ -417,6 +417,7 @@ export default function TaskShow() {
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
+            restrictedWidth
           >
             {reactFragmentToHideSubmitButton}
           </CustomForm>
@@ -427,6 +428,7 @@ export default function TaskShow() {
             schema={jsonSchema}
             uiSchema={formUiSchema}
             noValidate
+            restrictedWidth
           />
         </Column>
       </Grid>
