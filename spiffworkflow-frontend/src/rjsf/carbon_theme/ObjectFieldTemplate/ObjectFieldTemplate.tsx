@@ -1,21 +1,49 @@
-import React from 'react';
 import {
-  FormContextType,
-  ObjectFieldTemplatePropertyType,
-  ObjectFieldTemplateProps,
-  RJSFSchema,
-  StrictRJSFSchema,
   canExpand,
+  FormContextType,
   getTemplate,
   getUiOptions,
+  ObjectFieldTemplateProps,
+  ObjectFieldTemplatePropertyType,
+  RJSFSchema,
+  StrictRJSFSchema,
 } from '@rjsf/utils';
+import { Grid, Column } from '@carbon/react';
 
-/** The `ObjectFieldTemplate` is the template to use to render all the inner properties of an object along with the
- * title and description if available. If the object is expandable, then an `AddButton` is also rendered after all
- * the properties.
- *
- * @param props - The `ObjectFieldTemplateProps` for this component
- */
+// usage: add ui:layout to an object in the uiSchema
+//
+// If using ui:layout then ALL fields must be specified in the desired order
+//
+// Example uiSchema:
+//
+// {
+//   "ui:layout": [
+//     {
+//       "firstName": {
+//         "sm": 2,
+//         "md": 2,
+//         "lg": 4
+//       },
+//       "lastName": {
+//         "sm": 2,
+//         "md": 2,
+//         "lg": 4
+//       }
+//     },
+//     {
+//       "user": {}
+//     },
+//     {
+//       "details": {}
+//     }
+//   ],
+//   "user": {
+//     "ui:layout": [
+//       { "username": {}, "password": {} }
+//     ]
+//   }
+// }
+
 export default function ObjectFieldTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
@@ -23,17 +51,17 @@ export default function ObjectFieldTemplate<
 >(props: ObjectFieldTemplateProps<T, S, F>) {
   const {
     description,
-    disabled,
-    formData,
-    idSchema,
-    onAddClick,
     properties,
-    readonly,
-    registry,
-    required,
     schema,
     title,
     uiSchema,
+    idSchema,
+    formData,
+    registry,
+    required,
+    disabled,
+    readonly,
+    onAddClick,
   } = props;
   const options = getUiOptions<T, S, F>(uiSchema);
   const TitleFieldTemplate = getTemplate<'TitleFieldTemplate', T, S, F>(
@@ -51,6 +79,48 @@ export default function ObjectFieldTemplate<
   const {
     ButtonTemplates: { AddButton },
   } = registry.templates;
+
+  const layout = (uiSchema as any)['ui:layout'];
+  const schemaToUse = schema as any;
+
+  let innerElements = null;
+
+  if (layout) {
+    innerElements = layout.map((row: any) => {
+      const numberOfColumns = Object.keys(row).length;
+      return (
+        <Grid condensed fullWidth>
+          {Object.keys(row).map((name) => {
+            const element: any = properties.find((property: any) => {
+              return property.name === name;
+            });
+            if (schemaToUse.properties[name]) {
+              const { sm, md, lg } = row[name];
+              return (
+                <Column
+                  className="side-by-side-column"
+                  sm={sm || Math.floor(4 / numberOfColumns)}
+                  md={md || Math.floor(5 / numberOfColumns)}
+                  lg={lg || Math.floor(8 / numberOfColumns)}
+                >
+                  {element.content}
+                </Column>
+              );
+            }
+            console.error(
+              `'${name}' property was specified in ui:layout but it does not exist in the jsonschema.`
+            );
+            return null;
+          })}
+        </Grid>
+      );
+    });
+  } else {
+    innerElements = properties.map(
+      (prop: ObjectFieldTemplatePropertyType) => prop.content
+    );
+  }
+
   return (
     <fieldset id={idSchema.$id}>
       {(options.title || title) && (
@@ -72,7 +142,9 @@ export default function ObjectFieldTemplate<
           registry={registry}
         />
       )}
-      {properties.map((prop: ObjectFieldTemplatePropertyType) => prop.content)}
+
+      {innerElements}
+
       {canExpand<T, S, F>(schema, uiSchema, formData) && (
         <AddButton
           className="object-property-expand"

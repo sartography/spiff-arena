@@ -7,7 +7,6 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
-import ObjectFieldTemplate from '../rjsf/GridField';
 
 enum DateCheckType {
   minimum = 'minimum',
@@ -349,8 +348,6 @@ export default function CustomForm({
   const customValidate = (formDataToCheck: any, errors: any) => {
     return checkFieldsWithCustomValidations(schema, formDataToCheck, errors);
   };
-
-  uiSchema['ui:ObjectFieldTemplate'] = ObjectFieldTemplate;
 
   return (
     <Form
