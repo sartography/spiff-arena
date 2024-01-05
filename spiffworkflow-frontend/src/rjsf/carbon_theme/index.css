@@ -108,3 +108,7 @@
   line-height: var(--cds-helper-text-01-line-height, 1.33333);
   letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
 }
+
+.rjsf .side-by-side-column:not(:last-child) {
+    padding-right: 1rem;
+}
