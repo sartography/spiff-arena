@@ -13,6 +13,14 @@ from spiffworkflow_backend.services.reference_cache_service import ReferenceCach
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
+class DataStoreReadError(Exception):
+    pass
+
+
+class DataStoreWriteError(Exception):
+    pass
+
+
 def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     tld = current_app.config.get("THREAD_LOCAL_DATA")
     if tld and hasattr(tld, "process_model_identifier"):
@@ -61,7 +69,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         if location is not None:
             model = db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
         if model is None:
-            raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
+            raise DataStoreReadError(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
         my_task.data[self.bpmn_id] = model.data
 
     def set(self, my_task: SpiffTask) -> None:
@@ -72,7 +80,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         if location is not None:
             model = JSONDataStoreModel.query.filter_by(identifier=self.bpmn_id, location=location).first()
         if location is None or model is None:
-            raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
+            raise DataStoreWriteError(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
 
         data = my_task.data[self.bpmn_id]
 
@@ -130,7 +138,7 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
         """get."""
         location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
-            raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
+            raise DataStoreReadError(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
         contents = FileSystemService.contents_of_json_file_at_relative_path(location, self._data_store_filename(self.bpmn_id))
         my_task.data[self.bpmn_id] = contents
 
@@ -138,7 +146,7 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
         """set."""
         location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
-            raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
+            raise DataStoreWriteError(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
         data = my_task.data[self.bpmn_id]
         FileSystemService.write_to_json_file_at_relative_path(location, self._data_store_filename(self.bpmn_id), data)
         del my_task.data[self.bpmn_id]
