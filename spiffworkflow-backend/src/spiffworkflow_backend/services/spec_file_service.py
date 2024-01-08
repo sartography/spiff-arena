@@ -228,13 +228,9 @@ class SpecFileService(FileSystemService):
         full_file_path = SpecFileService.full_file_path(process_model, file_name)
         return FileSystemService._timestamp(full_file_path)
 
-    @staticmethod
-    def delete_file(process_model: ProcessModelInfo, file_name: str) -> None:
-        # Fixme: Remember to remove the lookup files when the process_model file is removed.
-        # lookup_files = session.query(LookupFileModel).filter_by(file_model_id=file_id).all()
-        # for lf in lookup_files:
-        #     session.query(LookupDataModel).filter_by(lookup_file_model_id=lf.id).delete()
-        #     session.query(LookupFileModel).filter_by(id=lf.id).delete()
+    @classmethod
+    def delete_file(cls, process_model: ProcessModelInfo, file_name: str) -> None:
+        cls.clear_caches_for_file(file_name, process_model)
         full_file_path = SpecFileService.full_file_path(process_model, file_name)
         os.remove(full_file_path)
 

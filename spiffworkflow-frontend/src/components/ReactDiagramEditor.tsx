@@ -176,7 +176,9 @@ export default function ReactDiagramEditor({
     // @ts-ignore
     diagramModelerToUse.on('import.parse.complete', event => { // eslint-disable-line
       // @ts-ignore
-      if (!event.references) return;
+      if (!event.references) {
+        return;
+      }
       const refs = event.references.filter(
         (r: any) =>
           r.property === 'bpmn:loopDataInputRef' ||
@@ -676,7 +678,9 @@ export default function ReactDiagramEditor({
   const getReferencesButton = () => {
     if (callers && callers.length > 0) {
       let buttonText = `View ${callers.length} Reference`;
-      if (callers.length > 1) buttonText += 's';
+      if (callers.length > 1) {
+        buttonText += 's';
+      }
       return (
         <Button onClick={() => setShowingReferences(true)}>{buttonText}</Button>
       );

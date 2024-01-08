@@ -2,6 +2,7 @@ import base64
 import hashlib
 import time
 from collections.abc import Generator
+from contextlib import suppress
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -45,6 +46,8 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
+
+FileDataGenerator = Generator[tuple[dict | list, str | int, str], None, None]
 
 
 class ProcessInstanceService:
@@ -359,33 +362,28 @@ class ProcessInstanceService:
     @classmethod
     def file_data_model_for_value(
         cls,
-        identifier: str,
         value: str,
         process_instance_id: int,
     ) -> ProcessInstanceFileDataModel | None:
-        if value.startswith("data:"):
-            try:
-                parts = value.split(";")
-                mimetype = parts[0][5:]
-                filename = unquote(parts[1].split("=")[1])
-                base64_value = parts[2].split(",")[1]
-                if not base64_value.startswith(cls.FILE_DATA_DIGEST_PREFIX):
-                    contents = base64.b64decode(base64_value)
-                    digest = hashlib.sha256(contents).hexdigest()
-                    now_in_seconds = round(time.time())
+        with suppress(Exception):
+            parts = value.split(";")
+            mimetype = parts[0][5:]
+            filename = unquote(parts[1].split("=")[1])
+            base64_value = parts[2].split(",")[1]
+            if not base64_value.startswith(cls.FILE_DATA_DIGEST_PREFIX):
+                contents = base64.b64decode(base64_value)
+                digest = hashlib.sha256(contents).hexdigest()
+                now_in_seconds = round(time.time())
 
-                    return ProcessInstanceFileDataModel(
-                        process_instance_id=process_instance_id,
-                        identifier=identifier,
-                        mimetype=mimetype,
-                        filename=filename,
-                        contents=contents,  # type: ignore
-                        digest=digest,
-                        updated_at_in_seconds=now_in_seconds,
-                        created_at_in_seconds=now_in_seconds,
-                    )
-            except Exception as e:
-                current_app.logger.warning(e)
+                return ProcessInstanceFileDataModel(
+                    process_instance_id=process_instance_id,
+                    mimetype=mimetype,
+                    filename=filename,
+                    contents=contents,  # type: ignore
+                    digest=digest,
+                    updated_at_in_seconds=now_in_seconds,
+                    created_at_in_seconds=now_in_seconds,
+                )
 
         return None
 
@@ -393,51 +391,39 @@ class ProcessInstanceService:
     def possible_file_data_values(
         cls,
         data: dict[str, Any],
-    ) -> Generator[tuple[str, str, int | None], None, None]:
-        for identifier, value in data.items():
-            if isinstance(value, str):
-                yield (identifier, value, None)
-            if isinstance(value, list):
-                for list_index, list_value in enumerate(value):
-                    if isinstance(list_value, str):
-                        yield (identifier, list_value, list_index)
-                    if isinstance(list_value, dict) and len(list_value) == 1:
-                        for v in list_value.values():
-                            if isinstance(v, str):
-                                yield (identifier, v, list_index)
+    ) -> FileDataGenerator:
+        def values(collection: dict | list, elem: str | int | None, value: Any) -> FileDataGenerator:
+            match (collection, elem, value):
+                case (dict(), None, None):
+                    for k, v in collection.items():  # type: ignore
+                        yield from values(collection, k, v)
+                case (list(), None, None):
+                    for i, v in enumerate(collection):
+                        yield from values(collection, i, v)
+                case (_, _, dict() | list()):
+                    yield from values(value, None, None)
+                case (_, _, str()) if elem is not None and value.startswith("data:"):
+                    yield (collection, elem, value)
+
+        yield from values(data, None, None)
 
     @classmethod
-    def file_data_models_for_data(
+    def replace_file_data_with_digest_references(
         cls,
         data: dict[str, Any],
         process_instance_id: int,
     ) -> list[ProcessInstanceFileDataModel]:
         models = []
 
-        for identifier, value, list_index in cls.possible_file_data_values(data):
-            model = cls.file_data_model_for_value(identifier, value, process_instance_id)
-            if model is not None:
-                model.list_index = list_index
-                models.append(model)
+        for collection, elem, value in cls.possible_file_data_values(data):
+            model = cls.file_data_model_for_value(value, process_instance_id)
+            if model is None:
+                continue
+            models.append(model)
+            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            collection[elem] = digest_reference  # type: ignore
 
         return models
-
-    @classmethod
-    def replace_file_data_with_digest_references(
-        cls,
-        data: dict[str, Any],
-        models: list[ProcessInstanceFileDataModel],
-    ) -> None:
-        for model in models:
-            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
-            if model.list_index is None:
-                data[model.identifier] = digest_reference
-            else:
-                old_value = data[model.identifier][model.list_index]
-                new_value: Any = digest_reference
-                if isinstance(old_value, dict) and len(old_value) == 1:
-                    new_value = {k: digest_reference for k in old_value.keys()}
-                data[model.identifier][model.list_index] = new_value
 
     @classmethod
     def save_file_data_and_replace_with_digest_references(
@@ -445,13 +431,11 @@ class ProcessInstanceService:
         data: dict[str, Any],
         process_instance_id: int,
     ) -> None:
-        models = cls.file_data_models_for_data(data, process_instance_id)
+        models = cls.replace_file_data_with_digest_references(data, process_instance_id)
 
         for model in models:
             db.session.add(model)
         db.session.commit()
-
-        cls.replace_file_data_with_digest_references(data, models)
 
     @classmethod
     def update_form_task_data(

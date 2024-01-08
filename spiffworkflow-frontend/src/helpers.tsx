@@ -10,7 +10,7 @@ export const doNothing = () => {
 };
 
 // https://www.30secondsofcode.org/js/s/slugify
-export const slugifyString = (str: any) => {
+export const slugifyString = (str: string) => {
   return str
     .toLowerCase()
     .trim()
@@ -26,7 +26,17 @@ export const HUMAN_TASK_TYPES = [
   'UserTask',
   'ManualTask',
   'Task',
+
+  // HumanTaskModel.task_type is sometimes set to this and it is the same as "Task"
+  'NoneTask',
 ];
+
+export const MULTI_INSTANCE_TASK_TYPES = [
+  'ParallelMultiInstanceTask',
+  'SequentialMultiInstanceTask',
+];
+
+export const LOOP_TASK_TYPES = ['StandardLoopTask'];
 
 export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');

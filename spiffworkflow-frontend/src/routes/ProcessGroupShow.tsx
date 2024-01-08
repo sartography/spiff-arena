@@ -1,32 +1,24 @@
-import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  TrashCan,
-  Edit,
-  // @ts-ignore
-} from '@carbon/icons-react';
-// @ts-ignore
+import { TrashCan, Edit } from '@carbon/icons-react';
 import { Button, Stack } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import { modifyProcessIdentifierForPathParam, setPageTitle } from '../helpers';
 import {
-  PermissionsToCheck,
-  ProcessGroup,
-  // ProcessModel,
-} from '../interfaces';
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
+} from '../helpers';
+import { PermissionsToCheck } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessModelListTiles from '../components/ProcessModelListTiles';
+import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 export default function ProcessGroupShow() {
   const params = useParams();
   const navigate = useNavigate();
-
-  const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -38,17 +30,10 @@ export default function ProcessGroupShow() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
   );
-
-  useEffect(() => {
-    const processResult = (result: any) => {
-      setProcessGroup(result);
-      setPageTitle([result.display_name]);
-    };
-    HttpService.makeCallToBackend({
-      path: `/process-groups/${params.process_group_id}`,
-      successCallback: processResult,
-    });
-  }, [params.process_group_id]);
+  const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
+    `${params.process_group_id}`
+  );
+  const { processGroup } = useProcessGroupFetcher(unModifiedProcessGroupId);
 
   const navigateToProcessGroups = (_result: any) => {
     navigate(`/process-groups`);
@@ -145,7 +130,6 @@ export default function ProcessGroupShow() {
           <ProcessModelListTiles
             headerElement={<h2>Process Models</h2>}
             processGroup={processGroup}
-            defaultProcessModels={processGroup.process_models}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',
@@ -157,7 +141,6 @@ export default function ProcessGroupShow() {
           <ProcessGroupListTiles
             processGroup={processGroup}
             headerElement={<h2 className="clear-left">Process Groups</h2>}
-            defaultProcessGroups={processGroup.process_groups}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',

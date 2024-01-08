@@ -144,7 +144,7 @@ class UserService:
         wildcard_pattern = wugam.pattern_from_wildcard_username()
         user_to_group_identifiers: list[UserToGroupDict] = []
         if wildcard_pattern is not None:
-            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern))  # type: ignore
+            users = UserModel.query.filter(UserModel.username.regexp_match(wildcard_pattern)).all()  # type: ignore
             for user in users:
                 cls.add_user_to_group(user, group)
                 user_to_group_identifiers.append({"username": user.username, "group_identifier": group.identifier})
@@ -212,6 +212,7 @@ class UserService:
     def all_principals_for_user(cls, user: UserModel) -> list[PrincipalModel]:
         if user.principal is None:
             raise MissingPrincipalError(f"Missing principal for user with id: {user.id}")
+
         principals = [user.principal]
 
         for group in user.groups:

@@ -36,7 +36,7 @@ module.exports = {
     'jsx-a11y/label-has-associated-control': 'off',
     'no-console': 'off',
     'react/jsx-filename-extension': [
-      1,
+      'warn',
       { extensions: ['.js', '.jsx', '.tsx', '.ts'] },
     ],
     'react/react-in-jsx-scope': 'off',
@@ -71,5 +71,6 @@ module.exports = {
         tsx: 'never',
       },
     ],
+    curly: ['error', 'all'],
   },
 };

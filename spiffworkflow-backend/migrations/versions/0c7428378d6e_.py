@@ -413,7 +413,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.ForeignKeyConstraint(['task_definition_id'], ['task_definition.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('guid')
+    sa.UniqueConstraint('guid', name='guid')
     )
     with op.batch_alter_table('task', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_task_bpmn_process_id'), ['bpmn_process_id'], unique=False)
@@ -446,7 +446,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.ForeignKeyConstraint(['task_model_id'], ['task.id'], ),
+    sa.ForeignKeyConstraint(['task_model_id'], ['task.id'], name='human_task_ibfk_5'),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('human_task', schema=None) as batch_op:

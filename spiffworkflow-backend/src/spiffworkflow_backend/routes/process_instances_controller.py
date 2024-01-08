@@ -334,7 +334,7 @@ def process_instance_task_list_without_task_data_for_me(
     to_task_guid: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-    return process_instance_task_list(
+    return _process_instance_task_list(
         _modified_process_model_identifier=modified_process_model_identifier,
         process_instance=process_instance,
         most_recent_tasks_only=most_recent_tasks_only,
@@ -351,7 +351,7 @@ def process_instance_task_list_without_task_data(
     to_task_guid: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    return process_instance_task_list(
+    return _process_instance_task_list(
         _modified_process_model_identifier=modified_process_model_identifier,
         process_instance=process_instance,
         most_recent_tasks_only=most_recent_tasks_only,
@@ -360,13 +360,17 @@ def process_instance_task_list_without_task_data(
     )
 
 
-def process_instance_task_list(
+def _process_instance_task_list(
     _modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
     bpmn_process_guid: str | None = None,
     to_task_guid: str | None = None,
     most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
+    """This is only used on the Process Instance Show page on the frontend.
+
+    This is how we know what the state of each task is and how to color things.
+    """
     bpmn_process_ids = []
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
@@ -429,8 +433,7 @@ def process_instance_task_list(
     direct_parent_bpmn_process_definition_alias = aliased(BpmnProcessDefinitionModel)
 
     task_model_query = (
-        task_model_query.order_by(TaskModel.id.desc())  # type: ignore
-        .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        task_model_query.join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)  # type: ignore
         .join(bpmn_process_alias, bpmn_process_alias.id == TaskModel.bpmn_process_id)
         .outerjoin(
             direct_parent_bpmn_process_alias,
@@ -448,11 +451,6 @@ def process_instance_task_list(
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
             BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
             bpmn_process_alias.guid.label("bpmn_process_guid"),
-            # not sure why we needed these
-            # direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
-            # direct_parent_bpmn_process_definition_alias.bpmn_identifier.label(
-            #     "bpmn_process_direct_parent_bpmn_identifier"
-            # ),
             TaskDefinitionModel.bpmn_identifier,
             TaskDefinitionModel.bpmn_name,
             TaskDefinitionModel.typename,
@@ -462,6 +460,7 @@ def process_instance_task_list(
             TaskModel.end_in_seconds,
             TaskModel.start_in_seconds,
             TaskModel.runtime_info,
+            TaskModel.properties_json,
         )
     )
 
@@ -470,7 +469,7 @@ def process_instance_task_list(
 
     task_models = task_model_query.all()
     if most_recent_tasks_only:
-        most_recent_tasks = {}
+        most_recent_tasks: dict[str, TaskModel] = {}
         additional_tasks = []
 
         # if you have a loop and there is a subprocess, and you are going around for the second time,
@@ -487,8 +486,15 @@ def process_instance_task_list(
                 full_bpmn_process_path = bpmn_process_cache[task_model.bpmn_process_guid]
 
             row_key = f"{':::'.join(full_bpmn_process_path)}:::{task_model.bpmn_identifier}"
-            if row_key not in most_recent_tasks:
+            if (
+                row_key not in most_recent_tasks
+                or most_recent_tasks[row_key].properties_json["last_state_change"]
+                < task_model.properties_json["last_state_change"]
+            ):
                 most_recent_tasks[row_key] = task_model
+
+                # we may need to remove guids for tasks that are no longer considered most recent but that may not matter
+                # since any task like would no longer be in the list anyway and therefore will not be returned
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
             elif task_model.runtime_info and ("instance" in task_model.runtime_info or "iteration" in task_model.runtime_info):

@@ -61,7 +61,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def existing_data_stores() -> list[dict[str, Any]]:
         data_stores = []
 
-        keys = db.session.query(JSONDataStoreModel.name).distinct().order_by(JSONDataStoreModel.name)  # type: ignore
+        keys = db.session.query(JSONDataStoreModel.name).distinct().order_by(JSONDataStoreModel.name).all()  # type: ignore
         for key in keys:
             data_stores.append({"name": key[0], "type": "json"})
 

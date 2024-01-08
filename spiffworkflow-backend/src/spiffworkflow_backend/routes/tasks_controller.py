@@ -52,6 +52,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataDict
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
@@ -310,6 +311,32 @@ def task_data_update(
         status=200,
         mimetype="application/json",
     )
+
+
+def task_instance_list(
+    process_instance_id: int,
+    task_guid: str,
+) -> Response:
+    task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+    task_model_instances = (
+        TaskModel.query.filter_by(task_definition_id=task_model.task_definition.id, bpmn_process_id=task_model.bpmn_process_id)
+        .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        .add_columns(
+            TaskDefinitionModel.bpmn_identifier,
+            TaskDefinitionModel.bpmn_name,
+            TaskDefinitionModel.typename,
+            TaskDefinitionModel.properties_json.label("task_definition_properties_json"),  # type: ignore
+            TaskModel.guid,
+            TaskModel.state,
+            TaskModel.end_in_seconds,
+            TaskModel.start_in_seconds,
+            TaskModel.runtime_info,
+            TaskModel.properties_json,
+        )
+    ).all()
+
+    sorted_task_models = TaskModel.sort_by_last_state_changed(task_model_instances)
+    return make_response(jsonify(sorted_task_models), 200)
 
 
 def manual_complete_task(

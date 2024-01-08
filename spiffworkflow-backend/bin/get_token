@@ -20,16 +20,12 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # ./bin/get_token repeat_form_user_1 repeat_form_user_1 # actually has permissions to the resource in this script
 # ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
 
+USERNAME=${1-admin}
+PASSWORD=${2-admin}
+REALM_NAME=${3-spiffworkflow}
+
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
   BACKEND_BASE_URL=http://localhost:7000
-fi
-if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-  if grep -qE "spiffworkflow.org" <<<"$BACKEND_BASE_URL" ; then
-    env_domain=$(hot_sed -E 's/.*api\.(\w+\.spiffworkflow.org).*/\1/' <<<"${BACKEND_BASE_URL}")
-    KEYCLOAK_BASE_URL="https://keycloak.${env_domain}"
-  elif grep -qE "localhost:7000" <<<"$BACKEND_BASE_URL" ; then
-    KEYCLOAK_BASE_URL="http://localhost:7002"
-  fi
 fi
 if [[ -z "${BACKEND_CLIENT_ID:-}" ]]; then
   export BACKEND_CLIENT_ID=spiffworkflow-backend
@@ -37,16 +33,24 @@ fi
 if [[ -z "${BACKEND_CLIENT_SECRET:-}" ]]; then
   export BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
 fi
-USERNAME=${1-admin}
-PASSWORD=${2-admin}
-REALM_NAME=${3-spiffworkflow}
 
 SECURE=false
 
 BACKEND_BASIC_AUTH=$(echo -n "${BACKEND_CLIENT_ID}:${BACKEND_CLIENT_SECRET}" | base64)
-KEYCLOAK_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
 
->&2 echo "Using Keycloak: $KEYCLOAK_URL"
+if [[ -z "${OPENID_TOKEN_URL:-}" ]]; then
+  if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+    if grep -qE "spiffworkflow.org" <<<"$BACKEND_BASE_URL" ; then
+      env_domain=$(hot_sed -E 's/.*api\.(\w+\.spiffworkflow.org).*/\1/' <<<"${BACKEND_BASE_URL}")
+      KEYCLOAK_BASE_URL="https://keycloak.${env_domain}"
+    elif grep -qE "localhost:7000" <<<"$BACKEND_BASE_URL" ; then
+      KEYCLOAK_BASE_URL="http://localhost:7002"
+    fi
+  fi
+  OPENID_TOKEN_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
+fi
+
+>&2 echo "Using OPENID_TOKEN_URL: $OPENID_TOKEN_URL"
 >&2 echo "realm: $REALM_NAME"
 >&2 echo "client-id: $BACKEND_CLIENT_ID"
 >&2 echo "username: $USERNAME"
@@ -60,14 +64,16 @@ else
 	INSECURE=--insecure
 fi
 
+
 ### Basic auth test with backend
-result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
+result=$(curl -s -X POST "$OPENID_TOKEN_URL" "$INSECURE" \
  -H "Content-Type: application/x-www-form-urlencoded" \
  -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
  -d "username=$USERNAME" \
  -d "password=$PASSWORD" \
  -d 'grant_type=password' \
  -d "client_id=$BACKEND_CLIENT_ID" \
+ -d "code=${USERNAME}:for-local-dev" \
 )
 backend_token=$(jq -r '.access_token' <<< "$result")
 if [[ -z "$backend_token" || "$backend_token" == "null" ]]; then
@@ -75,62 +81,3 @@ if [[ -z "$backend_token" || "$backend_token" == "null" ]]; then
   exit 1
 fi
 echo "$backend_token"
-# curl --fail -v "${BACKEND_BASE_URL}/v1.0/process-groups?per_page=1" -H "Authorization: Bearer $backend_token"
-# curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${backend_token}" -H "Authorization: Bearer $backend_token"
-
-
-### Get with frontend and exchange with backend - not configured to work in keycloak atm
-# result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
-#  -H "Content-Type: application/x-www-form-urlencoded" \
-#  -d "username=$USERNAME" \
-#  -d "password=$PASSWORD" \
-#  -d 'grant_type=password' \
-#  -d "client_id=$FRONTEND_CLIENT_ID" \
-# )
-# frontend_token=$(jq -r '.access_token' <<< "$result")
-#
-# result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
-#  -H "Content-Type: application/x-www-form-urlencoded" \
-#  --data-urlencode 'grant_type=urn:ietf:params:oauth:grant-type:token-exchange' \
-#  -d "client_id=$BACKEND_CLIENT_ID" \
-#  -d "subject_token=${frontend_token}" \
-#  -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
-#  -d "audience=${BACKEND_CLIENT_ID}" \
-# )
-# backend_token=$(jq -r '.access_token' <<< "$result")
-
-### Check fine grain permissions - does not work currently
-# URI_TO_TEST_AGAINST=${3-'%2Fprocess-models%2Fcategory_number_one%2Fprocess-model-with-repeating-form'}
-# if [[ "$backend_token" != 'null' ]]; then
-#   echo "backend_token: $backend_token"
-#
-#   echo "Getting resource set"
-#   # everything_resource_id='446bdcf4-a3bd-41c7-a0f8-67a225ba6b57'
-#   resource_result=$(curl -s "${BASE_URL}/realms/spiffworkflow/authz/protection/resource_set?matchingUri=true&deep=true&max=-1&exactName=false&uri=${URI_TO_TEST_AGAINST}" -H "Authorization: Bearer $backend_token")
-#   # resource_result=$(curl -s "${BASE_URL}/realms/spiffworkflow/authz/protection/resource_set?matchingUri=false&deep=true&max=-1&exactName=false&type=admin" -H "Authorization: Bearer $backend_token")
-#
-#   resource_id_name_pairs=$(jq -r '.[] | "\(._id):\(.name)"' <<<"$resource_result" || echo '')
-#   if [[ -z "$resource_id_name_pairs" || "$resource_id_name_pairs" == "null" ]]; then
-#     >&2 echo "ERROR: Could not find the resource id from the result: ${resource_result}"
-#     exit 1
-#   fi
-#   echo $resource_id_name_pairs
-#
-#   echo "Getting permissions"
-#   for resource_id_name_pair in $resource_id_name_pairs ; do
-#     resource_id=$(awk -F ':' '{print $1}' <<<"$resource_id_name_pair")
-#     resource_name=$(awk -F ':' '{print $2}' <<<"$resource_id_name_pair")
-#
-#     echo "Checking $resource_name"
-#     curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
-#       -H "Content-Type: application/x-www-form-urlencoded" \
-#       -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
-#       -d "audience=${BACKEND_CLIENT_ID}" \
-#       --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:uma-ticket" \
-#       -d "permission=${resource_id}" \
-#       -d "subject_token=${backend_token}" \
-#       | jq .
-#   done
-# else
-#   echo "Failed auth result: $result"
-# fi
