@@ -20,8 +20,6 @@ def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     return None
 
 
-
-
 class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
 
@@ -92,25 +90,17 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             return None
 
         locations = UpsearchService.upsearch_locations(location)
-
-        # references = (
-        #     ReferenceCacheModel.query.filter_by(
-        #         identifier=identifier,
-        #         type=type,
-        #         generation=cache_generation,
-        #     )
-        #     .filter(ReferenceCacheModel.relative_location.in_(locations))  # type: ignore
-        #     .order_by(ReferenceCacheModel.relative_location.desc())  # type: ignore
-        #     .all()
-        # )
-
-        model = JSONDataStoreModel.query.filter_by(identifier=identifier).filter(JSONDataStoreModel.location.in_(locations)).order_by(JSONDataStoreModel.location.desc()).first()
+        model = (
+            JSONDataStoreModel.query.filter_by(identifier=identifier)
+            .filter(JSONDataStoreModel.location.in_(locations))  # type: ignore
+            .order_by(JSONDataStoreModel.location.desc())  # type: ignore
+            .first()
+        )
 
         if model is None:
             return None
-        
-        return model.location
 
+        return model.location  # type: ignore
 
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:

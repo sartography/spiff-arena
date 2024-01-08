@@ -1,5 +1,3 @@
-import os
-
 from sqlalchemy import insert
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel

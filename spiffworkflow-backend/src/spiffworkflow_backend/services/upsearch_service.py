@@ -1,5 +1,6 @@
 import os
 
+
 class UpsearchService:
     @classmethod
     def upsearch_locations(cls, location: str) -> list[str]:
@@ -10,5 +11,3 @@ class UpsearchService:
             location = os.path.dirname(location)
 
         return locations
-
-    
