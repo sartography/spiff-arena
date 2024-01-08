@@ -66,20 +66,19 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
+        model: JSONDataStoreModel | None = None
         location = self._data_store_location_for_task(my_task, self.bpmn_id)
-        if location is None:
+
+        if location is not None:
+            model = JSONDataStoreModel.query.filter_by(identifier=self.bpmn_id, location=location).first()
+        if location is None or model is None:
             raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
+
         data = my_task.data[self.bpmn_id]
 
         # TODO: validate data against schema
+        model.data = data
 
-        model = JSONDataStoreModel(
-            identifier=self.bpmn_id,
-            location=location,
-            data=data,
-        )
-
-        db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).delete()
         db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
