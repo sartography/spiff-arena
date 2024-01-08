@@ -148,11 +148,6 @@ class FileSystemService:
         return json.loads(contents)
 
     @classmethod
-    def contents_of_process_group_json_file_at_relative_path(cls, relative_path: str) -> Any:
-        contents = cls.contents_of_file_at_relative_path(relative_path, cls.PROCESS_GROUP_JSON_FILE)
-        return json.loads(contents)
-
-    @classmethod
     def write_to_file_at_relative_path(cls, relative_path: str, file_name: str, contents: str) -> None:
         full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
         with open(full_path, "w") as f:
