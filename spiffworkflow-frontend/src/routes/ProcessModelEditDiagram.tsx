@@ -82,6 +82,8 @@ export default function ProcessModelEditDiagram() {
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
 
+  const [messageEventBus, setMessageEventBus] = useState<any>(null);
+
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
   const editorRef = useRef(null);
@@ -402,6 +404,19 @@ export default function ProcessModelEditDiagram() {
     } else {
       console.error('There is no process model.');
     }
+  };
+
+  const onMessagesRequested = (event: any) => {
+    setMessageEventBus(event.eventBus);
+
+    const updateMessageList = (result: any) => {
+      event.eventBus.fire('spiff.messages.returned', result);
+    };
+
+    HttpService.makeCallToBackend({
+      path: `/message-models?relative_location=${processModel?.id}`,
+      successCallback: updateMessageList,
+    });
   };
 
   useEffect(() => {
@@ -1101,6 +1116,7 @@ export default function ProcessModelEditDiagram() {
         onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onDmnFilesRequested={onDmnFilesRequested}
+        onMessagesRequested={onMessagesRequested}
         onSearchProcessModels={onSearchProcessModels}
         onElementsChanged={onElementsChanged}
         callers={callers}

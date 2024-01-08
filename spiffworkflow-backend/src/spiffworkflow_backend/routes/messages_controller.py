@@ -10,11 +10,14 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_model import MessageSchema, CorrelationKeySchema, CorrelationPropertySchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel, ReferenceSchema, ReferenceType
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 
 
@@ -41,7 +44,7 @@ def reference_cache_list(
     return make_response(jsonify(response_json), 200)
 
 
-def message_model_list(
+def message_model_list_old (
         relative_location: str | None = None,
         page: int = 1,
         per_page: int = 100,
@@ -52,6 +55,35 @@ def message_model_list(
         page=page,
         per_page=per_page,
     )
+
+
+def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
+
+    # Returns all the messages, correlation keys, and correlation properties that exist at the given
+    # relative location or higher in the directory tree, presents it in the same format as you would
+    # find in a single process group file.
+    locations = ReferenceCacheService.upsearch_locations(relative_location)
+    messages = []
+    correlation_keys = []
+    correlation_properties = []
+    for loc in locations:
+        try:
+            processGroup = ProcessModelService.get_process_group(loc)
+            if processGroup.messages is not None:
+                messages.extend(processGroup.messages)
+            if processGroup.correlation_properties is not None:
+                correlation_properties.extend(processGroup.correlation_properties)
+            if processGroup.correlation_keys is not None:
+                correlation_keys.extend(processGroup.correlation_keys)
+        except ProcessEntityNotFoundError:
+            pass
+    response_json = {
+        "messages": MessageSchema(many=True).dump(messages),
+        "correlation_keys": CorrelationKeySchema(many=True).dump(correlation_keys),
+        "correlation_properties": CorrelationPropertySchema(many=True).dump(correlation_properties),
+    }
+    return make_response(jsonify(response_json), 200)
+
 
 
 def correlation_key_list(

@@ -27,9 +27,7 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 flask-simple-crypt = "^0.3.3"
-# SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
-# SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"

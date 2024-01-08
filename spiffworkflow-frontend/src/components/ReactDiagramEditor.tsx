@@ -86,6 +86,7 @@ type OwnProps = {
   onServiceTasksRequested?: (..._args: any[]) => any;
   onJsonSchemaFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
+  onMessagesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
   url?: string;
@@ -115,6 +116,7 @@ export default function ReactDiagramEditor({
   onServiceTasksRequested,
   onJsonSchemaFilesRequested,
   onDmnFilesRequested,
+  onMessagesRequested,
   onSearchProcessModels,
   onElementsChanged,
   url,
@@ -397,6 +399,12 @@ export default function ReactDiagramEditor({
       }
     });
 
+    diagramModeler.on('spiff.messages.requested', (event: any) => {
+      if (onMessagesRequested) {
+        onMessagesRequested(event);
+      }
+    });
+
     diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
@@ -418,6 +426,7 @@ export default function ReactDiagramEditor({
     onServiceTasksRequested,
     onJsonSchemaFilesRequested,
     onDmnFilesRequested,
+    onMessagesRequested,
     onSearchProcessModels,
     onElementsChanged,
   ]);

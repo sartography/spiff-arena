@@ -307,9 +307,6 @@ export default function ProcessGroupForm({
       return (
         <TableRow>
           <td>{msg.id}</td>
-          <td>&nbsp</td>
-          <td>&nbsp</td>
-          <td>&nbsp</td>
           <td>
             <Button
               kind="ghost"
@@ -345,10 +342,7 @@ export default function ProcessGroupForm({
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeader>Name</TableHeader>
-              <TableHeader>Sending</TableHeader>
-              <TableHeader>Receiving</TableHeader>
-              <TableHeader>Api</TableHeader>
+              <TableHeader style="min-width:300px">Name</TableHeader>
               <TableHeader>Actions</TableHeader>
             </TableRow>
             {items}
