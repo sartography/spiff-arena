@@ -19,19 +19,13 @@ def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     return None
 
 
-def _data_store_filename(name: str) -> str:
-    return f"{name}.json"
-
-
-def _data_store_exists_at_location(location: str, identifier: str) -> bool:
-    return FileSystemService.file_exists_at_relative_path(location, _data_store_filename(identifier))
 
 
 def _data_store_location_for_task(spiff_task: SpiffTask, identifier: str, check_disk: bool) -> str | None:
     location = _process_model_location_for_task(spiff_task)
     if location is None:
         return None
-    if _data_store_exists_at_location(location, identifier):
+    if check_disk and _data_store_exists_at_location(location, identifier):
         return location
     location = ReferenceCacheService.upsearch(location, identifier, "data_store")
     if location is None:
@@ -132,20 +126,39 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
-        location = _data_store_location_for_task(my_task, self.bpmn_id, True)
+        location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
             raise Exception(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
-        contents = FileSystemService.contents_of_json_file_at_relative_path(location, _data_store_filename(self.bpmn_id))
+        contents = FileSystemService.contents_of_json_file_at_relative_path(location, self._data_store_filename(self.bpmn_id))
         my_task.data[self.bpmn_id] = contents
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
-        location = _data_store_location_for_task(my_task, self.bpmn_id, True)
+        location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
             raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
         data = my_task.data[self.bpmn_id]
-        FileSystemService.write_to_json_file_at_relative_path(location, _data_store_filename(self.bpmn_id), data)
+        FileSystemService.write_to_json_file_at_relative_path(location, self._data_store_filename(self.bpmn_id), data)
         del my_task.data[self.bpmn_id]
+
+    def _data_store_location_for_task(self, spiff_task: SpiffTask, identifier: str) -> str | None:
+        location = _process_model_location_for_task(spiff_task)
+        if location is None:
+            return None
+        if self._data_store_exists_at_location(location, identifier):
+            return location
+        location = ReferenceCacheService.upsearch(location, identifier, "data_store")
+        if location is None:
+            return None
+        if not self._data_store_exists_at_location(location, identifier):
+            return None
+        return location
+
+    def _data_store_exists_at_location(self, location: str, identifier: str) -> bool:
+        return FileSystemService.file_exists_at_relative_path(location, self._data_store_filename(identifier))
+
+    def _data_store_filename(self, name: str) -> str:
+        return f"{name}.json"
 
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
