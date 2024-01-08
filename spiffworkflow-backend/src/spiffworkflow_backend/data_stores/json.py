@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
 def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
@@ -19,20 +20,6 @@ def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
     return None
 
 
-
-
-def _data_store_location_for_task(spiff_task: SpiffTask, identifier: str, check_disk: bool) -> str | None:
-    location = _process_model_location_for_task(spiff_task)
-    if location is None:
-        return None
-    if check_disk and _data_store_exists_at_location(location, identifier):
-        return location
-    location = ReferenceCacheService.upsearch(location, identifier, "data_store")
-    if location is None:
-        return None
-    if check_disk and not _data_store_exists_at_location(location, identifier):
-        return None
-    return location
 
 
 class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
@@ -72,7 +59,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def get(self, my_task: SpiffTask) -> None:
         """get."""
         model: JSONDataStoreModel | None = None
-        location = _data_store_location_for_task(my_task, self.bpmn_id, False)
+        location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is not None:
             model = db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
         if model is None:
@@ -81,7 +68,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
-        location = _data_store_location_for_task(my_task, self.bpmn_id, False)
+        location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
             raise Exception(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
         data = my_task.data[self.bpmn_id]
@@ -98,6 +85,32 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
+
+    def _data_store_location_for_task(self, spiff_task: SpiffTask, identifier: str) -> str | None:
+        location = _process_model_location_for_task(spiff_task)
+        if location is None:
+            return None
+
+        locations = UpsearchService.upsearch_locations(location)
+
+        # references = (
+        #     ReferenceCacheModel.query.filter_by(
+        #         identifier=identifier,
+        #         type=type,
+        #         generation=cache_generation,
+        #     )
+        #     .filter(ReferenceCacheModel.relative_location.in_(locations))  # type: ignore
+        #     .order_by(ReferenceCacheModel.relative_location.desc())  # type: ignore
+        #     .all()
+        # )
+
+        model = JSONDataStoreModel.query.filter_by(identifier=identifier).filter(JSONDataStoreModel.location.in_(locations)).order_by(JSONDataStoreModel.location.desc()).first()
+
+        if model is None:
+            return None
+        
+        return model.location
+
 
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
