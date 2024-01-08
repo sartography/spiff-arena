@@ -14,7 +14,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
     "kkv": (KKVDataStore, "Keyed Key-Value Data Store"),
-    "typehead": (TypeaheadDataStore, "Typeahead Data Store"),
+    "typeahead": (TypeaheadDataStore, "Typeahead Data Store"),
 }
 
 

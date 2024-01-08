@@ -1,10 +1,12 @@
+from dataclasses import dataclass
+
 from sqlalchemy import UniqueConstraint
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 
 
-# @dataclass
+@dataclass
 class JSONDataStoreModel(SpiffworkflowBaseDBModel):
     __tablename__ = "json_data_store"
     __table_args__ = (UniqueConstraint("identifier", "location", name="_identifier_location_unique"),)

@@ -51,7 +51,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             identifier=identifier,
             location=location,
             schema=schema,
-            description=description,
+            description=description or "",
             data={},
         )
         db.session.add(model)
@@ -93,7 +93,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         data = my_task.data[self.bpmn_id]
 
         # TODO: validate data against schema
-        
+
         model = JSONDataStoreModel(
             identifier=self.bpmn_id,
             location=location,
