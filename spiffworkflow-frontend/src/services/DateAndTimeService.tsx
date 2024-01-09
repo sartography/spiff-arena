@@ -41,11 +41,17 @@ const convertDateObjectToFormattedString = (dateObject: Date) => {
 };
 
 const dateStringToYMDFormat = (dateString: string) => {
-  if (dateString && dateString.match(/^\d{2}-\d{2}-\d{4}$/)) {
-    const newDate = parse(dateString, DATE_FORMAT, new Date());
-    return format(newDate, 'yyyy-MM-dd');
+  if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return dateString;
   }
-  return dateString;
+  const newDate = parse(dateString, DATE_FORMAT, new Date());
+  // Number.isNaN and isNaN are NOT the same. We need isNaN here.
+  // https://stackoverflow.com/a/33164924
+  // eslint-disable-next-line no-restricted-globals
+  if (isNaN(newDate as any)) {
+    return dateString;
+  }
+  return format(newDate, 'yyyy-MM-dd');
 };
 
 const convertDateAndTimeStringsToDate = (
