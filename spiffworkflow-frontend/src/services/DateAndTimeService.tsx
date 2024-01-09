@@ -45,10 +45,8 @@ const dateStringToYMDFormat = (dateString: string) => {
     return dateString;
   }
   const newDate = parse(dateString, DATE_FORMAT, new Date());
-  // Number.isNaN and isNaN are NOT the same. We need isNaN here.
-  // https://stackoverflow.com/a/33164924
-  // eslint-disable-next-line no-restricted-globals
-  if (isNaN(newDate as any)) {
+  // getTime returns NaN if the date is invalid
+  if (Number.isNaN(newDate.getTime())) {
     return dateString;
   }
   return format(newDate, 'yyyy-MM-dd');
