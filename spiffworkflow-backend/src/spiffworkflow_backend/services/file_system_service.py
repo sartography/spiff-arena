@@ -1,8 +1,8 @@
+import datetime
 import json
 import os
 from collections.abc import Callable
 from collections.abc import Generator
-from datetime import datetime
 from typing import Any
 
 import pytz
@@ -220,10 +220,10 @@ class FileSystemService:
         return os.path.getmtime(file_path)
 
     @staticmethod
-    def _last_modified(file_path: str) -> datetime:
+    def _last_modified(file_path: str) -> datetime.datetime:
         # Returns the last modified date of the given file.
         timestamp = os.path.getmtime(file_path)
-        utc_dt = datetime.utcfromtimestamp(timestamp)
+        utc_dt = datetime.datetime.fromtimestamp(timestamp, datetime.UTC)
         aware_utc_dt = utc_dt.replace(tzinfo=pytz.utc)
         return aware_utc_dt
 
