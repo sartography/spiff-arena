@@ -329,6 +329,13 @@ class AuthorizationService:
             task_guid = request.path.split("/")[4]
             if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
                 return True
+
+        # TODO: Probably remove this once we have guest tokens working better
+        if (
+            api_view_function.__name__ == "typeahead"
+            and api_view_function.__module__ == "spiffworkflow_backend.routes.connector_proxy_controller"
+        ):
+            return True
         return False
 
     @staticmethod

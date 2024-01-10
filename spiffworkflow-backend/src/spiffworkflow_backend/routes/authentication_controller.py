@@ -449,17 +449,7 @@ def _get_decoded_token(token: str) -> dict | None:
 
 
 def _parse_id_token(token: str) -> Any:
-    """Parse the id token."""
-    parts = token.split(".")
-    if len(parts) != 3:
-        raise Exception("Incorrect id token format")
-
-    payload = parts[1]
-    padded = payload + "=" * (4 - len(payload) % 4)
-
-    # https://lists.jboss.org/pipermail/keycloak-user/2016-April/005758.html
-    decoded = base64.urlsafe_b64decode(padded)
-    return json.loads(decoded)
+    return jwt.decode(token, options={"verify_signature": False})
 
 
 def _get_authentication_identifier_from_request() -> str:
