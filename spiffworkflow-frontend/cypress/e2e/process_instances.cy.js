@@ -16,7 +16,15 @@ const updateDmnText = (oldText, newText, elementId = 'wonderful_process') => {
   // this will break if there are more elements added to the drd
   cy.get(`g[data-element-id=${elementId}]`).click();
   cy.get('.dmn-icon-decision-table').click();
-  cy.contains(oldText).clear().type(`"${newText}"`);
+
+  // We used to use the line:
+  //    cy.contains(oldText).clear().type(`"${newText}"`);
+  // but it broke when we upgraded dmn-js to v15 so after clearing it could not type in the cell.
+  // Clicking outside the cell seems to allow it to type it in it again so try that.
+  const item = cy.contains(oldText);
+  item.clear();
+  cy.contains('Process Model File:').click();
+  item.type(`"${newText}"`);
 
   // wait for a little bit for the xml to get set before saving
   // FIXME: gray out save button or add spinner while xml is loading

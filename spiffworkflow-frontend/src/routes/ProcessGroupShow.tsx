@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrashCan, Edit } from '@carbon/icons-react';
 import { Button, Stack } from '@carbon/react';
@@ -6,9 +7,10 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import {
   modifyProcessIdentifierForPathParam,
+  setPageTitle,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
-import { PermissionsToCheck } from '../interfaces';
+import { PermissionsToCheck, ProcessGroup } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
@@ -19,6 +21,8 @@ import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 export default function ProcessGroupShow() {
   const params = useParams();
   const navigate = useNavigate();
+  const [processGroupForBreadcrumb, setProcessGroupForBreadcrumb] =
+    useState<ProcessGroup | null>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -34,6 +38,17 @@ export default function ProcessGroupShow() {
     `${params.process_group_id}`
   );
   const { processGroup } = useProcessGroupFetcher(unModifiedProcessGroupId);
+
+  useEffect(() => {
+    const processResult = (result: ProcessGroup) => {
+      setProcessGroupForBreadcrumb(result);
+      setPageTitle([result.display_name]);
+    };
+    HttpService.makeCallToBackend({
+      path: `/process-groups/${params.process_group_id}`,
+      successCallback: processResult,
+    });
+  }, [params.process_group_id, setProcessGroupForBreadcrumb]);
 
   const navigateToProcessGroups = (_result: any) => {
     navigate(`/process-groups`);
@@ -51,7 +66,7 @@ export default function ProcessGroupShow() {
     }
   };
 
-  if (processGroup && permissionsLoaded) {
+  if (processGroup && processGroupForBreadcrumb && permissionsLoaded) {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
@@ -64,7 +79,7 @@ export default function ProcessGroupShow() {
           hotCrumbs={[
             ['Process Groups', '/process-groups'],
             {
-              entityToExplode: processGroup,
+              entityToExplode: processGroupForBreadcrumb,
               entityType: 'process-group',
             },
           ]}
