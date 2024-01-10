@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import DataStoreForm from '../components/DataStoreForm';
 import { DataStore, HotCrumbItem } from '../interfaces';
 import { setPageTitle } from '../helpers';
 
 export default function DataStoreNew() {
-  const searchParams = new URLSearchParams(document.location.search);
+  const [searchParams] = useSearchParams();
   const parentGroupId = searchParams.get('parentGroupId');
   const [dataStore, setDataStore] = useState<DataStore>({
     id: '',
