@@ -92,7 +92,6 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                 f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
             ) from e
 
-        # TODO: validate data against schema
         model.data = data
 
         db.session.add(model)
