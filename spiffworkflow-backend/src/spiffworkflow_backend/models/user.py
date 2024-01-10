@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.group import GroupModel
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
+SPIFF_JWT_KEY_ID = "spiff_backend"
 
 
 class UserNotFoundError(Exception):
@@ -62,17 +63,13 @@ class UserModel(SpiffworkflowBaseDBModel):
             "email": self.email,
             "preferred_username": self.username,
             "sub": f"service:{self.service}::service_id:{self.service_id}",
-            "token_type": "internal",
+            "token_type": SPIFF_JWT_KEY_ID,
         }
 
         payload = base_payload
         if extra_payload is not None:
             payload = {**base_payload, **extra_payload}
-        return jwt.encode(
-            payload,
-            secret_key,
-            algorithm="HS256",
-        )
+        return jwt.encode(payload, secret_key, algorithm="HS256", headers={"kid": SPIFF_JWT_KEY_ID})
 
     def as_dict(self) -> dict[str, Any]:
         # dump the user using our json encoder and then load it back up as a dict

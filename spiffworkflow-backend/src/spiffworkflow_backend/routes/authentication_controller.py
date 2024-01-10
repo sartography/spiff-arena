@@ -23,7 +23,7 @@ from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
+from spiffworkflow_backend.models.user import SPIFF_GUEST_USER, SPIFF_JWT_KEY_ID
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -224,7 +224,7 @@ def logout_return() -> Response:
 
 def get_scope(token: str) -> str:
     scope = ""
-    decoded_token = jwt.decode(token, options={"verify_signature": False})
+    decoded_token = _parse_id_token(token)
     if "scope" in decoded_token:
         scope = decoded_token["scope"]
     return scope
@@ -335,7 +335,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
     if decoded_token is not None:
         if "token_type" in decoded_token:
             token_type = decoded_token["token_type"]
-            if token_type == "internal":  # noqa: S105
+            if token_type == SPIFF_JWT_KEY_ID:
                 try:
                     user_model = _get_user_from_decoded_internal_token(decoded_token)
                 except Exception as e:
@@ -434,7 +434,7 @@ def _get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | No
 
 def _get_decoded_token(token: str) -> dict | None:
     try:
-        decoded_token: dict = jwt.decode(token, options={"verify_signature": False})
+        decoded_token: dict = _parse_id_token(token)
     except Exception as e:
         raise ApiError(error_code="invalid_token", message="Cannot decode token.") from e
     else:
@@ -449,7 +449,12 @@ def _get_decoded_token(token: str) -> dict | None:
 
 
 def _parse_id_token(token: str) -> Any:
-    return jwt.decode(token, options={"verify_signature": False})
+    try:
+        return AuthenticationService.parse_id_token(_get_authentication_identifier_from_request(), token)
+    # if signature has expired then force the user to log in again
+    except jwt.exceptions.ExpiredSignatureError as ex:
+        AuthenticationService.set_user_has_logged_out()
+        raise ex
 
 
 def _get_authentication_identifier_from_request() -> str:

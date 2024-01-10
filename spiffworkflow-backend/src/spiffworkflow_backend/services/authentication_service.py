@@ -6,6 +6,12 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from typing import Any
+
+from cryptography.x509 import load_der_x509_certificate
+from cryptography.hazmat.backends import default_backend
+
+from spiffworkflow_backend.models.user import SPIFF_JWT_KEY_ID
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -57,6 +63,7 @@ class AuthenticationOptionNotFoundError(Exception):
 
 class AuthenticationService:
     ENDPOINT_CACHE: dict[str, dict[str, str]] = {}  # We only need to find the openid endpoints once, then we can cache them.
+    JSON_WEB_KEYSET_CACHE: dict[str, dict[str, str]] = {}
 
     @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
@@ -104,16 +111,58 @@ class AuthenticationService:
         openid_config_url = f"{cls.server_url(authentication_identifier)}/.well-known/openid-configuration"
         if authentication_identifier not in cls.ENDPOINT_CACHE:
             cls.ENDPOINT_CACHE[authentication_identifier] = {}
+        if authentication_identifier not in cls.JSON_WEB_KEYSET_CACHE:
+            cls.JSON_WEB_KEYSET_CACHE[authentication_identifier] = {}
         if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
             try:
                 response = requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 AuthenticationService.ENDPOINT_CACHE[authentication_identifier] = response.json()
+                jwt_ks_response = requests.get(response.json()["jwks_uri"], timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+                AuthenticationService.JSON_WEB_KEYSET_CACHE[authentication_identifier] = jwt_ks_response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
         if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
             raise Exception(f"Unknown OpenID Endpoint: {name}. Tried to get from {openid_config_url}")
         config: str = AuthenticationService.ENDPOINT_CACHE[authentication_identifier].get(name, "")
         return config
+
+    @classmethod
+    def get_jwks_config_from_uri(cls, jwks_uri: str) -> dict:
+        if jwks_uri not in AuthenticationService.JSON_WEB_KEYSET_CACHE:
+            try:
+                jwt_ks_response = requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+                AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri] = jwt_ks_response.json()
+            except requests.exceptions.ConnectionError as ce:
+                raise OpenIdConnectionError(f"Cannot connect to given jwks url: {jwks_uri}") from ce
+        return AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri]
+
+    @classmethod
+    def jwks_public_key_for_key_id(cls, authentication_identifier, key_id: str) -> dict:
+        jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
+        jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
+        json_key_configs = next(jk for jk in jwks_configs["keys"] if jk["kid"] == key_id)
+        return json_key_configs
+
+    @classmethod
+    def parse_id_token(cls, authentication_identifier: str, token: str) -> Any:
+        header = jwt.get_unverified_header(token)
+        key_id = header.get("kid")
+
+        # if the token has our key id then we issued it and should verify to ensure it's valid
+        if key_id == SPIFF_JWT_KEY_ID:
+            return jwt.decode(
+                token,
+                str(current_app.secret_key),
+                algorithms=["HS256"],
+            )
+        else:
+            json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
+            x5c = json_key_configs["x5c"][0]
+            algorithm = header.get("alg")
+            decoded_certificate = base64.b64decode(x5c)
+            x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
+            public_key = x509_cert.public_key()
+            return jwt.decode(token, public_key, algorithms=[algorithm], audience="spiffworkflow-backend")
 
     @staticmethod
     def get_backend_url() -> str:
