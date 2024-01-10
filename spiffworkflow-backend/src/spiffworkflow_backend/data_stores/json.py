@@ -1,5 +1,6 @@
 from typing import Any
 
+import jsonschema
 from flask import current_app
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
@@ -83,6 +84,13 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             raise DataStoreWriteError(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
 
         data = my_task.data[self.bpmn_id]
+
+        try:
+            jsonschema.validate(instance=data, schema=model.schema)
+        except Exception as e:
+            raise DataStoreWriteError(
+                f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
+            ) from e
 
         # TODO: validate data against schema
         model.data = data
