@@ -1,13 +1,13 @@
 import React from 'react';
-import DataStoreList from '../components/DataStoreList';
+import DataStoreListTable from '../components/DataStoreListTable';
 import { setPageTitle } from '../helpers';
 
-export default function DataStorePage() {
+export default function DataStoreList() {
   setPageTitle(['Data Stores']);
   return (
     <>
       <h1>Data Stores</h1>
-      <DataStoreList />
+      <DataStoreListTable />
     </>
   );
 }

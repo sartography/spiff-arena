@@ -2770,6 +2770,28 @@ paths:
       responses:
         "200":
           description: The list of currently defined data store objects
+    post:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_create
+      summary: Create a new data store instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataStore"
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The newly created data store instance
+  /data-stores/types:
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_types
+      summary: Return a list of the data store types.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The list of currently defined data store types
   /data-stores/{data_store_type}/{name}:
     parameters:
       - name: data_store_type
@@ -2998,31 +3020,22 @@ components:
     DataStore:
       properties:
         id:
-          type: integer
-          example: 1234
-        key:
           type: string
-          example: MyKey
-        workflow_id:
-          type: integer
-          x-nullable: true
-          example: 12
-        user_id:
+          example: employees
+        name:
           type: string
-          x-nullable: true
-          example: dhf8r
-        task_id:
+          example: Emplyoees DataStore
+        type:
+          type: string
+          example: TypeaheadDataStore
+        description:
           type: string
           x-nullable: true
-          example: MyTask
-        process_model_id:
+          example: This data store contains all the employees
+        parent_group_id:
           type: string
           x-nullable: true
-          example: My Spec Name
-        value:
-          type: string
-          x-nullable: true
-          example: Some Value
+          example: Optional parent group id to specify the location of this data store
     Process:
       properties:
         identifier:
