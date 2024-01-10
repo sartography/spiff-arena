@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import DataStoreForm from '../components/DataStoreForm';
@@ -15,7 +15,9 @@ export default function DataStoreNew() {
     schema: '',
     description: '',
   });
-  setPageTitle(['New Data Store']);
+  useEffect(() => {
+    setPageTitle(['New Data Store']);
+  }, []);
 
   const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
   if (parentGroupId) {
