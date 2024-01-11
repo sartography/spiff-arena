@@ -14,6 +14,7 @@ import { PermissionsToCheck, ProcessGroup } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+import DataStoreListTiles from '../components/DataStoreListTiles';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessModelListTiles from '../components/ProcessModelListTiles';
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
@@ -160,6 +161,16 @@ export default function ProcessGroupShow() {
             userCanCreateProcessModels={ability.can(
               'POST',
               targetUris.processGroupListPath
+            )}
+          />
+          <br />
+          <br />
+          <DataStoreListTiles
+            headerElement={<h2 className="clear-left">Data Stores</h2>}
+            showNoItemsDisplayText={showNoItemsDisplayText}
+            userCanCreateDataStores={ability.can(
+              'POST',
+              targetUris.dataStoreListPath
             )}
           />
         </ul>
