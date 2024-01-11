@@ -7,10 +7,11 @@ from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
 
-from cryptography.x509 import load_der_x509_certificate
 from cryptography.hazmat.backends import default_backend
+from cryptography.x509 import load_der_x509_certificate
 
-from spiffworkflow_backend.models.user import SPIFF_JWT_ALGORITHM, SPIFF_JWT_KEY_ID
+from spiffworkflow_backend.models.user import SPIFF_JWT_ALGORITHM, SPIFF_JWT_AUDIENCE
+from spiffworkflow_backend.models.user import SPIFF_JWT_KEY_ID
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -93,6 +94,10 @@ class AuthenticationService:
         return config
 
     @classmethod
+    def valid_audiences(cls, authentication_identifier: str) -> str:
+        return [cls.client_id(authentication_identifier)]
+
+    @classmethod
     def server_url(cls, authentication_identifier: str) -> str:
         """Returns the server url from the config."""
         config: str = cls.authentication_option_for_identifier(authentication_identifier)["uri"]
@@ -143,17 +148,13 @@ class AuthenticationService:
         return json_key_configs
 
     @classmethod
-    def parse_id_token(cls, authentication_identifier: str, token: str) -> dict:
+    def parse_jwt_token(cls, authentication_identifier: str, token: str) -> dict:
         header = jwt.get_unverified_header(token)
         key_id = header.get("kid")
 
         # if the token has our key id then we issued it and should verify to ensure it's valid
         if key_id == SPIFF_JWT_KEY_ID:
-            return jwt.decode(
-                token,
-                str(current_app.secret_key),
-                algorithms=[SPIFF_JWT_ALGORITHM],
-            )
+            return jwt.decode(token, str(current_app.secret_key), algorithms=[SPIFF_JWT_ALGORITHM], audience=SPIFF_JWT_AUDIENCE)
         else:
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
             x5c = json_key_configs["x5c"][0]
@@ -161,7 +162,9 @@ class AuthenticationService:
             decoded_certificate = base64.b64decode(x5c)
             x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
             public_key = x509_cert.public_key()
-            return jwt.decode(token, public_key, algorithms=[algorithm], audience="spiffworkflow-backend")
+            return jwt.decode(
+                token, public_key, algorithms=[algorithm], audience=cls.valid_audiences(authentication_identifier)[0]
+            )
 
     @staticmethod
     def get_backend_url() -> str:
@@ -225,7 +228,7 @@ class AuthenticationService:
         if azp is None:
             return True
 
-        valid_client_ids = [cls.client_id(authentication_identifier), "account"]
+        valid_client_ids = [cls.client_id(authentication_identifier)]
         if (
             "additional_valid_client_ids" in cls.authentication_option_for_identifier(authentication_identifier)
             and cls.authentication_option_for_identifier(authentication_identifier)["additional_valid_client_ids"] is not None
@@ -238,24 +241,20 @@ class AuthenticationService:
         return azp in valid_client_ids
 
     @classmethod
-    def validate_id_or_access_token(cls, token: str, authentication_identifier: str) -> bool:
+    def validate_decoded_token(cls, decoded_token: dict, authentication_identifier: str) -> bool:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
         now = round(time.time())
-        try:
-            decoded_token = jwt.decode(token, options={"verify_signature": False})
-        except Exception as e:
-            raise TokenInvalidError("Cannot decode token") from e
 
         # give a 5 second leeway to iat in case keycloak server time doesn't match backend server
         iat_clock_skew_leeway = 5
 
         iss = decoded_token["iss"]
-        aud = decoded_token["aud"]
+        aud = decoded_token["aud"] if "aud" in decoded_token else None
         azp = decoded_token["azp"] if "azp" in decoded_token else None
         iat = decoded_token["iat"]
-
-        valid_audience_values = (cls.client_id(authentication_identifier), "account")
+        import pdb; pdb.set_trace()
+        valid_audience_values = cls.valid_audiences(authentication_identifier)
         audience_array_in_token = aud
         if isinstance(aud, str):
             audience_array_in_token = [aud]

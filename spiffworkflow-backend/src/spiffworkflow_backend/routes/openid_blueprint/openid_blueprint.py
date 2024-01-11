@@ -106,7 +106,7 @@ def token() -> Response | dict:
     id_token = jwt.encode(
         {
             "iss": base_url,
-            "aud": [client_id, "account"],
+            "aud": client_id,
             "iat": time.time(),
             "exp": time.time() + 86400,  # Expire after a day.
             "sub": user_name,

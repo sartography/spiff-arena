@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import time
 from typing import Any
 
 import jwt
@@ -13,8 +14,10 @@ from spiffworkflow_backend.models.group import GroupModel
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
-SPIFF_JWT_KEY_ID = "spiff_backend"
-SPIFF_JWT_ALGORITHM = "HS256"
+SPIFF_GENERATED_JWT_KEY_ID = "spiff_backend"
+SPIFF_GENERATED_JWT_ALGORITHM = "HS256"
+SPIFF_GENERATED_JWT_AUDIENCE = "spiffworkflow-backend"
+SPIFF_GENERATED_JWT_ISSUER = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
 
 
 class UserNotFoundError(Exception):
@@ -64,8 +67,12 @@ class UserModel(SpiffworkflowBaseDBModel):
             "email": self.email,
             "preferred_username": self.username,
             "sub": f"service:{self.service}::service_id:{self.service_id}",
-            "token_type": SPIFF_JWT_KEY_ID,
+            "iss": SPIFF_JWT_ISSUER,
+            "iat": round(time.time()) - 1,
+            "exp": round(time.time()) + 3600,
+            "aud": SPIFF_JWT_AUDIENCE,
         }
+        print(base_payload)
 
         payload = base_payload
         if extra_payload is not None:
