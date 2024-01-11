@@ -54,7 +54,7 @@ class UserModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def spiff_generated_jwt_issuer(cls) -> str:
-        return current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
+        return str(current_app.config["SPIFFWORKFLOW_BACKEND_URL"])
 
     def encode_auth_token(self, extra_payload: dict | None = None) -> str:
         """Generate the Auth Token.

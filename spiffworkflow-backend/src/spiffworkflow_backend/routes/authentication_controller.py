@@ -331,7 +331,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
 
     if decoded_token is not None:
         if "iss" in decoded_token.keys():
-            if decoded_token["iss"] == current_app.config["SPIFFWORKFLOW_BACKEND_URL"]:
+            if decoded_token["iss"] == UserModel.spiff_generated_jwt_issuer():
                 try:
                     user_model = _get_user_from_decoded_internal_token(decoded_token)
                 except Exception as e:
@@ -429,7 +429,7 @@ def _get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | No
     return user
 
 
-def _get_decoded_token(token: str) -> dict | None:
+def _get_decoded_token(token: str) -> dict:
     try:
         decoded_token: dict = AuthenticationService.parse_jwt_token(_get_authentication_identifier_from_request(), token)
     except Exception as e:

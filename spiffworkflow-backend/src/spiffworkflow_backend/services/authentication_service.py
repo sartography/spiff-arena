@@ -96,7 +96,7 @@ class AuthenticationService:
         return config
 
     @classmethod
-    def valid_audiences(cls, authentication_identifier: str) -> str:
+    def valid_audiences(cls, authentication_identifier: str) -> list[str]:
         return [cls.client_id(authentication_identifier)]
 
     @classmethod
@@ -143,16 +143,16 @@ class AuthenticationService:
         return AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri]
 
     @classmethod
-    def jwks_public_key_for_key_id(cls, authentication_identifier, key_id: str) -> dict:
+    def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict:
         jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
-        json_key_configs = next(jk for jk in jwks_configs["keys"] if jk["kid"] == key_id)
+        json_key_configs: dict = next(jk for jk in jwks_configs["keys"] if jk["kid"] == key_id)
         return json_key_configs
 
     @classmethod
     def parse_jwt_token(cls, authentication_identifier: str, token: str) -> dict:
         header = jwt.get_unverified_header(token)
-        key_id = header.get("kid")
+        key_id = str(header.get("kid"))
 
         # if the token has our key id then we issued it and should verify to ensure it's valid
         if key_id == SPIFF_GENERATED_JWT_KEY_ID:
@@ -172,8 +172,8 @@ class AuthenticationService:
             public_key = x509_cert.public_key()
             return jwt.decode(
                 token,
-                public_key,
-                algorithms=[algorithm],
+                str(public_key),
+                algorithms=algorithm,
                 audience=cls.valid_audiences(authentication_identifier)[0],
                 options={"verify_exp": False},
             )
