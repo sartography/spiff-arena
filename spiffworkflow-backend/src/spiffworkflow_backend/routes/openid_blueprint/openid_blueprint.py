@@ -21,6 +21,8 @@ from flask import request
 from flask import url_for
 from werkzeug.wrappers import Response
 
+from spiffworkflow_backend.models.user import SPIFF_JWT_ALGORITHM
+
 openid_blueprint = Blueprint("openid", __name__, template_folder="templates", static_folder="static")
 
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
@@ -112,7 +114,7 @@ def token() -> Response | dict:
             "preferred_username": user_details.get("preferred_username", user_name),
         },
         client_secret,
-        algorithm="HS256",
+        algorithm=SPIFF_JWT_ALGORITHM,
     )
     response = {
         "access_token": id_token,

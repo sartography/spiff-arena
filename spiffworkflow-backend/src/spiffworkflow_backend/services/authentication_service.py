@@ -6,12 +6,11 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
-from typing import Any
 
 from cryptography.x509 import load_der_x509_certificate
 from cryptography.hazmat.backends import default_backend
 
-from spiffworkflow_backend.models.user import SPIFF_JWT_KEY_ID
+from spiffworkflow_backend.models.user import SPIFF_JWT_ALGORITHM, SPIFF_JWT_KEY_ID
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -144,7 +143,7 @@ class AuthenticationService:
         return json_key_configs
 
     @classmethod
-    def parse_id_token(cls, authentication_identifier: str, token: str) -> Any:
+    def parse_id_token(cls, authentication_identifier: str, token: str) -> dict:
         header = jwt.get_unverified_header(token)
         key_id = header.get("kid")
 
@@ -153,7 +152,7 @@ class AuthenticationService:
             return jwt.decode(
                 token,
                 str(current_app.secret_key),
-                algorithms=["HS256"],
+                algorithms=[SPIFF_JWT_ALGORITHM],
             )
         else:
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
