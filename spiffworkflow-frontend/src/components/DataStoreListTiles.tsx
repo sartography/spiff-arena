@@ -33,8 +33,6 @@ export default function DataStoreListTiles({
   useEffect(() => {
     const setDataStoresFromResult = (result: any) => {
       setDataStores(result);
-      console.log(result);
-      console.log(dataStores);
     };
 
     if (defaultDataStores) {
