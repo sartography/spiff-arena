@@ -181,44 +181,48 @@ But in some other case where you actually want to have fields laid out horizonta
 
 Example form schema:
 
-    {
-      "title": "Side by side",
-      "description": "A simple form demonstrating side-by-side layout of fields",
-      "type": "object",
-      "properties": {
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        },
-        "notes": {
-          "type": "string"
-        }
-      }
+```json
+{
+  "title": "Side by side",
+  "description": "A simple form demonstrating side-by-side layout of fields",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
     }
+  }
+}
+```
 
 Example uiSchema:
 
+```json
+{
+  "ui:layout": [
     {
-      "ui:layout": [
-        {
-          "firstName": {
-            "sm": 2,
-            "md": 2,
-            "lg": 4
-          },
-          "lastName": {
-            "sm": 2,
-            "md": 2,
-            "lg": 4
-          }
-        },
-        {
-          "notes": {}
-        }
-      ]
+      "firstName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
+      },
+      "lastName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
+      }
+    },
+    {
+      "notes": {}
     }
+  ]
+}
+```
 
 In this case, we are saying that we want firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
 We are saying that firstName should take up 4 columns when a large display is used.
