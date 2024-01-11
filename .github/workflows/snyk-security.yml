@@ -1,3 +1,5 @@
+# burnettk created an account at https://app.snyk.io/org/kevin-jfx
+# and added his SNYK_TOKEN secret under the spiff-arena repo.
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
@@ -29,7 +31,7 @@ name: Snyk Security
 on:
   workflow_dispatch: # allow running on demand
   schedule:
-    - cron: "0 14 * * 2"  # Every Tuesday at 1PM UTC (9AM/10AM eastern)
+    - cron: "0 14 * * 2" # Every Tuesday at 1PM UTC (9AM/10AM eastern)
 
 permissions:
   contents: read
@@ -72,6 +74,10 @@ jobs:
         # Use || true to not fail the pipeline
       - name: Snyk Code test
         run: snyk code test --sarif > snyk-code.sarif || true
+
+      # checks library dependencies
+      - name: Snyk test
+        run: snyk test
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor

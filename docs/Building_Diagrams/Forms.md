@@ -42,19 +42,21 @@ To create forms inside editor, we utilize user tasks within the BPMN file.
 Upon creating a new BPMN file, open it to access the editor.
 
 **Initiating the Form Editor**
-- In the editor, proceed to the "Web form" section. Navigate to the "Web form" section. If starting from scratch, launch the editor and name your file (e.g., "demo"). After saving, it will automatically generate three essential files for us: a schema, UI settings, and some example data. 
+
+- In the editor, proceed to the "Web form" section. Navigate to the "Web form" section. If starting from scratch, launch the editor and name your file (e.g., "demo"). After saving, it will automatically generate three essential files for us: a schema, UI settings, and some example data.
 
 ![Form Editor](images/Form_editor.png)
 
 **Understanding the Three Core Files**
+
 - **JSON Schema**: This file describes the form. It allows you to define titles, property names, and more. As you make changes in this file, they will reflect in the form preview window. This schema outlines the properties or data points you aim to collect.
-![Form Editor](images/Form_editor1.png)
+  ![Form Editor](images/Form_editor1.png)
 
 - **UI Settings**: This file offers customization options for your form. You can edit descriptions, titles, and more. Changes made here are reflected in real-time on the form.
-![Form Editor](images/Form_editor2.png)
+  ![Form Editor](images/Form_editor2.png)
 
 - **Data View**: This section displays the data users input into the form. It provides a preview of what will be captured when the form is submitted. Both the data view and the form stay synchronized, ensuring consistency.
-![Form Editor](images/Form_editor3.png)
+  ![Form Editor](images/Form_editor3.png)
 
 **Adding and Customizing Form Elements**
 
@@ -63,7 +65,6 @@ Each element can be further customized in the JSON schema and UI settings.
 For instance, you can set the UI widget correctly for each element, ensuring it appears as intended on the form.
 
 ![Form Editor](images/Form_editor4.png)
-
 
 ## SpiffArena react-jsonschema-form enhancements
 
@@ -156,7 +157,7 @@ For instance, you can require that a date must be equal to or greater than anoth
 - To implement date validation compared to another date, use the your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
 
 - "start_or_end" can be either "start" or "end".
-You can choose to use end if the reference field is part of a range.
+  You can choose to use end if the reference field is part of a range.
 
 This is an example where end_date must be after start_date:
 
@@ -178,39 +179,54 @@ Perhaps, you want to let a user fill out a name, and have First Name and Last Na
 Don't actually do this; use Full name as a single field. :)
 But in some other case where you actually want to have fields laid out horizontally instead of vertically, do the following:
 
-   Example form schema:
+Example form schema:
 
+```json
+{
+  "title": "Side by side",
+  "description": "A simple form demonstrating side-by-side layout of fields",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
+```
+
+Example uiSchema:
+
+```json
+{
+  "ui:layout": [
     {
       "firstName": {
-        "type": "string",
+        "sm": 2,
+        "md": 2,
+        "lg": 4
       },
-      lastName": {
-        "type": "string",
+      "lastName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
       }
-    }
-
-   Example uiSchema:
-
+    },
     {
-      "ui:layout": [
-        {
-          "firstName": {
-            "sm": 2,
-            "md": 2,
-            "lg": 4
-          },
-          "lastName": {
-            "sm": 2,
-            "md": 2,
-            "lg": 4
-          }
-        }
-      ]
+      "notes": {}
     }
+  ]
+}
+```
 
-In this case, we are saying that we want firstName and lastName in the same row, since there is only one "row" in the UI layout (one element of the array).
+In this case, we are saying that we want firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
 We are saying that firstName should take up 4 columns when a large display is used.
-The lastName also takes up 4 columns, which fills up the whole row, which has 8 columns available for large displays.
+The lastName also takes up 4 columns, so the two of them together fill up the whole row, which has 8 columns available for large displays.
 Medium displays have 5 columns available and small displays have 4.
 If you just specific a uiSchema like this, it will figure out the column widths for you:
 
@@ -278,6 +294,7 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 ```json
 "ui:widget": "markdown"
 ```
+
 ![rsjf markdown](images/rsjf_markdown.png)
 
 ### Numeric Range Field
@@ -319,9 +336,9 @@ This schema defines a numeric range object with `min` and `max` properties, both
 
 ```json
 {
-    "numericRange": {
-        "ui:field": "numeric-range"
-    }
+  "numericRange": {
+    "ui:field": "numeric-range"
+  }
 }
 ```
 

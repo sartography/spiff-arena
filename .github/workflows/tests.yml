@@ -107,7 +107,7 @@ jobs:
       PRE_COMMIT_COLOR: "always"
       SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
       SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
-      SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: 'true'
+      SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: "true"
 
     steps:
       - name: Check out the repository
@@ -163,7 +163,7 @@ jobs:
           mysql version: "8.0"
           mysql database: "spiffworkflow_backend_unit_testing"
           mysql root password: password
-          collation server: 'utf8mb4_0900_as_cs'
+          collation server: "utf8mb4_0900_as_cs"
         if: matrix.database == 'mysql'
 
       - name: Setup Postgres
@@ -201,19 +201,6 @@ jobs:
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./spiffworkflow-backend/log/*.log"
-
-  # burnettk created an account at https://app.snyk.io/org/kevin-jfx
-  # and added his SNYK_TOKEN secret under the spiff-arena repo.
-  snyk:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/python@master
-        with:
-          args: spiffworkflow-backend
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   run_pre_commit_checks:
     runs-on: ubuntu-latest
@@ -324,7 +311,6 @@ jobs:
         with:
           name: pr_number
           path: pr/
-
 
   tests-frontend:
     runs-on: ubuntu-latest
