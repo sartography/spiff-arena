@@ -166,14 +166,14 @@ class AuthenticationService:
         else:
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
             x5c = json_key_configs["x5c"][0]
-            algorithm = header.get("alg")
+            algorithm = str(header.get("alg"))
             decoded_certificate = base64.b64decode(x5c)
             x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
             public_key = x509_cert.public_key()
             return jwt.decode(
                 token,
-                str(public_key),
-                algorithms=algorithm,
+                public_key,  # type: ignore
+                algorithms=[algorithm],
                 audience=cls.valid_audiences(authentication_identifier)[0],
                 options={"verify_exp": False},
             )
