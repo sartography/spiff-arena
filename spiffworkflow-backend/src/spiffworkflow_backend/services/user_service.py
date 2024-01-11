@@ -59,6 +59,7 @@ class UserService:
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
+                raise e
                 raise ApiError(
                     error_code="add_user_error",
                     message=f"Could not add user {username}",

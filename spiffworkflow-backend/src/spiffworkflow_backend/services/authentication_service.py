@@ -10,8 +10,8 @@ from hmac import compare_digest
 from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_der_x509_certificate
 
-from spiffworkflow_backend.models.user import SPIFF_JWT_ALGORITHM, SPIFF_JWT_AUDIENCE
-from spiffworkflow_backend.models.user import SPIFF_JWT_KEY_ID
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM, SPIFF_GENERATED_JWT_AUDIENCE, UserModel
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -153,8 +153,13 @@ class AuthenticationService:
         key_id = header.get("kid")
 
         # if the token has our key id then we issued it and should verify to ensure it's valid
-        if key_id == SPIFF_JWT_KEY_ID:
-            return jwt.decode(token, str(current_app.secret_key), algorithms=[SPIFF_JWT_ALGORITHM], audience=SPIFF_JWT_AUDIENCE)
+        if key_id == SPIFF_GENERATED_JWT_KEY_ID:
+            return jwt.decode(
+                token,
+                str(current_app.secret_key),
+                algorithms=[SPIFF_GENERATED_JWT_ALGORITHM],
+                audience=SPIFF_GENERATED_JWT_AUDIENCE,
+            )
         else:
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
             x5c = json_key_configs["x5c"][0]
@@ -253,14 +258,14 @@ class AuthenticationService:
         aud = decoded_token["aud"] if "aud" in decoded_token else None
         azp = decoded_token["azp"] if "azp" in decoded_token else None
         iat = decoded_token["iat"]
-        import pdb; pdb.set_trace()
+
         valid_audience_values = cls.valid_audiences(authentication_identifier)
         audience_array_in_token = aud
         if isinstance(aud, str):
             audience_array_in_token = [aud]
         overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
-        if iss != cls.server_url(authentication_identifier):
+        if iss not in [cls.server_url(authentication_identifier), UserModel.spiff_generated_jwt_issuer()]:
             current_app.logger.error(
                 f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url(authentication_identifier)}'"
             )

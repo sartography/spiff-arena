@@ -22,7 +22,7 @@ from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
-from spiffworkflow_backend.models.user import SPIFF_JWT_KEY_ID
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -439,7 +439,6 @@ def _get_decoded_token(token: str) -> dict | None:
         AuthenticationService.set_user_has_logged_out()
         raise ex
     except Exception as e:
-        raise e
         raise ApiError(error_code="invalid_token", message="Cannot decode token.") from e
     else:
         if "iss" in decoded_token:

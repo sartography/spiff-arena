@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import time
 from typing import Any
+import math
 
 import jwt
 from flask import current_app
@@ -17,7 +18,6 @@ SPIFF_GUEST_USER = "spiff_guest_user"
 SPIFF_GENERATED_JWT_KEY_ID = "spiff_backend"
 SPIFF_GENERATED_JWT_ALGORITHM = "HS256"
 SPIFF_GENERATED_JWT_AUDIENCE = "spiffworkflow-backend"
-SPIFF_GENERATED_JWT_ISSUER = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
 
 
 class UserNotFoundError(Exception):
@@ -52,6 +52,10 @@ class UserModel(SpiffworkflowBaseDBModel):
     )
     principal = relationship("PrincipalModel", uselist=False, cascade="delete")  # type: ignore
 
+    @classmethod
+    def spiff_generated_jwt_issuer(cls) -> str:
+        return current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
+
     def encode_auth_token(self, extra_payload: dict | None = None) -> str:
         """Generate the Auth Token.
 
@@ -67,17 +71,18 @@ class UserModel(SpiffworkflowBaseDBModel):
             "email": self.email,
             "preferred_username": self.username,
             "sub": f"service:{self.service}::service_id:{self.service_id}",
-            "iss": SPIFF_JWT_ISSUER,
-            "iat": round(time.time()) - 1,
+            "iss": self.__class__.spiff_generated_jwt_issuer(),
+            "iat": math.floor(time.time()),
             "exp": round(time.time()) + 3600,
-            "aud": SPIFF_JWT_AUDIENCE,
+            "aud": SPIFF_GENERATED_JWT_AUDIENCE,
         }
-        print(base_payload)
 
         payload = base_payload
         if extra_payload is not None:
             payload = {**base_payload, **extra_payload}
-        return jwt.encode(payload, secret_key, algorithm=SPIFF_JWT_ALGORITHM, headers={"kid": SPIFF_JWT_KEY_ID})
+        return jwt.encode(
+            payload, secret_key, algorithm=SPIFF_GENERATED_JWT_ALGORITHM, headers={"kid": SPIFF_GENERATED_JWT_KEY_ID}
+        )
 
     def as_dict(self) -> dict[str, Any]:
         # dump the user using our json encoder and then load it back up as a dict

@@ -323,5 +323,5 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     if api_exception.response_headers is not None:
         for header, value in api_exception.response_headers.items():
             error_response.headers[header] = value
-    raise api_exception
-    # return error_response
+
+    return error_response

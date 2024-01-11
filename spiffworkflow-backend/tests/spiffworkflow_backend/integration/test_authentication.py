@@ -43,17 +43,14 @@ class TestAuthentication(BaseTest):
             access_token = user.encode_auth_token(
                 {
                     "groups": ["group_one", "group_two"],
-                    # "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
-                    # "aud": "spiffworkflow-backend",
-                    # "iat": round(time.time()),
-                    "exp": round(time.time()) + 1000,
+                    "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                    "aud": "spiffworkflow-backend",
                 }
             )
             response = None
             response = client.post(
                 f"/v1.0/login_with_access_token?access_token={access_token}&authentication_identifier=default",
             )
-            print(f"response.json", response.json)
             assert response.status_code == 200
             assert len(user.groups) == 3
             group_identifiers = [g.identifier for g in user.groups]
@@ -64,8 +61,6 @@ class TestAuthentication(BaseTest):
                     "groups": ["group_one"],
                     "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
                     "aud": "spiffworkflow-backend",
-                    "iat": round(time.time()),
-                    "exp": round(time.time()) + 1000,
                 }
             )
             response = client.post(
