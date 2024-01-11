@@ -10,8 +10,10 @@ from hmac import compare_digest
 from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_der_x509_certificate
 
-from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM, SPIFF_GENERATED_JWT_AUDIENCE, UserModel
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_AUDIENCE
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
+from spiffworkflow_backend.models.user import UserModel
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -159,6 +161,7 @@ class AuthenticationService:
                 str(current_app.secret_key),
                 algorithms=[SPIFF_GENERATED_JWT_ALGORITHM],
                 audience=SPIFF_GENERATED_JWT_AUDIENCE,
+                options={"verify_exp": False},
             )
         else:
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
@@ -168,7 +171,11 @@ class AuthenticationService:
             x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
             public_key = x509_cert.public_key()
             return jwt.decode(
-                token, public_key, algorithms=[algorithm], audience=cls.valid_audiences(authentication_identifier)[0]
+                token,
+                public_key,
+                algorithms=[algorithm],
+                audience=cls.valid_audiences(authentication_identifier)[0],
+                options={"verify_exp": False},
             )
 
     @staticmethod

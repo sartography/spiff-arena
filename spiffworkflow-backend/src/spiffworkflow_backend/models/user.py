@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-import time
-from typing import Any
 import math
+import time
+from dataclasses import dataclass
+from typing import Any
 
 import jwt
 from flask import current_app

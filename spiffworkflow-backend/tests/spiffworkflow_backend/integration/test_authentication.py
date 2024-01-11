@@ -1,7 +1,6 @@
 import ast
 import base64
 import re
-import time
 
 from flask.app import Flask
 from flask.testing import FlaskClient
