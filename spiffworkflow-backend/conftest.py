@@ -23,12 +23,16 @@ if os.environ.get("RUN_TYPEGUARD") == "true":
 from spiffworkflow_backend import create_app  # noqa: E402
 
 
-@pytest.fixture(scope="session")
-def app() -> Flask:  # noqa
+def _set_unit_testing_env_variables() -> None:
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
     os.environ["FLASK_SESSION_SECRET_KEY"] = (
         "e7711a3ba96c46c68e084a86952de16f"  # noqa: S105, do not care about security when running unit tests
     )
+
+
+@pytest.fixture(scope="session")
+def app() -> Flask:  # noqa
+    _set_unit_testing_env_variables()
     app = create_app()
 
     # to screw with this, poet add nplusone --group dev
@@ -37,6 +41,14 @@ def app() -> Flask:  # noqa
     # NPlusOne(app)
 
     return app
+
+
+@pytest.fixture(scope="session")
+def app_with_backend_openid() -> Flask:
+    _set_unit_testing_env_variables()
+    os.environ["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"] = "http://localhost:7000/openid"
+    yield create_app()
+    del os.environ["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"]
 
 
 @pytest.fixture()

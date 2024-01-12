@@ -16,7 +16,7 @@ class TestFlaskOpenId(BaseTest):
 
     def test_discovery_of_endpoints(
         self,
-        app: Flask,
+        app_with_backend_openid: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:

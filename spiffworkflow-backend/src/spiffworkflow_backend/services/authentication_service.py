@@ -6,6 +6,7 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from typing import Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_der_x509_certificate
@@ -14,6 +15,7 @@ from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_AUDIENCE
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import SPIFF_OPEN_ID_KEY_ID
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -123,8 +125,6 @@ class AuthenticationService:
             try:
                 response = requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 AuthenticationService.ENDPOINT_CACHE[authentication_identifier] = response.json()
-                jwt_ks_response = requests.get(response.json()["jwks_uri"], timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
-                AuthenticationService.JSON_WEB_KEYSET_CACHE[authentication_identifier] = jwt_ks_response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
         if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
@@ -168,11 +168,22 @@ class AuthenticationService:
             x5c = json_key_configs["x5c"][0]
             algorithm = str(header.get("alg"))
             decoded_certificate = base64.b64decode(x5c)
-            x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
-            public_key = x509_cert.public_key()
+
+            # our backend-based openid provider implementation (which you should never use in prod)
+            # uses a public/private key pair. we played around with adding an x509 cert so we could
+            # follow the exact same mechanism for getting the public key that we use for keycloak,
+            # but using an x509 cert for no reason seemed a little overboard for this toy-openid use case,
+            # when we already have the public key that can work hardcoded in our config.
+            public_key: Any = None
+            if key_id == SPIFF_OPEN_ID_KEY_ID:
+                public_key = decoded_certificate
+            else:
+                x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
+                public_key = x509_cert.public_key()
+
             return jwt.decode(
                 token,
-                public_key,  # type: ignore
+                public_key,
                 algorithms=[algorithm],
                 audience=cls.valid_audiences(authentication_identifier)[0],
                 options={"verify_exp": False},
