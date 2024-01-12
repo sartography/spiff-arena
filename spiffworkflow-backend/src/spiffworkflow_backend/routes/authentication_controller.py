@@ -38,8 +38,14 @@ def authentication_options() -> Response:
     return make_response(jsonify(response), 200)
 
 
+# this does both authx and authn
+def omni_auth() -> None:
+    decoded_token = verify_token()
+    AuthorizationService.check_for_permission(decoded_token)
+
+
 # authorization_exclusion_list = ['status']
-def verify_token(token: str | None = None, force_run: bool | None = False) -> None:
+def verify_token(token: str | None = None, force_run: bool | None = False) -> dict | None:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
@@ -64,8 +70,10 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
     _clear_auth_tokens_from_thread_local_data()
 
     user_model = None
+    decoded_token = None
     if token_info["token"] is not None:
-        user_model = _get_user_model_from_token(token_info["token"])
+        decoded_token = _get_decoded_token(token_info["token"])
+        user_model = _get_user_model_from_token(decoded_token)
     elif token_info["api_key"] is not None:
         user_model = _get_user_model_from_api_key(token_info["api_key"])
 
@@ -86,7 +94,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
             get_scope(token_info["token"])
         elif token_info["api_key"]:
             g.authenticated = True
-        return None
+        return decoded_token
 
     raise ApiError(error_code="invalid_token", message="Cannot validate token.", status_code=401)
 
@@ -277,7 +285,7 @@ def _clear_auth_tokens_from_thread_local_data() -> None:
         delattr(tld, "user_has_logged_out")
 
 
-def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool:
+def _force_logout_user_if_necessary(user_model: UserModel | None, decoded_token: dict) -> bool:
     """Logs out a guest user if certain criteria gets met.
 
     * if the user is a no auth guest and we have auth enabled
@@ -291,7 +299,7 @@ def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool
         ) or (
             user_model.username == SPIFF_GUEST_USER
             and user_model.service_id == "spiff_guest_service_id"
-            and not AuthorizationService.request_allows_guest_access()
+            and not AuthorizationService.request_allows_guest_access(decoded_token)
         ):
             AuthenticationService.set_user_has_logged_out()
             return True
@@ -325,9 +333,8 @@ def _get_user_model_from_api_key(api_key: str) -> UserModel | None:
     return user_model
 
 
-def _get_user_model_from_token(token: str) -> UserModel | None:
+def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
     user_model = None
-    decoded_token = _get_decoded_token(token)
 
     if decoded_token is not None:
         if "iss" in decoded_token.keys():
@@ -338,7 +345,7 @@ def _get_user_model_from_token(token: str) -> UserModel | None:
                     current_app.logger.error(f"Exception in verify_token getting user from decoded internal token. {e}")
 
                 # if the user is forced logged out then stop processing the token
-                if _force_logout_user_if_necessary(user_model):
+                if _force_logout_user_if_necessary(user_model, decoded_token):
                     return None
             else:
                 user_info = None

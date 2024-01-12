@@ -19,10 +19,9 @@ from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.authentication_controller import _set_new_access_token_in_cookie
-from spiffworkflow_backend.routes.authentication_controller import verify_token
+from spiffworkflow_backend.routes.authentication_controller import omni_auth
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.monitoring_service import configure_sentry
 from spiffworkflow_backend.services.monitoring_service import setup_prometheus_metrics
 
@@ -93,8 +92,7 @@ def create_app() -> flask.app.Flask:
 
     configure_sentry(app)
 
-    app.before_request(verify_token)
-    app.before_request(AuthorizationService.check_for_permission)
+    app.before_request(omni_auth)
     app.after_request(_set_new_access_token_in_cookie)
 
     # The default is true, but we want to preserve the order of keys in the json
