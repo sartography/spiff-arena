@@ -336,14 +336,11 @@ class AuthorizationService:
             and "process_instance_id" in decoded_token
             and "only_guest_task_completion" in decoded_token
             and decoded_token["only_guest_task_completion"] is True
+            and api_view_function.__name__ == "typeahead"
+            and api_view_function.__module__ == "spiffworkflow_backend.routes.connector_proxy_controller"
         ):
             process_instance = ProcessInstanceModel.query.filter_by(id=decoded_token["process_instance_id"]).first()
-            if (
-                process_instance is not None
-                and not process_instance.has_terminal_status()
-                and api_view_function.__name__ == "typeahead"
-                and api_view_function.__module__ == "spiffworkflow_backend.routes.connector_proxy_controller"
-            ):
+            if process_instance is not None and not process_instance.has_terminal_status():
                 return True
         return False
 
