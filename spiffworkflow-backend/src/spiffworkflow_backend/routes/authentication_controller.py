@@ -1,11 +1,8 @@
 import ast
 import base64
-import json
 import re
-from typing import Any
 
 import flask
-import jwt
 from flask import current_app
 from flask import g
 from flask import jsonify
@@ -41,8 +38,14 @@ def authentication_options() -> Response:
     return make_response(jsonify(response), 200)
 
 
+# this does both authx and authn
+def omni_auth() -> None:
+    decoded_token = verify_token()
+    AuthorizationService.check_for_permission(decoded_token)
+
+
 # authorization_exclusion_list = ['status']
-def verify_token(token: str | None = None, force_run: bool | None = False) -> None:
+def verify_token(token: str | None = None, force_run: bool | None = False) -> dict | None:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
@@ -67,8 +70,10 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
     _clear_auth_tokens_from_thread_local_data()
 
     user_model = None
+    decoded_token = None
     if token_info["token"] is not None:
-        user_model = _get_user_model_from_token(token_info["token"])
+        decoded_token = _get_decoded_token(token_info["token"])
+        user_model = _get_user_model_from_token(decoded_token)
     elif token_info["api_key"] is not None:
         user_model = _get_user_model_from_api_key(token_info["api_key"])
 
@@ -89,7 +94,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> No
             get_scope(token_info["token"])
         elif token_info["api_key"]:
             g.authenticated = True
-        return None
+        return decoded_token
 
     raise ApiError(error_code="invalid_token", message="Cannot validate token.", status_code=401)
 
@@ -120,7 +125,7 @@ def login(
         AuthenticationService.create_guest_token(
             username=SPIFF_GUEST_USER,
             group_identifier=SPIFF_GUEST_GROUP,
-            auth_token_properties={"only_guest_task_completion": True},
+            auth_token_properties={"only_guest_task_completion": True, "process_instance_id": process_instance_id},
             authentication_identifier=authentication_identifier,
         )
         return redirect(redirect_url)
@@ -139,11 +144,11 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
     auth_token_object = AuthenticationService().get_auth_token_object(code, authentication_identifier=authentication_identifier)
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
-        user_info = _parse_id_token(id_token)
+        decoded_token = _get_decoded_token(id_token)
 
-        if AuthenticationService.validate_id_or_access_token(id_token, authentication_identifier=authentication_identifier):
-            if user_info and "error" not in user_info:
-                user_model = AuthorizationService.create_user_from_sign_in(user_info)
+        if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
+            if decoded_token and "error" not in decoded_token:
+                user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
                 g.user = user_model.id
                 g.token = auth_token_object["id_token"]
                 if "refresh_token" in auth_token_object:
@@ -174,11 +179,11 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
 
 # FIXME: share more code with login_return and maybe attempt to get a refresh token
 def login_with_access_token(access_token: str, authentication_identifier: str) -> Response:
-    user_info = _parse_id_token(access_token)
+    decoded_token = _get_decoded_token(access_token)
 
-    if AuthenticationService.validate_id_or_access_token(access_token, authentication_identifier=authentication_identifier):
-        if user_info and "error" not in user_info:
-            AuthorizationService.create_user_from_sign_in(user_info)
+    if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
+        if decoded_token and "error" not in decoded_token:
+            AuthorizationService.create_user_from_sign_in(decoded_token)
     else:
         raise ApiError(
             error_code="invalid_login",
@@ -224,7 +229,7 @@ def logout_return() -> Response:
 
 def get_scope(token: str) -> str:
     scope = ""
-    decoded_token = jwt.decode(token, options={"verify_signature": False})
+    decoded_token = _get_decoded_token(token)
     if "scope" in decoded_token:
         scope = decoded_token["scope"]
     return scope
@@ -280,7 +285,7 @@ def _clear_auth_tokens_from_thread_local_data() -> None:
         delattr(tld, "user_has_logged_out")
 
 
-def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool:
+def _force_logout_user_if_necessary(user_model: UserModel | None, decoded_token: dict) -> bool:
     """Logs out a guest user if certain criteria gets met.
 
     * if the user is a no auth guest and we have auth enabled
@@ -294,7 +299,7 @@ def _force_logout_user_if_necessary(user_model: UserModel | None = None) -> bool
         ) or (
             user_model.username == SPIFF_GUEST_USER
             and user_model.service_id == "spiff_guest_service_id"
-            and not AuthorizationService.request_allows_guest_access()
+            and not AuthorizationService.request_allows_guest_access(decoded_token)
         ):
             AuthenticationService.set_user_has_logged_out()
             return True
@@ -328,88 +333,87 @@ def _get_user_model_from_api_key(api_key: str) -> UserModel | None:
     return user_model
 
 
-def _get_user_model_from_token(token: str) -> UserModel | None:
+def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
     user_model = None
-    decoded_token = _get_decoded_token(token)
 
     if decoded_token is not None:
-        if "token_type" in decoded_token:
-            token_type = decoded_token["token_type"]
-            if token_type == "internal":  # noqa: S105
+        if "iss" in decoded_token.keys():
+            if decoded_token["iss"] == UserModel.spiff_generated_jwt_issuer():
                 try:
                     user_model = _get_user_from_decoded_internal_token(decoded_token)
                 except Exception as e:
                     current_app.logger.error(f"Exception in verify_token getting user from decoded internal token. {e}")
 
-            # if the user is forced logged out then stop processing the token
-            if _force_logout_user_if_necessary(user_model):
-                return None
+                # if the user is forced logged out then stop processing the token
+                if _force_logout_user_if_necessary(user_model, decoded_token):
+                    return None
+            else:
+                user_info = None
+                authentication_identifier = _get_authentication_identifier_from_request()
+                try:
+                    if AuthenticationService.validate_decoded_token(
+                        decoded_token, authentication_identifier=authentication_identifier
+                    ):
+                        user_info = decoded_token
+                except TokenExpiredError as token_expired_error:
+                    # Try to refresh the token
+                    user = UserService.get_user_by_service_and_service_id(decoded_token["iss"], decoded_token["sub"])
+                    if user:
+                        refresh_token = AuthenticationService.get_refresh_token(user.id)
+                        if refresh_token:
+                            auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
+                                refresh_token, authentication_identifier=authentication_identifier
+                            )
+                            if auth_token and "error" not in auth_token and "id_token" in auth_token:
+                                tld = current_app.config["THREAD_LOCAL_DATA"]
+                                tld.new_access_token = auth_token["id_token"]
+                                tld.new_id_token = auth_token["id_token"]
+                                # We have the user, but this code is a bit convoluted, and will later demand
+                                # a user_info object so it can look up the user.  Sorry to leave this crap here.
+                                user_info = {
+                                    "sub": user.service_id,
+                                    "iss": user.service,
+                                }
 
-        elif "iss" in decoded_token.keys():
-            user_info = None
-            authentication_identifier = _get_authentication_identifier_from_request()
-            try:
-                if AuthenticationService.validate_id_or_access_token(token, authentication_identifier=authentication_identifier):
-                    user_info = decoded_token
-            except TokenExpiredError as token_expired_error:
-                # Try to refresh the token
-                user = UserService.get_user_by_service_and_service_id(decoded_token["iss"], decoded_token["sub"])
-                if user:
-                    refresh_token = AuthenticationService.get_refresh_token(user.id)
-                    if refresh_token:
-                        auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
-                            refresh_token, authentication_identifier=authentication_identifier
-                        )
-                        if auth_token and "error" not in auth_token and "id_token" in auth_token:
-                            tld = current_app.config["THREAD_LOCAL_DATA"]
-                            tld.new_access_token = auth_token["id_token"]
-                            tld.new_id_token = auth_token["id_token"]
-                            # We have the user, but this code is a bit convoluted, and will later demand
-                            # a user_info object so it can look up the user.  Sorry to leave this crap here.
-                            user_info = {
-                                "sub": user.service_id,
-                                "iss": user.service,
-                            }
+                    if user_info is None:
+                        AuthenticationService.set_user_has_logged_out()
+                        raise ApiError(
+                            error_code="invalid_token",
+                            message="Your token is expired. Please Login",
+                            status_code=401,
+                        ) from token_expired_error
 
-                if user_info is None:
+                except Exception as e:
                     AuthenticationService.set_user_has_logged_out()
                     raise ApiError(
-                        error_code="invalid_token",
-                        message="Your token is expired. Please Login",
+                        error_code="fail_get_user_info",
+                        message="Cannot get user info from token",
                         status_code=401,
-                    ) from token_expired_error
-
-            except Exception as e:
-                AuthenticationService.set_user_has_logged_out()
-                raise ApiError(
-                    error_code="fail_get_user_info",
-                    message="Cannot get user info from token",
-                    status_code=401,
-                ) from e
-            if user_info is not None and "error" not in user_info and "iss" in user_info:  # not sure what to test yet
-                user_model = (
-                    UserModel.query.filter(UserModel.service == user_info["iss"])
-                    .filter(UserModel.service_id == user_info["sub"])
-                    .first()
-                )
-                if user_model is None:
+                    ) from e
+                if user_info is not None and "error" not in user_info and "iss" in user_info:  # not sure what to test yet
+                    user_model = (
+                        UserModel.query.filter(UserModel.service == user_info["iss"])
+                        .filter(UserModel.service_id == user_info["sub"])
+                        .first()
+                    )
+                    if user_model is None:
+                        AuthenticationService.set_user_has_logged_out()
+                        raise ApiError(
+                            error_code="invalid_user",
+                            message="Invalid user. Please log in.",
+                            status_code=401,
+                        )
+                # no user_info
+                else:
                     AuthenticationService.set_user_has_logged_out()
                     raise ApiError(
-                        error_code="invalid_user",
-                        message="Invalid user. Please log in.",
+                        error_code="no_user_info",
+                        message="Cannot retrieve user info",
                         status_code=401,
                     )
-            # no user_info
-            else:
-                AuthenticationService.set_user_has_logged_out()
-                raise ApiError(
-                    error_code="no_user_info",
-                    message="Cannot retrieve user info",
-                    status_code=401,
-                )
 
         else:
-            current_app.logger.debug("token_type not in decode_token in verify_token")
+            current_app.logger.debug("iss not in decode_token in verify_token")
             AuthenticationService.set_user_has_logged_out()
             raise ApiError(
                 error_code="invalid_token",
@@ -432,13 +436,13 @@ def _get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | No
     return user
 
 
-def _get_decoded_token(token: str) -> dict | None:
+def _get_decoded_token(token: str) -> dict:
     try:
-        decoded_token: dict = jwt.decode(token, options={"verify_signature": False})
+        decoded_token: dict = AuthenticationService.parse_jwt_token(_get_authentication_identifier_from_request(), token)
     except Exception as e:
         raise ApiError(error_code="invalid_token", message="Cannot decode token.") from e
     else:
-        if "token_type" in decoded_token or "iss" in decoded_token:
+        if "iss" in decoded_token:
             return decoded_token
         else:
             current_app.logger.error(f"Unknown token type in get_decoded_token: token: {token}")
@@ -446,20 +450,6 @@ def _get_decoded_token(token: str) -> dict | None:
                 error_code="unknown_token",
                 message="Unknown token type in get_decoded_token",
             )
-
-
-def _parse_id_token(token: str) -> Any:
-    """Parse the id token."""
-    parts = token.split(".")
-    if len(parts) != 3:
-        raise Exception("Incorrect id token format")
-
-    payload = parts[1]
-    padded = payload + "=" * (4 - len(payload) % 4)
-
-    # https://lists.jboss.org/pipermail/keycloak-user/2016-April/005758.html
-    decoded = base64.urlsafe_b64decode(padded)
-    return json.loads(decoded)
 
 
 def _get_authentication_identifier_from_request() -> str:
