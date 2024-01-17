@@ -90,3 +90,20 @@ class TestMessages(BaseTest):
         assert response.json is not None
         assert len(response.json["messages"]) == 3, "should not have access to messages defined in a sub directory"
 
+
+    def test_message_model_list_up_search (
+            self,
+            app: Flask,
+            client: FlaskClient,
+            with_db_and_bpmn_file_cleanup: None,
+            with_super_admin_user: UserModel,
+    ) -> None:
+        self.copy_example_process_models()
+        DataSetupService.save_all_process_models()
+
+        updated_xml = MessageSerice.updateProcessModelXmlWithMessageDetails(
+            process_model_xml,
+            message_details
+        )
+
+

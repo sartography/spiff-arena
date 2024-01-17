@@ -186,3 +186,5 @@ class TestMessageService(BaseTest):
         assert len(process_instance_result) == 3
         for process_instance in process_instance_result:
             assert process_instance.status == "complete"
+
+
