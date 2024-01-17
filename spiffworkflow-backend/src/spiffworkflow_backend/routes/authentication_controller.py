@@ -317,8 +317,8 @@ def _find_token_from_headers(token: str | None) -> dict[str, str | None]:
         ):
             token = request.cookies["access_token"]
 
-    if not token and "SpiffWorkflow-Api-key" in request.headers:
-        api_key = request.headers["SpiffWorkflow-Api-key"]
+    if not token and "SpiffWorkflow-Api-Key" in request.headers:
+        api_key = request.headers["SpiffWorkflow-Api-Key"]
 
     token_info = {"token": token, "api_key": api_key}
     return token_info
