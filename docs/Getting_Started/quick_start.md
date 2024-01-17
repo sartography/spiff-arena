@@ -465,11 +465,11 @@ This approach ensures you can monitor and review the progress of user forms with
 ---
 ## How to view task instance history
 
-Monitoring the history of task instances is crucial for tracking the progress and execution details of a workflow. This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
+Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow. This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
 
 ### Steps to Access Task Instance History
 
-1. **Run the Process**: Initiate the workflow process in SpiffWorkflow.
+1. **Run the Process**: Initiate a workflow process in SpiffWorkflow.
 
 2. **Access the Process Instance**: After running the process, navigate to the specific process instance within the SpiffWorkflow interface. This is where you can track the progress of the tasks.
 ![Access process instance](images/Access_Process_Instance.png)

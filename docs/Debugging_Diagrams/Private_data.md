@@ -1,7 +1,7 @@
 # Handling Sensitive Data using Data Store
 
 ## Introduction
-Handling sensitive data, such as credit card numbers, passwords requires careful management to ensure security and privacy. 
+Handling sensitive data, such as credit card numbers, passwords requires careful management to ensure security and privacy.
 This documentation outlines the process of creating and managing sensitive data objects within SpiffWorkflow, along with setting appropriate permissions.
 
 ### Process Breakdown
@@ -14,11 +14,9 @@ This documentation outlines the process of creating and managing sensitive data 
 #### 3. Assigning Data Categories
 - **Categorization**: Assign a specific category to the data object that reflects its sensitive nature. For example, categories like `confidential` or `private` or name of field can be used.
 #### 4. Implementing Access Controls
-- **Permission Rules**: Establish permission rules using a Decision Model and Notation (DMN) table or a similar mechanism. This step involves specifying who can access the sensitive data.
+- **Permission Rules**: Establish permission rules, using a Decision Model and Notation (DMN) table or another mechanism as described under [Admin and Permissions](/DevOps_installation_integration/admin_and_permissions.md) . This step involves specifying who can access the sensitive data.
 - **Access Restrictions**: Define the access level (e.g., read, write, deny) for different user groups or roles. For instance, you might restrict read access to certain groups while denying it to others.
-#### 5. Enforcing Permissions
-- **Applying Permissions**: Apply the defined permissions to the data object. This ensures that only authorized users can access or modify the sensitive data.
-- **URL-Based Permissions**: Use URL patterns to enforce permissions. For example, a URL pattern like `/process-data/confidential/` can be used to control access to all data objects categorized as confidential.
+- **URL-Based Permissions**: Use URL patterns to enforce permissions. For example, a URL pattern like `/process-data/confidential/*` can be used to control access to all data objects categorized as confidential.
 
 ### Example: Steps to Handle Sensitive Data
 
@@ -34,13 +32,13 @@ This documentation outlines the process of creating and managing sensitive data 
 - **Process Execution**: Upon running the process, the value of the data object will be `1`.
 ![image](images/sensitive_value.png)
 #### 4. Setting Permissions with DMN Table
-- **Access Control**: To control who can see the credit card data, set permissions in the DMN Table.
+- **Access Control**: To control who can see the credit card data, you could set permissions in a DMN Table.
 - **Permission Configuration**: Set the following permissions:
   - `permission_groups` to `"everybody"`
-  - `permissions` to `"Deny:read"`
+  - `permissions` to `"DENY:read"`
   - `permission_urls` to `"/process-data/creditcards/"`
 ![image](images/setting_permissions.png)
 #### 5. Implementing Restricted Access
- With these permissions, access to the credit card data is denied to everyone, ensuring that only authorized individuals can view this sensitive information. The data object representing the credit card number is now secured and inaccessible to unauthorized users.
+ With these permissions, access to the credit card data is denied to everyone, ensuring that no unauthorized individuals can view this sensitive information.
 
  By following these steps, SpiffWorkflow users can securely handle sensitive data within their processes. The combination of data objects, categorization, and precise permission settings ensures that sensitive information like credit card numbers is protected and accessible only to those with the necessary authorization.
