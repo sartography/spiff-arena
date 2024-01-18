@@ -440,7 +440,8 @@ def _get_decoded_token(token: str) -> dict:
     try:
         decoded_token: dict = AuthenticationService.parse_jwt_token(_get_authentication_identifier_from_request(), token)
     except Exception as e:
-        raise ApiError(error_code="invalid_token", message="Cannot decode token.") from e
+        AuthenticationService.set_user_has_logged_out()
+        raise ApiError(error_code="invalid_token", message="Cannot decode token.", status_code=401) from e
     else:
         if "iss" in decoded_token:
             return decoded_token
