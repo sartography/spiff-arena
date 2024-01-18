@@ -14,6 +14,7 @@ import { recursivelyChangeNullAndUndefined } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
 import {
+  ExtensionApiResponse,
   ExtensionPostBody,
   ExtensionUiSchema,
   UiSchemaPageComponent,
@@ -52,6 +53,9 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     useState<UiSchemaPageDefinition | null>(null);
   const [readyForComponentsToDisplay, setReadyForComponentsToDisplay] =
     useState<boolean>(false);
+  const [uiSchemaPageComponents, setuiSchemaPageComponents] = useState<
+    UiSchemaPageComponent[] | null
+  >(null);
 
   const { addError, removeError } = useAPIError();
 
@@ -83,9 +87,8 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     []
   );
   const processLoadResult = useCallback(
-    (result: any, pageDefinition: UiSchemaPageDefinition) => {
+    (result: ExtensionApiResponse, pageDefinition: UiSchemaPageDefinition) => {
       setFormData(result.task_data);
-      console.log('pageDefinition', pageDefinition);
       if (pageDefinition.navigate_to_on_load) {
         const optionString = interpolateNavigationString(
           pageDefinition.navigate_to_on_load,
@@ -100,6 +103,16 @@ export default function Extension({ displayErrors = true }: OwnProps) {
           result.rendered_results_markdown
         );
         setMarkdownToRenderOnLoad(newMarkdown);
+      }
+      if (
+        pageDefinition.on_load &&
+        pageDefinition.on_load.ui_schema_page_components_variable
+      ) {
+        setuiSchemaPageComponents(
+          result.task_data[
+            pageDefinition.on_load.ui_schema_page_components_variable
+          ]
+        );
       }
       setReadyForComponentsToDisplay(true);
     },
@@ -124,6 +137,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
         ) {
           const pageDefinition = extensionUiSchema.pages[pageIdentifier];
           setUiSchemaPageDefinition(pageDefinition);
+          setuiSchemaPageComponents(pageDefinition.components || null);
           setProcessModel(pm);
           pm.files.forEach((file: ProcessFile) => {
             filesByName[file.name] = file;
@@ -144,7 +158,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
             postBody.ui_schema_action = pageDefinition.on_load;
             HttpService.makeCallToBackend({
               path: `${targetUris.extensionListPath}/${pageDefinition.on_load.api_path}`,
-              successCallback: (result: any) =>
+              successCallback: (result: ExtensionApiResponse) =>
                 processLoadResult(result, pageDefinition),
               httpMethod: 'POST',
               postBody,
@@ -187,7 +201,7 @@ export default function Extension({ displayErrors = true }: OwnProps) {
     targetUris.extensionPath,
   ]);
 
-  const processSubmitResult = (result: any) => {
+  const processSubmitResult = (result: ExtensionApiResponse) => {
     if (
       uiSchemaPageDefinition &&
       uiSchemaPageDefinition.navigate_to_on_form_submit
@@ -301,21 +315,19 @@ export default function Extension({ displayErrors = true }: OwnProps) {
       );
     }
 
-    if (uiSchemaPageDefinition.components) {
-      uiSchemaPageDefinition.components.forEach(
-        (component: UiSchemaPageComponent) => {
-          if (supportedComponents[component.name]) {
-            const argumentsForComponent: any = component.arguments;
-            componentsToDisplay.push(
-              supportedComponents[component.name](argumentsForComponent)
-            );
-          } else {
-            console.error(
-              `Extension tried to use component with name '${component.name}' but that is not allowed.`
-            );
-          }
+    if (uiSchemaPageComponents) {
+      uiSchemaPageComponents.forEach((component: UiSchemaPageComponent) => {
+        if (supportedComponents[component.name]) {
+          const argumentsForComponent: any = component.arguments;
+          componentsToDisplay.push(
+            supportedComponents[component.name](argumentsForComponent)
+          );
+        } else {
+          console.error(
+            `Extension tried to use component with name '${component.name}' but that is not allowed.`
+          );
         }
-      );
+      });
     }
 
     const uiSchemaForm = uiSchemaPageDefinition.form;
