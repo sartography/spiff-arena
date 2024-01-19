@@ -166,6 +166,7 @@ export default function ProcessGroupShow() {
           <br />
           <br />
           <DataStoreListTiles
+            processGroup={processGroup}
             headerElement={<h2 className="clear-left">Data Stores</h2>}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateDataStores={ability.can(

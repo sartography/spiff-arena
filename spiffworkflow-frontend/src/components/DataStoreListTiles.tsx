@@ -3,15 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowRight } from '@carbon/icons-react';
 import { ClickableTile } from '@carbon/react';
 import HttpService from '../services/HttpService';
-import { DataStore } from '../interfaces';
-import {
-  modifyProcessIdentifierForPathParam,
-  truncateString,
-} from '../helpers';
+import { DataStore, ProcessGroup } from '../interfaces';
+import { truncateString } from '../helpers';
 
 type OwnProps = {
   defaultDataStores?: DataStore[];
   dataStore?: DataStore;
+  processGroup?: ProcessGroup;
   headerElement?: ReactElement;
   showNoItemsDisplayText?: boolean;
   userCanCreateDataStores?: boolean;
@@ -20,15 +18,14 @@ type OwnProps = {
 export default function DataStoreListTiles({
   defaultDataStores,
   dataStore,
+  processGroup,
   headerElement,
   showNoItemsDisplayText,
   userCanCreateDataStores,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
 
-  const [dataStores, setDataStores] = useState<DataStore[] | null>(
-    null
-  );
+  const [dataStores, setDataStores] = useState<DataStore[] | null>(null);
 
   useEffect(() => {
     const setDataStoresFromResult = (result: any) => {
@@ -38,19 +35,16 @@ export default function DataStoreListTiles({
     if (defaultDataStores) {
       setDataStores(defaultDataStores);
     } else {
-    /*
       let queryParams = '?per_page=1000';
       if (processGroup) {
         queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
       }
-      */
-      let queryParams = '';
       HttpService.makeCallToBackend({
         path: `/data-stores${queryParams}`,
         successCallback: setDataStoresFromResult,
       });
     }
-  }, [searchParams, dataStore, defaultDataStores]);
+  }, [searchParams, dataStore, defaultDataStores, processGroup]);
 
   const dataStoresDisplayArea = () => {
     let displayText = null;
@@ -60,15 +54,11 @@ export default function DataStoreListTiles({
           <ClickableTile
             id={`data-store-tile-${row.id}`}
             className="tile-data-store"
-            href={`/data-stores/${
-              row.id
-            }`}
+            href={`/data-stores/${row.id}`}
           >
             <div className="tile-data-store-content-container">
               <ArrowRight />
-              <div className="tile-data-store-display-name">
-                {row.name}
-              </div>
+              <div className="tile-data-store-display-name">{row.name}</div>
               <p className="tile-description">
                 {truncateString(row.description || '', 100)}
               </p>
@@ -79,8 +69,8 @@ export default function DataStoreListTiles({
     } else if (userCanCreateDataStores) {
       displayText = (
         <p className="no-results-message">
-          There are no data stores to display. You can add one by clicking
-          the &quot;Add a data store&quot; button.
+          There are no data stores to display. You can add one by clicking the
+          &quot;Add a data store&quot; button.
         </p>
       );
     } else {

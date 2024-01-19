@@ -2759,6 +2759,25 @@ paths:
           #  - application/json
 
   /data-stores:
+    parameters:
+      - name: process_group_identifier
+        in: query
+        required: false
+        description: Optional parameter to filter by a single group
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of groups to show per page. Defaults to page 10.
+        schema:
+          type: integer
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_list
       summary: Return a list of the data store objects.
