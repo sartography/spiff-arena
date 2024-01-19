@@ -25,7 +25,10 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
       <ErrorDisplay />
       <LoginHandler />
       <Routes>
-        <Route path="/" element={<RootRoute />} />
+        <Route
+          path="/"
+          element={<RootRoute extensionUxElements={extensionUxElements} />}
+        />
         <Route path="tasks/*" element={<HomeRoutes />} />
         <Route path="process-groups/*" element={<ProcessGroupRoutes />} />
         <Route path="process-models/*" element={<ProcessModelRoutes />} />

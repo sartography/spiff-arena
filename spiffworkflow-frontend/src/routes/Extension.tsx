@@ -27,11 +27,15 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import LoginHandler from '../components/LoginHandler';
 
 type OwnProps = {
+  pageIdentifier?: string;
   displayErrors?: boolean;
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-export default function Extension({ displayErrors = true }: OwnProps) {
+export default function Extension({
+  pageIdentifier,
+  displayErrors = true,
+}: OwnProps) {
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -130,12 +134,15 @@ export default function Extension({ displayErrors = true }: OwnProps) {
           (extensionUiSchemaFile as any).file_contents
         );
 
-        const pageIdentifier = `/${params.page_identifier}`;
+        let pageIdentifierToUse = pageIdentifier;
+        if (!pageIdentifierToUse) {
+          pageIdentifierToUse = `/${params.page_identifier}`;
+        }
         if (
           extensionUiSchema.pages &&
-          Object.keys(extensionUiSchema.pages).includes(pageIdentifier)
+          Object.keys(extensionUiSchema.pages).includes(pageIdentifierToUse)
         ) {
-          const pageDefinition = extensionUiSchema.pages[pageIdentifier];
+          const pageDefinition = extensionUiSchema.pages[pageIdentifierToUse];
           setUiSchemaPageDefinition(pageDefinition);
           setuiSchemaPageComponents(pageDefinition.components || null);
           setProcessModel(pm);
