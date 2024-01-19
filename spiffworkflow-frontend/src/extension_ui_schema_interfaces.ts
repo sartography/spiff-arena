@@ -16,7 +16,6 @@ export interface UiSchemaUxElement {
   label: string;
   page: string;
   display_location: UiSchemaDisplayLocation;
-  route?: string;
   location_specific_configs?: UiSchemaLocationSpecificConfig;
 }
 

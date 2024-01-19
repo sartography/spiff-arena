@@ -24,12 +24,9 @@ type OwnProps = {
 
 export default function BaseRoutes({ extensionUxElements }: OwnProps) {
   const elementCallback = (uxElement: UiSchemaUxElement) => {
-    if (!uxElement.route) {
-      console.error(`Could not find route for extension: ${uxElement}`);
-    }
     return (
       <Route
-        path={uxElement.route}
+        path={uxElement.page}
         element={<Extension pageIdentifier={uxElement.page} />}
       />
     );
@@ -37,7 +34,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
 
   if (extensionUxElements) {
     const extensionRoutes = ExtensionUxElementMap({
-      displayLocation: 'base_routes',
+      displayLocation: 'routes',
       elementCallback,
       extensionUxElements,
     });

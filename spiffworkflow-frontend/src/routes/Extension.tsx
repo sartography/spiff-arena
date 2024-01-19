@@ -182,6 +182,7 @@ export default function Extension({
       searchParams,
       filesByName,
       processLoadResult,
+      pageIdentifier,
     ]
   );
 
