@@ -65,6 +65,7 @@ import {
   PermissionsToCheck,
   FilterOperatorMapping,
   FilterDisplayTypeMapping,
+  SpiffTableHeader,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -93,7 +94,7 @@ type OwnProps = {
   canCompleteAllTasks?: boolean;
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
-  headerElement?: React.ReactElement;
+  header?: SpiffTableHeader;
   tableHtmlId?: string;
 };
 
@@ -115,7 +116,7 @@ export default function ProcessInstanceListTable({
   canCompleteAllTasks = false,
   showActionsColumn = false,
   showLinkToReport = false,
-  headerElement,
+  header,
   tableHtmlId,
 }: OwnProps) {
   // eslint-disable-next-line sonarjs/no-duplicate-string
@@ -1853,12 +1854,12 @@ export default function ProcessInstanceListTable({
       <Table {...tableProps} className="process-instance-list">
         <TableHead>
           <TableRow>
-            {headers.map((header: any) => (
+            {headers.map((tableRowHeader: any) => (
               <TableHeader
-                key={header}
-                title={header === 'Id' ? 'Process Instance Id' : null}
+                key={tableRowHeader}
+                title={tableRowHeader === 'Id' ? 'Process Instance Id' : null}
               >
-                {header}
+                {tableRowHeader}
               </TableHeader>
             ))}
           </TableRow>
@@ -1890,7 +1891,7 @@ export default function ProcessInstanceListTable({
   };
 
   const tableTitleLine = () => {
-    if (!showLinkToReport && !headerElement) {
+    if (!showLinkToReport && !header) {
       return null;
     }
     let filterButtonLink = null;
@@ -1915,7 +1916,7 @@ export default function ProcessInstanceListTable({
         </Column>
       );
     }
-    if (!headerElement && !filterButtonLink) {
+    if (!header && !filterButtonLink) {
       return null;
     }
     return (
@@ -1926,7 +1927,14 @@ export default function ProcessInstanceListTable({
           lg={{ span: 15 }}
           style={{ height: '48px' }}
         >
-          {headerElement}
+          {header ? (
+            <h2
+              title={header.tooltip_text}
+              className="process-instance-table-header"
+            >
+              {header.text}
+            </h2>
+          ) : null}
         </Column>
         {filterButtonLink}
       </>

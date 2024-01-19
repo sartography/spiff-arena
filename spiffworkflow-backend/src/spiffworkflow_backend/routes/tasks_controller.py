@@ -1024,7 +1024,7 @@ def _get_tasks(
     process_model_identifier_column = ProcessInstanceModel.process_model_identifier
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
     user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
-    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")
+    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")  # type: ignore
     if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
         process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label(
             "process_model_identifier"
