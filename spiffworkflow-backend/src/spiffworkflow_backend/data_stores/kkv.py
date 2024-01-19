@@ -23,7 +23,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             .all()
         )
         for key in keys:
-            data_stores.append({"name": key[0], "type": "kkv"})
+            data_stores.append({"name": key[0], "type": "kkv", "identifier": "", "clz": "KKVDataStore"})
 
         return data_stores
 

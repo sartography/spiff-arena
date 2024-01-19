@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-if [[ ! -f ./src/instance/db_unit_testing_gw0.sqlite3 ]] ; then
-  >&2 echo -e "ERROR: please run the following command first in order to set up and migrate the sqlite unit_testing database:\n\n\tSPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite ./bin/recreate_db clean"
+if [[ ! -f ./src/instance/db_unit_testing_gw0.sqlite3 ]]; then
+  echo >&2 -e "ERROR: please run the following command first in order to set up and migrate the sqlite unit_testing database:\n\n\tSPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite ./bin/recreate_db clean"
   exit 1
 fi
 
 # check if python package pytest-xdist is installed
-if ! python -c "import xdist" &>/dev/null; then
-  >&2 echo -e "ERROR: please install the python package pytest-xdist by running poetry install"
+if ! poetry run python -c "import xdist" &>/dev/null; then
+  echo >&2 -e "ERROR: please install the python package pytest-xdist by running poetry install"
   exit 1
 fi
 

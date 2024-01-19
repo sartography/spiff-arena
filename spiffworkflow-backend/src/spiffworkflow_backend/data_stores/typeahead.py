@@ -19,7 +19,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
 
         keys = db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category).all()  # type: ignore
         for key in keys:
-            data_stores.append({"name": key[0], "type": "typeahead"})
+            data_stores.append({"name": key[0], "type": "typeahead", "identifier": key[0], "clz": "TypeaheadDataStore"})
 
         return data_stores
 
