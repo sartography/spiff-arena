@@ -42,7 +42,7 @@ def data_store_types() -> flask.wrappers.Response:
 
 
 def _build_response(data_store_class: Any, name: str, page: int, per_page: int) -> flask.wrappers.Response:
-    data_store_query = data_store_class.query_data_store(name)
+    data_store_query = data_store_class.query_data_store(name, None)
     data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
     results = []
     for item in data.items:
@@ -103,3 +103,27 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
 
 def data_store_update(body: dict) -> flask.wrappers.Response:
     return make_response(jsonify({"ok": True}), 200)
+
+def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
+    """Returns a description of a data store."""
+
+    if data_store_type not in DATA_STORES:
+        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+
+    data_store_class, _ = DATA_STORES[data_store_type]
+    data_store_query = data_store_class.query_data_store(identifier, process_group_identifier)
+    result = data_store_query.first()
+
+    if result is None:
+        raise ApiError("could_not_locate_data_store", f"Could not locate data store type: {data_store_type} for process group: {process_group_identifier}", status_code=400)
+    
+    response = {
+        "name": result.name,
+        "location": result.location,
+        "type": data_store_type,
+        "id": result.identifier,
+        "schema": result.schema,
+        "description": result.description,
+    }
+    
+    return make_response(jsonify(response), 200)

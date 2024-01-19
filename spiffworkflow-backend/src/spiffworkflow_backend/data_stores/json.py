@@ -58,8 +58,13 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         return data_stores
 
     @staticmethod
-    def query_data_store(name: str) -> Any:
-        return JSONDataStoreModel.query.filter_by(name=name).order_by(JSONDataStoreModel.name)
+    def query_data_store(identifier: str, process_group_identifier: str | None) -> Any:
+        query = JSONDataStoreModel.query
+        if process_group_identifier is not None:
+            query = query.filter_by(identifier=identifier, location=process_group_identifier)
+        else:
+            query = query.filter_by(name=identifier)
+        return query.order_by(JSONDataStoreModel.name)
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:

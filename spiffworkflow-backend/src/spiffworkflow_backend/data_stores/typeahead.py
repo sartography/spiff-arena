@@ -28,7 +28,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
         return data_stores
 
     @staticmethod
-    def query_data_store(name: str) -> Any:
+    def query_data_store(name: str, process_group_identifier: str | None) -> Any:
         return TypeaheadModel.query.filter_by(category=name).order_by(TypeaheadModel.category, TypeaheadModel.search_term)
 
     @staticmethod
