@@ -7,7 +7,7 @@ type OwnProps = {
   elementCallbackIfNotFound?: Function;
 };
 
-export default function ExtensionUxElementForDisplay({
+export function ExtensionUxElementMap({
   displayLocation,
   elementCallback,
   extensionUxElements,
@@ -33,5 +33,13 @@ export default function ExtensionUxElementForDisplay({
     }
     return elementMap;
   };
-  return <>{mainElement()}</>;
+  return mainElement();
+}
+
+export default function ExtensionUxElementForDisplay(args: OwnProps) {
+  const result = ExtensionUxElementMap(args);
+  if (result === null) {
+    return null;
+  }
+  return result;
 }
