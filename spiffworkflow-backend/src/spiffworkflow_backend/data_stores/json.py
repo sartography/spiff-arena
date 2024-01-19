@@ -53,7 +53,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             query = query.filter_by(location=process_group_identifier)
         keys = query.distinct().order_by(JSONDataStoreModel.name).all()  # type: ignore
         for key in keys:
-            data_stores.append({"name": key[0], "type": "json", "identifier": key[1], "clz": "JSONDataStore"})
+            data_stores.append({"name": key[0], "type": "json", "id": key[1], "clz": "JSONDataStore"})
 
         return data_stores
 
