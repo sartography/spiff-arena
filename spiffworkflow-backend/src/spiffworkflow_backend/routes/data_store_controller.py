@@ -100,3 +100,6 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
     data_store_class.create_instance(name, identifier, location, schema, description)
 
     return make_response(jsonify({"ok": True}), 200)
+
+def data_store_update(body: dict) -> flask.wrappers.Response:
+    return make_response(jsonify({"ok": True}), 200)

@@ -102,7 +102,6 @@ export default function DataStoreForm({
     let path = '/data-stores';
     let httpMethod = 'POST';
     if (mode === 'edit') {
-      path = `/data-stores/${dataStore.id}`;
       httpMethod = 'PUT';
     }
     const postBody = {
@@ -177,11 +176,12 @@ export default function DataStoreForm({
       />,
     ];
 
-    if (mode === 'new') {
+
       textInputs.push(
         <TextInput
           id="data-store-identifier"
           name="id"
+	  readonly={mode==='edit'}
           invalidText="Identifier is required and must be all lowercase characters and hyphens."
           invalid={identifierInvalid}
           labelText="Identifier*"
@@ -196,7 +196,7 @@ export default function DataStoreForm({
           }}
         />
       );
-    }
+
 
     textInputs.push(
       <ComboBox

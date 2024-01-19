@@ -2799,6 +2799,19 @@ paths:
       responses:
         "200":
           description: The newly created data store instance
+    put:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_update
+      summary: Update a data store instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataStore"
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The updated data store instance
   /data-stores/types:
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_types
@@ -2808,7 +2821,7 @@ paths:
       responses:
         "200":
           description: The list of currently defined data store types
-  /data-stores/{data_store_type}/{name}:
+  /data-stores/{data_store_type}/{name}/items:
     parameters:
       - name: data_store_type
         in: path
