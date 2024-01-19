@@ -26,9 +26,9 @@ def data_store_list(
 
     # Right now the only data stores we support are type ahead, kkv, json
 
-    data_stores.extend(JSONDataStore.existing_data_stores())
-    data_stores.extend(TypeaheadDataStore.existing_data_stores())
-    data_stores.extend(KKVDataStore.existing_data_stores())
+    data_stores.extend(JSONDataStore.existing_data_stores(process_group_identifier))
+    data_stores.extend(TypeaheadDataStore.existing_data_stores(process_group_identifier))
+    data_stores.extend(KKVDataStore.existing_data_stores(process_group_identifier))
 
     return make_response(jsonify(data_stores), 200)
 

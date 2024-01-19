@@ -14,8 +14,12 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
     """TypeaheadDataStore."""
 
     @staticmethod
-    def existing_data_stores() -> list[dict[str, Any]]:
+    def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         data_stores = []
+
+        if process_group_identifier is not None:
+            # temporary until this data store gets location support
+            return data_stores
 
         keys = db.session.query(TypeaheadModel.category).distinct().order_by(TypeaheadModel.category).all()  # type: ignore
         for key in keys:

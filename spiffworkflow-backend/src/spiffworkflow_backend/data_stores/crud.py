@@ -7,7 +7,7 @@ class DataStoreCRUD:
         raise Exception("must implement")
 
     @staticmethod
-    def existing_data_stores() -> list[dict[str, Any]]:
+    def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         raise Exception("must implement")
 
     @staticmethod
