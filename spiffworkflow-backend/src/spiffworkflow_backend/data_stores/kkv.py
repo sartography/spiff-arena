@@ -14,7 +14,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     @staticmethod
     def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
-        data_stores = []
+        data_stores: list[dict[str, Any]] = []
 
         if process_group_identifier is not None:
             # temporary until this data store gets location support

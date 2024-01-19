@@ -18,9 +18,7 @@ DATA_STORES = {
 }
 
 
-def data_store_list(
-    process_group_identifier: str | None = None, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
+def data_store_list(process_group_identifier: str | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
 
