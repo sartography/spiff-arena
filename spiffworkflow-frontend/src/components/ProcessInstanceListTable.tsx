@@ -1919,6 +1919,23 @@ export default function ProcessInstanceListTable({
     if (!header && !filterButtonLink) {
       return null;
     }
+    let headerTextElement = null;
+    if (header) {
+      headerTextElement = header.text;
+      // poor man's markdown, just so we can allow bolded words in headers
+      if (header.text.includes('**')) {
+        const parts = header.text.split('**');
+        if (parts.length === 3) {
+          headerTextElement = (
+            <>
+              {parts[0]}
+              <strong>{parts[1]}</strong>
+              {parts[2]}
+            </>
+          );
+        }
+      }
+    }
     return (
       <>
         <Column
@@ -1932,7 +1949,7 @@ export default function ProcessInstanceListTable({
               title={header.tooltip_text}
               className="process-instance-table-header"
             >
-              {header.text}
+              {headerTextElement}
             </h2>
           ) : null}
         </Column>

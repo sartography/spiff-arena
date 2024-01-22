@@ -27,6 +27,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import LoginHandler from '../components/LoginHandler';
 import SpiffTabs from '../components/SpiffTabs';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import CreateNewInstance from './CreateNewInstance';
 
 type OwnProps = {
   pageIdentifier?: string;
@@ -66,6 +67,7 @@ export default function Extension({
   const { addError, removeError } = useAPIError();
 
   const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
+    CreateNewInstance,
     SpiffTabs,
     ProcessInstanceListTable,
     ProcessInstanceRun,
