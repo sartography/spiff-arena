@@ -7,6 +7,12 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
+
+enum DateCheckType {
+  minimum = 'minimum',
+  maximum = 'maximum',
+}
 
 type OwnProps = {
   id: string;
@@ -19,6 +25,7 @@ type OwnProps = {
   onSubmit?: any;
   children?: ReactNode;
   noValidate?: boolean;
+  restrictedWidth?: boolean;
 };
 
 export default function CustomForm({
@@ -31,6 +38,7 @@ export default function CustomForm({
   onSubmit,
   children,
   noValidate = false,
+  restrictedWidth = false,
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -40,9 +48,14 @@ export default function CustomForm({
   };
 
   // set in uiSchema using the "ui:field" key for a property
-  const fields: RegistryFieldsType = {
+  const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
   };
+
+  const rjsfTemplates: any = {};
+  if (restrictedWidth) {
+    rjsfTemplates.ObjectFieldTemplate = ObjectFieldRestrictedGridTemplate;
+  }
 
   const formatDateString = (dateString?: string) => {
     let dateObject = new Date();
@@ -53,9 +66,10 @@ export default function CustomForm({
   };
 
   const checkFieldComparisons = (
+    checkType: DateCheckType,
     formDataToCheck: any,
     propertyKey: string,
-    minimumDateCheck: string,
+    dateCheck: string,
     formattedDateString: string,
     errors: any,
     jsonSchema: any
@@ -67,8 +81,7 @@ export default function CustomForm({
     //    field:[field_name_to_use]:[start or end]
     //
     // defaults to "start" in all cases
-    const [_, fieldIdentifierToCompareWith, startOrEnd] =
-      minimumDateCheck.split(':');
+    const [_, fieldIdentifierToCompareWith, startOrEnd] = dateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formDataToCheck)) {
       errors[propertyKey].addError(
         `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
@@ -100,23 +113,72 @@ export default function CustomForm({
       return;
     }
 
+    let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
+    if (
+      fieldIdentifierToCompareWith in jsonSchema.properties &&
+      jsonSchema.properties[fieldIdentifierToCompareWith].title
+    ) {
+      fieldToCompareWithTitle =
+        jsonSchema.properties[fieldIdentifierToCompareWith].title;
+    }
+
     const dateStringToCompareWith = formatDateString(dateToCompareWith);
-    if (dateStringToCompareWith > formattedDateString) {
-      let fieldToCompareWithTitle = fieldIdentifierToCompareWith;
-      if (
-        fieldIdentifierToCompareWith in jsonSchema.properties &&
-        jsonSchema.properties[fieldIdentifierToCompareWith].title
-      ) {
-        fieldToCompareWithTitle =
-          jsonSchema.properties[fieldIdentifierToCompareWith].title;
+    if (checkType === 'minimum') {
+      if (dateStringToCompareWith > formattedDateString) {
+        errors[propertyKey].addError(
+          `must be equal to or greater than '${fieldToCompareWithTitle}'`
+        );
       }
-      errors[propertyKey].addError(
-        `must be equal to or greater than '${fieldToCompareWithTitle}'`
-      );
+      // best NOT to merge this with nested if statement in case we add more or move code around
+      // eslint-disable-next-line sonarjs/no-collapsible-if
+    } else if (checkType === 'maximum') {
+      if (dateStringToCompareWith < formattedDateString) {
+        errors[propertyKey].addError(
+          `must be equal to or less than '${fieldToCompareWithTitle}'`
+        );
+      }
     }
   };
 
-  const checkMinimumDate = (
+  const runDateChecks = (
+    checkType: DateCheckType,
+    dateChecks: string[],
+    formDataToCheck: any,
+    propertyKey: string,
+    formattedDateString: string,
+    errors: any,
+    jsonSchema: any
+  ) => {
+    dateChecks.forEach((mdc: string) => {
+      if (mdc === 'today') {
+        const dateTodayString = formatDateString();
+        if (checkType === 'minimum') {
+          if (dateTodayString > formattedDateString) {
+            errors[propertyKey].addError('must be today or after');
+          }
+          // best NOT to merge this with nested if statement in case we add more or move code around
+          // eslint-disable-next-line sonarjs/no-collapsible-if
+        } else if (checkType === 'maximum') {
+          if (dateTodayString < formattedDateString) {
+            errors[propertyKey].addError('must be today or before');
+          }
+        }
+      } else if (mdc.startsWith('field:')) {
+        checkFieldComparisons(
+          checkType,
+          formDataToCheck,
+          propertyKey,
+          mdc,
+          formattedDateString,
+          errors,
+          jsonSchema
+        );
+      }
+    });
+  };
+
+  const checkDateValidations = (
+    checkType: DateCheckType,
     formDataToCheck: any,
     propertyKey: string,
     propertyMetadata: any,
@@ -131,24 +193,21 @@ export default function CustomForm({
         [dateString] = dateString.split(DATE_RANGE_DELIMITER);
       }
       const formattedDateString = formatDateString(dateString);
-      const minimumDateChecks = propertyMetadata.minimumDate.split(',');
-      minimumDateChecks.forEach((mdc: string) => {
-        if (mdc === 'today') {
-          const dateTodayString = formatDateString();
-          if (dateTodayString > formattedDateString) {
-            errors[propertyKey].addError('must be today or after');
-          }
-        } else if (mdc.startsWith('field:')) {
-          checkFieldComparisons(
-            formDataToCheck,
-            propertyKey,
-            mdc,
-            formattedDateString,
-            errors,
-            jsonSchema
-          );
-        }
-      });
+      let dateChecks = null;
+      if (checkType === 'minimum') {
+        dateChecks = propertyMetadata.minimumDate.split(',');
+      } else if (checkType === 'maximum') {
+        dateChecks = propertyMetadata.maximumDate.split(',');
+      }
+      runDateChecks(
+        checkType,
+        dateChecks,
+        formDataToCheck,
+        propertyKey,
+        formattedDateString,
+        errors,
+        jsonSchema
+      );
     }
   };
 
@@ -226,7 +285,18 @@ export default function CustomForm({
           currentUiSchema = uiSchemaToUse[propertyKey];
         }
         if ('minimumDate' in propertyMetadata) {
-          checkMinimumDate(
+          checkDateValidations(
+            DateCheckType.minimum,
+            formDataToCheck,
+            propertyKey,
+            propertyMetadata,
+            errors,
+            jsonSchemaToUse
+          );
+        }
+        if ('maximumDate' in propertyMetadata) {
+          checkDateValidations(
+            DateCheckType.maximum,
             formDataToCheck,
             propertyKey,
             propertyMetadata,
@@ -300,7 +370,8 @@ export default function CustomForm({
       validator={validator}
       customValidate={customValidate}
       noValidate={noValidate}
-      fields={fields}
+      fields={rjsfFields}
+      templates={rjsfTemplates}
       omitExtraData
     >
       {children}

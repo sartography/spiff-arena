@@ -30,6 +30,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -156,8 +157,11 @@ class AuthorizationService:
     @classmethod
     def target_uri_matches_actual_uri(cls, target_uri: str, actual_uri: str) -> bool:
         if target_uri.endswith("%"):
-            target_uri_without_suffix = target_uri.removesuffix("%").removesuffix(":").removesuffix("/")
-            return actual_uri.startswith(target_uri_without_suffix) or actual_uri == target_uri_without_suffix
+            target_uri_without_wildcard = target_uri.removesuffix("%")
+            target_uri_without_wildcard_and_without_delimiters = target_uri_without_wildcard.removesuffix(":").removesuffix("/")
+            return actual_uri == target_uri_without_wildcard_and_without_delimiters or actual_uri.startswith(
+                target_uri_without_wildcard
+            )
         return actual_uri == target_uri
 
     @classmethod
@@ -278,7 +282,7 @@ class AuthorizationService:
         return None
 
     @classmethod
-    def check_for_permission(cls) -> None:
+    def check_for_permission(cls, decoded_token: dict | None) -> None:
         if cls.should_disable_auth_for_request():
             return None
 
@@ -290,7 +294,7 @@ class AuthorizationService:
         if cls.request_is_excluded_from_permission_check():
             return None
 
-        if cls.request_allows_guest_access():
+        if cls.request_allows_guest_access(decoded_token):
             return None
 
         permission_string = cls.get_permission_from_http_method(request.method)
@@ -316,7 +320,7 @@ class AuthorizationService:
         return False
 
     @classmethod
-    def request_allows_guest_access(cls) -> bool:
+    def request_allows_guest_access(cls, decoded_token: dict | None) -> bool:
         if cls.request_is_excluded_from_permission_check():
             return True
 
@@ -325,6 +329,18 @@ class AuthorizationService:
             process_instance_id = int(request.path.split("/")[3])
             task_guid = request.path.split("/")[4]
             if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
+                return True
+
+        if (
+            decoded_token is not None
+            and "process_instance_id" in decoded_token
+            and "only_guest_task_completion" in decoded_token
+            and decoded_token["only_guest_task_completion"] is True
+            and api_view_function.__name__ == "typeahead"
+            and api_view_function.__module__ == "spiffworkflow_backend.routes.connector_proxy_controller"
+        ):
+            process_instance = ProcessInstanceModel.query.filter_by(id=decoded_token["process_instance_id"]).first()
+            if process_instance is not None and not process_instance.has_terminal_status():
                 return True
         return False
 

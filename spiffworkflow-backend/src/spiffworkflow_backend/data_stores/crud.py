@@ -3,6 +3,10 @@ from typing import Any
 
 class DataStoreCRUD:
     @staticmethod
+    def create_instance(name: str, identifier: str, location: str, schema: dict[str, Any], description: str | None) -> None:
+        raise Exception("must implement")
+
+    @staticmethod
     def existing_data_stores() -> list[dict[str, Any]]:
         raise Exception("must implement")
 

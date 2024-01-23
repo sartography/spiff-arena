@@ -1,35 +1,32 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  TrashCan,
-  Edit,
-  // @ts-ignore
-} from '@carbon/icons-react';
-// @ts-ignore
+import { TrashCan, Edit } from '@carbon/icons-react';
 import { Button, Stack } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import { modifyProcessIdentifierForPathParam, setPageTitle } from '../helpers';
 import {
-  PermissionsToCheck,
-  ProcessGroup,
-  // ProcessModel,
-} from '../interfaces';
+  modifyProcessIdentifierForPathParam,
+  setPageTitle,
+  unModifyProcessIdentifierForPathParam,
+} from '../helpers';
+import { PermissionsToCheck, ProcessGroup } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessModelListTiles from '../components/ProcessModelListTiles';
+import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 export default function ProcessGroupShow() {
   const params = useParams();
   const navigate = useNavigate();
-
-  const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
+  const [processGroupForBreadcrumb, setProcessGroupForBreadcrumb] =
+    useState<ProcessGroup | null>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['POST'],
     [targetUris.processGroupListPath]: ['POST'],
     [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelCreatePath]: ['POST'],
@@ -37,17 +34,21 @@ export default function ProcessGroupShow() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
   );
+  const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
+    `${params.process_group_id}`
+  );
+  const { processGroup } = useProcessGroupFetcher(unModifiedProcessGroupId);
 
   useEffect(() => {
-    const processResult = (result: any) => {
-      setProcessGroup(result);
+    const processResult = (result: ProcessGroup) => {
+      setProcessGroupForBreadcrumb(result);
       setPageTitle([result.display_name]);
     };
     HttpService.makeCallToBackend({
       path: `/process-groups/${params.process_group_id}`,
       successCallback: processResult,
     });
-  }, [params.process_group_id]);
+  }, [params.process_group_id, setProcessGroupForBreadcrumb]);
 
   const navigateToProcessGroups = (_result: any) => {
     navigate(`/process-groups`);
@@ -65,7 +66,7 @@ export default function ProcessGroupShow() {
     }
   };
 
-  if (processGroup && permissionsLoaded) {
+  if (processGroup && processGroupForBreadcrumb && permissionsLoaded) {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
@@ -78,7 +79,7 @@ export default function ProcessGroupShow() {
           hotCrumbs={[
             ['Process Groups', '/process-groups'],
             {
-              entityToExplode: processGroup,
+              entityToExplode: processGroupForBreadcrumb,
               entityType: 'process-group',
             },
           ]}
@@ -131,13 +132,19 @@ export default function ProcessGroupShow() {
                 Add a process model
               </Button>
             </Can>
+            <Can I="POST" a={targetUris.dataStoreListPath} ability={ability}>
+              <Button
+                href={`/data-stores/new?parentGroupId=${processGroup.id}`}
+              >
+                Add a data store
+              </Button>
+            </Can>
           </Stack>
           <br />
           <br />
           <ProcessModelListTiles
             headerElement={<h2>Process Models</h2>}
             processGroup={processGroup}
-            defaultProcessModels={processGroup.process_models}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',
@@ -149,7 +156,6 @@ export default function ProcessGroupShow() {
           <ProcessGroupListTiles
             processGroup={processGroup}
             headerElement={<h2 className="clear-left">Process Groups</h2>}
-            defaultProcessGroups={processGroup.process_groups}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',

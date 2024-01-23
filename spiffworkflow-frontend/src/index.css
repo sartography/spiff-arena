@@ -804,6 +804,10 @@ li.cds--accordion__item {
   max-width: 100%;
 }
 
+.process-model-search-combobox li{
+  max-width: 100%;
+}
+
 div.markdown {
   padding: 15px 0 15px 0;
   overflow: visible;

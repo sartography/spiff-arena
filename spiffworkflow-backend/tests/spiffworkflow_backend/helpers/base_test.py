@@ -105,6 +105,12 @@ class BaseTest:
         process_group_id: str,
         display_name: str = "",
     ) -> ProcessGroup:
+        process_group_parent_id = "/".join(process_group_id.rsplit("/", 1)[:-1])
+        if process_group_parent_id != "":
+            if not ProcessModelService.is_process_group_identifier(process_group_parent_id):
+                raise Exception(
+                    f"Parent process group does not exist for '{process_group_id}'. Parent was '{process_group_parent_id}'"
+                )
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         return ProcessModelService.add_process_group(process_group)
 
@@ -126,6 +132,21 @@ class BaseTest:
         assert response.json is not None
         assert response.json["id"] == process_group_id
         return process_group_id
+
+    def create_process_model(
+        self,
+        process_model_id: str,
+        display_name: str | None = None,
+    ) -> ProcessModelInfo:
+        process_group_parent_id = "/".join(process_model_id.rsplit("/", 1)[:-1])
+        if process_group_parent_id != "":
+            if not ProcessModelService.is_process_group_identifier(process_group_parent_id):
+                raise Exception(
+                    f"Parent process group does not exist for '{process_model_id}'. Parent was '{process_group_parent_id}'"
+                )
+        process_model = ProcessModelInfo(id=process_model_id, display_name=process_model_id, description=process_model_id)
+        ProcessModelService.save_process_model(process_model)
+        return process_model
 
     def create_process_model_with_api(
         self,

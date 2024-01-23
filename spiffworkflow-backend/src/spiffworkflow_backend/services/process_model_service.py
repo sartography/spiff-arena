@@ -11,6 +11,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
+from spiffworkflow_backend.models.permission_assignment import PermitDeny
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
@@ -329,12 +330,15 @@ class ProcessModelService(FileSystemService):
     def get_process_groups_for_api(
         cls,
         process_group_id: str | None = None,
+        user: UserModel | None = None,
     ) -> list[ProcessGroup]:
         process_groups = cls.get_process_groups(process_group_id)
 
         permission_to_check = "read"
-        permission_base_uri = "/v1.0/process-groups"
-        user = UserService.current_user()
+        permission_base_uri = "/process-groups"
+
+        if user is None:
+            user = UserService.current_user()
 
         # if user has access to uri/* with that permission then there's no reason to check each one individually
         guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
@@ -346,14 +350,49 @@ class ProcessModelService(FileSystemService):
         if has_permission:
             return process_groups
 
+        permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
+
         new_process_group_list = []
+        denied_parent_ids: set[str] = set()
         for process_group in process_groups:
             modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group.id)
-            uri = f"{permission_base_uri}/{modified_process_group_id}"
-            has_permission = AuthorizationService.user_has_permission(user=user, permission=permission_to_check, target_uri=uri)
+            target_uri = f"{permission_base_uri}/{modified_process_group_id}"
+            has_permission = AuthorizationService.permission_assignments_include(
+                permission_assignments=permission_assignments,
+                permission=permission_to_check,
+                target_uri=target_uri,
+            )
+            if not has_permission:
+                for pa in permission_assignments:
+                    if (
+                        pa.permission == permission_to_check
+                        and pa.grant_type == PermitDeny.deny.value
+                        and AuthorizationService.target_uri_matches_actual_uri(pa.permission_target.uri, target_uri)
+                    ):
+                        denied_parent_ids.add(f"{process_group.id}")
+                    elif (
+                        pa.permission == permission_to_check
+                        and pa.grant_type == PermitDeny.permit.value
+                        and (
+                            pa.permission_target.uri.startswith(f"{target_uri}:")
+                            or pa.permission_target.uri.startswith(f"/process-models/{modified_process_group_id}:")
+                        )
+                    ):
+                        has_permission = True
             if has_permission:
                 new_process_group_list.append(process_group)
-        return new_process_group_list
+
+        # remove any process group that also matched a deny permission
+        permitted_process_groups = []
+        for process_group in new_process_group_list:
+            has_denied_permission = False
+            for dpi in denied_parent_ids:
+                if process_group.id.startswith(f"{dpi}:") or process_group.id == dpi:
+                    has_denied_permission = True
+            if not has_denied_permission:
+                permitted_process_groups.append(process_group)
+
+        return permitted_process_groups
 
     @classmethod
     def get_process_group(
@@ -477,10 +516,14 @@ class ProcessModelService(FileSystemService):
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
 
-        if find_direct_nested_items or find_all_nested_items:
+        process_group.process_models = []
+        process_group.process_groups = []
+
+        if find_direct_nested_items is False:
+            return process_group
+
+        if find_all_nested_items:
             with os.scandir(dir_path) as nested_items:
-                process_group.process_models = []
-                process_group.process_groups = []
                 for nested_item in nested_items:
                     if nested_item.is_dir():
                         # TODO: check whether this is a group or model

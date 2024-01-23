@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import Configuration from './Configuration';
 import MessageListPage from './MessageListPage';
-import DataStorePage from './DataStorePage';
+import DataStoreRoutes from './DataStoreRoutes';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import HomeRoutes from './HomeRoutes';
 import ProcessGroupRoutes from './ProcessGroupRoutes';
@@ -39,7 +39,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
           element={<Configuration extensionUxElements={extensionUxElements} />}
         />
         <Route path="messages" element={<MessageListPage />} />
-        <Route path="data-stores" element={<DataStorePage />} />
+        <Route path="data-stores/*" element={<DataStoreRoutes />} />
         <Route path="about" element={<About />} />
         <Route path="admin/*" element={<AdminRedirect />} />
         <Route path="/*" element={<Page404 />} />

@@ -1,4 +1,5 @@
 """Test Process Api Blueprint."""
+import base64
 import io
 import json
 import os
@@ -1186,7 +1187,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["id"] == process_group_id
-        assert response.json["process_models"][0]["id"] == process_model.id
+        assert response.json["process_models"] == []
         assert response.json["parent_groups"] == []
 
     def test_get_process_group_show_when_nested(
@@ -1642,6 +1643,80 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 400
         assert response.json
         assert response.json["error_code"] == "message_not_accepted"
+
+    def test_can_download_uploaded_file(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "test_message_send"
+        process_model_id = "message_sender"
+        bpmn_file_name = "message_sender.bpmn"
+        bpmn_file_location = "message_send_one_conversation"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        def _file_data(i: int, c: bytes) -> str:
+            b64 = base64.b64encode(c).decode()
+            return f"data:some/mimetype;name=testing{i}.txt;base64,{b64}"
+
+        def _digest_reference(i: int, sha: str) -> str:
+            b64 = f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}{sha}"
+            return f"data:some/mimetype;name=testing{i}.txt;base64,{b64}"
+
+        file_contents = [f"contents{i}".encode() for i in range(3)]
+        file_data = [_file_data(i, c) for i, c in enumerate(file_contents)]
+        digests = [sha256(c).hexdigest() for c in file_contents]
+        [_digest_reference(i, d) for i, d in enumerate(digests)]
+
+        payload = {
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "But seriously.",
+            "file0": file_data[0],
+            "key": [{"file1": file_data[1]}],
+            "key2": {"key3": [{"key4": file_data[2], "key5": "bob"}]},
+        }
+
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model.id,
+            self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        task = processor.get_all_user_tasks()[0]
+        human_task = process_instance.active_human_tasks[0]
+
+        ProcessInstanceService.complete_form_task(
+            processor,
+            task,
+            payload,
+            with_super_admin_user,
+            human_task,
+        )
+        processor.save()
+
+        for expected_content, digest in zip(file_contents, digests, strict=True):
+            response = client.get(
+                f"/v1.0/process-data-file-download/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{digest}",
+                headers=self.logged_in_headers(with_super_admin_user),
+            )
+            assert response.status_code == 200
+            assert response.data == expected_content
 
     def test_process_instance_can_be_terminated(
         self,

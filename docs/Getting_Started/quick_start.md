@@ -461,3 +461,32 @@ To access and review completed user forms within a specific process model, follo
    ![Completed by others](images/Completed_by_others.png)
 
 This approach ensures you can monitor and review the progress of user forms within any process model while maintaining the confidentiality of inputs made by other users.
+
+---
+## How to view task instance history
+
+Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow. This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
+
+### Steps to Access Task Instance History
+
+1. **Run the Process**: Initiate a workflow process in SpiffWorkflow.
+
+2. **Access the Process Instance**: After running the process, navigate to the specific process instance within the SpiffWorkflow interface. This is where you can track the progress of the tasks.
+![Access process instance](images/Access_Process_Instance.png)
+
+3. **View Task Details**: Click on the executed task or event that has been completed. For instance, in this example we clicked on "user task".
+![Access task instance](images/Task_instance.png)
+
+You will be presented with detailed information about each task instance, including its status and execution timestamp. 
+
+For example:
+   - `2 : 04-01-2024 19:58:11 - MAYBE`
+   - `3 : 04-01-2024 19:58:10 - COMPLETED`
+   - `4 : 04-01-2024 19:58:07 - COMPLETED`
+![Access task instance](images/task_instance_history.png)
+
+
+- **COMPLETED Status**: Tasks marked as 'COMPLETED' have finished their execution successfully and have moved the workflow forward.
+- **MAYBE Status**: Indicates that the task still exists within SpiffWorkflow. While these tasks could be omitted for clarity, retaining them provides a complete picture of the workflow's execution.
+
+Viewing task instance history in SpiffWorkflow is now more streamlined and informative, thanks to recent updates. Users can effectively track each task's execution, status, and timing, gaining insights into the workflow's overall performance.

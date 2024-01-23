@@ -35,6 +35,7 @@ Building_Diagrams/Builtin_examples.md
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
 Debugging_Diagrams/process_error_handling.md
+Debugging_Diagrams/Private_data.md
 ```
 
 ```{toctree}
