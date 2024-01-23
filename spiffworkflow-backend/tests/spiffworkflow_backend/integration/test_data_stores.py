@@ -80,7 +80,7 @@ class TestDataStores(BaseTest):
     ) -> None:
         self.load_data_store(app, client, with_db_and_bpmn_file_cleanup, with_super_admin_user)
         response = client.get(
-            "/v1.0/data-stores/typeahead/albums?per_page=10", headers=self.logged_in_headers(with_super_admin_user)
+            "/v1.0/data-stores/typeahead/albums/items?per_page=10", headers=self.logged_in_headers(with_super_admin_user)
         )
 
         expected_item_in_response = {
