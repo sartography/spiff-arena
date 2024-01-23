@@ -67,8 +67,8 @@ class TestDataStores(BaseTest):
         self.load_data_store(app, client, with_db_and_bpmn_file_cleanup, with_super_admin_user)
         results = client.get("/v1.0/data-stores", headers=self.logged_in_headers(with_super_admin_user))
         assert results.json == [
-            {"name": "albums", "type": "typeahead", "identifier": "albums", "clz": "TypeaheadDataStore"},
-            {"name": "cereals", "type": "typeahead", "identifier": "cereals", "clz": "TypeaheadDataStore"},
+            {"name": "albums", "type": "typeahead", "id": "albums", "clz": "TypeaheadDataStore"},
+            {"name": "cereals", "type": "typeahead", "id": "cereals", "clz": "TypeaheadDataStore"},
         ]
 
     def test_get_data_store_returns_paginated_results(

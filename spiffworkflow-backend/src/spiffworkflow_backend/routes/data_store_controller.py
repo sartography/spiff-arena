@@ -101,8 +101,10 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
 
     return make_response(jsonify({"ok": True}), 200)
 
+
 def data_store_update(body: dict) -> flask.wrappers.Response:
     return make_response(jsonify({"ok": True}), 200)
+
 
 def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
     """Returns a description of a data store."""
@@ -115,8 +117,12 @@ def data_store_show(data_store_type: str, identifier: str, process_group_identif
     result = data_store_query.first()
 
     if result is None:
-        raise ApiError("could_not_locate_data_store", f"Could not locate data store type: {data_store_type} for process group: {process_group_identifier}", status_code=400)
-    
+        raise ApiError(
+            "could_not_locate_data_store",
+            f"Could not locate data store type: {data_store_type} for process group: {process_group_identifier}",
+            status_code=400,
+        )
+
     response = {
         "name": result.name,
         "location": result.location,
@@ -125,5 +131,5 @@ def data_store_show(data_store_type: str, identifier: str, process_group_identif
         "schema": result.schema,
         "description": result.description,
     }
-    
+
     return make_response(jsonify(response), 200)

@@ -2872,7 +2872,7 @@ paths:
       - name: process_group_identifier
         in: query
         required: true
-        description: The process group 
+        description: The process group
         schema:
           type: string
     get:
