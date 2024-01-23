@@ -10,6 +10,7 @@ from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -70,6 +71,14 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
 
 
 def data_store_create(body: dict) -> flask.wrappers.Response:
+    return _data_store_upsert(body, True)
+
+
+def data_store_update(body: dict) -> flask.wrappers.Response:
+    return _data_store_upsert(body, False)
+
+
+def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     try:
         data_store_type = body["type"]
         name = body["name"]
@@ -97,12 +106,19 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
         raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
     data_store_class, _ = DATA_STORES[data_store_type]
-    data_store_class.create_instance(name, identifier, location, schema, description)
 
-    return make_response(jsonify({"ok": True}), 200)
+    if insert:
+        model = data_store_class.create_instance(identifier, location)
+    else:
+        model = data_store_class.existing_instance(identifier, location)
 
+    model.name = name
+    model.schema = schema
+    model.description = description or ""
 
-def data_store_update(body: dict) -> flask.wrappers.Response:
+    db.session.add(model)
+    db.session.commit()
+
     return make_response(jsonify({"ok": True}), 200)
 
 

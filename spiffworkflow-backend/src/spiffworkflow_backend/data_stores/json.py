@@ -32,17 +32,16 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
 
     @staticmethod
-    def create_instance(name: str, identifier: str, location: str, schema: dict[str, Any], description: str | None) -> None:
-        model = JSONDataStoreModel(
-            name=name,
+    def create_instance(identifier: str, location: str) -> Any:
+        return JSONDataStoreModel(
             identifier=identifier,
             location=location,
-            schema=schema,
-            description=description or "",
             data={},
         )
-        db.session.add(model)
-        db.session.commit()
+
+    @staticmethod
+    def existing_instance(identifier: str, location: str) -> Any:
+        return db.session.query(JSONDataStoreModel).filter_by(identifier=identifier, location=location).first()
 
     @staticmethod
     def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
