@@ -49,7 +49,11 @@ export default function DataStoreForm({
 
   useEffect(() => {
     const handleSetDataStoreTypesCallback = (result: any) => {
+      const dataStoreType = result.find((item: any) => {
+      return item.type === dataStore.type;
+      });
       setDataStoreTypes(result);
+      setSelectedDataStoreType(dataStoreType ?? null);
     };
 
     HttpService.makeCallToBackend({
@@ -57,7 +61,7 @@ export default function DataStoreForm({
       successCallback: handleSetDataStoreTypesCallback,
       httpMethod: 'GET',
     });
-  }, [setDataStoreTypes]);
+  }, [dataStore, setDataStoreTypes]);
 
   const navigateToDataStores = (_result: any) => {
     const location = dataStoreLocation();
