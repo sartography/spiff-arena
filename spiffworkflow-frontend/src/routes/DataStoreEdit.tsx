@@ -30,8 +30,6 @@ export default function DataStoreEdit() {
 
     const queryParams = `?process_group_identifier=${parentGroupId}`;
     HttpService.makeCallToBackend({
-      // TODO: don't hardcode json
-      // TODO: is making infinite calls
       path: `/data-stores/json/${dataStoreIdentifier}${queryParams}`,
       successCallback: setDataStoreFromResult,
     });
