@@ -305,7 +305,7 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The number of groups to show per page. Defaults to page 10.
+        description: The number of groups to show per page. Defaults to 10.
         schema:
           type: integer
     get:
