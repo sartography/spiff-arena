@@ -26,6 +26,7 @@ export default function DataStoreEdit() {
 
   useEffect(() => {
     const setDataStoreFromResult = (result: any) => {
+      result.schema = JSON.stringify(result.schema);
       setDataStore(result);
     };
 
@@ -37,7 +38,7 @@ export default function DataStoreEdit() {
         successCallback: setDataStoreFromResult,
       });
 
-  }, [dataStore, parentGroupId, dataStoreIdentifier]);
+  }, [dataStoreIdentifier, parentGroupId]);
 
 
   const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
