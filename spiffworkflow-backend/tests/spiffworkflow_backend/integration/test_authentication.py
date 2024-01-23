@@ -1,7 +1,6 @@
 import ast
 import base64
 import re
-import time
 
 from flask.app import Flask
 from flask.testing import FlaskClient
@@ -45,8 +44,6 @@ class TestAuthentication(BaseTest):
                     "groups": ["group_one", "group_two"],
                     "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
                     "aud": "spiffworkflow-backend",
-                    "iat": round(time.time()),
-                    "exp": round(time.time()) + 1000,
                 }
             )
             response = None
@@ -63,8 +60,6 @@ class TestAuthentication(BaseTest):
                     "groups": ["group_one"],
                     "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
                     "aud": "spiffworkflow-backend",
-                    "iat": round(time.time()),
-                    "exp": round(time.time()) + 1000,
                 }
             )
             response = client.post(
