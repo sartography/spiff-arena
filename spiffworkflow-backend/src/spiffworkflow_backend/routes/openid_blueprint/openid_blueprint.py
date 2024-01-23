@@ -7,6 +7,7 @@ This is just here to make local development, testing, and demonstration easier.
 """
 import base64
 import json
+import math
 import time
 from typing import Any
 from urllib.parse import urlencode
@@ -15,15 +16,21 @@ import jwt
 import yaml
 from flask import Blueprint
 from flask import current_app
+from flask import jsonify
+from flask import make_response
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
 from werkzeug.wrappers import Response
 
+from spiffworkflow_backend.config.openid.rsa_keys import OpenIdConfigsForDevOnly
+
 openid_blueprint = Blueprint("openid", __name__, template_folder="templates", static_folder="static")
 
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
+SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
+SPIFF_OPEN_ID_ALGORITHM = "RS256"
 
 
 @openid_blueprint.route("/.well-known/openid-configuration", methods=["GET"])
@@ -38,6 +45,7 @@ def well_known() -> dict:
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",
         "token_endpoint": f"{host_url}{url_for('openid.token')}",
         "end_session_endpoint": f"{host_url}{url_for('openid.end_session')}",
+        "jwks_uri": f"{host_url}{url_for('openid.jwks')}",
     }
 
 
@@ -97,22 +105,24 @@ def token() -> Response | dict:
     authorization = request.headers.get("Authorization", "Basic ")
     authorization = authorization[6:]  # Remove "Basic"
     authorization = base64.b64decode(authorization).decode("utf-8")
-    client_id, client_secret = authorization.split(":")
+    client_id = authorization.split(":")
 
     base_url = request.host_url + "openid"
+    private_key = OpenIdConfigsForDevOnly.private_key
 
     id_token = jwt.encode(
         {
             "iss": base_url,
-            "aud": [client_id, "account"],
-            "iat": time.time(),
-            "exp": time.time() + 86400,  # Expire after a day.
+            "aud": client_id,
+            "iat": math.floor(time.time()),
+            "exp": round(time.time()) + 3600,
             "sub": user_name,
             "email": user_details["email"],
             "preferred_username": user_details.get("preferred_username", user_name),
         },
-        client_secret,
-        algorithm="HS256",
+        private_key,
+        algorithm=SPIFF_OPEN_ID_ALGORITHM,
+        headers={"kid": SPIFF_OPEN_ID_KEY_ID},
     )
     response = {
         "access_token": id_token,
@@ -127,6 +137,21 @@ def end_session() -> Response:
     redirect_url = request.args.get("post_logout_redirect_uri", "http://localhost")
     request.args.get("id_token_hint")
     return redirect(redirect_url)
+
+
+@openid_blueprint.route("/jwks", methods=["GET"])
+def jwks() -> Response:
+    public_key = base64.b64encode(OpenIdConfigsForDevOnly.public_key.encode()).decode("utf-8")
+    jwks_configs = {
+        "keys": [
+            {
+                "kid": SPIFF_OPEN_ID_KEY_ID,
+                "kty": "RSA",
+                "x5c": [public_key],
+            }
+        ]
+    }
+    return make_response(jsonify(jwks_configs), 200)
 
 
 @openid_blueprint.route("/refresh", methods=["POST"])

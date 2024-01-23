@@ -19,10 +19,9 @@ from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.authentication_controller import _set_new_access_token_in_cookie
-from spiffworkflow_backend.routes.authentication_controller import verify_token
+from spiffworkflow_backend.routes.authentication_controller import omni_auth
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.monitoring_service import configure_sentry
 from spiffworkflow_backend.services.monitoring_service import setup_prometheus_metrics
 
@@ -72,7 +71,11 @@ def create_app() -> flask.app.Flask:
 
     app.register_blueprint(user_blueprint)
     app.register_blueprint(api_error_blueprint)
-    app.register_blueprint(openid_blueprint, url_prefix="/openid")
+
+    # only register the backend openid server if the backend is configured to use it
+    backend_auths = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
+    if len(backend_auths) == 1 and backend_auths[0]["uri"] == f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/openid":
+        app.register_blueprint(openid_blueprint, url_prefix="/openid")
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
@@ -89,8 +92,7 @@ def create_app() -> flask.app.Flask:
 
     configure_sentry(app)
 
-    app.before_request(verify_token)
-    app.before_request(AuthorizationService.check_for_permission)
+    app.before_request(omni_auth)
     app.after_request(_set_new_access_token_in_cookie)
 
     # The default is true, but we want to preserve the order of keys in the json

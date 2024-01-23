@@ -181,6 +181,7 @@ def setup_config(app: Flask) -> None:
 
     env_config_prefix = "spiffworkflow_backend.config."
     env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
+
     load_config_file(app, env_config_module)
 
     # This allows config/testing.py or instance/config.py to override the default config
@@ -226,7 +227,7 @@ def setup_config(app: Flask) -> None:
         app.config["SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
     )
 
-    if "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS" not in app.config:
+    if app.config.get("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS") is None:
         app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"] = [
             {
                 "identifier": "default",

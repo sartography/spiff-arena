@@ -18,6 +18,12 @@ from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinitio
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -470,9 +476,12 @@ class ProcessInstanceService:
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-            # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-            processor.do_engine_steps(save=True)
+        if queue_enabled_for_process_model(processor.process_instance_model):
+            queue_process_instance_if_appropriate(processor.process_instance_model)
+        else:
+            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
+                processor.do_engine_steps(save=True)
 
     @staticmethod
     def create_dot_dict(data: dict) -> dict[str, Any]:

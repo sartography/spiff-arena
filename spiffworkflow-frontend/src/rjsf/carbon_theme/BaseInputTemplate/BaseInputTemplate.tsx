@@ -8,6 +8,7 @@ import {
 } from '@rjsf/utils';
 
 import { useCallback } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 import { DATE_FORMAT_CARBON, DATE_FORMAT_FOR_DISPLAY } from '../../../config';
 import DateAndTimeService from '../../../services/DateAndTimeService';
 import { getCommonAttributes } from '../../helpers';
@@ -55,19 +56,28 @@ export default function BaseInputTemplate<
   };
 
   const _onChange = useCallback(
-    ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
-      onChange(value === '' ? options.emptyValue : value),
+    ({ target }: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(target.value === '' ? options.emptyValue : target.value);
+    },
     [onChange, options]
   );
   const _onBlur = useCallback(
-    ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
-      onBlur(id, value),
+    ({ target }: React.FocusEvent<HTMLInputElement>) =>
+      onBlur(id, target.value),
     [onBlur, id]
   );
   const _onFocus = useCallback(
-    ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
-      onFocus(id, value),
+    ({ target }: React.FocusEvent<HTMLInputElement>) =>
+      onFocus(id, target.value),
     [onFocus, id]
+  );
+
+  const addDebouncedOnChangeDate = useDebouncedCallback(
+    (target: React.ChangeEvent<HTMLInputElement>) => {
+      _onChange(target);
+    },
+    // delay in ms
+    1000
   );
 
   const commonAttributes = getCommonAttributes(
@@ -108,7 +118,7 @@ export default function BaseInputTemplate<
           value={dateValue}
           autocomplete="off"
           allowInput={false}
-          onChange={_onChange}
+          onChange={addDebouncedOnChangeDate}
           invalid={commonAttributes.invalid}
           invalidText={commonAttributes.errorMessageForField}
           autoFocus={autofocus}

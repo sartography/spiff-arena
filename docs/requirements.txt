@@ -27,7 +27,7 @@ packaging==23.1
 pygls==1.0.2
 Pygments==2.15.1
 pyspellchecker==0.7.2
-PyYAML==6.0
+PyYAML==6.0.1
 requests==2.30.0
 six==1.16.0
 snowballstemmer==2.2.0

@@ -387,7 +387,8 @@ def _process_instance_task_list(
         bpmn_process_ids = [p.id for p in bpmn_processes]
 
     task_model_query = db.session.query(TaskModel).filter(
-        TaskModel.process_instance_id == process_instance.id, TaskModel.state.not_in(["LIKELY", "MAYBE"])  # type: ignore
+        TaskModel.process_instance_id == process_instance.id,
+        TaskModel.state.not_in(["LIKELY", "MAYBE"]),  # type: ignore
     )
 
     to_task_model: TaskModel | None = None
@@ -651,12 +652,11 @@ def _process_instance_run(
         )
 
     processor = None
-    task_runnability = None
     try:
         if queue_enabled_for_process_model(process_instance):
             queue_process_instance_if_appropriate(process_instance)
         elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-            processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(process_instance)
+            processor, _ = ProcessInstanceService.run_process_instance_with_processor(process_instance)
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,
