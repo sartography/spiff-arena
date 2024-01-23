@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import DataStoreForm from '../components/DataStoreForm';
 import { DataStore, HotCrumbItem } from '../interfaces';
@@ -23,23 +22,20 @@ export default function DataStoreEdit() {
     setPageTitle(['Edit Data Store']);
   }, []);
 
-
   useEffect(() => {
     const setDataStoreFromResult = (result: any) => {
-      result.schema = JSON.stringify(result.schema);
-      setDataStore(result);
+      const schema = JSON.stringify(result.schema);
+      setDataStore({ ...result, schema });
     };
 
-      let queryParams = `?process_group_identifier=${parentGroupId}`;
-      HttpService.makeCallToBackend({
+    const queryParams = `?process_group_identifier=${parentGroupId}`;
+    HttpService.makeCallToBackend({
       // TODO: don't hardcode json
       // TODO: is making infinite calls
-        path: `/data-stores/json/${dataStoreIdentifier}${queryParams}`,
-        successCallback: setDataStoreFromResult,
-      });
-
+      path: `/data-stores/json/${dataStoreIdentifier}${queryParams}`,
+      successCallback: setDataStoreFromResult,
+    });
   }, [dataStoreIdentifier, parentGroupId]);
-
 
   const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
   if (parentGroupId) {

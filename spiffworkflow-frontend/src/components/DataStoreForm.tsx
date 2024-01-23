@@ -50,7 +50,7 @@ export default function DataStoreForm({
   useEffect(() => {
     const handleSetDataStoreTypesCallback = (result: any) => {
       const dataStoreType = result.find((item: any) => {
-      return item.type === dataStore.type;
+        return item.type === dataStore.type;
       });
       setDataStoreTypes(result);
       setSelectedDataStoreType(dataStoreType ?? null);
@@ -103,7 +103,7 @@ export default function DataStoreForm({
     if (hasErrors) {
       return;
     }
-    let path = '/data-stores';
+    const path = '/data-stores';
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
@@ -180,27 +180,25 @@ export default function DataStoreForm({
       />,
     ];
 
-
-      textInputs.push(
-        <TextInput
-          id="data-store-identifier"
-          name="id"
-	  readonly={mode==='edit'}
-          invalidText="Identifier is required and must be all lowercase characters and hyphens."
-          invalid={identifierInvalid}
-          labelText="Identifier*"
-          value={dataStore.id}
-          onChange={(event: any) => {
-            updateDataStore({ id: event.target.value });
-            // was invalid, and now valid
-            if (identifierInvalid && hasValidIdentifier(event.target.value)) {
-              setIdentifierInvalid(false);
-            }
-            setIdHasBeenUpdatedByUser(true);
-          }}
-        />
-      );
-
+    textInputs.push(
+      <TextInput
+        id="data-store-identifier"
+        name="id"
+        readonly={mode === 'edit'}
+        invalidText="Identifier is required and must be all lowercase characters and hyphens."
+        invalid={identifierInvalid}
+        labelText="Identifier*"
+        value={dataStore.id}
+        onChange={(event: any) => {
+          updateDataStore({ id: event.target.value });
+          // was invalid, and now valid
+          if (identifierInvalid && hasValidIdentifier(event.target.value)) {
+            setIdentifierInvalid(false);
+          }
+          setIdHasBeenUpdatedByUser(true);
+        }}
+      />
+    );
 
     textInputs.push(
       <ComboBox

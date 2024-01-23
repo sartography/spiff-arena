@@ -54,7 +54,9 @@ export default function DataStoreListTiles({
           <ClickableTile
             id={`data-store-tile-${row.id}`}
             className="tile-data-store"
-            href={`/data-stores/${row.id}/edit?parentGroupId=${processGroup?.id ?? ''}`}
+            href={`/data-stores/${row.id}/edit?parentGroupId=${
+              processGroup?.id ?? ''
+            }`}
           >
             <div className="tile-data-store-content-container">
               <ArrowRight />
