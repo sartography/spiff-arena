@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ProcessInstanceListTableOnly from '../components/ProcessInstanceListTableOnly';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -26,7 +26,7 @@ export default function InProgressInstances() {
       };
       const identifierForTable = `waiting-for-${slugifyString(userGroup)}`;
       return (
-        <ProcessInstanceListTableOnly
+        <ProcessInstanceListTable
           additionalReportFilters={[
             { field_name: 'user_group_identifier', field_value: userGroup },
           ]}
@@ -61,7 +61,7 @@ export default function InProgressInstances() {
 
   return (
     <>
-      <ProcessInstanceListTableOnly
+      <ProcessInstanceListTable
         autoReload
         header={startedByMeHeaderElement}
         paginationClassName="with-large-bottom-margin"
@@ -73,7 +73,7 @@ export default function InProgressInstances() {
         tableHtmlId="open-instances-started-by-me"
         textToShowIfEmpty="There are no open instances you started at this time."
       />
-      <ProcessInstanceListTableOnly
+      <ProcessInstanceListTable
         autoReload
         header={waitingForMeHeaderElement}
         paginationClassName="with-large-bottom-margin"

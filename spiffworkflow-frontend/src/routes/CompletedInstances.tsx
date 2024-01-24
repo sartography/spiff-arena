@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ProcessInstanceListTableOnly from '../components/ProcessInstanceListTableOnly';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -28,7 +28,7 @@ export default function CompletedInstances() {
         userGroup
       )}`;
       return (
-        <ProcessInstanceListTableOnly
+        <ProcessInstanceListTable
           additionalReportFilters={[
             { field_name: 'user_group_identifier', field_value: userGroup },
           ]}
@@ -61,7 +61,7 @@ export default function CompletedInstances() {
 
   return (
     <>
-      <ProcessInstanceListTableOnly
+      <ProcessInstanceListTable
         header={startedByMeHeaderElement}
         paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_instances"
@@ -72,7 +72,7 @@ export default function CompletedInstances() {
         tableHtmlId="my-completed-instances"
         textToShowIfEmpty="You have no completed instances at this time."
       />
-      <ProcessInstanceListTableOnly
+      <ProcessInstanceListTable
         header={withTasksHeaderElement}
         paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_tasks"
