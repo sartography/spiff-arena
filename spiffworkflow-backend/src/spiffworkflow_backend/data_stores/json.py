@@ -33,32 +33,38 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
 
     @staticmethod
-    def create_instance(name: str, identifier: str, location: str, schema: dict[str, Any], description: str | None) -> None:
-        model = JSONDataStoreModel(
-            name=name,
+    def create_instance(identifier: str, location: str) -> Any:
+        return JSONDataStoreModel(
             identifier=identifier,
             location=location,
-            schema=schema,
-            description=description or "",
             data={},
         )
-        db.session.add(model)
-        db.session.commit()
 
     @staticmethod
-    def existing_data_stores() -> list[dict[str, Any]]:
+    def existing_instance(identifier: str, location: str) -> Any:
+        return db.session.query(JSONDataStoreModel).filter_by(identifier=identifier, location=location).first()
+
+    @staticmethod
+    def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         data_stores = []
 
         query = db.session.query(JSONDataStoreModel.name, JSONDataStoreModel.identifier)
+        if process_group_identifier is not None:
+            query = query.filter_by(location=process_group_identifier)
         keys = query.distinct().order_by(JSONDataStoreModel.name).all()  # type: ignore
         for key in keys:
-            data_stores.append({"name": key[0], "type": "json", "identifier": key[1], "clz": "JSONDataStore"})
+            data_stores.append({"name": key[0], "type": "json", "id": key[1], "clz": "JSONDataStore"})
 
         return data_stores
 
     @staticmethod
-    def query_data_store(name: str) -> Any:
-        return JSONDataStoreModel.query.filter_by(name=name).order_by(JSONDataStoreModel.name)
+    def get_data_store_query(identifier: str, process_group_identifier: str | None) -> Any:
+        query = JSONDataStoreModel.query
+        if process_group_identifier is not None:
+            query = query.filter_by(identifier=identifier, location=process_group_identifier)
+        else:
+            query = query.filter_by(name=identifier)
+        return query.order_by(JSONDataStoreModel.name)
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:
