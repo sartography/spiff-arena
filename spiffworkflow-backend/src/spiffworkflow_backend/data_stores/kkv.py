@@ -32,7 +32,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         return data_stores
 
     @staticmethod
-    def query_data_store(name: str, process_group_identifier: str | None) -> Any:
+    def get_data_store_query(name: str, process_group_identifier: str | None) -> Any:
         return KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
             KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
         )

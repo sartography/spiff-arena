@@ -43,7 +43,7 @@ def data_store_types() -> flask.wrappers.Response:
 
 
 def _build_response(data_store_class: Any, name: str, page: int, per_page: int) -> flask.wrappers.Response:
-    data_store_query = data_store_class.query_data_store(name, None)
+    data_store_query = data_store_class.get_data_store_query(name, None)
     data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
     results = []
     for item in data.items:
@@ -129,7 +129,7 @@ def data_store_show(data_store_type: str, identifier: str, process_group_identif
         raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
     data_store_class, _ = DATA_STORES[data_store_type]
-    data_store_query = data_store_class.query_data_store(identifier, process_group_identifier)
+    data_store_query = data_store_class.get_data_store_query(identifier, process_group_identifier)
     result = data_store_query.first()
 
     if result is None:

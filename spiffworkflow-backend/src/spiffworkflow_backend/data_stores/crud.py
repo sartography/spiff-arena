@@ -15,7 +15,7 @@ class DataStoreCRUD:
         raise Exception("must implement")
 
     @staticmethod
-    def query_data_store(name: str, process_group_identifier: str | None) -> Any:
+    def get_data_store_query(name: str, process_group_identifier: str | None) -> Any:
         raise Exception("must implement")
 
     @staticmethod

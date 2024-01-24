@@ -58,7 +58,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         return data_stores
 
     @staticmethod
-    def query_data_store(identifier: str, process_group_identifier: str | None) -> Any:
+    def get_data_store_query(identifier: str, process_group_identifier: str | None) -> Any:
         query = JSONDataStoreModel.query
         if process_group_identifier is not None:
             query = query.filter_by(identifier=identifier, location=process_group_identifier)
