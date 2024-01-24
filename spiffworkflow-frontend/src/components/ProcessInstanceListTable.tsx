@@ -343,8 +343,9 @@ export default function ProcessInstanceListTable({
     if (!showLinkToReport && !header) {
       return null;
     }
+
     let filterButtonLink = null;
-    if (showLinkToReport) {
+    if (showLinkToReport && pagination && pagination.total) {
       filterButtonLink = (
         <Column
           sm={{ span: 1, offset: 3 }}
