@@ -115,7 +115,6 @@ export default function ProcessInstanceListTableWithFilters({
     permissionRequestData
   );
   const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
-  const [applyFilterClicked, setApplyFilterClicked] = useState<boolean>(false);
 
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
 
@@ -720,7 +719,6 @@ export default function ProcessInstanceListTableWithFilters({
 
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
     setReportMetadata(newReportMetadata);
-    setApplyFilterClicked(true);
   };
 
   const dateComponent = (
@@ -1548,22 +1546,16 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const onProcessInstanceTableListUpdate = (result: any) => {
-    if (applyFilterClicked) {
-      if (result.report_hash) {
-        setReportHash(result.report_hash);
-        searchParams.set('report_hash', result.report_hash);
-        // whenever apply button is clicked, we want to reset the page to 1,
-        // since the user has changed the filters
-        if (requiresRefilter && searchParams.get('page') !== '1') {
-          searchParams.set('page', '1');
-        }
-        setSearchParams(searchParams);
+    if (result.report_hash && result.report_hash !== reportHash) {
+      setReportHash(result.report_hash);
+      searchParams.set('report_hash', result.report_hash);
+      // whenever update the report hash , we want to reset the page to 1,
+      // since the report has changed
+      if (requiresRefilter && searchParams.get('page') !== '1') {
+        searchParams.set('page', '1');
       }
-      setApplyFilterClicked(false);
+      setSearchParams(searchParams);
     }
-
-    // anytime this is called we no longer need to refilter
-    setRequiresRefilter(false);
 
     // if columns are length then assume the reportMetadata hasn't been fully set yet
     // either by a passed in prop or by the api server
