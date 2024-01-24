@@ -16,7 +16,7 @@ classifiers = [
 Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,<3.13"
 flask = "2.2.5"
 flask-admin = "*"
 flask-bcrypt = "*"
@@ -63,8 +63,8 @@ Flask-SQLAlchemy = "^3"
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.17.6"
-pytz = "^2022.6"
-dateparser = "^1.1.2"
+pytz = "^2023.3"
+dateparser = "^1.2.0"
 cryptography = "^41.0"
 prometheus-flask-exporter = "^0.22.3"
 
@@ -137,7 +137,9 @@ filterwarnings = [
     "ignore:'JSONEncoder' is deprecated and will be removed in Flask 2.3",
     "ignore:'app.json_encoder' is deprecated and will be removed in Flask 2.3",
     # SpiffWorkflow/bpmn/PythonScriptEngineEnvironment.py
-    'ignore:The usage of Box has been deprecated'
+    'ignore:The usage of Box has been deprecated',
+    # dateutil/tz/tz.py:37
+    'ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated:DeprecationWarning',
 ]
 
 [tool.coverage.paths]
