@@ -34,6 +34,10 @@ import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
+import {
+  childrenForErrorObject,
+  errorForDisplayFromString,
+} from './ErrorDisplay';
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -70,12 +74,6 @@ export default function ProcessInstanceListTable({
   textToShowIfEmpty,
   variant = 'for-me',
 }: OwnProps) {
-  if (additionalReportFilters && reportMetadata) {
-    console.error(
-      'Both reportMetadata and additionalReportFilters were provided. ',
-      'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.'
-    );
-  }
   const navigate = useNavigate();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [searchParams] = useSearchParams();
@@ -129,10 +127,8 @@ export default function ProcessInstanceListTable({
     [onProcessInstanceTableListUpdate]
   );
 
-  useEffect(() => {
-    const getProcessInstances = (
-      reportMetadataArg: ReportMetadata | undefined | null = reportMetadata
-    ) => {
+  const getProcessInstances = useCallback(
+    (reportMetadataArg: ReportMetadata | undefined | null = reportMetadata) => {
       let reportMetadataToUse: ReportMetadata = {
         columns: [],
         filter_by: [],
@@ -171,7 +167,20 @@ export default function ProcessInstanceListTable({
           report_metadata: reportMetadataToUse,
         },
       });
-    };
+    },
+    [
+      additionalReportFilters,
+      paginationQueryParamPrefix,
+      perPageOptions,
+      processInstanceApiSearchPath,
+      reportMetadata,
+      searchParams,
+      setProcessInstancesFromResult,
+      stopRefreshing,
+    ]
+  );
+
+  useEffect(() => {
     const setReportMetadataFromReport = (
       processInstanceReport: ProcessInstanceReport
     ) => {
@@ -189,26 +198,24 @@ export default function ProcessInstanceListTable({
         getProcessInstances();
       }
     };
-    checkForReportAndRun();
+    if (reportIdentifier || reportMetadata) {
+      checkForReportAndRun();
 
-    if (autoReload) {
-      clearRefreshRef.current = refreshAtInterval(
-        DateAndTimeService.REFRESH_INTERVAL_SECONDS,
-        DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-        checkForReportAndRun
-      );
-      return clearRefreshRef.current;
+      if (autoReload) {
+        clearRefreshRef.current = refreshAtInterval(
+          DateAndTimeService.REFRESH_INTERVAL_SECONDS,
+          DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
+          checkForReportAndRun
+        );
+        return clearRefreshRef.current;
+      }
     }
     return undefined;
   }, [
-    additionalReportFilters,
     autoReload,
-    paginationQueryParamPrefix,
-    perPageOptions,
-    processInstanceApiSearchPath,
+    getProcessInstances,
     reportIdentifier,
     reportMetadata,
-    searchParams,
     setProcessInstancesFromResult,
     stopRefreshing,
   ]);
@@ -509,6 +516,20 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const errors: string[] = [];
+  if (additionalReportFilters && reportMetadata) {
+    errors.push(
+      'Both reportMetadata and additionalReportFilters were provided. ' +
+        'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.'
+    );
+  }
+  if (reportIdentifier && reportMetadata) {
+    errors.push(
+      'Both reportIdentifier and reportMetadata were provided. ' +
+        'You must use one or the other.'
+    );
+  }
+
   let tableElement = null;
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
     // eslint-disable-next-line prefer-const
@@ -538,6 +559,19 @@ export default function ProcessInstanceListTable({
       <p className="no-results-message with-large-bottom-margin">
         {textToShowIfEmpty}
       </p>
+    );
+  }
+
+  if (errors.length > 0) {
+    return (
+      <Grid fullWidth condensed className="megacondensed">
+        {tableTitleLine()}
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {childrenForErrorObject(
+            errorForDisplayFromString(errors.join(' ::: '))
+          )}
+        </Column>
+      </Grid>
     );
   }
   return (

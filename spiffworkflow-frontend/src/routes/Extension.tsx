@@ -26,7 +26,7 @@ import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import LoginHandler from '../components/LoginHandler';
 import SpiffTabs from '../components/SpiffTabs';
-import ProcessInstanceListTableWithFilters from '../components/ProcessInstanceListTableWithFilters';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import CreateNewInstance from './CreateNewInstance';
 
 type OwnProps = {
@@ -68,10 +68,10 @@ export default function Extension({
 
   const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
     CreateNewInstance,
-    SpiffTabs,
-    ProcessInstanceListTableWithFilters,
-    ProcessInstanceRun,
     MarkdownRenderer,
+    ProcessInstanceListTable,
+    ProcessInstanceRun,
+    SpiffTabs,
   };
 
   const interpolateNavigationString = useCallback(
