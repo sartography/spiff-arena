@@ -1,4 +1,3 @@
-
 from flask import g
 from flask.app import Flask
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
@@ -17,7 +16,7 @@ class TestGetGroupsForUser(BaseTest):
         testuser1 = self.find_or_create_user("testuser1")
         group1 = UserService.find_or_create_group("group1")
         group2 = UserService.find_or_create_group("group2")
-        group3 = UserService.find_or_create_group("group3")
+        UserService.find_or_create_group("group3")
         UserService.add_user_to_group(testuser1, group1)
         UserService.add_user_to_group(testuser1, group2)
 
