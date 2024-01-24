@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { Close, AddAlt, ArrowRight } from '@carbon/icons-react';
+import { Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -31,12 +31,7 @@ import {
   DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
 } from '../config';
-import {
-  getKeyByValue,
-  getPageInfoFromSearchParams,
-  titleizeString,
-  truncateString,
-} from '../helpers';
+import { getKeyByValue, titleizeString, truncateString } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 import 'react-datepicker/dist/react-datepicker.css';
@@ -108,12 +103,6 @@ export default function ProcessInstanceListTable({
   header,
   tableHtmlId,
 }: OwnProps) {
-  // eslint-disable-next-line sonarjs/no-duplicate-string
-  let processInstanceApiSearchPath = '/process-instances/for-me';
-  if (variant === 'all') {
-    processInstanceApiSearchPath = '/process-instances';
-  }
-
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
@@ -126,6 +115,7 @@ export default function ProcessInstanceListTable({
     permissionRequestData
   );
   const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
+  const [applyFilterClicked, setApplyFilterClicked] = useState<boolean>(false);
 
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
 
@@ -193,6 +183,8 @@ export default function ProcessInstanceListTable({
   const [processInitiatorSelection, setProcessInitiatorSelection] = useState<
     string | null
   >(null);
+  const [autoReloadEnabled, setAutoReloadEnabled] =
+    useState<boolean>(autoReload);
 
   const [showAdvancedOptions, setShowAdvancedOptions] =
     useState<boolean>(false);
@@ -276,40 +268,6 @@ export default function ProcessInstanceListTable({
     // delay in ms
     250
   );
-
-  const setProcessInstancesFromResult = useCallback((result: any) => {
-    setRequiresRefilter(false);
-    setReportMetadata(result.report_metadata);
-    if (result.report_hash) {
-      setReportHash(result.report_hash);
-    }
-  }, []);
-
-  // only called when the apply button is clicked
-  const setProcessInstancesFromApplyFilter = (result: any) => {
-    setProcessInstancesFromResult(result);
-    if (result.report_hash) {
-      searchParams.set('report_hash', result.report_hash);
-      // whenever apply button is clicked, we want to reset the page to 1,
-      // since the user has changed the filters
-      if (searchParams.get('page') !== '1') {
-        searchParams.set('page', '1');
-      }
-      setSearchParams(searchParams);
-    }
-  };
-
-  // Useful to stop refreshing if an api call gets an error
-  // since those errors can make the page unusable in any way
-  const clearRefreshRef = useRef<any>(null);
-  const stopRefreshing = useCallback((error: any) => {
-    if (clearRefreshRef.current) {
-      clearRefreshRef.current();
-    }
-    if (error) {
-      console.error(error);
-    }
-  }, []);
 
   // we apparently cannot use a state set in a useEffect from within that same useEffect
   // so use a variable instead
@@ -445,23 +403,14 @@ export default function ProcessInstanceListTable({
       }
       setRequiresRefilter(false);
       setReportMetadata(reportMetadataBodyToUse);
-      // if (result.report_hash) {
-      //   setReportHash(result.report_hash);
-      // }
     },
     [
       additionalReportFilters,
+      clearFilters,
       dateParametersToAlwaysFilterBy,
       filtersEnabled,
-      paginationQueryParamPrefix,
-      perPageOptions,
-      processInstanceApiSearchPath,
-      searchParams,
-      setProcessInstancesFromResult,
-      stopRefreshing,
-      systemReportOptions,
       showActionsColumn,
-      clearFilters,
+      systemReportOptions,
     ]
   );
 
@@ -485,7 +434,7 @@ export default function ProcessInstanceListTable({
         HttpService.makeCallToBackend({
           path: `/process-instances/report-metadata${queryParamString}`,
           successCallback: setReportMetadataFromReport,
-          onUnauthorized: stopRefreshing,
+          onUnauthorized: () => setAutoReloadEnabled(false),
         });
       } else {
         setReportMetadataFromReport();
@@ -529,7 +478,6 @@ export default function ProcessInstanceListTable({
     permissionsLoaded,
     reportIdentifier,
     searchParams,
-    stopRefreshing,
   ]);
 
   const processInstanceReportSaveTag = () => {
@@ -771,29 +719,9 @@ export default function ProcessInstanceListTable({
     event.preventDefault();
     setProcessInitiatorNotFoundErrorText('');
 
-    // eslint-disable-next-line prefer-const
-    let { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      undefined,
-      undefined,
-      paginationQueryParamPrefix
-    );
-    page = 1;
-
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
     setReportMetadata(newReportMetadata);
-
-    // const queryParamString = `per_page=${perPage}&page=${page}`;
-    // HttpService.makeCallToBackend({
-    //   path: `${processInstanceApiSearchPath}?${queryParamString}`,
-    //   httpMethod: 'POST',
-    //   postBody: { report_metadata: newReportMetadata },
-    //   failureCallback: stopRefreshing,
-    //   onUnauthorized: stopRefreshing,
-    //   successCallback: (result: any) => {
-    //     setProcessInstancesFromApplyFilter(result);
-    //   },
-    // });
+    setApplyFilterClicked(true);
   };
 
   const dateComponent = (
@@ -1620,72 +1548,21 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
-  const tableTitleLine = () => {
-    if (!showLinkToReport && !header) {
-      return null;
-    }
-    let filterButtonLink = null;
-    if (showLinkToReport) {
-      filterButtonLink = (
-        <Column
-          sm={{ span: 1, offset: 3 }}
-          md={{ span: 1, offset: 7 }}
-          lg={{ span: 1, offset: 15 }}
-          style={{ textAlign: 'right' }}
-        >
-          <Button
-            data-qa="process-instance-list-link"
-            renderIcon={ArrowRight}
-            iconDescription="View Filterable List"
-            hasIconOnly
-            size="md"
-            onClick={() =>
-              navigate(`/process-instances?report_hash=${reportHash}`)
-            }
-          />
-        </Column>
-      );
-    }
-    if (!header && !filterButtonLink) {
-      return null;
-    }
-    let headerTextElement = null;
-    if (header) {
-      headerTextElement = header.text;
-      // poor man's markdown, just so we can allow bolded words in headers
-      if (header.text.includes('**')) {
-        const parts = header.text.split('**');
-        if (parts.length === 3) {
-          headerTextElement = (
-            <>
-              {parts[0]}
-              <strong>{parts[1]}</strong>
-              {parts[2]}
-            </>
-          );
+  const onProcessInstanceTableListUpdate = (result: any) => {
+    if (applyFilterClicked) {
+      if (result.report_hash) {
+        setReportHash(result.report_hash);
+        searchParams.set('report_hash', result.report_hash);
+        // whenever apply button is clicked, we want to reset the page to 1,
+        // since the user has changed the filters
+        if (requiresRefilter && searchParams.get('page') !== '1') {
+          searchParams.set('page', '1');
         }
+        setSearchParams(searchParams);
       }
+      setApplyFilterClicked(false);
+      setRequiresRefilter(false);
     }
-    return (
-      <>
-        <Column
-          sm={{ span: 3 }}
-          md={{ span: 7 }}
-          lg={{ span: 15 }}
-          style={{ height: '48px' }}
-        >
-          {header ? (
-            <h2
-              title={header.tooltip_text}
-              className="process-instance-table-header"
-            >
-              {headerTextElement}
-            </h2>
-          ) : null}
-        </Column>
-        {filterButtonLink}
-      </>
-    );
   };
 
   let resultsTable = null;
@@ -1703,16 +1580,19 @@ export default function ProcessInstanceListTable({
       <>
         {refilterTextComponent}
         <ProcessInstanceListTableOnly
+          autoReload={autoReloadEnabled}
+          canCompleteAllTasks={canCompleteAllTasks}
+          header={header}
+          onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
+          paginationClassName={paginationClassName}
           paginationQueryParamPrefix={paginationQueryParamPrefix}
           perPageOptions={perPageOptions}
-          textToShowIfEmpty={textToShowIfEmpty}
-          paginationClassName={paginationClassName}
-          autoReload={autoReload}
-          variant={variant}
-          canCompleteAllTasks={canCompleteAllTasks}
-          showActionsColumn={showActionsColumn}
-          tableHtmlId={tableHtmlId}
           reportMetadata={reportMetadata}
+          showActionsColumn={showActionsColumn}
+          showLinkToReport={showLinkToReport}
+          tableHtmlId={tableHtmlId}
+          textToShowIfEmpty={textToShowIfEmpty}
+          variant={variant}
         />
       </>
     );
@@ -1724,7 +1604,6 @@ export default function ProcessInstanceListTable({
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
       <Grid fullWidth condensed className="megacondensed">
-        {tableTitleLine()}
         <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           <Filters
             filterOptions={filterOptions}
@@ -1735,10 +1614,8 @@ export default function ProcessInstanceListTable({
             reportHash={reportHash}
           />
         </Column>
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-          {resultsTable}
-        </Column>
       </Grid>
+      {resultsTable}
     </div>
   );
 }

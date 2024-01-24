@@ -1,4 +1,13 @@
-import { TableRow, Table, TableHeader, TableHead, Button } from '@carbon/react';
+import { ArrowRight } from '@carbon/icons-react';
+import {
+  Grid,
+  Column,
+  TableRow,
+  Table,
+  TableHeader,
+  TableHead,
+  Button,
+} from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -16,6 +25,7 @@ import {
   ProcessInstance,
   ReportColumn,
   ReportMetadata,
+  SpiffTableHeader,
 } from '../interfaces';
 import DateAndTimeService from '../services/DateAndTimeService';
 import HttpService from '../services/HttpService';
@@ -34,6 +44,9 @@ type OwnProps = {
   showActionsColumn?: boolean;
   tableHtmlId?: string;
   reportMetadata: ReportMetadata;
+  showLinkToReport?: boolean;
+  header?: SpiffTableHeader;
+  onProcessInstanceTableListUpdate?: Function;
 };
 
 export default function ProcessInstanceListTableOnly({
@@ -47,6 +60,9 @@ export default function ProcessInstanceListTableOnly({
   showActionsColumn = false,
   tableHtmlId,
   reportMetadata,
+  showLinkToReport = false,
+  header,
+  onProcessInstanceTableListUpdate,
 }: OwnProps) {
   const navigate = useNavigate();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -59,6 +75,11 @@ export default function ProcessInstanceListTableOnly({
     reportMetadataFromProcessInstances,
     setreportMetadataFromProcessInstances,
   ] = useState<ReportMetadata | null>(null);
+
+  // this is used from pages like the home page that have multiple tables
+  // and cannot store the report hash in the query params.
+  // it can be used to create a link to the process instances list page to reconstruct the report.
+  const [reportHash, setReportHash] = useState<string | null>(null);
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
   const processInstanceShowPathPrefix =
@@ -82,14 +103,21 @@ export default function ProcessInstanceListTableOnly({
     }
   }, []);
 
-  useEffect(() => {
-    const setProcessInstancesFromResult = (result: any) => {
+  const setProcessInstancesFromResult = useCallback(
+    (result: any) => {
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
       setPagination(result.pagination);
       setreportMetadataFromProcessInstances(result.report_metadata);
-    };
+      setReportHash(result.report_hash);
+      if (onProcessInstanceTableListUpdate) {
+        onProcessInstanceTableListUpdate(result);
+      }
+    },
+    [onProcessInstanceTableListUpdate]
+  );
 
+  useEffect(() => {
     const getProcessInstances = () => {
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
@@ -133,6 +161,7 @@ export default function ProcessInstanceListTableOnly({
     processInstanceApiSearchPath,
     reportMetadata,
     searchParams,
+    setProcessInstancesFromResult,
     stopRefreshing,
   ]);
 
@@ -255,6 +284,74 @@ export default function ProcessInstanceListTableOnly({
     );
   };
 
+  const tableTitleLine = () => {
+    if (!showLinkToReport && !header) {
+      return null;
+    }
+    let filterButtonLink = null;
+    if (showLinkToReport) {
+      filterButtonLink = (
+        <Column
+          sm={{ span: 1, offset: 3 }}
+          md={{ span: 1, offset: 7 }}
+          lg={{ span: 1, offset: 15 }}
+          style={{ textAlign: 'right' }}
+        >
+          <Button
+            data-qa="process-instance-list-link"
+            renderIcon={ArrowRight}
+            iconDescription="View Filterable List"
+            hasIconOnly
+            size="md"
+            onClick={() =>
+              navigate(`/process-instances?report_hash=${reportHash}`)
+            }
+          />
+        </Column>
+      );
+    }
+    if (!header && !filterButtonLink) {
+      return null;
+    }
+    let headerTextElement = null;
+    if (header) {
+      headerTextElement = header.text;
+      // poor man's markdown, just so we can allow bolded words in headers
+      if (header.text.includes('**')) {
+        const parts = header.text.split('**');
+        if (parts.length === 3) {
+          headerTextElement = (
+            <>
+              {parts[0]}
+              <strong>{parts[1]}</strong>
+              {parts[2]}
+            </>
+          );
+        }
+      }
+    }
+    return (
+      <>
+        <Column
+          sm={{ span: 3 }}
+          md={{ span: 7 }}
+          lg={{ span: 15 }}
+          style={{ height: '48px' }}
+        >
+          {header ? (
+            <h2
+              title={header.tooltip_text}
+              className="process-instance-table-header"
+            >
+              {headerTextElement}
+            </h2>
+          ) : null}
+        </Column>
+        {filterButtonLink}
+      </>
+    );
+  };
+
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const buildTable = () => {
     const headers = reportColumns().map((column: ReportColumn) => {
@@ -363,6 +460,8 @@ export default function ProcessInstanceListTableOnly({
       </Table>
     );
   };
+
+  let tableElement = null;
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
@@ -375,7 +474,7 @@ export default function ProcessInstanceListTableOnly({
       // eslint-disable-next-line prefer-destructuring
       perPage = perPageOptions[1];
     }
-    return (
+    tableElement = (
       <PaginationForTable
         page={page}
         perPage={perPage}
@@ -386,13 +485,19 @@ export default function ProcessInstanceListTableOnly({
         paginationClassName={paginationClassName}
       />
     );
-  }
-  if (textToShowIfEmpty) {
-    return (
+  } else if (textToShowIfEmpty) {
+    tableElement = (
       <p className="no-results-message with-large-bottom-margin">
         {textToShowIfEmpty}
       </p>
     );
   }
-  return null;
+  return (
+    <Grid fullWidth condensed className="megacondensed">
+      {tableTitleLine()}
+      <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+        {tableElement}
+      </Column>
+    </Grid>
+  );
 }
