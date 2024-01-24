@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import ProcessInstanceListTableOnly from '../components/ProcessInstanceListTableOnly';
 import { slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -22,27 +22,24 @@ export default function InProgressInstances() {
       const titleText = `This is a list of instances with tasks that are waiting for the ${userGroup} group.`;
       const headerElement = {
         tooltip_text: titleText,
-        text: `Waiting for <strong>${userGroup}</strong>`,
+        text: `Waiting for **${userGroup}**`,
       };
       const identifierForTable = `waiting-for-${slugifyString(userGroup)}`;
       return (
-        <ProcessInstanceListTable
-          header={headerElement}
-          tableHtmlId={identifierForTable}
-          showLinkToReport
-          filtersEnabled={false}
-          paginationQueryParamPrefix={identifierForTable.replace('-', '_')}
-          paginationClassName="with-large-bottom-margin"
-          perPageOptions={[2, 5, 25]}
-          reportIdentifier="system_report_in_progress_instances_with_tasks"
-          showReports={false}
-          textToShowIfEmpty="This group has no instances waiting on it at this time."
+        <ProcessInstanceListTableOnly
           additionalReportFilters={[
             { field_name: 'user_group_identifier', field_value: userGroup },
           ]}
-          canCompleteAllTasks
-          showActionsColumn
           autoReload
+          header={headerElement}
+          paginationClassName="with-large-bottom-margin"
+          paginationQueryParamPrefix={identifierForTable.replace('-', '_')}
+          perPageOptions={[2, 5, 25]}
+          reportIdentifier="system_report_in_progress_instances_with_tasks"
+          showActionsColumn
+          showLinkToReport
+          tableHtmlId={identifierForTable}
+          textToShowIfEmpty="This group has no instances waiting on it at this time."
         />
       );
     });
@@ -64,34 +61,29 @@ export default function InProgressInstances() {
 
   return (
     <>
-      <ProcessInstanceListTable
+      <ProcessInstanceListTableOnly
+        autoReload
         header={startedByMeHeaderElement}
-        tableHtmlId="open-instances-started-by-me"
-        filtersEnabled={false}
+        paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="open_instances_started_by_me"
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_in_progress_instances_initiated_by_me"
-        showReports={false}
-        textToShowIfEmpty="There are no open instances you started at this time."
-        paginationClassName="with-large-bottom-margin"
-        showLinkToReport
         showActionsColumn
-        autoReload
-      />
-      <ProcessInstanceListTable
-        header={waitingForMeHeaderElement}
-        tableHtmlId="waiting-for-me"
         showLinkToReport
-        filtersEnabled={false}
+        tableHtmlId="open-instances-started-by-me"
+        textToShowIfEmpty="There are no open instances you started at this time."
+      />
+      <ProcessInstanceListTableOnly
+        autoReload
+        header={waitingForMeHeaderElement}
+        paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="waiting_for_me"
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_in_progress_instances_with_tasks_for_me"
-        showReports={false}
-        textToShowIfEmpty="There are no instances waiting on you at this time."
-        paginationClassName="with-large-bottom-margin"
-        canCompleteAllTasks
         showActionsColumn
-        autoReload
+        showLinkToReport
+        tableHtmlId="waiting-for-me"
+        textToShowIfEmpty="There are no instances waiting on you at this time."
       />
       {groupTableComponents()}
     </>

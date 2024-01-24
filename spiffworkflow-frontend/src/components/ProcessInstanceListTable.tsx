@@ -455,7 +455,6 @@ export default function ProcessInstanceListTable({
         }
       );
       setProcessStatusAllOptions(processStatusAllOptionsArray);
-
       getReportMetadataWithReportHash();
     }
     const checkFiltersAndRun = () => {

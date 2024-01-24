@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import ProcessInstanceListTableOnly from '../components/ProcessInstanceListTableOnly';
 import { slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -22,27 +22,25 @@ export default function CompletedInstances() {
       const titleText = `This is a list of instances with tasks that were completed by the ${userGroup} group.`;
       const headerElement = {
         tooltip_text: titleText,
-        text: `Instances with tasks completed by <strong>${userGroup}</strong>`,
+        text: `Instances with tasks completed by **${userGroup}**`,
       };
       const identifierForTable = `completed-by-group-${slugifyString(
         userGroup
       )}`;
       return (
-        <ProcessInstanceListTable
-          header={headerElement}
-          tableHtmlId={identifierForTable}
-          showLinkToReport
-          filtersEnabled={false}
-          paginationQueryParamPrefix="group_completed_instances"
-          paginationClassName="with-large-bottom-margin"
-          perPageOptions={[2, 5, 25]}
-          reportIdentifier="system_report_completed_instances"
-          showReports={false}
-          textToShowIfEmpty="This group has no completed instances at this time."
+        <ProcessInstanceListTableOnly
           additionalReportFilters={[
             { field_name: 'user_group_identifier', field_value: userGroup },
           ]}
+          header={headerElement}
+          paginationClassName="with-large-bottom-margin"
+          paginationQueryParamPrefix="group_completed_instances"
+          perPageOptions={[2, 5, 25]}
+          reportIdentifier="system_report_completed_instances"
           showActionsColumn
+          showLinkToReport
+          tableHtmlId={identifierForTable}
+          textToShowIfEmpty="This group has no completed instances at this time."
         />
       );
     });
@@ -63,32 +61,27 @@ export default function CompletedInstances() {
 
   return (
     <>
-      <ProcessInstanceListTable
+      <ProcessInstanceListTableOnly
         header={startedByMeHeaderElement}
-        tableHtmlId="my-completed-instances"
-        showLinkToReport
-        filtersEnabled={false}
+        paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_instances"
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_completed_instances_initiated_by_me"
-        showReports={false}
-        textToShowIfEmpty="You have no completed instances at this time."
-        paginationClassName="with-large-bottom-margin"
-        autoReload
         showActionsColumn
-      />
-      <ProcessInstanceListTable
-        header={withTasksHeaderElement}
-        tableHtmlId="with-tasks-completed-by-me"
         showLinkToReport
-        filtersEnabled={false}
+        tableHtmlId="my-completed-instances"
+        textToShowIfEmpty="You have no completed instances at this time."
+      />
+      <ProcessInstanceListTableOnly
+        header={withTasksHeaderElement}
+        paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_tasks"
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_completed_instances_with_tasks_completed_by_me"
-        showReports={false}
-        textToShowIfEmpty="You have no completed instances at this time."
-        paginationClassName="with-large-bottom-margin"
         showActionsColumn
+        showLinkToReport
+        tableHtmlId="with-tasks-completed-by-me"
+        textToShowIfEmpty="You have no completed instances at this time."
       />
       {groupTableComponents()}
     </>

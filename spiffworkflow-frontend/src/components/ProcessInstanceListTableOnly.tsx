@@ -23,7 +23,9 @@ import {
 import {
   PaginationObject,
   ProcessInstance,
+  ProcessInstanceReport,
   ReportColumn,
+  ReportFilter,
   ReportMetadata,
   SpiffTableHeader,
 } from '../interfaces';
@@ -34,36 +36,46 @@ import PaginationForTable from './PaginationForTable';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 type OwnProps = {
-  paginationQueryParamPrefix?: string;
-  perPageOptions?: number[];
-  textToShowIfEmpty?: string;
-  paginationClassName?: string;
+  additionalReportFilters?: ReportFilter[];
   autoReload?: boolean;
-  variant?: string;
   canCompleteAllTasks?: boolean;
-  showActionsColumn?: boolean;
-  tableHtmlId?: string;
-  reportMetadata: ReportMetadata;
-  showLinkToReport?: boolean;
   header?: SpiffTableHeader;
   onProcessInstanceTableListUpdate?: Function;
+  paginationClassName?: string;
+  paginationQueryParamPrefix?: string;
+  perPageOptions?: number[];
+  reportIdentifier?: string;
+  reportMetadata?: ReportMetadata;
+  showActionsColumn?: boolean;
+  showLinkToReport?: boolean;
+  tableHtmlId?: string;
+  textToShowIfEmpty?: string;
+  variant?: string;
 };
 
 export default function ProcessInstanceListTableOnly({
-  paginationQueryParamPrefix,
-  perPageOptions,
-  textToShowIfEmpty,
-  paginationClassName,
+  additionalReportFilters,
   autoReload = false,
-  variant = 'for-me',
   canCompleteAllTasks = false,
-  showActionsColumn = false,
-  tableHtmlId,
-  reportMetadata,
-  showLinkToReport = false,
   header,
   onProcessInstanceTableListUpdate,
+  paginationClassName,
+  paginationQueryParamPrefix,
+  perPageOptions,
+  reportIdentifier,
+  reportMetadata,
+  showActionsColumn = false,
+  showLinkToReport = false,
+  tableHtmlId,
+  textToShowIfEmpty,
+  variant = 'for-me',
 }: OwnProps) {
+  if (additionalReportFilters && reportMetadata) {
+    console.error(
+      'Both reportMetadata and additionalReportFilters were provided. ',
+      'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.'
+    );
+  }
   const navigate = useNavigate();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [searchParams] = useSearchParams();
@@ -118,7 +130,9 @@ export default function ProcessInstanceListTableOnly({
   );
 
   useEffect(() => {
-    const getProcessInstances = () => {
+    const getProcessInstances = (
+      reportMetadataToUse: ReportMetadata | undefined | null = reportMetadata
+    ) => {
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
@@ -130,6 +144,13 @@ export default function ProcessInstanceListTableOnly({
         // eslint-disable-next-line prefer-destructuring
         perPage = perPageOptions[1];
       }
+      if (additionalReportFilters && reportMetadataToUse) {
+        additionalReportFilters.forEach((arf: ReportFilter) => {
+          if (!reportMetadataToUse.filter_by.includes(arf)) {
+            reportMetadataToUse.filter_by.push(arf);
+          }
+        });
+      }
 
       const queryParamString = `per_page=${perPage}&page=${page}`;
       HttpService.makeCallToBackend({
@@ -139,26 +160,47 @@ export default function ProcessInstanceListTableOnly({
         failureCallback: stopRefreshing,
         onUnauthorized: stopRefreshing,
         postBody: {
-          report_metadata: reportMetadata,
+          report_metadata: reportMetadataToUse,
         },
       });
     };
-    getProcessInstances();
+    const setReportMetadataFromReport = (
+      processInstanceReport: ProcessInstanceReport
+    ) => {
+      getProcessInstances(processInstanceReport.report_metadata);
+    };
+    const checkForReportAndRun = () => {
+      if (reportIdentifier) {
+        const queryParamString = `?report_identifier=${reportIdentifier}`;
+        HttpService.makeCallToBackend({
+          path: `/process-instances/report-metadata${queryParamString}`,
+          successCallback: setReportMetadataFromReport,
+          onUnauthorized: () => stopRefreshing,
+        });
+      } else if (!reportMetadata) {
+        console.error('reportMetadata or reportIdentifier must be provided.');
+      } else {
+        getProcessInstances();
+      }
+    };
+    checkForReportAndRun();
 
     if (autoReload) {
       clearRefreshRef.current = refreshAtInterval(
         DateAndTimeService.REFRESH_INTERVAL_SECONDS,
         DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-        getProcessInstances
+        checkForReportAndRun
       );
       return clearRefreshRef.current;
     }
     return undefined;
   }, [
+    additionalReportFilters,
     autoReload,
     paginationQueryParamPrefix,
     perPageOptions,
     processInstanceApiSearchPath,
+    reportIdentifier,
     reportMetadata,
     searchParams,
     setProcessInstancesFromResult,
