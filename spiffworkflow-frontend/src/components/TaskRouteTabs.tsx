@@ -9,7 +9,7 @@ export default function TaskRouteTabs() {
   }
 
   const spiffTabs: SpiffTab[] = [
-    { path: '/tasks/grouped', display_name: 'In Progress' },
+    { path: '/tasks/in-progress', display_name: 'In Progress' },
     { path: '/tasks/completed-instances', display_name: 'Completed' },
     { path: '/tasks/create-new-instance', display_name: 'Start New +' },
   ];

@@ -1560,7 +1560,15 @@ export default function ProcessInstanceListTableWithFilters({
         setSearchParams(searchParams);
       }
       setApplyFilterClicked(false);
-      setRequiresRefilter(false);
+    }
+
+    // anytime this is called we no longer need to refilter
+    setRequiresRefilter(false);
+
+    // if columns are length then assume the reportMetadata hasn't been fully set yet
+    // either by a passed in prop or by the api server
+    if (!reportMetadata || reportMetadata.columns.length === 0) {
+      setReportMetadata(result.report_metadata);
     }
   };
 
