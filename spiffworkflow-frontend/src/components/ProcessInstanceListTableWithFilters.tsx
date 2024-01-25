@@ -588,7 +588,7 @@ export default function ProcessInstanceListTableWithFilters({
   // re-rendered while the user is still typing. NOTE that we also prevented rerendering
   // with the use of the setErrorMessageSafely function. we are not sure why the context not
   // changing still causes things to rerender when we call its setter without our extra check.
-  const calculateStartAndEndSeconds = (validate: boolean = true) => {
+  const validateStartAndEndSeconds = () => {
     const startFromSeconds =
       DateAndTimeService.convertDateAndTimeStringsToSeconds(
         startFromDate,
@@ -608,37 +608,25 @@ export default function ProcessInstanceListTableWithFilters({
       endToDate,
       endToTime || '00:00:00'
     );
-    let valid = true;
 
-    if (validate) {
-      let message = '';
-      if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
-        message = '"Start date from" cannot be after "start date to"';
-      }
-      if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
-        message = '"End date from" cannot be after "end date to"';
-      }
-      if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
-        message = '"Start date from" cannot be after "end date from"';
-      }
-      if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
-        message = '"Start date to" cannot be after "end date to"';
-      }
-      if (message !== '') {
-        valid = false;
-        addError({ message } as ErrorForDisplay);
-      } else {
-        removeError();
-      }
+    let message = '';
+    if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
+      message = '"Start date from" cannot be after "start date to"';
     }
-
-    return {
-      valid,
-      startFromSeconds,
-      startToSeconds,
-      endFromSeconds,
-      endToSeconds,
-    };
+    if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
+      message = '"End date from" cannot be after "end date to"';
+    }
+    if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
+      message = '"Start date from" cannot be after "end date from"';
+    }
+    if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
+      message = '"Start date to" cannot be after "end date to"';
+    }
+    if (message !== '') {
+      addError({ message } as ErrorForDisplay);
+    } else {
+      removeError();
+    }
   };
 
   const reportColumns = () => {
@@ -696,7 +684,7 @@ export default function ProcessInstanceListTableWithFilters({
                 newValue
               );
               onChangeDateFunction(dateChangeEvent.srcElement.value);
-              calculateStartAndEndSeconds();
+              validateStartAndEndSeconds();
             }}
             value={initialDate}
           />
@@ -724,7 +712,7 @@ export default function ProcessInstanceListTableWithFilters({
               newValue
             );
             onChangeTimeFunction(event.srcElement.value);
-            calculateStartAndEndSeconds();
+            validateStartAndEndSeconds();
           }}
         />
       </>
@@ -739,7 +727,6 @@ export default function ProcessInstanceListTableWithFilters({
     if (!reportMetadata) {
       return null;
     }
-    const statusReportFilter = getFilterByFromReportMetadata('process_status');
     return (
       <MultiSelect
         label="Choose Status"
@@ -1057,16 +1044,21 @@ export default function ProcessInstanceListTableWithFilters({
           }}
         />
       );
+
+      // if we pass undefined into selectedItem followed by an actual value then the component changes from uncontrolled
+      // (i guess because selectedItem=undefined is treated the same as the parameter being omitted)
+      // to controlled so get the operator here and use null if it's undefined
+      const operator = getKeyByValue(
+        filterOperatorMappings,
+        reportColumnToOperateOn.filter_operator,
+        'id'
+      );
       formElements.push(
         <Dropdown
           titleText="Operator"
           id="report-column-condition-operator"
           items={Object.keys(filterOperatorMappings)}
-          selectedItem={getKeyByValue(
-            filterOperatorMappings,
-            reportColumnToOperateOn.filter_operator,
-            'id'
-          )}
+          selectedItem={operator || null}
           onChange={(value: any) => {
             setReportColumnConditionOperator(value.selectedItem);
           }}
@@ -1310,9 +1302,6 @@ export default function ProcessInstanceListTableWithFilters({
       });
     }
 
-    const userReportFilter = getFilterByFromReportMetadata(
-      'process_initiator_username'
-    );
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
