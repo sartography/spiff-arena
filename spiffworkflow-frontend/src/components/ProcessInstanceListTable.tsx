@@ -85,6 +85,7 @@ export default function ProcessInstanceListTable({
     reportMetadataFromProcessInstances,
     setreportMetadataFromProcessInstances,
   ] = useState<ReportMetadata | null>(null);
+  const [rmHash, setRmHash] = useState<string>('');
 
   // this is used from pages like the home page that have multiple tables
   // and cannot store the report hash in the query params.
@@ -129,6 +130,21 @@ export default function ProcessInstanceListTable({
 
   const getProcessInstances = useCallback(
     (reportMetadataArg: ReportMetadata | undefined | null = reportMetadata) => {
+      // eslint-disable-next-line prefer-const
+      let { page, perPage } = getPageInfoFromSearchParams(
+        searchParams,
+        undefined,
+        undefined,
+        paginationQueryParamPrefix
+      );
+
+      const newRmHash = JSON.stringify(reportMetadata) + page + perPage;
+      console.log('newRmHash', newRmHash);
+      console.log('rmHash', rmHash);
+      if (rmHash && rmHash === newRmHash) {
+        return;
+      }
+      setRmHash(newRmHash);
       let reportMetadataToUse: ReportMetadata = {
         columns: [],
         filter_by: [],
@@ -137,13 +153,6 @@ export default function ProcessInstanceListTable({
       if (reportMetadataArg) {
         reportMetadataToUse = reportMetadataArg;
       }
-      // eslint-disable-next-line prefer-const
-      let { page, perPage } = getPageInfoFromSearchParams(
-        searchParams,
-        undefined,
-        undefined,
-        paginationQueryParamPrefix
-      );
       if (perPageOptions && !perPageOptions.includes(perPage)) {
         // eslint-disable-next-line prefer-destructuring
         perPage = perPageOptions[1];
@@ -174,6 +183,7 @@ export default function ProcessInstanceListTable({
       perPageOptions,
       processInstanceApiSearchPath,
       reportMetadata,
+      rmHash,
       searchParams,
       setProcessInstancesFromResult,
       stopRefreshing,
@@ -181,6 +191,7 @@ export default function ProcessInstanceListTable({
   );
 
   useEffect(() => {
+    console.log('NO HERE');
     const setReportMetadataFromReport = (
       processInstanceReport: ProcessInstanceReport
     ) => {
@@ -216,6 +227,7 @@ export default function ProcessInstanceListTable({
     getProcessInstances,
     reportIdentifier,
     reportMetadata,
+    // reportMetadataInteger,
     setProcessInstancesFromResult,
     stopRefreshing,
   ]);

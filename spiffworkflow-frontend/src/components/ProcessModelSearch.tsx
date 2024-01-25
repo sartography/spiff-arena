@@ -8,6 +8,7 @@ type OwnProps = {
   onChange: (..._args: any[]) => any;
   processModels: ProcessModel[];
   selectedItem?: ProcessModel | null;
+  initialSelectedItem?: ProcessModel | null;
   titleText?: string;
   truncateProcessModelDisplayName?: boolean;
 };
@@ -15,6 +16,7 @@ type OwnProps = {
 export default function ProcessModelSearch({
   processModels,
   selectedItem,
+  initialSelectedItem,
   onChange,
   titleText = 'Process',
   truncateProcessModelDisplayName = false,
@@ -79,6 +81,7 @@ export default function ProcessModelSearch({
       placeholder="Choose a process model"
       titleText={titleText}
       selectedItem={selectedItem}
+      initialSelectedItem={initialSelectedItem}
       className="process-model-search-combobox"
     />
   );
