@@ -182,7 +182,6 @@ export default function ProcessInstanceListTable({
   );
 
   useEffect(() => {
-    console.log('NO HERE');
     const setReportMetadataFromReport = (
       processInstanceReport: ProcessInstanceReport
     ) => {

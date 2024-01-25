@@ -257,7 +257,6 @@ export default function ProcessInstanceListTableWithFilters({
       processInstanceReport: ProcessInstanceReport | null = null
       // eslint-disable-next-line sonarjs/cognitive-complexity
     ) => {
-      console.log('CALLBACK_ONE');
       let reportMetadataBodyToUse: ReportMetadata = {
         columns: [],
         filter_by: [],
@@ -365,7 +364,6 @@ export default function ProcessInstanceListTableWithFilters({
   // this is in its own callback to limit scrope of states we need to watch since
   // this function should never have to reload
   const getReportMetadataWithReportHash = useCallback(() => {
-    console.log('CALLBACK_2');
     const queryParams: string[] = [];
 
     // favor the reportHash state over the one in the searchParams
@@ -400,7 +398,6 @@ export default function ProcessInstanceListTableWithFilters({
   }, []);
 
   useEffect(() => {
-    console.log('PARENT USE EFFECT');
     if (!permissionsLoaded) {
       return;
     }
@@ -1212,9 +1209,27 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const advancedOptionsModal = () => {
-    if (!showAdvancedOptions) {
+    if (!showAdvancedOptions || !reportMetadata) {
       return null;
     }
+    const withOldestOpenTaskFilter = getFilterByFromReportMetadata(
+      'with_oldest_open_task'
+    );
+    const withRelationToMeFilter = getFilterByFromReportMetadata(
+      'with_relation_to_me'
+    );
+    const selectedUserGroupFilter = getFilterByFromReportMetadata(
+      'user_group_identifier'
+    );
+    let systemReportOptionValue = null;
+    systemReportOptions.forEach((systemReportOption: string) => {
+      const filter: ReportFilter | null | undefined =
+        getFilterByFromReportMetadata(systemReportOption);
+      if (filter && filter.field_value === true) {
+        systemReportOptionValue = filter.field_name;
+      }
+    });
+    console.log('systemReportOptionValue', systemReportOptionValue);
     const formElements = (
       <>
         <Grid fullWidth>
@@ -1224,9 +1239,15 @@ export default function ProcessInstanceListTableWithFilters({
               titleText="System report"
               items={['', ...systemReportOptions]}
               itemToString={(item: any) => titleizeString(item)}
-              selectedItem={systemReport}
+              selectedItem={systemReportOptionValue}
               onChange={(value: any) => {
-                setSystemReport(value.selectedItem);
+                systemReportOptions.forEach((systemReportOption: string) => {
+                  insertOrUpdateFieldInReportMetadata(
+                    reportMetadata,
+                    systemReportOption,
+                    value.selectedItem === systemReportOption
+                  );
+                });
               }}
             />
           </Column>
@@ -1236,9 +1257,17 @@ export default function ProcessInstanceListTableWithFilters({
               titleText="Assigned user group"
               items={['', ...userGroups]}
               itemToString={(item: any) => item}
-              selectedItem={selectedUserGroup}
+              selectedItem={
+                selectedUserGroupFilter
+                  ? selectedUserGroupFilter.field_value
+                  : null
+              }
               onChange={(value: any) => {
-                setSelectedUserGroup(value.selectedItem);
+                insertOrUpdateFieldInReportMetadata(
+                  reportMetadata,
+                  'user_group_identifier',
+                  value.selectedItem
+                );
               }}
             />
           </Column>
@@ -1249,10 +1278,16 @@ export default function ProcessInstanceListTableWithFilters({
             <Checkbox
               labelText="Include oldest open task information"
               id="with-oldest-open-task-checkbox"
-              checked={withOldestOpenTask}
+              checked={
+                withOldestOpenTaskFilter && withOldestOpenTaskFilter.field_value
+              }
               disabled={showActionsColumn}
               onChange={(value: any) => {
-                setWithOldestOpenTask(value.target.checked);
+                insertOrUpdateFieldInReportMetadata(
+                  reportMetadata,
+                  'with_oldest_open_task',
+                  value.target.checked
+                );
               }}
             />
           </Column>
@@ -1261,9 +1296,15 @@ export default function ProcessInstanceListTableWithFilters({
               <Checkbox
                 labelText="Include tasks for me"
                 id="with-relation-to-me"
-                checked={withRelationToMe}
+                checked={
+                  withRelationToMeFilter && withRelationToMeFilter.field_value
+                }
                 onChange={(value: any) => {
-                  setwithRelationToMe(value.target.checked);
+                  insertOrUpdateFieldInReportMetadata(
+                    reportMetadata,
+                    'with_relation_to_me',
+                    value.target.checked
+                  );
                 }}
               />
             </Column>
@@ -1543,7 +1584,6 @@ export default function ProcessInstanceListTableWithFilters({
   let resultsTable = null;
   if (reportMetadata) {
     const refilterTextComponent = null;
-    console.log('WE RENDER AGAIN?');
     resultsTable = (
       <>
         {refilterTextComponent}
