@@ -13,8 +13,12 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """KKVDataStore."""
 
     @staticmethod
-    def existing_data_stores() -> list[dict[str, Any]]:
-        data_stores = []
+    def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
+        data_stores: list[dict[str, Any]] = []
+
+        if process_group_identifier is not None:
+            # temporary until this data store gets location support
+            return data_stores
 
         keys = (
             db.session.query(KKVDataStoreModel.top_level_key)
@@ -23,12 +27,12 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             .all()
         )
         for key in keys:
-            data_stores.append({"name": key[0], "type": "kkv", "identifier": "", "clz": "KKVDataStore"})
+            data_stores.append({"name": key[0], "type": "kkv", "id": "", "clz": "KKVDataStore"})
 
         return data_stores
 
     @staticmethod
-    def query_data_store(name: str) -> Any:
+    def get_data_store_query(name: str, process_group_identifier: str | None) -> Any:
         return KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
             KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
         )

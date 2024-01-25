@@ -10,6 +10,7 @@ from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -18,15 +19,15 @@ DATA_STORES = {
 }
 
 
-def data_store_list() -> flask.wrappers.Response:
+def data_store_list(process_group_identifier: str | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
 
     # Right now the only data stores we support are type ahead, kkv, json
 
-    data_stores.extend(JSONDataStore.existing_data_stores())
-    data_stores.extend(TypeaheadDataStore.existing_data_stores())
-    data_stores.extend(KKVDataStore.existing_data_stores())
+    data_stores.extend(JSONDataStore.existing_data_stores(process_group_identifier))
+    data_stores.extend(TypeaheadDataStore.existing_data_stores(process_group_identifier))
+    data_stores.extend(KKVDataStore.existing_data_stores(process_group_identifier))
 
     return make_response(jsonify(data_stores), 200)
 
@@ -42,7 +43,7 @@ def data_store_types() -> flask.wrappers.Response:
 
 
 def _build_response(data_store_class: Any, name: str, page: int, per_page: int) -> flask.wrappers.Response:
-    data_store_query = data_store_class.query_data_store(name)
+    data_store_query = data_store_class.get_data_store_query(name, None)
     data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
     results = []
     for item in data.items:
@@ -70,6 +71,14 @@ def data_store_item_list(data_store_type: str, name: str, page: int = 1, per_pag
 
 
 def data_store_create(body: dict) -> flask.wrappers.Response:
+    return _data_store_upsert(body, True)
+
+
+def data_store_update(body: dict) -> flask.wrappers.Response:
+    return _data_store_upsert(body, False)
+
+
+def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     try:
         data_store_type = body["type"]
         name = body["name"]
@@ -97,6 +106,46 @@ def data_store_create(body: dict) -> flask.wrappers.Response:
         raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
 
     data_store_class, _ = DATA_STORES[data_store_type]
-    data_store_class.create_instance(name, identifier, location, schema, description)
+
+    if insert:
+        model = data_store_class.create_instance(identifier, location)
+    else:
+        model = data_store_class.existing_instance(identifier, location)
+
+    model.name = name
+    model.schema = schema
+    model.description = description or ""
+
+    db.session.add(model)
+    db.session.commit()
 
     return make_response(jsonify({"ok": True}), 200)
+
+
+def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
+    """Returns a description of a data store."""
+
+    if data_store_type not in DATA_STORES:
+        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+
+    data_store_class, _ = DATA_STORES[data_store_type]
+    data_store_query = data_store_class.get_data_store_query(identifier, process_group_identifier)
+    result = data_store_query.first()
+
+    if result is None:
+        raise ApiError(
+            "could_not_locate_data_store",
+            f"Could not locate data store type: {data_store_type} for process group: {process_group_identifier}",
+            status_code=400,
+        )
+
+    response = {
+        "name": result.name,
+        "location": result.location,
+        "type": data_store_type,
+        "id": result.identifier,
+        "schema": result.schema,
+        "description": result.description,
+    }
+
+    return make_response(jsonify(response), 200)
