@@ -6,7 +6,7 @@ import {
   Modal,
   // @ts-ignore
 } from '@carbon/react';
-import { ProcessInstanceReport } from '../interfaces';
+import { ProcessInstanceReport, ReportMetadata } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
@@ -14,7 +14,7 @@ type OwnProps = {
   buttonText?: string;
   buttonClassName?: string;
   processInstanceReportSelection?: ProcessInstanceReport | null;
-  getReportMetadataCallback: Function;
+  reportMetadata: ReportMetadata | null;
 };
 
 export default function ProcessInstanceListSaveAsReport({
@@ -22,7 +22,7 @@ export default function ProcessInstanceListSaveAsReport({
   processInstanceReportSelection,
   buttonClassName,
   buttonText = 'Save as Perspective',
-  getReportMetadataCallback,
+  reportMetadata,
 }: OwnProps) {
   const [identifier, setIdentifier] = useState<string>(
     processInstanceReportSelection?.identifier || ''
@@ -49,11 +49,6 @@ export default function ProcessInstanceListSaveAsReport({
 
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
-
-    const reportMetadata = getReportMetadataCallback();
-    if (!reportMetadata) {
-      return;
-    }
 
     let path = `/process-instances/reports`;
     let httpMethod = 'POST';
