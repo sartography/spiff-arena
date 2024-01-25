@@ -31,7 +31,12 @@ import {
   DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
 } from '../config';
-import { getKeyByValue, titleizeString, truncateString } from '../helpers';
+import {
+  getKeyByValue,
+  getPageInfoFromSearchParams,
+  titleizeString,
+  truncateString,
+} from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 import 'react-datepicker/dist/react-datepicker.css';
@@ -1501,21 +1506,39 @@ export default function ProcessInstanceListTableWithFilters({
     return null;
   };
 
-  const onProcessInstanceTableListUpdate = (result: any) => {
-    if (result.report_hash && result.report_hash !== reportHash) {
-      setReportHash(result.report_hash);
-      searchParams.set('page', '1');
-      setSearchParams(searchParams);
-    }
+  const onProcessInstanceTableListUpdate = useCallback(
+    (result: any) => {
+      // mostly for pagination so we do not set the page to 1 if the report did not change
+      if (result.report_hash && result.report_hash !== reportHash) {
+        setReportHash(result.report_hash);
+        const { page } = getPageInfoFromSearchParams(
+          searchParams,
+          undefined,
+          undefined,
+          paginationQueryParamPrefix
+        );
+        if (page !== 1) {
+          searchParams.set('page', '1');
+          setSearchParams(searchParams);
+        }
+      }
 
-    // if columns are length then assume the reportMetadata hasn't been fully set yet
-    // either by a passed in prop or by the api server.
-    // Note that reportMetadata is also never expected to be falsy here since the table cannot
-    // render without and therefore this method would never get called.
-    if (!reportMetadata || reportMetadata.columns.length === 0) {
-      setReportMetadata(result.report_metadata);
-    }
-  };
+      // if columns array is empty, assume the reportMetadata hasn't been fully set yet
+      // either by a passed in prop or by the api server.
+      // Note that reportMetadata is also never expected to be falsy here since the table cannot
+      // render without and therefore this method would never get called.
+      if (!reportMetadata || reportMetadata.columns.length === 0) {
+        setReportMetadata(result.report_metadata);
+      }
+    },
+    [
+      reportHash,
+      reportMetadata,
+      searchParams,
+      setSearchParams,
+      paginationQueryParamPrefix,
+    ]
+  );
 
   let resultsTable = null;
   if (reportMetadata) {
