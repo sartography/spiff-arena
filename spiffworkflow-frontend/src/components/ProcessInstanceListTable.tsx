@@ -199,17 +199,15 @@ export default function ProcessInstanceListTable({
         getProcessInstances();
       }
     };
-    if (reportIdentifier || reportMetadata) {
-      checkForReportAndRun();
+    checkForReportAndRun();
 
-      if (autoReload) {
-        clearRefreshRef.current = refreshAtInterval(
-          DateAndTimeService.REFRESH_INTERVAL_SECONDS,
-          DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-          checkForReportAndRun
-        );
-        return clearRefreshRef.current;
-      }
+    if (autoReload) {
+      clearRefreshRef.current = refreshAtInterval(
+        DateAndTimeService.REFRESH_INTERVAL_SECONDS,
+        DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
+        checkForReportAndRun
+      );
+      return clearRefreshRef.current;
     }
     return undefined;
   }, [
