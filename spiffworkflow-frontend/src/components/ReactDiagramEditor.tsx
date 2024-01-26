@@ -154,13 +154,13 @@ export default function ReactDiagramEditor({
         }
         try {
           if (amount === 0) {
-            const canvas = (modeler as any).get('canvas');
+            const canvas = modeler.get('canvas');
             canvas.zoom(FitViewport, 'auto');
           } else {
             modeler.get('zoomScroll').stepZoom(amount);
           }
         } catch (e) {
-          console.log(
+          console.error(
             'zoom failed, certain modes in DMN do not support zooming.',
             e
           );
@@ -174,8 +174,7 @@ export default function ReactDiagramEditor({
   // @ts-ignore
   const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
     // @ts-ignore
-    diagramModelerToUse.on('import.parse.complete', event => { // eslint-disable-line
-      // @ts-ignore
+    diagramModelerToUse.on('import.parse.complete', (event) => {
       if (!event.references) {
         return;
       }
