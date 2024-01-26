@@ -6,10 +6,17 @@ const filterByDate = (fromDate) => {
   cy.get('#date-picker-start-from').clear();
   cy.get('#date-picker-start-from').type(format(fromDate, DATE_FORMAT));
   cy.contains('Start date to').click();
+
+  // this can sometimes run a couple mintues after the instances are completed
+  // so avoid failing tests for that by setting the time as well
+  cy.get('#time-picker-start-from').clear();
+  cy.get('#time-picker-start-from').type(format(fromDate, 'HH:mm'));
+
   cy.get('#date-picker-end-from').clear();
   cy.get('#date-picker-end-from').type(format(fromDate, DATE_FORMAT));
   cy.contains('End date to').click();
-  cy.getBySel('filter-button').click();
+  cy.get('#time-picker-end-from').clear();
+  cy.get('#time-picker-end-from').type(format(fromDate, 'HH:mm'));
 };
 
 const updateDmnText = (oldText, newText, elementId = 'wonderful_process') => {
@@ -192,7 +199,6 @@ describe('process-instances', () => {
         cy.get(statusSelect).click();
         cy.get(statusSelect).contains(titleizeString(processStatus)).click();
         clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
-        cy.getBySel('filter-button').click();
 
         // make sure that there is 1 status item selected in the multiselect
         cy.get(`${statusSelect} .cds--tag`).contains('1');

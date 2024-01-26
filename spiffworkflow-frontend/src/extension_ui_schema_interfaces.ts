@@ -29,6 +29,7 @@ export interface UiSchemaForm {
 export interface UiSchemaAction {
   api_path: string;
 
+  ui_schema_page_components_variable?: string;
   persistence_level?: UiSchemaPersistenceLevel;
   process_id_to_run?: string;
   results_markdown_filename?: string;
@@ -76,5 +77,5 @@ export interface ExtensionApiResponse {
   task_data: any;
 
   rendered_results_markdown?: string;
-  redirect_to?: string;
+  ui_schema_page_components?: UiSchemaPageComponent[];
 }

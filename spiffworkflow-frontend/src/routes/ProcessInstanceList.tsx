@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
-import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import ProcessInstanceListTableWithFilters from '../components/ProcessInstanceListTableWithFilters';
 import {
   getProcessModelFullIdentifierFromSearchParams,
   setPageTitle,
@@ -53,7 +53,10 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
       <br />
       {processInstanceBreadcrumbElement()}
       {processInstanceTitleElement()}
-      <ProcessInstanceListTable variant={variant} showActionsColumn />
+      <ProcessInstanceListTableWithFilters
+        variant={variant}
+        showActionsColumn
+      />
     </>
   );
 }

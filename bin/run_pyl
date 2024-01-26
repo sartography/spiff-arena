@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -31,23 +31,16 @@ function get_python_dirs() {
 }
 
 function run_autofixers() {
-  # checking command -v ruff is not good enough, since the asdf shim may be installed, which will make command -v succeed,
-  # but ruff may not have been pip installed inside the correct version of python.
-  if ! ruff --help >/dev/null 2>&1; then
-    pip install ruff
-    asdf reshim python
-  fi
-
   python_dirs="$(get_python_dirs) bin"
   # shellcheck disable=2086
-  ruff --fix $python_dirs || echo ''
+  poetry run ruff --fix $python_dirs || echo ''
 }
 
 function run_pre_commmit() {
   poetry run pre-commit run --verbose --all-files
 }
 
-for react_project in "${react_projects[@]}" ; do
+for react_project in "${react_projects[@]}"; do
   # if pre, only do stuff when there are changes
   if [[ -n "$(git status --porcelain "$react_project")" ]]; then
     pushd "$react_project"
@@ -56,7 +49,7 @@ for react_project in "${react_projects[@]}" ; do
   fi
 done
 
-for python_project in "${python_projects[@]}" ; do
+for python_project in "${python_projects[@]}"; do
   # if pre, only do stuff when there are changes
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
     pushd "$python_project"
@@ -73,7 +66,7 @@ fi
 function clear_log_file() {
   unit_testing_log_file="./log/unit_testing.log"
   if [[ -f "$unit_testing_log_file" ]]; then
-    > "$unit_testing_log_file"
+    >"$unit_testing_log_file"
   fi
 }
 

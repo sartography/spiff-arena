@@ -96,32 +96,7 @@ def _run_extension(
     _raise_unless_extensions_api_enabled()
 
     process_model_identifier = _get_process_model_identifier(modified_process_model_identifier)
-
-    try:
-        process_model = _get_process_model(process_model_identifier)
-    except ApiError as ex:
-        if ex.error_code == "process_model_cannot_be_found":
-            # if process_model_identifier.startswith(current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"])
-            raise ApiError(
-                error_code="invalid_process_model_extension",
-                message=(
-                    f"Process Model '{process_model_identifier}' could not be found as an extension. It must be in the"
-                    " correct Process Group:"
-                    f" {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
-                ),
-                status_code=403,
-            ) from ex
-        raise ex
-
-    if process_model.primary_file_name is None:
-        raise ApiError(
-            error_code="process_model_missing_primary_bpmn_file",
-            message=(
-                f"Process Model '{process_model_identifier}' does not have a primary"
-                " bpmn file. One must be set in order to instantiate this model."
-            ),
-            status_code=400,
-        )
+    process_model = _get_process_model_or_raise(process_model_identifier)
 
     ui_schema_action = None
     persistence_level = "none"
@@ -220,3 +195,32 @@ def _add_extension_group_identifier_it_not_present(process_model_identifier: str
     if process_model_identifier.startswith(f"{extension_prefix}/"):
         return process_model_identifier
     return f"{extension_prefix}/{process_model_identifier}"
+
+
+def _get_process_model_or_raise(process_model_identifier: str) -> ProcessModelInfo:
+    try:
+        process_model = _get_process_model(process_model_identifier)
+    except ApiError as ex:
+        if ex.error_code == "process_model_cannot_be_found":
+            # if process_model_identifier.startswith(current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"])
+            raise ApiError(
+                error_code="invalid_process_model_extension",
+                message=(
+                    f"Process Model '{process_model_identifier}' could not be found as an extension. It must be in the"
+                    " correct Process Group:"
+                    f" {current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}"
+                ),
+                status_code=403,
+            ) from ex
+        raise ex
+
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_missing_primary_bpmn_file",
+            message=(
+                f"Process Model '{process_model_identifier}' does not have a primary"
+                " bpmn file. One must be set in order to instantiate this model."
+            ),
+            status_code=400,
+        )
+    return process_model

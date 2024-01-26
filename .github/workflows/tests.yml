@@ -16,11 +16,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { python: "3.12", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.12", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.11", os: "ubuntu-latest", session: "safety" }
           - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
           - {
               python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "mysql",
+              upload_coverage: true,
+            }
+          - {
+              python: "3.12",
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
@@ -33,7 +42,19 @@ jobs:
               database: "postgres",
             }
           - {
+              python: "3.12",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "postgres",
+            }
+          - {
               python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.12",
               os: "ubuntu-latest",
               session: "tests",
               database: "sqlite",
@@ -64,6 +85,15 @@ jobs:
               # probably the next release fixes it.
               # https://github.com/agronholm/typeguard/issues/242
               python: "3.11",
+              os: "ubuntu-latest",
+              session: "typeguard",
+              database: "sqlite",
+            }
+          - {
+              # typeguard 2.13.3 is broken with TypeDict in 3.11.
+              # probably the next release fixes it.
+              # https://github.com/agronholm/typeguard/issues/242
+              python: "3.12",
               os: "ubuntu-latest",
               session: "typeguard",
               database: "sqlite",

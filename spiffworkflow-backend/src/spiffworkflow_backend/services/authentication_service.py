@@ -6,6 +6,16 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from typing import Any
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509 import load_der_x509_certificate
+
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_AUDIENCE
+from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
+from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import SPIFF_OPEN_ID_KEY_ID
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -57,6 +67,7 @@ class AuthenticationOptionNotFoundError(Exception):
 
 class AuthenticationService:
     ENDPOINT_CACHE: dict[str, dict[str, str]] = {}  # We only need to find the openid endpoints once, then we can cache them.
+    JSON_WEB_KEYSET_CACHE: dict[str, dict[str, str]] = {}
 
     @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
@@ -87,6 +98,10 @@ class AuthenticationService:
         return config
 
     @classmethod
+    def valid_audiences(cls, authentication_identifier: str) -> list[str]:
+        return [cls.client_id(authentication_identifier)]
+
+    @classmethod
     def server_url(cls, authentication_identifier: str) -> str:
         """Returns the server url from the config."""
         config: str = cls.authentication_option_for_identifier(authentication_identifier)["uri"]
@@ -104,6 +119,8 @@ class AuthenticationService:
         openid_config_url = f"{cls.server_url(authentication_identifier)}/.well-known/openid-configuration"
         if authentication_identifier not in cls.ENDPOINT_CACHE:
             cls.ENDPOINT_CACHE[authentication_identifier] = {}
+        if authentication_identifier not in cls.JSON_WEB_KEYSET_CACHE:
+            cls.JSON_WEB_KEYSET_CACHE[authentication_identifier] = {}
         if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
             try:
                 response = requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
@@ -114,6 +131,63 @@ class AuthenticationService:
             raise Exception(f"Unknown OpenID Endpoint: {name}. Tried to get from {openid_config_url}")
         config: str = AuthenticationService.ENDPOINT_CACHE[authentication_identifier].get(name, "")
         return config
+
+    @classmethod
+    def get_jwks_config_from_uri(cls, jwks_uri: str) -> dict:
+        if jwks_uri not in AuthenticationService.JSON_WEB_KEYSET_CACHE:
+            try:
+                jwt_ks_response = requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+                AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri] = jwt_ks_response.json()
+            except requests.exceptions.ConnectionError as ce:
+                raise OpenIdConnectionError(f"Cannot connect to given jwks url: {jwks_uri}") from ce
+        return AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri]
+
+    @classmethod
+    def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict:
+        jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
+        jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
+        json_key_configs: dict = next(jk for jk in jwks_configs["keys"] if jk["kid"] == key_id)
+        return json_key_configs
+
+    @classmethod
+    def parse_jwt_token(cls, authentication_identifier: str, token: str) -> dict:
+        header = jwt.get_unverified_header(token)
+        key_id = str(header.get("kid"))
+
+        # if the token has our key id then we issued it and should verify to ensure it's valid
+        if key_id == SPIFF_GENERATED_JWT_KEY_ID:
+            return jwt.decode(
+                token,
+                str(current_app.secret_key),
+                algorithms=[SPIFF_GENERATED_JWT_ALGORITHM],
+                audience=SPIFF_GENERATED_JWT_AUDIENCE,
+                options={"verify_exp": False},
+            )
+        else:
+            json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
+            x5c = json_key_configs["x5c"][0]
+            algorithm = str(header.get("alg"))
+            decoded_certificate = base64.b64decode(x5c)
+
+            # our backend-based openid provider implementation (which you should never use in prod)
+            # uses a public/private key pair. we played around with adding an x509 cert so we could
+            # follow the exact same mechanism for getting the public key that we use for keycloak,
+            # but using an x509 cert for no reason seemed a little overboard for this toy-openid use case,
+            # when we already have the public key that can work hardcoded in our config.
+            public_key: Any = None
+            if key_id == SPIFF_OPEN_ID_KEY_ID:
+                public_key = decoded_certificate
+            else:
+                x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
+                public_key = x509_cert.public_key()
+
+            return jwt.decode(
+                token,
+                public_key,
+                algorithms=[algorithm],
+                audience=cls.valid_audiences(authentication_identifier)[0],
+                options={"verify_exp": False},
+            )
 
     @staticmethod
     def get_backend_url() -> str:
@@ -177,7 +251,7 @@ class AuthenticationService:
         if azp is None:
             return True
 
-        valid_client_ids = [cls.client_id(authentication_identifier), "account"]
+        valid_client_ids = [cls.client_id(authentication_identifier)]
         if (
             "additional_valid_client_ids" in cls.authentication_option_for_identifier(authentication_identifier)
             and cls.authentication_option_for_identifier(authentication_identifier)["additional_valid_client_ids"] is not None
@@ -190,30 +264,26 @@ class AuthenticationService:
         return azp in valid_client_ids
 
     @classmethod
-    def validate_id_or_access_token(cls, token: str, authentication_identifier: str) -> bool:
+    def validate_decoded_token(cls, decoded_token: dict, authentication_identifier: str) -> bool:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
         now = round(time.time())
-        try:
-            decoded_token = jwt.decode(token, options={"verify_signature": False})
-        except Exception as e:
-            raise TokenInvalidError("Cannot decode token") from e
 
         # give a 5 second leeway to iat in case keycloak server time doesn't match backend server
         iat_clock_skew_leeway = 5
 
         iss = decoded_token["iss"]
-        aud = decoded_token["aud"]
+        aud = decoded_token["aud"] if "aud" in decoded_token else None
         azp = decoded_token["azp"] if "azp" in decoded_token else None
         iat = decoded_token["iat"]
 
-        valid_audience_values = (cls.client_id(authentication_identifier), "account")
+        valid_audience_values = cls.valid_audiences(authentication_identifier)
         audience_array_in_token = aud
         if isinstance(aud, str):
             audience_array_in_token = [aud]
         overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
-        if iss != cls.server_url(authentication_identifier):
+        if iss not in [cls.server_url(authentication_identifier), UserModel.spiff_generated_jwt_issuer()]:
             current_app.logger.error(
                 f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url(authentication_identifier)}'"
             )
