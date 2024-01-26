@@ -32,7 +32,7 @@ class GetAllPermissions(Script):
             .add_columns(
                 PermissionAssignmentModel.permission,
                 PermissionTargetModel.uri,
-                GroupModel.identifier.label("group_identifier"),
+                GroupModel.identifier.label("group_identifier"),  # type: ignore
             )
             .all()
         )
