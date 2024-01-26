@@ -392,6 +392,12 @@ class ProcessInstanceReportService:
         if filter_found is False:
             filters.append(new_filter)
 
+    # When we say we want to filter by "waiting for group" or "waiting for specific user," what we probably assume is that
+    # there are human tasks that those people can actually complete right now.
+    # We don't exactly have that in the query directly, but if you pass a filter for user_group_identifier, it will get into
+    # this function, and if you pass any statuses, and if they are all "active" then it will do what you want, which is
+    # to look for only HumanTaskModel.completed.is_(False). So...we should probably make the widget add filters for
+    # both user_group_identifier and status. And we should make a method that does a similar thing for waiting for users.
     @classmethod
     def filter_by_user_group_identifier(
         cls,
@@ -428,7 +434,11 @@ class ProcessInstanceReportService:
             UserGroupAssignmentModel,
             UserGroupAssignmentModel.group_id == GroupModel.id,
         )
+
+        # FIXME: this may be problematic
+        # if user_group_identifier filter is set to something you are not in
         process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
+
         return process_instance_query
 
     @classmethod
