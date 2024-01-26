@@ -528,6 +528,18 @@ export default function ProcessInstanceListTable({
         'You must use one or the other.'
     );
   }
+  if (errors.length > 0) {
+    return (
+      <Grid fullWidth condensed className="megacondensed">
+        {tableTitleLine()}
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {childrenForErrorObject(
+            errorForDisplayFromString(errors.join(' ::: '))
+          )}
+        </Column>
+      </Grid>
+    );
+  }
 
   let tableElement = null;
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
@@ -558,19 +570,6 @@ export default function ProcessInstanceListTable({
       <p className="no-results-message with-large-bottom-margin">
         {textToShowIfEmpty}
       </p>
-    );
-  }
-
-  if (errors.length > 0) {
-    return (
-      <Grid fullWidth condensed className="megacondensed">
-        {tableTitleLine()}
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-          {childrenForErrorObject(
-            errorForDisplayFromString(errors.join(' ::: '))
-          )}
-        </Column>
-      </Grid>
     );
   }
   return (
