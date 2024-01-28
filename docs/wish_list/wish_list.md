@@ -42,6 +42,9 @@ Given these things are already in place, we just need to lock processes at the t
 Improve performance by pre-processing the BPMN Specification and generating the internal JSON representation so we no longer incur the expense of doing this on a per-process basis.
 This will also allow us to do some early and deep validation as well.
 
+### BPMN model versioning
+The model has version control functionality, and the active instances of the model are not affected by subsequent updates, preserving existing workflows.
+
 ## End User Experience
 
 ### UI Overview
@@ -63,6 +66,9 @@ It might also be available in the footer or under a help icon when displaying a 
 
 ### Process Heatmap
 Allow administrators to see an overlay of a BPMN diagram that shows all the process instances in the system and where they are (20 people are waiting on approval, 15 are in the re-review .....)
+
+### Tasks Permission
+Each task can be assigned to a responsible person for handling.
 
 ## Modeler Experience
 
