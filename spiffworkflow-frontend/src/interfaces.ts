@@ -503,3 +503,13 @@ export interface KeyboardShortcut {
 export interface KeyboardShortcuts {
   [key: string]: KeyboardShortcut;
 }
+
+export interface SpiffTab {
+  path: string;
+  display_name: string;
+}
+
+export interface SpiffTableHeader {
+  tooltip_text: string;
+  text: string;
+}

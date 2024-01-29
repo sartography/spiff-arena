@@ -20,30 +20,27 @@ export default function CompletedInstances() {
 
     return userGroups.map((userGroup: string) => {
       const titleText = `This is a list of instances with tasks that were completed by the ${userGroup} group.`;
-      const headerElement = (
-        <h2 title={titleText} className="process-instance-table-header">
-          Instances with tasks completed by <strong>{userGroup}</strong>
-        </h2>
-      );
+      const headerElement = {
+        tooltip_text: titleText,
+        text: `Instances with tasks completed by **${userGroup}**`,
+      };
       const identifierForTable = `completed-by-group-${slugifyString(
         userGroup
       )}`;
       return (
         <ProcessInstanceListTable
-          headerElement={headerElement}
-          tableHtmlId={identifierForTable}
-          showLinkToReport
-          filtersEnabled={false}
-          paginationQueryParamPrefix="group_completed_instances"
-          paginationClassName="with-large-bottom-margin"
-          perPageOptions={[2, 5, 25]}
-          reportIdentifier="system_report_completed_instances"
-          showReports={false}
-          textToShowIfEmpty="This group has no completed instances at this time."
           additionalReportFilters={[
             { field_name: 'user_group_identifier', field_value: userGroup },
           ]}
+          header={headerElement}
+          paginationClassName="with-large-bottom-margin"
+          paginationQueryParamPrefix="group_completed_instances"
+          perPageOptions={[2, 5, 25]}
+          reportIdentifier="system_report_completed_instances"
           showActionsColumn
+          showLinkToReport
+          tableHtmlId={identifierForTable}
+          textToShowIfEmpty="This group has no completed instances at this time."
         />
       );
     });
@@ -51,50 +48,40 @@ export default function CompletedInstances() {
 
   const startedByMeTitleText =
     'This is a list of instances you started that are now complete.';
-  const startedByMeHeaderElement = (
-    <h2 title={startedByMeTitleText} className="process-instance-table-header">
-      Started by me
-    </h2>
-  );
+  const startedByMeHeaderElement = {
+    tooltip_text: startedByMeTitleText,
+    text: 'Started by me',
+  };
   const withTasksCompletedByMeTitleText =
     'This is a list of instances where you have completed tasks.';
-  const withTasksHeaderElement = (
-    <h2
-      title={withTasksCompletedByMeTitleText}
-      className="process-instance-table-header"
-    >
-      Instances with tasks completed by me
-    </h2>
-  );
+  const withTasksHeaderElement = {
+    tooltip_text: withTasksCompletedByMeTitleText,
+    text: 'Instances with tasks completed by me',
+  };
 
   return (
     <>
       <ProcessInstanceListTable
-        headerElement={startedByMeHeaderElement}
-        tableHtmlId="my-completed-instances"
-        showLinkToReport
-        filtersEnabled={false}
+        header={startedByMeHeaderElement}
+        paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_instances"
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_completed_instances_initiated_by_me"
-        showReports={false}
-        textToShowIfEmpty="You have no completed instances at this time."
-        paginationClassName="with-large-bottom-margin"
-        autoReload
         showActionsColumn
+        showLinkToReport
+        tableHtmlId="my-completed-instances"
+        textToShowIfEmpty="You have no completed instances at this time."
       />
       <ProcessInstanceListTable
-        headerElement={withTasksHeaderElement}
-        tableHtmlId="with-tasks-completed-by-me"
-        showLinkToReport
-        filtersEnabled={false}
+        header={withTasksHeaderElement}
+        paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_tasks"
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_completed_instances_with_tasks_completed_by_me"
-        showReports={false}
-        textToShowIfEmpty="You have no completed instances at this time."
-        paginationClassName="with-large-bottom-margin"
         showActionsColumn
+        showLinkToReport
+        tableHtmlId="with-tasks-completed-by-me"
+        textToShowIfEmpty="You have no completed instances at this time."
       />
       {groupTableComponents()}
     </>

@@ -16,7 +16,7 @@ export default function HomeRoutes() {
         <Route path="/" element={<InProgressInstances />} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
-        <Route path="grouped" element={<InProgressInstances />} />
+        <Route path="in-progress" element={<InProgressInstances />} />
         <Route path="completed-instances" element={<CompletedInstances />} />
         <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>

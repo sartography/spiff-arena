@@ -865,7 +865,7 @@ class AuthorizationService:
         # do not remove the default user group
         added_group_identifiers.add(current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"])
         added_group_identifiers.add(SPIFF_GUEST_GROUP)
-        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()
+        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()  # type: ignore
         for gtd in groups_to_delete:
             db.session.delete(gtd)
 

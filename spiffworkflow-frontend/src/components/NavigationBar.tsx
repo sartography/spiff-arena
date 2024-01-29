@@ -63,16 +63,22 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     documentationUrl = DOCUMENTATION_URL;
   }
 
+  const processGroupPath = '/process-groups';
+
   const versionInfo = appVersionInfo();
 
   useEffect(() => {
-    let newActiveKey = '/process-groups';
+    let newActiveKey = 'unknown';
     if (location.pathname.match(/^\/messages\b/)) {
       newActiveKey = '/messages';
     } else if (location.pathname.match(/^\/process-instances\/reports\b/)) {
       newActiveKey = '/process-instances/reports';
     } else if (location.pathname.match(/^\/process-instances\b/)) {
       newActiveKey = '/process-instances';
+    } else if (location.pathname.match(/^\/process-(groups|models)\b/)) {
+      newActiveKey = processGroupPath;
+    } else if (location.pathname.match(/^\/editor\b/)) {
+      newActiveKey = processGroupPath;
     } else if (location.pathname.match(/^\/configuration\b/)) {
       newActiveKey = '/configuration';
     } else if (location.pathname.match(/^\/data-stores\b/)) {
@@ -231,8 +237,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         </HeaderMenuItem>
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
           <HeaderMenuItem
-            href="/process-groups"
-            isCurrentPage={isActivePage('/process-groups')}
+            href={processGroupPath}
+            isCurrentPage={isActivePage(processGroupPath)}
             data-qa="header-nav-processes"
           >
             Processes
