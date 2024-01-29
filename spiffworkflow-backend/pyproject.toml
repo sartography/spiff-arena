@@ -49,7 +49,7 @@ connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
 PyJWT = "^2.6.0"
-gunicorn = "^20.1.0"
+gunicorn = "^21.0.0"
 APScheduler = "*"
 Jinja2 = "^3.1.3"
 RestrictedPython = "^7.0"
@@ -80,6 +80,7 @@ flask-oauthlib = "^0.9.6"
 celery = {extras = ["redis"], version = "^5.3.5"}
 celery-stubs = "^0.1.3"
 jsonschema = "^4.20.0"
+chardet = "^5.2.0"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
