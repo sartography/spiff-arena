@@ -242,6 +242,8 @@ jobs:
         timeout-minutes: 20
         env:
           SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
+      - name: dump_logs
+        run: docker logs spiffworkflow-backend
       - name: wait_for_backend
         run: ./bin/wait_for_backend_to_be_up 5
 
