@@ -46,7 +46,7 @@ def _parse_environment(key_values: os._Environ | dict) -> list | dict:
 
     Copyright (c) 2018 Department for International Trade. All rights reserved.
 
-    This work is licensed under the terms of the MIT license.
+    This work (this function) is licensed under the terms of the MIT license.
     For a copy, see https://opensource.org/licenses/MIT.
     """
 

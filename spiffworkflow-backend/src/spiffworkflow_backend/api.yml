@@ -3,7 +3,7 @@ info:
   version: 1.0.0
   title: spiffworkflow-backend
   license:
-    name: MIT
+    name: LGPL
 servers:
   - url: http://localhost:5000/v1.0
 # this is handled in flask now
