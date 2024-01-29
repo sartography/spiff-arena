@@ -6,6 +6,7 @@ import {
 } from '@rjsf/utils';
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
+import React from 'react';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
 //    compensation":{
@@ -60,17 +61,32 @@ export default function NumericRangeField({
 
   const formatNumberString = (numberString: string): string => {
     if (numberString) {
-      return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      if (numberString.includes('.')) {
+        return numberString
+          .toString()
+          .replace(/\B(?=(\d{3}?)+(?!\d).[^\.])/g, ',');
+      } else {
+        return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
     }
     return '';
   };
 
-  const parseNumberString = (numberString: string) =>
-    Number(numberString.replace(/,/g, ''));
+  const parseNumberString = (numberString: string) => {
+    if (
+      (numberString === '-' && numberString.length === 1) ||
+      numberString.endsWith('.')
+    ) {
+      return null;
+    }
+    return Number(numberString.replace(/,/g, ''));
+  };
 
   // create two number inputs for min and max compensation
-  const min = formData?.min || 0;
-  const max = formData?.max || 0;
+  let min = formData?.min || null;
+  const [minValue, setMinValue] = React.useState(min?.toString() || '');
+  let max = formData?.max || null;
+  const [maxValue, setMaxValue] = React.useState(max?.toString() || '');
 
   // the text input eventually breaks when the number gets too big.
   // we are not sure what the cut off really is but seems unlikely
@@ -80,11 +96,38 @@ export default function NumericRangeField({
   const onChangeLocal = (nameToChange: any, event: any) => {
     event.preventDefault();
     const numberValue = parseNumberString(event.target.value);
+    if (numberValue === null || (numberValue === 0 && required)) {
+      if (nameToChange === 'min') {
+        onChange({
+          ...(formData || {}),
+          min: null,
+        });
+      }
+      if (nameToChange === 'max') {
+        onChange({
+          ...(formData || {}),
+          max: null,
+        });
+      }
+      return;
+    }
     if (numberValue > maxNumber) {
       return;
     }
+    if (nameToChange === 'min') {
+      min = numberValue;
+      setMinValue(formatNumberString(numberValue.toString()));
+    }
+    if (nameToChange === 'max') {
+      max = numberValue;
+      setMaxValue(formatNumberString(numberValue.toString()));
+    }
     if (!disabled && !readonly) {
       if (nameToChange === 'min' && numberValue > max) {
+        min = numberValue;
+        setMinValue(numberValue.toString());
+        max = numberValue;
+        setMaxValue(numberValue.toString());
         onChange({
           ...(formData || {}),
           min: numberValue,
@@ -121,23 +164,29 @@ export default function NumericRangeField({
       <div className="numeric--range-field-inputs">
         <TextInput
           id={`${id}-min`}
+          type="text"
           labelText={(schema as any).properties?.min?.title || `Minimum`}
           disabled={disabled}
           readonly={readonly}
-          value={formatNumberString(min)}
-          onChange={(values: any) => {
-            onChangeLocal('min', values);
+          value={formatNumberString(minValue)}
+          onChange={(event: any) => {
+            onChangeLocal('min', event);
+            setMinValue(event.target.value.replace(/,/g, ''));
           }}
           invalid={commonAttributes.invalid}
           autofocus={autofocus}
         />
         <TextInput
           id={`${id}-max`}
+          type="text"
           labelText={(schema as any).properties?.max?.title || `Maximum`}
           disabled={disabled}
           readonly={readonly}
-          value={formatNumberString(max)}
-          onChange={(values: any) => onChangeLocal('max', values)}
+          value={formatNumberString(maxValue)}
+          onChange={(event: any) => {
+            onChangeLocal('max', event);
+            setMaxValue(event.target.value.replace(/,/g, ''));
+          }}
           invalid={commonAttributes.invalid}
         />
       </div>

@@ -28,6 +28,8 @@ function RadioWidget({
       onChange(newValue);
     }
   };
+
+  const column = uiSchema ? uiSchema.column : false;
   const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
     onBlur(id, value);
   const _onFocus = ({
@@ -57,16 +59,18 @@ function RadioWidget({
       onBlur={_onBlur}
       onFocus={_onFocus}
     >
-      {Array.isArray(enumOptions) &&
-        enumOptions.map((option) => {
-          return (
-            <RadioButton
-              id={`${id}-${option.value}`}
-              labelText={option.label}
-              value={`${option.value}`}
-            />
-          );
-        })}
+      <div className={`radio-button-group-${column ? 'column' : 'row'}`}>
+        {Array.isArray(enumOptions) &&
+          enumOptions.map((option) => {
+            return (
+              <RadioButton
+                id={`${id}-${option.value}`}
+                labelText={option.label}
+                value={`${option.value}`}
+              />
+            );
+          })}
+      </div>
     </RadioButtonGroup>
   );
 }

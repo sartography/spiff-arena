@@ -965,3 +965,20 @@ div.onboarding {
   height: 48px;
   line-height: 48px;
 }
+
+.radio-button-group-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-inline-end: none;
+}
+
+.radio-button-group-column > * {
+  margin-bottom: 0.5rem;
+}
+
+.radio-button-group-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
