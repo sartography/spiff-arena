@@ -51,7 +51,7 @@ export default function DataStoreListTable() {
     }
     const queryParamString = `per_page=${perPage}&page=${page}`;
     HttpService.makeCallToBackend({
-      path: `/data-stores/${dataStoreType}/${dataStoreName}?${queryParamString}`,
+      path: `/data-stores/${dataStoreType}/${dataStoreName}/items?${queryParamString}`,
       successCallback: (response: DataStoreRecords) => {
         setResults(response.results);
         setPagination(response.pagination);

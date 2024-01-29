@@ -40,13 +40,13 @@ import {
 } from '../helpers';
 import { PermissionsToCheck, ProcessFile, ProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import MarkdownDisplayForFile from '../components/MarkdownDisplayForFile';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -680,9 +680,6 @@ export default function ProcessModelShow() {
                 ability={ability}
               >
                 <ProcessInstanceListTable
-                  filtersEnabled={false}
-                  showLinkToReport
-                  variant="for-me"
                   additionalReportFilters={[
                     {
                       field_name: 'process_model_identifier',
@@ -690,7 +687,8 @@ export default function ProcessModelShow() {
                     },
                   ]}
                   perPageOptions={[2, 5, 25]}
-                  showReports={false}
+                  showLinkToReport
+                  variant="for-me"
                 />
               </Can>
             )}
