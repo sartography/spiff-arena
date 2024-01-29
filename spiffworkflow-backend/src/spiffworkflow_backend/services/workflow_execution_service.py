@@ -522,12 +522,13 @@ class WorkflowExecutionService:
         waiting_events = self.bpmn_process_instance.waiting_events()
         waiting_message_events = filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events)
         for event in waiting_message_events:
-            # Ensure we are only creating one message instance for each waiting message
+            # Ensure we are only creating one active message instance for each waiting message
             if (
                 MessageInstanceModel.query.filter_by(
                     process_instance_id=self.process_instance_model.id,
                     message_type="receive",
                     name=event.name,
+                    status="ready",
                 ).count()
                 > 0
             ):
