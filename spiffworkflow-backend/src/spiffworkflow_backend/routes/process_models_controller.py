@@ -90,7 +90,7 @@ def process_model_create(
     underscored_process_id = process_model_id_for_bpmn_file.replace("-", "_")
 
     # make process id unique by adding random string to add
-    fuzz = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(7))  # noqa: S311
+    fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
     process_id_with_fuzz = f"Process_{underscored_process_id}_{fuzz}"
     contents = contents.replace("Process_replace_me_just_for_template", process_id_with_fuzz)
 
