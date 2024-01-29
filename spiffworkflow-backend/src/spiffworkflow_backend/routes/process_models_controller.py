@@ -1,3 +1,6 @@
+import string
+import random
+
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
@@ -83,6 +86,15 @@ def process_model_create(
     with open(template_file) as f:
         contents = f.read()
     process_model_id_for_bpmn_file = process_model_info.id.split("/")[-1]
+
+    # convert dashes to underscores for process id
+    underscored_process_id = process_model_id_for_bpmn_file.replace("-", "_")
+
+    # make process id unique by adding random string to add
+    fuzz = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(7))  # noqa: S311
+    process_id_with_fuzz = f"Process_{underscored_process_id}_{fuzz}"
+    contents = contents.replace("Process_replace_me_just_for_template", process_id_with_fuzz)
+
     SpecFileService.update_file(process_model_info, f"{process_model_id_for_bpmn_file}.bpmn", contents.encode())
 
     _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
