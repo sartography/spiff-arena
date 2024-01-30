@@ -518,7 +518,12 @@ class AuthorizationService:
     def set_basic_permissions(cls) -> list[PermissionToAssign]:
         permissions_to_assign: list[PermissionToAssign] = []
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/active-users/*"))
+
+        # gets lists of instances (we use a POST with a json body because there are complex filters, hence the create)
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instances/for-me"))
+        # view individual instances that require my attention
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/for-me/*"))
+
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/connector-proxy/typeahead/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/debug/version-info"))
