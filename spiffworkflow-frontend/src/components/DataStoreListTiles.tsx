@@ -3,8 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowRight } from '@carbon/icons-react';
 import { ClickableTile } from '@carbon/react';
 import HttpService from '../services/HttpService';
-import { DataStore, ProcessGroup } from '../interfaces';
+import { DataStore, PermissionsToCheck, ProcessGroup } from '../interfaces';
 import { truncateString } from '../helpers';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 type OwnProps = {
   defaultDataStores?: DataStore[];
@@ -26,25 +28,40 @@ export default function DataStoreListTiles({
   const [searchParams] = useSearchParams();
 
   const [dataStores, setDataStores] = useState<DataStore[] | null>(null);
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['GET'],
+  };
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   useEffect(() => {
-    const setDataStoresFromResult = (result: any) => {
-      setDataStores(result);
-    };
-
-    if (defaultDataStores) {
-      setDataStores(defaultDataStores);
-    } else {
-      let queryParams = '?per_page=1000';
-      if (processGroup) {
-        queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
+    if (permissionsLoaded) {
+      if (ability.can('GET', targetUris.dataStoreListPath)) {
+        if (defaultDataStores) {
+          setDataStores(defaultDataStores);
+        } else {
+          let queryParams = '?per_page=1000';
+          if (processGroup) {
+            queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
+          }
+          HttpService.makeCallToBackend({
+            path: `${targetUris.dataStoreListPath}${queryParams}`,
+            successCallback: setDataStores,
+          });
+        }
       }
-      HttpService.makeCallToBackend({
-        path: `/data-stores${queryParams}`,
-        successCallback: setDataStoresFromResult,
-      });
     }
-  }, [searchParams, dataStore, defaultDataStores, processGroup]);
+  }, [
+    searchParams,
+    dataStore,
+    defaultDataStores,
+    processGroup,
+    permissionsLoaded,
+    ability,
+    targetUris.dataStoreListPath,
+  ]);
 
   const dataStoresDisplayArea = () => {
     let displayText = null;
