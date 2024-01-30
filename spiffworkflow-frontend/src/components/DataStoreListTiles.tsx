@@ -37,20 +37,18 @@ export default function DataStoreListTiles({
   );
 
   useEffect(() => {
-    if (permissionsLoaded) {
-      if (ability.can('GET', targetUris.dataStoreListPath)) {
-        if (defaultDataStores) {
-          setDataStores(defaultDataStores);
-        } else {
-          let queryParams = '?per_page=1000';
-          if (processGroup) {
-            queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
-          }
-          HttpService.makeCallToBackend({
-            path: `${targetUris.dataStoreListPath}${queryParams}`,
-            successCallback: setDataStores,
-          });
+    if (permissionsLoaded && ability.can('GET', targetUris.dataStoreListPath)) {
+      if (defaultDataStores) {
+        setDataStores(defaultDataStores);
+      } else {
+        let queryParams = '?per_page=1000';
+        if (processGroup) {
+          queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
         }
+        HttpService.makeCallToBackend({
+          path: `${targetUris.dataStoreListPath}${queryParams}`,
+          successCallback: setDataStores,
+        });
       }
     }
   }, [
