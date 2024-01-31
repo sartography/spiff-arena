@@ -19,6 +19,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.reference_cache import Reference
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -313,6 +314,13 @@ class ProcessModelService(FileSystemService):
                     process_group_cache[full_group_id_path] = parent_group
                 parent_group_array.append({"id": parent_group.id, "display_name": parent_group.display_name})
         return {"cache": process_group_cache, "process_groups": parent_group_array}
+
+    @classmethod
+    def reference_for_primary_file(cls, references: list[Reference], primary_file: str) -> Reference | None:
+        for reference in references:
+            if reference.file_name == primary_file:
+                return reference
+        return None
 
     @classmethod
     def get_parent_group_array(cls, process_identifier: str) -> list[ProcessGroupLite]:

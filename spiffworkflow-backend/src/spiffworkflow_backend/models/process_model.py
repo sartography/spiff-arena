@@ -39,6 +39,7 @@ class ProcessModelInfo:
     description: str
     primary_file_name: str | None = None
     primary_process_id: str | None = None
+    is_executable: bool = True
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
     metadata_extraction_paths: list[dict[str, str]] | None = None

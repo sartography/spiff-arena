@@ -165,10 +165,14 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     files = FileSystemService.get_sorted_files(process_model)
     process_model.files = files
 
+    ref_for_primary_file = None
     if include_file_references:
         for file in process_model.files:
-            file.references = SpecFileService.get_references_for_file(file, process_model)
-
+            refs = SpecFileService.get_references_for_file(file, process_model)
+            file.references = refs
+            if file.name == process_model.primary_file_name:
+                ref_for_primary_file = ProcessModelService.reference_for_primary_file(refs, process_model.primary_file_name)
+    process_model.is_executable = True if ref_for_primary_file and ref_for_primary_file.properties["is_executable"] else False
     process_model.parent_groups = ProcessModelService.get_parent_group_array(process_model.id)
     try:
         current_git_revision = GitService.get_current_revision()
