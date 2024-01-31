@@ -1,4 +1,3 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
 import random
@@ -24,6 +23,7 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
@@ -165,14 +165,23 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     files = FileSystemService.get_sorted_files(process_model)
     process_model.files = files
 
-    ref_for_primary_file = None
+    reference_cache_processes = (
+        ReferenceCacheModel.basic_query()
+        .filter_by(
+            type="process",
+            identifier=process_model.primary_process_id,
+            relative_location=process_model.id,
+            file_name=process_model.primary_file_name,
+        )
+        .all()
+    )
+
+    ProcessModelService.embellish_with_is_executable_property([process_model], reference_cache_processes)
+
     if include_file_references:
         for file in process_model.files:
             refs = SpecFileService.get_references_for_file(file, process_model)
             file.references = refs
-            if file.name == process_model.primary_file_name:
-                ref_for_primary_file = ProcessModelService.reference_for_primary_file(refs, process_model.primary_file_name)
-    process_model.is_executable = True if ref_for_primary_file and ref_for_primary_file.properties["is_executable"] else False
     process_model.parent_groups = ProcessModelService.get_parent_group_array(process_model.id)
     try:
         current_git_revision = GitService.get_current_revision()

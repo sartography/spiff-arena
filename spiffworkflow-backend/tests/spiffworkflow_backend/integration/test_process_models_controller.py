@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelsController(BaseTest):
@@ -60,3 +61,39 @@ class TestProcessModelsController(BaseTest):
         assert response.json["message"].startswith(
             "NotAuthorizedError: You are not authorized to use one or more processes as a called element"
         )
+
+    def test_process_model_show(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        user = BaseTest.create_user_with_permission("super_admin")
+        process_model_1 = load_test_spec(
+            "test_group/hello_world",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+        process_model_2 = load_test_spec(
+            "non_executable/non_executable",
+            bpmn_file_name="non_executable.bpmn",
+            process_model_source_directory="non_executable",
+        )
+        json = self._get_process_show_show_response(client, user, process_model_1.modified_process_model_identifier())
+        assert json["is_executable"] is True
+
+        json = self._get_process_show_show_response(client, user, process_model_2.modified_process_model_identifier())
+        assert json["is_executable"] is False
+
+    def _get_process_show_show_response(self, client: FlaskClient, user: UserModel, process_model_id: str) -> dict:
+        url = f"/v1.0/process-models/{process_model_id}"
+        response = client.get(
+            url,
+            follow_redirects=True,
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        hot_dict: dict = response.json
+        return hot_dict

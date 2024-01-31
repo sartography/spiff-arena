@@ -273,6 +273,7 @@ class ProcessModelService(FileSystemService):
             if (
                 matching_reference_cache_process
                 and matching_reference_cache_process.properties
+                and "is_executable" in matching_reference_cache_process.properties
                 and matching_reference_cache_process.properties["is_executable"] is False
             ):
                 process_model.is_executable = False
