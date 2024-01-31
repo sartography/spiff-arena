@@ -8,6 +8,10 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestDotNotation(BaseTest):
+    # this used to prove the point that dot notation got converted into deeply-nested dictionaries.
+    # it doesn't do that any more, and just behaves more like you would expect (flat dictionary with dots in the keys),
+    # but it didn't seem obvious that the test was worthless, and this will at least prove it doesn't go back to the old behavior,
+    # which would be awkward.
     def test_dot_notation_in_message_path(
         self,
         app: Flask,
@@ -39,12 +43,14 @@ class TestDotNotation(BaseTest):
         ProcessInstanceService.complete_form_task(processor, user_task, form_data, process_instance.process_initiator, human_task)
 
         expected = {
-            "contibutorName": "Elizabeth",
-            "contributorId": 100,
-            "invoiceId": 10001,
-            "invoiceAmount": "1000.00",
-            "dueDate": "09/30/2022",
+            "invoice.contibutorName": "Elizabeth",
+            "invoice.contributorId": 100,
+            "invoice.invoiceId": 10001,
+            "invoice.invoiceAmount": "1000.00",
+            "invoice.dueDate": "09/30/2022",
         }
 
         processor.do_engine_steps(save=True)
-        assert processor.get_data()["invoice"] == expected
+        actual_data = processor.get_data()
+        del actual_data["validate_only"]
+        assert actual_data == expected
