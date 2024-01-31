@@ -249,6 +249,10 @@ class ProcessModelService(FileSystemService):
 
         permitted_process_models = []
         for process_model in process_models:
+            if filter_runnable_by_user or filter_runnable_as_extension:
+                # if you want to be able to run a process model, it must have a primary file
+                if process_model.primary_file_name is None:
+                    continue
             process_model_identifier = process_model.id
             if filter_runnable_as_extension:
                 process_model_identifier = process_model.id.replace(
