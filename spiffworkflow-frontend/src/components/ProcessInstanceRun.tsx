@@ -137,17 +137,20 @@ export default function ProcessInstanceRun({
     });
   };
 
-  const startButton = (
-    <Button
-      data-qa="start-process-instance"
-      onClick={processInstanceCreateAndRun}
-      className={className}
-      disabled={disableStartButton}
-      size="md"
-    >
-      {buttonText}
-    </Button>
-  );
+  let startButton = null;
+  if (processModel.primary_file_name && processModel.is_executable) {
+    startButton = (
+      <Button
+        data-qa="start-process-instance"
+        onClick={processInstanceCreateAndRun}
+        className={className}
+        disabled={disableStartButton}
+        size="md"
+      >
+        {buttonText}
+      </Button>
+    );
+  }
 
   // if checkPermissions is false then assume the page using this component has already checked the permissions
   if (checkPermissions) {

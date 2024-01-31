@@ -237,9 +237,6 @@ class ProcessModelService(FileSystemService):
             permission_to_check = "create"
             permission_base_uri = "/v1.0/extensions"
             process_model_identifiers = [p.id.replace(f"{extension_prefix}/", "") for p in process_models]
-        reference_cache_processes = []
-        if filter_runnable_by_user or filter_runnable_as_extension:
-            reference_cache_processes = ReferenceCacheModel.basic_query().filter_by(type="process").all()
 
         # these are the ones (identifiers, at least) you are allowed to start
         permitted_process_model_identifiers = cls.process_model_identifiers_with_permission_for_user(
@@ -248,6 +245,9 @@ class ProcessModelService(FileSystemService):
             permission_base_uri=permission_base_uri,
             process_model_identifiers=process_model_identifiers,
         )
+
+        reference_cache_processes = ReferenceCacheModel.basic_query().filter_by(type="process").all()
+        process_models = cls.embellish_with_is_executable_property(process_models, reference_cache_processes)
 
         if filter_runnable_by_user or filter_runnable_as_extension:
             process_models = cls.filter_by_runnable(process_models, reference_cache_processes)
@@ -263,14 +263,10 @@ class ProcessModelService(FileSystemService):
         return permitted_process_models
 
     @classmethod
-    def filter_by_runnable(
+    def embellish_with_is_executable_property(
         cls, process_models: list[ProcessModelInfo], reference_cache_processes: list[ReferenceCacheModel]
     ) -> list[ProcessModelInfo]:
-        runnable_process_models = []
         for process_model in process_models:
-            # if you want to be able to run a process model, it must have a primary file
-            if process_model.primary_file_name is None or process_model.primary_file_name == "":
-                continue
             matching_reference_cache_process = cls.find_reference_cache_process_for_process_model(
                 reference_cache_processes, process_model
             )
@@ -279,8 +275,25 @@ class ProcessModelService(FileSystemService):
                 and matching_reference_cache_process.properties
                 and matching_reference_cache_process.properties["is_executable"] is False
             ):
-                continue
-            runnable_process_models.append(process_model)
+                process_model.is_executable = False
+            else:
+                process_model.is_executable = True
+
+        return process_models
+
+    @classmethod
+    def filter_by_runnable(
+        cls, process_models: list[ProcessModelInfo], reference_cache_processes: list[ReferenceCacheModel]
+    ) -> list[ProcessModelInfo]:
+        runnable_process_models = []
+        for process_model in process_models:
+            # if you want to be able to run a process model, it must have a primary file in addition to being executable
+            if (
+                process_model.primary_file_name is not None
+                and process_model.primary_file_name != ""
+                and process_model.is_executable
+            ):
+                runnable_process_models.append(process_model)
         return runnable_process_models
 
     @classmethod
