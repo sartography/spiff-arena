@@ -11,10 +11,10 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
