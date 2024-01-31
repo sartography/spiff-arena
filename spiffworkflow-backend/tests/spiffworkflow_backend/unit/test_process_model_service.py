@@ -129,3 +129,44 @@ class TestProcessModelService(BaseTest):
         pg_identifiers = [pg.id for pg in process_groups]
         assert len(pg_identifiers) == 1
         assert process_groups[0].id == "a1/b2"
+
+    def test_get_process_models_for_api(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = BaseTest.create_user_with_permission("super_admin")
+        process_model = load_test_spec(
+            "test_group/hello_world",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+        assert process_model.display_name == "test_group/hello_world"
+
+        primary_process_id = process_model.primary_process_id
+        assert primary_process_id == "Process_HelloWorld"
+
+        process_models = ProcessModelService.get_process_models_for_api(user=user, recursive=True, filter_runnable_by_user=True)
+        assert len(process_models) == 1
+        assert process_model.primary_process_id == primary_process_id
+
+        process_model = load_test_spec(
+            "test_group/hello_world_2",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+
+        # this model should not show up in results because it has no primary_file_name
+        ProcessModelService.update_process_model(process_model, {"primary_file_name": None})
+        process_models = ProcessModelService.get_process_models_for_api(user=user, recursive=True, filter_runnable_by_user=True)
+        assert len(process_models) == 1
+
+        process_model = load_test_spec(
+            "non_executable/non_executable",
+            bpmn_file_name="non_executable.bpmn",
+            process_model_source_directory="non_executable",
+        )
+
+        # this model should not show up in results because it is not executable
+        process_models = ProcessModelService.get_process_models_for_api(user=user, recursive=True, filter_runnable_by_user=True)
+        assert len(process_models) == 1
