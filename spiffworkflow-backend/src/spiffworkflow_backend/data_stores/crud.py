@@ -1,5 +1,10 @@
 from typing import Any
 
+from flask import current_app
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+
+
 
 class DataStoreCRUD:
     @staticmethod
@@ -33,3 +38,28 @@ class DataStoreCRUD:
     @staticmethod
     def delete_record(name: str, data: dict[str, Any]) -> None:
         raise Exception("must implement")
+
+    @staticmethod
+    def process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
+        tld = current_app.config.get("THREAD_LOCAL_DATA")
+        if tld and hasattr(tld, "process_model_identifier"):
+            return tld.process_model_identifier  # type: ignore
+        return None
+
+    def data_store_location_for_task(self, model: Any, spiff_task: SpiffTask, identifier: str) -> str | None:
+        location = self.process_model_location_for_task(spiff_task)
+        if location is None:
+            return None
+
+        locations = UpsearchService.upsearch_locations(location)
+        model = (
+            model.query.filter_by(identifier=identifier)
+            .filter(model.location.in_(locations))  # type: ignore
+            .order_by(model.location.desc())  # type: ignore
+            .first()
+        )
+
+        if model is None:
+            return None
+
+        return model.location  # type: ignore

@@ -22,13 +22,6 @@ class DataStoreWriteError(Exception):
     pass
 
 
-def _process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
-    tld = current_app.config.get("THREAD_LOCAL_DATA")
-    if tld and hasattr(tld, "process_model_identifier"):
-        return tld.process_model_identifier  # type: ignore
-    return None
-
-
 class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """JSONDataStore."""
 
@@ -73,7 +66,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def get(self, my_task: SpiffTask) -> None:
         """get."""
         model: JSONDataStoreModel | None = None
-        location = self._data_store_location_for_task(my_task, self.bpmn_id)
+        location = self.data_store_location_for_task(JSONDataStoreModel, my_task, self.bpmn_id)
         if location is not None:
             model = db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
         if model is None:
@@ -83,7 +76,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def set(self, my_task: SpiffTask) -> None:
         """set."""
         model: JSONDataStoreModel | None = None
-        location = self._data_store_location_for_task(my_task, self.bpmn_id)
+        location = self.data_store_location_for_task(JSONDataStoreModel, my_task, self.bpmn_id)
 
         if location is not None:
             model = JSONDataStoreModel.query.filter_by(identifier=self.bpmn_id, location=location).first()
@@ -104,24 +97,6 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         db.session.add(model)
         db.session.commit()
         del my_task.data[self.bpmn_id]
-
-    def _data_store_location_for_task(self, spiff_task: SpiffTask, identifier: str) -> str | None:
-        location = _process_model_location_for_task(spiff_task)
-        if location is None:
-            return None
-
-        locations = UpsearchService.upsearch_locations(location)
-        model = (
-            JSONDataStoreModel.query.filter_by(identifier=identifier)
-            .filter(JSONDataStoreModel.location.in_(locations))  # type: ignore
-            .order_by(JSONDataStoreModel.location.desc())  # type: ignore
-            .first()
-        )
-
-        if model is None:
-            return None
-
-        return model.location  # type: ignore
 
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
@@ -166,7 +141,7 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
         del my_task.data[self.bpmn_id]
 
     def _data_store_location_for_task(self, spiff_task: SpiffTask, identifier: str) -> str | None:
-        location = _process_model_location_for_task(spiff_task)
+        location = DataStoreCRUD.process_model_location_for_task(spiff_task)
         if location is None:
             return None
         if self._data_store_exists_at_location(location, identifier):
