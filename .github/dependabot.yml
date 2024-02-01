@@ -1,19 +1,18 @@
 version: 2
 updates:
-
   # GITHUB-ACTIONSS
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: daily
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
 
   # PIP
   - package-ecosystem: pip
     directory: "/.github/workflows"
     schedule:
       interval: daily
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
   - package-ecosystem: pip
     directory: "/spiffworkflow-backend/docs"
     schedule:
@@ -28,21 +27,16 @@ updates:
     directory: "/spiffworkflow-backend"
     schedule:
       interval: daily
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
 
   # NPM
   - package-ecosystem: npm
     directory: "/.github/workflows"
     schedule:
       interval: daily
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
   - package-ecosystem: npm
     directory: "/spiffworkflow-frontend"
     schedule:
       interval: daily
-    open-pull-requests-limit: 0
-  - package-ecosystem: npm
-    directory: "/bpmn-js-spiffworkflow"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
