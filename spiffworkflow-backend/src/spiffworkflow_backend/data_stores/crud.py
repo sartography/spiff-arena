@@ -1,9 +1,17 @@
 from typing import Any
 
 from flask import current_app
-from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
+
+
+class DataStoreReadError(Exception):
+    pass
+
+
+class DataStoreWriteError(Exception):
+    pass
 
 
 class DataStoreCRUD:
@@ -54,8 +62,8 @@ class DataStoreCRUD:
         locations = UpsearchService.upsearch_locations(location)
         model = (
             model.query.filter_by(identifier=identifier)
-            .filter(model.location.in_(locations))  # type: ignore
-            .order_by(model.location.desc())  # type: ignore
+            .filter(model.location.in_(locations))
+            .order_by(model.location.desc())
             .first()
         )
 

@@ -1,25 +1,17 @@
 from typing import Any
 
 import jsonschema  # type: ignore
-from flask import current_app
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
+from spiffworkflow_backend.data_stores.crud import DataStoreReadError
+from spiffworkflow_backend.data_stores.crud import DataStoreWriteError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
-from spiffworkflow_backend.services.upsearch_service import UpsearchService
-
-
-class DataStoreReadError(Exception):
-    pass
-
-
-class DataStoreWriteError(Exception):
-    pass
 
 
 class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
@@ -67,10 +59,12 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         """get."""
         model: JSONDataStoreModel | None = None
         location = self.data_store_location_for_task(JSONDataStoreModel, my_task, self.bpmn_id)
+
         if location is not None:
             model = db.session.query(JSONDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
         if model is None:
             raise DataStoreReadError(f"Unable to read from data store '{self.bpmn_id}' using location '{location}'.")
+
         my_task.data[self.bpmn_id] = model.data
 
     def set(self, my_task: SpiffTask) -> None:
@@ -80,7 +74,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
         if location is not None:
             model = JSONDataStoreModel.query.filter_by(identifier=self.bpmn_id, location=location).first()
-        if location is None or model is None:
+        if model is None:
             raise DataStoreWriteError(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")
 
         data = my_task.data[self.bpmn_id]
