@@ -13,6 +13,20 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """KKVDataStore."""
 
     @staticmethod
+    def create_instance(identifier: str, location: str) -> Any:
+        return KKVDataStoreModel(
+            identifier=identifier,
+            location=location,
+            top_level_key="",
+            secondary_key="",
+            value={},
+        )
+
+    @staticmethod
+    def existing_instance(identifier: str, location: str) -> Any:
+        return db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+
+    @staticmethod
     def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         data_stores: list[dict[str, Any]] = []
 
