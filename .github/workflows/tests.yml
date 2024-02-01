@@ -1,8 +1,12 @@
 name: Tests
 
 on:
-  - push
-  - pull_request
+  push:
+    # hitting just main on push suffices to avoid duplicate runs for PRs, since PRs never update main.
+    # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
+    branches:
+      - main
+  pull_request:
 
 defaults:
   run:
