@@ -28,28 +28,25 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     @staticmethod
     def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
-        data_stores: list[dict[str, Any]] = []
+        data_stores = []
 
+        query = db.session.query(KKVDataStoreModel.name, KKVDataStoreModel.identifier)
         if process_group_identifier is not None:
-            # temporary until this data store gets location support
-            return data_stores
-
-        keys = (
-            db.session.query(KKVDataStoreModel.top_level_key)
-            .distinct()  # type: ignore
-            .order_by(KKVDataStoreModel.top_level_key)
-            .all()
-        )
+            query = query.filter_by(location=process_group_identifier)
+        keys = query.distinct().order_by(KKVDataStoreModel.name).all()  # type: ignore
         for key in keys:
-            data_stores.append({"name": key[0], "type": "kkv", "id": "", "clz": "KKVDataStore"})
+            data_stores.append({"name": key[0], "type": "kkv", "id": key[1], "clz": "KKVDataStore"})
 
         return data_stores
 
     @staticmethod
-    def get_data_store_query(name: str, process_group_identifier: str | None) -> Any:
-        return KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
-            KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
-        )
+    def get_data_store_query(identifier: str, process_group_identifier: str | None) -> Any:
+        query = KKVDataStoreModel.query
+        if process_group_identifier is not None:
+            query = query.filter_by(identifier=identifier, location=process_group_identifier)
+        else:
+            query = query.filter_by(name=identifier)
+        return query.order_by(KKVDataStoreModel.name)
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:

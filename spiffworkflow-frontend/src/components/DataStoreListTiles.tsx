@@ -69,7 +69,7 @@ export default function DataStoreListTiles({
           <ClickableTile
             id={`data-store-tile-${row.id}`}
             className="tile-data-store"
-            href={`/data-stores/${row.id}/edit?parentGroupId=${
+            href={`/data-stores/${row.id}/edit?type=${row.type}&parentGroupId=${
               processGroup?.id ?? ''
             }`}
           >

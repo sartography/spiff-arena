@@ -10,6 +10,7 @@ export default function DataStoreEdit() {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const parentGroupId = searchParams.get('parentGroupId');
+  const dataStoreType = searchParams.get('type');
   const dataStoreIdentifier = params.data_store_identifier;
   const [dataStore, setDataStore] = useState<DataStore>({
     id: '',
@@ -30,7 +31,7 @@ export default function DataStoreEdit() {
 
     const queryParams = `?process_group_identifier=${parentGroupId}`;
     HttpService.makeCallToBackend({
-      path: `/data-stores/json/${dataStoreIdentifier}${queryParams}`,
+      path: `/data-stores/${dataStoreType}/${dataStoreIdentifier}${queryParams}`,
       successCallback: setDataStoreFromResult,
     });
   }, [dataStoreIdentifier, parentGroupId]);
