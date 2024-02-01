@@ -5,6 +5,8 @@ from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # typ
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
+from spiffworkflow_backend.data_stores.crud import DataStoreReadError
+from spiffworkflow_backend.data_stores.crud import DataStoreWriteError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 
@@ -55,20 +57,22 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             "value": model.value,
         }
 
-    def _get_model(self, top_level_key: str, secondary_key: str) -> KKVDataStoreModel | None:
-        model = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key, secondary_key=secondary_key).first()
-        return model
-
-    def _delete_all_for_top_level_key(self, top_level_key: str) -> None:
-        models = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key).all()
-        for model in models:
-            db.session.delete(model)
-
     def get(self, my_task: SpiffTask) -> None:
         """get."""
 
         def getter(top_level_key: str, secondary_key: str) -> Any | None:
-            model = self._get_model(top_level_key, secondary_key)
+            model: KKVDataStoreModel | None = None
+            location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
+
+            if location is None:
+                raise DataStoreReadError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
+
+            model = (
+                db.session.query(KKVDataStoreModel)
+                .filter_by(identifier=self.bpmn_id, location=location, top_level_key=top_level_key, secondary_key=secondary_key)
+                .first()
+            )
+
             if model is not None:
                 return model.value
             return None
@@ -77,29 +81,53 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
+        location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
+
+        if location is None:
+            raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
+
         data = my_task.data[self.bpmn_id]
         if not isinstance(data, dict):
-            raise Exception(
+            raise DataStoreWriteError(
                 f"When writing to this data store, a dictionary is expected as the value for variable '{self.bpmn_id}'"
             )
         for top_level_key, second_level in data.items():
             if second_level is None:
-                self._delete_all_for_top_level_key(top_level_key)
+                models = (
+                    db.session.query(KKVDataStoreModel)
+                    .filter_by(identifier=self.bpmn_id, location=location, top_level_key=top_level_key)
+                    .all()
+                )
+                for model_to_delete in models:
+                    db.session.delete(model_to_delete)
                 continue
             if not isinstance(second_level, dict):
-                raise Exception(
+                raise DataStoreWriteError(
                     "When writing to this data store, a dictionary is expected as the value for"
                     f" '{self.bpmn_id}[\"{top_level_key}\"]'"
                 )
             for secondary_key, value in second_level.items():
-                model = self._get_model(top_level_key, secondary_key)
+                model: KKVDataStoreModel | None = (
+                    db.session.query(KKVDataStoreModel)
+                    .filter_by(
+                        identifier=self.bpmn_id, location=location, top_level_key=top_level_key, secondary_key=secondary_key
+                    )
+                    .first()
+                )
+
                 if model is None and value is None:
                     continue
                 if value is None:
                     db.session.delete(model)
                     continue
                 if model is None:
-                    model = KKVDataStoreModel(top_level_key=top_level_key, secondary_key=secondary_key, value=value)
+                    model = KKVDataStoreModel(
+                        identifier=self.bpmn_id,
+                        location=location,
+                        top_level_key=top_level_key,
+                        secondary_key=secondary_key,
+                        value=value,
+                    )
                 else:
                     model.value = value
                 db.session.add(model)
