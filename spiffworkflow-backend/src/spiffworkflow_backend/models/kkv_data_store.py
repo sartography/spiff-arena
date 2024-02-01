@@ -5,7 +5,7 @@ from spiffworkflow_backend.models.db import db
 
 
 @dataclass
-class KKVDataStoreModel(SpiffworkflowBaseDBModel):
+class KKVDataStoreModel: #(SpiffworkflowBaseDBModel):
     __tablename__ = "kkv_data_store"
 
     id: int = db.Column(db.Integer, primary_key=True)
