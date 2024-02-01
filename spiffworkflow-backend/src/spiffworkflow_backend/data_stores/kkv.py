@@ -1,5 +1,7 @@
 from typing import Any
 
+import jsonschema  # type: ignore
+
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -19,6 +21,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         return KKVDataStoreModel(
             identifier=identifier,
             location=location,
+            name="",
             top_level_key="",
             secondary_key="",
             value={},
@@ -107,7 +110,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                     f" '{self.bpmn_id}[\"{top_level_key}\"]'"
                 )
             for secondary_key, value in second_level.items():
-                model: KKVDataStoreModel | None = (
+                model = (
                     db.session.query(KKVDataStoreModel)
                     .filter_by(
                         identifier=self.bpmn_id, location=location, top_level_key=top_level_key, secondary_key=secondary_key
@@ -120,10 +123,20 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                 if value is None:
                     db.session.delete(model)
                     continue
+
+                try:
+                    jsonschema.validate(instance=value, schema=model.schema)
+                except jsonschema.exceptions.ValidationError as e:
+                    raise DataStoreWriteError(
+                        f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
+                    ) from e
+
+                
                 if model is None:
                     model = KKVDataStoreModel(
                         identifier=self.bpmn_id,
                         location=location,
+                        name="tmp",
                         top_level_key=top_level_key,
                         secondary_key=secondary_key,
                         value=value,
