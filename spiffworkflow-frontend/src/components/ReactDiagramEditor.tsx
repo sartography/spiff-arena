@@ -84,6 +84,7 @@ type OwnProps = {
   onLaunchDmnEditor?: (..._args: any[]) => any;
   onElementClick?: (..._args: any[]) => any;
   onServiceTasksRequested?: (..._args: any[]) => any;
+  onDataStoresRequested?: (..._args: any[]) => any;
   onJsonSchemaFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
@@ -113,6 +114,7 @@ export default function ReactDiagramEditor({
   onLaunchDmnEditor,
   onElementClick,
   onServiceTasksRequested,
+  onDataStoresRequested,
   onJsonSchemaFilesRequested,
   onDmnFilesRequested,
   onSearchProcessModels,
@@ -325,6 +327,12 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function handleDataStoresRequested(event: any) {
+      if (onDataStoresRequested) {
+        onDataStoresRequested(event);
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
@@ -382,6 +390,10 @@ export default function ReactDiagramEditor({
 
     diagramModeler.on('spiff.service_tasks.requested', (event: any) => {
       handleServiceTasksRequested(event);
+    });
+
+    diagramModeler.on('spiff.data_stores.requested', (event: any) => {
+      handleDataStoresRequested(event);
     });
 
     diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
