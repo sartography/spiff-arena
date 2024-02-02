@@ -1,3 +1,5 @@
+from spiffworkflow_backend.models.future_task import FutureTaskModel
+
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import copy
@@ -609,9 +611,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -1810,9 +1812,20 @@ class ProcessInstanceProcessor:
         )
         db.session.commit()
 
+    def bring_archived_future_tasks_back_to_life(self) -> None:
+        archived_future_tasks = (
+            self.process_instance_model.future_tasks_query()
+            .filter(FutureTaskModel.archived_for_process_instance_status == True)  # noqa: E712
+            .all()
+        )
+        for archived_future_task in archived_future_tasks:
+            archived_future_task.archived_for_process_instance_status = False
+            db.session.add(archived_future_task)
+
     def resume(self) -> None:
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
+        self.bring_archived_future_tasks_back_to_life()
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
