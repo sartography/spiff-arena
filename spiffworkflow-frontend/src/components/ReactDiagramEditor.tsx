@@ -427,6 +427,7 @@ export default function ReactDiagramEditor({
     onLaunchJsonSchemaEditor,
     onElementClick,
     onServiceTasksRequested,
+    onDataStoresRequested,
     onJsonSchemaFilesRequested,
     onDmnFilesRequested,
     onSearchProcessModels,
