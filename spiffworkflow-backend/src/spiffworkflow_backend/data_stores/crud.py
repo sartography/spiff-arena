@@ -54,8 +54,9 @@ class DataStoreCRUD:
             return tld.process_model_identifier  # type: ignore
         return None
 
-    def data_store_location_for_task(self, model: Any, spiff_task: SpiffTask, identifier: str) -> str | None:
-        location = self.process_model_location_for_task(spiff_task)
+    @classmethod
+    def data_store_location_for_task(cls, model: Any, spiff_task: SpiffTask, identifier: str) -> str | None:
+        location = cls.process_model_location_for_task(spiff_task)
         if location is None:
             return None
 

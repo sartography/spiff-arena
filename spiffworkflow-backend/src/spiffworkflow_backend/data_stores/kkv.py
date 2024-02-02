@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_stores.crud import DataStoreReadError
 from spiffworkflow_backend.data_stores.crud import DataStoreWriteError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
 
 
 class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
@@ -81,10 +82,16 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def set(self, my_task: SpiffTask) -> None:
         """set."""
         location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
+        instance_model: KKVDataStoreModel | None = None
 
-        if location is None:
+        if location is not None:            
+            instance_model = (db.session.query(KKVDataStoreModel)
+                    .filter_by(identifier=self.bpmn_id, location=location)
+                    .first())
+
+        if instance_model is None:
             raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
-
+        
         data = my_task.data[self.bpmn_id]
         if not isinstance(data, dict):
             raise DataStoreWriteError(
@@ -93,8 +100,8 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         for top_level_key, second_level in data.items():
             if second_level is None:
                 models = (
-                    db.session.query(KKVDataStoreModel)
-                    .filter_by(identifier=self.bpmn_id, location=location, top_level_key=top_level_key)
+                    db.session.query(KKVDataStoreEntryModel)
+                    .filter_by(instance_id=instance_model.id, top_level_key=top_level_key)
                     .all()
                 )
                 for model_to_delete in models:
@@ -107,9 +114,9 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                 )
             for secondary_key, value in second_level.items():
                 model = (
-                    db.session.query(KKVDataStoreModel)
+                    db.session.query(KKVDataStoreEntryModel)
                     .filter_by(
-                        identifier=self.bpmn_id, location=location, top_level_key=top_level_key, secondary_key=secondary_key
+                        instance_id=instance_model.id, top_level_key=top_level_key, secondary_key=secondary_key
                     )
                     .first()
                 )
@@ -129,10 +136,8 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
                 
                 if model is None:
-                    model = KKVDataStoreModel(
-                        identifier=self.bpmn_id,
-                        location=location,
-                        name="tmp",
+                    model = KKVDataStoreEntryModel(
+                        instance_id=instance_model.id,
                         top_level_key=top_level_key,
                         secondary_key=secondary_key,
                         value=value,
