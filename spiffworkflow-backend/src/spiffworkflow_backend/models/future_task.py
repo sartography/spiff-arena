@@ -17,7 +17,6 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
     guid: str = db.Column(db.String(36), primary_key=True)
     run_at_in_seconds: int = db.Column(db.Integer, nullable=False, index=True)
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
-    archived_for_process_instance_status: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
