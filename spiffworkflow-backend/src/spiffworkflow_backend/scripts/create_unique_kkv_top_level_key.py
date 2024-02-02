@@ -1,11 +1,11 @@
 from typing import Any
 
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
-from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 
 
 class CreateUniqueKKVTopLevelKey(Script):
@@ -31,14 +31,12 @@ class CreateUniqueKKVTopLevelKey(Script):
 
         instance_model: KKVDataStoreModel | None = None
 
-        if location is not None:            
-            instance_model = (db.session.query(KKVDataStoreModel)
-                    .filter_by(identifier=identifier, location=location)
-                    .first())
+        if location is not None:
+            instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
 
         if instance_model is None:
             raise Exception(f"Could not find KKV data store with the identifier '{identifier}'")
-            
+
         model = KKVDataStoreEntryModel(instance_id=instance_model.id, top_level_key="", secondary_key="", value={})
         db.session.add(model)
         db.session.commit()

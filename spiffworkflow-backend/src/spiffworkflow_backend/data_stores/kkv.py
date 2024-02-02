@@ -1,7 +1,6 @@
 from typing import Any
 
 import jsonschema  # type: ignore
-
 from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -84,14 +83,12 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
         instance_model: KKVDataStoreModel | None = None
 
-        if location is not None:            
-            instance_model = (db.session.query(KKVDataStoreModel)
-                    .filter_by(identifier=self.bpmn_id, location=location)
-                    .first())
+        if location is not None:
+            instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
 
         if instance_model is None:
             raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
-        
+
         data = my_task.data[self.bpmn_id]
         if not isinstance(data, dict):
             raise DataStoreWriteError(
@@ -115,9 +112,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             for secondary_key, value in second_level.items():
                 model = (
                     db.session.query(KKVDataStoreEntryModel)
-                    .filter_by(
-                        instance_id=instance_model.id, top_level_key=top_level_key, secondary_key=secondary_key
-                    )
+                    .filter_by(instance_id=instance_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
                     .first()
                 )
 
@@ -134,7 +129,6 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                         f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
                     ) from e
 
-                
                 if model is None:
                     model = KKVDataStoreEntryModel(
                         instance_id=instance_model.id,

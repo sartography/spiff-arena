@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 
-from sqlalchemy import UniqueConstraint
 from sqlalchemy import ForeignKey
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 
-    
+
 @dataclass
 class KKVDataStoreEntryModel(SpiffworkflowBaseDBModel):
     __tablename__ = "kkv_data_store_entry"
