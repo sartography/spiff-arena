@@ -30,7 +30,6 @@ jobs:
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
-              upload_coverage: true,
             }
           - {
               python: "3.12",
@@ -186,10 +185,10 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4.3.0"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
-          name: coverage-data
+          name: coverage-data-${{ matrix.runs-on }}
           path: "spiffworkflow-backend/.coverage.*"
 
       # - name: Upload documentation
@@ -275,9 +274,10 @@ jobs:
           poetry --version
 
       - name: Download coverage data
-        uses: actions/download-artifact@v3.0.2
+        uses: actions/download-artifact@v4.1.1
         with:
-          name: coverage-data
+          name: coverage-data-*
+          merge-multiple: true
           # this action doesn't seem to respect working-directory so include working-directory value in path
           path: spiffworkflow-backend
 
