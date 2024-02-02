@@ -367,10 +367,25 @@ export default function ProcessModelEditDiagram() {
     };
   };
 
+  const makeDataStoresApiHandler = (event: any) => {
+    return function fireEvent(results: any) {
+      event.eventBus.fire('spiff.data_stores.returned', {
+        options: results,
+      });
+    };
+  };
+
   const onServiceTasksRequested = (event: any) => {
     HttpService.makeCallToBackend({
       path: `/service-tasks`,
       successCallback: makeApiHandler(event),
+    });
+  };
+
+  const onDataStoresRequested = (event: any) => {
+    HttpService.makeCallToBackend({
+      path: `/data-stores`,
+      successCallback: makeDataStoresApiHandler(event),
     });
   };
 
@@ -1095,6 +1110,7 @@ export default function ProcessModelEditDiagram() {
         diagramType="bpmn"
         onLaunchScriptEditor={onLaunchScriptEditor}
         onServiceTasksRequested={onServiceTasksRequested}
+        onDataStoresRequested={onDataStoresRequested}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchBpmnEditor={onLaunchBpmnEditor}
         onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
