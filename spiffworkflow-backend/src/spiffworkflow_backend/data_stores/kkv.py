@@ -60,15 +60,18 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         """get."""
 
         def getter(top_level_key: str, secondary_key: str) -> Any | None:
-            model: KKVDataStoreModel | None = None
             location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
+            instance_model: KKVDataStoreModel | None = None
+            
+            if location is not None:
+                instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
 
-            if location is None:
+            if instance_model is None:
                 raise DataStoreReadError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
 
             model = (
-                db.session.query(KKVDataStoreModel)
-                .filter_by(identifier=self.bpmn_id, location=location, top_level_key=top_level_key, secondary_key=secondary_key)
+                db.session.query(KKVDataStoreEntryModel)
+                .filter_by(instance_id=instance_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
                 .first()
             )
 
@@ -90,6 +93,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
 
         data = my_task.data[self.bpmn_id]
+        
         if not isinstance(data, dict):
             raise DataStoreWriteError(
                 f"When writing to this data store, a dictionary is expected as the value for variable '{self.bpmn_id}'"
