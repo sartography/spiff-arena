@@ -188,7 +188,7 @@ jobs:
         uses: "actions/upload-artifact@v4.3.0"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
-          name: coverage-data-${{ matrix.runs-on }}
+          name: coverage-data
           path: "spiffworkflow-backend/.coverage.*"
 
       # - name: Upload documentation
@@ -276,8 +276,7 @@ jobs:
       - name: Download coverage data
         uses: actions/download-artifact@v4.1.1
         with:
-          name: coverage-data-*
-          merge-multiple: true
+          name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
           path: spiffworkflow-backend
 
