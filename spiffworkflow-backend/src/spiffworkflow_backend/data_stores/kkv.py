@@ -62,7 +62,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         def getter(top_level_key: str, secondary_key: str) -> Any | None:
             location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
             instance_model: KKVDataStoreModel | None = None
-            
+
             if location is not None:
                 instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
 
@@ -93,7 +93,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
 
         data = my_task.data[self.bpmn_id]
-        
+
         if not isinstance(data, dict):
             raise DataStoreWriteError(
                 f"When writing to this data store, a dictionary is expected as the value for variable '{self.bpmn_id}'"
@@ -127,7 +127,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                     continue
 
                 try:
-                    jsonschema.validate(instance=value, schema=model.schema)
+                    jsonschema.validate(instance=value, schema=instance_model.schema)
                 except jsonschema.exceptions.ValidationError as e:
                     raise DataStoreWriteError(
                         f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"

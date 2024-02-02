@@ -1,10 +1,14 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+
+if TYPE_CHECKING:
+    from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel  # noqa: F401
 
 
 @dataclass

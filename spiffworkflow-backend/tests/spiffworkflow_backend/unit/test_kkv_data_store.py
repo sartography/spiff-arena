@@ -25,7 +25,7 @@ def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Ge
 
 @pytest.fixture()
 def with_key1_key2_record(with_clean_data_store: None) -> Generator[None, None, None]:
-    model = KKVDataStoreModel(top_level_key="key1", secondary_key="key2", value="value1")  # type: ignore
+    model = KKVDataStoreModel(top_level_key="key1", secondary_key="key2", value="value1")
     db.session.add(model)
     db.session.commit()
     yield
