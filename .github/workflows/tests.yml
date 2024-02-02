@@ -314,7 +314,11 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: pr_number
-          path: pr/
+          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
+          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
+          # from spiff-arena root rather than the default working-directory we specified, and therefore
+          # trying to explicitly add spiffworkflow-backend to path
+          path: spiffworkflow-backend/pr/
 
   tests-frontend:
     runs-on: ubuntu-latest
