@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
 from sqlalchemy import UniqueConstraint
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -16,9 +18,8 @@ class KKVDataStoreModel(SpiffworkflowBaseDBModel):
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
     location: str = db.Column(db.String(255), nullable=False)
     schema: dict = db.Column(db.JSON, nullable=False)
-    top_level_key: str = db.Column(db.String(255), nullable=False, index=True)
-    secondary_key: str = db.Column(db.String(255), nullable=False, index=True)
-    value: dict = db.Column(db.JSON, nullable=False)
     description: str = db.Column(db.String(255))
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+
+    entries = relationship("KKVDataStoreEntryModel", cascade="delete")

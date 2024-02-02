@@ -91,6 +91,9 @@ from spiffworkflow_backend.models.json_data_store import (
 from spiffworkflow_backend.models.kkv_data_store import (
     KKVDataStoreModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.kkv_data_store_entry import (
+    KKVDataStoreEntryModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.task_draft_data import (
     TaskDraftDataModel,
 )  # noqa: F401

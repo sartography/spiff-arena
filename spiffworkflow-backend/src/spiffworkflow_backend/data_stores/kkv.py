@@ -21,10 +21,6 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         return KKVDataStoreModel(
             identifier=identifier,
             location=location,
-            name="",
-            top_level_key="",
-            secondary_key="",
-            value={},
         )
 
     @staticmethod
