@@ -68,7 +68,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )  # type: ignore
 
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
-    tasks = relationship("TaskModel", cascade="delete")  # type: ignore
+    tasks = relationship("TaskModel", cascade="delete")
     task_draft_data = relationship("TaskDraftDataModel", cascade="delete")  # type: ignore
     process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
     process_instance_file_data = relationship("ProcessInstanceFileDataModel", cascade="delete")  # type: ignore
