@@ -33,12 +33,12 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         data_stores = []
 
-        query = db.session.query(JSONDataStoreModel.name, JSONDataStoreModel.identifier)
+        query = db.session.query(JSONDataStoreModel)
         if process_group_identifier is not None:
             query = query.filter_by(location=process_group_identifier)
-        keys = query.distinct().order_by(JSONDataStoreModel.name).all()  # type: ignore
-        for key in keys:
-            data_stores.append({"name": key[0], "type": "json", "id": key[1], "clz": "JSONDataStore"})
+        models = query.distinct().order_by(JSONDataStoreModel.name).all()  # type: ignore
+        for model in models:
+            data_stores.append({"name": model.name, "type": "json", "id": model.identifier, "clz": "JSONDataStore", "location": model.location})
 
         return data_stores
 
@@ -53,7 +53,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:
-        return {"location": model.location, "identifier": model.identifier, "data": model.data}
+        return {"data": model.data}
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""

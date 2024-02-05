@@ -464,6 +464,7 @@ export interface DataStore {
   id: string;
   schema: string;
   description?: string | null;
+  location?: string | null;
 }
 
 export interface DataStoreType {

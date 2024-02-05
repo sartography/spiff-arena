@@ -116,7 +116,7 @@ export default function DataStoreListTable() {
         label="Please select a data store"
         items={dataStores}
         selectedItem={dataStore}
-        itemToString={(ds: DataStore) => (ds ? `${ds.name} (${ds.type})` : '')}
+        itemToString={(ds: DataStore) => (ds ? `${ds.name} (${ds.type}${ds.location ? ' @ ' + ds.location : ''})` : '')}
         onChange={(event: any) => {
           setDataStore(event.selectedItem);
           searchParams.set('datastore_page', '1');

@@ -31,12 +31,12 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         data_stores = []
 
-        query = db.session.query(KKVDataStoreModel.name, KKVDataStoreModel.identifier)
+        query = db.session.query(KKVDataStoreModel)
         if process_group_identifier is not None:
             query = query.filter_by(location=process_group_identifier)
-        keys = query.distinct().order_by(KKVDataStoreModel.name).all()  # type: ignore
-        for key in keys:
-            data_stores.append({"name": key[0], "type": "kkv", "id": key[1], "clz": "KKVDataStore"})
+        models = query.distinct().order_by(KKVDataStoreModel.name).all()  # type: ignore
+        for model in models:
+            data_stores.append({"name": model.name, "type": "kkv", "id": model.identifier, "clz": "KKVDataStore", "location": model.location})
 
         return data_stores
 
@@ -51,9 +51,16 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:
+        data = []
+
+        for entry in model.entries:
+            data.append({"top_level_key": entry.top_level_key,
+                         "secondary_key": entry.secondary_key,
+                         "value": entry.value,
+                         })
+        
         return {
-            "secondary_key": model.secondary_key,
-            "value": model.value,
+            "data": data,
         }
 
     def get(self, my_task: SpiffTask) -> None:
