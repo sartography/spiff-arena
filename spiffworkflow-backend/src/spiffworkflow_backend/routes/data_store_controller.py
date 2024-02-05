@@ -44,7 +44,9 @@ def data_store_types() -> flask.wrappers.Response:
     return make_response(jsonify(data_store_types), 200)
 
 
-def _build_response(data_store_class: Any, identifier: str, location: str | None, page: int, per_page: int) -> flask.wrappers.Response:
+def _build_response(
+    data_store_class: Any, identifier: str, location: str | None, page: int, per_page: int
+) -> flask.wrappers.Response:
     data_store_query = data_store_class.get_data_store_query(identifier, location)
     data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
     results = []
@@ -62,7 +64,9 @@ def _build_response(data_store_class: Any, identifier: str, location: str | None
     return make_response(jsonify(response_json), 200)
 
 
-def data_store_item_list(data_store_type: str, identifier: str, location: str | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def data_store_item_list(
+    data_store_type: str, identifier: str, location: str | None = None, page: int = 1, per_page: int = 100
+) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
 
     if data_store_type not in DATA_STORES:
