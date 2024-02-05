@@ -29,15 +29,15 @@ class CreateUniqueKKVTopLevelKey(Script):
         if identifier is not None and spiff_task is not None:
             location = DataStoreCRUD.data_store_location_for_task(KKVDataStoreModel, spiff_task, identifier)
 
-        instance_model: KKVDataStoreModel | None = None
+        store_model: KKVDataStoreModel | None = None
 
         if location is not None:
-            instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+            store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
 
-        if instance_model is None:
+        if store_model is None:
             raise Exception(f"Could not find KKV data store with the identifier '{identifier}'")
 
-        model = KKVDataStoreEntryModel(instance_id=instance_model.id, top_level_key="", secondary_key="", value={})
+        model = KKVDataStoreEntryModel(kkv_data_store_id=store_model.id, top_level_key="", secondary_key="", value={})
         db.session.add(model)
         db.session.commit()
 
