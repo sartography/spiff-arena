@@ -28,7 +28,7 @@ def upgrade():
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=False),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('identifier', 'location', name='_identifier_location_unique')
+    sa.UniqueConstraint('identifier', 'location', name='_kkv_identifier_location_unique')
     )
     with op.batch_alter_table('kkv_data_store', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_kkv_data_store_identifier'), ['identifier'], unique=False)
