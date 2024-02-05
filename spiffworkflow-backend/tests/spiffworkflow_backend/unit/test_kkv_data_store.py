@@ -28,10 +28,6 @@ def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Ge
     db.session.add(model)
     db.session.commit()
 
-    other_model = KKVDataStoreModel(identifier="other_id", name="other_name", location="other_location", schema={})
-    db.session.add(other_model)
-    db.session.commit()
-
     yield model
 
 
