@@ -1,11 +1,9 @@
 from __future__ import annotations
-from flask_sqlalchemy.query import Query
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.future_task import FutureTaskModel
 
 from typing import Any
 
 import marshmallow
+from flask_sqlalchemy.query import Query
 from marshmallow import INCLUDE
 from marshmallow import Schema
 from sqlalchemy import ForeignKey
@@ -17,6 +15,8 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
 

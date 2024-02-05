@@ -26,7 +26,7 @@ class TestBackgroundProcessingService(BaseTest):
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
             mock = mocker.patch("celery.current_app.send_task")
-            process_instance = self._load_up_a_future_task_and_return_instance()
+            self._load_up_a_future_task_and_return_instance()
             assert mock.call_count == 0
             BackgroundProcessingService.do_process_future_tasks(99999999999999999)
             assert mock.call_count == 1
