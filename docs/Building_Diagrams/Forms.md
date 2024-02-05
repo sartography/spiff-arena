@@ -152,6 +152,8 @@ Example for UI schema:
 ### Date Validation When Compared to Another Date
 
 Date validation when compared to another date allows you to ensure that a date field meets certain criteria concerning another date field.
+
+#### Minimum date validation
 For instance, you can require that a date must be equal to or greater than another date within the form.
 
 - To implement date validation compared to another date, use the your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
@@ -169,7 +171,75 @@ This is an example where end_date must be after start_date:
     }
 
 These enhancements provide you with more flexibility and control when building forms in SpiffArena.
-By using these features, you can create dynamic, validated forms that enhance the user experience and support your business processes effectively.
+
+#### Maximum date validation
+
+Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form. This type of validation is particularly useful for setting deadlines, end dates, or latest possible dates that are contingent on other dates in the workflow.
+
+To apply maximum date validation in your JSON schema, use the `maximumDate` property and specify the field to compare with, using the format `field:field_name`. This ensures that the date chosen does not exceed the referenced field's date.
+
+Here’s an example where `delivery_date` must be on or before `end_date`:
+
+```json
+"delivery_date": {
+  "type": "string",
+  "title": "Delivery Date",
+  "format": "date",
+  "maximumDate": "field:end_date"
+}
+```
+
+If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
+
+These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where a latest permissible date is a factor.
+
+By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
+
+
+#### Date Validation Scenario: Enforcing Minimum and Maximum Date Constraints
+
+#### Scenario Overview
+Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines. This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
+
+#### JSON Schema Configuration:
+The "test-maximum-date-schema.json" process model outlines a form structure that includes fields for `end_date`, `delivery_date`, and `delivery_date_range`, each with constraints on the earliest and latest dates that can be selected.
+
+```json
+{
+  "title": "Date",
+  "description": "Test Maximum Date",
+  "type": "object",
+  "properties": {
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "End Date"
+    },
+    "delivery_date": {
+      "type": "string",
+      "title": "Preferred Delivery Date",
+      "minimumDate": "today",
+      "maximumDate": "field:end_date"
+    },
+    "delivery_date_range": {
+      "type": "string",
+      "title": "Preferred Delivery Date Range",
+      "minimumDate": "today",
+      "maximumDate": "field:end_date"
+    }
+  }
+}
+```
+
+#### Field Descriptions:
+- **End Date**: The final date by which all activities should be completed.
+- **Preferred Delivery Date**: A single date indicating when the delivery of a service or product is preferred, bounded by today's date and the `end_date`.
+- **Preferred Delivery Date Range**: A span of dates indicating an acceptable window for delivery, constrained by today's date and the `end_date`.
+
+### Implementation in SpiffWorkflow Forms:
+The schema enforces the following rules:
+- The `Preferred Delivery Date` cannot be earlier than today (the `minimumDate`) and not later than the `end_date` (the `maximumDate`).
+- The `Preferred Delivery Date Range` must start no earlier than today and end no later than the `end_date`.
 
 ### Display Fields Side-By-Side on Same Row
 

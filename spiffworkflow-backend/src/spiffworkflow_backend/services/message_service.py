@@ -1,4 +1,4 @@
-from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 

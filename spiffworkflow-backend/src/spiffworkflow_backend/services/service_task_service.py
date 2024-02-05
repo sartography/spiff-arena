@@ -7,7 +7,7 @@ import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # type: ignore

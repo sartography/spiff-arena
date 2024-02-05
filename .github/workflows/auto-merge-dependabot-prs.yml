@@ -1,3 +1,4 @@
+# see also https://stackoverflow.com/a/68365564/6090676
 name: Dependabot auto-merge
 on:
   workflow_run:
@@ -20,15 +21,15 @@ permissions:
 
 jobs:
   # uncomment this to print the context for debugging in case a job is getting skipped
-  # printJob:
-  #   name: Print event
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Dump GitHub context
-  #       env:
-  #         GITHUB_CONTEXT: ${{ toJson(github) }}
-  #       run: |
-  #         echo "$GITHUB_CONTEXT"
+  printJob:
+    name: Print event
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
 
   dependabot:
     runs-on: ubuntu-latest
@@ -40,18 +41,24 @@ jobs:
       ###### GET PR NUMBER
       # we saved the pr_number in tests.yml. fetch it so we can merge the correct PR.
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      # https://github.com/actions/github-script
       - name: "Download artifact"
         uses: actions/github-script@v6
         with:
           script: |
+            console.log("download artifact: started")
+            console.log("download artifact: content.payload: ", context.payload)
             let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: context.payload.workflow_run.id,
             });
+            console.log("download artifact: got allArtifacts")
+            console.log("download artifact: allArtifacts: ", allArtifacts)
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "pr_number"
             })[0];
+            console.log("download artifact: got matchArtifact: ", matchArtifact)
             let download = await github.rest.actions.downloadArtifact({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -66,7 +73,14 @@ jobs:
 
       - name: print pr number
         run: cat pr_number
-      - name: actually merge it
-        run: gh pr merge --auto --merge "$(cat pr_number)"
+      # the repo requires one approval. if a dependabot change passes tests, that is good enough.
+      - name: approve pr
+        run: gh pr review --approve "$(cat pr_number)"
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      # if the merge --auto flag were added, and if the repo allowed it at https://github.com/sartography/spiff-arena/settings,
+      # it would set up the pr to auto merge when all requirements were met. but we just want to merge now.
+      - name: set up pr to auto merge when all requirements are met
+        run: gh pr merge --squash "$(cat pr_number)"
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

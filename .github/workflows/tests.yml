@@ -1,8 +1,12 @@
 name: Tests
 
 on:
-  - push
-  - pull_request
+  push:
+    # hitting just main on push suffices to avoid duplicate runs for PRs, since PRs never update main.
+    # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
+    branches:
+      - main
+  pull_request:
 
 defaults:
   run:
@@ -26,7 +30,6 @@ jobs:
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
-              upload_coverage: true,
             }
           - {
               python: "3.12",
@@ -182,7 +185,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4.3.0"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
@@ -271,7 +274,7 @@ jobs:
           poetry --version
 
       - name: Download coverage data
-        uses: actions/download-artifact@v3.0.2
+        uses: actions/download-artifact@v4.1.1
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
@@ -300,17 +303,24 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       # part about saving PR number and then using it from auto-merge-dependabot-prs from:
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Save PR number
+      - name: Write PR number to spiffworkflow-backend/pr dir
         if: ${{ github.event_name == 'pull_request' }}
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           mkdir -p ./pr
           echo "$PR_NUMBER" > ./pr/pr_number
-      - uses: actions/upload-artifact@v3
+      - name: Upload PR number as artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           name: pr_number
-          path: pr/
+          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
+          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
+          # from spiff-arena root rather than the default working-directory we specified, and therefore
+          # trying to explicitly add spiffworkflow-backend to path
+          path: spiffworkflow-backend/pr/
+          if-no-files-found: error
 
   tests-frontend:
     runs-on: ubuntu-latest
@@ -347,19 +357,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Save PR number
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          mkdir -p ./pr
-          echo "$PR_NUMBER" > ./pr/pr_number
-      - uses: actions/upload-artifact@v3
-        with:
-          name: pr_number
-          path: pr/
 
   cypress-run:
     runs-on: ubuntu-latest
@@ -405,7 +402,7 @@ jobs:
         run: |
           echo "$GITHUB_CONTEXT"
       - name: Cypress run
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chrome
