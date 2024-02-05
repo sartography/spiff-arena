@@ -95,14 +95,14 @@ class TestKKVDataStore(BaseTest):
         kkv_data_store = KKVDataStore("the_id", "the_name")
         my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue", "newKey3": "newValue2"}}})
         kkv_data_store.set(my_task)
-        count = db.session.query(KKVDataStoreEntryModel).filter_by(instance_id=with_clean_data_store.id).count()
+        count = self._entry_count(with_clean_data_store)
         assert count == 2
 
     def test_can_insert_mulitple_values_for_different_top_key(self, with_clean_data_store: KKVDataStoreModel) -> None:
         kkv_data_store = KKVDataStore("the_id", "the_name")
         my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}, "newKey3": {"newKey4": "newValue2"}}})
         kkv_data_store.set(my_task)
-        count = db.session.query(KKVDataStoreEntryModel).filter_by(instance_id=with_clean_data_store.id).count()
+        count = self._entry_count(with_clean_data_store)
         assert count == 2
 
     def test_value_is_removed_from_task_data_after_insert(self, with_clean_data_store: None) -> None:
