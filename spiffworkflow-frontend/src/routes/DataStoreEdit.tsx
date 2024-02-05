@@ -34,7 +34,7 @@ export default function DataStoreEdit() {
       path: `/data-stores/${dataStoreType}/${dataStoreIdentifier}${queryParams}`,
       successCallback: setDataStoreFromResult,
     });
-  }, [dataStoreIdentifier, parentGroupId]);
+  }, [dataStoreIdentifier, parentGroupId, dataStoreType]);
 
   const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
   if (parentGroupId) {

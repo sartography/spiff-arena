@@ -36,7 +36,9 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             query = query.filter_by(location=process_group_identifier)
         models = query.distinct().order_by(KKVDataStoreModel.name).all()  # type: ignore
         for model in models:
-            data_stores.append({"name": model.name, "type": "kkv", "id": model.identifier, "clz": "KKVDataStore", "location": model.location})
+            data_stores.append(
+                {"name": model.name, "type": "kkv", "id": model.identifier, "clz": "KKVDataStore", "location": model.location}
+            )
 
         return data_stores
 
@@ -54,11 +56,14 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         data = []
 
         for entry in model.entries:
-            data.append({"top_level_key": entry.top_level_key,
-                         "secondary_key": entry.secondary_key,
-                         "value": entry.value,
-                         })
-        
+            data.append(
+                {
+                    "top_level_key": entry.top_level_key,
+                    "secondary_key": entry.secondary_key,
+                    "value": entry.value,
+                }
+            )
+
         return {
             "data": data,
         }
