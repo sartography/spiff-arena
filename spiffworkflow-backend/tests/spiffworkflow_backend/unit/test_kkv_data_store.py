@@ -18,9 +18,9 @@ class MockTask:
 
 
 @pytest.fixture()
-def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
+def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[KKVDataStoreModel, None, None]:
     app.config["THREAD_LOCAL_DATA"].process_model_identifier = "the_location/of/some/process-model"
-    
+
     db.session.query(KKVDataStoreModel).delete()
     db.session.commit()
 
@@ -31,16 +31,18 @@ def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Ge
     other_model = KKVDataStoreModel(identifier="other_id", name="other_name", location="other_location", schema={})
     db.session.add(other_model)
     db.session.commit()
-    
+
     yield model
 
 
 @pytest.fixture()
-def with_key1_key2_record(with_clean_data_store: KKVDataStoreModel) -> Generator[None, None, None]:
-    model = KKVDataStoreEntryModel(instance_id=with_clean_data_store.id, top_level_key="key1", secondary_key="key2", value="value1")
+def with_key1_key2_record(with_clean_data_store: KKVDataStoreModel) -> Generator[KKVDataStoreModel, None, None]:
+    model = KKVDataStoreEntryModel(
+        instance_id=with_clean_data_store.id, top_level_key="key1", secondary_key="key2", value={"key": "value"}
+    )
     db.session.add(model)
     db.session.commit()
-    
+
     yield with_clean_data_store
 
 
@@ -64,7 +66,7 @@ class TestKKVDataStore(BaseTest):
         kkv_data_store.get(my_task)
         assert len(my_task.data) == 1
         result = my_task.data["the_id"]("key1", "key2")
-        assert result == "value1"
+        assert result == {"key": "value"}
 
     def test_returns_none_if_first_key_does_not_match(self, with_key1_key2_record: None) -> None:
         kkv_data_store = KKVDataStore("the_id", "the_name")
