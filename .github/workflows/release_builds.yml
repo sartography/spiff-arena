@@ -132,7 +132,7 @@ jobs:
         working-directory: ./connector-proxy-demo
         run: ./bin/wait_for_connector_to_be_up 5 8004
       - name: Cypress run
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chromium
