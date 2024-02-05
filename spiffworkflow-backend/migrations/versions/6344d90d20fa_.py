@@ -36,18 +36,18 @@ def upgrade():
 
     op.create_table('kkv_data_store_entry',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('instance_id', sa.Integer(), nullable=False),
+    sa.Column('kkv_data_store_id', sa.Integer(), nullable=False),
     sa.Column('top_level_key', sa.String(length=255), nullable=False),
     sa.Column('secondary_key', sa.String(length=255), nullable=False),
     sa.Column('value', sa.JSON(), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=False),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['instance_id'], ['kkv_data_store.id'], ),
+    sa.ForeignKeyConstraint(['kkv_data_store_id'], ['kkv_data_store.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('instance_id', 'top_level_key', 'secondary_key', name='_instance_keys_unique')
+    sa.UniqueConstraint('kkv_data_store_id', 'top_level_key', 'secondary_key', name='_instance_keys_unique')
     )
     with op.batch_alter_table('kkv_data_store_entry', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_kkv_data_store_entry_instance_id'), ['instance_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_kkv_data_store_entry_kkv_data_store_id'), ['kkv_data_store_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_kkv_data_store_entry_secondary_key'), ['secondary_key'], unique=False)
         batch_op.create_index(batch_op.f('ix_kkv_data_store_entry_top_level_key'), ['top_level_key'], unique=False)
 
@@ -59,7 +59,7 @@ def downgrade():
     with op.batch_alter_table('kkv_data_store_entry', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_kkv_data_store_entry_top_level_key'))
         batch_op.drop_index(batch_op.f('ix_kkv_data_store_entry_secondary_key'))
-        batch_op.drop_index(batch_op.f('ix_kkv_data_store_entry_instance_id'))
+        batch_op.drop_index(batch_op.f('ix_kkv_data_store_entry_kkv_data_store_id'))
 
     op.drop_table('kkv_data_store_entry')
     with op.batch_alter_table('kkv_data_store', schema=None) as batch_op:

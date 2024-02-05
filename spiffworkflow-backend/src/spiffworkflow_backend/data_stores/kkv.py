@@ -73,17 +73,17 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
         def getter(top_level_key: str, secondary_key: str) -> Any | None:
             location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
-            instance_model: KKVDataStoreModel | None = None
+            store_model: KKVDataStoreModel | None = None
 
             if location is not None:
-                instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
+                store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
 
-            if instance_model is None:
+            if store_model is None:
                 raise DataStoreReadError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
 
             model = (
                 db.session.query(KKVDataStoreEntryModel)
-                .filter_by(instance_id=instance_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
+                .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
                 .first()
             )
 
@@ -96,12 +96,12 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def set(self, my_task: SpiffTask) -> None:
         """set."""
         location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
-        instance_model: KKVDataStoreModel | None = None
+        store_model: KKVDataStoreModel | None = None
 
         if location is not None:
-            instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
+            store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
 
-        if instance_model is None:
+        if store_model is None:
             raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
 
         data = my_task.data[self.bpmn_id]
@@ -114,7 +114,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             if second_level is None:
                 models = (
                     db.session.query(KKVDataStoreEntryModel)
-                    .filter_by(instance_id=instance_model.id, top_level_key=top_level_key)
+                    .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key)
                     .all()
                 )
                 for model_to_delete in models:
@@ -128,7 +128,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             for secondary_key, value in second_level.items():
                 model = (
                     db.session.query(KKVDataStoreEntryModel)
-                    .filter_by(instance_id=instance_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
+                    .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
                     .first()
                 )
 
@@ -139,7 +139,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                     continue
 
                 try:
-                    jsonschema.validate(instance=value, schema=instance_model.schema)
+                    jsonschema.validate(instance=value, schema=store_model.schema)
                 except jsonschema.exceptions.ValidationError as e:
                     raise DataStoreWriteError(
                         f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
@@ -147,7 +147,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
                 if model is None:
                     model = KKVDataStoreEntryModel(
-                        instance_id=instance_model.id,
+                        kkv_data_store_id=store_model.id,
                         top_level_key=top_level_key,
                         secondary_key=secondary_key,
                         value=value,

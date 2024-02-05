@@ -38,7 +38,7 @@ def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Ge
 @pytest.fixture()
 def with_key1_key2_record(with_clean_data_store: KKVDataStoreModel) -> Generator[KKVDataStoreModel, None, None]:
     model = KKVDataStoreEntryModel(
-        instance_id=with_clean_data_store.id, top_level_key="key1", secondary_key="key2", value={"key": "value"}
+        kkv_data_store_id=with_clean_data_store.id, top_level_key="key1", secondary_key="key2", value={"key": "value"}
     )
     db.session.add(model)
     db.session.commit()
@@ -50,7 +50,7 @@ class TestKKVDataStore(BaseTest):
     """Infer from class name."""
 
     def _entry_count(self, model: KKVDataStoreModel) -> int:
-        return db.session.query(KKVDataStoreEntryModel).filter_by(instance_id=model.id).count()
+        return db.session.query(KKVDataStoreEntryModel).filter_by(kkv_data_store_id=model.id).count()
 
     def test_returns_none_if_no_records_exist(self, with_clean_data_store: None) -> None:
         kkv_data_store = KKVDataStore("the_id", "the_name")
