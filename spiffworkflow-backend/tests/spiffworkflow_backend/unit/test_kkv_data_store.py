@@ -87,14 +87,14 @@ class TestKKVDataStore(BaseTest):
         count = self._entry_count(with_clean_data_store)
         assert count == 1
 
-    def test_can_insert_mulitple_values_for_same_top_key(self, with_clean_data_store: KKVDataStoreModel) -> None:
+    def test_can_insert_multiple_values_for_same_top_key(self, with_clean_data_store: KKVDataStoreModel) -> None:
         kkv_data_store = KKVDataStore("the_id", "the_name")
         my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue", "newKey3": "newValue2"}}})
         kkv_data_store.set(my_task)
         count = self._entry_count(with_clean_data_store)
         assert count == 2
 
-    def test_can_insert_mulitple_values_for_different_top_key(self, with_clean_data_store: KKVDataStoreModel) -> None:
+    def test_can_insert_multiple_values_for_different_top_key(self, with_clean_data_store: KKVDataStoreModel) -> None:
         kkv_data_store = KKVDataStore("the_id", "the_name")
         my_task = MockTask(data={"the_id": {"newKey1": {"newKey2": "newValue"}, "newKey3": {"newKey4": "newValue2"}}})
         kkv_data_store.set(my_task)
