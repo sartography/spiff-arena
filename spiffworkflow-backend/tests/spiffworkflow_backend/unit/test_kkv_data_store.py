@@ -7,6 +7,7 @@ from flask.app import Flask
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -18,16 +19,25 @@ class MockTask:
 
 @pytest.fixture()
 def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
+    app.config["THREAD_LOCAL_DATA"].process_model_identifier = "the_location/of/some/process-model"
+    
     db.session.query(KKVDataStoreModel).delete()
     db.session.commit()
+    
+    db.session.add(KKVDataStoreModel(identifier="the_id", name="the_name", location="the_location", schema={}))
+    db.session.commit()
+    
     yield
 
 
 @pytest.fixture()
 def with_key1_key2_record(with_clean_data_store: None) -> Generator[None, None, None]:
-    model = KKVDataStoreModel(top_level_key="key1", secondary_key="key2", value="value1")
-    db.session.add(model)
+    instance_model = db.session.query(KKVDataStoreModel).filter_by(identifier="the_id", location="the_location").first()
+    
+    entry_model = KKVDataStoreEntryModel(instance_id=instance_model.id, top_level_key="key1", secondary_key="key2", value="value1")
+    db.session.add(entry_model)
     db.session.commit()
+    
     yield
 
 
