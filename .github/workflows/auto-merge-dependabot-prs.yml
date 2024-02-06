@@ -17,6 +17,9 @@ on:
 #     types: [labeled]
 
 permissions:
+  # for gh pr review
+  pull-requests: write
+  # for gh pr merge
   contents: write
 
 jobs:
