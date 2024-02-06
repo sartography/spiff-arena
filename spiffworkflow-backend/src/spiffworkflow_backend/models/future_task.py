@@ -8,6 +8,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from sqlalchemy.sql import false
 
 
 @dataclass
@@ -17,7 +18,14 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
     guid: str = db.Column(db.String(36), primary_key=True)
     run_at_in_seconds: int = db.Column(db.Integer, nullable=False, index=True)
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
-    archived_for_process_instance_status: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    archived_for_process_instance_status: bool = db.Column(
+        # db.Boolean, default=False, server_default=db.sql.False_(), nullable=False, index=True
+        db.Boolean,
+        default=False,
+        server_default=false(),
+        nullable=False,
+        index=True,
+    )
 
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
