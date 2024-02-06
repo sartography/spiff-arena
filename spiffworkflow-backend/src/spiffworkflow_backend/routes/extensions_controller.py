@@ -7,6 +7,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -61,6 +62,7 @@ def extension_list() -> flask.wrappers.Response:
     process_model_extensions = []
     if current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
         process_model_extensions = ProcessModelService.get_process_models_for_api(
+            user=g.user,
             process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
             recursive=True,
             filter_runnable_as_extension=True,
@@ -132,7 +134,7 @@ def _run_extension(
         if body and "extension_input" in body:
             processor.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
             next_task = processor.next_task()
-            next_task.update_data(body["extension_input"])
+            DeepMerge.merge(next_task.data, body["extension_input"])
         processor.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
     except (
         ApiError,

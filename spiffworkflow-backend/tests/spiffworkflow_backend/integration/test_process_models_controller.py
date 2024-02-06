@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelsController(BaseTest):
@@ -60,3 +61,58 @@ class TestProcessModelsController(BaseTest):
         assert response.json["message"].startswith(
             "NotAuthorizedError: You are not authorized to use one or more processes as a called element"
         )
+
+    def test_process_model_show(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_1 = load_test_spec(
+            "test_group/hello_world",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+        process_model_2 = load_test_spec(
+            "test_group/non_executable",
+            bpmn_file_name="non_executable.bpmn",
+            process_model_source_directory="non_executable",
+        )
+        json = self._get_process_show_show_response(
+            client, with_super_admin_user, process_model_1.modified_process_model_identifier()
+        )
+        assert json["id"] == "test_group/hello_world"
+        assert json["is_executable"] is True
+
+        json = self._get_process_show_show_response(
+            client, with_super_admin_user, process_model_2.modified_process_model_identifier()
+        )
+        assert json["id"] == "test_group/non_executable"
+        assert json["is_executable"] is False
+
+    def test_process_model_show_when_not_found(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        json = self._get_process_show_show_response(
+            client, with_super_admin_user, "bad-model-does-not-exist", expected_response=400
+        )
+        assert json["error_code"] == "process_model_cannot_be_found"
+
+    def _get_process_show_show_response(
+        self, client: FlaskClient, user: UserModel, process_model_id: str, expected_response: int = 200
+    ) -> dict:
+        url = f"/v1.0/process-models/{process_model_id}"
+        response = client.get(
+            url,
+            follow_redirects=True,
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == expected_response
+        assert response.json is not None
+        process_model_data: dict = response.json
+        return process_model_data

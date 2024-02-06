@@ -23,9 +23,6 @@ from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel  # noqa: F401
-from spiffworkflow_backend.models.spec_reference import (
-    SpecReferenceCache,
-)  # noqa: F401
 from spiffworkflow_backend.models.cache_generation import (
     CacheGenerationModel,
 )  # noqa: F401

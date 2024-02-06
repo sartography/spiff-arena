@@ -3,12 +3,12 @@ name = "spiffworkflow-arena"
 version = "0.0.0"
 description = "Spiffworkflow Arena"
 authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
-license = "MIT"
+license = "LGPL"
 readme = "README.md"
 homepage = "https://github.com/sartography/spiffworkflow-arena"
 repository = "https://github.com/sartography/spiffworkflow-arena"
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 4 - Beta",
 ]
 
 [tool.poetry.dependencies]

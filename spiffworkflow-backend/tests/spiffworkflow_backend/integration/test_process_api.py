@@ -173,6 +173,9 @@ class TestProcessApi(BaseTest):
         assert model_display_name == process_model.display_name
         assert 0 == process_model.display_order
         assert 1 == len(ProcessModelService.get_process_groups())
+        assert process_model.primary_file_name == f"{process_model_id}.bpmn"
+        assert process_model.primary_process_id
+        assert process_model.primary_process_id.startswith(f"Process_{process_model_id}")
 
         # add bpmn file to the model
         bpmn_file_name = "sample.bpmn"

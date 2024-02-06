@@ -78,7 +78,7 @@ describe('process-models', () => {
     cy.getBySel('process-model-add-file').contains('New BPMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=StartEvent_1]').click();
-    cy.contains('General').click();
+    cy.get('.bio-properties-panel-group-header-title[title=General]').click();
     cy.get('#bio-properties-panel-name').clear();
     cy.get('#bio-properties-panel-name').type('Start Event Name');
     cy.wait(500);

@@ -11,11 +11,12 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
@@ -456,8 +457,7 @@ class ProcessInstanceService:
             data,
             process_instance.id,
         )
-        dot_dct = cls.create_dot_dict(data)
-        spiff_task.update_data(dot_dct)
+        DeepMerge.merge(spiff_task.data, data)
 
     @staticmethod
     def complete_form_task(
@@ -482,48 +482,6 @@ class ProcessInstanceService:
             with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
                 # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
                 processor.do_engine_steps(save=True)
-
-    @staticmethod
-    def create_dot_dict(data: dict) -> dict[str, Any]:
-        dot_dict: dict[str, Any] = {}
-        for key, value in data.items():
-            ProcessInstanceService.set_dot_value(key, value, dot_dict)
-        return dot_dict
-
-    @staticmethod
-    def get_dot_value(path: str, source: dict) -> Any:
-        # Given a path in dot notation, uas as 'fruit.type' tries to find that value in
-        # the source, but looking deep in the dictionary.
-        paths = path.split(".")  # [a,b,c]
-        s = source
-        index = 0
-        for p in paths:
-            index += 1
-            if isinstance(s, dict) and p in s:
-                if index == len(paths):
-                    return s[p]
-                else:
-                    s = s[p]
-        if path in source:
-            return source[path]
-        return None
-
-    @staticmethod
-    def set_dot_value(path: str, value: Any, target: dict) -> dict:
-        # Given a path in dot notation, such as "fruit.type", and a value "apple", will
-        # set the value in the target dictionary, as target["fruit"]["type"]="apple"
-        destination = target
-        paths = path.split(".")  # [a,b,c]
-        index = 0
-        for p in paths:
-            index += 1
-            if p not in destination:
-                if index == len(paths):
-                    destination[p] = value
-                else:
-                    destination[p] = {}
-            destination = destination[p]
-        return target
 
     @staticmethod
     def spiff_task_to_api_task(

@@ -49,7 +49,7 @@ connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
 PyJWT = "^2.6.0"
-gunicorn = "^20.1.0"
+gunicorn = "^21.0.0"
 APScheduler = "*"
 Jinja2 = "^3.1.3"
 RestrictedPython = "^7.0"
@@ -65,11 +65,11 @@ sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", r
 simplejson = "^3.17.6"
 pytz = "^2023.3"
 dateparser = "^1.2.0"
-cryptography = "^41.0"
+cryptography = "^42.0"
 prometheus-flask-exporter = "^0.22.3"
 
 sqlalchemy = "^2.0.7"
-marshmallow-sqlalchemy = "^0.29.0"
+marshmallow-sqlalchemy = "^1.0.0"
 spiff-element-units = "^0.3.1"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
@@ -80,6 +80,7 @@ flask-oauthlib = "^0.9.6"
 celery = {extras = ["redis"], version = "^5.3.5"}
 celery-stubs = "^0.1.3"
 jsonschema = "^4.20.0"
+chardet = "^5.2.0"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
@@ -90,7 +91,7 @@ coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^2.3.5"
 mypy = ">=0.961"
 typeguard = "^4"
-xdoctest = {extras = ["colors"], version = "^1.0.1"}
+xdoctest = {extras = ["colors"], version = "^1.1.3"}
 pre-commit = "^2.20.0"
 black = ">=21.10b0"
 ruff = "^0.1.7"
@@ -101,7 +102,7 @@ pytest-flask-sqlalchemy = "^1.1.0"
 pytest-xdist = "^3.3.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
-bandit = "1.7.2"
+bandit = "1.7.7"
 
 # flask-sqlalchemy-stubs = "^0.2"
 pre-commit-hooks = "^4.0.1"
