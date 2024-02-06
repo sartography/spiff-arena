@@ -213,6 +213,8 @@ def process_data_file_download(
 # {"ref": "refs/heads/main", "repository": {"name": "sample-process-models",
 # "full_name": "sartography/sample-process-models", "private": False .... }}
 # test with: ngrok http 7000
+# or with:
+# npm install -g localtunnel && lt --port 7000 --subdomain oh-so-hot
 # where 7000 is the port the app is running on locally
 def github_webhook_receive(body: dict) -> Response:
     auth_header = request.headers.get("X-Hub-Signature-256")
