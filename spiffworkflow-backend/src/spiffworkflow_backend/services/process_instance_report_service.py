@@ -183,13 +183,11 @@ class ProcessInstanceReportService:
 
     @classmethod
     def process_instance_metadata_as_columns(cls, process_model_identifier: str | None = None) -> list[ReportMetadataColumn]:
-        columns_for_metadata_query = (
-            db.session.query(ProcessInstanceMetadataModel.key)  # type: ignore
-            .order_by(ProcessInstanceMetadataModel.key)
-            .distinct()
-        )
+        columns_for_metadata_query = db.session.query(
+            ProcessInstanceMetadataModel.key.distinct()  # type: ignore
+        ).order_by(ProcessInstanceMetadataModel.key)
         if process_model_identifier:
-            columns_for_metadata_query = columns_for_metadata_query.join(ProcessInstanceModel)
+            columns_for_metadata_query = columns_for_metadata_query.join(ProcessInstanceModel)  # type: ignore
             columns_for_metadata_query = columns_for_metadata_query.filter(
                 ProcessInstanceModel.process_model_identifier == process_model_identifier
             )
