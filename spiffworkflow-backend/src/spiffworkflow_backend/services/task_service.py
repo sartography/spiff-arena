@@ -458,6 +458,8 @@ class TaskService:
         tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
 
         human_task_guids_to_clear = deleted_task_guids
+
+        # ensure we clear out any human tasks that were associated with this guid in case it was a human task
         if to_task_guid is not None:
             human_task_guids_to_clear.append(to_task_guid)
         human_tasks_to_clear = HumanTaskModel.query.filter(

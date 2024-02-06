@@ -257,14 +257,18 @@ class TestProcessInstanceProcessor(BaseTest):
             human_task_one.task_name, processor.bpmn_process_instance
         )
         assert spiff_manual_task is not None
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
         processor.suspend()
-        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id))
+        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.id))
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         processor.resume()
         processor.do_engine_steps(save=True)
+
+        # if if there are more human tasks then they were duplicated in the reset process method
+        assert len(process_instance.human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
