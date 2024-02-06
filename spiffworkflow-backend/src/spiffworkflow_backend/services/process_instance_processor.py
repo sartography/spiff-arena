@@ -1230,7 +1230,7 @@ class ProcessInstanceProcessor:
             serializer=processor._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
         )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
+        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
 
         # Save the process
         processor.save()
