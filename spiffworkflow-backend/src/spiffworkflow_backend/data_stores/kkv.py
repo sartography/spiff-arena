@@ -34,7 +34,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         query = db.session.query(KKVDataStoreModel)
         if process_group_identifier is not None:
             query = query.filter_by(location=process_group_identifier)
-        models = query.distinct().order_by(KKVDataStoreModel.name).all()  # type: ignore
+        models = query.order_by(KKVDataStoreModel.name).all()
         for model in models:
             data_stores.append(
                 {"name": model.name, "type": "kkv", "id": model.identifier, "clz": "KKVDataStore", "location": model.location}
