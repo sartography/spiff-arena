@@ -367,23 +367,6 @@ export interface PermissionCheckResponseBody {
   results: PermissionCheckResult;
 }
 
-export interface FormField {
-  id: string;
-  title: string;
-  required?: boolean;
-  type: string;
-  enum?: string[];
-  default?: any;
-  pattern?: string;
-}
-
-export interface JsonSchemaForm {
-  file_contents: string;
-  name: string;
-  process_model_id: string;
-  required: string[];
-}
-
 export interface ProcessInstanceEventErrorDetail {
   id: number;
   message: string;

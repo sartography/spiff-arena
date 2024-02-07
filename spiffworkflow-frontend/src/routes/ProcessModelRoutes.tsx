@@ -1,5 +1,4 @@
 import { Route, Routes } from 'react-router-dom';
-import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelEdit from './ProcessModelEdit';
 import ProcessModelNew from './ProcessModelNew';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
@@ -20,10 +19,6 @@ export default function ProcessModelRoutes() {
       <Route
         path=":process_model_id/form/:file_name"
         element={<ReactFormEditor />}
-      />
-      <Route
-        path=":process_model_id/form-builder"
-        element={<JsonSchemaFormBuilder />}
       />
     </Routes>
   );
