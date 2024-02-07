@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: 60c13a48d675
-Revises: 343b406f723d
+Revises: 29b261f5edf4
 Create Date: 2024-02-01 08:43:01.666683
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = '60c13a48d675'
-down_revision = '343b406f723d'
+down_revision = '29b261f5edf4'
 branch_labels = None
 depends_on = None
 
