@@ -16,7 +16,12 @@ def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta
     if queue_enabled_for_process_model(process_instance):
         buffer = 1
         countdown = eta_in_seconds - time.time() + buffer
-        args_to_celery = {"process_instance_id": process_instance.id, "task_guid": task_guid}
+        args_to_celery = {
+            "process_instance_id": process_instance.id,
+            "task_guid": task_guid,
+            # the producer_identifier is so we can know what is putting messages in the queue
+            "producer_identifier": "future_task",
+        }
         # add buffer to countdown to avoid rounding issues and race conditions with spiff. the situation we want to avoid is where
         # we think the timer said to run it at 6:34:11, and we initialize the SpiffWorkflow library,
         # expecting the timer to be ready, but the library considered it ready a little after that time

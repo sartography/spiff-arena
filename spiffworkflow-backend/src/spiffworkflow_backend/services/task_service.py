@@ -446,13 +446,25 @@ class TaskService:
             self.task_models[task_model.guid] = task_model
 
     def update_all_tasks_from_spiff_tasks(
-        self, spiff_tasks: list[SpiffTask], deleted_spiff_tasks: list[SpiffTask], start_time: float
+        self,
+        spiff_tasks: list[SpiffTask],
+        deleted_spiff_tasks: list[SpiffTask],
+        start_time: float,
+        to_task_guid: str | None = None,
     ) -> None:
         """Update given spiff tasks in the database and remove deleted tasks."""
         # Remove all the deleted/pruned tasks from the database.
         deleted_task_guids = [str(t.id) for t in deleted_spiff_tasks]
         tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
-        human_tasks_to_clear = HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(deleted_task_guids)).all()  # type: ignore
+
+        human_task_guids_to_clear = deleted_task_guids
+
+        # ensure we clear out any human tasks that were associated with this guid in case it was a human task
+        if to_task_guid is not None:
+            human_task_guids_to_clear.append(to_task_guid)
+        human_tasks_to_clear = HumanTaskModel.query.filter(
+            HumanTaskModel.task_id.in_(human_task_guids_to_clear)  # type: ignore
+        ).all()
 
         # delete human tasks first to avoid potential conflicts when deleting tasks.
         # otherwise sqlalchemy returns several warnings.

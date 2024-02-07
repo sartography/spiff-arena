@@ -69,6 +69,7 @@ from spiffworkflow_backend.models.bpmn_process_definition_relationship import Bp
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
+from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -1229,7 +1230,7 @@ class ProcessInstanceProcessor:
             serializer=processor._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
         )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
+        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
 
         # Save the process
         processor.save()
@@ -1810,9 +1811,20 @@ class ProcessInstanceProcessor:
         )
         db.session.commit()
 
+    def bring_archived_future_tasks_back_to_life(self) -> None:
+        archived_future_tasks = (
+            self.process_instance_model.future_tasks_query()
+            .filter(FutureTaskModel.archived_for_process_instance_status == True)  # noqa: E712
+            .all()
+        )
+        for archived_future_task in archived_future_tasks:
+            archived_future_task.archived_for_process_instance_status = False
+            db.session.add(archived_future_task)
+
     def resume(self) -> None:
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
+        self.bring_archived_future_tasks_back_to_life()
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )

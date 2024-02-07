@@ -5,6 +5,7 @@ from spiffworkflow_backend import create_app
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from sqlalchemy import update
 
@@ -39,6 +40,27 @@ def put_serializer_version_onto_numeric_track() -> None:
     db.session.commit()
 
 
+@benchmark_log_func
+def remove_duplicate_human_task_rows() -> None:
+    result = (
+        db.session.query(HumanTaskModel.process_instance_id, HumanTaskModel.task_guid, db.func.count().label("ct"))
+        .group_by(HumanTaskModel.task_guid, HumanTaskModel.process_instance_id)
+        .having(db.func.count() > 1)
+        .all()
+    )
+
+    # Process the result as needed
+    rows_to_delete = []
+    for row in result:
+        human_tasks = (
+            HumanTaskModel.query.filter_by(task_guid=row.task_guid).order_by(HumanTaskModel.created_at_in_seconds.desc()).all()
+        )
+        rows_to_delete = rows_to_delete + human_tasks[1:]
+    for row in rows_to_delete:
+        db.session.delete(row)
+    db.session.commit()
+
+
 def all_potentially_relevant_process_instances() -> list[ProcessInstanceModel]:
     return ProcessInstanceModel.query.filter(
         ProcessInstanceModel.spiff_serializer_version < Version2.version(),
@@ -65,6 +87,7 @@ def main() -> None:
         current_app.logger.debug(f"data_migrations/run_all::create_app took {end_time - start_time} seconds")
         start_time = time.time()
         put_serializer_version_onto_numeric_track()
+        remove_duplicate_human_task_rows()
         process_instances = all_potentially_relevant_process_instances()
         potentially_relevant_instance_count = len(process_instances)
         current_app.logger.debug(f"Found potentially relevant process_instances: {potentially_relevant_instance_count}")
