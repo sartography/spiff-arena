@@ -2821,7 +2821,7 @@ paths:
       responses:
         "200":
           description: The list of currently defined data store types
-  /data-stores/{data_store_type}/{name}/items:
+  /data-stores/{data_store_type}/{identifier}/items:
     parameters:
       - name: data_store_type
         in: path
@@ -2829,10 +2829,16 @@ paths:
         description: The type of datastore, such as "typeahead"
         schema:
           type: string
-      - name: name
+      - name: identifier
         in: path
         required: true
-        description: The name of the datastore, such as "cities"
+        description: The identifier of the datastore, such as "cities"
+        schema:
+          type: string
+      - name: location
+        in: query
+        required: false
+        description: The location of the data store
         schema:
           type: string
       - name: page
