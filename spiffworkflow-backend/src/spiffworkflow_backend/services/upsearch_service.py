@@ -11,4 +11,6 @@ class UpsearchService:
             locations.append(location)
             location = os.path.dirname(location)
 
+        locations.append("")
+
         return locations
