@@ -574,20 +574,23 @@ class ProcessInstanceService:
         cls,
         process_model: ProcessModelInfo,
         persistence_level: str,
-        user: UserModel,
         data_to_inject: dict | None = None,
         process_id_to_run: str | None = None,
+        user: UserModel | None = None,
     ) -> ProcessInstanceProcessor:
         process_instance = None
         if persistence_level == "none":
+            user_id = user.id if user is not None else None
             process_instance = ProcessInstanceModel(
                 status=ProcessInstanceStatus.not_started.value,
-                process_initiator_id=user.id,
+                process_initiator_id=user_id,
                 process_model_identifier=process_model.id,
                 process_model_display_name=process_model.display_name,
                 persistence_level=persistence_level,
             )
         else:
+            if user is None:
+                raise Exception("User must be provided to create a persistent process instance")
             process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
                 process_model.id, user
             )

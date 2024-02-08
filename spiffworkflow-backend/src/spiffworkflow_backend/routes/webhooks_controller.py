@@ -1,5 +1,3 @@
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
-from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
 import json
 
 from flask import current_app
@@ -7,6 +5,8 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
+from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authentication_service import AuthenticationService  # noqa: F401
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -37,9 +37,6 @@ def webhook(body: dict) -> Response:
             status_code=501,
         )
 
-    import pdb
-
-    pdb.set_trace()
     process_model = _get_process_model_for_instantiation(
         _un_modify_modified_process_model_id(current_app.config["SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER"])
     )
