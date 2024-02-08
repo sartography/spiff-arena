@@ -9,7 +9,7 @@
     "@carbon/icons-react": "^11.10.0",
     "@carbon/react": "^1.33.0",
     "@carbon/styles": "^1.16.0",
-    "@casl/ability": "^6.3.2",
+    "@casl/ability": "^6.5.0",
     "@casl/react": "^3.1.0",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.4.5",
