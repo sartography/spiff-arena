@@ -115,7 +115,7 @@ class ExecutionStrategy:
         spiff_task: SpiffTask,
         app: flask.app.Flask,
         user: Any | None,
-        process_model_identifier: str | None,
+        process_model_identifier: str,
     ) -> SpiffTask:
         with app.app_context():
             tld = current_app.config.get("THREAD_LOCAL_DATA")
