@@ -108,6 +108,7 @@ def _run_extension(
         persistence_level=persistence_level,
         data_to_inject=data_to_inject,
         process_id_to_run=process_id_to_run,
+        user=g.user,
     )
 
     task_data = {}

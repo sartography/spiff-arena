@@ -747,7 +747,7 @@ paths:
 
   /github-webhook-receive:
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.github_webhook_receive
+      operationId: spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive
       summary: receives push webhooks from github so we can keep our process model repo up to date
       requestBody:
         content:
@@ -766,7 +766,7 @@ paths:
 
   /webhook:
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.webhook
+      operationId: spiffworkflow_backend.routes.webhooks_controller.webhook
       summary: receives webhooks from external systems and runs a process model using the data received from the caller so arbitrary handling can be achieved.
       requestBody:
         content:
