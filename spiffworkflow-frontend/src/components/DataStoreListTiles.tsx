@@ -41,10 +41,9 @@ export default function DataStoreListTiles({
       if (defaultDataStores) {
         setDataStores(defaultDataStores);
       } else {
-        let queryParams = '?per_page=1000';
-        if (processGroup) {
-          queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
-        }
+        const queryParams = `?per_page=1000&process_group_identifier=${
+          processGroup?.id ?? ''
+        }`;
         HttpService.makeCallToBackend({
           path: `${targetUris.dataStoreListPath}${queryParams}`,
           successCallback: setDataStores,
