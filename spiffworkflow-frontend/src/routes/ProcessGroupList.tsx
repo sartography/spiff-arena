@@ -13,6 +13,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessModelSearch from '../components/ProcessModelSearch';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+import DataStoreListTiles from '../components/DataStoreListTiles';
 
 export default function ProcessGroupList() {
   const navigate = useNavigate();
@@ -80,6 +81,15 @@ export default function ProcessGroupList() {
         {processModelSearchArea()}
         <br />
         <ProcessGroupListTiles showNoItemsDisplayText />
+          <br />
+          <br />
+          <DataStoreListTiles
+            headerElement={<h2 className="clear-left">Data Stores</h2>}
+            userCanCreateDataStores={ability.can(
+              'POST',
+              targetUris.dataStoreListPath
+            )}
+          />
       </>
     );
   }
