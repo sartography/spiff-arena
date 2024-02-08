@@ -86,7 +86,6 @@ export default function ProcessGroupList() {
         </Stack>
         <br />
         <br />
-        <br />
         {processModelSearchArea()}
         <br />
         <ProcessGroupListTiles showNoItemsDisplayText />
