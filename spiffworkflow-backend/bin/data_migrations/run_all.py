@@ -5,6 +5,7 @@ from spiffworkflow_backend import create_app
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from sqlalchemy import update
 
@@ -39,6 +40,15 @@ def put_serializer_version_onto_numeric_track() -> None:
     db.session.commit()
 
 
+@benchmark_log_func
+def backfill_task_guid_for_human_tasks() -> None:
+    update_query = (
+        update(HumanTaskModel).where(HumanTaskModel.task_guid == None).values(task_guid=HumanTaskModel.task_id)  # noqa: E711
+    )
+    db.session.execute(update_query)
+    db.session.commit()
+
+
 def all_potentially_relevant_process_instances() -> list[ProcessInstanceModel]:
     return ProcessInstanceModel.query.filter(
         ProcessInstanceModel.spiff_serializer_version < Version2.version(),
@@ -65,6 +75,7 @@ def main() -> None:
         current_app.logger.debug(f"data_migrations/run_all::create_app took {end_time - start_time} seconds")
         start_time = time.time()
         put_serializer_version_onto_numeric_track()
+        backfill_task_guid_for_human_tasks()
         process_instances = all_potentially_relevant_process_instances()
         potentially_relevant_instance_count = len(process_instances)
         current_app.logger.debug(f"Found potentially relevant process_instances: {potentially_relevant_instance_count}")
