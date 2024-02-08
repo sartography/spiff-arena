@@ -764,6 +764,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /webhook:
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.webhook
+      summary: receives webhooks from external systems and runs a process model using the data received from the caller so arbitrary handling can be achieved.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OkTrue"
+      tags:
+        - git
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /process-instances/for-me:
     parameters:
       - name: process_model_identifier
