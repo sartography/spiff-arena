@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
+  Stack,
   // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
@@ -24,6 +25,7 @@ export default function ProcessGroupList() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['POST'],
     [targetUris.processGroupListPath]: ['POST'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
@@ -70,26 +72,33 @@ export default function ProcessGroupList() {
     return (
       <>
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
-        <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
-          <Button kind="secondary" href="/process-groups/new">
-            Add a process group
-          </Button>
-          <br />
-          <br />
-        </Can>
+        <Stack orientation="horizontal" gap={3}>
+          <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
+            <Button kind="secondary" href="/process-groups/new">
+              Add a process group
+            </Button>
+          </Can>
+          <Can I="POST" a={targetUris.dataStoreListPath} ability={ability}>
+            <Button href="/data-stores/new?parentGroupId=">
+              Add a data store
+            </Button>
+          </Can>
+        </Stack>
+        <br />
+        <br />
         <br />
         {processModelSearchArea()}
         <br />
         <ProcessGroupListTiles showNoItemsDisplayText />
-          <br />
-          <br />
-          <DataStoreListTiles
-            headerElement={<h2 className="clear-left">Data Stores</h2>}
-            userCanCreateDataStores={ability.can(
-              'POST',
-              targetUris.dataStoreListPath
-            )}
-          />
+        <br />
+        <br />
+        <DataStoreListTiles
+          headerElement={<h2 className="clear-left">Data Stores</h2>}
+          userCanCreateDataStores={ability.can(
+            'POST',
+            targetUris.dataStoreListPath
+          )}
+        />
       </>
     );
   }
