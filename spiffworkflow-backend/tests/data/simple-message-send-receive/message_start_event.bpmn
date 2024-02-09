@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:collaboration id="Collaboration_0vy9d1x">
+    <bpmn:participant id="Participant_12dcof4" processRef="Process_message_start" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_message_start" isExecutable="true">
+    <bpmn:startEvent id="message_start_event" name="Message start event" messageRef="[object Object]">
+      <bpmn:outgoing>Flow_08cv33e</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_014kujv" messageRef="Message_0rcwl5q" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_08cv33e" sourceRef="message_start_event" targetRef="Event_1bsjcsi" />
+    <bpmn:endEvent id="Event_1bsjcsi">
+      <bpmn:incoming>Flow_08cv33e</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:message id="Message_0rcwl5q" name="message_one">
+    <bpmn:extensionElements>
+      <spiffworkflow:messageVariable>the_message</spiffworkflow:messageVariable>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0vy9d1x">
+      <bpmndi:BPMNShape id="Participant_12dcof4_di" bpmnElement="Participant_12dcof4" isHorizontal="true">
+        <dc:Bounds x="30" y="70" width="600" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1xm7wfz_di" bpmnElement="message_start_event">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="163" y="202" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1bsjcsi_di" bpmnElement="Event_1bsjcsi">
+        <dc:Bounds x="432" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_08cv33e_di" bpmnElement="Flow_08cv33e">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="432" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

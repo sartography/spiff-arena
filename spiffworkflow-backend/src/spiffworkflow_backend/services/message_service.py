@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class MessageServiceError(Exception):
@@ -52,9 +53,10 @@ class MessageService:
                     message_name=message_instance_send.name
                 ).first()
                 if message_triggerable_process_model:
-                    receiving_process = MessageService.start_process_with_message(
-                        message_triggerable_process_model, message_instance_send.user
-                    )
+                    user = message_instance_send.user
+                    if user is None:
+                        user = UserService.find_or_create_system_user()
+                    receiving_process = MessageService.start_process_with_message(message_triggerable_process_model, user)
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process.id,
                         message_type="receive",

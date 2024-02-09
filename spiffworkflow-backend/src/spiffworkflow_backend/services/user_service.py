@@ -266,11 +266,21 @@ class UserService:
 
     @classmethod
     def find_or_create_guest_user(cls, username: str = SPIFF_GUEST_USER, group_identifier: str = SPIFF_GUEST_GROUP) -> UserModel:
-        guest_user: UserModel | None = UserModel.query.filter_by(
+        user: UserModel | None = UserModel.query.filter_by(
             username=username, service="spiff_guest_service", service_id="spiff_guest_service_id"
         ).first()
-        if guest_user is None:
-            guest_user = cls.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
-            cls.add_user_to_group_or_add_to_waiting(guest_user.username, group_identifier)
+        if user is None:
+            user = cls.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
+            cls.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
 
-        return guest_user
+        return user
+
+    @classmethod
+    def find_or_create_system_user(cls, username: str = "system") -> UserModel:
+        user: UserModel | None = UserModel.query.filter_by(
+            username=username, service="spiff_system_service", service_id="spiff_system_service_id"
+        ).first()
+        if user is None:
+            user = cls.create_user(username, "spiff_system_service", "spiff_system_service_id")
+
+        return user
