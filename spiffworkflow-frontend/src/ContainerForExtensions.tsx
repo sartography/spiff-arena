@@ -22,12 +22,9 @@ import NavigationBar from './components/NavigationBar';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
-  const [extensionUxElements, setExtensionNavigationItems] = useState<
+  const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
-  const [canLoadExtensions, setCanLoadExtensions] = useState<boolean | null>(
-    null
-  );
 
   let contentClassName = 'main-site-body-centered';
   if (window.location.pathname.startsWith('/editor/')) {
@@ -70,7 +67,7 @@ export default function ContainerForExtensions() {
         })
         .flat();
       if (eni) {
-        setExtensionNavigationItems(eni);
+        setExtensionUxElements(eni);
       }
     };
 
@@ -80,13 +77,13 @@ export default function ContainerForExtensions() {
         return;
       }
       if (ability.can('GET', targetUris.extensionListPath)) {
-        setCanLoadExtensions(true);
         HttpService.makeCallToBackend({
           path: targetUris.extensionListPath,
           successCallback: processExtensionResult,
         });
       } else {
-        setCanLoadExtensions(false);
+        // set to an empty array so we know that it loaded
+        setExtensionUxElements([]);
       }
     };
 
@@ -107,12 +104,7 @@ export default function ContainerForExtensions() {
       <Routes>
         <Route
           path="/*"
-          element={
-            <BaseRoutes
-              extensionUxElements={extensionUxElements}
-              canLoadExtensions={canLoadExtensions}
-            />
-          }
+          element={<BaseRoutes extensionUxElements={extensionUxElements} />}
         />
         <Route path="/editor/*" element={<EditorRoutes />} />
         <Route path="/extensions/:page_identifier" element={<Extension />} />
