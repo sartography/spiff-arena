@@ -78,7 +78,7 @@ jobs:
         working-directory: spiffworkflow-frontend
         run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
       - name: Build and push Frontend Docker image
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v5.1.0
         with:
           # this action doesn't seem to respect working-directory so set context
           context: spiffworkflow-frontend
@@ -132,7 +132,7 @@ jobs:
         working-directory: spiffworkflow-backend
         run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
       - name: Build and push Backend Docker image
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v5.1.0
         with:
           # this action doesn't seem to respect working-directory so set context
           context: spiffworkflow-backend
@@ -184,7 +184,7 @@ jobs:
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
 
       - name: Build and push the connector proxy
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v5.1.0
         with:
           # this action doesn't seem to respect working-directory so set context
           context: connector-proxy-demo
