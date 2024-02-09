@@ -16,17 +16,6 @@ First install python, poetry, and mysql. Then:
     ./bin/recreate_db clean
     ./bin/run_server_locally
 
-Note: if you're on a Mac and trying to run native (might translate elsewhere) running python 3 and get errors with mysqlclient and psycopgen2, you may need to install mysql-client, pkg-config, mysqlclient, and psycopgen2 (and remove mysqlclient and psycopgen2 from the pyproject.toml or Poetry will try to build them and crash). 
-
-    brew install mysql-client pkg-config
-    export PKG_CONFIG_PATH="$(brew --prefix)/opt/mysql-client/lib/pkgconfig"
-    pip install mysqlclient
-    pip install psycopg2
-
-On a Mac, port 7000 (used by the app) might be hijacked by Airplay. See the Docker section below. 
-
-Remember, if you don't need a full-on native dev experience, you can run the docker image, which saves you from all the native setup.
-
 ## Keycloak Setup
 
 You will want an openid server of some sort.
@@ -35,9 +24,6 @@ You can start it like this:
 
     ./keycloak/bin/start_keycloak
 
-It'll be running on port 7002 (if you want to log into the keycloak admin, localhost:7002). 
-Creds = admin/admin (also logs you into the app if running the front end)
-
 ## Frontend Setup
 
 First install nodejs, ideally the version in .tool-versions (but likely other versions will work). Then:
@@ -45,8 +31,6 @@ First install nodejs, ideally the version in .tool-versions (but likely other ve
     cd spiffworkflow-frontend
     npm install
     npm start
-
-Assuming you're running KeyCloak as indicated above, login will be admin/admin.
 
 ## Run tests
 
@@ -63,8 +47,6 @@ Get the app running so you can access the frontend at http://localhost:7001 in y
 For full instructions, see [Running SpiffWorkflow Locally with Docker](https://www.spiffworkflow.org/posts/articles/get_started_docker/).
 
 The `docker-compose.yml` file is for running a full-fledged instance of spiff-arena while `editor.docker-compose.yml` provides BPMN graphical editor capability to libraries and projects that depend on SpiffWorkflow but have no built-in BPMN edit capabilities.
-
-Note: For those who upgraded to MacOS 12.1 and are running everything locally, your AirPlay receiver may have started on Port 7000 and your docker (or anything requesting port 7000) may fail due to this port already being used. You can disable this port in System Preferences > Sharing > AirPlay receiver. 
 
 ## Contributing
 
