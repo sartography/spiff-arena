@@ -19,10 +19,14 @@ import { ExtensionUxElementMap } from '../components/ExtensionUxElementForDispla
 import Extension from './Extension';
 
 type OwnProps = {
+  canLoadExtensions: boolean | null;
   extensionUxElements?: UiSchemaUxElement[] | null;
 };
 
-export default function BaseRoutes({ extensionUxElements }: OwnProps) {
+export default function BaseRoutes({
+  canLoadExtensions,
+  extensionUxElements,
+}: OwnProps) {
   const elementCallback = (uxElement: UiSchemaUxElement) => {
     return (
       <Route
@@ -32,7 +36,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
     );
   };
 
-  if (extensionUxElements) {
+  if (extensionUxElements || canLoadExtensions === false) {
     const extensionRoutes = ExtensionUxElementMap({
       displayLocation: 'routes',
       elementCallback,

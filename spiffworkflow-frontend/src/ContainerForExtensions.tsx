@@ -25,6 +25,9 @@ export default function ContainerForExtensions() {
   const [extensionUxElements, setExtensionNavigationItems] = useState<
     UiSchemaUxElement[] | null
   >(null);
+  const [canLoadExtensions, setCanLoadExtensions] = useState<boolean | null>(
+    null
+  );
 
   let contentClassName = 'main-site-body-centered';
   if (window.location.pathname.startsWith('/editor/')) {
@@ -77,10 +80,13 @@ export default function ContainerForExtensions() {
         return;
       }
       if (ability.can('GET', targetUris.extensionListPath)) {
+        setCanLoadExtensions(true);
         HttpService.makeCallToBackend({
           path: targetUris.extensionListPath,
           successCallback: processExtensionResult,
         });
+      } else {
+        setCanLoadExtensions(false);
       }
     };
 
@@ -101,7 +107,12 @@ export default function ContainerForExtensions() {
       <Routes>
         <Route
           path="/*"
-          element={<BaseRoutes extensionUxElements={extensionUxElements} />}
+          element={
+            <BaseRoutes
+              extensionUxElements={extensionUxElements}
+              canLoadExtensions={canLoadExtensions}
+            />
+          }
         />
         <Route path="/editor/*" element={<EditorRoutes />} />
         <Route path="/extensions/:page_identifier" element={<Extension />} />
