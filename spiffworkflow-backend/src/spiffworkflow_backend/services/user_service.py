@@ -15,6 +15,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
+from spiffworkflow_backend.models.user import SPIFF_SYSTEM_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentNotFoundError
@@ -276,7 +277,7 @@ class UserService:
         return user
 
     @classmethod
-    def find_or_create_system_user(cls, username: str = "system") -> UserModel:
+    def find_or_create_system_user(cls, username: str = SPIFF_SYSTEM_USER) -> UserModel:
         user: UserModel | None = UserModel.query.filter_by(
             username=username, service="spiff_system_service", service_id="spiff_system_service_id"
         ).first()

@@ -53,7 +53,7 @@ class MessageService:
                     message_name=message_instance_send.name
                 ).first()
                 if message_triggerable_process_model:
-                    user = message_instance_send.user
+                    user: UserModel | None = message_instance_send.user
                     if user is None:
                         user = UserService.find_or_create_system_user()
                     receiving_process = MessageService.start_process_with_message(message_triggerable_process_model, user)
