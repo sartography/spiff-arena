@@ -1,6 +1,7 @@
 from flask import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -186,3 +187,23 @@ class TestMessageService(BaseTest):
         assert len(process_instance_result) == 3
         for process_instance in process_instance_result:
             assert process_instance.status == "complete"
+
+    def test_can_send_to_correct_start_event_if_there_are_multiple(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        load_test_spec(
+            "test_group/multiple_message_start_events",
+            process_model_source_directory="multiple_message_start_events",
+        )
+        user = self.find_or_create_user()
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+            message_name="travel_start_test_v2"
+        ).first()
+        assert message_triggerable_process_model is not None
+
+        MessageService.start_process_with_message(message_triggerable_process_model, user)
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 1
+        assert message_instances[0].name == "travel_start_test_v2"

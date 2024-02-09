@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:collaboration id="Collaboration_1rcnpcl">
+    <bpmn:participant id="Participant_0scxul5" processRef="Process_ynixgwm" />
+    <bpmn:correlationKey name="message_test_pur">
+      <bpmn:correlationPropertyRef>message_test_pur_id</bpmn:correlationPropertyRef>
+    </bpmn:correlationKey>
+    <bpmn:correlationKey name="message_test_trvl">
+      <bpmn:correlationPropertyRef>message_test_trvl_id</bpmn:correlationPropertyRef>
+    </bpmn:correlationKey>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_ynixgwm" isExecutable="true">
+    <bpmn:startEvent id="purchase_message_start_event" name="Purchase" messageRef="[object Object]">
+      <bpmn:outgoing>Flow_18sbiwh</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_090dz23" messageRef="Message_0e9yhnl" />
+    </bpmn:startEvent>
+    <bpmn:startEvent id="travel_message_start_event" name="Travel" messageRef="[object Object]">
+      <bpmn:outgoing>Flow_0kepd4s</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_093515a" messageRef="Message_1pyl8rr" />
+    </bpmn:startEvent>
+    <bpmn:startEvent id="normal_start_event" name="Normal start event">
+      <bpmn:outgoing>Flow_0a541po</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="Gateway_1jfkfac">
+      <bpmn:incoming>Flow_18sbiwh</bpmn:incoming>
+      <bpmn:incoming>Flow_0kepd4s</bpmn:incoming>
+      <bpmn:incoming>Flow_0a541po</bpmn:incoming>
+      <bpmn:outgoing>Flow_18oryqi</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>The process instance completed successfully.</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_17u2bz9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:scriptTask id="script_task" name="Script task">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>placeholder</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_18oryqi</bpmn:incoming>
+      <bpmn:outgoing>Flow_17u2bz9</bpmn:outgoing>
+      <bpmn:script>a = 1</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_18sbiwh" sourceRef="purchase_message_start_event" targetRef="Gateway_1jfkfac" />
+    <bpmn:sequenceFlow id="Flow_0kepd4s" sourceRef="travel_message_start_event" targetRef="Gateway_1jfkfac" />
+    <bpmn:sequenceFlow id="Flow_0a541po" sourceRef="normal_start_event" targetRef="Gateway_1jfkfac" />
+    <bpmn:sequenceFlow id="Flow_18oryqi" sourceRef="Gateway_1jfkfac" targetRef="script_task" />
+    <bpmn:sequenceFlow id="Flow_17u2bz9" sourceRef="script_task" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmn:message id="Message_0e9yhnl" name="purchase_start_test_v2">
+    <bpmn:extensionElements>
+      <spiffworkflow:messageVariable>incoming_pur_data_test</spiffworkflow:messageVariable>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_1pyl8rr" name="travel_start_test_v2">
+    <bpmn:extensionElements>
+      <spiffworkflow:messageVariable>incoming_trvl_data_test</spiffworkflow:messageVariable>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_0tggnp6" name="send_status_trvl_test_v2">
+    <bpmn:extensionElements>
+      <spiffworkflow:messagePayload>{"status": "open",
+"message_test_trvl_id": incoming_trvl_data_test["message_test_trvl_id"]}</spiffworkflow:messagePayload>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:correlationProperty id="message_test_pur_id" name="message_test_pur_id">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="Message_0e9yhnl">
+      <bpmn:formalExpression />
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="Message_0igeg1t">
+      <bpmn:formalExpression>incoming_pur_data_test["message_test_pur_id"]</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+  <bpmn:correlationProperty id="message_test_trvl_id" name="message_test_trvl_id">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="Message_1pyl8rr">
+      <bpmn:formalExpression>message_test_trvl_id</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="Message_0tggnp6">
+      <bpmn:formalExpression>message_test_trvl_id</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+  <bpmn:message id="Message_0igeg1t" name="send_status_pur_test_v2">
+    <bpmn:extensionElements>
+      <spiffworkflow:messagePayload>{"status": "open",
+"message_test_pur_id": incoming_pur_data_test["message_test_pur_id"]}</spiffworkflow:messagePayload>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1rcnpcl">
+      <bpmndi:BPMNShape id="Participant_0scxul5_di" bpmnElement="Participant_0scxul5" isHorizontal="true">
+        <dc:Bounds x="-80" y="-40" width="720" height="410" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1bo8ovz_di" bpmnElement="purchase_message_start_event">
+        <dc:Bounds x="172" y="42" width="36" height="36" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_03idp3u_di" bpmnElement="travel_message_start_event">
+        <dc:Bounds x="172" y="149" width="36" height="36" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0exzx6k_di" bpmnElement="normal_start_event">
+        <dc:Bounds x="172" y="242" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="116" y="295" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0u7wxe6_di" bpmnElement="Gateway_1jfkfac" isMarkerVisible="true">
+        <dc:Bounds x="265" y="142" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14za570_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="502" y="149" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1u87o6m_di" bpmnElement="script_task">
+        <dc:Bounds x="350" y="127" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_18sbiwh_di" bpmnElement="Flow_18sbiwh">
+        <di:waypoint x="208" y="60" />
+        <di:waypoint x="290" y="60" />
+        <di:waypoint x="290" y="142" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kepd4s_di" bpmnElement="Flow_0kepd4s">
+        <di:waypoint x="208" y="167" />
+        <di:waypoint x="265" y="167" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0a541po_di" bpmnElement="Flow_0a541po">
+        <di:waypoint x="208" y="260" />
+        <di:waypoint x="290" y="260" />
+        <di:waypoint x="290" y="192" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18oryqi_di" bpmnElement="Flow_18oryqi">
+        <di:waypoint x="315" y="167" />
+        <di:waypoint x="350" y="167" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17u2bz9_di" bpmnElement="Flow_17u2bz9">
+        <di:waypoint x="450" y="167" />
+        <di:waypoint x="502" y="167" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

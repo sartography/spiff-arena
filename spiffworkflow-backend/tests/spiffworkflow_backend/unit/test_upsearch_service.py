@@ -13,4 +13,5 @@ class TestUpsearchService(BaseTest):
             "misc/jonjon/generic-data-store-area",
             "misc/jonjon",
             "misc",
+            "",
         ]

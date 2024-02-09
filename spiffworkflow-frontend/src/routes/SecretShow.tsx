@@ -106,7 +106,7 @@ export default function SecretShow() {
                 <td>{params.key}</td>
                 {displaySecretValue && (
                   <>
-                    <td>
+                    <td aria-label="Secret value">
                       <TextInput
                         id="secret_value"
                         name="secret_value"
