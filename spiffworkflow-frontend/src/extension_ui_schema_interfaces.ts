@@ -1,11 +1,25 @@
+export enum ExtensionUiSchemaVersion {
+  ONE = '1',
+}
+
 export enum UiSchemaDisplayLocation {
+  configuration_tab_item = 'configuration_tab_item',
   header_menu_item = 'header_menu_item',
+  routes = 'routes',
   user_profile_item = 'user_profile_item',
 }
 
 export enum UiSchemaPersistenceLevel {
   full = 'full',
   none = 'none',
+}
+
+export enum UiSchemaPageComponentList {
+  CreateNewInstance = 'CreateNewInstance',
+  MarkdownRenderer = 'MarkdownRenderer',
+  ProcessInstanceListTable = 'ProcessInstanceListTable',
+  ProcessInstanceRun = 'ProcessInstanceRun',
+  SpiffTabs = 'SpiffTabs',
 }
 
 export interface UiSchemaLocationSpecificConfig {
@@ -39,13 +53,13 @@ export interface UiSchemaAction {
 }
 
 export interface UiSchemaPageComponent {
-  name: string;
+  name: keyof typeof UiSchemaPageComponentList;
   arguments: object;
 }
 
 export interface UiSchemaPageDefinition {
-  header: string;
-  api: string;
+  header?: string;
+  api?: string;
 
   components?: UiSchemaPageComponent[];
   form?: UiSchemaForm;
@@ -66,6 +80,7 @@ export interface ExtensionUiSchema {
   pages: UiSchemaPage;
   disabled?: boolean;
   ux_elements?: UiSchemaUxElement[];
+  version?: ExtensionUiSchemaVersion;
 }
 
 export interface ExtensionPostBody {

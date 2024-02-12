@@ -331,10 +331,11 @@ export default function Extension({
 
     if (uiSchemaPageComponents) {
       uiSchemaPageComponents.forEach((component: UiSchemaPageComponent) => {
-        if (supportedComponents[component.name]) {
+        const componentName = component.name;
+        if (supportedComponents[componentName]) {
           const argumentsForComponent: any = component.arguments;
           componentsToDisplay.push(
-            supportedComponents[component.name](argumentsForComponent)
+            supportedComponents[componentName](argumentsForComponent)
           );
         } else {
           console.error(
