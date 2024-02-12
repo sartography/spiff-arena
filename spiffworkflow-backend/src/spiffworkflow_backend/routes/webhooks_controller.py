@@ -1,3 +1,4 @@
+from spiffworkflow_backend.services.user_service import UserService
 import json
 
 from flask import current_app
@@ -19,6 +20,7 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 # or with:
 # npm install -g localtunnel && lt --port 7000 --subdomain oh-so-hot
 # where 7000 is the port the app is running on locally
+# so this would work: curl https://oh-so-hot.loca.lt/v1.0/status
 def github_webhook_receive(body: dict) -> Response:
     _enforce_github_auth()
     result = GitService.handle_web_hook(body)
@@ -40,13 +42,16 @@ def webhook(body: dict) -> Response:
     process_model = _get_process_model_for_instantiation(
         _un_modify_modified_process_model_id(current_app.config["SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER"])
     )
-    ProcessInstanceService.create_and_run_process_instance(
+    user = UserService.find_or_create_system_user()
+    processor = ProcessInstanceService.create_and_run_process_instance(
         process_model=process_model,
-        persistence_level="none",
-        data_to_inject={"headers": request.headers, "body": body},
+        persistence_level="full",
+        user=user,
+        # data_to_inject={"headers": request.headers, "body": body},
+        data_to_inject={"headers": dict(request.headers), "body": body},
     )
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return Response(json.dumps({"ok": processor.get_data()}), status=200, mimetype="application/json")
 
 
 def _enforce_github_auth() -> None:
