@@ -46,7 +46,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
@@ -100,7 +100,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
@@ -155,7 +155,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
