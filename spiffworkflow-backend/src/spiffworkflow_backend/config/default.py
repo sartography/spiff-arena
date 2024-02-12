@@ -165,6 +165,15 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
 config_from_env("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
 
+### webhook
+# configs for handling incoming webhooks from other systems
+# it assumes github webhooks by default, since SPIFFWORKFLOW_BACKEND_WEBHOOK_ENFORCES_GITHUB_AUTH is true,
+# but if you set that to false, you can handle webhooks from any system. just make sure you supply your
+# own auth checks in the process model.
+# the github auth will use SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET from above.
+config_from_env("SPIFFWORKFLOW_BACKEND_WEBHOOK_ENFORCES_GITHUB_AUTH", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER")
+
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors
 config_from_env("SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default="src/instance/element-unit-cache")

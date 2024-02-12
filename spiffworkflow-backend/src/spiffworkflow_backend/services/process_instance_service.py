@@ -45,13 +45,17 @@ from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
@@ -563,5 +567,68 @@ class ProcessInstanceService:
             assigned_user_group_identifier=assigned_user_group_identifier,
             potential_owner_usernames=potential_owner_usernames,
         )
-
         return task
+
+    @classmethod
+    def create_and_run_process_instance(
+        cls,
+        process_model: ProcessModelInfo,
+        persistence_level: str,
+        data_to_inject: dict | None = None,
+        process_id_to_run: str | None = None,
+        user: UserModel | None = None,
+    ) -> ProcessInstanceProcessor:
+        process_instance = None
+        if persistence_level == "none":
+            user_id = user.id if user is not None else None
+            process_instance = ProcessInstanceModel(
+                status=ProcessInstanceStatus.not_started.value,
+                process_initiator_id=user_id,
+                process_model_identifier=process_model.id,
+                process_model_display_name=process_model.display_name,
+                persistence_level=persistence_level,
+            )
+        else:
+            if user is None:
+                raise Exception("User must be provided to create a persistent process instance")
+            process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+                process_model.id, user
+            )
+
+        processor = None
+        try:
+            # this is only creates new process instances so no need to worry about process instance migrations
+            processor = ProcessInstanceProcessor(
+                process_instance,
+                script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
+                process_id_to_run=process_id_to_run,
+            )
+            save_to_db = process_instance.persistence_level != "none"
+            if data_to_inject is not None:
+                processor.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
+                next_task = processor.next_task()
+                DeepMerge.merge(next_task.data, data_to_inject)
+            processor.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
+        except (
+            ApiError,
+            ProcessInstanceIsNotEnqueuedError,
+            ProcessInstanceIsAlreadyLockedError,
+            WorkflowExecutionServiceError,
+        ) as e:
+            ErrorHandlingService.handle_error(process_instance, e)
+            raise e
+        except Exception as e:
+            ErrorHandlingService.handle_error(process_instance, e)
+            # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
+            # we need to recurse through all last tasks if the last task is a call activity or subprocess.
+            if processor is not None:
+                task = processor.bpmn_process_instance.last_task
+                if task is not None:
+                    raise ApiError.from_task(
+                        error_code="unknown_exception",
+                        message=f"An unknown error occurred. Original error: {e}",
+                        status_code=400,
+                        task=task,
+                    ) from e
+            raise e
+        return processor

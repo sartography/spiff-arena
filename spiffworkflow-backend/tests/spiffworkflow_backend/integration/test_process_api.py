@@ -1,4 +1,3 @@
-"""Test Process Api Blueprint."""
 import base64
 import io
 import json
@@ -36,8 +35,6 @@ from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
-# from spiffworkflow_backend.services.git_service import GitService
 
 
 class TestProcessApi(BaseTest):
