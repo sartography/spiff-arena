@@ -43,7 +43,7 @@ export default function Extension({
   const params = useParams();
   const [searchParams] = useSearchParams();
 
-  const [_processModel, setProcessModel] = useState<ProcessModel | null>(null);
+  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [formData, setFormData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [processedTaskData, setProcessedTaskData] = useState<any>(null);
@@ -68,6 +68,7 @@ export default function Extension({
 
   const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
     CreateNewInstance,
+    CustomForm,
     MarkdownRenderer,
     ProcessInstanceListTable,
     ProcessInstanceRun,
@@ -240,7 +241,11 @@ export default function Extension({
   };
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
-  const handleFormSubmit = (formObject: any, event: any) => {
+  const handleFormSubmit = (
+    pageDefinitionToUse: UiSchemaPageDefinition | UiSchemaPageComponent,
+    formObject: any,
+    event: any
+  ) => {
     event.preventDefault();
 
     if (formButtonsDisabled) {
@@ -255,13 +260,13 @@ export default function Extension({
     delete dataToSubmit.isManualTask;
 
     if (
-      uiSchemaPageDefinition &&
-      uiSchemaPageDefinition.navigate_instead_of_post_to_api
+      pageDefinitionToUse &&
+      pageDefinitionToUse.navigate_instead_of_post_to_api
     ) {
       let optionString: string | null = '';
-      if (uiSchemaPageDefinition.navigate_to_on_form_submit) {
+      if (pageDefinitionToUse.navigate_to_on_form_submit) {
         optionString = interpolateNavigationString(
-          uiSchemaPageDefinition.navigate_to_on_form_submit,
+          pageDefinitionToUse.navigate_to_on_form_submit,
           dataToSubmit
         );
         if (optionString !== null) {
@@ -272,14 +277,14 @@ export default function Extension({
     } else {
       let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
-      if (uiSchemaPageDefinition && uiSchemaPageDefinition.on_form_submit) {
-        if (uiSchemaPageDefinition.on_form_submit.full_api_path) {
-          apiPath = `/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+      if (pageDefinitionToUse && pageDefinitionToUse.on_form_submit) {
+        if (pageDefinitionToUse.on_form_submit.full_api_path) {
+          apiPath = `/${pageDefinitionToUse.on_form_submit.api_path}`;
           postBody = dataToSubmit;
         } else {
-          apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+          apiPath = `${targetUris.extensionListPath}/${pageDefinitionToUse.on_form_submit.api_path}`;
         }
-        postBody.ui_schema_action = uiSchemaPageDefinition.on_form_submit;
+        postBody.ui_schema_action = pageDefinitionToUse.on_form_submit;
       }
 
       // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
@@ -296,6 +301,43 @@ export default function Extension({
         postBody,
       });
     }
+  };
+
+  const renderComponentArguments = (component: UiSchemaPageComponent) => {
+    const argumentsForComponent: any = component.arguments;
+    if (processModel) {
+      Object.keys(argumentsForComponent).forEach((argName: string) => {
+        const argValue = argumentsForComponent[argName];
+        if (
+          typeof argValue === 'string' &&
+          argValue.startsWith('SPIFF_PROCESS_MODEL_FILE:')
+        ) {
+          const [macro, fileName] = argValue.split(':::');
+          const macroList = macro.split(':');
+          const pmFileForArg = processModel.files.find(
+            (pmFile: ProcessFile) => {
+              return pmFile.name === fileName;
+            }
+          );
+          if (pmFileForArg) {
+            let newArgValue = pmFileForArg.file_contents;
+            if (macroList.includes('FROM_JSON')) {
+              newArgValue = JSON.parse(newArgValue || '{}');
+            }
+            argumentsForComponent[argName] = newArgValue;
+          }
+        }
+      });
+    }
+    if (component.name === 'CustomForm') {
+      argumentsForComponent.onSubmit = (formObject: any, event: any) =>
+        handleFormSubmit(component, formObject, event);
+      argumentsForComponent.formData = formData;
+      argumentsForComponent.onChange = (obj: any) => {
+        setFormData(obj.formData);
+      };
+    }
+    return argumentsForComponent;
   };
 
   if (readyForComponentsToDisplay && uiSchemaPageDefinition) {
@@ -333,7 +375,7 @@ export default function Extension({
       uiSchemaPageComponents.forEach((component: UiSchemaPageComponent) => {
         const componentName = component.name;
         if (supportedComponents[componentName]) {
-          const argumentsForComponent: any = component.arguments;
+          const argumentsForComponent = renderComponentArguments(component);
           componentsToDisplay.push(
             supportedComponents[componentName](argumentsForComponent)
           );
@@ -361,7 +403,9 @@ export default function Extension({
               setFormData(obj.formData);
             }}
             disabled={formButtonsDisabled}
-            onSubmit={handleFormSubmit}
+            onSubmit={(formObject: any, event: any) =>
+              handleFormSubmit(uiSchemaPageDefinition, formObject, event)
+            }
             schema={JSON.parse(formSchemaFile.file_contents)}
             uiSchema={JSON.parse(formUiSchemaFile.file_contents)}
           >

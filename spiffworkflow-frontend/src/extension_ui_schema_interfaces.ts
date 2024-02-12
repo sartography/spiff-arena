@@ -16,6 +16,7 @@ export enum UiSchemaPersistenceLevel {
 
 export enum UiSchemaPageComponentList {
   CreateNewInstance = 'CreateNewInstance',
+  CustomForm = 'CustomForm',
   MarkdownRenderer = 'MarkdownRenderer',
   ProcessInstanceListTable = 'ProcessInstanceListTable',
   ProcessInstanceRun = 'ProcessInstanceRun',
@@ -55,6 +56,10 @@ export interface UiSchemaAction {
 export interface UiSchemaPageComponent {
   name: keyof typeof UiSchemaPageComponentList;
   arguments: object;
+
+  navigate_instead_of_post_to_api?: boolean;
+  navigate_to_on_form_submit?: string;
+  on_form_submit?: UiSchemaAction;
 }
 
 export interface UiSchemaPageDefinition {
