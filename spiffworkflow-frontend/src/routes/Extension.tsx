@@ -220,7 +220,6 @@ export default function Extension({
     pageDefinitionToUse: UiSchemaPageDefinition | UiSchemaPageComponent,
     result: ExtensionApiResponse
   ) => {
-    console.log('pageDefinitionToUse', pageDefinitionToUse);
     if (pageDefinitionToUse && pageDefinitionToUse.navigate_to_on_form_submit) {
       const optionString = interpolateNavigationString(
         pageDefinitionToUse.navigate_to_on_form_submit,
@@ -246,6 +245,7 @@ export default function Extension({
     pageDefinitionToUse: UiSchemaPageDefinition | UiSchemaPageComponent,
     formObject: any,
     event: any
+    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     event.preventDefault();
 
@@ -305,6 +305,7 @@ export default function Extension({
     }
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const renderComponentArguments = (component: UiSchemaPageComponent) => {
     const argumentsForComponent: any = component.arguments;
     if (processModel) {

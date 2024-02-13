@@ -556,8 +556,6 @@ export default function ProcessModelShow() {
             navigate(
               `/process-models/${modifiedProcessModelId}/form?file_ext=md`
             );
-          } else {
-            console.log('a.selectedItem.text', a.selectedItem.text);
           }
         }}
         items={items}
