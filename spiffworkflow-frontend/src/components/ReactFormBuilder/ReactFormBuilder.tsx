@@ -316,7 +316,7 @@ export default function ReactFormBuilder({
       setFormData(JSON.parse(result.file_contents));
     } catch (e) {
       // todo: show error message
-      console.log('Error parsing JSON:', e);
+      console.error('Error parsing JSON:', e);
     }
   }
 

@@ -26,13 +26,12 @@ name: Docker Image For Main Builds
 # Git tags for an image:
 #   curl -H "Authorization: Bearer $(echo -n $TOKEN | base64 -w0)" https://ghcr.io/v2/sartography/spiffworkflow-backend/tags/list | jq -r '.tags | sort_by(.)'
 
-
 on:
   push:
     branches:
       - main
       - spiffdemo
-      - feature/background-proc-with-celery
+      - feature/update-extension-docs
 
 jobs:
   create_frontend_docker_image:
