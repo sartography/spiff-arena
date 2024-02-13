@@ -172,15 +172,6 @@ export interface UiSchemaPageDefinition {
    * It may be better to move functionality to the action but not 100% sure how.
    */
   open_links_in_new_tab?: boolean;
-
-  // NOTE: remove in favor of CustomForm component?
-  form?: UiSchemaForm;
-  navigate_instead_of_post_to_api?: boolean;
-  navigate_to_on_form_submit?: string;
-  on_form_submit?: UiSchemaAction;
-
-  // NOTE: remove in favor of MarkdownRenderer component?
-  markdown_instruction_filename?: string;
 }
 
 // The name of the page along with its definition.
