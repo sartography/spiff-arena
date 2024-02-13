@@ -249,7 +249,7 @@ class ProcessModelService(FileSystemService):
         reference_cache_processes = ReferenceCacheModel.basic_query().filter_by(type="process").all()
         process_models = cls.embellish_with_is_executable_property(process_models, reference_cache_processes)
 
-        if filter_runnable_by_user or filter_runnable_as_extension:
+        if filter_runnable_by_user:
             process_models = cls.filter_by_runnable(process_models, reference_cache_processes)
 
         permitted_process_models = []
