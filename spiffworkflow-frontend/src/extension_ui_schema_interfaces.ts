@@ -1,3 +1,4 @@
+// current version of the extension uischema.
 export enum ExtensionUiSchemaVersion {
   ONE = '1',
 }
@@ -98,14 +99,18 @@ export interface UiSchemaAction {
   search_params_to_inject?: string[];
 
   /**
+   * the variable name in the task data that will define the components to use.
+   * this is useful if the components for the page need to be generated more dynamically.
+   * this variable should be defined from the on_load process.
+   */
+  ui_schema_page_components_variable?: string;
+
+  /**
    * by default, when submitting an action it makes the call to the extension endpoint in backend.
    * this tells the web ui to use the api_path as the full path and removes the extension portion.
    * NOTE: this appears unused by any extension.
    */
   full_api_path?: boolean;
-
-  // NOTE: this appears unused by any extension.
-  ui_schema_page_components_variable?: string;
 }
 
 // component to use for the page
@@ -113,13 +118,20 @@ export interface UiSchemaPageComponent {
   // the name must match a value in "UiSchemaPageComponentList".
   name: keyof typeof UiSchemaPageComponentList;
 
-  // arguments given to the component - details above under "UiSchemaPageComponentList".
+  /**
+   * arguments given to the component.
+   * details above under "UiSchemaPageComponentList".
+   *
+   * if an argument is a string prepended by SPIFF_PROCESS_MODEL_FILE if will look for a file defined in that process model.
+   * FROM_JSON can be used with SPIFF_PROCESS_MODEL_FILE to tell frontend to load the contents with JSON.parse
+   * example: "SPIFF_PROCESS_MODEL_FILE:FROM_JSON:::filename.json"
+   * example: "SPIFF_PROCESS_MODEL_FILE:::filename.md"
+   */
   arguments: object;
 
   /**
    * instead of posting the extension api, this makes it set the "href" to the api_path.
    * this is useful if the intent is download a file.
-   * NOTE: this appears unused by any extension.
    */
   navigate_instead_of_post_to_api?: boolean;
 
@@ -132,40 +144,75 @@ export interface UiSchemaPageComponent {
   on_form_submit?: UiSchemaAction;
 }
 
+// the primary definition for a page.
 export interface UiSchemaPageDefinition {
+  // primary header to use for the page.
   header?: string;
-  api?: string;
 
   components?: UiSchemaPageComponent[];
+
+  /**
+   * path to navigate to after calling the on_load api.
+   * this will interpolate patterns like "{task_data_var}" if found in the task data.
+   */
+  navigate_to_on_load?: string;
+
+  /**
+   * the on_load action to use.
+   * useful for gathering data from a process model when loading the extension.
+   */
+  on_load?: UiSchemaAction;
+
+  /**
+   * specifies whether or not open links specified in the markdown to open in a new tab or not.
+   * NOTE: this gets used for both the markdown_instruction_filename and markdown returned from the on_load.
+   * it may be better to move functionality to the action but not 100% sure how.
+   */
+  open_links_in_new_tab?: boolean;
+
+  // NOTE: remove in favor of CustomForm component?
   form?: UiSchemaForm;
-  markdown_instruction_filename?: string;
   navigate_instead_of_post_to_api?: boolean;
   navigate_to_on_form_submit?: string;
-  navigate_to_on_load?: string;
   on_form_submit?: UiSchemaAction;
-  on_load?: UiSchemaAction;
-  open_links_in_new_tab?: boolean;
+
+  // NOTE: remove in favor of MarkdownRenderer component?
+  markdown_instruction_filename?: string;
 }
 
+// the name of the page along with its definition.
 export interface UiSchemaPage {
   [key: string]: UiSchemaPageDefinition;
 }
 
+/**
+ * top-level object in the extension_uischema.json file.
+ * read the interfaces above for more info.
+ */
 export interface ExtensionUiSchema {
   pages: UiSchemaPage;
-  disabled?: boolean;
   ux_elements?: UiSchemaUxElement[];
   version?: ExtensionUiSchemaVersion;
+
+  // disable the extension which is useful during development of an extension.
+  disabled?: boolean;
 }
 
+/** ********************************************
+ * these are types given to and received from the api calls.
+ * these are not specified from within the extension_uischema.json file.
+ */
 export interface ExtensionPostBody {
   extension_input: any;
   ui_schema_action?: UiSchemaAction;
 }
 
+// the response returned from the backend
 export interface ExtensionApiResponse {
+  // task data generated from the process model.
   task_data: any;
 
+  // the markdown string rendered from the process model.
   rendered_results_markdown?: string;
-  ui_schema_page_components?: UiSchemaPageComponent[];
 }
+/** ************************************* */
