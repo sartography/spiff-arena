@@ -5,9 +5,7 @@
  */
 
 // Current version of the extension uischema.
-export enum ExtensionUiSchemaVersion {
-  ONE = '1',
-}
+export type ExtensionUiSchemaVersion = '0.1' | '0.2';
 
 // All locations that can be specified to display the link to use the extensions.
 export enum UiSchemaDisplayLocation {
@@ -83,6 +81,12 @@ export interface UiSchemaAction {
    */
   api_path: string;
 
+  /**
+   * By default, when submitting an action it makes the call to the extension endpoint in backend.
+   * This tells the web ui to use the api_path as the full path and removes the extension portion.
+   */
+  is_full_api_path?: boolean;
+
   persistence_level?: UiSchemaPersistenceLevel;
 
   /**
@@ -110,13 +114,6 @@ export interface UiSchemaAction {
    * This variable should be defined from the on_load process.
    */
   ui_schema_page_components_variable?: string;
-
-  /**
-   * By default, when submitting an action it makes the call to the extension endpoint in backend.
-   * This tells the web ui to use the api_path as the full path and removes the extension portion.
-   * NOTE: this appears unused by any extension.
-   */
-  full_api_path?: boolean;
 }
 
 // Component to use for the page

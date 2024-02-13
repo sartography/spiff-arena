@@ -10,7 +10,7 @@ import {
 } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import { recursivelyChangeNullAndUndefined } from '../helpers';
+import { recursivelyChangeNullAndUndefined, makeid } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
 import {
@@ -216,13 +216,14 @@ export default function Extension({
     targetUris.extensionPath,
   ]);
 
-  const processSubmitResult = (result: ExtensionApiResponse) => {
-    if (
-      uiSchemaPageDefinition &&
-      uiSchemaPageDefinition.navigate_to_on_form_submit
-    ) {
+  const processSubmitResult = (
+    pageDefinitionToUse: UiSchemaPageDefinition | UiSchemaPageComponent,
+    result: ExtensionApiResponse
+  ) => {
+    console.log('pageDefinitionToUse', pageDefinitionToUse);
+    if (pageDefinitionToUse && pageDefinitionToUse.navigate_to_on_form_submit) {
       const optionString = interpolateNavigationString(
-        uiSchemaPageDefinition.navigate_to_on_form_submit,
+        pageDefinitionToUse.navigate_to_on_form_submit,
         result.task_data
       );
       if (optionString !== null) {
@@ -278,7 +279,7 @@ export default function Extension({
       let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
       if (pageDefinitionToUse && pageDefinitionToUse.on_form_submit) {
-        if (pageDefinitionToUse.on_form_submit.full_api_path) {
+        if (pageDefinitionToUse.on_form_submit.is_full_api_path) {
           apiPath = `/${pageDefinitionToUse.on_form_submit.api_path}`;
           postBody = dataToSubmit;
         } else {
@@ -292,7 +293,8 @@ export default function Extension({
       recursivelyChangeNullAndUndefined(dataToSubmit, null);
       HttpService.makeCallToBackend({
         path: apiPath,
-        successCallback: processSubmitResult,
+        successCallback: (result: ExtensionApiResponse) =>
+          processSubmitResult(pageDefinitionToUse, result),
         failureCallback: (error: any) => {
           addError(error);
           setFormButtonsDisabled(false);
@@ -333,6 +335,7 @@ export default function Extension({
       argumentsForComponent.onSubmit = (formObject: any, event: any) =>
         handleFormSubmit(component, formObject, event);
       argumentsForComponent.formData = formData;
+      argumentsForComponent.id = argumentsForComponent.id || makeid(20);
       argumentsForComponent.onChange = (obj: any) => {
         setFormData(obj.formData);
       };
