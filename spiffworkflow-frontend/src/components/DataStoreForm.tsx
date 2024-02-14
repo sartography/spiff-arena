@@ -155,7 +155,11 @@ export default function DataStoreForm({
   const onTypeChanged = (newType: any) => {
     setTypeInvalid(false);
     const newTypeSelection = newType.selectedItem;
-    if (newTypeSelection) {
+    if (
+      newTypeSelection &&
+      typeof newTypeSelection === 'object' &&
+      'type' in newTypeSelection
+    ) {
       const updateDict = { type: newTypeSelection.type };
       updateDataStore(updateDict);
     }
@@ -168,14 +172,16 @@ export default function DataStoreForm({
     updateDataStore(updateDict);
   };
 
-  const dataStoreTypeDisplayString = (dataStoreType: DataStoreType | null) => {
+  const dataStoreTypeDisplayString = (
+    dataStoreType: DataStoreType | null
+  ): string => {
     if (dataStoreType) {
       return `${dataStoreType.name} (${truncateString(
         dataStoreType.description,
         75
       )})`;
     }
-    return null;
+    return '';
   };
 
   const formElements = () => {
