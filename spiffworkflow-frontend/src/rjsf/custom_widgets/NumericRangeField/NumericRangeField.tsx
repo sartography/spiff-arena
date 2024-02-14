@@ -62,9 +62,13 @@ export default function NumericRangeField({
   const formatNumberString = (numberString: string): string => {
     if (numberString) {
       if (numberString.includes('.')) {
-        return numberString
-          .toString()
-          .replace(/\B(?=(\d{3}?)+(?!\d).[^\.])/g, ',');
+        return (
+          numberString
+            .toString()
+            .split('.')[0]
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ',') +
+          `.${numberString.split('.')[1]}`
+        );
       } else {
         return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       }
@@ -82,7 +86,7 @@ export default function NumericRangeField({
     return Number(numberString.replace(/,/g, ''));
   };
 
-  // create two number inputs for min and max compensation
+  const maxNumber = 999_999_999_999;
   let min = formData?.min || null;
   const [minValue, setMinValue] = React.useState(min?.toString() || '');
   let max = formData?.max || null;
@@ -91,7 +95,6 @@ export default function NumericRangeField({
   // the text input eventually breaks when the number gets too big.
   // we are not sure what the cut off really is but seems unlikely
   // people will need to go this high.
-  const maxNumber = 999_999_999_999;
 
   const onChangeLocal = (nameToChange: any, event: any) => {
     event.preventDefault();

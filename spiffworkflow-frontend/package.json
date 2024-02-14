@@ -66,7 +66,7 @@
     }
   },
   "scripts": {
-    "start": "ESLINT_NO_DEV_ERRORS=true PORT=7001 craco start",
+    "start": "CHOKIDAR_USEPOLLING=true ESLINT_NO_DEV_ERRORS=true PORT=7001 craco start",
     "build": "craco build",
     "test": "react-scripts test --coverage",
     "t": "npm test -- --watchAll=false",
