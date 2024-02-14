@@ -228,7 +228,6 @@ export default function DataStoreForm({
           onChange={onTypeChanged}
           id="data-store-type-select"
           data-qa="data-store-type-selection"
-          disabled={mode === 'edit'}
           items={dataStoreTypes}
           itemToString={dataStoreTypeDisplayString}
           titleText="Type*"
