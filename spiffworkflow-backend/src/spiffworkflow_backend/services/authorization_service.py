@@ -241,6 +241,7 @@ class AuthorizationService:
             "task_allows_guest",
             "test_raise_error",
             "url_info",
+            "webhook",
         ]
         if request.method == "OPTIONS":
             return True

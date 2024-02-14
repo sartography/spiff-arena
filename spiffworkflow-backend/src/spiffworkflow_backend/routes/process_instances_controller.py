@@ -40,6 +40,7 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -685,7 +686,7 @@ def _process_instance_run(
 def _process_instance_create(
     process_model_identifier: str,
 ) -> ProcessInstanceModel:
-    process_model = _get_process_model(process_model_identifier)
+    process_model = _get_process_model_for_instantiation(process_model_identifier)
     if process_model.primary_file_name is None:
         raise ApiError(
             error_code="process_model_missing_primary_bpmn_file",

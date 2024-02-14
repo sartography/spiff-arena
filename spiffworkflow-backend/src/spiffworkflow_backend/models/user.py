@@ -15,6 +15,7 @@ from spiffworkflow_backend.models.group import GroupModel
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
+SPIFF_SYSTEM_USER = "spiff_system_user"
 SPIFF_GENERATED_JWT_KEY_ID = "spiff_backend"
 SPIFF_GENERATED_JWT_ALGORITHM = "HS256"
 SPIFF_GENERATED_JWT_AUDIENCE = "spiffworkflow-backend"

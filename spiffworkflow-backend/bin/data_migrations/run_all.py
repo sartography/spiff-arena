@@ -61,6 +61,15 @@ def remove_duplicate_human_task_rows() -> None:
     db.session.commit()
 
 
+@benchmark_log_func
+def backfill_task_guid_for_human_tasks() -> None:
+    update_query = (
+        update(HumanTaskModel).where(HumanTaskModel.task_guid == None).values(task_guid=HumanTaskModel.task_id)  # noqa: E711
+    )
+    db.session.execute(update_query)
+    db.session.commit()
+
+
 def all_potentially_relevant_process_instances() -> list[ProcessInstanceModel]:
     return ProcessInstanceModel.query.filter(
         ProcessInstanceModel.spiff_serializer_version < Version2.version(),
@@ -88,6 +97,7 @@ def main() -> None:
         start_time = time.time()
         put_serializer_version_onto_numeric_track()
         remove_duplicate_human_task_rows()
+        backfill_task_guid_for_human_tasks()
         process_instances = all_potentially_relevant_process_instances()
         potentially_relevant_instance_count = len(process_instances)
         current_app.logger.debug(f"Found potentially relevant process_instances: {potentially_relevant_instance_count}")

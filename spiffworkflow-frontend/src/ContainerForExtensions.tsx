@@ -22,7 +22,7 @@ import NavigationBar from './components/NavigationBar';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
-  const [extensionUxElements, setExtensionNavigationItems] = useState<
+  const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
 
@@ -67,7 +67,7 @@ export default function ContainerForExtensions() {
         })
         .flat();
       if (eni) {
-        setExtensionNavigationItems(eni);
+        setExtensionUxElements(eni);
       }
     };
 
@@ -81,6 +81,9 @@ export default function ContainerForExtensions() {
           path: targetUris.extensionListPath,
           successCallback: processExtensionResult,
         });
+      } else {
+        // set to an empty array so we know that it loaded
+        setExtensionUxElements([]);
       }
     };
 
