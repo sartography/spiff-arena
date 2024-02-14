@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -125,7 +126,34 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     db.session.add(model)
     db.session.commit()
 
+    _write_data_store_definition_json(data_store_type, model)
+
     return make_response(jsonify({"ok": True}), 200)
+
+
+def _write_data_store_definition_json(data_store_type: str, model: Any) -> None:
+    # TODO: once the top level is a process group this check should be removed
+    if model.location == "":
+        return
+
+    contents = FileSystemService.contents_of_json_file_at_relative_path(model.location, FileSystemService.PROCESS_GROUP_JSON_FILE)
+    data_stores_key = "data_stores"
+
+    if data_stores_key not in contents:
+        contents[data_stores_key] = {}
+
+    if data_store_type not in contents[data_stores_key]:
+        contents[data_stores_key][data_store_type] = {}
+
+    contents[data_stores_key][data_store_type][model.identifier] = {
+        "name": model.name,
+        "identifier": model.identifier,
+        "location": model.location,
+        "schema": model.schema,
+        "description": model.description,
+    }
+
+    FileSystemService.write_to_json_file_at_relative_path(model.location, FileSystemService.PROCESS_GROUP_JSON_FILE, contents)
 
 
 def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
