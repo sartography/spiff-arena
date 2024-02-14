@@ -220,7 +220,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 type = "git"
 url = "https://github.com/sartography/connector-http.git"
 reference = "HEAD"
-resolved_reference = "5e6a675a421cbee85f9c33832b874152a2a57e1e"
+resolved_reference = "b79938f3e325b22c3e393405906a01b0a795fec4"
 
 [[package]]
 name = "connector-slack"
