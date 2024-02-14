@@ -1,6 +1,7 @@
 import validator from '@rjsf/validator-ajv8';
 import { ReactNode } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
+import { Button } from '@carbon/react';
 import { Form } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
@@ -26,6 +27,7 @@ type OwnProps = {
   children?: ReactNode;
   noValidate?: boolean;
   restrictedWidth?: boolean;
+  submitButtonText?: string;
 };
 
 export default function CustomForm({
@@ -39,6 +41,7 @@ export default function CustomForm({
   children,
   noValidate = false,
   restrictedWidth = false,
+  submitButtonText,
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -357,6 +360,15 @@ export default function CustomForm({
     return checkFieldsWithCustomValidations(schema, formDataToCheck, errors);
   };
 
+  let childrenToUse = children;
+  if (submitButtonText) {
+    childrenToUse = (
+      <Button type="submit" id="submit-button" disabled={disabled}>
+        {submitButtonText}
+      </Button>
+    );
+  }
+
   return (
     <Form
       id={id}
@@ -374,7 +386,7 @@ export default function CustomForm({
       templates={rjsfTemplates}
       omitExtraData
     >
-      {children}
+      {childrenToUse}
     </Form>
   );
 }

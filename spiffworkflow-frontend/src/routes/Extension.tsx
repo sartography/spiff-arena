@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button } from '@carbon/react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -10,7 +9,7 @@ import {
 } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import { recursivelyChangeNullAndUndefined } from '../helpers';
+import { recursivelyChangeNullAndUndefined, makeid } from '../helpers';
 import CustomForm from '../components/CustomForm';
 import { BACKEND_BASE_URL } from '../config';
 import {
@@ -43,7 +42,7 @@ export default function Extension({
   const params = useParams();
   const [searchParams] = useSearchParams();
 
-  const [_processModel, setProcessModel] = useState<ProcessModel | null>(null);
+  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [formData, setFormData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [processedTaskData, setProcessedTaskData] = useState<any>(null);
@@ -68,6 +67,7 @@ export default function Extension({
 
   const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
     CreateNewInstance,
+    CustomForm,
     MarkdownRenderer,
     ProcessInstanceListTable,
     ProcessInstanceRun,
@@ -215,13 +215,13 @@ export default function Extension({
     targetUris.extensionPath,
   ]);
 
-  const processSubmitResult = (result: ExtensionApiResponse) => {
-    if (
-      uiSchemaPageDefinition &&
-      uiSchemaPageDefinition.navigate_to_on_form_submit
-    ) {
+  const processSubmitResult = (
+    pageComponent: UiSchemaPageComponent,
+    result: ExtensionApiResponse
+  ) => {
+    if (pageComponent && pageComponent.navigate_to_on_form_submit) {
       const optionString = interpolateNavigationString(
-        uiSchemaPageDefinition.navigate_to_on_form_submit,
+        pageComponent.navigate_to_on_form_submit,
         result.task_data
       );
       if (optionString !== null) {
@@ -239,8 +239,12 @@ export default function Extension({
     }
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
-  const handleFormSubmit = (formObject: any, event: any) => {
+  const handleFormSubmit = (
+    pageComponent: UiSchemaPageComponent,
+    formObject: any,
+    event: any
+    // eslint-disable-next-line sonarjs/cognitive-complexity
+  ) => {
     event.preventDefault();
 
     if (formButtonsDisabled) {
@@ -254,14 +258,11 @@ export default function Extension({
     removeError();
     delete dataToSubmit.isManualTask;
 
-    if (
-      uiSchemaPageDefinition &&
-      uiSchemaPageDefinition.navigate_instead_of_post_to_api
-    ) {
+    if (pageComponent && pageComponent.navigate_instead_of_post_to_api) {
       let optionString: string | null = '';
-      if (uiSchemaPageDefinition.navigate_to_on_form_submit) {
+      if (pageComponent.navigate_to_on_form_submit) {
         optionString = interpolateNavigationString(
-          uiSchemaPageDefinition.navigate_to_on_form_submit,
+          pageComponent.navigate_to_on_form_submit,
           dataToSubmit
         );
         if (optionString !== null) {
@@ -272,14 +273,14 @@ export default function Extension({
     } else {
       let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
       let apiPath = targetUris.extensionPath;
-      if (uiSchemaPageDefinition && uiSchemaPageDefinition.on_form_submit) {
-        if (uiSchemaPageDefinition.on_form_submit.full_api_path) {
-          apiPath = `/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+      if (pageComponent && pageComponent.on_form_submit) {
+        if (pageComponent.on_form_submit.is_full_api_path) {
+          apiPath = `/${pageComponent.on_form_submit.api_path}`;
           postBody = dataToSubmit;
         } else {
-          apiPath = `${targetUris.extensionListPath}/${uiSchemaPageDefinition.on_form_submit.api_path}`;
+          apiPath = `${targetUris.extensionListPath}/${pageComponent.on_form_submit.api_path}`;
         }
-        postBody.ui_schema_action = uiSchemaPageDefinition.on_form_submit;
+        postBody.ui_schema_action = pageComponent.on_form_submit;
       }
 
       // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
@@ -287,7 +288,8 @@ export default function Extension({
       recursivelyChangeNullAndUndefined(dataToSubmit, null);
       HttpService.makeCallToBackend({
         path: apiPath,
-        successCallback: processSubmitResult,
+        successCallback: (result: ExtensionApiResponse) =>
+          processSubmitResult(pageComponent, result),
         failureCallback: (error: any) => {
           addError(error);
           setFormButtonsDisabled(false);
@@ -298,18 +300,49 @@ export default function Extension({
     }
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  const renderComponentArguments = (component: UiSchemaPageComponent) => {
+    const argumentsForComponent: any = component.arguments;
+    if (processModel) {
+      Object.keys(argumentsForComponent).forEach((argName: string) => {
+        const argValue = argumentsForComponent[argName];
+        if (
+          typeof argValue === 'string' &&
+          argValue.startsWith('SPIFF_PROCESS_MODEL_FILE:')
+        ) {
+          const [macro, fileName] = argValue.split(':::');
+          const macroList = macro.split(':');
+          const pmFileForArg = processModel.files.find(
+            (pmFile: ProcessFile) => {
+              return pmFile.name === fileName;
+            }
+          );
+          if (pmFileForArg) {
+            let newArgValue = pmFileForArg.file_contents;
+            if (macroList.includes('FROM_JSON')) {
+              newArgValue = JSON.parse(newArgValue || '{}');
+            }
+            argumentsForComponent[argName] = newArgValue;
+          }
+        }
+      });
+    }
+    if (component.name === 'CustomForm') {
+      argumentsForComponent.onSubmit = (formObject: any, event: any) =>
+        handleFormSubmit(component, formObject, event);
+      argumentsForComponent.formData = formData;
+      argumentsForComponent.id = argumentsForComponent.id || makeid(20);
+      argumentsForComponent.onChange = (obj: any) => {
+        setFormData(obj.formData);
+      };
+    }
+    return argumentsForComponent;
+  };
+
   if (readyForComponentsToDisplay && uiSchemaPageDefinition) {
     const componentsToDisplay = [<h1>{uiSchemaPageDefinition.header}</h1>];
     const markdownContentsToRender = [];
 
-    if (uiSchemaPageDefinition.markdown_instruction_filename) {
-      const markdownFile =
-        filesByName[uiSchemaPageDefinition.markdown_instruction_filename];
-
-      if (markdownFile.file_contents) {
-        markdownContentsToRender.push(markdownFile.file_contents);
-      }
-    }
     if (markdownToRenderOnLoad) {
       markdownContentsToRender.push(markdownToRenderOnLoad);
     }
@@ -331,10 +364,11 @@ export default function Extension({
 
     if (uiSchemaPageComponents) {
       uiSchemaPageComponents.forEach((component: UiSchemaPageComponent) => {
-        if (supportedComponents[component.name]) {
-          const argumentsForComponent: any = component.arguments;
+        const componentName = component.name;
+        if (supportedComponents[componentName]) {
+          const argumentsForComponent = renderComponentArguments(component);
           componentsToDisplay.push(
-            supportedComponents[component.name](argumentsForComponent)
+            supportedComponents[componentName](argumentsForComponent)
           );
         } else {
           console.error(
@@ -344,37 +378,6 @@ export default function Extension({
       });
     }
 
-    const uiSchemaForm = uiSchemaPageDefinition.form;
-    if (uiSchemaForm) {
-      const formSchemaFile = filesByName[uiSchemaForm.form_schema_filename];
-      const formUiSchemaFile =
-        filesByName[uiSchemaForm.form_ui_schema_filename];
-      const submitButtonText =
-        uiSchemaForm.form_submit_button_label || 'Submit';
-      if (formSchemaFile.file_contents && formUiSchemaFile.file_contents) {
-        componentsToDisplay.push(
-          <CustomForm
-            id="form-to-submit"
-            formData={formData}
-            onChange={(obj: any) => {
-              setFormData(obj.formData);
-            }}
-            disabled={formButtonsDisabled}
-            onSubmit={handleFormSubmit}
-            schema={JSON.parse(formSchemaFile.file_contents)}
-            uiSchema={JSON.parse(formUiSchemaFile.file_contents)}
-          >
-            <Button
-              type="submit"
-              id="submit-button"
-              disabled={formButtonsDisabled}
-            >
-              {submitButtonText}
-            </Button>
-          </CustomForm>
-        );
-      }
-    }
     if (processedTaskData) {
       if (markdownToRenderOnSubmit) {
         componentsToDisplay.push(

@@ -18,17 +18,17 @@ export function ExtensionUxElementMap({
   }
 
   const mainElement = () => {
-    let foundElement = false;
-    const elementMap = extensionUxElements.map(
-      (uxElement: UiSchemaUxElement, index: number) => {
-        if (uxElement.display_location === displayLocation) {
-          foundElement = true;
-          return elementCallback(uxElement, index);
-        }
-        return null;
+    const elementsForDisplayLocation = extensionUxElements.filter(
+      (uxElement: UiSchemaUxElement) => {
+        return uxElement.display_location === displayLocation;
       }
     );
-    if (!foundElement && elementCallbackIfNotFound) {
+    const elementMap = elementsForDisplayLocation.map(
+      (uxElement: UiSchemaUxElement, index: number) => {
+        return elementCallback(uxElement, index);
+      }
+    );
+    if (elementMap.length === 0 && elementCallbackIfNotFound) {
       return elementCallbackIfNotFound();
     }
     return elementMap;

@@ -26,13 +26,12 @@ name: Docker Image For Main Builds
 # Git tags for an image:
 #   curl -H "Authorization: Bearer $(echo -n $TOKEN | base64 -w0)" https://ghcr.io/v2/sartography/spiffworkflow-backend/tags/list | jq -r '.tags | sort_by(.)'
 
-
 on:
   push:
     branches:
       - main
       - spiffdemo
-      - feature/background-proc-with-celery
+      - feature/update-extension-docs
 
 jobs:
   create_frontend_docker_image:
@@ -46,7 +45,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
@@ -100,7 +99,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
@@ -155,7 +154,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
