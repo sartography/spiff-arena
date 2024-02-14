@@ -9,22 +9,14 @@ from flask import make_response
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
-from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
 def extension_run(
@@ -61,6 +53,7 @@ def extension_list() -> flask.wrappers.Response:
     process_model_extensions = []
     if current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED"]:
         process_model_extensions = ProcessModelService.get_process_models_for_api(
+            user=g.user,
             process_group_id=current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"],
             recursive=True,
             filter_runnable_as_extension=True,
@@ -106,56 +99,17 @@ def _run_extension(
         persistence_level = ui_schema_action.get("persistence_level", "none")
         process_id_to_run = ui_schema_action.get("process_id_to_run", None)
 
-    process_instance = None
-    if persistence_level == "none":
-        process_instance = ProcessInstanceModel(
-            status=ProcessInstanceStatus.not_started.value,
-            process_initiator_id=g.user.id,
-            process_model_identifier=process_model.id,
-            process_model_display_name=process_model.display_name,
-            persistence_level=persistence_level,
-        )
-    else:
-        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-            process_model_identifier, g.user
-        )
+    data_to_inject = None
+    if body and "extension_input" in body:
+        data_to_inject = body["extension_input"]
 
-    processor = None
-    try:
-        # this is only creates new process instances so no need to worry about process instance migrations
-        processor = ProcessInstanceProcessor(
-            process_instance,
-            script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
-            process_id_to_run=process_id_to_run,
-        )
-        save_to_db = process_instance.persistence_level != "none"
-        if body and "extension_input" in body:
-            processor.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
-            next_task = processor.next_task()
-            next_task.update_data(body["extension_input"])
-        processor.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
-    except (
-        ApiError,
-        ProcessInstanceIsNotEnqueuedError,
-        ProcessInstanceIsAlreadyLockedError,
-        WorkflowExecutionServiceError,
-    ) as e:
-        ErrorHandlingService.handle_error(process_instance, e)
-        raise e
-    except Exception as e:
-        ErrorHandlingService.handle_error(process_instance, e)
-        # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
-        # we need to recurse through all last tasks if the last task is a call activity or subprocess.
-        if processor is not None:
-            task = processor.bpmn_process_instance.last_task
-            if task is not None:
-                raise ApiError.from_task(
-                    error_code="unknown_exception",
-                    message=f"An unknown error occurred. Original error: {e}",
-                    status_code=400,
-                    task=task,
-                ) from e
-        raise e
+    processor = ProcessInstanceService.create_and_run_process_instance(
+        process_model=process_model,
+        persistence_level=persistence_level,
+        data_to_inject=data_to_inject,
+        process_id_to_run=process_id_to_run,
+        user=g.user,
+    )
 
     task_data = {}
     if processor is not None:

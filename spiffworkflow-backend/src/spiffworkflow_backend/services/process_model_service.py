@@ -19,6 +19,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.reference_cache import Reference
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -207,6 +209,7 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def get_process_models_for_api(
         cls,
+        user: UserModel,
         process_group_id: str | None = None,
         recursive: bool | None = False,
         filter_runnable_by_user: bool | None = False,
@@ -226,17 +229,14 @@ class ProcessModelService(FileSystemService):
 
         permission_to_check = "read"
         permission_base_uri = "/v1.0/process-models"
-        user = UserService.current_user()
+        extension_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]
         if filter_runnable_by_user:
             permission_to_check = "create"
             permission_base_uri = "/v1.0/process-instances"
         if filter_runnable_as_extension:
             permission_to_check = "create"
             permission_base_uri = "/v1.0/extensions"
-            process_model_identifiers = [
-                p.id.replace(f"{current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}/", "")
-                for p in process_models
-            ]
+            process_model_identifiers = [p.id.replace(f"{extension_prefix}/", "") for p in process_models]
 
         # these are the ones (identifiers, at least) you are allowed to start
         permitted_process_model_identifiers = cls.process_model_identifiers_with_permission_for_user(
@@ -246,16 +246,69 @@ class ProcessModelService(FileSystemService):
             process_model_identifiers=process_model_identifiers,
         )
 
+        reference_cache_processes = ReferenceCacheModel.basic_query().filter_by(type="process").all()
+        process_models = cls.embellish_with_is_executable_property(process_models, reference_cache_processes)
+
+        if filter_runnable_by_user:
+            process_models = cls.filter_by_runnable(process_models, reference_cache_processes)
+
         permitted_process_models = []
         for process_model in process_models:
             process_model_identifier = process_model.id
             if filter_runnable_as_extension:
-                process_model_identifier = process_model.id.replace(
-                    f"{current_app.config['SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX']}/", ""
-                )
+                process_model_identifier = process_model.id.replace(f"{extension_prefix}/", "")
             if process_model_identifier in permitted_process_model_identifiers:
                 permitted_process_models.append(process_model)
+
         return permitted_process_models
+
+    @classmethod
+    def embellish_with_is_executable_property(
+        cls, process_models: list[ProcessModelInfo], reference_cache_processes: list[ReferenceCacheModel]
+    ) -> list[ProcessModelInfo]:
+        for process_model in process_models:
+            matching_reference_cache_process = cls.find_reference_cache_process_for_process_model(
+                reference_cache_processes, process_model
+            )
+            if (
+                matching_reference_cache_process
+                and matching_reference_cache_process.properties
+                and "is_executable" in matching_reference_cache_process.properties
+                and matching_reference_cache_process.properties["is_executable"] is False
+            ):
+                process_model.is_executable = False
+            else:
+                process_model.is_executable = True
+
+        return process_models
+
+    @classmethod
+    def filter_by_runnable(
+        cls, process_models: list[ProcessModelInfo], reference_cache_processes: list[ReferenceCacheModel]
+    ) -> list[ProcessModelInfo]:
+        runnable_process_models = []
+        for process_model in process_models:
+            # if you want to be able to run a process model, it must have a primary file in addition to being executable
+            if (
+                process_model.primary_file_name is not None
+                and process_model.primary_file_name != ""
+                and process_model.is_executable
+            ):
+                runnable_process_models.append(process_model)
+        return runnable_process_models
+
+    @classmethod
+    def find_reference_cache_process_for_process_model(
+        cls, reference_cache_processes: list[ReferenceCacheModel], process_model: ProcessModelInfo
+    ) -> ReferenceCacheModel | None:
+        for reference_cache_process in reference_cache_processes:
+            if (
+                reference_cache_process.identifier == process_model.primary_process_id
+                and reference_cache_process.file_name == process_model.primary_file_name
+                and reference_cache_process.relative_location == process_model.id
+            ):
+                return reference_cache_process
+        return None
 
     @classmethod
     def process_model_identifiers_with_permission_for_user(
@@ -313,6 +366,13 @@ class ProcessModelService(FileSystemService):
                     process_group_cache[full_group_id_path] = parent_group
                 parent_group_array.append({"id": parent_group.id, "display_name": parent_group.display_name})
         return {"cache": process_group_cache, "process_groups": parent_group_array}
+
+    @classmethod
+    def reference_for_primary_file(cls, references: list[Reference], primary_file: str) -> Reference | None:
+        for reference in references:
+            if reference.file_name == primary_file:
+                return reference
+        return None
 
     @classmethod
     def get_parent_group_array(cls, process_identifier: str) -> list[ProcessGroupLite]:

@@ -1,4 +1,3 @@
-"""Test Process Api Blueprint."""
 import base64
 import io
 import json
@@ -36,8 +35,6 @@ from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
-# from spiffworkflow_backend.services.git_service import GitService
 
 
 class TestProcessApi(BaseTest):
@@ -173,6 +170,9 @@ class TestProcessApi(BaseTest):
         assert model_display_name == process_model.display_name
         assert 0 == process_model.display_order
         assert 1 == len(ProcessModelService.get_process_groups())
+        assert process_model.primary_file_name == f"{process_model_id}.bpmn"
+        assert process_model.primary_process_id
+        assert process_model.primary_process_id.startswith(f"Process_{process_model_id}")
 
         # add bpmn file to the model
         bpmn_file_name = "sample.bpmn"

@@ -108,7 +108,7 @@ export default function ProcessModelShow() {
       setSelectedTabIndex(newTabIndex);
     };
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}`,
+      path: `/process-models/${modifiedProcessModelId}?include_file_references=true`,
       successCallback: processResult,
     });
   }, [reloadModel, modifiedProcessModelId]);
@@ -556,8 +556,6 @@ export default function ProcessModelShow() {
             navigate(
               `/process-models/${modifiedProcessModelId}/form?file_ext=md`
             );
-          } else {
-            console.log('a.selectedItem.text', a.selectedItem.text);
           }
         }}
         items={items}
@@ -795,7 +793,9 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         <p className="process-description">{processModel.description}</p>
-        {processModel.primary_file_name ? processStartButton : null}
+        {processModel.primary_file_name && processModel.is_executable
+          ? processStartButton
+          : null}
         <div className="with-top-margin">{tabArea()}</div>
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />

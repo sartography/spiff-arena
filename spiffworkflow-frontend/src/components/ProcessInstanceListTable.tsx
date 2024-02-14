@@ -451,7 +451,7 @@ export default function ProcessInstanceListTable({
         if (!(processInstance.status in statusesToExcludeTaskButton)) {
           currentRow.push(<td>{buttonElement}</td>);
         } else {
-          currentRow.push(<td />);
+          currentRow.push(<td aria-label="Empty table placeholder" />);
         }
       }
 

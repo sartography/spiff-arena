@@ -84,6 +84,7 @@ type OwnProps = {
   onLaunchDmnEditor?: (..._args: any[]) => any;
   onElementClick?: (..._args: any[]) => any;
   onServiceTasksRequested?: (..._args: any[]) => any;
+  onDataStoresRequested?: (..._args: any[]) => any;
   onJsonSchemaFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
@@ -113,6 +114,7 @@ export default function ReactDiagramEditor({
   onLaunchDmnEditor,
   onElementClick,
   onServiceTasksRequested,
+  onDataStoresRequested,
   onJsonSchemaFilesRequested,
   onDmnFilesRequested,
   onSearchProcessModels,
@@ -154,13 +156,13 @@ export default function ReactDiagramEditor({
         }
         try {
           if (amount === 0) {
-            const canvas = (modeler as any).get('canvas');
+            const canvas = modeler.get('canvas');
             canvas.zoom(FitViewport, 'auto');
           } else {
             modeler.get('zoomScroll').stepZoom(amount);
           }
         } catch (e) {
-          console.log(
+          console.error(
             'zoom failed, certain modes in DMN do not support zooming.',
             e
           );
@@ -174,8 +176,7 @@ export default function ReactDiagramEditor({
   // @ts-ignore
   const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
     // @ts-ignore
-    diagramModelerToUse.on('import.parse.complete', event => { // eslint-disable-line
-      // @ts-ignore
+    diagramModelerToUse.on('import.parse.complete', (event) => {
       if (!event.references) {
         return;
       }
@@ -326,6 +327,12 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function handleDataStoresRequested(event: any) {
+      if (onDataStoresRequested) {
+        onDataStoresRequested(event);
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
@@ -385,6 +392,10 @@ export default function ReactDiagramEditor({
       handleServiceTasksRequested(event);
     });
 
+    diagramModeler.on('spiff.data_stores.requested', (event: any) => {
+      handleDataStoresRequested(event);
+    });
+
     diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       if (onJsonSchemaFilesRequested) {
         onJsonSchemaFilesRequested(event);
@@ -416,6 +427,7 @@ export default function ReactDiagramEditor({
     onLaunchJsonSchemaEditor,
     onElementClick,
     onServiceTasksRequested,
+    onDataStoresRequested,
     onJsonSchemaFilesRequested,
     onDmnFilesRequested,
     onSearchProcessModels,

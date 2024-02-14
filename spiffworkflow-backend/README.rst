@@ -2,11 +2,11 @@ Spiffworkflow Backend
 ==========
 |Tests| |Codecov| |pre-commit| |Black|
 
-.. |Tests| image:: https://github.com/sartography/spiffworkflow-backend/workflows/Tests/badge.svg
-   :target: https://github.com/sartography/spiffworkflow-backend/actions?workflow=Tests
+.. |Tests| image:: https://github.com/sartography/spiff-arena/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/sartography/spiff-arena/actions?workflow=Tests
    :alt: Tests
-.. |Codecov| image:: https://codecov.io/gh/sartography/spiffworkflow-backend/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/sartography/spiffworkflow-backend
+.. |Codecov| image:: https://codecov.io/gh/sartography/spiff-arena/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/sartography/spiff-arena
    :alt: Codecov
 .. |pre-commit| image:: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
    :target: https://github.com/pre-commit/pre-commit

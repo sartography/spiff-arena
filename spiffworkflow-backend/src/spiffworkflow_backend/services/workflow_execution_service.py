@@ -115,8 +115,13 @@ class ExecutionStrategy:
         spiff_task: SpiffTask,
         app: flask.app.Flask,
         user: Any | None,
+        process_model_identifier: str,
     ) -> SpiffTask:
         with app.app_context():
+            tld = current_app.config.get("THREAD_LOCAL_DATA")
+            if tld:
+                tld.process_model_identifier = process_model_identifier
+
             g.user = user
             spiff_task.run()
             return spiff_task
@@ -159,6 +164,7 @@ class ExecutionStrategy:
                                 spiff_task,
                                 current_app._get_current_object(),
                                 user,
+                                process_instance_model.process_model_identifier,
                             )
                         )
                     for future in concurrent.futures.as_completed(futures):

@@ -1,5 +1,6 @@
-from SpiffWorkflow.bpmn.event import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
+from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 
 from spiffworkflow_backend.models.db import db
@@ -8,9 +9,11 @@ from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class MessageServiceError(Exception):
@@ -50,9 +53,10 @@ class MessageService:
                     message_name=message_instance_send.name
                 ).first()
                 if message_triggerable_process_model:
-                    receiving_process = MessageService.start_process_with_message(
-                        message_triggerable_process_model, message_instance_send
-                    )
+                    user: UserModel | None = message_instance_send.user
+                    if user is None:
+                        user = UserService.find_or_create_system_user()
+                    receiving_process = MessageService.start_process_with_message(message_triggerable_process_model, user)
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process.id,
                         message_type="receive",
@@ -106,19 +110,36 @@ class MessageService:
         for message_instance_send in message_instances_send:
             cls.correlate_send_message(message_instance_send)
 
-    @staticmethod
+    @classmethod
     def start_process_with_message(
+        cls,
         message_triggerable_process_model: MessageTriggerableProcessModel,
-        message_instance: MessageInstanceModel,
+        user: UserModel,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
         process_instance_receive = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
-            message_instance.user,
+            user,
         )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
+        cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
         processor_receive.do_engine_steps(save=True)
         return process_instance_receive
+
+    @classmethod
+    def _cancel_non_matching_start_events(
+        cls, processor_receive: ProcessInstanceProcessor, message_triggerable_process_model: MessageTriggerableProcessModel
+    ) -> None:
+        """Cancel any start event that does not match the start event that triggered this.
+
+        After that SpiffWorkflow and the WorkflowExecutionService can figure it out.
+        """
+        start_tasks = processor_receive.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
+        for start_task in start_tasks:
+            if not isinstance(start_task.task_spec.event_definition, MessageEventDefinition):
+                start_task.cancel()
+            elif start_task.task_spec.event_definition.name != message_triggerable_process_model.message_name:
+                start_task.cancel()
 
     @staticmethod
     def get_process_instance_for_message_instance(

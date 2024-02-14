@@ -166,7 +166,7 @@ class TestNestedGroups(BaseTest):
             data=json.dumps(ProcessGroupSchema().dump(process_group_c)),
         )
 
-    def test_process_model_create(
+    def test_process_model_create_nested(
         self,
         app: Flask,
         client: FlaskClient,

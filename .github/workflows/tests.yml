@@ -1,8 +1,12 @@
 name: Tests
 
 on:
-  - push
-  - pull_request
+  push:
+    # hitting just main on push suffices to avoid duplicate runs for PRs, since PRs never update main.
+    # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
+    branches:
+      - main
+  pull_request:
 
 defaults:
   run:
@@ -26,7 +30,6 @@ jobs:
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
-              upload_coverage: true,
             }
           - {
               python: "3.12",
@@ -111,7 +114,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4.6.1
@@ -142,7 +145,7 @@ jobs:
       # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
       # - name: Checkout Samples
       #   if: matrix.database == 'sqlite'
-      #   uses: actions/checkout@v3
+      #   uses: actions/checkout@v4
       #   with:
       #     repository: sartography/sample-process-models
       #     path: sample-process-models
@@ -172,8 +175,10 @@ jobs:
 
       - name: Install mysqlclient lib dependencies
         if: matrix.os == 'macos-latest'
+        # mysql 8.3 causes failure in poetry install so pin to 8.0. https://github.com/feast-dev/feast/issues/3916
+        # 8.0 is keg-only, so we have to force link it in order for pkg-config and everything to find it.
         run: |
-          brew install mysql pkg-config
+          brew install mysql@8.0 pkg-config && brew link mysql@8.0
 
       - name: Run Session
         run: |
@@ -182,7 +187,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
@@ -190,14 +195,14 @@ jobs:
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'
-      #   uses: actions/upload-artifact@v3
+      #   uses: actions/upload-artifact@v4
       #   with:
       #     name: docs
       #     path: docs/_build
       #
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./spiffworkflow-backend/log/*.log"
@@ -209,7 +214,7 @@ jobs:
         working-directory: .
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4.6.1
         with:
@@ -231,9 +236,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Checkout Samples
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -250,7 +255,7 @@ jobs:
     needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -271,7 +276,7 @@ jobs:
           poetry --version
 
       - name: Download coverage data
-        uses: actions/download-artifact@v3.0.2
+        uses: actions/download-artifact@v4.1.1
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
@@ -285,7 +290,7 @@ jobs:
         uses: codecov/codecov-action@v3.1.4
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v1.9
+        uses: sonarsource/sonarcloud-github-action@v2.1.1
         # thought about just skipping dependabot
         # if: ${{ github.actor != 'dependabot[bot]' }}
         # but figured all pull requests seems better, since none of them will have access to sonarcloud.
@@ -300,17 +305,24 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       # part about saving PR number and then using it from auto-merge-dependabot-prs from:
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Save PR number
+      - name: Write PR number to spiffworkflow-backend/pr dir
         if: ${{ github.event_name == 'pull_request' }}
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           mkdir -p ./pr
           echo "$PR_NUMBER" > ./pr/pr_number
-      - uses: actions/upload-artifact@v3
+      - name: Upload PR number as artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           name: pr_number
-          path: pr/
+          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
+          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
+          # from spiff-arena root rather than the default working-directory we specified, and therefore
+          # trying to explicitly add spiffworkflow-backend to path
+          path: spiffworkflow-backend/pr/
+          if-no-files-found: error
 
   tests-frontend:
     runs-on: ubuntu-latest
@@ -320,13 +332,13 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Development Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18.x
       - run: npm install
@@ -341,25 +353,12 @@ jobs:
         # if: ${{ github.event_name != 'pull_request' }}
         # so just skip everything but main
         if: github.ref_name == 'main'
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: sonarsource/sonarcloud-github-action@v2.1.1
         with:
           projectBaseDir: spiffworkflow-frontend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Save PR number
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          mkdir -p ./pr
-          echo "$PR_NUMBER" > ./pr/pr_number
-      - uses: actions/upload-artifact@v3
-        with:
-          name: pr_number
-          path: pr/
 
   cypress-run:
     runs-on: ubuntu-latest
@@ -369,11 +368,11 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Checkout Samples
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -405,7 +404,7 @@ jobs:
         run: |
           echo "$GITHUB_CONTEXT"
       - name: Cypress run
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chrome
@@ -429,21 +428,21 @@ jobs:
         run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
       - name: Upload logs
         if: failure()
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           name: spiffworkflow-backend-logs
           path: "./spiffworkflow-backend/log/*.log"
 
       #  https://github.com/cypress-io/github-action#artifacts
       - name: upload_screenshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-screenshots
           path: ./spiffworkflow-frontend/cypress/screenshots
       # Test run video was always captured, so this action uses "always()" condition
       - name: upload_videos
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-videos

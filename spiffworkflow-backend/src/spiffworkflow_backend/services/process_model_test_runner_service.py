@@ -10,6 +10,7 @@ from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
@@ -121,7 +122,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
     def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
         if task_data_for_submit is not None or spiff_task.task_spec.manual:
             if task_data_for_submit is not None:
-                spiff_task.update_data(task_data_for_submit)
+                DeepMerge.merge(spiff_task.data, task_data_for_submit)
             spiff_task.complete()
         else:
             spiff_task.run()
