@@ -16,6 +16,7 @@ import {
   HeaderGlobalAction,
   HeaderGlobalBar,
 } from '@carbon/react';
+import { Tooltip } from '@mui/material';
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -192,12 +193,14 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               {(secretAllowed: boolean) => {
                 if (secretAllowed || authenticationAllowed) {
                   return (
-                    <HeaderMenuItem
-                      href="/configuration"
-                      isCurrentPage={isActivePage('/configuration')}
-                    >
-                      Configuration
-                    </HeaderMenuItem>
+                    <Tooltip title="Manage Secrets and Authentications" arrow>
+                      <HeaderMenuItem
+                        href="/configuration"
+                        isCurrentPage={isActivePage('/configuration')}
+                      >
+                        Configuration
+                      </HeaderMenuItem>
+                    </Tooltip>
                   );
                 }
                 return null;
@@ -216,13 +219,15 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       setActiveKey(navItemPage);
     }
     return (
-      <HeaderMenuItem
-        href={navItemPage}
-        isCurrentPage={isActivePage(navItemPage)}
-        data-qa={`extension-${slugifyString(uxElement.label)}`}
-      >
-        {uxElement.label}
-      </HeaderMenuItem>
+      <Tooltip title={uxElement?.tooltip} arrow>
+        <HeaderMenuItem
+          href={navItemPage}
+          isCurrentPage={isActivePage(navItemPage)}
+          data-qa={`extension-${slugifyString(uxElement.label)}`}
+        >
+          {uxElement.label}
+        </HeaderMenuItem>
+      </Tooltip>
     );
   };
 
@@ -232,45 +237,55 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     }
     return (
       <>
-        <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
-          Home
-        </HeaderMenuItem>
-        <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
-          <HeaderMenuItem
-            href={processGroupPath}
-            isCurrentPage={isActivePage(processGroupPath)}
-            data-qa="header-nav-processes"
-          >
-            Processes
+        <Tooltip title="View and start Processes" arrow>
+          <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
+            <div>Home</div>
           </HeaderMenuItem>
+        </Tooltip>
+        <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
+          <Tooltip title="Find and organize Processes" arrow>
+            <HeaderMenuItem
+              href={processGroupPath}
+              isCurrentPage={isActivePage(processGroupPath)}
+              data-qa="header-nav-processes"
+            >
+              Processes
+            </HeaderMenuItem>
+          </Tooltip>
         </Can>
         <Can
           I="POST"
           a={targetUris.processInstanceListForMePath}
           ability={ability}
         >
-          <HeaderMenuItem
-            href="/process-instances"
-            isCurrentPage={isActivePage('/process-instances')}
-          >
-            Process Instances
-          </HeaderMenuItem>
+          <Tooltip title="List of active and completed Process Instances" arrow>
+            <HeaderMenuItem
+              href="/process-instances"
+              isCurrentPage={isActivePage('/process-instances')}
+            >
+              Process Instances
+            </HeaderMenuItem>
+          </Tooltip>
         </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
-          <HeaderMenuItem
-            href="/messages"
-            isCurrentPage={isActivePage('/messages')}
-          >
-            Messages
-          </HeaderMenuItem>
+          <Tooltip title="Logs emitted by Process Instances" arrow>
+            <HeaderMenuItem
+              href="/messages"
+              isCurrentPage={isActivePage('/messages')}
+            >
+              Messages
+            </HeaderMenuItem>
+          </Tooltip>
         </Can>
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
-          <HeaderMenuItem
-            href="/data-stores"
-            isCurrentPage={isActivePage('/data-stores')}
-          >
-            Data Stores
-          </HeaderMenuItem>
+          <Tooltip title="(needs definition)" arrow>
+            <HeaderMenuItem
+              href="/data-stores"
+              isCurrentPage={isActivePage('/data-stores')}
+            >
+              Data Stores
+            </HeaderMenuItem>
+          </Tooltip>
         </Can>
         {configurationElement()}
         <ExtensionUxElementForDisplay

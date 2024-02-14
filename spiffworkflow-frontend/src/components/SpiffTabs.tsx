@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabList, Tab } from '@carbon/react';
+import { Tooltip } from '@mui/material';
 import { SpiffTab } from '../interfaces';
 
 type OwnProps = {
@@ -24,7 +25,11 @@ export default function SpiffTabs({ tabs }: OwnProps) {
 
   const tabComponents = tabs.map((spiffTab: SpiffTab) => {
     return (
-      <Tab onClick={() => navigate(spiffTab.path)}>{spiffTab.display_name}</Tab>
+      <Tooltip title={spiffTab?.tooltip} arrow>
+        <Tab onClick={() => navigate(spiffTab.path)}>
+          {spiffTab.display_name}
+        </Tab>
+      </Tooltip>
     );
   });
 

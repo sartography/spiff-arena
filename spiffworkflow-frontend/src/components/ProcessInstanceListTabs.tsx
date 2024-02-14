@@ -2,6 +2,7 @@
 import { Tabs, TabList, Tab } from '@carbon/react';
 import { Can } from '@casl/react';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip } from '@mui/material';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
@@ -28,35 +29,41 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
   return (
     <Tabs selectedIndex={selectedTabIndex}>
       <TabList aria-label="List of tabs">
-        <Tab
+        <Tooltip
           title="Only show process instances for the current user."
-          data-qa="process-instance-list-for-me"
-          onClick={() => {
-            navigate('/process-instances/for-me');
-          }}
+          arrow
         >
-          For Me
-        </Tab>
-        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           <Tab
-            title="Show all process instances for all users."
-            data-qa="process-instance-list-all"
+            data-qa="process-instance-list-for-me"
             onClick={() => {
-              navigate('/process-instances/all');
+              navigate('/process-instances/for-me');
             }}
           >
-            All
+            For Me
           </Tab>
+        </Tooltip>
+        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
+          <Tooltip title="Show all process instances for all users." arrow>
+            <Tab
+              data-qa="process-instance-list-all"
+              onClick={() => {
+                navigate('/process-instances/all');
+              }}
+            >
+              All
+            </Tab>
+          </Tooltip>
         </Can>
-        <Tab
-          title="Search for a process instance by id."
-          data-qa="process-instance-list-find-by-id"
-          onClick={() => {
-            navigate('/process-instances/find-by-id');
-          }}
-        >
-          Find By Id
-        </Tab>
+        <Tooltip title="Search for a process instance by id." arrow>
+          <Tab
+            data-qa="process-instance-list-find-by-id"
+            onClick={() => {
+              navigate('/process-instances/find-by-id');
+            }}
+          >
+            Find By Id
+          </Tab>
+        </Tooltip>
       </TabList>
     </Tabs>
   );
