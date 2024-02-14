@@ -155,8 +155,10 @@ export default function DataStoreForm({
   const onTypeChanged = (newType: any) => {
     setTypeInvalid(false);
     const newTypeSelection = newType.selectedItem;
-    const updateDict = { type: newTypeSelection.type };
-    updateDataStore(updateDict);
+    if (newTypeSelection) {
+      const updateDict = { type: newTypeSelection.type };
+      updateDataStore(updateDict);
+    }
     setSelectedDataStoreType(newTypeSelection);
   };
 
@@ -164,6 +166,16 @@ export default function DataStoreForm({
     setSchemaInvalid(false);
     const updateDict = { schema: newSchema };
     updateDataStore(updateDict);
+  };
+
+  const dataStoreTypeDisplayString = (dataStoreType: DataStoreType | null) => {
+    if (dataStoreType) {
+      return `${dataStoreType.name} (${truncateString(
+        dataStoreType.description,
+        75
+      )})`;
+    }
+    return null;
   };
 
   const formElements = () => {
@@ -200,28 +212,33 @@ export default function DataStoreForm({
       />
     );
 
-    textInputs.push(
-      <ComboBox
-        onChange={onTypeChanged}
-        id="data-store-type-select"
-        data-qa="data-store-type-selection"
-        items={dataStoreTypes}
-        itemToString={(dataStoreType: DataStoreType) => {
-          if (dataStoreType) {
-            return `${dataStoreType.name} (${truncateString(
-              dataStoreType.description,
-              75
-            )})`;
-          }
-          return null;
-        }}
-        titleText="Type*"
-        invalidText="Type is required."
-        invalid={typeInvalid}
-        placeholder="Choose the data store type"
-        selectedItem={selectedDataStoreType}
-      />
-    );
+    if (mode === 'edit') {
+      textInputs.push(
+        <TextInput
+          id="data-store-type"
+          name="data-store-type"
+          readonly
+          labelText="Type*"
+          value={dataStoreTypeDisplayString(selectedDataStoreType)}
+        />
+      );
+    } else {
+      textInputs.push(
+        <ComboBox
+          onChange={onTypeChanged}
+          id="data-store-type-select"
+          data-qa="data-store-type-selection"
+          disabled={mode === 'edit'}
+          items={dataStoreTypes}
+          itemToString={dataStoreTypeDisplayString}
+          titleText="Type*"
+          invalidText="Type is required."
+          invalid={typeInvalid}
+          placeholder="Choose the data store type"
+          selectedItem={selectedDataStoreType}
+        />
+      );
+    }
 
     textInputs.push(
       <TextArea
