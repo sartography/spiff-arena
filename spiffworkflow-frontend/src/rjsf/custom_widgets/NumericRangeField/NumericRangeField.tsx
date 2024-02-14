@@ -60,6 +60,10 @@ export default function NumericRangeField({
   );
 
   const formatNumberString = (numberString: string): string => {
+    // this function will change the number string to a number with commas
+    // and a decimal point if needed. For example, 1000 will become 1,000
+    // or 1000.5 will become 1,000.5
+
     if (numberString) {
       if (numberString.includes('.')) {
         return (
