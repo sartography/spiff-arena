@@ -29,20 +29,7 @@ function RadioWidget({
     }
   };
 
-  let column = false;
-  if (uiSchema) {
-    if (
-      uiSchema['ui:layout'] &&
-      uiSchema['ui:layout'].toString().toLowerCase() === 'column'
-    ) {
-      column = true;
-    } else if (
-      uiSchema['ui:layout'] &&
-      uiSchema['ui:layout'].toString().toLowerCase() === 'row'
-    ) {
-      column = false;
-    }
-  }
+  const column = uiSchema?.['ui:layout']?.toString().toLowerCase() === 'column';
   const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
     onBlur(id, value);
   const _onFocus = ({
