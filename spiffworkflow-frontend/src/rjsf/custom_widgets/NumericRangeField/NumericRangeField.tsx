@@ -5,8 +5,8 @@ import {
   getUiOptions,
 } from '@rjsf/utils';
 import { TextInput } from '@carbon/react';
-import { getCommonAttributes } from '../../helpers';
 import React from 'react';
+import { getCommonAttributes } from '../../helpers';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
 //    compensation":{
@@ -65,17 +65,9 @@ export default function NumericRangeField({
     // or 1000.5 will become 1,000.5
 
     if (numberString) {
-      if (numberString.includes('.')) {
-        return (
-          numberString
-            .toString()
-            .split('.')[0]
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ',') +
-          `.${numberString.split('.')[1]}`
-        );
-      } else {
-        return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      }
+      const parts = numberString.split('.');
+      const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
     }
     return '';
   };
@@ -104,18 +96,8 @@ export default function NumericRangeField({
     event.preventDefault();
     const numberValue = parseNumberString(event.target.value);
     if (numberValue === null || (numberValue === 0 && required)) {
-      if (nameToChange === 'min') {
-        onChange({
-          ...(formData || {}),
-          min: null,
-        });
-      }
-      if (nameToChange === 'max') {
-        onChange({
-          ...(formData || {}),
-          max: null,
-        });
-      }
+      const updatedFormData = { ...formData, [nameToChange]: null };
+      onChange(updatedFormData);
       return;
     }
     if (numberValue > maxNumber) {
@@ -129,6 +111,7 @@ export default function NumericRangeField({
       max = numberValue;
       setMaxValue(formatNumberString(numberValue.toString()));
     }
+    const existingFormData = formData || {};
     if (!disabled && !readonly) {
       if (nameToChange === 'min' && numberValue > max) {
         min = numberValue;
@@ -136,13 +119,13 @@ export default function NumericRangeField({
         max = numberValue;
         setMaxValue(numberValue.toString());
         onChange({
-          ...(formData || {}),
+          ...existingFormData,
           min: numberValue,
           max: numberValue,
         });
       } else {
         onChange({
-          ...(formData || {}),
+          ...existingFormData,
           ...{ max, min },
           [nameToChange]: numberValue,
         });
