@@ -149,7 +149,12 @@ class DataSetupService:
             db.session.add(model)
 
         for key in keys_to_update:
-            model = all_data_store_models[key]
+            model = all_data_store_models.get(key)
+            if model is None:
+                current_app.logger.debug(
+                    f"DataSetupService: was expecting key '{key}' to point to a data store model for model updating."
+                )
+                continue
             update_model_from_specification(model, key)
 
         for key in keys_to_delete:
