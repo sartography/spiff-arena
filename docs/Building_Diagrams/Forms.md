@@ -332,7 +332,7 @@ Below is an example JSON schema that includes the numeric range field:
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
 
-#### Ui Schema Example
+#### UI Schema Example
 
 ```json
 {
@@ -345,3 +345,54 @@ This schema defines a numeric range object with `min` and `max` properties, both
 #### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
+
+---
+
+### Configuring Side-by-Side Field Layout in Forms
+
+The `ui:layout` attribute allows you to specify how fields are displayed in relation to each other. By defining this attribute, you can control the grid columns that each field occupies, making it possible to place them side by side.
+
+### Configuration Steps:
+
+1. **Access UI Settings**: In the form editor, locate the UI settings where you can specify layout options for your form fields.
+
+2. **Define the Layout**: Use the `ui:layout` attribute within the JSON schema to set the layout structure. This attribute accepts an array of objects, with each object representing a row of fields.
+
+3. **Set Grid Column Width**: Within the layout object, define the grid column width for each field using the keys `sm`, `md`, and `lg`. These correspond to the grid column options defined in the Carbon design theme and control the field size across different screen sizes (small, medium, and large).
+
+### Example Usage:
+
+To illustrate, let's configure two fields, `firstName` and `lastName`, to be displayed side by side on the same row, each taking up equal space:
+
+```json
+{
+  "ui:layout": [
+    {
+      "firstName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
+      },
+      "lastName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
+      }
+    }
+  ]
+}
+```
+![Styling_Form](images/styling_forms.png)
+In this example:
+
+- **"ui:layout"**: This property specifies the layout configuration for the UI. It's an array that can contain one or more objects, each representing a row or a set of fields that should be considered together for layout purposes.
+
+- **Objects within the array**: Each object in the `ui:layout` array defines how specific form fields (in this case, `firstName` and `lastName`) should be laid out. The keys of the object (`firstName` and `lastName`) refer to the form field names.
+
+- **Responsive Columns**:
+  - The values for each field (`sm`, `md`, `lg`) correspond to different screen sizes (small, medium, large) and dictate how many columns of the grid system the field should occupy at each size.
+  - `"sm": 2` indicates that on small screens, the field should take up 2 grid columns. This is typically for devices like phones.
+  - `"md": 2` specifies that on medium screens (like tablets), the field also occupies 2 grid columns.
+  - `"lg": 4` means that on large screens, such as desktop monitors, the field should span 4 grid columns.
+
+The `ui:layout` option offers a powerful way to design form layouts that are both functional and aesthetically pleasing. By leveraging this feature, you can ensure your forms are well-organized and user-friendly across various devices and screen sizes.
