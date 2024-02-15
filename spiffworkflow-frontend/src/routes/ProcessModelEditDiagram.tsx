@@ -1082,6 +1082,7 @@ export default function ProcessModelEditDiagram() {
           diagramXML={bpmnXmlForDiagramRendering}
           fileName={params.file_name}
           diagramType="dmn"
+          disableSaveButton={!diagramHasChanges}
         />
       );
     }
@@ -1118,6 +1119,7 @@ export default function ProcessModelEditDiagram() {
         onElementsChanged={onElementsChanged}
         callers={callers}
         activeUserElement={<ActiveUsers />}
+        disableSaveButton={!diagramHasChanges}
       />
     );
   };
@@ -1128,6 +1130,8 @@ export default function ProcessModelEditDiagram() {
         <Notification
           title="File Saved: "
           onClose={() => setDisplaySaveFileMessage(false)}
+          hideCloseButton
+          timeout={3000}
         >
           Changes to the file were saved.
         </Notification>
