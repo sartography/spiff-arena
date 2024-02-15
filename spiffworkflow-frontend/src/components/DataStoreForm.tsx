@@ -251,7 +251,7 @@ export default function DataStoreForm({
         name="schema"
         invalidText="Schema is required and must be valid JSON."
         invalid={schemaInvalid}
-        labelText="Schema"
+        labelText="Schema*"
         value={dataStore.schema}
         onChange={(event: any) => onSchemaChanged(event.target.value)}
       />
