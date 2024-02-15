@@ -27,6 +27,8 @@ class DataSetupService:
         failing_process_models = []
         files = FileSystemService.walk_files_from_root_path(True, None)
         reference_objects: dict[str, ReferenceCacheModel] = {}
+        all_data_store_specifications: dict[str, Any] = {}
+        
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
@@ -70,8 +72,27 @@ class DataSetupService:
                 )
                 ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
             elif FileSystemService.is_process_group_json_file(file):
-                print(f"--------------- {file}")
+                try:
+                    process_group = ProcessModelService.find_or_create_process_group(os.path.dirname(file))
+                except Exception as e:
+                    current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
+                    continue
 
+                for data_store_type, specs_by_id in process_group.data_store_specifications.items():
+                    if data_store_type not in all_data_store_specifications:
+                        all_data_store_specifications[data_store_type] = {}
+                    specs_by_location = all_data_store_specifications[data_store_type]
+
+                    for identifier, specification in specs_by_id.items():
+                        location = specification.get("location")
+                        if location is None:
+                            current_app.logger.debug(f"Location missing from data store specification '{identifier}' in file @ '{file}'")
+                            continue
+                        if location not in specs_by_location:
+                            specs_by_location[location] = {}
+                        specs_by_location[location][identifier] = specification
+
+        current_app.logger.debug(f"DataSetupService: all_data_store_specifications: {all_data_store_specifications}")
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 
         ReferenceCacheService.add_new_generation(reference_objects)
