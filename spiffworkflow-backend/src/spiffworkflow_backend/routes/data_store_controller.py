@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -125,7 +126,32 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     db.session.add(model)
     db.session.commit()
 
+    _write_specification_to_process_group(data_store_type, model)
+
     return make_response(jsonify({"ok": True}), 200)
+
+
+def _write_specification_to_process_group(data_store_type: str, model: Any) -> None:
+    # TODO: once the top level is a process group this check should be removed
+    if model.location == "":
+        return
+
+    process_group = ProcessModelService.get_process_group(model.location, False, False)
+    if not process_group:
+        return
+
+    if data_store_type not in process_group.data_store_specifications:
+        process_group.data_store_specifications[data_store_type] = {}
+
+    process_group.data_store_specifications[data_store_type][model.identifier] = {
+        "name": model.name,
+        "identifier": model.identifier,
+        "location": model.location,
+        "schema": model.schema,
+        "description": model.description,
+    }
+
+    ProcessModelService.update_process_group(process_group)
 
 
 def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
