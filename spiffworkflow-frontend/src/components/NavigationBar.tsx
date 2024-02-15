@@ -194,7 +194,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                 if (secretAllowed || authenticationAllowed) {
                   return (
                     <SpiffTooltip
-                      title="Manage Secrets and Authentications"
+                      title="Manage Secrets and Authentication information for Service Tasks"
                       arrow
                     >
                       <HeaderMenuItem
@@ -240,13 +240,13 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     }
     return (
       <>
-        <SpiffTooltip title="View and start Processes">
+        <SpiffTooltip title="View and start Process Instances">
           <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
             <div>Home</div>
           </HeaderMenuItem>
         </SpiffTooltip>
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
-          <SpiffTooltip title="Find and organize Processes">
+          <SpiffTooltip title="Find and organize Process Groups and Process Models">
             <HeaderMenuItem
               href={processGroupPath}
               isCurrentPage={isActivePage(processGroupPath)}
@@ -274,7 +274,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
-          <SpiffTooltip title="Logs emitted by Process Instances">
+          <SpiffTooltip title="View information about messages being sent and received">
             <HeaderMenuItem
               href="/messages"
               isCurrentPage={isActivePage('/messages')}
@@ -284,7 +284,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
-          <SpiffTooltip title="(needs definition)">
+          <SpiffTooltip title="Browse data that has been saved to Data Stores">
             <HeaderMenuItem
               href="/data-stores"
               isCurrentPage={isActivePage('/data-stores')}
