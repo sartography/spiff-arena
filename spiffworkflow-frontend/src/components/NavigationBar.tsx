@@ -268,7 +268,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
-          <SpiffTooltip title="View information about messages being sent and received">
+          <SpiffTooltip title="Browse messages being sent and received">
             <HeaderMenuItem
               href="/messages"
               isCurrentPage={isActivePage('/messages')}

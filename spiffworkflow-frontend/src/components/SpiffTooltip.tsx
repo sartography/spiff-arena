@@ -2,9 +2,14 @@
 // import { Tooltip } from '@carbon/react';
 
 import { Tooltip } from '@mui/material';
+import { ReactElement } from 'react';
 
-export default function SpiffTooltip(props: any) {
-  const { title, children } = props;
+interface OwnProps {
+  title?: string;
+  children: ReactElement;
+}
+
+export default function SpiffTooltip({ title, children }: OwnProps) {
   return (
     <Tooltip title={title} arrow>
       {children}
