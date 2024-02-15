@@ -3,6 +3,8 @@ from typing import Any
 
 from flask import current_app
 
+from spiffworkflow_backend.data_stores.json import JSONDataStore
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
@@ -124,13 +126,36 @@ class DataSetupService:
         current_app.logger.debug(f"DataSetupService: keys_to_update: {keys_to_update}")
         current_app.logger.debug(f"DataSetupService: keys_to_delete: {keys_to_delete}")
 
-        # TODO: insert
-        # TODO: update
+        model_creators = {
+            "kkv": KKVDataStore.create_instance,
+            "json": JSONDataStore.create_instance,
+        }
+
+        def update_model_from_specification(model: Any, key: tuple[str, str, str]) -> None:
+            specification = all_data_store_specifications.get(key)
+            if specification is None:
+                current_app.logger.debug(
+                    f"DataSetupService: was expecting key '{key}' to point to a data store specification for model updating."
+                )
+                return
+            model.name = specification["name"]
+            model.schema = specification["schema"]
+            model.description = specification.get("description")
+
+        for key in keys_to_insert:
+            data_store_type, location, identifier = key
+            model = model_creators[data_store_type](identifier, location)
+            update_model_from_specification(model, key)
+            db.session.add(model)
+
+        for key in keys_to_update:
+            model = all_data_store_models[key]
+            update_model_from_specification(model, key)
 
         for key in keys_to_delete:
             model = all_data_store_models.get(key)
             if model is None:
-                current_app.logger.debug(f"DataSetupService: was expecting key '{key}' to point to a data store model.")
+                current_app.logger.debug(f"DataSetupService: was expecting key '{key}' to point to a data store model to delete.")
                 continue
             db.session.delete(model)
 
