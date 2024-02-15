@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from flask import current_app
 
@@ -28,7 +29,7 @@ class DataSetupService:
         files = FileSystemService.walk_files_from_root_path(True, None)
         reference_objects: dict[str, ReferenceCacheModel] = {}
         all_data_store_specifications: dict[str, Any] = {}
-        
+
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
@@ -74,7 +75,7 @@ class DataSetupService:
             elif FileSystemService.is_process_group_json_file(file):
                 try:
                     process_group = ProcessModelService.find_or_create_process_group(os.path.dirname(file))
-                except Exception as e:
+                except Exception:
                     current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
                     continue
 
@@ -86,7 +87,9 @@ class DataSetupService:
                     for identifier, specification in specs_by_id.items():
                         location = specification.get("location")
                         if location is None:
-                            current_app.logger.debug(f"Location missing from data store specification '{identifier}' in file @ '{file}'")
+                            current_app.logger.debug(
+                                f"Location missing from data store specification '{identifier}' in file @ '{file}'"
+                            )
                             continue
                         if location not in specs_by_location:
                             specs_by_location[location] = {}
