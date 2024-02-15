@@ -1,12 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { createElement, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import {
-  ObjectWithStringKeysAndFunctionValues,
-  ProcessFile,
-  ProcessModel,
-} from '../interfaces';
+import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined, makeid } from '../helpers';
@@ -16,6 +12,7 @@ import {
   ExtensionApiResponse,
   ExtensionPostBody,
   ExtensionUiSchema,
+  SupportedComponentList,
   UiSchemaPageComponent,
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
@@ -65,7 +62,7 @@ export default function Extension({
 
   const { addError, removeError } = useAPIError();
 
-  const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
+  const supportedComponents: SupportedComponentList = {
     CreateNewInstance,
     CustomForm,
     MarkdownRenderer,
@@ -380,7 +377,7 @@ export default function Extension({
         if (supportedComponents[componentName]) {
           const argumentsForComponent = renderComponentArguments(component);
           componentsToDisplay.push(
-            React.createElement(
+            createElement(
               supportedComponents[componentName],
               argumentsForComponent
             )
