@@ -69,6 +69,8 @@ class DataSetupService:
                     False,
                 )
                 ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
+            elif FileSystemService.is_process_group_json_file(file):
+                print(f"--------------- {file}")
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 
