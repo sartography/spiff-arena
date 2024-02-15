@@ -138,8 +138,19 @@ class DataSetupService:
                     f"DataSetupService: was expecting key '{key}' to point to a data store specification for model updating."
                 )
                 return
-            model.name = specification["name"]
-            model.schema = specification["schema"]
+
+            name = specification.get("name")
+            schema = specification.get("schema")
+
+            if name is None or schema is None:
+                current_app.logger.debug(
+                    f"DataSetupService: was expecting key '{key}' to point to a valid data store specification for model"
+                    " updating."
+                )
+                return
+
+            model.name = name
+            model.schema = schema
             model.description = specification.get("description")
 
         for key in keys_to_insert:
