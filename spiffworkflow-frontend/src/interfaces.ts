@@ -1,3 +1,5 @@
+import { FunctionComponent } from 'react';
+
 export interface User {
   id: number;
   username: string;
@@ -149,7 +151,7 @@ export interface ProcessReference {
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
 export type ObjectWithStringKeysAndFunctionValues = {
-  [key: string]: Function;
+  [key: string]: FunctionComponent<any>;
 };
 
 export interface FilterOperator {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -303,7 +303,7 @@ export default function Extension({
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const renderComponentArguments = (component: UiSchemaPageComponent) => {
     const argumentsForComponent: any = component.arguments;
-    if (processModel) {
+    if (processModel && argumentsForComponent) {
       Object.keys(argumentsForComponent).forEach((argName: string) => {
         const argValue = argumentsForComponent[argName];
         if (
@@ -368,7 +368,10 @@ export default function Extension({
         if (supportedComponents[componentName]) {
           const argumentsForComponent = renderComponentArguments(component);
           componentsToDisplay.push(
-            supportedComponents[componentName](argumentsForComponent)
+            React.createElement(
+              supportedComponents[componentName],
+              argumentsForComponent
+            )
           );
         } else {
           console.error(

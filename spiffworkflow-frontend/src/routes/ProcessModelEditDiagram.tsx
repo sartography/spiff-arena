@@ -47,7 +47,6 @@ import {
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
-import { usePrompt } from '../hooks/UsePrompt';
 import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 
@@ -136,8 +135,6 @@ export default function ProcessModelEditDiagram() {
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
   const [callers, setCallers] = useState<ProcessReference[]>([]);
-
-  usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
   const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
     const processResults = (result: any) => {
@@ -1054,7 +1051,7 @@ export default function ProcessModelEditDiagram() {
       path = generatePath(
         '/editor/process-models/:process_model_id/files/:file_name',
         {
-          process_model_id: params.process_model_id,
+          process_model_id: params.process_model_id || null,
           file_name: file.name,
         }
       );
@@ -1063,7 +1060,7 @@ export default function ProcessModelEditDiagram() {
       path = generatePath(
         '/editor/process-models/:process_model_id/files?file_type=dmn',
         {
-          process_model_id: params.process_model_id,
+          process_model_id: params.process_model_id || null,
         }
       );
     }
@@ -1139,6 +1136,29 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
 
+  const unsavedChangesMessage = () => {
+    if (diagramHasChanges) {
+      return (
+        <Notification title="Unsaved changes." type="error" hideCloseButton>
+          Please save to avoid losing your work.
+        </Notification>
+      );
+    }
+    return null;
+  };
+
+  const pageModals = () => {
+    return (
+      <>
+        {newFileNameBox()}
+        {scriptEditorAndTests()}
+        {markdownEditor()}
+        {jsonSchemaEditor()}
+        {processModelSelector()}
+      </>
+    );
+  };
+
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
@@ -1159,13 +1179,13 @@ export default function ProcessModelEditDiagram() {
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
+
+        {pageModals()}
+
+        {unsavedChangesMessage()}
         {saveFileMessage()}
+
         {appropriateEditor()}
-        {newFileNameBox()}
-        {scriptEditorAndTests()}
-        {markdownEditor()}
-        {jsonSchemaEditor()}
-        {processModelSelector()}
         <div id="diagram-container" />
       </>
     );
