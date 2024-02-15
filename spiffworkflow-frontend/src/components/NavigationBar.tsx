@@ -193,10 +193,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               {(secretAllowed: boolean) => {
                 if (secretAllowed || authenticationAllowed) {
                   return (
-                    <SpiffTooltip
-                      title="Manage Secrets and Authentication information for Service Tasks"
-                      arrow
-                    >
+                    <SpiffTooltip title="Manage Secrets and Authentication information for Service Tasks">
                       <HeaderMenuItem
                         href="/configuration"
                         isCurrentPage={isActivePage('/configuration')}
@@ -261,10 +258,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           a={targetUris.processInstanceListForMePath}
           ability={ability}
         >
-          <SpiffTooltip
-            title="List of active and completed Process Instances"
-            arrow
-          >
+          <SpiffTooltip title="List of active and completed Process Instances">
             <HeaderMenuItem
               href="/process-instances"
               isCurrentPage={isActivePage('/process-instances')}
