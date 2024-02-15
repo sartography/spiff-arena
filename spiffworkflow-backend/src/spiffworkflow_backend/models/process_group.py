@@ -20,6 +20,7 @@ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "data_store_specifications",
 ]
 
+
 @dataclass(order=True)
 class ProcessGroup:
     sort_index: str = field(init=False)

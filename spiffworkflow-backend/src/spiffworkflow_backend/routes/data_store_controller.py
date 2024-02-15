@@ -11,7 +11,6 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DATA_STORES = {
@@ -140,7 +139,7 @@ def _write_data_store_definition_json(data_store_type: str, model: Any) -> None:
     process_group = ProcessModelService.get_process_group(model.location, False, False)
     if not process_group:
         return
-    
+
     if data_store_type not in process_group.data_store_specifications:
         process_group.data_store_specifications[data_store_type] = {}
 
