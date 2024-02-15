@@ -126,12 +126,12 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     db.session.add(model)
     db.session.commit()
 
-    _write_data_store_definition_json(data_store_type, model)
+    _write_specification_to_process_group(data_store_type, model)
 
     return make_response(jsonify({"ok": True}), 200)
 
 
-def _write_data_store_definition_json(data_store_type: str, model: Any) -> None:
+def _write_specification_to_process_group(data_store_type: str, model: Any) -> None:
     # TODO: once the top level is a process group this check should be removed
     if model.location == "":
         return
