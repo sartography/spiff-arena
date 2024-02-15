@@ -98,7 +98,6 @@ export default function Extension({
   );
   const processLoadResult = useCallback(
     (result: ExtensionApiResponse, pageDefinition: UiSchemaPageDefinition) => {
-      setFormData(result.task_data);
       if (pageDefinition.navigate_to_on_load) {
         const optionString = interpolateNavigationString(
           pageDefinition.navigate_to_on_load,
@@ -114,6 +113,8 @@ export default function Extension({
         );
         setMarkdownToRenderOnLoad(newMarkdown);
       }
+
+      const taskDataCopy = { ...result.task_data };
       if (
         pageDefinition.on_load &&
         pageDefinition.on_load.ui_schema_page_components_variable
@@ -123,7 +124,18 @@ export default function Extension({
             pageDefinition.on_load.ui_schema_page_components_variable
           ]
         );
+
+        // we were getting any AJV8Validator error when we had this data in the task data
+        // when we attempted to submit a form using this task data.
+        // The error was:
+        //  Uncaught RangeError: Maximum call stack size exceeded
+        //
+        // Removing the ui schema page components dictionary seems to resolve it.
+        delete taskDataCopy[
+          pageDefinition.on_load.ui_schema_page_components_variable
+        ];
       }
+      setFormData(taskDataCopy);
       setReadyForComponentsToDisplay(true);
     },
     [interpolateNavigationString]
