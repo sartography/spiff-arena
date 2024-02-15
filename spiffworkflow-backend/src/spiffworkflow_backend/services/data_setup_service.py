@@ -4,6 +4,8 @@ from typing import Any
 from flask import current_app
 
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
+from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -28,7 +30,7 @@ class DataSetupService:
         failing_process_models = []
         files = FileSystemService.walk_files_from_root_path(True, None)
         reference_objects: dict[str, ReferenceCacheModel] = {}
-        all_data_store_specifications: dict[str, Any] = {}
+        all_data_store_specifications: dict[tuple[str, str, str], Any] = {}
 
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
@@ -80,24 +82,56 @@ class DataSetupService:
                     continue
 
                 for data_store_type, specs_by_id in process_group.data_store_specifications.items():
-                    if data_store_type not in all_data_store_specifications:
-                        all_data_store_specifications[data_store_type] = {}
-                    specs_by_location = all_data_store_specifications[data_store_type]
-
                     for identifier, specification in specs_by_id.items():
                         location = specification.get("location")
                         if location is None:
                             current_app.logger.debug(
                                 f"Location missing from data store specification '{identifier}' in file @ '{file}'"
                             )
-                            continue
-                        if location not in specs_by_location:
-                            specs_by_location[location] = {}
-                        specs_by_location[location][identifier] = specification
 
-        current_app.logger.debug(f"DataSetupService: all_data_store_specifications: {all_data_store_specifications}")
+                        all_data_store_specifications[(data_store_type, location, identifier)] = specification
+
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 
         ReferenceCacheService.add_new_generation(reference_objects)
+        cls._sync_data_store_models_with_specifications(all_data_store_specifications)
 
         return failing_process_models
+
+    @classmethod
+    def _sync_data_store_models_with_specifications(cls, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:
+        all_data_store_models: dict[tuple[str, str, str], Any] = {}
+
+        kkv_models = db.session.query(KKVDataStoreModel).all()
+        json_models = db.session.query(JSONDataStoreModel).all()
+
+        for kkv_model in kkv_models:
+            all_data_store_models[("kkv", kkv_model.location, kkv_model.identifier)] = kkv_model
+
+        for json_model in json_models:
+            all_data_store_models[("json", json_model.location, json_model.identifier)] = json_model
+
+        specification_keys = set(all_data_store_specifications.keys())
+        model_keys = set(all_data_store_models.keys())
+
+        keys_to_insert = specification_keys - model_keys
+        keys_to_update = specification_keys & model_keys
+        keys_to_delete = model_keys - specification_keys
+
+        current_app.logger.debug(f"DataSetupService: all_data_store_specifications: {all_data_store_specifications}")
+        current_app.logger.debug(f"DataSetupService: all_data_store_models: {all_data_store_models}")
+        current_app.logger.debug(f"DataSetupService: keys_to_insert: {keys_to_insert}")
+        current_app.logger.debug(f"DataSetupService: keys_to_update: {keys_to_update}")
+        current_app.logger.debug(f"DataSetupService: keys_to_delete: {keys_to_delete}")
+
+        # TODO: insert
+        # TODO: update
+
+        for key in keys_to_delete:
+            model = all_data_store_models.get(key)
+            if model is None:
+                current_app.logger.debug(f"DataSetupService: was expecting key '{key}' to point to a data store model.")
+                continue
+            db.session.delete(model)
+
+        db.session.commit()
