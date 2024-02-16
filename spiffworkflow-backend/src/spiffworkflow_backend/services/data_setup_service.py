@@ -121,6 +121,17 @@ class DataSetupService:
         specification_keys = set(all_data_store_specifications.keys())
         model_keys = set(all_data_store_models.keys())
 
+        #
+        # At this point we have a dictionary of all data store specifications from all the process_group.json files and
+        # a dictionary of all data store models. These two dictionaries use the same key format of (type, location, identifier)
+        # which allows checking to see if a given data store has a specification and/or a model.
+        #
+        # With this we can perform set operations on the keys of the two dictionaries to figure out what needs to be
+        # inserted, updated or deleted. If a key has a specification but not a model, an insert needs to happen. If a key
+        # has a specification and a model, an update needs to happen. If a key has a model but no specification, a delete
+        # needs to happen.
+        #
+
         keys_to_insert = specification_keys - model_keys
         keys_to_update = specification_keys & model_keys
         keys_to_delete = model_keys - specification_keys
