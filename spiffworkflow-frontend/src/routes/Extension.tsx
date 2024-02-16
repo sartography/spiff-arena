@@ -1,12 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createElement, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import {
-  ObjectWithStringKeysAndFunctionValues,
-  ProcessFile,
-  ProcessModel,
-} from '../interfaces';
+import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { recursivelyChangeNullAndUndefined, makeid } from '../helpers';
@@ -16,6 +12,7 @@ import {
   ExtensionApiResponse,
   ExtensionPostBody,
   ExtensionUiSchema,
+  SupportedComponentList,
   UiSchemaPageComponent,
   UiSchemaPageDefinition,
 } from '../extension_ui_schema_interfaces';
@@ -65,7 +62,7 @@ export default function Extension({
 
   const { addError, removeError } = useAPIError();
 
-  const supportedComponents: ObjectWithStringKeysAndFunctionValues = {
+  const supportedComponents: SupportedComponentList = {
     CreateNewInstance,
     CustomForm,
     MarkdownRenderer,
@@ -98,7 +95,6 @@ export default function Extension({
   );
   const processLoadResult = useCallback(
     (result: ExtensionApiResponse, pageDefinition: UiSchemaPageDefinition) => {
-      setFormData(result.task_data);
       if (pageDefinition.navigate_to_on_load) {
         const optionString = interpolateNavigationString(
           pageDefinition.navigate_to_on_load,
@@ -114,6 +110,8 @@ export default function Extension({
         );
         setMarkdownToRenderOnLoad(newMarkdown);
       }
+
+      const taskDataCopy = { ...result.task_data };
       if (
         pageDefinition.on_load &&
         pageDefinition.on_load.ui_schema_page_components_variable
@@ -123,7 +121,18 @@ export default function Extension({
             pageDefinition.on_load.ui_schema_page_components_variable
           ]
         );
+
+        // we were getting any AJV8Validator error when we had this data in the task data
+        // when we attempted to submit a form using this task data.
+        // The error was:
+        //  Uncaught RangeError: Maximum call stack size exceeded
+        //
+        // Removing the ui schema page components dictionary seems to resolve it.
+        delete taskDataCopy[
+          pageDefinition.on_load.ui_schema_page_components_variable
+        ];
       }
+      setFormData(taskDataCopy);
       setReadyForComponentsToDisplay(true);
     },
     [interpolateNavigationString]
@@ -303,7 +312,7 @@ export default function Extension({
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const renderComponentArguments = (component: UiSchemaPageComponent) => {
     const argumentsForComponent: any = component.arguments;
-    if (processModel) {
+    if (processModel && argumentsForComponent) {
       Object.keys(argumentsForComponent).forEach((argName: string) => {
         const argValue = argumentsForComponent[argName];
         if (
@@ -368,7 +377,10 @@ export default function Extension({
         if (supportedComponents[componentName]) {
           const argumentsForComponent = renderComponentArguments(component);
           componentsToDisplay.push(
-            supportedComponents[componentName](argumentsForComponent)
+            createElement(
+              supportedComponents[componentName],
+              argumentsForComponent
+            )
           );
         } else {
           console.error(
