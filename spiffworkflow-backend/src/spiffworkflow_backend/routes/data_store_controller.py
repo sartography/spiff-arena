@@ -123,22 +123,18 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     model.schema = schema
     model.description = description or ""
 
+    _write_specification_to_process_group(data_store_type, model)
+
     db.session.add(model)
     db.session.commit()
-
-    _write_specification_to_process_group(data_store_type, model)
 
     return make_response(jsonify({"ok": True}), 200)
 
 
 def _write_specification_to_process_group(data_store_type: str, model: Any) -> None:
-    # TODO: once the top level is a process group this check should be removed
-    if model.location == "":
-        return
-
-    process_group = ProcessModelService.get_process_group(model.location, False, False)
-    if not process_group:
-        return
+    process_group = ProcessModelService.get_process_group(
+        model.location, find_direct_nested_items=False, find_all_nested_items=False, create_if_not_exists=True
+    )
 
     if data_store_type not in process_group.data_store_specifications:
         process_group.data_store_specifications[data_store_type] = {}
