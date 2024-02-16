@@ -711,7 +711,11 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={handleSave} disabled={disableSaveButton}>
+            <Button
+              onClick={handleSave}
+              disabled={disableSaveButton}
+              data-qa="process-model-file-save-button"
+            >
               Save
             </Button>
           </Can>

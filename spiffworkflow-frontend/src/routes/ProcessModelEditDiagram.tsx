@@ -1082,7 +1082,6 @@ export default function ProcessModelEditDiagram() {
           diagramXML={bpmnXmlForDiagramRendering}
           fileName={params.file_name}
           diagramType="dmn"
-          disableSaveButton={!diagramHasChanges}
         />
       );
     }
@@ -1143,7 +1142,12 @@ export default function ProcessModelEditDiagram() {
   const unsavedChangesMessage = () => {
     if (diagramHasChanges) {
       return (
-        <Notification title="Unsaved changes." type="error" hideCloseButton>
+        <Notification
+          title="Unsaved changes."
+          type="error"
+          hideCloseButton
+          data-qa="process-model-file-changed"
+        >
           Please save to avoid losing your work.
         </Notification>
       );
