@@ -38,7 +38,6 @@ import 'dmn-js-properties-panel/dist/assets/properties-panel.css';
 import spiffworkflow from 'bpmn-js-spiffworkflow/app/spiffworkflow';
 import 'bpmn-js-spiffworkflow/app/css/app.css';
 
-// @ts-expect-error TS(7016) FIXME
 import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle/spiffworkflow.json';
 
 // @ts-expect-error TS(7016) FIXME

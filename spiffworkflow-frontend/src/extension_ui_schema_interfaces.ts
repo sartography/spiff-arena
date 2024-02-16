@@ -63,6 +63,7 @@ export interface UiSchemaUxElement {
   page: string;
   display_location: UiSchemaDisplayLocation;
   location_specific_configs?: UiSchemaLocationSpecificConfig;
+  tooltip?: string;
 }
 
 export interface UiSchemaForm {

@@ -492,6 +492,7 @@ export interface KeyboardShortcuts {
 export interface SpiffTab {
   path: string;
   display_name: string;
+  tooltip?: string;
 }
 
 export interface SpiffTableHeader {
