@@ -456,12 +456,16 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def get_process_group(
-        cls, process_group_id: str, find_direct_nested_items: bool = True, find_all_nested_items: bool = True
+        cls,
+        process_group_id: str,
+        find_direct_nested_items: bool = True,
+        find_all_nested_items: bool = True,
+        create_if_not_exists: bool = False,
     ) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = FileSystemService.full_path_from_id(process_group_id)
-            if cls.is_process_group(process_group_path):
+            if cls.is_process_group(process_group_path) or create_if_not_exists:
                 return cls.find_or_create_process_group(
                     process_group_path,
                     find_direct_nested_items=find_direct_nested_items,
