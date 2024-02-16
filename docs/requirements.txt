@@ -15,7 +15,7 @@ furo==2022.9.29
 idna==3.4
 imagesize==1.4.1
 Jinja2==3.1.2
-lazy-object-proxy==1.9.0
+lazy-object-proxy==1.10.0
 livereload==2.6.3
 lsprotocol==2023.0.0a1
 markdown-it-py==2.2.0
