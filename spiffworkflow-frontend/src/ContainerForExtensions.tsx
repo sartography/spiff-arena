@@ -128,7 +128,7 @@ export default function ContainerForExtensions() {
   const layout = () => {
     return (
       <>
-        <NavigationBar extensionUxElements={extensionUxElements} />;
+        <NavigationBar extensionUxElements={extensionUxElements} />
         <Content className={contentClassName}>
           <ScrollToTop />
           <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
