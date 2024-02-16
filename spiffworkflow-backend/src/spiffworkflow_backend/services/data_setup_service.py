@@ -84,12 +84,17 @@ class DataSetupService:
                     continue
 
                 for data_store_type, specs_by_id in process_group.data_store_specifications.items():
+                    if not isinstance(specs_by_id, dict):
+                        current_app.logger.debug(f"Expected dictionary as value for key '{data_store_type}' in file @ '{file}'")
+                        continue
+
                     for identifier, specification in specs_by_id.items():
                         location = specification.get("location")
                         if location is None:
                             current_app.logger.debug(
                                 f"Location missing from data store specification '{identifier}' in file @ '{file}'"
                             )
+                            continue
 
                         all_data_store_specifications[(data_store_type, location, identifier)] = specification
 
@@ -155,6 +160,11 @@ class DataSetupService:
 
         for key in keys_to_insert:
             data_store_type, location, identifier = key
+
+            if data_store_type not in model_creators:
+                current_app.logger.debug(f"DataSetupService: cannot create model for type '{data_store_type}'.")
+                continue
+
             model = model_creators[data_store_type](identifier, location)
             update_model_from_specification(model, key)
             db.session.add(model)
