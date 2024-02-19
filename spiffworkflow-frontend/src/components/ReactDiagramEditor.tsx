@@ -91,6 +91,7 @@ type OwnProps = {
   url?: string;
   callers?: ProcessReference[];
   activeUserElement?: React.ReactElement;
+  disableSaveButton?: boolean;
 };
 
 const FitViewport = 'fit-viewport';
@@ -121,6 +122,7 @@ export default function ReactDiagramEditor({
   url,
   callers,
   activeUserElement,
+  disableSaveButton,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -708,7 +710,13 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={handleSave}>Save</Button>
+            <Button
+              onClick={handleSave}
+              disabled={disableSaveButton}
+              data-qa="process-model-file-save-button"
+            >
+              Save
+            </Button>
           </Can>
           <Can
             I="DELETE"

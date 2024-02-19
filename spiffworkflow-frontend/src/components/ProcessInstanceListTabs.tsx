@@ -2,10 +2,10 @@
 import { Tabs, TabList, Tab } from '@carbon/react';
 import { Can } from '@casl/react';
 import { useNavigate } from 'react-router-dom';
-import { Tooltip } from '@mui/material';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   variant: string;
@@ -29,10 +29,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
   return (
     <Tabs selectedIndex={selectedTabIndex}>
       <TabList aria-label="List of tabs">
-        <Tooltip
-          title="Only show process instances for the current user."
-          arrow
-        >
+        <SpiffTooltip title="Only show process instances for the current user">
           <Tab
             data-qa="process-instance-list-for-me"
             onClick={() => {
@@ -41,9 +38,9 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           >
             For Me
           </Tab>
-        </Tooltip>
+        </SpiffTooltip>
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
-          <Tooltip title="Show all process instances for all users." arrow>
+          <SpiffTooltip title="Show process instances for all users">
             <Tab
               data-qa="process-instance-list-all"
               onClick={() => {
@@ -52,9 +49,9 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
             >
               All
             </Tab>
-          </Tooltip>
+          </SpiffTooltip>
         </Can>
-        <Tooltip title="Search for a process instance by id." arrow>
+        <SpiffTooltip title="Search for a process instance by id">
           <Tab
             data-qa="process-instance-list-find-by-id"
             onClick={() => {
@@ -63,7 +60,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           >
             Find By Id
           </Tab>
-        </Tooltip>
+        </SpiffTooltip>
       </TabList>
     </Tabs>
   );

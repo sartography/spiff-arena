@@ -3,7 +3,7 @@ name: Delete old container images
 on:
   workflow_dispatch: # allow running on demand
   schedule:
-    - cron: "0 2 * * *"  # every day at 2:00am UTC
+    - cron: "0 2 * * *" # every day at 2:00am UTC
 
 jobs:
   clean-ghcr:
@@ -14,7 +14,7 @@ jobs:
         uses: snok/container-retention-policy@v2
         with:
           image-names: spiffworkflow-backend, spiffworkflow-frontend
-          cut-off: Two months ago UTC
+          cut-off: Three months ago UTC
           account-type: org
           org-name: sartography
           keep-at-least: 1

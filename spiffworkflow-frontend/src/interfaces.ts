@@ -148,9 +148,6 @@ export interface ProcessReference {
 }
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
-export type ObjectWithStringKeysAndFunctionValues = {
-  [key: string]: Function;
-};
 
 export interface FilterOperator {
   id: string;

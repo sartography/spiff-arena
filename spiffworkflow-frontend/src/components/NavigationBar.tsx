@@ -16,7 +16,6 @@ import {
   HeaderGlobalAction,
   HeaderGlobalBar,
 } from '@carbon/react';
-import { Tooltip } from '@mui/material';
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -32,6 +31,7 @@ import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { slugifyString } from '../helpers';
 import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -193,14 +193,14 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               {(secretAllowed: boolean) => {
                 if (secretAllowed || authenticationAllowed) {
                   return (
-                    <Tooltip title="Manage Secrets and Authentications" arrow>
+                    <SpiffTooltip title="Manage Secrets and Authentication information for Service Tasks">
                       <HeaderMenuItem
                         href="/configuration"
                         isCurrentPage={isActivePage('/configuration')}
                       >
                         Configuration
                       </HeaderMenuItem>
-                    </Tooltip>
+                    </SpiffTooltip>
                   );
                 }
                 return null;
@@ -219,7 +219,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       setActiveKey(navItemPage);
     }
     return (
-      <Tooltip title={uxElement?.tooltip} arrow>
+      <SpiffTooltip title={uxElement?.tooltip}>
         <HeaderMenuItem
           href={navItemPage}
           isCurrentPage={isActivePage(navItemPage)}
@@ -227,7 +227,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         >
           {uxElement.label}
         </HeaderMenuItem>
-      </Tooltip>
+      </SpiffTooltip>
     );
   };
 
@@ -237,13 +237,13 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     }
     return (
       <>
-        <Tooltip title="View and start Processes" arrow>
+        <SpiffTooltip title="View and start Process Instances">
           <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
             <div>Home</div>
           </HeaderMenuItem>
-        </Tooltip>
+        </SpiffTooltip>
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
-          <Tooltip title="Find and organize Processes" arrow>
+          <SpiffTooltip title="Find and organize Process Groups and Process Models">
             <HeaderMenuItem
               href={processGroupPath}
               isCurrentPage={isActivePage(processGroupPath)}
@@ -251,41 +251,41 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             >
               Processes
             </HeaderMenuItem>
-          </Tooltip>
+          </SpiffTooltip>
         </Can>
         <Can
           I="POST"
           a={targetUris.processInstanceListForMePath}
           ability={ability}
         >
-          <Tooltip title="List of active and completed Process Instances" arrow>
+          <SpiffTooltip title="List of active and completed Process Instances">
             <HeaderMenuItem
               href="/process-instances"
               isCurrentPage={isActivePage('/process-instances')}
             >
               Process Instances
             </HeaderMenuItem>
-          </Tooltip>
+          </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
-          <Tooltip title="Logs emitted by Process Instances" arrow>
+          <SpiffTooltip title="Browse messages being sent and received">
             <HeaderMenuItem
               href="/messages"
               isCurrentPage={isActivePage('/messages')}
             >
               Messages
             </HeaderMenuItem>
-          </Tooltip>
+          </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
-          <Tooltip title="(needs definition)" arrow>
+          <SpiffTooltip title="Browse data that has been saved to Data Stores">
             <HeaderMenuItem
               href="/data-stores"
               isCurrentPage={isActivePage('/data-stores')}
             >
               Data Stores
             </HeaderMenuItem>
-          </Tooltip>
+          </SpiffTooltip>
         </Can>
         {configurationElement()}
         <ExtensionUxElementForDisplay
