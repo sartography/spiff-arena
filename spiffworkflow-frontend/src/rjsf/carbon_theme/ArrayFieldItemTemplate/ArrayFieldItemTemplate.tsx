@@ -5,7 +5,6 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-import { Grid, Column } from '@carbon/react';
 
 /** The `ArrayFieldItemTemplate` component is the template used to render an items of an array.
  *
