@@ -7,4 +7,4 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 def status() -> Response:
     ProcessInstanceModel.query.filter().first()
     response = app.config["SCRIPT_ASSIST_ENABLED"]
-    return make_response({"ok": response}, 200)
+    return make_response({"enabled": response}, 200)
