@@ -29,6 +29,7 @@ import {
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
 import MDEditor from '@uiw/react-md-editor';
+import { TextArea } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
@@ -49,6 +50,7 @@ import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
+import useAIService from '../atesting/useAIService';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -87,6 +89,9 @@ export default function ProcessModelEditDiagram() {
   const monacoRef = useRef(null);
 
   const failingScriptLineClassNamePrefix = 'failingScriptLineError';
+
+  const { aiResult, setAIQuery } = useAIService();
+  const [pizzaQueryValue, setPizzaQueryValue] = useState('');
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -817,20 +822,52 @@ export default function ProcessModelEditDiagram() {
     }
     return null;
   };
+
+  const handleAskPizzaClick = () => {
+    setAIQuery(pizzaQueryValue);
+  };
+
   const scriptEditor = () => {
     if (!showScriptEditor) {
       return null;
     }
     return (
-      <Editor
-        height={500}
-        width="auto"
-        options={generalEditorOptions()}
-        defaultLanguage="python"
-        defaultValue={scriptText}
-        onChange={handleEditorScriptChange}
-        onMount={handleEditorDidMount}
-      />
+      <Grid fullwidth>
+        <Column lg={10}>
+          <Editor
+            height={500}
+            width="auto"
+            options={generalEditorOptions()}
+            defaultLanguage="python"
+            defaultValue={scriptText}
+            value={aiResult}
+            onChange={handleEditorScriptChange}
+            onMount={handleEditorDidMount}
+          />
+        </Column>
+        <Column lg={6}>
+          <TextArea
+            placeholder="Ask Pizza AI"
+            rows={21}
+            value={pizzaQueryValue}
+            onChange={(e: any) => setPizzaQueryValue(e.target.value)}
+          />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'right',
+            }}
+          >
+            <Button
+              style={{ marginTop: '10px' }}
+              kind="secondary"
+              onClick={() => handleAskPizzaClick()}
+            >
+              Ask Pizza AI
+            </Button>
+          </div>
+        </Column>
+      </Grid>
     );
   };
   const scriptEditorAndTests = () => {
