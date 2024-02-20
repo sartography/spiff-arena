@@ -19,6 +19,7 @@ paths:
       responses:
         "200":
           description: Redirects to authentication server
+
   /login:
     parameters:
       - name: authentication_identifier
@@ -172,6 +173,20 @@ paths:
       responses:
         "200":
           description: Test Return Response
+
+  /script-assist:
+    get:
+      operationId: spiffworkflow_backend.routes.script_assist_config.status
+      summary: Returns value of app.config["SCRIPT_ASSIST_ENABLED"]
+      tags:
+        - AI Tools
+      responses:
+        "200":
+          description: Returns if AI script should be enabled in UI
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /status:
     get:
