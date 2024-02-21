@@ -64,6 +64,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessModel,
   Task,
   TaskDefinitionPropertiesJson,
   User,
@@ -157,6 +158,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelFileCreatePath]: ['GET'],
     [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
@@ -195,10 +197,29 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const shortcutLoadPrimaryFile = () => {
+    if (ability.can('GET', targetUris.processInstanceActionPath)) {
+      const processResult = (result: ProcessModel) => {
+        const primaryFileName = result.primary_file_name;
+        navigate(
+          `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`
+        );
+      };
+      HttpService.makeCallToBackend({
+        path: `/process-models/${modifiedProcessModelId}?include_file_references=true`,
+        successCallback: processResult,
+      });
+    }
+  };
+
   const keyboardShortcuts: KeyboardShortcuts = {
     'f,r,enter': {
       function: forceRunProcessInstance,
       label: 'Force run process instance',
+    },
+    'd,enter': {
+      function: shortcutLoadPrimaryFile,
+      label: 'View diagram',
     },
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
