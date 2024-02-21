@@ -12,6 +12,8 @@ import React from 'react';
 //    compensation":{
 //      "title": "Compensation (yearly), USD",
 //      "type": "object",
+//      "minimum": 0,
+//      "maximum": 999999999999,
 //      "properties": {
 //        "min": {
 //          "type": "number"
@@ -90,7 +92,8 @@ export default function NumericRangeField({
     return Number(numberString.replace(/,/g, ''));
   };
 
-  const maxNumber = 999_999_999_999;
+  const minNumber = schema.minimum || 0;
+  const maxNumber = schema.maximum || 999_999_999_999;
   let min = formData?.min || null;
   const [minValue, setMinValue] = React.useState(min?.toString() || '');
   let max = formData?.max || null;
@@ -102,7 +105,7 @@ export default function NumericRangeField({
 
   const onChangeLocal = (nameToChange: any, event: any) => {
     event.preventDefault();
-    const numberValue = parseNumberString(event.target.value);
+    let numberValue = parseNumberString(event.target.value);
     if (numberValue === null || (numberValue === 0 && required)) {
       if (nameToChange === 'min') {
         onChange({
@@ -118,35 +121,58 @@ export default function NumericRangeField({
       }
       return;
     }
-    if (numberValue > maxNumber) {
-      return;
-    }
     if (nameToChange === 'min') {
-      min = numberValue;
-      setMinValue(formatNumberString(numberValue.toString()));
+      if (
+        numberValue !== null &&
+        (numberValue < minNumber ||
+          numberValue > maxNumber ||
+          numberValue > max)
+      ) {
+        numberValue = null;
+      } else {
+        min = numberValue;
+        let currentMax = parseNumberString(maxValue);
+        if (
+          currentMax !== null &&
+          currentMax >= min &&
+          currentMax <= maxNumber
+        ) {
+          max = currentMax;
+        } else {
+          max = null;
+        }
+      }
+      setMinValue(formatNumberString(numberValue?.toString() || ''));
     }
     if (nameToChange === 'max') {
-      max = numberValue;
-      setMaxValue(formatNumberString(numberValue.toString()));
+      if (
+        numberValue !== null &&
+        (numberValue > maxNumber ||
+          numberValue < minNumber ||
+          numberValue < min)
+      ) {
+        numberValue = null;
+      } else {
+        max = numberValue;
+        let currentMin = parseNumberString(minValue);
+        if (
+          currentMin !== null &&
+          currentMin <= max &&
+          currentMin >= minNumber
+        ) {
+          min = currentMin;
+        } else {
+          min = null;
+        }
+      }
+      setMaxValue(formatNumberString(numberValue?.toString() || ''));
     }
     if (!disabled && !readonly) {
-      if (nameToChange === 'min' && numberValue > max) {
-        min = numberValue;
-        setMinValue(numberValue.toString());
-        max = numberValue;
-        setMaxValue(numberValue.toString());
-        onChange({
-          ...(formData || {}),
-          min: numberValue,
-          max: numberValue,
-        });
-      } else {
-        onChange({
-          ...(formData || {}),
-          ...{ max, min },
-          [nameToChange]: numberValue,
-        });
-      }
+      onChange({
+        ...(formData || {}),
+        ...{ max, min },
+        [nameToChange]: numberValue,
+      });
     }
   };
 
@@ -181,6 +207,9 @@ export default function NumericRangeField({
             setMinValue(event.target.value.replace(/,/g, ''));
           }}
           invalid={commonAttributes.invalid}
+          helperText={`${formatNumberString(
+            minNumber?.toString() || ''
+          )} - ${formatNumberString(maxNumber?.toString() || '')}`}
           autofocus={autofocus}
         />
         <TextInput
@@ -195,6 +224,9 @@ export default function NumericRangeField({
             setMaxValue(event.target.value.replace(/,/g, ''));
           }}
           invalid={commonAttributes.invalid}
+          helperText={`${formatNumberString(
+            minNumber?.toString() || ''
+          )} - ${formatNumberString(maxNumber?.toString() || '')}`}
         />
       </div>
       {commonAttributes.errorMessageForField && (
