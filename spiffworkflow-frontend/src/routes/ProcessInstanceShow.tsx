@@ -201,6 +201,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (ability.can('GET', targetUris.processInstanceActionPath)) {
       const processResult = (result: ProcessModel) => {
         const primaryFileName = result.primary_file_name;
+        if (!primaryFileName) {
+          // this should be very unlikely, since we are in the context of an instance,
+          // but it's techically possible for the file to have been subsequently deleted or something.
+          console.error('Primary file name not found for the process model.');
+          return;
+        }
         navigate(
           `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`
         );
