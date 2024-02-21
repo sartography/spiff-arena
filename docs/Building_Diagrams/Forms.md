@@ -172,57 +172,49 @@ These enhancements provide you with more flexibility and control when building f
 By using these features, you can create dynamic, validated forms that enhance the user experience and support your business processes effectively.
 
 ### Display Fields Side-By-Side on Same Row
+When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically. The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
 
-By default, all form fields will be laid out one on top of the other.
-In some cases, it might be more user-friendly to put two or more fields next to each other on the same conceptual "row."
-Perhaps, you want to let a user fill out a name, and have First Name and Last Name next to each other.
-Don't actually do this; use Full name as a single field. :)
-But in some other case where you actually want to have fields laid out horizontally instead of vertically, do the following:
+#### Form Schema Example:
 
-Example form schema:
+Define your form fields in the JSON schema as follows:
 
 ```json
 {
-  "title": "Side by side",
-  "description": "A simple form demonstrating side-by-side layout of fields",
+  "title": "Side by Side Layout",
+  "description": "Demonstrating side-by-side layout",
   "type": "object",
   "properties": {
-    "firstName": {
-      "type": "string"
-    },
-    "lastName": {
-      "type": "string"
-    },
-    "notes": {
-      "type": "string"
-    }
+    "firstName": {"type": "string"},
+    "lastName": {"type": "string"},
+    "notes": {"type": "string"}
   }
 }
 ```
 
-Example uiSchema:
+#### `ui:layout` Configuration:
+
+The `ui:layout` attribute accepts an array of objects, each representing a conceptual "row" of fields. Here's how to use it:
 
 ```json
 {
   "ui:layout": [
     {
-      "firstName": {
-        "sm": 2,
-        "md": 2,
-        "lg": 4
-      },
-      "lastName": {
-        "sm": 2,
-        "md": 2,
-        "lg": 4
-      }
+      "firstName": {"sm": 2, "md": 2, "lg": 4},
+      "lastName": {"sm": 2, "md": 2, "lg": 4}
     },
-    {
-      "notes": {}
-    }
+    {"notes": {}}
   ]
 }
 ```
+![Styling_Form](images/styling_forms.png)
+
+#### Key Points:
+
+- **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
+- **Responsive Columns**: Values (`sm`, `md`, `lg`) indicate the number of grid columns a field should occupy, ensuring the form remains functional and visually appealing across devices.
+- **Simplified Configuration**: If column widths are unspecified, the layout will automatically adjust, providing flexibility in design.
+
+#### Example Illustrated:
 
 In this case, we are saying that we want firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
 We are saying that firstName should take up 4 columns when a large display is used.
@@ -238,6 +230,11 @@ If you just specific a uiSchema like this, it will figure out the column widths 
         }
       ]
     }
+
+
+By leveraging the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
+
+
 
 ### Display UI Help in Web Forms
 
@@ -345,54 +342,3 @@ This schema defines a numeric range object with `min` and `max` properties, both
 #### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
-
----
-
-### Configuring Side-by-Side Field Layout in Forms
-
-The `ui:layout` attribute allows you to specify how fields are displayed in relation to each other. By defining this attribute, you can control the grid columns that each field occupies, making it possible to place them side by side.
-
-### Configuration Steps:
-
-1. **Access UI Settings**: In the form editor, locate the UI settings where you can specify layout options for your form fields.
-
-2. **Define the Layout**: Use the `ui:layout` attribute within the JSON schema to set the layout structure. This attribute accepts an array of objects, with each object representing a row of fields.
-
-3. **Set Grid Column Width**: Within the layout object, define the grid column width for each field using the keys `sm`, `md`, and `lg`. These correspond to the grid column options defined in the Carbon design theme and control the field size across different screen sizes (small, medium, and large).
-
-### Example Usage:
-
-To illustrate, let's configure two fields, `firstName` and `lastName`, to be displayed side by side on the same row, each taking up equal space:
-
-```json
-{
-  "ui:layout": [
-    {
-      "firstName": {
-        "sm": 2,
-        "md": 2,
-        "lg": 4
-      },
-      "lastName": {
-        "sm": 2,
-        "md": 2,
-        "lg": 4
-      }
-    }
-  ]
-}
-```
-![Styling_Form](images/styling_forms.png)
-In this example:
-
-- **"ui:layout"**: This property specifies the layout configuration for the UI. It's an array that can contain one or more objects, each representing a row or a set of fields that should be considered together for layout purposes.
-
-- **Objects within the array**: Each object in the `ui:layout` array defines how specific form fields (in this case, `firstName` and `lastName`) should be laid out. The keys of the object (`firstName` and `lastName`) refer to the form field names.
-
-- **Responsive Columns**:
-  - The values for each field (`sm`, `md`, `lg`) correspond to different screen sizes (small, medium, large) and dictate how many columns of the grid system the field should occupy at each size.
-  - `"sm": 2` indicates that on small screens, the field should take up 2 grid columns. This is typically for devices like phones.
-  - `"md": 2` specifies that on medium screens (like tablets), the field also occupies 2 grid columns.
-  - `"lg": 4` means that on large screens, such as desktop monitors, the field should span 4 grid columns.
-
-The `ui:layout` option offers a powerful way to design form layouts that are both functional and aesthetically pleasing. By leveraging this feature, you can ensure your forms are well-organized and user-friendly across various devices and screen sizes.
