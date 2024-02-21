@@ -84,8 +84,11 @@ export default function NumericRangeField({
     return Number(numberString.replace(/,/g, ''));
   };
 
-  const minNumber = schema.minimum || 0;
-  const maxNumber = schema.maximum || 999_999_999_999;
+  if (schema.minimum === undefined || schema.maximum === undefined) {
+    throw new Error('minimum and maximum not defined');
+  }
+  const minNumber = schema.minimum;
+  const maxNumber = schema.maximum;
   let min = formData?.min || null;
   const [minValue, setMinValue] = React.useState(min?.toString() || '');
   let max = formData?.max || null;
@@ -106,6 +109,8 @@ export default function NumericRangeField({
     if (nameToChange === 'min') {
       if (
         numberValue !== null &&
+        minNumber !== undefined &&
+        maxNumber !== undefined &&
         (numberValue < minNumber ||
           numberValue > maxNumber ||
           numberValue > max)
@@ -116,6 +121,7 @@ export default function NumericRangeField({
         let currentMax = parseNumberString(maxValue);
         if (
           currentMax !== null &&
+          maxNumber !== undefined &&
           currentMax >= min &&
           currentMax <= maxNumber
         ) {
@@ -129,6 +135,8 @@ export default function NumericRangeField({
     if (nameToChange === 'max') {
       if (
         numberValue !== null &&
+        minNumber !== undefined &&
+        maxNumber !== undefined &&
         (numberValue > maxNumber ||
           numberValue < minNumber ||
           numberValue < min)
@@ -140,6 +148,7 @@ export default function NumericRangeField({
         if (
           currentMin !== null &&
           currentMin <= max &&
+          minNumber !== undefined &&
           currentMin >= minNumber
         ) {
           min = currentMin;
@@ -190,9 +199,7 @@ export default function NumericRangeField({
             setMinValue(event.target.value.replace(/,/g, ''));
           }}
           invalid={commonAttributes.invalid}
-          helperText={`${formatNumberString(
-            minNumber?.toString() || ''
-          )} - ${formatNumberString(maxNumber?.toString() || '')}`}
+          helperText={`Min: ${formatNumberString(minNumber?.toString() || '')}`}
           autofocus={autofocus}
         />
         <TextInput
@@ -207,9 +214,7 @@ export default function NumericRangeField({
             setMaxValue(event.target.value.replace(/,/g, ''));
           }}
           invalid={commonAttributes.invalid}
-          helperText={`${formatNumberString(
-            minNumber?.toString() || ''
-          )} - ${formatNumberString(maxNumber?.toString() || '')}`}
+          helperText={`Max: ${formatNumberString(maxNumber?.toString() || '')}`}
         />
       </div>
       {commonAttributes.errorMessageForField && (
