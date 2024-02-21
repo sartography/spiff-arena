@@ -325,9 +325,10 @@ class SpecFileService(FileSystemService):
                 )
                 db.session.add(message_triggerable_process_model)
             else:
-                if message_triggerable_process_model.process_model_identifier != ref.relative_location:
+                existing_model_identifier = message_triggerable_process_model.process_model_identifier
+                if existing_model_identifier != ref.relative_location:
                     raise ProcessModelFileInvalidError(
-                        f"Message model is already used to start process model {ref.relative_location}"
+                        f"Message model is already used to start process model {existing_model_identifier}"
                     )
                 elif message_triggerable_process_model.file_name is None:
                     message_triggerable_process_model.file_name = ref.file_name
