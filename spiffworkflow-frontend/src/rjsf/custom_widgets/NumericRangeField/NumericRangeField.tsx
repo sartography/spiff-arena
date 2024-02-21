@@ -151,31 +151,11 @@ export default function NumericRangeField({
     }
     const existingFormData = formData || {};
     if (!disabled && !readonly) {
-<<<<<<< HEAD
       onChange({
         ...(formData || {}),
         ...{ max, min },
         [nameToChange]: numberValue,
       });
-=======
-      if (nameToChange === 'min' && numberValue > max) {
-        min = numberValue;
-        setMinValue(numberValue.toString());
-        max = numberValue;
-        setMaxValue(numberValue.toString());
-        onChange({
-          ...existingFormData,
-          min: numberValue,
-          max: numberValue,
-        });
-      } else {
-        onChange({
-          ...existingFormData,
-          ...{ max, min },
-          [nameToChange]: numberValue,
-        });
-      }
->>>>>>> e9d087fcdd2a7ecceb8cfabe9c9cd088e7d90022
     }
   };
 
