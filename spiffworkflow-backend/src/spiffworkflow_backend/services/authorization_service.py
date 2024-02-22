@@ -231,18 +231,17 @@ class AuthorizationService:
     @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         swagger_functions = ["get_json_spec"]
-        authentication_exclusion_list = [
-            "authentication_begin",
-            "authentication_callback",
-            "authentication_options",
-            "github_webhook_receive",
-            "prometheus_metrics",
-            "status",
-            "task_allows_guest",
-            "test_raise_error",
-            "url_info",
-            "webhook",
-        ]
+        authentication_exclusion_list = {
+            "authentication_begin": "spiffworkflow_backend.routes.authentication_controller",
+            "authentication_callback": "spiffworkflow_backend.routes.authentication_controller",
+            "authentication_options": "spiffworkflow_backend.routes.authentication_controller",
+            "github_webhook_receive": "spiffworkflow_backend.routes.webhooks_controller",
+            "status": "spiffworkflow_backend.routes.health_controller",
+            "task_allows_guest": "spiffworkflow_backend.routes.tasks_controller",
+            "test_raise_error": "spiffworkflow_backend.routes.debug_controller",
+            "url_info": "spiffworkflow_backend.routes.debug_controller",
+            "webhook": "spiffworkflow_backend.routes.webhooks_controller",
+        }
         if request.method == "OPTIONS":
             return True
 
@@ -255,13 +254,19 @@ class AuthorizationService:
 
         api_view_function = current_app.view_functions[request.endpoint]
         module = inspect.getmodule(api_view_function)
+        api_function_name = api_view_function.__name__
+        controller_name = module.__name__ if module is not None else None
         if (
             api_view_function
-            and api_view_function.__name__.startswith("login")
-            or api_view_function.__name__.startswith("logout")
-            or api_view_function.__name__.startswith("console_ui_")
-            or api_view_function.__name__ in authentication_exclusion_list
-            or api_view_function.__name__ in swagger_functions
+            and api_function_name.startswith("login")
+            or api_function_name.startswith("logout")
+            or api_function_name.startswith("console_ui_")
+            or (
+                api_function_name in authentication_exclusion_list
+                and controller_name
+                and controller_name in authentication_exclusion_list[api_function_name]
+            )
+            or api_function_name in swagger_functions
             or module == openid_blueprint
             or module == scaffold  # don't check permissions for static assets
         ):
