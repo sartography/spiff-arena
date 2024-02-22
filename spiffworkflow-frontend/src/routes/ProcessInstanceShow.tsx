@@ -227,10 +227,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       function: shortcutLoadPrimaryFile,
       label: 'View process model [d]iagram',
     },
-    'd,enter': {
-      function: shortcutLoadPrimaryFile,
-      label: 'View diagram',
-    },
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
 
