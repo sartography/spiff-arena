@@ -15,4 +15,8 @@ stop-dev:
 		-f $(FRONTEND_DEV_OVERLAY) \
 		down
 
-.PHONY: dev-env start-dev stop-dev
+fe-sh:
+	docker exec -it spiffworkflow-frontend /bin/bash
+
+.PHONY: dev-env start-dev stop-dev \
+	fe-sh
