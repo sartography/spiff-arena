@@ -174,10 +174,10 @@ paths:
         "200":
           description: Test Return Response
 
-  /script-assist:
+  /script-assist/enabled:
     get:
       operationId: spiffworkflow_backend.routes.script_assist_controller.enabled
-      summary: Returns value of app.config["SCRIPT_ASSIST_ENABLED"]
+      summary: Returns value of SCRIPT_ASSIST_ENABLED
       tags:
         - AI Tools
       responses:
@@ -188,21 +188,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-script-assist:
-    parameters:
-      - name: message
-        in: query
-        required: true
-        schema:
-          type: string
+  /script-assist/process-message:
     post:
-      operationId: spiffworkflow_backend.routes.script_assist_controller.process_script_assist
-      summary: Receive a message to send to AI system, return generated response
+      operationId: spiffworkflow_backend.routes.script_assist_controller.process_message
+      summary: Send natural language message in for processing by AI service
       tags:
         - AI Tools
       responses:
         "200":
-          description: "Return AI generated script"
+          description: Send back AI service response
           content:
             application/json:
               schema:

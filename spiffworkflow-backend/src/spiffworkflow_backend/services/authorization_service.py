@@ -75,6 +75,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-model-tests", "relevant_permissions": ["create"]},
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
+    {"path": "/script-assist", "relevant_permissions": ["read", "create"]},
 ]
 
 
