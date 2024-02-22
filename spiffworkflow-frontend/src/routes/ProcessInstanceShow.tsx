@@ -221,7 +221,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const keyboardShortcuts: KeyboardShortcuts = {
     'f,r,enter': {
       function: forceRunProcessInstance,
-      label: 'Force run process instance',
+      label: '[F]orce [r]un process instance',
+    },
+    'd,enter': {
+      function: shortcutLoadPrimaryFile,
+      label: 'View process model [d]iagram',
     },
     'd,enter': {
       function: shortcutLoadPrimaryFile,
