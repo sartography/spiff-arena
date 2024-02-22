@@ -1,0 +1,16 @@
+# version: "3.8"
+
+services:
+  spiffworkflow-frontend:
+    container_name: spiffworkflow-frontend
+    build:
+      context: spiffworkflow-frontend
+      dockerfile: dev.Dockerfile
+    depends_on:
+      spiffworkflow-backend:
+        condition: service_started
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
+    volumes:
+      - ./spiffworkflow-frontend:/app
