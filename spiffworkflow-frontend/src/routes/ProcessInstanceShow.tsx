@@ -64,6 +64,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessModel,
   Task,
   TaskDefinitionPropertiesJson,
   User,
@@ -157,6 +158,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelFileCreatePath]: ['GET'],
     [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
@@ -195,10 +197,35 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const shortcutLoadPrimaryFile = () => {
+    if (ability.can('GET', targetUris.processInstanceActionPath)) {
+      const processResult = (result: ProcessModel) => {
+        const primaryFileName = result.primary_file_name;
+        if (!primaryFileName) {
+          // this should be very unlikely, since we are in the context of an instance,
+          // but it's techically possible for the file to have been subsequently deleted or something.
+          console.error('Primary file name not found for the process model.');
+          return;
+        }
+        navigate(
+          `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`
+        );
+      };
+      HttpService.makeCallToBackend({
+        path: `/process-models/${modifiedProcessModelId}`,
+        successCallback: processResult,
+      });
+    }
+  };
+
   const keyboardShortcuts: KeyboardShortcuts = {
     'f,r,enter': {
       function: forceRunProcessInstance,
       label: 'Force run process instance',
+    },
+    'd,enter': {
+      function: shortcutLoadPrimaryFile,
+      label: 'View diagram',
     },
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
