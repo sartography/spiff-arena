@@ -5,9 +5,7 @@ from os import environ
 TESTING = True
 SPIFFWORKFLOW_BACKEND_LOG_TO_FILE = environ.get("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default="true") == "true"
 
-SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
-    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME", default="unit_testing.yml"
-)
+SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = "unit_testing.yml"
 
 SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = "http://localhost:7000/openid"
 SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID = "spiffworkflow-backend"
