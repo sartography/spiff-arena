@@ -22,7 +22,7 @@ all: dev-env start-dev be-tests-par
 build-images:
 	$(DOCKER_COMPOSE) build
 
-dev-env: build-images be-recreate-db
+dev-env: build-images fe-npm-i be-recreate-db
 	@/bin/true
 
 start-dev: stop-dev
@@ -46,6 +46,9 @@ be-tests-par:
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix
 
+fe-npm-i:
+	$(IN_FRONTEND) npm i
+
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
 
@@ -55,5 +58,5 @@ take-ownership:
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
 	be-recreate-db be-sh be-tests be-tests-par \
-	fe-lint-fix fe-sh \
+	fe-lint-fix fe-npm-i fe-sh \
 	take-ownership
