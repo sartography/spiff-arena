@@ -5,6 +5,7 @@ services:
       context: spiffworkflow-backend
       dockerfile: dev.Dockerfile
     environment:
+      FLASK_DEBUG: "1"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
     volumes:
       - ./spiffworkflow-backend:/app
