@@ -6,6 +6,5 @@ services:
       dockerfile: dev.Dockerfile
     environment:
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
-    #volumes:
-    #  - ./process_models:/app/process_models
-    #  - spiffworkflow_backend_db:/app/db_volume
+    volumes:
+      - ./spiffworkflow-backend:/app
