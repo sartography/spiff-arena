@@ -1,3 +1,7 @@
+MY_USER := $(shell id -u)
+MY_GROUP := $(shell id -g)
+ME := $(MY_USER):$(MY_GROUP)
+
 BACKEND_CONTAINER ?= spiffworkflow-backend
 BACKEND_DEV_OVERLAY ?= spiffworkflow-backend/dev.docker-compose.yml
 
@@ -9,13 +13,13 @@ YML_FILES := -f docker-compose.yml \
 		-f $(FRONTEND_DEV_OVERLAY)
 
 dev-env:
-	docker compose $(YML_FILES) build
+	RUN_AS=$(ME) docker compose $(YML_FILES) build
 
 start-dev: stop-dev
-	docker compose $(YML_FILES) up -d
+	RUN_AS=$(ME) docker compose $(YML_FILES) up -d
 
 stop-dev:
-	docker compose $(YML_FILES) down
+	RUN_AS=$(ME) docker compose $(YML_FILES) down
 
 be-sh:
 	docker exec -it $(BACKEND_CONTAINER) /bin/bash
@@ -29,6 +33,10 @@ fe-lint-fix:
 fe-sh:
 	docker exec -it $(FRONTEND_CONTAINER) /bin/bash
 
+take-ownership:
+	sudo chown -R $(ME) .
+
 .PHONY: dev-env start-dev stop-dev \
 	be-sh be-tests-par \
-	fe-lint-fix fe-sh
+	fe-lint-fix fe-sh \
+	take-ownership

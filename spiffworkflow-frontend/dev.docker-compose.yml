@@ -3,6 +3,7 @@ services:
     build:
       context: spiffworkflow-frontend
       dockerfile: dev.Dockerfile
+    user: "${RUN_AS}"
     environment:
       HOST: "0.0.0.0"
       PORT: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
