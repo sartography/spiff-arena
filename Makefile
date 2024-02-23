@@ -12,6 +12,9 @@ YML_FILES := -f docker-compose.yml \
 		-f $(BACKEND_DEV_OVERLAY) \
 		-f $(FRONTEND_DEV_OVERLAY)
 
+all: dev-env start-dev be-tests-par
+	@/bin/true
+
 dev-env:
 	RUN_AS=$(ME) docker compose $(YML_FILES) build
 
