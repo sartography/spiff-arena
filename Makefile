@@ -19,14 +19,20 @@ YML_FILES := -f docker-compose.yml \
 all: dev-env start-dev be-tests-par
 	@/bin/true
 
-dev-env:
+build-images:
 	$(DOCKER_COMPOSE) build
+
+dev-env: build-images be-recreate-db
+	@/bin/true
 
 start-dev: stop-dev
 	$(DOCKER_COMPOSE) up -d
 
 stop-dev:
 	$(DOCKER_COMPOSE) down
+
+be-recreate-db:
+	$(IN_BACKEND) ./bin/recreate_db clean
 
 be-sh:
 	$(IN_BACKEND) /bin/bash
@@ -46,7 +52,8 @@ fe-sh:
 take-ownership:
 	sudo chown -R $(ME) .
 
-.PHONY: dev-env start-dev stop-dev \
-	be-sh be-tests be-tests-par \
+.PHONY: build-images dev-env \
+	start-dev stop-dev \
+	be-recreate-db be-sh be-tests be-tests-par \
 	fe-lint-fix fe-sh \
 	take-ownership
