@@ -27,8 +27,11 @@ stop-dev:
 be-sh:
 	docker exec -it $(BACKEND_CONTAINER) /bin/bash
 
+be-tests:
+	RUN_AS=$(ME) docker compose $(YML_FILES) run $(BACKEND_CONTAINER) poetry run pytest
+
 be-tests-par:
-	docker exec -it $(BACKEND_CONTAINER) poetry run pytest -n auto -x --random-order
+	RUN_AS=$(ME) docker compose $(YML_FILES) run $(BACKEND_CONTAINER) poetry run pytest -n auto -x --random-order
 
 fe-lint-fix:
 	docker exec -it $(FRONTEND_CONTAINER) npm run lint:fix
@@ -40,6 +43,6 @@ take-ownership:
 	sudo chown -R $(ME) .
 
 .PHONY: dev-env start-dev stop-dev \
-	be-sh be-tests-par \
+	be-sh be-tests be-tests-par \
 	fe-lint-fix fe-sh \
 	take-ownership
