@@ -30,5 +30,5 @@ fe-sh:
 	docker exec -it $(FRONTEND_CONTAINER) /bin/bash
 
 .PHONY: dev-env start-dev stop-dev \
-	be-sh \
+	be-sh be-tests-par \
 	fe-lint-fix fe-sh
