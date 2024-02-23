@@ -1,0 +1,10 @@
+services:
+  spiffworkflow-frontend:
+    build:
+      context: spiffworkflow-frontend
+      dockerfile: dev.Dockerfile
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
+    volumes:
+      - ./spiffworkflow-frontend:/app
