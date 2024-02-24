@@ -2,6 +2,8 @@ MY_USER := $(shell id -u)
 MY_GROUP := $(shell id -g)
 ME := $(MY_USER):$(MY_GROUP)
 
+SUDO ?= sudo
+
 ARENA_CONTAINER ?= spiff-arena
 ARENA_DEV_OVERLAY ?= dev.docker-compose.yml
 
@@ -76,7 +78,7 @@ sh:
 	$(IN_ARENA) /bin/bash
 
 take-ownership:
-	sudo chown -R $(ME) .
+	$(SUDO) chown -R $(ME) .
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
