@@ -1,0 +1,9 @@
+
+services:
+  spiff-arena:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    user: "${RUN_AS}"
+    volumes:
+      - ./:/app
