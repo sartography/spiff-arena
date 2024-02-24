@@ -1,4 +1,4 @@
-alabaster==0.7.13
+alabaster==0.7.16
 appdirs==1.4.4
 astroid==2.15.5
 attrs==23.1.0
@@ -10,7 +10,7 @@ charset-normalizer==3.1.0
 click==8.1.3
 colorama==0.4.6
 docutils==0.18.1
-esbonio==0.16.1
+esbonio==0.16.4
 furo==2024.1.29
 idna==3.4
 imagesize==1.4.1
