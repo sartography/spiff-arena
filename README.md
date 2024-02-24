@@ -8,7 +8,6 @@ Please visit the [SpiffWorkflow website](https://www.spiffworkflow.org) for a [G
 There are also additional articles, videos, and tutorials about SpiffArena and its components, including SpiffWorkflow, Service Connectors, and BPMN.js extensions.
 
 
-
 ## Backend Setup, local
 
 Remember, if you don't need a full-on native dev experience, you can run with docker (see below), which saves you from all the native setup.
