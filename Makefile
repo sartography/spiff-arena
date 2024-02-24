@@ -21,11 +21,8 @@ YML_FILES := -f docker-compose.yml \
 	-f $(FRONTEND_DEV_OVERLAY) \
 	-f $(ARENA_DEV_OVERLAY)
 
-all: dev-env allow-git-in-docker start-dev run-pyl
+all: dev-env start-dev run-pyl
 	@/bin/true
-
-allow-git-in-docker:
-	git config --global --add safe.directory /app
 
 build-images:
 	$(DOCKER_COMPOSE) build
@@ -81,7 +78,7 @@ sh:
 take-ownership:
 	sudo chown -R $(ME) .
 
-.PHONY: allow-git-in-docker build-images dev-env \
+.PHONY: build-images dev-env \
 	start-dev stop-dev \
 	be-clear-log-file be-recreate-db be-ruff be-sh be-tests be-tests-par \
 	fe-lint-fix fe-npm-i fe-sh \
