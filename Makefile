@@ -12,6 +12,7 @@ FRONTEND_CONTAINER ?= spiffworkflow-frontend
 FRONTEND_DEV_OVERLAY ?= spiffworkflow-frontend/dev.docker-compose.yml
 
 DOCKER_COMPOSE ?= RUN_AS=$(ME) docker compose $(YML_FILES)
+IN_ARENA ?= $(DOCKER_COMPOSE) run $(ARENA_CONTAINER)
 IN_BACKEND ?= $(DOCKER_COMPOSE) run $(BACKEND_CONTAINER)
 IN_FRONTEND ?= $(DOCKER_COMPOSE) run $(FRONTEND_CONTAINER)
 
@@ -20,8 +21,11 @@ YML_FILES := -f docker-compose.yml \
 	-f $(FRONTEND_DEV_OVERLAY) \
 	-f $(ARENA_DEV_OVERLAY)
 
-all: dev-env start-dev run-pyl
+all: dev-env allow-git-in-docker start-dev run-pyl
 	@/bin/true
+
+allow-git-in-docker:
+	git config --global --add safe.directory /app
 
 build-images:
 	$(DOCKER_COMPOSE) build
@@ -65,15 +69,21 @@ fe-npm-i:
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
 
-run-pyl: be-mypy be-tests-par
+pre-commit:
+	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
+
+run-pyl: pre-commit be-mypy be-tests-par
 	@/bin/true
+
+sh:
+	$(IN_ARENA) /bin/bash
 
 take-ownership:
 	sudo chown -R $(ME) .
 
-.PHONY: build-images dev-env \
+.PHONY: allow-git-in-docker build-images dev-env \
 	start-dev stop-dev \
 	be-clear-log-file be-recreate-db be-ruff be-sh be-tests be-tests-par \
 	fe-lint-fix fe-npm-i fe-sh \
-	run-pyl \
+	pre-commit run-pyl \
 	take-ownership

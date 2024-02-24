@@ -4,6 +4,9 @@ services:
     build:
       context: .
       dockerfile: dev.Dockerfile
-    user: "${RUN_AS}"
+    #
+    # TODO: would like to figure out the permissions issue that is preventing this
+    #
+    #user: "${RUN_AS}"
     volumes:
       - ./:/app
