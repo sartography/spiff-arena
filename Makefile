@@ -72,7 +72,7 @@ fe-sh:
 pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
-run-pyl: pre-commit be-mypy be-tests-par
+run-pyl: fe-lint-fix pre-commit be-mypy be-tests-par
 	@/bin/true
 
 sh:
