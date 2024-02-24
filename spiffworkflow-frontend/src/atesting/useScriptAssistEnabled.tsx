@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { BACKEND_BASE_URL } from '../config';
+import HttpService from '../services/HttpService';
 
 const useScriptAssistEnabled = () => {
   const [scriptAssistEnabled, setScriptAssistEnabled] = useState(null);
 
-  const client = axios.create({
-    baseURL: BACKEND_BASE_URL,
-  });
-
   useEffect(() => {
     if (scriptAssistEnabled === null) {
-      client.get('/script-assist/enabled').then((response) => {
-        console.log('RESPONSE', response);
-        setScriptAssistEnabled(response.data.enabled);
+      const handleResponse = (response: any) => {
+        setScriptAssistEnabled(response.ok);
+      };
+
+      HttpService.makeCallToBackend({
+        path: `/script-assist/enabled`,
+        successCallback: handleResponse,
       });
     }
-  }, [client, scriptAssistEnabled]);
+  }, [scriptAssistEnabled]);
 
   return {
     scriptAssistEnabled,

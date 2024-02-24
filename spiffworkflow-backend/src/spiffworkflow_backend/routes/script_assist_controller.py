@@ -13,9 +13,7 @@ def enabled() -> Response:
 def process_message() -> Response:
     openai_api_key = app.config["SPIFFWORKFLOW_BACKEND_OPENAI_API_KEY"]
 
-    no_nonsense = "Resulting script must be returned as JSON. Do not include any text other than the complete python script."
-
-    print('>>>>>>>>>>>>>>', openai_api_key)
+    no_nonsense = "Do not include any text other than the complete python script. Do not include any comments. Reject any request that does not appear to be for a python script."
 
     client = OpenAI(api_key=openai_api_key)
 
@@ -23,7 +21,7 @@ def process_message() -> Response:
         messages=[
             {
                 "role": "user",
-                "content": "Build a python script that says hello world " + no_nonsense,
+                "content": "create a python script that says hello world {}".format(no_nonsense),
             }
         ],
         model="gpt-3.5-turbo",
@@ -33,10 +31,6 @@ def process_message() -> Response:
         frequency_penalty=0,
         presence_penalty=0,
     )
-
-    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-    print(completion)
-    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
     return make_response({"ok": completion.choices[0].message.content}, 200)
 

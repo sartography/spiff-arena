@@ -826,56 +826,83 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
 
-  const handleProcessScriptAssist = async (query: string) => {
-    setScriptAssistQuery(query);
+  /**
+   * When user clicks script assist button, set useScriptAssistQuery hook with query.
+   * This will async update scriptAssistResult as needed.
+   */
+  const handleProcessScriptAssist = () => {
+    console.log(scriptAssistValue);
+    setScriptAssistQuery(scriptAssistValue);
   };
 
+  /* Main python script editor user works in */
+  const editorWindow = () => {
+    return (
+      <Editor
+        height={500}
+        width="auto"
+        options={generalEditorOptions()}
+        defaultLanguage="python"
+        defaultValue={scriptText}
+        value={scriptAssistResult}
+        onChange={handleEditorScriptChange}
+        onMount={handleEditorDidMount}
+      />
+    );
+  };
+
+  /* If enabled, will appear to right of editorWindow */
+  const scriptAssistWindow = () => {
+    return (
+      <>
+        <TextArea
+          placeholder="Ask Spiff AI"
+          rows={21}
+          value={scriptAssistValue}
+          onChange={(e: any) => setScriptAssistValue(e.target.value)}
+        />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'right',
+          }}
+        >
+          <Button
+            style={{ marginTop: '10px' }}
+            kind="secondary"
+            onClick={() => handleProcessScriptAssist()}
+          >
+            Ask Spiff AI
+          </Button>
+        </div>
+      </>
+    );
+  };
+
+  /* Depending on scriptAssist being enabled, adjust layout */
   const scriptEditor = () => {
     return (
       showScriptEditor && (
         <Grid fullwidth>
-          <Column lg={scriptAssistEnabled ? 10 : 16}>
-            <Editor
-              height={500}
-              width="auto"
-              options={generalEditorOptions()}
-              defaultLanguage="python"
-              defaultValue={scriptText}
-              value={scriptAssistResult}
-              onChange={handleEditorScriptChange}
-              onMount={handleEditorDidMount}
-            />
-          </Column>
-          {scriptAssistEnabled && (
-            <Column lg={6}>
-              <TextArea
-                placeholder="Ask Spiff AI"
-                rows={21}
-                value={scriptAssistValue}
-                onChange={(e: any) => setScriptAssistValue(e.target.value)}
-              />
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'right',
-                }}
-              >
-                <Button
-                  style={{ marginTop: '10px' }}
-                  kind="secondary"
-                  onClick={(e: any) =>
-                    handleProcessScriptAssist(e.target.value)
-                  }
-                >
-                  Ask Spiff AI
-                </Button>
-              </div>
+          {scriptAssistEnabled ? (
+            <>
+              <Column lg={10} md={4} sm={2}>
+                {editorWindow()}
+              </Column>
+              <Column lg={6} md={4} sm={2}>
+                {scriptAssistWindow()}
+              </Column>
+            </>
+          ) : (
+            <Column lg={16} md={8} sm={4}>
+              {editorWindow()}
             </Column>
           )}
         </Grid>
       )
     );
   };
+
   const scriptEditorAndTests = () => {
     if (!showScriptEditor) {
       return null;

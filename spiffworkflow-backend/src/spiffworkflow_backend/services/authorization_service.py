@@ -556,6 +556,7 @@ class AuthorizationService:
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/script-assist/*"))
         return permissions_to_assign
 
     @classmethod
