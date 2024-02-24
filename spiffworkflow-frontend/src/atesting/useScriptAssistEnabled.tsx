@@ -11,7 +11,7 @@ const useScriptAssistEnabled = () => {
 
   useEffect(() => {
     if (scriptAssistEnabled === null) {
-      client.get('/script-assist').then((response) => {
+      client.get('/script-assist/enabled').then((response) => {
         console.log('RESPONSE', response);
         setScriptAssistEnabled(response.data.enabled);
       });

@@ -51,6 +51,7 @@ import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 import useScriptAssistEnabled from '../atesting/useScriptAssistEnabled';
+import useProcessScriptAssistMessage from '../atesting/useProcessScriptAssistQuery';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -90,8 +91,10 @@ export default function ProcessModelEditDiagram() {
 
   const failingScriptLineClassNamePrefix = 'failingScriptLineError';
 
+  const [scriptAssistValue, setScriptAssistValue] = useState('');
   const { scriptAssistEnabled } = useScriptAssistEnabled();
-  const [spiffScriptQuery, setSpiffScriptQuery] = useState('');
+  const { setScriptAssistQuery, scriptAssistResult } =
+    useProcessScriptAssistMessage();
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -823,6 +826,10 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
 
+  const handleProcessScriptAssist = async (query: string) => {
+    setScriptAssistQuery(query);
+  };
+
   const scriptEditor = () => {
     return (
       showScriptEditor && (
@@ -834,6 +841,7 @@ export default function ProcessModelEditDiagram() {
               options={generalEditorOptions()}
               defaultLanguage="python"
               defaultValue={scriptText}
+              value={scriptAssistResult}
               onChange={handleEditorScriptChange}
               onMount={handleEditorDidMount}
             />
@@ -843,8 +851,8 @@ export default function ProcessModelEditDiagram() {
               <TextArea
                 placeholder="Ask Spiff AI"
                 rows={21}
-                value={spiffScriptQuery}
-                onChange={(e: any) => console.log(e.target.value)}
+                value={scriptAssistValue}
+                onChange={(e: any) => setScriptAssistValue(e.target.value)}
               />
               <div
                 style={{
@@ -855,7 +863,9 @@ export default function ProcessModelEditDiagram() {
                 <Button
                   style={{ marginTop: '10px' }}
                   kind="secondary"
-                  onClick={() => console.log('Clicked me!')}
+                  onClick={(e: any) =>
+                    handleProcessScriptAssist(e.target.value)
+                  }
                 >
                   Ask Spiff AI
                 </Button>
