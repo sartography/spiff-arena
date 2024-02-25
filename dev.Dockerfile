@@ -14,5 +14,3 @@ RUN pip install poetry==1.6.1
 
 COPY pyproject.toml poetry.lock .
 RUN poetry install --no-root
-
-CMD ["/bin/true"]
