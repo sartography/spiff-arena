@@ -3,7 +3,7 @@ info:
   version: 1.0.0
   title: spiffworkflow-backend
   license:
-    name: MIT
+    name: LGPL
 servers:
   - url: http://localhost:5000/v1.0
 # this is handled in flask now
@@ -305,7 +305,7 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The number of groups to show per page. Defaults to page 10.
+        description: The number of groups to show per page. Defaults to 10.
         schema:
           type: integer
     get:
@@ -449,7 +449,7 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The number of models to show per page. Defaults to page 10.
+        description: The number of models to show per page. Defaults to 10.
         schema:
           type: integer
     get:
@@ -714,8 +714,7 @@ paths:
           minItems: 1
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_caller_list
-      summary:
-        Return a list of information about all processes that call the provided process id
+      summary: Return a list of information about all processes that call the provided process id
       tags:
         - Process Models
       responses:
@@ -727,7 +726,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Process"
-
 
   /processes:
     get:
@@ -749,13 +747,32 @@ paths:
 
   /github-webhook-receive:
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.github_webhook_receive
+      operationId: spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive
       summary: receives push webhooks from github so we can keep our process model repo up to date
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ProcessGroup"
+      tags:
+        - git
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /webhook:
+    post:
+      operationId: spiffworkflow_backend.routes.webhooks_controller.webhook
+      summary: receives webhooks from external systems and runs a process model using the data received from the caller so arbitrary handling can be achieved.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OkTrue"
       tags:
         - git
       responses:
@@ -2222,15 +2239,14 @@ paths:
         content:
           application/json:
             schema:
-               $ref: "#/components/schemas/Task"
+              $ref: "#/components/schemas/Task"
       responses:
         "200":
           description: Returns the same data structure provided, but after some replacements.
           content:
             application/json:
               schema:
-                 $ref: "#/components/schemas/Task"
-
+                $ref: "#/components/schemas/Task"
 
   /tasks/{process_instance_id}/instruction:
     parameters:
@@ -2463,7 +2479,7 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The number of models to show per page. Defaults to page 10.
+        description: The number of models to show per page. Defaults to 10.
         schema:
           type: integer
     get:
@@ -2523,7 +2539,7 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The number of items to show per page. Defaults to page 10.
+        description: The number of items to show per page. Defaults to 10.
         schema:
           type: integer
       - name: events
@@ -2646,7 +2662,7 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The number of items to show per page. Defaults to page 10.
+        description: The number of items to show per page. Defaults to 10.
         schema:
           type: integer
     post:
@@ -2784,6 +2800,25 @@ paths:
           #  - application/json
 
   /data-stores:
+    parameters:
+      - name: process_group_identifier
+        in: query
+        required: false
+        description: Optional parameter to filter by a single group
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of groups to show per page. Defaults to 10.
+        schema:
+          type: integer
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_list
       summary: Return a list of the data store objects.
@@ -2792,7 +2827,42 @@ paths:
       responses:
         "200":
           description: The list of currently defined data store objects
-  /data-stores/{data_store_type}/{name}:
+    post:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_create
+      summary: Create a new data store instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataStore"
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The newly created data store instance
+    put:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_update
+      summary: Update a data store instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataStore"
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The updated data store instance
+  /data-stores/types:
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_types
+      summary: Return a list of the data store types.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The list of currently defined data store types
+  /data-stores/{data_store_type}/{identifier}/items:
     parameters:
       - name: data_store_type
         in: path
@@ -2800,10 +2870,16 @@ paths:
         description: The type of datastore, such as "typeahead"
         schema:
           type: string
-      - name: name
+      - name: identifier
         in: path
         required: true
-        description: The name of the datastore, such as "cities"
+        description: The identifier of the datastore, such as "cities"
+        schema:
+          type: string
+      - name: location
+        in: query
+        required: false
+        description: The location of the data store
         schema:
           type: string
       - name: page
@@ -2826,17 +2902,37 @@ paths:
       responses:
         "200":
           description: A list of the data stored in the requested data store.
-
+  /data-stores/{data_store_type}/{identifier}:
+    parameters:
+      - name: data_store_type
+        in: path
+        required: true
+        description: The type of datastore, such as "typeahead"
+        schema:
+          type: string
+      - name: identifier
+        in: path
+        required: true
+        description: The identifier of the datastore, such as "cities"
+        schema:
+          type: string
+      - name: process_group_identifier
+        in: query
+        required: true
+        description: The process group
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_show
+      summary: Returns a description of the data store.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The requested data store.
 
 components:
   securitySchemes:
-    jwt:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      x-bearerInfoFunc: spiffworkflow_backend.routes.authentication_controller.verify_token
-      x-scopeValidateFunc: spiffworkflow_backend.routes.authentication_controller.validate_scope
-
     oAuth2AuthCode:
       type: oauth2
       description: authenticate with openid server
@@ -2959,31 +3055,22 @@ components:
     DataStore:
       properties:
         id:
-          type: integer
-          example: 1234
-        key:
           type: string
-          example: MyKey
-        workflow_id:
-          type: integer
-          x-nullable: true
-          example: 12
-        user_id:
+          example: employees
+        name:
           type: string
-          x-nullable: true
-          example: dhf8r
-        task_id:
+          example: Emplyoees DataStore
+        type:
+          type: string
+          example: TypeaheadDataStore
+        description:
           type: string
           x-nullable: true
-          example: MyTask
-        process_model_id:
+          example: This data store contains all the employees
+        parent_group_id:
           type: string
           x-nullable: true
-          example: My Spec Name
-        value:
-          type: string
-          x-nullable: true
-          example: Some Value
+          example: Optional parent group id to specify the location of this data store
     Process:
       properties:
         identifier:

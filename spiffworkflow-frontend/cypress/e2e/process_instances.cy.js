@@ -6,22 +6,37 @@ const filterByDate = (fromDate) => {
   cy.get('#date-picker-start-from').clear();
   cy.get('#date-picker-start-from').type(format(fromDate, DATE_FORMAT));
   cy.contains('Start date to').click();
+
+  // this can sometimes run a couple mintues after the instances are completed
+  // so avoid failing tests for that by setting the time as well
+  cy.get('#time-picker-start-from').clear();
+  cy.get('#time-picker-start-from').type(format(fromDate, 'HH:mm'));
+
   cy.get('#date-picker-end-from').clear();
   cy.get('#date-picker-end-from').type(format(fromDate, DATE_FORMAT));
   cy.contains('End date to').click();
-  cy.getBySel('filter-button').click();
+  cy.get('#time-picker-end-from').clear();
+  cy.get('#time-picker-end-from').type(format(fromDate, 'HH:mm'));
 };
 
 const updateDmnText = (oldText, newText, elementId = 'wonderful_process') => {
   // this will break if there are more elements added to the drd
   cy.get(`g[data-element-id=${elementId}]`).click();
   cy.get('.dmn-icon-decision-table').click();
-  cy.contains(oldText).clear().type(`"${newText}"`);
+
+  // We used to use the line:
+  //    cy.contains(oldText).clear().type(`"${newText}"`);
+  // but it broke when we upgraded dmn-js to v15 so after clearing it could not type in the cell.
+  // Clicking outside the cell seems to allow it to type it in it again so try that.
+  const item = cy.contains(oldText);
+  item.clear();
+  cy.contains('Process Model File:').click();
+  item.type(`"${newText}"`);
 
   // wait for a little bit for the xml to get set before saving
   // FIXME: gray out save button or add spinner while xml is loading
   cy.wait(500);
-  cy.contains('Save').click();
+  cy.getBySel('process-model-file-save-button').click();
 };
 
 const updateBpmnPythonScript = (pythonScript, elementId = 'process_script') => {
@@ -32,7 +47,7 @@ const updateBpmnPythonScript = (pythonScript, elementId = 'process_script') => {
 
   // wait for a little bit for the xml to get set before saving
   cy.wait(500);
-  cy.contains('Save').click();
+  cy.getBySel('process-model-file-save-button').click();
 };
 
 // NOTE: anytime the status dropdown box is clicked on, click off of it
@@ -184,7 +199,6 @@ describe('process-instances', () => {
         cy.get(statusSelect).click();
         cy.get(statusSelect).contains(titleizeString(processStatus)).click();
         clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
-        cy.getBySel('filter-button').click();
 
         // make sure that there is 1 status item selected in the multiselect
         cy.get(`${statusSelect} .cds--tag`).contains('1');

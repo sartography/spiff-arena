@@ -404,6 +404,32 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   padding-left: 5px;
 }
 
+.cds--tile.tile-data-store {
+  padding: 0px;
+  margin: 12px 24px 12px 0px;
+  width: 320px;
+  height: 264px;
+  background: #f4f4f4;
+  order: 1;
+  float: left;
+}
+
+.tile-data-store-content-container {
+  width: 320px;
+  height: 264px;
+  padding: 1rem;
+  position: relative;
+}
+
+.tile-data-store-display-name {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+  order: 0;
+}
+
 .cds--tile.tile-process-group {
   padding: 0px;
   margin: 12px 24px 12px 0px;
@@ -808,7 +834,7 @@ li.cds--accordion__item {
   max-width: 100%;
 }
 
-.process-model-search-combobox li{
+.process-model-search-combobox li {
   max-width: 100%;
 }
 

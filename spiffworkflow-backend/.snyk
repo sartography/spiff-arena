@@ -8,16 +8,11 @@ ignore:
   # this means we cannot satisfy the snyk requiement to upgrade werkzeug to v3.
   # we have a ticket to workaround it:
   #   https://github.com/sartography/spiff-arena/issues/592
-  SNYK-PYTHON-CRYPTOGRAPHY-6050294:
-    - '*':
-        reason: No current resolution
-        expires: 2024-12-15T19:52:08.948Z
-        created: 2023-11-15T19:52:08.954Z
-  SNYK-PYTHON-CRYPTOGRAPHY-6126975:
-    - '*':
-        reason: No current resolution
-        expires: 2024-12-15T19:52:08.948Z
-        created: 2023-12-18T19:52:08.954Z
+  # SNYK-PYTHON-CRYPTOGRAPHY-6050294:
+  #   - '*':
+  #       reason: No current resolution
+  #       expires: 2024-12-15T19:52:08.948Z
+  #       created: 2023-11-15T19:52:08.954Z
 
 patch: {}
 

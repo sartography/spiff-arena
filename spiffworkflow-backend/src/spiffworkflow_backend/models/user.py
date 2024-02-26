@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,6 +15,10 @@ from spiffworkflow_backend.models.group import GroupModel
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
+SPIFF_SYSTEM_USER = "spiff_system_user"
+SPIFF_GENERATED_JWT_KEY_ID = "spiff_backend"
+SPIFF_GENERATED_JWT_ALGORITHM = "HS256"
+SPIFF_GENERATED_JWT_AUDIENCE = "spiffworkflow-backend"
 
 
 class UserNotFoundError(Exception):
@@ -47,6 +53,10 @@ class UserModel(SpiffworkflowBaseDBModel):
     )
     principal = relationship("PrincipalModel", uselist=False, cascade="delete")  # type: ignore
 
+    @classmethod
+    def spiff_generated_jwt_issuer(cls) -> str:
+        return str(current_app.config["SPIFFWORKFLOW_BACKEND_URL"])
+
     def encode_auth_token(self, extra_payload: dict | None = None) -> str:
         """Generate the Auth Token.
 
@@ -62,16 +72,17 @@ class UserModel(SpiffworkflowBaseDBModel):
             "email": self.email,
             "preferred_username": self.username,
             "sub": f"service:{self.service}::service_id:{self.service_id}",
-            "token_type": "internal",
+            "iss": self.__class__.spiff_generated_jwt_issuer(),
+            "iat": math.floor(time.time()),
+            "exp": round(time.time()) + 3600,
+            "aud": SPIFF_GENERATED_JWT_AUDIENCE,
         }
 
         payload = base_payload
         if extra_payload is not None:
             payload = {**base_payload, **extra_payload}
         return jwt.encode(
-            payload,
-            secret_key,
-            algorithm="HS256",
+            payload, secret_key, algorithm=SPIFF_GENERATED_JWT_ALGORITHM, headers={"kid": SPIFF_GENERATED_JWT_KEY_ID}
         )
 
     def as_dict(self) -> dict[str, Any]:

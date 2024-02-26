@@ -137,6 +137,7 @@ export default function MyTasks() {
               {row.processModelDisplayName}
             </Link>
           </td>
+          {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
           <td className="actions-cell">
             <ProcessInstanceRun processModel={processModel} />
           </td>

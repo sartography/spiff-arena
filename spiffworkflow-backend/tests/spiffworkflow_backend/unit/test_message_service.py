@@ -1,10 +1,14 @@
 from flask import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -187,4 +191,101 @@ class TestMessageService(BaseTest):
         for process_instance in process_instance_result:
             assert process_instance.status == "complete"
 
+    def test_can_send_to_correct_start_event_if_there_are_multiple(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        load_test_spec(
+            "test_group/multiple_message_start_events",
+            process_model_source_directory="multiple_message_start_events",
+        )
+        user = self.find_or_create_user()
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+            message_name="travel_start_test_v2"
+        ).first()
+        assert message_triggerable_process_model is not None
 
+        MessageService.start_process_with_message(message_triggerable_process_model, user)
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 1
+        assert message_instances[0].name == "travel_start_test_v2"
+
+    def test_can_send_a_message_with_non_persistent_process_instance(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_sender = load_test_spec(
+            "test_group/simple-message-send",
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name="simple-message-send-receive.bpmn",
+        )
+        load_test_spec(
+            "test_group/simple-message-receive",
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name="message_start_event.bpmn",
+        )
+
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(message_name="message_one").first()
+        assert message_triggerable_process_model is not None
+
+        processor = ProcessInstanceService.create_and_run_process_instance(
+            process_model=process_model_sender,
+            persistence_level="none",
+        )
+        assert processor.process_instance_model.process_model_identifier == "test_group/simple-message-send"
+
+        # ensure we commit the message instances
+        db.session.commit()
+
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 1
+
+        MessageService.correlate_all_message_instances()
+
+        process_instances = ProcessInstanceModel.query.all()
+        assert len(process_instances) == 1
+        assert process_instances[0].status == ProcessInstanceStatus.complete.value
+        assert process_instances[0].process_model_identifier == "test_group/simple-message-receive"
+
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 2
+        mi_statuses = [mi.status for mi in message_instances]
+        assert mi_statuses == ["completed", "completed"]
+
+    def test_can_delete_message_start_events_from_database_if_model_no_longer_references_it(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_without_message_start_event = load_test_spec(
+            "test_group/sample",
+            process_model_source_directory="sample",
+        )
+        old_message_triggerable_process = MessageTriggerableProcessModel(
+            message_name="travel_start_test_v2",
+            process_model_identifier=process_model_without_message_start_event.id,
+            file_name=process_model_without_message_start_event.primary_file_name,
+        )
+        db.session.add(old_message_triggerable_process)
+        db.session.commit()
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+            message_name="travel_start_test_v2"
+        ).first()
+        assert message_triggerable_process_model is not None
+        assert message_triggerable_process_model.process_model_identifier == process_model_without_message_start_event.id
+
+        assert process_model_without_message_start_event.primary_file_name is not None
+        primary_file_contents = SpecFileService.get_data(
+            process_model_without_message_start_event, process_model_without_message_start_event.primary_file_name
+        )
+        SpecFileService.update_file(
+            process_model_without_message_start_event,
+            process_model_without_message_start_event.primary_file_name,
+            primary_file_contents,
+        )
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+            message_name="travel_start_test_v2"
+        ).first()
+        assert message_triggerable_process_model is None

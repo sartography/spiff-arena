@@ -47,7 +47,6 @@ import {
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
-import { usePrompt } from '../hooks/UsePrompt';
 import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 
@@ -138,8 +137,6 @@ export default function ProcessModelEditDiagram() {
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
   const [callers, setCallers] = useState<ProcessReference[]>([]);
-
-  usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
   const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
     const processResults = (result: any) => {
@@ -369,10 +366,25 @@ export default function ProcessModelEditDiagram() {
     };
   };
 
+  const makeDataStoresApiHandler = (event: any) => {
+    return function fireEvent(results: any) {
+      event.eventBus.fire('spiff.data_stores.returned', {
+        options: results,
+      });
+    };
+  };
+
   const onServiceTasksRequested = (event: any) => {
     HttpService.makeCallToBackend({
       path: `/service-tasks`,
       successCallback: makeApiHandler(event),
+    });
+  };
+
+  const onDataStoresRequested = (event: any) => {
+    HttpService.makeCallToBackend({
+      path: `/data-stores`,
+      successCallback: makeDataStoresApiHandler(event),
     });
   };
 
@@ -1054,7 +1066,7 @@ export default function ProcessModelEditDiagram() {
       path = generatePath(
         '/editor/process-models/:process_model_id/files/:file_name',
         {
-          process_model_id: params.process_model_id,
+          process_model_id: params.process_model_id || null,
           file_name: file.name,
         }
       );
@@ -1063,7 +1075,7 @@ export default function ProcessModelEditDiagram() {
       path = generatePath(
         '/editor/process-models/:process_model_id/files?file_type=dmn',
         {
-          process_model_id: params.process_model_id,
+          process_model_id: params.process_model_id || null,
         }
       );
     }
@@ -1110,6 +1122,7 @@ export default function ProcessModelEditDiagram() {
         diagramType="bpmn"
         onLaunchScriptEditor={onLaunchScriptEditor}
         onServiceTasksRequested={onServiceTasksRequested}
+        onDataStoresRequested={onDataStoresRequested}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchBpmnEditor={onLaunchBpmnEditor}
         onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
@@ -1121,6 +1134,7 @@ export default function ProcessModelEditDiagram() {
         onElementsChanged={onElementsChanged}
         callers={callers}
         activeUserElement={<ActiveUsers />}
+        disableSaveButton={!diagramHasChanges}
       />
     );
   };
@@ -1131,12 +1145,42 @@ export default function ProcessModelEditDiagram() {
         <Notification
           title="File Saved: "
           onClose={() => setDisplaySaveFileMessage(false)}
+          hideCloseButton
+          timeout={3000}
         >
           Changes to the file were saved.
         </Notification>
       );
     }
     return null;
+  };
+
+  const unsavedChangesMessage = () => {
+    if (diagramHasChanges) {
+      return (
+        <Notification
+          title="Unsaved changes."
+          type="error"
+          hideCloseButton
+          data-qa="process-model-file-changed"
+        >
+          Please save to avoid losing your work.
+        </Notification>
+      );
+    }
+    return null;
+  };
+
+  const pageModals = () => {
+    return (
+      <>
+        {newFileNameBox()}
+        {scriptEditorAndTests()}
+        {markdownEditor()}
+        {jsonSchemaEditor()}
+        {processModelSelector()}
+      </>
+    );
   };
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
@@ -1159,13 +1203,13 @@ export default function ProcessModelEditDiagram() {
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
+
+        {pageModals()}
+
+        {unsavedChangesMessage()}
         {saveFileMessage()}
+
         {appropriateEditor()}
-        {newFileNameBox()}
-        {scriptEditorAndTests()}
-        {markdownEditor()}
-        {jsonSchemaEditor()}
-        {processModelSelector()}
         <div id="diagram-container" />
       </>
     );

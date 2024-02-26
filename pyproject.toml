@@ -3,23 +3,23 @@ name = "spiffworkflow-arena"
 version = "0.0.0"
 description = "Spiffworkflow Arena"
 authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
-license = "MIT"
+license = "LGPL"
 readme = "README.md"
 homepage = "https://github.com/sartography/spiffworkflow-arena"
 repository = "https://github.com/sartography/spiffworkflow-arena"
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 4 - Beta",
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.11,<3.13"
 
 [tool.poetry.dev-dependencies]
-pre-commit = "^2.20.0"
+pre-commit = "^3.6.2"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
 flake8-bandit = "^2.1.2"
-ruff = "^0.0.270"
+ruff = "^0.2.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"

@@ -1,3 +1,5 @@
+# burnettk created an account at https://app.snyk.io/org/kevin-jfx
+# and added his SNYK_TOKEN secret under the spiff-arena repo.
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
@@ -29,7 +31,7 @@ name: Snyk Security
 on:
   workflow_dispatch: # allow running on demand
   schedule:
-    - cron: "0 14 * * 2"  # Every Tuesday at 1PM UTC (9AM/10AM eastern)
+    - cron: "0 14 * * 2" # Every Tuesday at 1PM UTC (9AM/10AM eastern)
 
 permissions:
   contents: read
@@ -48,11 +50,11 @@ jobs:
       # This is where you will need to introduce the Snyk API token created with your Snyk account
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Snyk CLI to check for security issues
         # Snyk can be used to break the build when it detects security issues.
         # In this case we want to upload the SAST issues to GitHub Code Scanning
-        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+        uses: snyk/actions/setup@1d672a455ab3339ef0a0021e1ec809165ee12fad
         env:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -73,6 +75,10 @@ jobs:
       - name: Snyk Code test
         run: snyk code test --sarif > snyk-code.sarif || true
 
+      # checks library dependencies
+      - name: Snyk test
+        run: snyk test
+
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
         run: snyk monitor --all-projects
@@ -86,7 +92,7 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: spiffworkflow-backend/snyk-code.sarif
   snyk-frontend:
@@ -102,17 +108,17 @@ jobs:
       # This is where you will need to introduce the Snyk API token created with your Snyk account
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Snyk CLI to check for security issues
         # Snyk can be used to break the build when it detects security issues.
         # In this case we want to upload the SAST issues to GitHub Code Scanning
-        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+        uses: snyk/actions/setup@1d672a455ab3339ef0a0021e1ec809165ee12fad
         env:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18.x
       - run: npm install
@@ -139,6 +145,6 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: spiffworkflow-frontend/snyk-code.sarif

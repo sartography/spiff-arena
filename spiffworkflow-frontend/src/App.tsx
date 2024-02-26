@@ -1,4 +1,3 @@
-import { BrowserRouter } from 'react-router-dom';
 import { defineAbility } from '@casl/ability';
 import React from 'react';
 
@@ -10,14 +9,11 @@ export default function App() {
   const ability = defineAbility(() => {});
   return (
     <div className="cds--white">
-      {/* @ts-ignore */}
-      <AbilityContext.Provider value={ability}>
-        <APIErrorProvider>
-          <BrowserRouter>
-            <ContainerForExtensions />
-          </BrowserRouter>
-        </APIErrorProvider>
-      </AbilityContext.Provider>
+      <APIErrorProvider>
+        <AbilityContext.Provider value={ability}>
+          <ContainerForExtensions />
+        </AbilityContext.Provider>
+      </APIErrorProvider>
     </div>
   );
 }

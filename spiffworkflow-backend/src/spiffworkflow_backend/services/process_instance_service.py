@@ -11,13 +11,20 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -35,15 +42,20 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from spiffworkflow_backend.services.workflow_service import WorkflowService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
@@ -450,8 +462,7 @@ class ProcessInstanceService:
             data,
             process_instance.id,
         )
-        dot_dct = cls.create_dot_dict(data)
-        spiff_task.update_data(dot_dct)
+        DeepMerge.merge(spiff_task.data, data)
 
     @staticmethod
     def complete_form_task(
@@ -470,51 +481,12 @@ class ProcessInstanceService:
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-            # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-            processor.do_engine_steps(save=True)
-
-    @staticmethod
-    def create_dot_dict(data: dict) -> dict[str, Any]:
-        dot_dict: dict[str, Any] = {}
-        for key, value in data.items():
-            ProcessInstanceService.set_dot_value(key, value, dot_dict)
-        return dot_dict
-
-    @staticmethod
-    def get_dot_value(path: str, source: dict) -> Any:
-        # Given a path in dot notation, uas as 'fruit.type' tries to find that value in
-        # the source, but looking deep in the dictionary.
-        paths = path.split(".")  # [a,b,c]
-        s = source
-        index = 0
-        for p in paths:
-            index += 1
-            if isinstance(s, dict) and p in s:
-                if index == len(paths):
-                    return s[p]
-                else:
-                    s = s[p]
-        if path in source:
-            return source[path]
-        return None
-
-    @staticmethod
-    def set_dot_value(path: str, value: Any, target: dict) -> dict:
-        # Given a path in dot notation, such as "fruit.type", and a value "apple", will
-        # set the value in the target dictionary, as target["fruit"]["type"]="apple"
-        destination = target
-        paths = path.split(".")  # [a,b,c]
-        index = 0
-        for p in paths:
-            index += 1
-            if p not in destination:
-                if index == len(paths):
-                    destination[p] = value
-                else:
-                    destination[p] = {}
-            destination = destination[p]
-        return target
+        if queue_enabled_for_process_model(processor.process_instance_model):
+            queue_process_instance_if_appropriate(processor.process_instance_model)
+        else:
+            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
+                processor.do_engine_steps(save=True)
 
     @staticmethod
     def spiff_task_to_api_task(
@@ -595,5 +567,68 @@ class ProcessInstanceService:
             assigned_user_group_identifier=assigned_user_group_identifier,
             potential_owner_usernames=potential_owner_usernames,
         )
-
         return task
+
+    @classmethod
+    def create_and_run_process_instance(
+        cls,
+        process_model: ProcessModelInfo,
+        persistence_level: str,
+        data_to_inject: dict | None = None,
+        process_id_to_run: str | None = None,
+        user: UserModel | None = None,
+    ) -> ProcessInstanceProcessor:
+        process_instance = None
+        if persistence_level == "none":
+            user_id = user.id if user is not None else None
+            process_instance = ProcessInstanceModel(
+                status=ProcessInstanceStatus.not_started.value,
+                process_initiator_id=user_id,
+                process_model_identifier=process_model.id,
+                process_model_display_name=process_model.display_name,
+                persistence_level=persistence_level,
+            )
+        else:
+            if user is None:
+                raise Exception("User must be provided to create a persistent process instance")
+            process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+                process_model.id, user
+            )
+
+        processor = None
+        try:
+            # this is only creates new process instances so no need to worry about process instance migrations
+            processor = ProcessInstanceProcessor(
+                process_instance,
+                script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
+                process_id_to_run=process_id_to_run,
+            )
+            save_to_db = process_instance.persistence_level != "none"
+            if data_to_inject is not None:
+                processor.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
+                next_task = processor.next_task()
+                DeepMerge.merge(next_task.data, data_to_inject)
+            processor.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
+        except (
+            ApiError,
+            ProcessInstanceIsNotEnqueuedError,
+            ProcessInstanceIsAlreadyLockedError,
+            WorkflowExecutionServiceError,
+        ) as e:
+            ErrorHandlingService.handle_error(process_instance, e)
+            raise e
+        except Exception as e:
+            ErrorHandlingService.handle_error(process_instance, e)
+            # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
+            # we need to recurse through all last tasks if the last task is a call activity or subprocess.
+            if processor is not None:
+                task = processor.bpmn_process_instance.last_task
+                if task is not None:
+                    raise ApiError.from_task(
+                        error_code="unknown_exception",
+                        message=f"An unknown error occurred. Original error: {e}",
+                        status_code=400,
+                        task=task,
+                    ) from e
+            raise e
+        return processor

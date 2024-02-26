@@ -135,7 +135,6 @@ export function ErrorDisplayStateless(
 ) {
   const title = 'Error:';
   const hideCloseButton = !onClose;
-  console.log('hideCloseButton', hideCloseButton);
 
   return (
     <Notification

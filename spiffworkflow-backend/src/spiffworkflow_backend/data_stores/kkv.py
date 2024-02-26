@@ -1,90 +1,168 @@
 from typing import Any
 
-from SpiffWorkflow.bpmn.serializer.helpers.registry import BpmnConverter  # type: ignore
+import jsonschema  # type: ignore
+from SpiffWorkflow.bpmn.serializer.helpers import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
+from spiffworkflow_backend.data_stores.crud import DataStoreReadError
+from spiffworkflow_backend.data_stores.crud import DataStoreWriteError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
 
 
 class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     """KKVDataStore."""
 
     @staticmethod
-    def existing_data_stores() -> list[dict[str, Any]]:
+    def create_instance(identifier: str, location: str) -> Any:
+        return KKVDataStoreModel(
+            identifier=identifier,
+            location=location,
+        )
+
+    @staticmethod
+    def existing_instance(identifier: str, location: str) -> Any:
+        return db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+
+    @staticmethod
+    def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
         data_stores = []
 
-        keys = (
-            db.session.query(KKVDataStoreModel.top_level_key)
-            .distinct()  # type: ignore
-            .order_by(KKVDataStoreModel.top_level_key)
-            .all()
-        )
-        for key in keys:
-            data_stores.append({"name": key[0], "type": "kkv"})
+        query = db.session.query(KKVDataStoreModel)
+        if process_group_identifier is not None:
+            query = query.filter_by(location=process_group_identifier)
+        models = query.order_by(KKVDataStoreModel.name).all()
+        for model in models:
+            data_stores.append(
+                {"name": model.name, "type": "kkv", "id": model.identifier, "clz": "KKVDataStore", "location": model.location}
+            )
 
         return data_stores
 
     @staticmethod
-    def query_data_store(name: str) -> Any:
-        return KKVDataStoreModel.query.filter_by(top_level_key=name).order_by(
-            KKVDataStoreModel.top_level_key, KKVDataStoreModel.secondary_key
-        )
+    def get_data_store_query(identifier: str, process_group_identifier: str | None) -> Any:
+        query = KKVDataStoreModel.query
+        if process_group_identifier is not None:
+            query = query.filter_by(identifier=identifier, location=process_group_identifier)
+        else:
+            query = query.filter_by(name=identifier)
+        return query.order_by(KKVDataStoreModel.name)
 
     @staticmethod
     def build_response_item(model: Any) -> dict[str, Any]:
+        data = []
+
+        for entry in model.entries:
+            data.append(
+                {
+                    "top_level_key": entry.top_level_key,
+                    "secondary_key": entry.secondary_key,
+                    "value": entry.value,
+                }
+            )
+
         return {
-            "secondary_key": model.secondary_key,
-            "value": model.value,
+            "data": data,
         }
-
-    def _get_model(self, top_level_key: str, secondary_key: str) -> KKVDataStoreModel | None:
-        model = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key, secondary_key=secondary_key).first()
-        return model
-
-    def _delete_all_for_top_level_key(self, top_level_key: str) -> None:
-        models = db.session.query(KKVDataStoreModel).filter_by(top_level_key=top_level_key).all()
-        for model in models:
-            db.session.delete(model)
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
 
-        def getter(top_level_key: str, secondary_key: str) -> Any | None:
-            model = self._get_model(top_level_key, secondary_key)
-            if model is not None:
-                return model.value
-            return None
+        def getter(top_level_key: str, secondary_key: str | None) -> Any | None:
+            location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
+            store_model: KKVDataStoreModel | None = None
+
+            if location is not None:
+                store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
+
+            if store_model is None:
+                raise DataStoreReadError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
+
+            if secondary_key is not None:
+                model = (
+                    db.session.query(KKVDataStoreEntryModel)
+                    .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
+                    .first()
+                )
+
+                if model is not None:
+                    return model.value
+                return None
+
+            models = (
+                db.session.query(KKVDataStoreEntryModel)
+                .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key)
+                .all()
+            )
+
+            values = {model.secondary_key: model.value for model in models}
+
+            return values
 
         my_task.data[self.bpmn_id] = getter
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
+        location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
+        store_model: KKVDataStoreModel | None = None
+
+        if location is not None:
+            store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=self.bpmn_id, location=location).first()
+
+        if store_model is None:
+            raise DataStoreWriteError(f"Unable to locate kkv data store '{self.bpmn_id}'.")
+
         data = my_task.data[self.bpmn_id]
+
         if not isinstance(data, dict):
-            raise Exception(
+            raise DataStoreWriteError(
                 f"When writing to this data store, a dictionary is expected as the value for variable '{self.bpmn_id}'"
             )
         for top_level_key, second_level in data.items():
             if second_level is None:
-                self._delete_all_for_top_level_key(top_level_key)
+                models = (
+                    db.session.query(KKVDataStoreEntryModel)
+                    .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key)
+                    .all()
+                )
+                for model_to_delete in models:
+                    db.session.delete(model_to_delete)
                 continue
             if not isinstance(second_level, dict):
-                raise Exception(
+                raise DataStoreWriteError(
                     "When writing to this data store, a dictionary is expected as the value for"
                     f" '{self.bpmn_id}[\"{top_level_key}\"]'"
                 )
             for secondary_key, value in second_level.items():
-                model = self._get_model(top_level_key, secondary_key)
+                model = (
+                    db.session.query(KKVDataStoreEntryModel)
+                    .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key, secondary_key=secondary_key)
+                    .first()
+                )
+
                 if model is None and value is None:
                     continue
                 if value is None:
                     db.session.delete(model)
                     continue
+
+                try:
+                    jsonschema.validate(instance=value, schema=store_model.schema)
+                except jsonschema.exceptions.ValidationError as e:
+                    raise DataStoreWriteError(
+                        f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
+                    ) from e
+
                 if model is None:
-                    model = KKVDataStoreModel(top_level_key=top_level_key, secondary_key=secondary_key, value=value)
+                    model = KKVDataStoreEntryModel(
+                        kkv_data_store_id=store_model.id,
+                        top_level_key=top_level_key,
+                        secondary_key=secondary_key,
+                        value=value,
+                    )
                 else:
                     model.value = value
                 db.session.add(model)

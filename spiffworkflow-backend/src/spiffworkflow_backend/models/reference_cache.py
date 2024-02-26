@@ -61,7 +61,6 @@ class Reference:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
 
-# SpecReferenceCache
 class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 

@@ -925,9 +925,15 @@ def _task_submit_shared(
                 human_task=human_task,
             )
 
+    # currently task_model has the potential to be None. This should be removable once
+    # we backfill the human_task table for task_guid and make that column not nullable
+    task_model: TaskModel | None = human_task.task_model
+    if task_model is None:
+        task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
+
     # delete draft data when we submit a task to ensure cycling back to the task contains the
     # most up-to-date data
-    task_draft_data = TaskService.task_draft_data_from_task_model(human_task.task_model)
+    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
     if task_draft_data is not None:
         db.session.delete(task_draft_data)
         db.session.commit()
@@ -1024,7 +1030,7 @@ def _get_tasks(
     process_model_identifier_column = ProcessInstanceModel.process_model_identifier
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
     user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
-    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")
+    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")  # type: ignore
     if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
         process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label(
             "process_model_identifier"

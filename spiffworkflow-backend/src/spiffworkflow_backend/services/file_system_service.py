@@ -3,9 +3,9 @@ import os
 from collections.abc import Callable
 from collections.abc import Generator
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 
-import pytz
 from flask import current_app
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -65,6 +65,10 @@ class FileSystemService:
     @classmethod
     def is_process_model_json_file(cls, file: str) -> bool:
         return file.endswith(cls.PROCESS_MODEL_JSON_FILE)
+
+    @classmethod
+    def is_process_group_json_file(cls, file: str) -> bool:
+        return file.endswith(cls.PROCESS_GROUP_JSON_FILE)
 
     @classmethod
     def is_data_store_json_file(cls, file: str) -> bool:
@@ -227,9 +231,7 @@ class FileSystemService:
     def _last_modified(file_path: str) -> datetime:
         # Returns the last modified date of the given file.
         timestamp = os.path.getmtime(file_path)
-        utc_dt = datetime.utcfromtimestamp(timestamp)
-        aware_utc_dt = utc_dt.replace(tzinfo=pytz.utc)
-        return aware_utc_dt
+        return datetime.fromtimestamp(timestamp, timezone.utc)
 
     @staticmethod
     def file_type(file_name: str) -> FileType:

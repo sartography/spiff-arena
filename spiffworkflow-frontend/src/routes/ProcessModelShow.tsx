@@ -40,13 +40,13 @@ import {
 } from '../helpers';
 import { PermissionsToCheck, ProcessFile, ProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import MarkdownDisplayForFile from '../components/MarkdownDisplayForFile';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -108,7 +108,7 @@ export default function ProcessModelShow() {
       setSelectedTabIndex(newTabIndex);
     };
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}`,
+      path: `/process-models/${modifiedProcessModelId}?include_file_references=true`,
       successCallback: processResult,
     });
   }, [reloadModel, modifiedProcessModelId]);
@@ -556,8 +556,6 @@ export default function ProcessModelShow() {
             navigate(
               `/process-models/${modifiedProcessModelId}/form?file_ext=md`
             );
-          } else {
-            console.log('a.selectedItem.text', a.selectedItem.text);
           }
         }}
         items={items}
@@ -680,9 +678,6 @@ export default function ProcessModelShow() {
                 ability={ability}
               >
                 <ProcessInstanceListTable
-                  filtersEnabled={false}
-                  showLinkToReport
-                  variant="for-me"
                   additionalReportFilters={[
                     {
                       field_name: 'process_model_identifier',
@@ -690,7 +685,8 @@ export default function ProcessModelShow() {
                     },
                   ]}
                   perPageOptions={[2, 5, 25]}
-                  showReports={false}
+                  showLinkToReport
+                  variant="for-me"
                 />
               </Can>
             )}
@@ -797,7 +793,9 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         <p className="process-description">{processModel.description}</p>
-        {processModel.primary_file_name ? processStartButton : null}
+        {processModel.primary_file_name && processModel.is_executable
+          ? processStartButton
+          : null}
         <div className="with-top-margin">{tabArea()}</div>
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />

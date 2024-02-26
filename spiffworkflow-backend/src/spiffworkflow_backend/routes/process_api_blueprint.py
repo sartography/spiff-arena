@@ -1,4 +1,3 @@
-import json
 from typing import Any
 from uuid import UUID
 
@@ -8,7 +7,6 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
-from flask import request
 from flask.wrappers import Response
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -209,18 +207,6 @@ def process_data_file_download(
     )
 
 
-# sample body:
-# {"ref": "refs/heads/main", "repository": {"name": "sample-process-models",
-# "full_name": "sartography/sample-process-models", "private": False .... }}
-# test with: ngrok http 7000
-# where 7000 is the port the app is running on locally
-def github_webhook_receive(body: dict) -> Response:
-    auth_header = request.headers.get("X-Hub-Signature-256")
-    AuthenticationService.verify_sha256_token(auth_header)
-    result = GitService.handle_web_hook(body)
-    return Response(json.dumps({"git_pull": result}), status=200, mimetype="application/json")
-
-
 def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
     return_value = None
     if parameter in post_body:
@@ -355,3 +341,19 @@ def _find_process_instance_for_me_or_raise(
             process_instance.actions = {"read": {"path": target_uri, "method": "GET"}}
 
     return process_instance
+
+
+def _get_process_model_for_instantiation(
+    process_model_identifier: str,
+) -> ProcessModelInfo:
+    process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_missing_primary_bpmn_file",
+            message=(
+                f"Process Model '{process_model_identifier}' does not have a primary"
+                " bpmn file. One must be set in order to instantiate this model."
+            ),
+            status_code=400,
+        )
+    return process_model

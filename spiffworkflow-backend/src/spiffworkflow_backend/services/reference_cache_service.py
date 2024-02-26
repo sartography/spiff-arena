@@ -1,10 +1,9 @@
-import os
-
 from sqlalchemy import insert
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
 class ReferenceCacheService:
@@ -37,7 +36,7 @@ class ReferenceCacheService:
         cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
         if cache_generation is None:
             return None
-        locations = cls.upsearch_locations(location)
+        locations = UpsearchService.upsearch_locations(location)
         references = (
             ReferenceCacheModel.query.filter_by(
                 identifier=identifier,

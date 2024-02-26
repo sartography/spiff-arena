@@ -449,6 +449,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-groups", "read"),
                 ("/process-instances/find-by-id/*", "read"),
                 ("/process-instances/for-me", "create"),
+                ("/process-instances/for-me/*", "read"),
                 ("/process-instances/report-metadata", "read"),
                 ("/process-instances/reports/*", "create"),
                 ("/process-instances/reports/*", "delete"),

@@ -81,7 +81,7 @@ export default function SecretList() {
             </Link>
           </td>
           <td>{(row as any).username}</td>
-          <td>
+          <td aria-label="Delete">
             <MdDelete onClick={() => handleDeleteSecret((row as any).key)} />
           </td>
         </tr>

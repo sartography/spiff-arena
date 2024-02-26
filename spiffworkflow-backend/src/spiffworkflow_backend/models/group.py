@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import relationship
@@ -21,13 +22,14 @@ class GroupNotFoundError(Exception):
     pass
 
 
+@dataclass
 class GroupModel(SpiffworkflowBaseDBModel):
     __tablename__ = "group"
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), index=True)
-    identifier = db.Column(db.String(255), index=True)
+    name: str = db.Column(db.String(255), index=True)
+    identifier: str = db.Column(db.String(255), index=True)
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")
     user_group_assignments_waiting = relationship("UserGroupAssignmentWaitingModel", cascade="delete")  # type: ignore

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrashCan, Edit } from '@carbon/icons-react';
 import { Button, Stack } from '@carbon/react';
@@ -6,12 +7,14 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import {
   modifyProcessIdentifierForPathParam,
+  setPageTitle,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
-import { PermissionsToCheck } from '../interfaces';
+import { PermissionsToCheck, ProcessGroup } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+import DataStoreListTiles from '../components/DataStoreListTiles';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessModelListTiles from '../components/ProcessModelListTiles';
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
@@ -19,9 +22,12 @@ import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 export default function ProcessGroupShow() {
   const params = useParams();
   const navigate = useNavigate();
+  const [processGroupForBreadcrumb, setProcessGroupForBreadcrumb] =
+    useState<ProcessGroup | null>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['POST'],
     [targetUris.processGroupListPath]: ['POST'],
     [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelCreatePath]: ['POST'],
@@ -33,6 +39,17 @@ export default function ProcessGroupShow() {
     `${params.process_group_id}`
   );
   const { processGroup } = useProcessGroupFetcher(unModifiedProcessGroupId);
+
+  useEffect(() => {
+    const processResult = (result: ProcessGroup) => {
+      setProcessGroupForBreadcrumb(result);
+      setPageTitle([result.display_name]);
+    };
+    HttpService.makeCallToBackend({
+      path: `/process-groups/${params.process_group_id}`,
+      successCallback: processResult,
+    });
+  }, [params.process_group_id, setProcessGroupForBreadcrumb]);
 
   const navigateToProcessGroups = (_result: any) => {
     navigate(`/process-groups`);
@@ -50,7 +67,7 @@ export default function ProcessGroupShow() {
     }
   };
 
-  if (processGroup && permissionsLoaded) {
+  if (processGroup && processGroupForBreadcrumb && permissionsLoaded) {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
@@ -63,7 +80,7 @@ export default function ProcessGroupShow() {
           hotCrumbs={[
             ['Process Groups', '/process-groups'],
             {
-              entityToExplode: processGroup,
+              entityToExplode: processGroupForBreadcrumb,
               entityType: 'process-group',
             },
           ]}
@@ -116,6 +133,13 @@ export default function ProcessGroupShow() {
                 Add a process model
               </Button>
             </Can>
+            <Can I="POST" a={targetUris.dataStoreListPath} ability={ability}>
+              <Button
+                href={`/data-stores/new?parentGroupId=${processGroup.id}`}
+              >
+                Add a data store
+              </Button>
+            </Can>
           </Stack>
           <br />
           <br />
@@ -137,6 +161,17 @@ export default function ProcessGroupShow() {
             userCanCreateProcessModels={ability.can(
               'POST',
               targetUris.processGroupListPath
+            )}
+          />
+          <br />
+          <br />
+          <DataStoreListTiles
+            processGroup={processGroup}
+            headerElement={<h2 className="clear-left">Data Stores</h2>}
+            showNoItemsDisplayText={showNoItemsDisplayText}
+            userCanCreateDataStores={ability.can(
+              'POST',
+              targetUris.dataStoreListPath
             )}
           />
         </ul>

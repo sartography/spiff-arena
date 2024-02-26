@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -19,7 +19,6 @@ if [[ -d "$process_model_dir" ]]; then
   shift
 fi
 
-
 if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   if [[ -n "${process_model_dir}" ]] && [[ -d "${process_model_dir}" ]]; then
     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$process_model_dir"
@@ -33,8 +32,8 @@ if [[ "$process_model_dir" == "acceptance" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
 elif [[ "$process_model_dir" == "localopenid" ]]; then
-  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="openid"
-  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="default"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="internal openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="http://localhost:$port/openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"

@@ -148,9 +148,6 @@ export interface ProcessReference {
 }
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
-export type ObjectWithStringKeysAndFunctionValues = {
-  [key: string]: Function;
-};
 
 export interface FilterOperator {
   id: string;
@@ -311,6 +308,7 @@ export interface ProcessModel {
   fault_or_suspend_on_exception?: string;
   exception_notification_addresses?: string[];
   bpmn_version_control_identifier?: string;
+  is_executable?: boolean;
   actions?: ApiActions;
 }
 
@@ -391,23 +389,6 @@ export interface PermissionCheckResponseBody {
   results: PermissionCheckResult;
 }
 
-export interface FormField {
-  id: string;
-  title: string;
-  required?: boolean;
-  type: string;
-  enum?: string[];
-  default?: any;
-  pattern?: string;
-}
-
-export interface JsonSchemaForm {
-  file_contents: string;
-  name: string;
-  process_model_id: string;
-  required: string[];
-}
-
 export interface ProcessInstanceEventErrorDetail {
   id: number;
   message: string;
@@ -485,6 +466,16 @@ export interface DataStoreRecords {
 export interface DataStore {
   name: string;
   type: string;
+  id: string;
+  schema: string;
+  description?: string | null;
+  location?: string | null;
+}
+
+export interface DataStoreType {
+  type: string;
+  name: string;
+  description: string;
 }
 
 export interface JsonSchemaExample {
@@ -518,4 +509,15 @@ export interface KeyboardShortcut {
 
 export interface KeyboardShortcuts {
   [key: string]: KeyboardShortcut;
+}
+
+export interface SpiffTab {
+  path: string;
+  display_name: string;
+  tooltip?: string;
+}
+
+export interface SpiffTableHeader {
+  tooltip_text: string;
+  text: string;
 }
