@@ -60,13 +60,8 @@ export default function CharacterCounterField({
 
   const text = formData || '';
 
-  // the text input eventually breaks when the number gets too big.
-  // we are not sure what the cut off really is but seems unlikely
-  // people will need to go this high.
-
   const onChangeLocal = (event: any) => {
     event.preventDefault();
-    const existingFormData = formData || {};
     if (!disabled && !readonly) {
       onChange(event.target.value);
     }
