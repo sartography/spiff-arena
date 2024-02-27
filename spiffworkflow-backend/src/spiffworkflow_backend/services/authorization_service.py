@@ -79,8 +79,8 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
 ]
 
 AUTHENTICATION_EXCLUSION_LIST = {
-    "authentication_begin": "spiffworkflow_backend.routes.authentication_controller",
-    "authentication_callback": "spiffworkflow_backend.routes.authentication_controller",
+    "authentication_begin": "spiffworkflow_backend.routes.service_tasks_controller",
+    "authentication_callback": "spiffworkflow_backend.routes.service_tasks_controller",
     "authentication_options": "spiffworkflow_backend.routes.authentication_controller",
     "github_webhook_receive": "spiffworkflow_backend.routes.webhooks_controller",
     "login": "spiffworkflow_backend.routes.authentication_controller",
