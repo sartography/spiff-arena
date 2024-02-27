@@ -41,6 +41,9 @@ stop-dev:
 be-clear-log-file:
 	$(IN_BACKEND) rm -f log/unit_testing.log
 
+be-logs:
+	docker logs -f $(BACKEND_CONTAINER)
+
 be-mypy:
 	$(IN_BACKEND) poetry run mypy src tests
 
@@ -62,6 +65,9 @@ be-tests-par: be-clear-log-file
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix
 
+fe-logs:
+	docker logs -f $(FRONTEND_CONTAINER)
+
 fe-npm-i:
 	$(IN_FRONTEND) npm i
 
@@ -82,7 +88,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-recreate-db be-ruff be-sh be-tests be-tests-par \
-	fe-lint-fix fe-npm-i fe-sh \
+	be-clear-log-file be-logs be-recreate-db be-ruff be-sh be-tests be-tests-par \
+	fe-lint-fix fe-logs fe-npm-i fe-sh \
 	pre-commit run-pyl \
 	take-ownership

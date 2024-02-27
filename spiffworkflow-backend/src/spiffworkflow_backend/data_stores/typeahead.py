@@ -17,7 +17,7 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
     def existing_data_stores(process_group_identifiers: list[str] | None = None) -> list[dict[str, Any]]:
         data_stores: list[dict[str, Any]] = []
 
-        if process_group_identifier is not None:
+        if process_group_identifiers:
             # temporary until this data store gets location support
             return data_stores
 
