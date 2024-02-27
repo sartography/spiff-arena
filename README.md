@@ -69,7 +69,9 @@ The `docker-compose.yml` file is for running a full-fledged instance of spiff-ar
 
 ### Using Docker for Local Development
 
-If you have `docker` and `docker compose`, as an alternative to locally installing the required dependencies, you can leverage the development docker containers and `Makefile` while working locally. To use, clone the repo and run `make`. This will build the required images, install all dependencies, start the servers and run the linting and tests. Once complete you can [open the app](http://localhost:8001) and code changes will be reflected while running.  
+If you have `docker` and `docker compose`, as an alternative to locally installing the required dependencies, you can leverage the development docker containers and `Makefile` while working locally. To use, clone the repo and run `make`. This will build the required images, install all dependencies, start the servers and run the linting and tests. Once complete you can [open the app](http://localhost:8001) and code changes will be reflected while running. 
+
+After the containers are set up, you can run `make start-dev` and `make stop-dev` to start and stop the servers. If the frontend or backend lock file changes, `make dev-env` will recreate the containers with the new dependencies.
 
 Please refer to the [Makefile](Makefile) as the source of truth, but for a summary of the available `make` targets.
 
