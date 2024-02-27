@@ -175,9 +175,7 @@ def setup_config(app: Flask) -> None:
     except OSError:
         pass
 
-    # TODO: There is probably a way to push these values into the config files (default.py?)
     app.config["SCRIPT_ASSIST_ENABLED"] = True
-    app.config["SPIFFWORKFLOW_BACKEND_OPENAI_API_KEY"] = "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"
 
     app.config["ENV_IDENTIFIER"] = os.environ.get("SPIFFWORKFLOW_BACKEND_ENV", "local_development")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

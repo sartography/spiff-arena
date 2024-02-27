@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import HttpService from '../services/HttpService';
 
+/** Basic fetcher for the env value from the backend */
 const useScriptAssistEnabled = () => {
   const [scriptAssistEnabled, setScriptAssistEnabled] = useState(null);
 

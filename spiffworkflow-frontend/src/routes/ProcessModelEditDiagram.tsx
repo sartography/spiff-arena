@@ -50,8 +50,8 @@ import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
-import useScriptAssistEnabled from '../atesting/useScriptAssistEnabled';
-import useProcessScriptAssistMessage from '../atesting/useProcessScriptAssistQuery';
+import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
+import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -826,15 +826,6 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
 
-  /**
-   * When user clicks script assist button, set useScriptAssistQuery hook with query.
-   * This will async update scriptAssistResult as needed.
-   */
-  const handleProcessScriptAssist = () => {
-    console.log(scriptAssistValue);
-    setScriptAssistQuery(scriptAssistValue);
-  };
-
   /* Main python script editor user works in */
   const editorWindow = () => {
     return (
@@ -851,13 +842,21 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  /* If enabled, will appear to right of editorWindow */
+  /**
+   * When user clicks script assist button, set useScriptAssistQuery hook with query.
+   * This will async update scriptAssistResult as needed.
+   */
+  const handleProcessScriptAssist = () => {
+    setScriptAssistQuery(scriptAssistValue);
+  };
+
+  /* If the Script Assist tab is enabled (via scriptAssistEnabled), this is the UI */
   const scriptAssistWindow = () => {
     return (
       <>
         <TextArea
           placeholder="Ask Spiff AI"
-          rows={21}
+          rows={20}
           value={scriptAssistValue}
           onChange={(e: any) => setScriptAssistValue(e.target.value)}
         />
@@ -879,27 +878,35 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  /* Depending on scriptAssist being enabled, adjust layout */
   const scriptEditor = () => {
     return (
-      showScriptEditor && (
-        <Grid fullwidth>
-          {scriptAssistEnabled ? (
-            <>
-              <Column lg={10} md={4} sm={2}>
-                {editorWindow()}
-              </Column>
-              <Column lg={6} md={4} sm={2}>
-                {scriptAssistWindow()}
-              </Column>
-            </>
-          ) : (
-            <Column lg={16} md={8} sm={4}>
-              {editorWindow()}
-            </Column>
-          )}
-        </Grid>
-      )
+      <Grid fullwidth>
+        <Column lg={16} md={8} sm={4}>
+          {editorWindow()}
+        </Column>
+      </Grid>
+    );
+  };
+
+  const scriptEditorWithAssist = () => {
+    return (
+      <Grid fullwidth>
+        <Column lg={10} md={4} sm={2}>
+          {editorWindow()}
+        </Column>
+        <Column lg={6} md={4} sm={2}>
+          <div
+            style={{
+              color: 'darkgrey',
+              fontStyle: 'italic',
+              paddingBottom: '5px',
+            }}
+          >
+            Create a python script that...
+          </div>
+          {scriptAssistWindow()}
+        </Column>
+      </Grid>
     );
   };
 
@@ -923,10 +930,15 @@ export default function ProcessModelEditDiagram() {
         <Tabs>
           <TabList aria-label="List of tabs" activation="manual">
             <Tab>Script Editor</Tab>
+            <Tab>Script Assist</Tab>
             <Tab>Unit Tests</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>{scriptEditor()}</TabPanel>
+            {scriptAssistEnabled && (
+              <TabPanel>{scriptEditorWithAssist()}</TabPanel>
+            )}
+            <TabPanel>{scriptEditorWithAssist()}</TabPanel>
             <TabPanel>{scriptUnitTestEditorElement()}</TabPanel>
           </TabPanels>
         </Tabs>
