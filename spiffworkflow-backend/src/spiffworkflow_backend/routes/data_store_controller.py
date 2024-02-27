@@ -12,6 +12,7 @@ from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -23,12 +24,16 @@ DATA_STORES = {
 def data_store_list(process_group_identifier: str | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
+    locations_to_upsearch = []
+
+    if process_group_identifier is not None:
+        locations_to_upsearch = UpsearchService.upsearch_locations(process_group_identifier)
 
     # Right now the only data stores we support are type ahead, kkv, json
 
-    data_stores.extend(JSONDataStore.existing_data_stores(process_group_identifier))
-    data_stores.extend(TypeaheadDataStore.existing_data_stores(process_group_identifier))
-    data_stores.extend(KKVDataStore.existing_data_stores(process_group_identifier))
+    data_stores.extend(JSONDataStore.existing_data_stores(locations_to_upsearch))
+    data_stores.extend(TypeaheadDataStore.existing_data_stores(locations_to_upsearch))
+    data_stores.extend(KKVDataStore.existing_data_stores(locations_to_upsearch))
 
     return make_response(jsonify(data_stores), 200)
 
