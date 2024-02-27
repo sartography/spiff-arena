@@ -148,9 +148,6 @@ export interface ProcessReference {
 }
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
-export type ObjectWithStringKeysAndFunctionValues = {
-  [key: string]: Function;
-};
 
 export interface FilterOperator {
   id: string;
@@ -492,6 +489,7 @@ export interface KeyboardShortcuts {
 export interface SpiffTab {
   path: string;
   display_name: string;
+  tooltip?: string;
 }
 
 export interface SpiffTableHeader {

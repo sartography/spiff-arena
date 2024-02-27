@@ -166,6 +166,9 @@ export default function NumericRangeField({
         [nameToChange]: numberValue,
       });
     }
+    console.log('min', min, 'max', max);
+    console.log('formData.min', formData?.min);
+    console.log('formData.max', formData?.max);
   };
 
   return (

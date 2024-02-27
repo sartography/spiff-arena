@@ -446,7 +446,15 @@ export default function ProcessInstanceListTableWithFilters({
     };
 
     checkFiltersAndRun();
-  }, [filtersEnabled, getReportMetadataWithReportHash, permissionsLoaded]);
+  }, [
+    filtersEnabled,
+    getReportMetadataWithReportHash,
+    permissionsLoaded,
+
+    // watch the variant prop so when switching between the "For Me" and "All" pi list tables
+    // the api call to find the new process instances is made and the report metadata is updated.
+    variant,
+  ]);
 
   const removeFieldFromReportMetadata = (
     reportMetadataToUse: ReportMetadata,

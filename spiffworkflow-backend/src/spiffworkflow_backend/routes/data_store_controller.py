@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -122,10 +123,31 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     model.schema = schema
     model.description = description or ""
 
+    _write_specification_to_process_group(data_store_type, model)
+
     db.session.add(model)
     db.session.commit()
 
     return make_response(jsonify({"ok": True}), 200)
+
+
+def _write_specification_to_process_group(data_store_type: str, model: Any) -> None:
+    process_group = ProcessModelService.get_process_group(
+        model.location, find_direct_nested_items=False, find_all_nested_items=False, create_if_not_exists=True
+    )
+
+    if data_store_type not in process_group.data_store_specifications:
+        process_group.data_store_specifications[data_store_type] = {}
+
+    process_group.data_store_specifications[data_store_type][model.identifier] = {
+        "name": model.name,
+        "identifier": model.identifier,
+        "location": model.location,
+        "schema": model.schema,
+        "description": model.description,
+    }
+
+    ProcessModelService.update_process_group(process_group)
 
 
 def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:

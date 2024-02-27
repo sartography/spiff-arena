@@ -36,7 +36,7 @@ const updateDmnText = (oldText, newText, elementId = 'wonderful_process') => {
   // wait for a little bit for the xml to get set before saving
   // FIXME: gray out save button or add spinner while xml is loading
   cy.wait(500);
-  cy.contains('Save').click();
+  cy.getBySel('process-model-file-save-button').click();
 };
 
 const updateBpmnPythonScript = (pythonScript, elementId = 'process_script') => {
@@ -47,7 +47,7 @@ const updateBpmnPythonScript = (pythonScript, elementId = 'process_script') => {
 
   // wait for a little bit for the xml to get set before saving
   cy.wait(500);
-  cy.contains('Save').click();
+  cy.getBySel('process-model-file-save-button').click();
 };
 
 // NOTE: anytime the status dropdown box is clicked on, click off of it

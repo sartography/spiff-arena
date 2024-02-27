@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "display_name",
     "description",
+    "data_store_specifications",
 ]
 
 
@@ -29,6 +30,7 @@ class ProcessGroup:
     description: str | None = None
     process_models: list[ProcessModelInfo] = field(default_factory=list[ProcessModelInfo])
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
+    data_store_specifications: dict[str, Any] = field(default_factory=dict)
     parent_groups: list[ProcessGroupLite] | None = None
 
     # TODO: delete these once they no no longer mentioned in current

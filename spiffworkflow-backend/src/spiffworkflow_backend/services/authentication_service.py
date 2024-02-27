@@ -99,7 +99,7 @@ class AuthenticationService:
 
     @classmethod
     def valid_audiences(cls, authentication_identifier: str) -> list[str]:
-        return [cls.client_id(authentication_identifier)]
+        return [cls.client_id(authentication_identifier), "account"]
 
     @classmethod
     def server_url(cls, authentication_identifier: str) -> str:
@@ -181,12 +181,17 @@ class AuthenticationService:
                 x509_cert = load_der_x509_certificate(decoded_certificate, default_backend())
                 public_key = x509_cert.public_key()
 
+            # tokens generated from the cli have an aud like: [ "realm-management", "account" ]
+            # while tokens generated from frontend have an aud like: "spiffworkflow-backend."
+            # as such, we cannot simply pull the first valid audience out of cls.valid_audiences(authentication_identifier)
+            # and then shove it into decode (it will raise), but we need the algorithm from validate_decoded_token that checks
+            # if the audience in the token matches any of the valid audience values. Therefore do not check aud here.
             return jwt.decode(
                 token,
                 public_key,
                 algorithms=[algorithm],
                 audience=cls.valid_audiences(authentication_identifier)[0],
-                options={"verify_exp": False},
+                options={"verify_exp": False, "verify_aud": False},
             )
 
     @staticmethod

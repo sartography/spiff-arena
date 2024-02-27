@@ -3,6 +3,18 @@ import { RadioButtonGroup, RadioButton } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes } from '../../helpers';
 
+// Example uiSchema:{
+//     "driving": {
+//         "ui:widget": "radio",
+//         "ui:options": {
+//             "inline": true
+//         },
+//         "ui:help": "Click on Yes if you are a good driver!",
+//         "ui:placeholder": "Test Place Holder",
+//         "ui:layout": "column"
+//     }
+// }
+
 function RadioWidget({
   id,
   schema,

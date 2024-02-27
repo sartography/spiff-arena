@@ -1,5 +1,5 @@
 import { Content } from '@carbon/react';
-import { Routes, Route } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -100,42 +100,51 @@ export default function ContainerForExtensions() {
   ]);
 
   const routeComponents = () => {
-    return (
-      <Routes>
-        <Route
-          path="/*"
-          element={<BaseRoutes extensionUxElements={extensionUxElements} />}
-        />
-        <Route path="/editor/*" element={<EditorRoutes />} />
-        <Route path="/extensions/:page_identifier" element={<Extension />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    );
+    return [
+      {
+        path: '*',
+        element: <BaseRoutes extensionUxElements={extensionUxElements} />,
+      },
+      { path: 'editor/*', element: <EditorRoutes /> },
+      { path: 'extensions/:page_identifier', element: <Extension /> },
+      { path: 'login', element: <Login /> },
+    ];
   };
 
   const backendIsDownPage = () => {
-    return <BackendIsDown />;
+    return [<BackendIsDown />];
   };
 
   const innerComponents = () => {
     if (backendIsUp === null) {
-      return null;
+      return [];
     }
     if (backendIsUp) {
-      return routeComponents();
+      return <Outlet />;
     }
     return backendIsDownPage();
   };
 
-  return (
-    <>
-      <NavigationBar extensionUxElements={extensionUxElements} />;
-      <Content className={contentClassName}>
-        <ScrollToTop />
-        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-          {innerComponents()}
-        </ErrorBoundary>
-      </Content>
-    </>
-  );
+  const layout = () => {
+    return (
+      <>
+        <NavigationBar extensionUxElements={extensionUxElements} />
+        <Content className={contentClassName}>
+          <ScrollToTop />
+          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+            {innerComponents()}
+          </ErrorBoundary>
+        </Content>
+      </>
+    );
+  };
+
+  const router = createBrowserRouter([
+    {
+      path: '*',
+      Component: layout,
+      children: routeComponents(),
+    },
+  ]);
+  return <RouterProvider router={router} />;
 }

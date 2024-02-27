@@ -77,6 +77,24 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
+AUTHENTICATION_EXCLUSION_LIST = {
+    "authentication_begin": "spiffworkflow_backend.routes.service_tasks_controller",
+    "authentication_callback": "spiffworkflow_backend.routes.service_tasks_controller",
+    "authentication_options": "spiffworkflow_backend.routes.authentication_controller",
+    "github_webhook_receive": "spiffworkflow_backend.routes.webhooks_controller",
+    "login": "spiffworkflow_backend.routes.authentication_controller",
+    "login_api_return": "spiffworkflow_backend.routes.authentication_controller",
+    "login_return": "spiffworkflow_backend.routes.authentication_controller",
+    "login_with_access_token": "spiffworkflow_backend.routes.authentication_controller",
+    "logout": "spiffworkflow_backend.routes.authentication_controller",
+    "logout_return": "spiffworkflow_backend.routes.authentication_controller",
+    "status": "spiffworkflow_backend.routes.health_controller",
+    "task_allows_guest": "spiffworkflow_backend.routes.tasks_controller",
+    "test_raise_error": "spiffworkflow_backend.routes.debug_controller",
+    "url_info": "spiffworkflow_backend.routes.debug_controller",
+    "webhook": "spiffworkflow_backend.routes.webhooks_controller",
+}
+
 
 class AuthorizationService:
     """Determine whether a user has permission to perform their request."""
@@ -231,18 +249,6 @@ class AuthorizationService:
     @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         swagger_functions = ["get_json_spec"]
-        authentication_exclusion_list = [
-            "authentication_begin",
-            "authentication_callback",
-            "authentication_options",
-            "github_webhook_receive",
-            "prometheus_metrics",
-            "status",
-            "task_allows_guest",
-            "test_raise_error",
-            "url_info",
-            "webhook",
-        ]
         if request.method == "OPTIONS":
             return True
 
@@ -255,15 +261,20 @@ class AuthorizationService:
 
         api_view_function = current_app.view_functions[request.endpoint]
         module = inspect.getmodule(api_view_function)
+        api_function_name = api_view_function.__name__ if api_view_function else None
+        controller_name = module.__name__ if module is not None else None
         if (
-            api_view_function
-            and api_view_function.__name__.startswith("login")
-            or api_view_function.__name__.startswith("logout")
-            or api_view_function.__name__.startswith("console_ui_")
-            or api_view_function.__name__ in authentication_exclusion_list
-            or api_view_function.__name__ in swagger_functions
-            or module == openid_blueprint
-            or module == scaffold  # don't check permissions for static assets
+            api_function_name
+            and (
+                api_function_name in AUTHENTICATION_EXCLUSION_LIST
+                and controller_name
+                and controller_name in AUTHENTICATION_EXCLUSION_LIST[api_function_name]
+            )
+            or (
+                api_function_name in swagger_functions
+                or module == openid_blueprint
+                or module == scaffold  # don't check permissions for static assets
+            )
         ):
             return True
 
