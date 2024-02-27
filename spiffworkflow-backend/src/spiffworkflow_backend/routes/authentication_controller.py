@@ -64,7 +64,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
     if not force_run and AuthorizationService.should_disable_auth_for_request():
         return None
 
-    token_info = _find_token_from_headers(token)
+    token_info = _find_token_from_request(token)
 
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
@@ -306,7 +306,7 @@ def _force_logout_user_if_necessary(user_model: UserModel | None, decoded_token:
     return False
 
 
-def _find_token_from_headers(token: str | None) -> dict[str, str | None]:
+def _find_token_from_request(token: str | None) -> dict[str, str | None]:
     api_key = None
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
