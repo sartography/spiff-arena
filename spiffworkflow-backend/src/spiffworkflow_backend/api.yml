@@ -2785,6 +2785,12 @@ paths:
         description: Optional parameter to filter by a single group
         schema:
           type: string
+      - name: upsearch
+        in: query
+        required: false
+        description: Optional parameter to indicate if an upsearch should be performed
+        schema:
+          type: boolean
       - name: page
         in: query
         required: false

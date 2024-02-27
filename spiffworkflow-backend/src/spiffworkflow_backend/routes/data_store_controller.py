@@ -21,13 +21,18 @@ DATA_STORES = {
 }
 
 
-def data_store_list(process_group_identifier: str | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def data_store_list(
+    process_group_identifier: str | None = None, upsearch: bool = False, page: int = 1, per_page: int = 100
+) -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
     locations_to_upsearch = []
 
     if process_group_identifier is not None:
-        locations_to_upsearch = UpsearchService.upsearch_locations(process_group_identifier)
+        if upsearch:
+            locations_to_upsearch = UpsearchService.upsearch_locations(process_group_identifier)
+        else:
+            locations_to_upsearch.append(process_group_identifier)
 
     # Right now the only data stores we support are type ahead, kkv, json
 
