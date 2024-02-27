@@ -1,0 +1,12 @@
+
+services:
+  spiff-arena:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    #
+    # TODO: would like to figure out the permissions issue that is preventing this
+    #
+    #user: "${RUN_AS}"
+    volumes:
+      - ./:/app
