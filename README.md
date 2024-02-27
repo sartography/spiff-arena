@@ -67,6 +67,10 @@ For full instructions, see [Running SpiffWorkflow Locally with Docker](https://w
 
 The `docker-compose.yml` file is for running a full-fledged instance of spiff-arena while `editor.docker-compose.yml` provides BPMN graphical editor capability to libraries and projects that depend on SpiffWorkflow but have no built-in BPMN edit capabilities.
 
+### Using Docker for Local Development
+
+If you have `docker` and `docker compose`, as an alternative to locally installing the required dependencies, you can leverage the development docker containers and `Makefile` while working locally. To use, clone the repo and run `make`. This will build the required images, install all dependencies, start the servers and run the linting and tests. Once complete you can [open the app](http://localhost:8001) and code changes will be reflected while running.  
+
 ## Contributing
 
 To start understanding the system, you might:
