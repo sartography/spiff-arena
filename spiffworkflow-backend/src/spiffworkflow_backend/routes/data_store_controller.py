@@ -1,8 +1,8 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
 
 import flask.wrappers
+from flask import g
 from flask import jsonify
 from flask import make_response
 
@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DATA_STORES = {
@@ -115,36 +116,39 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     data_store_class, _ = DATA_STORES[data_store_type]
 
     if insert:
-        model = data_store_class.create_instance(identifier, location)
+        data_store_model = data_store_class.create_instance(identifier, location)
     else:
-        model = data_store_class.existing_instance(identifier, location)
+        data_store_model = data_store_class.existing_instance(identifier, location)
 
-    model.name = name
-    model.schema = schema
-    model.description = description or ""
+    data_store_model.name = name
+    data_store_model.schema = schema
+    data_store_model.description = description or ""
 
-    _write_specification_to_process_group(data_store_type, model)
+    _write_specification_to_process_group(data_store_type, data_store_model)
 
-    db.session.add(model)
+    db.session.add(data_store_model)
     db.session.commit()
 
+    _commit_and_push_to_git(f"User: {g.user.username} added data store {data_store_model.identifier}")
     return make_response(jsonify({"ok": True}), 200)
 
 
-def _write_specification_to_process_group(data_store_type: str, model: Any) -> None:
+def _write_specification_to_process_group(
+    data_store_type: str, data_store_model: JSONDataStore | KKVDataStore | TypeaheadDataStore
+) -> None:
     process_group = ProcessModelService.get_process_group(
-        model.location, find_direct_nested_items=False, find_all_nested_items=False, create_if_not_exists=True
+        data_store_model.location, find_direct_nested_items=False, find_all_nested_items=False, create_if_not_exists=True
     )
 
     if data_store_type not in process_group.data_store_specifications:
         process_group.data_store_specifications[data_store_type] = {}
 
-    process_group.data_store_specifications[data_store_type][model.identifier] = {
-        "name": model.name,
-        "identifier": model.identifier,
-        "location": model.location,
-        "schema": model.schema,
-        "description": model.description,
+    process_group.data_store_specifications[data_store_type][data_store_model.identifier] = {
+        "name": data_store_model.name,
+        "identifier": data_store_model.identifier,
+        "location": data_store_model.location,
+        "schema": data_store_model.schema,
+        "description": data_store_model.description,
     }
 
     ProcessModelService.update_process_group(process_group)
