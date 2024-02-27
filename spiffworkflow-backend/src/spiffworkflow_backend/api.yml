@@ -1223,6 +1223,12 @@ paths:
         description: Force the process instance to run even if it has already been started.
         schema:
           type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run
       summary: Run a process instance
@@ -2318,6 +2324,12 @@ paths:
         description: Include task data for forms
         schema:
           type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
     get:
       tags:
         - Tasks

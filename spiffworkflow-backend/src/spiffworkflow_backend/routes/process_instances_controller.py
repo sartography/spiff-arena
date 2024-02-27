@@ -47,7 +47,7 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceExecutionMode, ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -74,9 +74,10 @@ def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
     force_run: bool = False,
+    execution_mode: str = ProcessInstanceExecutionMode.asynchronous.value,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    _process_instance_run(process_instance, force_run=force_run)
+    _process_instance_run(process_instance, force_run=force_run, execution_mode=execution_mode)
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
@@ -644,6 +645,7 @@ def _get_process_instance(
 def _process_instance_run(
     process_instance: ProcessInstanceModel,
     force_run: bool = False,
+    execution_mode: str = ProcessInstanceExecutionMode.asynchronous.value,
 ) -> None:
     if process_instance.status != "not_started" and not force_run:
         raise ApiError(
@@ -654,10 +656,17 @@ def _process_instance_run(
 
     processor = None
     try:
-        if queue_enabled_for_process_model(process_instance):
+        if execution_mode == ProcessInstanceExecutionMode.asynchronous.value and queue_enabled_for_process_model(
+            process_instance
+        ):
             queue_process_instance_if_appropriate(process_instance)
         elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-            processor, _ = ProcessInstanceService.run_process_instance_with_processor(process_instance)
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.asynchronous.value:
+                execution_strategy_name = "greedy"
+            processor, _ = ProcessInstanceService.run_process_instance_with_processor(
+                process_instance, execution_strategy_name=execution_strategy_name
+            )
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,

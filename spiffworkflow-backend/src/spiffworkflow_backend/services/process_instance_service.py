@@ -49,6 +49,7 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceExecutionMode
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
@@ -471,6 +472,7 @@ class ProcessInstanceService:
         data: dict[str, Any],
         user: UserModel,
         human_task: HumanTaskModel,
+        execution_mode: str = "asynchronous",
     ) -> None:
         """All the things that need to happen when we complete a form.
 
@@ -481,12 +483,17 @@ class ProcessInstanceService:
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        if queue_enabled_for_process_model(processor.process_instance_model):
+        if execution_mode == ProcessInstanceExecutionMode.synchronous.value and queue_enabled_for_process_model(
+            processor.process_instance_model
+        ):
             queue_process_instance_if_appropriate(processor.process_instance_model)
         else:
             with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                execution_strategy_name = None
+                if execution_mode == ProcessInstanceExecutionMode.asynchronous.value:
+                    execution_strategy_name = "greedy"
                 # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-                processor.do_engine_steps(save=True)
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(
