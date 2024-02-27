@@ -35,7 +35,7 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
         query = db.session.query(JSONDataStoreModel.name, JSONDataStoreModel.identifier, JSONDataStoreModel.location)
         if process_group_identifiers:
-            query = query.filter(JSONDataStoreModel.location.in_(process_group_identifiers))
+            query = query.filter(JSONDataStoreModel.location.in_(process_group_identifiers))  # type: ignore
         keys = query.order_by(JSONDataStoreModel.name).all()
         for key in keys:
             data_stores.append({"name": key[0], "type": "json", "id": key[1], "clz": "JSONDataStore", "location": key[2]})

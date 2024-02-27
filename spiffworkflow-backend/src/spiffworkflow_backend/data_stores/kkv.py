@@ -33,7 +33,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
         query = db.session.query(KKVDataStoreModel)
         if process_group_identifiers:
-            query = query.filter(KKVDataStoreModel.location.in_(process_group_identifiers))
+            query = query.filter(KKVDataStoreModel.location.in_(process_group_identifiers))  # type: ignore
         models = query.order_by(KKVDataStoreModel.name).all()
         for model in models:
             data_stores.append(
