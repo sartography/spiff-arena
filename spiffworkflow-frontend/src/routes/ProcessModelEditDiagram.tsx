@@ -380,8 +380,10 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onDataStoresRequested = (event: any) => {
+    const processGroupIdentifier =
+      processModel?.parent_groups?.slice(-1).pop()?.id ?? '';
     HttpService.makeCallToBackend({
-      path: `/data-stores`,
+      path: `/data-stores?process_group_identifier=${processGroupIdentifier}`,
       successCallback: makeDataStoresApiHandler(event),
     });
   };
