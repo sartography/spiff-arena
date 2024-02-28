@@ -11,7 +11,7 @@ services:
     environment:
       FLASK_DEBUG: "1"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: ""
-      SPIFFWORKFLOW_BACKEND_ENV: "local_development"
+      SPIFFWORKFLOW_BACKEND_ENV: "${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
     volumes:
       - ./spiffworkflow-backend:/app
