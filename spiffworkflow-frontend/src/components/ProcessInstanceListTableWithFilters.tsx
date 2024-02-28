@@ -1539,6 +1539,23 @@ export default function ProcessInstanceListTableWithFilters({
     ]
   );
 
+  const filterComponent = () => {
+    return (
+      <Grid fullWidth condensed className="megacondensed">
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          <Filters
+            filterOptions={filterOptions}
+            showFilterOptions={showFilterOptions}
+            setShowFilterOptions={setShowFilterOptions}
+            reportSearchComponent={reportSearchComponent}
+            filtersEnabled={filtersEnabled}
+            reportHash={reportHash}
+          />
+        </Column>
+      </Grid>
+    );
+  };
+
   let resultsTable = null;
   if (reportMetadata) {
     const refilterTextComponent = null;
@@ -1559,6 +1576,7 @@ export default function ProcessInstanceListTableWithFilters({
           tableHtmlId={tableHtmlId}
           textToShowIfEmpty={textToShowIfEmpty}
           variant={variant}
+          filterComponent={filterComponent}
         />
       </>
     );
@@ -1569,18 +1587,6 @@ export default function ProcessInstanceListTableWithFilters({
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      <Grid fullWidth condensed className="megacondensed">
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-          <Filters
-            filterOptions={filterOptions}
-            showFilterOptions={showFilterOptions}
-            setShowFilterOptions={setShowFilterOptions}
-            reportSearchComponent={reportSearchComponent}
-            filtersEnabled={filtersEnabled}
-            reportHash={reportHash}
-          />
-        </Column>
-      </Grid>
       {resultsTable}
     </div>
   );

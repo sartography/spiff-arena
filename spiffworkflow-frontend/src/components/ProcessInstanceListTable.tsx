@@ -4,13 +4,13 @@ import {
   Column,
   TableRow,
   Table,
-  TableHeader,
   TableHead,
   Button,
+  TableHeader,
 } from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   getLastMilestoneFromProcessInstance,
@@ -43,6 +43,7 @@ type OwnProps = {
   additionalReportFilters?: ReportFilter[];
   autoReload?: boolean;
   canCompleteAllTasks?: boolean;
+  filterComponent?: Function;
   header?: SpiffTableHeader;
   onProcessInstanceTableListUpdate?: Function;
   paginationClassName?: string;
@@ -61,6 +62,7 @@ export default function ProcessInstanceListTable({
   additionalReportFilters,
   autoReload = false,
   canCompleteAllTasks = false,
+  filterComponent,
   header,
   onProcessInstanceTableListUpdate,
   paginationClassName,
@@ -244,8 +246,19 @@ export default function ProcessInstanceListTable({
     }
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
-  const formatProcessInstanceId = (_row: ProcessInstance, id: number) => {
-    return <span data-qa="paginated-entity-id">{id}</span>;
+  const formatProcessInstanceId = (
+    processInstance: ProcessInstance,
+    id: number
+  ) => {
+    const modifiedModelId = modifyProcessIdentifierForPathParam(
+      processInstance.process_model_identifier
+    );
+    const piLink = `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`;
+    return (
+      <span data-qa="paginated-entity-id">
+        <Link to={piLink}>{id}</Link>
+      </span>
+    );
   };
   const formatProcessModelIdentifier = (
     _row: ProcessInstance,
@@ -455,15 +468,6 @@ export default function ProcessInstanceListTable({
         }
       }
 
-      const rowStyle = { cursor: 'pointer' };
-      const modifiedModelId = modifyProcessIdentifierForPathParam(
-        processInstance.process_model_identifier
-      );
-      const navigateToProcessInstance = () => {
-        navigate(
-          `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
-        );
-      };
       let variantFromMetadata = 'all';
       if (reportMetadataFromProcessInstances) {
         reportMetadataFromProcessInstances.filter_by.forEach((filter: any) => {
@@ -479,10 +483,7 @@ export default function ProcessInstanceListTable({
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
-          style={rowStyle}
           key={processInstance.id}
-          onClick={navigateToProcessInstance}
-          onKeyDown={navigateToProcessInstance}
           className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
@@ -573,11 +574,16 @@ export default function ProcessInstanceListTable({
     );
   }
   return (
-    <Grid fullWidth condensed className="megacondensed">
-      {tableTitleLine()}
-      <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-        {tableElement}
-      </Column>
-    </Grid>
+    <>
+      <Grid fullWidth condensed className="megacondensed">
+        {tableTitleLine()}
+      </Grid>
+      {filterComponent ? filterComponent() : null}
+      <Grid fullWidth condensed className="megacondensed">
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {tableElement}
+        </Column>
+      </Grid>
+    </>
   );
 }
