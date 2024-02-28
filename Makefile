@@ -59,11 +59,11 @@ be-sh:
 	$(IN_BACKEND) /bin/bash
 
 be-sqlite:
-   @if [ ! -f "src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3" ]; then \
-       echo "SQLite database file does not exist: src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3"; \
-       exit 1; \
-   fi
-    $(IN_BACKEND) sqlite3 src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+	@if [ ! -f "$(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3" ]; then \
+		echo "SQLite database file does not exist: $(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3"; \
+	exit 1; \
+	fi
+	$(IN_BACKEND) sqlite3 src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
 
 be-tests: be-clear-log-file
 	$(IN_BACKEND) poetry run pytest
