@@ -73,7 +73,7 @@ If you have `docker` and `docker compose`, as an alternative to locally installi
 
 After the containers are set up, you can run `make start-dev` and `make stop-dev` to start and stop the servers. If the frontend or backend lock file changes, `make dev-env` will recreate the containers with the new dependencies.
 
-Please refer to the [Makefile](Makefile) as the source of truth, but for a summary of the available `make` targets.
+Please refer to the [Makefile](Makefile) as the source of truth, but for a summary of the available `make` targets:
 
 | Target | Action |
 |----|----|

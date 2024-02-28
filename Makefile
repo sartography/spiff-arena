@@ -29,7 +29,7 @@ all: dev-env start-dev run-pyl
 build-images:
 	$(DOCKER_COMPOSE) build
 
-dev-env: build-images fe-npm-i be-recreate-db
+dev-env: stop-dev build-images fe-npm-i be-recreate-db
 	@/bin/true
 
 start-dev: stop-dev
@@ -69,7 +69,7 @@ fe-logs:
 	docker logs -f $(FRONTEND_CONTAINER)
 
 fe-npm-i:
-	$(IN_FRONTEND) npm i
+	$(IN_FRONTEND) npm i && git checkout -- spiffworkflow-frontend/package-lock.json
 
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
@@ -88,7 +88,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-recreate-db be-ruff be-sh be-tests be-tests-par \
+	be-clear-log-file be-logs be-mypy be-recreate-db be-ruff be-sh be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-i fe-sh \
 	pre-commit run-pyl \
 	take-ownership
