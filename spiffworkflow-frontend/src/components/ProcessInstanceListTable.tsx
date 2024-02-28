@@ -1,4 +1,4 @@
-import { ArrowRight } from '@carbon/icons-react';
+import { ArrowRight, Renew } from '@carbon/icons-react';
 import {
   Grid,
   Column,
@@ -7,6 +7,7 @@ import {
   TableHead,
   Button,
   TableHeader,
+  Stack,
 } from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -350,6 +351,48 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const tableTitle = () => {
+    let headerTextElement = null;
+    if (header) {
+      headerTextElement = header.text;
+      // poor man's markdown, just so we can allow bolded words in headers
+      if (header.text.includes('**')) {
+        const parts = header.text.split('**');
+        if (parts.length === 3) {
+          headerTextElement = (
+            <>
+              {parts[0]}
+              <strong>{parts[1]}</strong>
+              {parts[2]}
+            </>
+          );
+        }
+      }
+    }
+
+    if (header) {
+      return (
+        <Stack orientation="horizontal" gap={1}>
+          <h2
+            title={header.tooltip_text}
+            className="process-instance-table-header with-icons"
+          >
+            {headerTextElement}
+          </h2>
+          <Button
+            kind="ghost"
+            data-qa="refresh-process-instance-table"
+            renderIcon={Renew}
+            iconDescription="Refresh data in the table"
+            hasIconOnly
+            onClick={() => getProcessInstances()}
+          />
+        </Stack>
+      );
+    }
+    return null;
+  };
+
   const tableTitleLine = () => {
     if (!showLinkToReport && !header) {
       return null;
@@ -380,23 +423,6 @@ export default function ProcessInstanceListTable({
     if (!header && !filterButtonLink) {
       return null;
     }
-    let headerTextElement = null;
-    if (header) {
-      headerTextElement = header.text;
-      // poor man's markdown, just so we can allow bolded words in headers
-      if (header.text.includes('**')) {
-        const parts = header.text.split('**');
-        if (parts.length === 3) {
-          headerTextElement = (
-            <>
-              {parts[0]}
-              <strong>{parts[1]}</strong>
-              {parts[2]}
-            </>
-          );
-        }
-      }
-    }
     return (
       <>
         <Column
@@ -405,14 +431,7 @@ export default function ProcessInstanceListTable({
           lg={{ span: 15 }}
           style={{ height: '48px' }}
         >
-          {header ? (
-            <h2
-              title={header.tooltip_text}
-              className="process-instance-table-header"
-            >
-              {headerTextElement}
-            </h2>
-          ) : null}
+          {tableTitle()}
         </Column>
         {filterButtonLink}
       </>
