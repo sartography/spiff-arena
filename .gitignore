@@ -8,3 +8,4 @@ version_info.json
 UNKNOWN.egg-info/
 process_models/
 .ipynb_checkpoints
+.env*
