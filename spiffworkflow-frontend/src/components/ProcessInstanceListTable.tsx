@@ -228,6 +228,20 @@ export default function ProcessInstanceListTable({
     return [];
   };
 
+  const getProcessModelSpanTag = (
+    processInstance: ProcessInstance,
+    identifier: string
+  ) => {
+    const modifiedModelId = modifyProcessIdentifierForPathParam(
+      processInstance.process_model_identifier
+    );
+    return (
+      <span>
+        <Link to={`/process-models/${modifiedModelId}`}>{identifier}</Link>
+      </span>
+    );
+  };
+
   const getWaitingForTableCellComponent = (processInstanceTask: any) => {
     let fullUsernameString = '';
     let shortUsernameString = '';
@@ -262,16 +276,16 @@ export default function ProcessInstanceListTable({
     );
   };
   const formatProcessModelIdentifier = (
-    _row: ProcessInstance,
+    processInstance: ProcessInstance,
     identifier: any
   ) => {
-    return <span>{identifier}</span>;
+    return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatProcessModelDisplayName = (
-    _row: ProcessInstance,
+    processInstance: ProcessInstance,
     identifier: any
   ) => {
-    return <span>{identifier}</span>;
+    return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatLastMilestone = (
     processInstance: ProcessInstance,
