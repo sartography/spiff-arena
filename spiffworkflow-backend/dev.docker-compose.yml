@@ -10,7 +10,7 @@ services:
       POETRY_VIRTUALENVS_IN_PROJECT: "true"
       POETRY_CACHE_DIR: "/app/.cache/poetry"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: ""
-      SPIFFWORKFLOW_BACKEND_ENV: "local_development"
+      SPIFFWORKFLOW_BACKEND_ENV: "${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
     volumes:
       - ./spiffworkflow-backend:/app
