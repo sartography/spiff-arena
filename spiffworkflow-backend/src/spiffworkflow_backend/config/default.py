@@ -38,12 +38,11 @@ configs_with_structures = normalized_environment(environ)
 
 ### basic
 config_from_env("FLASK_SESSION_SECRET_KEY")
-config_from_env("OPEN_API_SECRET_KEY", default='')
+config_from_env("SECRET_KEY_OPENAI_API", default='')
 config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
 
 ### AI Tools
 config_from_env("SPIFFWORKFLOW_SCRIPT_ASSIST_ENABLED", default=False)
-config_from_env("SECRET_KEY_OPENAI_API", default='')
 
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
@@ -136,7 +135,7 @@ else:
 ### logs
 # loggers to use is a comma separated list of logger prefixes that we will be converted to list of strings
 config_from_env("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE")
-config_from_env("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="debug")
+config_from_env("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info")
 config_from_env("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default=False)
 
 ### permissions

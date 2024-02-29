@@ -972,9 +972,9 @@ div.onboarding {
   align-items: center;
 }
 
-.flex-justify-right {
+.flex-justify-end {
   display: flex;
-  justify-content: right;
+  justify-content: flex-end;
 }
 
 .gray-text {
@@ -986,24 +986,44 @@ div.onboarding {
 }
 
 /* Utility classes (carbon equivalents for stacks, columns and rows?) */
-.padding-10 {
+.p-10 {
   padding: 10px;
 }
 
-.padding-top-10 {
+.p-top-10 {
   padding-top: 10px;
 }
 
-.padding-bottom-10 {
+.p-bottom-10 {
   padding-bottom: 10px;
 }
 
-.padding-left-10 {
+.p-left-10 {
   padding-left: 10px;
 }
 
-.padding-right-10 {
+.p-right-10 {
   padding-right: 10px;
+}
+
+.m-10 {
+  margin: 10px;
+}
+
+.m-top-10 {
+  margin-top: 10px;
+}
+
+.m-bottom-10 {
+  margin-bottom: 10px;
+}
+
+.m-left-10 {
+  margin-left: 10px;
+}
+
+.m-right-10 {
+  margin-right: 10px;
 }
 
 .not-editable {

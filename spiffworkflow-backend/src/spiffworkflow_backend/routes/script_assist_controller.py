@@ -1,5 +1,6 @@
 from os import environ
 from flask import make_response
+from flask import jsonify
 from flask import request
 from flask.wrappers import Response
 from openai import OpenAI

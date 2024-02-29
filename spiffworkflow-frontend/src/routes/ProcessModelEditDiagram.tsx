@@ -857,7 +857,12 @@ export default function ProcessModelEditDiagram() {
   const handleProcessScriptAssist = () => {
     setScriptAssistError(!scriptAssistValue);
     if (scriptAssistValue) {
-      setScriptAssistQuery(scriptAssistValue);
+      try {
+        setScriptAssistQuery(scriptAssistValue);
+      } catch (error) {
+        console.error('Failed to process script assist query:', error);
+        setScriptAssistError(true);
+      }
     }
   };
 
@@ -872,13 +877,13 @@ export default function ProcessModelEditDiagram() {
           onChange={(e: any) => setScriptAssistValue(e.target.value)}
         />
         <Stack
-          className="flex-justify-right flex-align-horizontal-center"
+          className="flex-justify-end flex-align-horizontal-center"
           orientation="horizontal"
           gap={5}
         >
           {scriptAssistError && (
             <div className="error-text-red">
-              Please provide a description for your script!
+              Please provide instructions for your script!
             </div>
           )}
           {scriptAssistLoading && (
@@ -889,7 +894,7 @@ export default function ProcessModelEditDiagram() {
             />
           )}
           <Button
-            style={{ marginTop: '10px' }}
+            className="m-top-10"
             kind="secondary"
             onClick={() => handleProcessScriptAssist()}
           >
@@ -920,13 +925,13 @@ export default function ProcessModelEditDiagram() {
           <Stack
             gap={3}
             orientation="horizontal"
-            className="stack-align-content-horizontal padding-bottom-10"
+            className="stack-align-content-horizontal p-bottom-10"
             color={gray[50]}
           >
             <SpiffTooltip title="Use natural language to create your script. Hint: start basic and edit to tweak.">
               <Stack className="gray-text flex-align-horizontal-center">
                 <Information size={14} />
-                <Stack className="padding-left-10 not-editable">
+                <Stack className="p-left-10 not-editable">
                   Create a python script that...
                 </Stack>
               </Stack>
