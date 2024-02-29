@@ -2989,8 +2989,8 @@ doc = ["sphinx", "sphinx_rtd_theme"]
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "main"
-resolved_reference = "652fe462e4c784b8d1beed70a53d7c36cf5121cc"
+reference = "633de80a722cf28f4a79df9de7be911130f1f5ad"
+resolved_reference = "633de80a722cf28f4a79df9de7be911130f1f5ad"
 
 [[package]]
 name = "spiffworkflow-connector-command"
@@ -3466,4 +3466,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "83ec1dfe9092d0347ce22b27298627edd20b7145a17e3e5c446b70f0000aff95"
+content-hash = "1ffc95f89b442920a76ed99701c215a9708e446d99d00ec855ec174eeaf61015"

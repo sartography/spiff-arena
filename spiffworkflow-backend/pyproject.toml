@@ -26,7 +26,7 @@ flask-mail = "*"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "633de80a722cf28f4a79df9de7be911130f1f5ad"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"
