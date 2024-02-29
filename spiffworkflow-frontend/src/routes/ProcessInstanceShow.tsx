@@ -54,6 +54,7 @@ import {
   MULTI_INSTANCE_TASK_TYPES,
   LOOP_TASK_TYPES,
   titleizeString,
+  isURL,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -443,6 +444,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const formatMetadataValue = (value: string) => {
+    if (isURL(value)) {
+      return <Link to={value}>{value}</Link>;
+    }
+    return value;
+  };
+
   const getInfoTag = () => {
     if (!processInstance) {
       return null;
@@ -548,7 +556,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <dt title={processInstanceMetadata.key}>
                   {truncateString(processInstanceMetadata.key, 50)}:
                 </dt>
-                <dd>{processInstanceMetadata.value}</dd>
+                <dd>{formatMetadataValue(processInstanceMetadata.value)}</dd>
               </dl>
             )
           )}
