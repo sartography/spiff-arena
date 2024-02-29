@@ -18,6 +18,8 @@ IN_ARENA ?= $(DOCKER_COMPOSE) run $(ARENA_CONTAINER)
 IN_BACKEND ?= $(DOCKER_COMPOSE) run $(BACKEND_CONTAINER)
 IN_FRONTEND ?= $(DOCKER_COMPOSE) run $(FRONTEND_CONTAINER)
 
+SPIFFWORKFLOW_BACKEND_ENV ?= local_development
+
 YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
 	-f $(FRONTEND_DEV_OVERLAY) \
@@ -59,6 +61,13 @@ be-ruff:
 be-sh:
 	$(IN_BACKEND) /bin/bash
 
+be-sqlite:
+	@if [ ! -f "$(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3" ]; then \
+		echo "SQLite database file does not exist: $(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3"; \
+		exit 1; \
+	fi
+	$(IN_BACKEND) sqlite3 src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+
 be-tests: be-clear-log-file
 	$(IN_BACKEND) poetry run pytest
 
@@ -94,7 +103,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-mypy be-poetry-i be-recreate-db be-ruff be-sh be-tests be-tests-par \
+	be-clear-log-file be-logs be-mypy be-poetry-i be-recreate-db be-ruff be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-i fe-sh \
 	poetry-i pre-commit run-pyl \
 	take-ownership
