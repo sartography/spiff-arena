@@ -19,6 +19,7 @@ import {
   Column,
   Stack,
   TextArea,
+  InlineLoading,
 } from '@carbon/react';
 import {
   SkipForward,
@@ -96,8 +97,9 @@ export default function ProcessModelEditDiagram() {
   const failingScriptLineClassNamePrefix = 'failingScriptLineError';
 
   const [scriptAssistValue, setScriptAssistValue] = useState('');
+  const [scriptAssistError, setScriptAssistError] = useState(false);
   const { scriptAssistEnabled } = useScriptAssistEnabled();
-  const { setScriptAssistQuery, scriptAssistResult } =
+  const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
     useProcessScriptAssistMessage();
 
   function handleEditorDidMount(editor: any, monaco: any) {
@@ -851,7 +853,10 @@ export default function ProcessModelEditDiagram() {
    * This will async update scriptAssistResult as needed.
    */
   const handleProcessScriptAssist = () => {
-    setScriptAssistQuery(scriptAssistValue);
+    setScriptAssistError(!scriptAssistValue);
+    if (scriptAssistValue) {
+      setScriptAssistQuery(scriptAssistValue);
+    }
   };
 
   /* If the Script Assist tab is enabled (via scriptAssistEnabled), this is the UI */
@@ -864,7 +869,23 @@ export default function ProcessModelEditDiagram() {
           value={scriptAssistValue}
           onChange={(e: any) => setScriptAssistValue(e.target.value)}
         />
-        <div className="flex-justify-right">
+        <Stack
+          className="flex-justify-right flex-align-horizontal-center"
+          orientation="horizontal"
+          gap={5}
+        >
+          {scriptAssistError && (
+            <div className="error-text-red">
+              Please provide a description for your script!
+            </div>
+          )}
+          {scriptAssistLoading && (
+            <InlineLoading
+              status="active"
+              iconDescription="Loading"
+              description="Fetching script..."
+            />
+          )}
           <Button
             style={{ marginTop: '10px' }}
             kind="secondary"
@@ -872,7 +893,7 @@ export default function ProcessModelEditDiagram() {
           >
             Ask Spiff AI
           </Button>
-        </div>
+        </Stack>
       </>
     );
   };

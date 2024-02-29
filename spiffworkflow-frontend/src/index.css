@@ -981,6 +981,10 @@ div.onboarding {
   color: gray;
 }
 
+.error-text-red {
+  color: red;
+}
+
 /* Utility classes (carbon equivalents for stacks, columns and rows?) */
 .padding-10 {
   padding: 10px;
