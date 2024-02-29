@@ -446,7 +446,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const formatMetadataValue = (value: string) => {
     if (isURL(value)) {
-      return <Link to={value}>{value}</Link>;
+      return <a href={value} target="_blank" rel="noopener noreferrer">{value}</a>;
     }
     return value;
   };
