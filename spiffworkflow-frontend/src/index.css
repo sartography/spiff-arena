@@ -967,16 +967,21 @@ div.onboarding {
 }
 
 /* Utility classes to create horizontally centered stacks (to align icons etc) */
-.stack-align-content-horizontal {
+.flex-align-horizontal-center {
   display: flex;
   align-items: center;
+}
+
+.flex-justify-right {
+  display: flex;
+  justify-content: right;
 }
 
 .gray-text {
   color: gray;
 }
 
-/* Utility padding classes (carbon equivalents for stacks, columns and rows?) */
+/* Utility classes (carbon equivalents for stacks, columns and rows?) */
 .padding-10 {
   padding: 10px;
 }
@@ -995,4 +1000,8 @@ div.onboarding {
 
 .padding-right-10 {
   padding-right: 10px;
+}
+
+.not-editable {
+  pointer-events: none;
 }

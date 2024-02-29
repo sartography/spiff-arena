@@ -18,6 +18,7 @@ import {
   Grid,
   Column,
   Stack,
+  TextArea,
 } from '@carbon/react';
 import {
   SkipForward,
@@ -32,7 +33,6 @@ import { gray } from '@carbon/colors';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
 import MDEditor from '@uiw/react-md-editor';
-import { TextArea } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
@@ -55,8 +55,6 @@ import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
-import { Row } from '@carbon/react';
-import { Tooltip } from '@mui/material';
 import SpiffTooltip from '../components/SpiffTooltip';
 
 export default function ProcessModelEditDiagram() {
@@ -866,12 +864,7 @@ export default function ProcessModelEditDiagram() {
           value={scriptAssistValue}
           onChange={(e: any) => setScriptAssistValue(e.target.value)}
         />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'right',
-          }}
-        >
+        <div className="flex-justify-right">
           <Button
             style={{ marginTop: '10px' }}
             kind="secondary"
@@ -907,10 +900,10 @@ export default function ProcessModelEditDiagram() {
             className="stack-align-content-horizontal padding-bottom-10"
             color={gray[50]}
           >
-            <SpiffTooltip title="Describe your script in natural language. Edit to tweak the result.">
-              <Stack className="gray-text stack-align-content-horizontal">
-                <Information size={12} />
-                <Stack className="padding-left-10">
+            <SpiffTooltip title="Use natural language to create your script. Hint: start basic and edit to tweak.">
+              <Stack className="gray-text flex-align-horizontal-center">
+                <Information size={14} />
+                <Stack className="padding-left-10 not-editable">
                   Create a python script that...
                 </Stack>
               </Stack>
