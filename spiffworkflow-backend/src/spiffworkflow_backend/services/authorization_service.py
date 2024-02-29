@@ -75,7 +75,6 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-model-tests", "relevant_permissions": ["create"]},
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
-    {"path": "/script-assist", "relevant_permissions": ["read", "create"]},
 ]
 
 AUTHENTICATION_EXCLUSION_LIST = {
@@ -553,10 +552,12 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/script-assist/enabled"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/script-assist/process-message"))
+
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
-            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/script-assist/*"))
         return permissions_to_assign
 
     @classmethod

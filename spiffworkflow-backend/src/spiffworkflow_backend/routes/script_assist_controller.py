@@ -6,13 +6,14 @@ from flask import current_app
 from flask.wrappers import Response
 from openai import OpenAI
 
+
 # TODO: We could just test for the existence of the API key, if it's there, it's enabled.
 # Leaving them separate now for clarity.
 # Note there is an async version in the openai lib if that's preferable.
 def enabled() -> Response:
-    response = current_app.config["SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED"];
-    result = response in ["True", "true", "1"]
-    return make_response({"ok": result}, 200)
+    assist_enabled = current_app.config["SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED"]
+    return make_response({"ok": assist_enabled}, 200)
+
 
 def process_message() -> Response:
     openai_api_key = current_app.config["SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API"]
@@ -22,7 +23,7 @@ def process_message() -> Response:
     script_query = str(request.data)
     if not script_query:
         return make_response({"ok": "No query provided"}, 200)
-        
+
     # Prompt engineer the user input to clean up the return and avoid basic non-python-script responses
     no_nonsense_prepend = "Create a python script that "
     no_nonsense_append = (
@@ -53,4 +54,3 @@ def process_message() -> Response:
     )
 
     return make_response({"ok": completion.choices[0].message.content}, 200)
-
