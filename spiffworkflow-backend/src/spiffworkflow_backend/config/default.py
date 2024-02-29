@@ -42,7 +42,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
 
 ### AI Tools
 config_from_env("SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED", default=False)
-config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API", default='')
+config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API", default="")
 
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
