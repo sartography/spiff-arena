@@ -965,3 +965,34 @@ div.onboarding {
   height: 48px;
   line-height: 48px;
 }
+
+/* Utility classes to create horizontally centered stacks (to align icons etc) */
+.stack-align-content-horizontal {
+  display: flex;
+  align-items: center;
+}
+
+.gray-text {
+  color: gray;
+}
+
+/* Utility padding classes (carbon equivalents for stacks, columns and rows?) */
+.padding-10 {
+  padding: 10px;
+}
+
+.padding-top-10 {
+  padding-top: 10px;
+}
+
+.padding-bottom-10 {
+  padding-bottom: 10px;
+}
+
+.padding-left-10 {
+  padding-left: 10px;
+}
+
+.padding-right-10 {
+  padding-right: 10px;
+}

@@ -17,6 +17,7 @@ import {
   TextInput,
   Grid,
   Column,
+  Stack,
 } from '@carbon/react';
 import {
   SkipForward,
@@ -24,7 +25,9 @@ import {
   PlayOutline,
   Close,
   Checkmark,
+  Information,
 } from '@carbon/icons-react';
+import { gray } from '@carbon/colors';
 
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
@@ -52,6 +55,9 @@ import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
+import { Row } from '@carbon/react';
+import { Tooltip } from '@mui/material';
+import SpiffTooltip from '../components/SpiffTooltip';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -895,15 +901,21 @@ export default function ProcessModelEditDiagram() {
           {editorWindow()}
         </Column>
         <Column lg={6} md={4} sm={2}>
-          <div
-            style={{
-              color: 'darkgrey',
-              fontStyle: 'italic',
-              paddingBottom: '5px',
-            }}
+          <Stack
+            gap={3}
+            orientation="horizontal"
+            className="stack-align-content-horizontal padding-bottom-10"
+            color={gray[50]}
           >
-            Create a python script that...
-          </div>
+            <SpiffTooltip title="Describe your script in natural language. Edit to tweak the result.">
+              <Stack className="gray-text stack-align-content-horizontal">
+                <Information size={12} />
+                <Stack className="padding-left-10">
+                  Create a python script that...
+                </Stack>
+              </Stack>
+            </SpiffTooltip>
+          </Stack>
           {scriptAssistWindow()}
         </Column>
       </Grid>
@@ -930,7 +942,7 @@ export default function ProcessModelEditDiagram() {
         <Tabs>
           <TabList aria-label="List of tabs" activation="manual">
             <Tab>Script Editor</Tab>
-            <Tab>Script Assist</Tab>
+            {scriptAssistEnabled && <Tab>Script Assist</Tab>}
             <Tab>Unit Tests</Tab>
           </TabList>
           <TabPanels>
@@ -938,7 +950,6 @@ export default function ProcessModelEditDiagram() {
             {scriptAssistEnabled && (
               <TabPanel>{scriptEditorWithAssist()}</TabPanel>
             )}
-            <TabPanel>{scriptEditorWithAssist()}</TabPanel>
             <TabPanel>{scriptUnitTestEditorElement()}</TabPanel>
           </TabPanels>
         </Tabs>

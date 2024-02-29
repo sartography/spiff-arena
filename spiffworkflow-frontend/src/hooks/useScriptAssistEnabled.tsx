@@ -8,6 +8,7 @@ const useScriptAssistEnabled = () => {
   useEffect(() => {
     if (scriptAssistEnabled === null) {
       const handleResponse = (response: any) => {
+        console.log(response);
         setScriptAssistEnabled(response.ok);
       };
 
