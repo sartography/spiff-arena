@@ -513,6 +513,18 @@ export default function ProcessModelEditDiagram() {
     setScriptText(value);
   };
 
+  /**
+   * When the value of the Editor is updated dynamically async,
+   * it doesn't seem to fire an onChange (discussions as recent as 4.2.1).
+   * The straightforward recommended fix is to handle manually, so when
+   * the scriptAssistResult is updated, call the handler manually.
+   */
+  useEffect(() => {
+    if (scriptAssistResult) {
+      handleEditorScriptChange(scriptAssistResult);
+    }
+  }, [scriptAssistResult]);
+
   const handleEditorScriptTestUnitInputChange = (value: any) => {
     if (currentScriptUnitTest) {
       currentScriptUnitTest.inputJson.value = value;
