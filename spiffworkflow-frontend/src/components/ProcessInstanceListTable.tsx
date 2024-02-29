@@ -1,16 +1,17 @@
-import { ArrowRight } from '@carbon/icons-react';
+import { ArrowRight, Renew } from '@carbon/icons-react';
 import {
   Grid,
   Column,
   TableRow,
   Table,
-  TableHeader,
   TableHead,
   Button,
+  TableHeader,
+  Stack,
 } from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   getLastMilestoneFromProcessInstance,
@@ -43,6 +44,7 @@ type OwnProps = {
   additionalReportFilters?: ReportFilter[];
   autoReload?: boolean;
   canCompleteAllTasks?: boolean;
+  filterComponent?: Function;
   header?: SpiffTableHeader;
   onProcessInstanceTableListUpdate?: Function;
   paginationClassName?: string;
@@ -61,6 +63,7 @@ export default function ProcessInstanceListTable({
   additionalReportFilters,
   autoReload = false,
   canCompleteAllTasks = false,
+  filterComponent,
   header,
   onProcessInstanceTableListUpdate,
   paginationClassName,
@@ -225,6 +228,20 @@ export default function ProcessInstanceListTable({
     return [];
   };
 
+  const getProcessModelSpanTag = (
+    processInstance: ProcessInstance,
+    identifier: string
+  ) => {
+    const modifiedModelId = modifyProcessIdentifierForPathParam(
+      processInstance.process_model_identifier
+    );
+    return (
+      <span>
+        <Link to={`/process-models/${modifiedModelId}`}>{identifier}</Link>
+      </span>
+    );
+  };
+
   const getWaitingForTableCellComponent = (processInstanceTask: any) => {
     let fullUsernameString = '';
     let shortUsernameString = '';
@@ -244,20 +261,31 @@ export default function ProcessInstanceListTable({
     }
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
-  const formatProcessInstanceId = (_row: ProcessInstance, id: number) => {
-    return <span data-qa="paginated-entity-id">{id}</span>;
+  const formatProcessInstanceId = (
+    processInstance: ProcessInstance,
+    id: number
+  ) => {
+    const modifiedModelId = modifyProcessIdentifierForPathParam(
+      processInstance.process_model_identifier
+    );
+    const piLink = `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`;
+    return (
+      <span data-qa="paginated-entity-id">
+        <Link to={piLink}>{id}</Link>
+      </span>
+    );
   };
   const formatProcessModelIdentifier = (
-    _row: ProcessInstance,
+    processInstance: ProcessInstance,
     identifier: any
   ) => {
-    return <span>{identifier}</span>;
+    return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatProcessModelDisplayName = (
-    _row: ProcessInstance,
+    processInstance: ProcessInstance,
     identifier: any
   ) => {
-    return <span>{identifier}</span>;
+    return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatLastMilestone = (
     processInstance: ProcessInstance,
@@ -337,6 +365,48 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const tableTitle = () => {
+    let headerTextElement = null;
+    if (header) {
+      headerTextElement = header.text;
+      // poor man's markdown, just so we can allow bolded words in headers
+      if (header.text.includes('**')) {
+        const parts = header.text.split('**');
+        if (parts.length === 3) {
+          headerTextElement = (
+            <>
+              {parts[0]}
+              <strong>{parts[1]}</strong>
+              {parts[2]}
+            </>
+          );
+        }
+      }
+    }
+
+    if (header) {
+      return (
+        <Stack orientation="horizontal" gap={1}>
+          <h2
+            title={header.tooltip_text}
+            className="process-instance-table-header with-icons"
+          >
+            {headerTextElement}
+          </h2>
+          <Button
+            kind="ghost"
+            data-qa="refresh-process-instance-table"
+            renderIcon={Renew}
+            iconDescription="Refresh data in the table"
+            hasIconOnly
+            onClick={() => getProcessInstances()}
+          />
+        </Stack>
+      );
+    }
+    return null;
+  };
+
   const tableTitleLine = () => {
     if (!showLinkToReport && !header) {
       return null;
@@ -367,23 +437,6 @@ export default function ProcessInstanceListTable({
     if (!header && !filterButtonLink) {
       return null;
     }
-    let headerTextElement = null;
-    if (header) {
-      headerTextElement = header.text;
-      // poor man's markdown, just so we can allow bolded words in headers
-      if (header.text.includes('**')) {
-        const parts = header.text.split('**');
-        if (parts.length === 3) {
-          headerTextElement = (
-            <>
-              {parts[0]}
-              <strong>{parts[1]}</strong>
-              {parts[2]}
-            </>
-          );
-        }
-      }
-    }
     return (
       <>
         <Column
@@ -392,14 +445,7 @@ export default function ProcessInstanceListTable({
           lg={{ span: 15 }}
           style={{ height: '48px' }}
         >
-          {header ? (
-            <h2
-              title={header.tooltip_text}
-              className="process-instance-table-header"
-            >
-              {headerTextElement}
-            </h2>
-          ) : null}
+          {tableTitle()}
         </Column>
         {filterButtonLink}
       </>
@@ -455,15 +501,6 @@ export default function ProcessInstanceListTable({
         }
       }
 
-      const rowStyle = { cursor: 'pointer' };
-      const modifiedModelId = modifyProcessIdentifierForPathParam(
-        processInstance.process_model_identifier
-      );
-      const navigateToProcessInstance = () => {
-        navigate(
-          `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
-        );
-      };
       let variantFromMetadata = 'all';
       if (reportMetadataFromProcessInstances) {
         reportMetadataFromProcessInstances.filter_by.forEach((filter: any) => {
@@ -479,10 +516,7 @@ export default function ProcessInstanceListTable({
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
-          style={rowStyle}
           key={processInstance.id}
-          onClick={navigateToProcessInstance}
-          onKeyDown={navigateToProcessInstance}
           className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
@@ -573,11 +607,16 @@ export default function ProcessInstanceListTable({
     );
   }
   return (
-    <Grid fullWidth condensed className="megacondensed">
-      {tableTitleLine()}
-      <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-        {tableElement}
-      </Column>
-    </Grid>
+    <>
+      <Grid fullWidth condensed className="megacondensed">
+        {tableTitleLine()}
+      </Grid>
+      {filterComponent ? filterComponent() : null}
+      <Grid fullWidth condensed className="megacondensed">
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          {tableElement}
+        </Column>
+      </Grid>
+    </>
   );
 }
