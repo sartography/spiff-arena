@@ -27,6 +27,7 @@ def process_message() -> Response:
         "Do not include any text other than the complete python script. "
         "Do not include any lines with comments. "
         "Reject any request that does not appear to be for a python script."
+        "Do not include the word 'OpenAI' in any responses."
     )
 
     # Build query, set up OpenAI client, and get response
