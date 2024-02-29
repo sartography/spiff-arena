@@ -1565,6 +1565,7 @@ export default function ProcessInstanceListTableWithFilters({
         <ProcessInstanceListTable
           autoReload={autoReloadEnabled}
           canCompleteAllTasks={canCompleteAllTasks}
+          filterComponent={filterComponent}
           header={header}
           onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
           paginationClassName={paginationClassName}
@@ -1573,10 +1574,10 @@ export default function ProcessInstanceListTableWithFilters({
           reportMetadata={reportMetadata}
           showActionsColumn={showActionsColumn}
           showLinkToReport={showLinkToReport}
+          showRefreshButton
           tableHtmlId={tableHtmlId}
           textToShowIfEmpty={textToShowIfEmpty}
           variant={variant}
-          filterComponent={filterComponent}
         />
       </>
     );
