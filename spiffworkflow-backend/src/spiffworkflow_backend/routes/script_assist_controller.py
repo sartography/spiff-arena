@@ -2,6 +2,7 @@ from os import environ
 from flask import make_response
 from flask import jsonify
 from flask import request
+from flask import current_app
 from flask.wrappers import Response
 from openai import OpenAI
 
@@ -9,12 +10,12 @@ from openai import OpenAI
 # Leaving them separate now for clarity.
 # Note there is an async version in the openai lib if that's preferable.
 def enabled() -> Response:
-    response = environ.get("SPIFFWORKFLOW_SCRIPT_ASSIST_ENABLED");
+    response = current_app.config["SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED"];
     result = response in ["True", "true", "1"]
     return make_response({"ok": result}, 200)
 
 def process_message() -> Response:
-    openai_api_key = environ.get("SECRET_KEY_OPENAI_API")
+    openai_api_key = current_app.config["SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API"]
     if not openai_api_key:
         return make_response({"ok": "OpenAI API key not set"}, 200)
 

@@ -28,8 +28,8 @@ from spiffworkflow_backend.services.monitoring_service import setup_prometheus_m
 # This is necessary to make sure that the pymysql library is used as the MySQLdb library
 # This is only needed if you want to run non-docker local and are using Python 3. 
 # See the repo's top-level README for details.
-import pymysql;
-pymysql.install_as_MySQLdb()
+# import pymysql;
+# pymysql.install_as_MySQLdb()
 
 class MyJSONEncoder(DefaultJSONProvider):
     def default(self, obj: Any) -> Any:
