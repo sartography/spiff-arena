@@ -1,0 +1,77 @@
+---
+defaults: &defaults
+  random-route: true
+  services:
+    - ((db-instance))
+  disk_quota: 3G
+  memory: 256M
+  instances: 2  
+
+applications:
+
+################################
+- name: spiffworkflow-frontend
+  <<: *defaults
+  docker:
+    image: ((frontend-image))
+  env:
+    APPLICATION_ROOT: "/"
+
+    # Look for the backend on subpath "/api" of the app... I think.
+    SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY: "path_based"
+
+    # We may need to set BACKEND_URL; see spiffworkflow-frontend/src/config/tsx:15-72
+
+    # Other vars this image understands:
+    # CYPRESS_RECORD_KEY
+    # SPIFFWORKFLOW_FRONTEND_PORT
+    # SPIFFWORKFLOW_FRONTEND_URL
+    # CYPRESS_RECORD_KEY
+    # REACT_APP_BACKEND_BASE_URL
+    # PUBLIC_URL
+    # NODE_ENV
+
+#################################
+
+- name: spiffworkflow-backend
+  <<: *defaults
+  command: DATABASE_URL="$(echo $VCAP_SERVICES | jq --raw-output --arg service_name "((db-instance))" ".[][] | select(.name == \$service_name) | .credentials.uri")?sslmode=require" /app/bin/boot_server_in_docker
+  disk_quota: 3G
+
+  # With buildpack:
+  path: spiffworkflow-backend
+  buildpacks:
+    - python_buildpack
+
+  # With Docker:
+  # docker:
+  #   image: ((backend-image))
+
+  env:
+    APPLICATION_ROOT: "/"
+    SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: "postgres"
+    
+    
+
+# SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite SPIFFWORKFLOW_BACKEND_ENV=local_docker SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=true FLASK_DEBUG=0 FLASK_SESSION_SECRET_KEY=HEY SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${HOME}/projects/github/sartography/sample-process-models/" ./bin/boot_server_in_docker
+
+    # environment:
+    #   - FLASK_DEBUG=0
+    #   - FLASK_SESSION_SECRET_KEY=${FLASK_SESSION_SECRET_KEY:-e7711a3ba96c46c68e084a86952de16f}
+    #   - SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT=/
+    #   - SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=/app/process_models
+    #   - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqldb://root:${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}@127.0.0.1:7003/${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
+    #   - SPIFFWORKFLOW_BACKEND_ENV=${SPIFFWORKFLOW_BACKEND_ENV:-local_development}
+    #   - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-false}
+    #   - SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=${SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL:-http://localhost:7002/realms/spiffworkflow}
+    #   - SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=${SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME:-acceptance_tests.yml}
+    #   - SPIFFWORKFLOW_BACKEND_PORT=7000
+    #     # the background scheduler picks up process instances that we set in a certain state and then runs them like running not_started instances
+    #     # that are required for the process instance filter test. So for now do not run it. we may want to find another way around in the future
+    #   - SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
+    #   - SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND=${SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND:-http://localhost:7001}
+    #   - SPIFFWORKFLOW_BACKEND_UPGRADE_DB=true
+    #   - SPIFFWORKFLOW_BACKEND_URL=${SPIFFWORKFLOW_BACKEND_URL:-http://localhost:7000}
+
+    # All of the configuration variables are documented here:
+    # https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/config/default.py

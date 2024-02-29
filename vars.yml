@@ -1,0 +1,3 @@
+frontend-image: ghcr.io/sartography/spiffworkflow-frontend:latest
+backend-image: ghcr.io/sartography/spiffworkflow-backend:latest
+db-instance: spiffworkflow-db
