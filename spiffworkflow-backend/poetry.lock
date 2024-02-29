@@ -590,21 +590,6 @@ files = [
 ]
 
 [[package]]
-name = "configparser"
-version = "5.3.0"
-description = "Updated configparser from stdlib for earlier Pythons."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "configparser-5.3.0-py3-none-any.whl", hash = "sha256:b065779fd93c6bf4cee42202fa4351b4bb842e96a3fb469440e484517a49b9fa"},
-    {file = "configparser-5.3.0.tar.gz", hash = "sha256:8be267824b541c09b08db124917f48ab525a6c3e837011f3130781a224c57090"},
-]
-
-[package.extras]
-docs = ["jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx"]
-testing = ["flake8 (<5)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)", "types-backports"]
-
-[[package]]
 name = "connexion"
 version = "2.14.1"
 description = "Connexion - API first applications with OpenAPI/Swagger and Flask"
@@ -2671,22 +2656,25 @@ files = [
 
 [[package]]
 name = "SpiffWorkflow"
-version = "2.0.0rc0"
+version = "3.0.0rc2"
 description = "A workflow framework and BPMN/DMN Processor"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = []
 develop = false
 
 [package.dependencies]
-configparser = "*"
 lxml = "*"
+
+[package.extras]
+dev = ["build", "coverage"]
+doc = ["sphinx", "sphinx_rtd_theme"]
 
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "633de80a722cf28f4a79df9de7be911130f1f5ad"
+resolved_reference = "cdf7fc46d2e00f213d296b9055cf2e17bde2e1dc"
 
 [[package]]
 name = "spiffworkflow-connector-command"
