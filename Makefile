@@ -31,7 +31,7 @@ all: dev-env start-dev run-pyl
 build-images:
 	$(DOCKER_COMPOSE) build
 
-dev-env: stop-dev build-images fe-npm-i be-recreate-db
+dev-env: stop-dev build-images poetry-i be-poetry-i be-recreate-db fe-npm-i
 	@/bin/true
 
 start-dev: stop-dev
@@ -48,6 +48,9 @@ be-logs:
 
 be-mypy:
 	$(IN_BACKEND) poetry run mypy src tests
+
+be-poetry-i:
+	$(IN_BACKEND) poetry install
 
 be-recreate-db:
 	$(IN_BACKEND) ./bin/recreate_db clean
@@ -83,6 +86,9 @@ fe-npm-i:
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
 
+poetry-i:
+	$(IN_ARENA) poetry install --no-root
+
 pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
@@ -97,7 +103,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-mypy be-sqlite be-recreate-db be-ruff be-sh be-tests be-tests-par \
+	be-clear-log-file be-logs be-mypy be-poetry-i be-recreate-db be-ruff be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-i fe-sh \
-	pre-commit run-pyl \
+	poetry-i pre-commit run-pyl \
 	take-ownership

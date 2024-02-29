@@ -4,9 +4,9 @@ services:
     build:
       context: .
       dockerfile: dev.Dockerfile
-    #
-    # TODO: would like to figure out the permissions issue that is preventing this
-    #
-    #user: "${RUN_AS}"
+    user: "${RUN_AS}"
+    environment:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      PRE_COMMIT_HOME: "/app/.cache/pre-commit"
     volumes:
       - ./:/app

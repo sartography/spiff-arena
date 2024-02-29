@@ -4,12 +4,11 @@ services:
     build:
       context: spiffworkflow-backend
       dockerfile: dev.Dockerfile
-    #
-    # TODO: would like to figure out the permissions issue that is preventing this
-    #
-    #user: "${RUN_AS}"
+    user: "${RUN_AS}"
     environment:
       FLASK_DEBUG: "1"
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      POETRY_CACHE_DIR: "/app/.cache/poetry"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: ""
       SPIFFWORKFLOW_BACKEND_ENV: "${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
