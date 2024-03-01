@@ -54,6 +54,7 @@ type OwnProps = {
   reportMetadata?: ReportMetadata;
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
+  showRefreshButton?: boolean;
   tableHtmlId?: string;
   textToShowIfEmpty?: string;
   variant?: string;
@@ -73,6 +74,7 @@ export default function ProcessInstanceListTable({
   reportMetadata,
   showActionsColumn = false,
   showLinkToReport = false,
+  showRefreshButton = false,
   tableHtmlId,
   textToShowIfEmpty,
   variant = 'for-me',
@@ -393,14 +395,16 @@ export default function ProcessInstanceListTable({
           >
             {headerTextElement}
           </h2>
-          <Button
-            kind="ghost"
-            data-qa="refresh-process-instance-table"
-            renderIcon={Renew}
-            iconDescription="Refresh data in the table"
-            hasIconOnly
-            onClick={() => getProcessInstances()}
-          />
+          {showRefreshButton ? (
+            <Button
+              kind="ghost"
+              data-qa="refresh-process-instance-table"
+              renderIcon={Renew}
+              iconDescription="Refresh data in the table"
+              hasIconOnly
+              onClick={() => getProcessInstances()}
+            />
+          ) : null}
         </Stack>
       );
     }
