@@ -6,9 +6,7 @@ services:
       dockerfile: dev.Dockerfile
     user: "${RUN_AS}"
     environment:
-      #POETRY_CACHE_DIR: "/app/.cache/poetry"
       POETRY_VIRTUALENVS_IN_PROJECT: "true"
-      #PRE_COMMIT_HOME: "/app/.cache/pre-commit"
       XDG_CACHE_HOME: "/app/.cache"
     volumes:
       - ./:/app
