@@ -5,16 +5,17 @@ import re
 import traceback
 from abc import abstractmethod
 from dataclasses import dataclass
+from typing import Any
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 
 class UnrunnableTestCaseError(Exception):
@@ -39,6 +40,29 @@ class UnsupporterRunnerDelegateGivenError(Exception):
 
 class BpmnFileMissingExecutableProcessError(Exception):
     pass
+
+
+class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
+    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
+        methods = {
+            "get_process_initiator_user": lambda: {
+                "username": "test_username_a",
+                "tenant_specific_field_1": "test_tenant_specific_field_1_a",
+            },
+        }
+        if external_context:
+            methods.update(external_context)
+        if script:
+            super().execute(task, script, methods)
+        return True
+
+    def call_service(
+        self,
+        operation_name: str,
+        operation_params: dict[str, Any],
+        spiff_task: SpiffTask,
+    ) -> str:
+        raise Exception("please override this service task in your bpmn unit test json")
 
 
 @dataclass
@@ -122,7 +146,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             bpmn_process_spec,
             subprocess_specs=subprocesses,
         )
-        bpmn_process_instance.script_engine = ProcessInstanceProcessor._default_script_engine
+        bpmn_process_instance.script_engine = ProcessModelTestRunnerScriptEngine()
 
         # we do not want to call the real get_process_initiator_user script, since it depends on a process instance
         # that does not actually exist
