@@ -366,6 +366,10 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         if external_context:
             methods.update(external_context)
 
+        if hasattr(self, "method_overrides"):
+            if self.method_overrides:
+                methods = {**methods, **self.method_overrides}
+
         """Evaluate the given expression, within the context of the given task and return the result."""
         try:
             return super()._evaluate(expression, context, external_context=methods)
@@ -387,6 +391,11 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             methods = self.__get_augment_methods(task)
             if external_context:
                 methods.update(external_context)
+
+            if hasattr(self, "method_overrides"):
+                if self.method_overrides:
+                    methods = {**methods, **self.method_overrides}
+
             # do not run script if it is blank
             if script:
                 super().execute(task, script, methods)
