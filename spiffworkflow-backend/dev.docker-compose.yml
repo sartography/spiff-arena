@@ -7,10 +7,11 @@ services:
     user: "${RUN_AS}"
     environment:
       FLASK_DEBUG: "1"
-      POETRY_CACHE_DIR: "/app/.cache/poetry"
+      #POETRY_CACHE_DIR: "/app/.cache/poetry"
       POETRY_VIRTUALENVS_IN_PROJECT: "true"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: ""
       SPIFFWORKFLOW_BACKEND_ENV: "${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
+      XDG_CACHE_HOME: "/app/.cache"
     volumes:
       - ./spiffworkflow-backend:/app
