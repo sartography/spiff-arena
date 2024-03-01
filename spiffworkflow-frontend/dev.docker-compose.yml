@@ -5,6 +5,7 @@ services:
       dockerfile: dev.Dockerfile
     user: "${RUN_AS}"
     environment:
+      CYPRESS_CACHE_FOLDER: "/app/.cache/cypress"
       HOST: "0.0.0.0"
       PORT: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
       npm_config_cache: "/app/.cache/npm"
