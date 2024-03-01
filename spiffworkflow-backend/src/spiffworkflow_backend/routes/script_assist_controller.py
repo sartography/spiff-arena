@@ -1,9 +1,10 @@
 from flask import current_app
 from flask import jsonify
 from flask import make_response
-from flask import request
 from flask.wrappers import Response
 from openai import OpenAI
+
+from spiffworkflow_backend.exceptions.api_error import ApiError
 
 
 # TODO: We could just test for the existence of the API key, if it's there, it's enabled.
@@ -14,14 +15,19 @@ def enabled() -> Response:
     return make_response(jsonify({"ok": assist_enabled}), 200)
 
 
-def process_message() -> Response:
+def process_message(body: dict) -> Response:
     openai_api_key = current_app.config["SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API"]
     if openai_api_key is None:
-        return make_response({"ok": "OpenAI API key not set"}, 200)
+        raise ApiError(
+            error_code="openai_api_key_not_set",
+            message="the OpenAI API key is not configured.",
+        )
 
-    script_query = str(request.data)
-    if not script_query:
-        return make_response({"ok": "No query provided"}, 200)
+    if "query" not in body or not body["query"]:
+        raise ApiError(
+            error_code="no_openai_query_provided",
+            message="No query was provided in body.",
+        )
 
     # Prompt engineer the user input to clean up the return and avoid basic non-python-script responses
     no_nonsense_prepend = "Create a python script that "
@@ -33,7 +39,7 @@ def process_message() -> Response:
     )
 
     # Build query, set up OpenAI client, and get response
-    query = no_nonsense_prepend + str(script_query) + no_nonsense_append
+    query = no_nonsense_prepend + str(body["query"]) + no_nonsense_append
     client = OpenAI(api_key=openai_api_key)
 
     # TODO: Might be good to move Model and maybe other parameters to config
@@ -52,4 +58,4 @@ def process_message() -> Response:
         presence_penalty=0,
     )
 
-    return make_response(jsonify({"ok": completion.choices[0].message.content}), 200)
+    return make_response(jsonify({"result": completion.choices[0].message.content}), 200)

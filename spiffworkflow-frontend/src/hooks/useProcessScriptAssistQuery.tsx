@@ -6,13 +6,17 @@ import HttpService from '../services/HttpService';
  * and set the result to update any watchers.
  */
 const useProcessScriptAssistMessage = () => {
-  const [scriptAssistQuery, setScriptAssistQuery] = useState('');
-  const [scriptAssistResult, setScriptAssistResult] = useState('');
-  const [scriptAssistLoading, setScriptAssistLoading] = useState(false);
+  const [scriptAssistQuery, setScriptAssistQuery] = useState<string>('');
+  const [scriptAssistResult, setScriptAssistResult] = useState<Record<
+    string,
+    any
+  > | null>(null);
+  const [scriptAssistLoading, setScriptAssistLoading] =
+    useState<boolean>(false);
 
   useEffect(() => {
     const handleResponse = (response: Record<string, any>) => {
-      setScriptAssistResult(response.ok);
+      setScriptAssistResult(response);
       setScriptAssistQuery('');
       setScriptAssistLoading(false);
     };
@@ -27,10 +31,11 @@ const useProcessScriptAssistMessage = () => {
       HttpService.makeCallToBackend({
         httpMethod: 'POST',
         path: `/script-assist/process-message`,
-        postBody: scriptAssistQuery.trim(),
+        postBody: { query: scriptAssistQuery.trim() },
         successCallback: handleResponse,
-        failureCallback: (errorMessage: string) => {
-          console.error('Failed to process script assist query:', errorMessage);
+        failureCallback: (error: any) => {
+          setScriptAssistResult(error);
+          setScriptAssistQuery('');
           setScriptAssistLoading(false);
         },
       });

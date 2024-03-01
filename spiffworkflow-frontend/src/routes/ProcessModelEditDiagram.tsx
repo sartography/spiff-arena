@@ -96,8 +96,10 @@ export default function ProcessModelEditDiagram() {
 
   const failingScriptLineClassNamePrefix = 'failingScriptLineError';
 
-  const [scriptAssistValue, setScriptAssistValue] = useState('');
-  const [scriptAssistError, setScriptAssistError] = useState(false);
+  const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
+  const [scriptAssistError, setScriptAssistError] = useState<string | null>(
+    null
+  );
   const { scriptAssistEnabled } = useScriptAssistEnabled();
   const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
     useProcessScriptAssistMessage();
@@ -521,7 +523,13 @@ export default function ProcessModelEditDiagram() {
    */
   useEffect(() => {
     if (scriptAssistResult) {
-      handleEditorScriptChange(scriptAssistResult);
+      if (scriptAssistResult.result) {
+        handleEditorScriptChange(scriptAssistResult.result);
+      } else if (scriptAssistResult.error_code && scriptAssistResult.message) {
+        setScriptAssistError(scriptAssistResult.message);
+      } else {
+        setScriptAssistError('Received unexpected response from server.');
+      }
     }
   }, [scriptAssistResult]);
 
@@ -855,7 +863,7 @@ export default function ProcessModelEditDiagram() {
         options={generalEditorOptions()}
         defaultLanguage="python"
         defaultValue={scriptText}
-        value={scriptAssistResult}
+        value={scriptText}
         onChange={handleEditorScriptChange}
         onMount={handleEditorDidMount}
       />
@@ -867,17 +875,15 @@ export default function ProcessModelEditDiagram() {
    * This will async update scriptAssistResult as needed.
    */
   const handleProcessScriptAssist = () => {
-    setScriptAssistError(!scriptAssistValue);
     if (scriptAssistValue) {
       try {
         setScriptAssistQuery(scriptAssistValue);
-        setScriptAssistError(false);
+        setScriptAssistError(null);
       } catch (error) {
-        console.error('Failed to process script assist query:', error);
-        setScriptAssistError(true);
+        setScriptAssistError(`Failed to process script assist query: ${error}`);
       }
     } else {
-      setScriptAssistError(true);
+      setScriptAssistError('Please provide instructions for your script!');
     }
   };
 
@@ -897,9 +903,7 @@ export default function ProcessModelEditDiagram() {
           gap={5}
         >
           {scriptAssistError && (
-            <div className="error-text-red">
-              Please provide instructions for your script!
-            </div>
+            <div className="error-text-red">{scriptAssistError}</div>
           )}
           {scriptAssistLoading && (
             <InlineLoading
@@ -912,6 +916,7 @@ export default function ProcessModelEditDiagram() {
             className="m-top-10"
             kind="secondary"
             onClick={() => handleProcessScriptAssist()}
+            disabled={scriptAssistLoading}
           >
             Ask Spiff AI
           </Button>

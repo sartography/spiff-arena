@@ -199,9 +199,8 @@ paths:
         content:
           application/json:
             schema:
-              type: object
               properties:
-                message:
+                query:
                   type: string
                   description: The natural language message to be processed.
       responses:
