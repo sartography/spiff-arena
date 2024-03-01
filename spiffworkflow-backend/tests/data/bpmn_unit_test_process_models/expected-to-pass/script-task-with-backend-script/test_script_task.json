@@ -1,0 +1,24 @@
+{
+  "test_case_1": {
+    "mocks": {
+      "get_frontend_url": "https://spiffworkflow.example.com",
+      "get_process_initiator_user": {
+        "username": "test_username_a",
+        "tenant_specific_field_1": "test_tenant_specific_field_1_a"
+      }
+    },
+    "tasks": {
+      "Activity_1vepcwc": {
+        "data": [
+          {
+            "what": true
+          }
+        ]
+      }
+    },
+    "expected_output_json": {
+      "a": 1,
+      "frontend_url_for_testing": "https://spiffworkflow.example.com"
+    }
+  }
+}
