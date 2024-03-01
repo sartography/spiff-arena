@@ -1,4 +1,4 @@
-name: Makefile CI
+name: Dev Containers
 
 on:
   push:
