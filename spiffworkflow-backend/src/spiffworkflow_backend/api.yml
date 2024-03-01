@@ -194,6 +194,16 @@ paths:
       summary: Send natural language message in for processing by AI service
       tags:
         - AI Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The natural language message to be processed.
       responses:
         "200":
           description: Send back AI service response

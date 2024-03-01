@@ -29,6 +29,10 @@ const useProcessScriptAssistMessage = () => {
         path: `/script-assist/process-message`,
         postBody: scriptAssistQuery.trim(),
         successCallback: handleResponse,
+        failureCallback: (errorMessage: string) => {
+          console.error('Failed to process script assist query:', errorMessage);
+          setScriptAssistLoading(false);
+        },
       });
     }
   }, [scriptAssistQuery, setScriptAssistQuery, scriptAssistResult]);

@@ -1,4 +1,5 @@
 from flask import current_app
+from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
@@ -10,12 +11,12 @@ from openai import OpenAI
 # Note there is an async version in the openai lib if that's preferable.
 def enabled() -> Response:
     assist_enabled = current_app.config["SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED"]
-    return make_response({"ok": assist_enabled}, 200)
+    return make_response(jsonify({"ok": assist_enabled}), 200)
 
 
 def process_message() -> Response:
     openai_api_key = current_app.config["SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API"]
-    if not openai_api_key:
+    if openai_api_key is None:
         return make_response({"ok": "OpenAI API key not set"}, 200)
 
     script_query = str(request.data)
@@ -51,4 +52,4 @@ def process_message() -> Response:
         presence_penalty=0,
     )
 
-    return make_response({"ok": completion.choices[0].message.content}, 200)
+    return make_response(jsonify({"ok": completion.choices[0].message.content}), 200)

@@ -871,10 +871,13 @@ export default function ProcessModelEditDiagram() {
     if (scriptAssistValue) {
       try {
         setScriptAssistQuery(scriptAssistValue);
+        setScriptAssistError(false);
       } catch (error) {
         console.error('Failed to process script assist query:', error);
         setScriptAssistError(true);
       }
+    } else {
+      setScriptAssistError(true);
     }
   };
 
