@@ -5,9 +5,11 @@ import re
 import traceback
 from abc import abstractmethod
 from dataclasses import dataclass
+from typing import Any
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -38,6 +40,29 @@ class UnsupporterRunnerDelegateGivenError(Exception):
 
 class BpmnFileMissingExecutableProcessError(Exception):
     pass
+
+
+class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
+    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
+        methods = {
+            "get_process_initiator_user": lambda: {
+                "username": "test_username_a",
+                "tenant_specific_field_1": "test_tenant_specific_field_1_a",
+            },
+        }
+        if external_context:
+            methods.update(external_context)
+        if script:
+            super().execute(task, script, methods)
+        return True
+
+    def call_service(
+        self,
+        operation_name: str,
+        operation_params: dict[str, Any],
+        spiff_task: SpiffTask,
+    ) -> str:
+        raise Exception("please override this service task in your bpmn unit test json")
 
 
 @dataclass
@@ -108,6 +133,10 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             raise BpmnFileMissingExecutableProcessError(f"Executable process cannot be found in {bpmn_file}. Test cannot run.")
 
         all_related = self._find_related_bpmn_files(bpmn_file)
+
+        # get unique list of related files
+        all_related = list(set(all_related))
+
         for related_file in all_related:
             self._add_bpmn_file_to_parser(parser, related_file)
 
@@ -117,6 +146,17 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             bpmn_process_spec,
             subprocess_specs=subprocesses,
         )
+        bpmn_process_instance.script_engine = ProcessModelTestRunnerScriptEngine()
+
+        # we do not want to call the real get_process_initiator_user script, since it depends on a process instance
+        # that does not actually exist
+        overridden_methods = {
+            "get_process_initiator_user": lambda: {
+                "username": "test_username_a",
+                "tenant_specific_field_1": "test_tenant_specific_field_1_a",
+            },
+        }
+        bpmn_process_instance.script_engine.method_overrides = overridden_methods
         return bpmn_process_instance
 
     def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
@@ -444,7 +484,7 @@ class ProcessModelTestRunner:
         return test_mappings
 
 
-class ProcessModeltTestRunnerBackendDelegate(ProcessModelTestRunnerMostlyPureSpiffDelegate):
+class ProcessModelTestRunnerBackendDelegate(ProcessModelTestRunnerMostlyPureSpiffDelegate):
     pass
 
 
@@ -459,7 +499,7 @@ class ProcessModelTestRunnerService:
             process_model_directory_path,
             test_case_file=test_case_file,
             test_case_identifier=test_case_identifier,
-            process_model_test_runner_delegate_class=ProcessModeltTestRunnerBackendDelegate,
+            process_model_test_runner_delegate_class=ProcessModelTestRunnerBackendDelegate,
         )
 
     def run(self) -> None:

@@ -545,7 +545,9 @@ def task_show(
             else:
                 task_model.form_ui_schema = {}
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model.form_ui_schema, task_model.data)
-        JinjaService.render_instructions_for_end_user(task_model, extensions)
+
+        # it should be safe to add instructions to the task spec here since we are never commiting it back to the db
+        extensions["instructionsForEndUser"] = JinjaService.render_instructions_for_end_user(task_model, extensions)
 
     task_model.extensions = extensions
 

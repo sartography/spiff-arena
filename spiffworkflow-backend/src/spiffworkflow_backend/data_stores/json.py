@@ -30,12 +30,12 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         return db.session.query(JSONDataStoreModel).filter_by(identifier=identifier, location=location).first()
 
     @staticmethod
-    def existing_data_stores(process_group_identifier: str | None = None) -> list[dict[str, Any]]:
+    def existing_data_stores(process_group_identifiers: list[str] | None = None) -> list[dict[str, Any]]:
         data_stores = []
 
         query = db.session.query(JSONDataStoreModel.name, JSONDataStoreModel.identifier, JSONDataStoreModel.location)
-        if process_group_identifier is not None:
-            query = query.filter_by(location=process_group_identifier)
+        if process_group_identifiers:
+            query = query.filter(JSONDataStoreModel.location.in_(process_group_identifiers))  # type: ignore
         keys = query.order_by(JSONDataStoreModel.name).all()
         for key in keys:
             data_stores.append({"name": key[0], "type": "json", "id": key[1], "clz": "JSONDataStore", "location": key[2]})

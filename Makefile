@@ -18,6 +18,8 @@ IN_ARENA ?= $(DOCKER_COMPOSE) run $(ARENA_CONTAINER)
 IN_BACKEND ?= $(DOCKER_COMPOSE) run $(BACKEND_CONTAINER)
 IN_FRONTEND ?= $(DOCKER_COMPOSE) run $(FRONTEND_CONTAINER)
 
+SPIFFWORKFLOW_BACKEND_ENV ?= local_development
+
 YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
 	-f $(FRONTEND_DEV_OVERLAY) \
@@ -29,7 +31,7 @@ all: dev-env start-dev run-pyl
 build-images:
 	$(DOCKER_COMPOSE) build
 
-dev-env: build-images fe-npm-i be-recreate-db
+dev-env: stop-dev build-images poetry-i be-poetry-i be-recreate-db fe-npm-i
 	@/bin/true
 
 start-dev: stop-dev
@@ -41,8 +43,14 @@ stop-dev:
 be-clear-log-file:
 	$(IN_BACKEND) rm -f log/unit_testing.log
 
+be-logs:
+	docker logs -f $(BACKEND_CONTAINER)
+
 be-mypy:
 	$(IN_BACKEND) poetry run mypy src tests
+
+be-poetry-i:
+	$(IN_BACKEND) poetry install
 
 be-recreate-db:
 	$(IN_BACKEND) ./bin/recreate_db clean
@@ -53,6 +61,13 @@ be-ruff:
 be-sh:
 	$(IN_BACKEND) /bin/bash
 
+be-sqlite:
+	@if [ ! -f "$(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3" ]; then \
+		echo "SQLite database file does not exist: $(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3"; \
+		exit 1; \
+	fi
+	$(IN_BACKEND) sqlite3 src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+
 be-tests: be-clear-log-file
 	$(IN_BACKEND) poetry run pytest
 
@@ -62,11 +77,17 @@ be-tests-par: be-clear-log-file
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix
 
+fe-logs:
+	docker logs -f $(FRONTEND_CONTAINER)
+
 fe-npm-i:
-	$(IN_FRONTEND) npm i
+	$(IN_FRONTEND) npm i && git checkout -- spiffworkflow-frontend/package-lock.json
 
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
+
+poetry-i:
+	$(IN_ARENA) poetry install --no-root
 
 pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
@@ -82,7 +103,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-recreate-db be-ruff be-sh be-tests be-tests-par \
-	fe-lint-fix fe-npm-i fe-sh \
-	pre-commit run-pyl \
+	be-clear-log-file be-logs be-mypy be-poetry-i be-recreate-db be-ruff be-sh be-sqlite be-tests be-tests-par \
+	fe-lint-fix fe-logs fe-npm-i fe-sh \
+	poetry-i pre-commit run-pyl \
 	take-ownership
