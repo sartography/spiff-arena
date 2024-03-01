@@ -7,6 +7,6 @@ services:
     user: "${RUN_AS}"
     environment:
       POETRY_VIRTUALENVS_IN_PROJECT: "true"
-      PRE_COMMIT_HOME: "/app/.cache/pre-commit"
+      XDG_CACHE_HOME: "/app/.cache"
     volumes:
       - ./:/app
