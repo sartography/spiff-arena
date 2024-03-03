@@ -43,17 +43,39 @@ class BpmnFileMissingExecutableProcessError(Exception):
 
 
 class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
-    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
+    def __init__(self, method_overrides: dict | None = None) -> None:
+        self.method_overrides = method_overrides
+        super().__init__()
+
+    def _get_all_methods_for_context(self, external_context: dict[str, Any] | None) -> dict:
         methods = {
             "get_process_initiator_user": lambda: {
                 "username": "test_username_a",
                 "tenant_specific_field_1": "test_tenant_specific_field_1_a",
             },
         }
+
+        if self.method_overrides:
+            methods = {**methods, **self.method_overrides}
+
         if external_context:
             methods.update(external_context)
+
+        return methods
+
+    def evaluate(self, task: SpiffTask, expression: str, external_context: dict[str, Any] | None = None) -> Any:
+        """
+        Evaluate the given expression, within the context of the given task and
+        return the result.
+        """
+        updated_context = self._get_all_methods_for_context(external_context)
+        return super().evaluate(task, expression, updated_context)
+
+    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
         if script:
+            methods = self._get_all_methods_for_context(external_context)
             super().execute(task, script, methods)
+
         return True
 
     def call_service(
@@ -146,17 +168,6 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             bpmn_process_spec,
             subprocess_specs=subprocesses,
         )
-        bpmn_process_instance.script_engine = ProcessModelTestRunnerScriptEngine()
-
-        # we do not want to call the real get_process_initiator_user script, since it depends on a process instance
-        # that does not actually exist
-        overridden_methods = {
-            "get_process_initiator_user": lambda: {
-                "username": "test_username_a",
-                "tenant_specific_field_1": "test_tenant_specific_field_1_a",
-            },
-        }
-        bpmn_process_instance.script_engine.method_overrides = overridden_methods
         return bpmn_process_instance
 
     def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
@@ -339,6 +350,11 @@ class ProcessModelTestRunner:
 
     def run_test_case(self, bpmn_file: str, test_case_identifier: str, test_case_contents: dict) -> None:
         bpmn_process_instance = self._instantiate_executer(bpmn_file)
+        method_overrides = {}
+        if "mocks" in test_case_contents:
+            for method_name, mock_return_value in test_case_contents["mocks"].items():
+                method_overrides[method_name] = lambda value=mock_return_value: value
+        bpmn_process_instance.script_engine = ProcessModelTestRunnerScriptEngine(method_overrides=method_overrides)
         next_task = self._get_next_task(bpmn_process_instance)
         while next_task is not None:
             test_case_task_properties = None
