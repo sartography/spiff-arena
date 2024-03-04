@@ -2975,7 +2975,7 @@ doc = ["sphinx", "sphinx_rtd_theme"]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "cdf7fc46d2e00f213d296b9055cf2e17bde2e1dc"
+resolved_reference = "32c00e4a276b931aace9c9e9491cdb18011e6780"
 
 [[package]]
 name = "spiffworkflow-connector-command"
