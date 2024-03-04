@@ -33,7 +33,6 @@ sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
-pymysql = "1.1.0"
 openai = "^1.1.0"
 
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
