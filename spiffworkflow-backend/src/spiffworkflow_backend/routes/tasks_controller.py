@@ -67,7 +67,6 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceExecutionMode
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -558,7 +557,7 @@ def task_submit(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
-    execution_mode: str = ProcessInstanceExecutionMode.asynchronous.value,
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
         return _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
@@ -877,7 +876,7 @@ def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
-    execution_mode: str = ProcessInstanceExecutionMode.asynchronous.value,
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
