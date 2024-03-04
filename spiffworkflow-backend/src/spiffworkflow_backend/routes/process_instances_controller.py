@@ -656,9 +656,9 @@ def _process_instance_run(
 
     processor = None
     try:
-        if ProcessInstanceService.should_queue_process_instance(process_instance, execution_mode):
-            queue_process_instance_if_appropriate(process_instance)
-        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+        if not queue_process_instance_if_appropriate(
+            process_instance, execution_mode=execution_mode
+        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
             processor, _ = ProcessInstanceService.run_process_instance_with_processor(process_instance)
     except (
         ApiError,

@@ -20,9 +20,6 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_enabled_for_process_model,
-)
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
@@ -49,7 +46,6 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceExecutionMode
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
@@ -466,19 +462,6 @@ class ProcessInstanceService:
         DeepMerge.merge(spiff_task.data, data)
 
     @classmethod
-    def should_queue_process_instance(cls, process_instance: ProcessInstanceModel, execution_mode: str | None = None) -> bool:
-        if execution_mode == ProcessInstanceExecutionMode.asynchronous.value:
-            if queue_enabled_for_process_model(process_instance):
-                return True
-            else:
-                raise ApiError(
-                    error_code="async_mode_called_without_celery",
-                    message="Execution mode asynchronous requested but SPIFFWORKFLOW_BACKEND_CELERY_ENABLED is not set to true.",
-                    status_code=400,
-                )
-        return False
-
-    @classmethod
     def complete_form_task(
         cls,
         processor: ProcessInstanceProcessor,
@@ -497,8 +480,8 @@ class ProcessInstanceService:
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        if cls.should_queue_process_instance(processor.process_instance_model, execution_mode):
-            queue_process_instance_if_appropriate(processor.process_instance_model)
+        if queue_process_instance_if_appropriate(processor.process_instance_model, execution_mode):
+            return
         elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
             with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
                 # maybe move this out once we have the interstitial page since this is here just so we can get the next human task

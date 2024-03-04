@@ -2,7 +2,6 @@
 #   where this points to the pi service
 import copy
 import decimal
-import enum
 import json
 import logging
 import os
@@ -126,11 +125,6 @@ SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
 SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
-
-
-class ProcessInstanceExecutionMode(enum.Enum):
-    asynchronous = "asynchronous"
-    synchronous = "synchronous"
 
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
