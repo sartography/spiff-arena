@@ -7,6 +7,7 @@ from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
 from typing import Any
+from typing import cast
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -179,10 +180,11 @@ class AuthenticationService:
     def parse_jwt_token(cls, authentication_identifier: str, token: str) -> dict:
         header = jwt.get_unverified_header(token)
         key_id = str(header.get("kid"))
+        parsed_token: dict | None = None
 
         # if the token has our key id then we issued it and should verify to ensure it's valid
         if key_id == SPIFF_GENERATED_JWT_KEY_ID:
-            return jwt.decode(
+            parsed_token = jwt.decode(
                 token,
                 str(current_app.secret_key),
                 algorithms=[SPIFF_GENERATED_JWT_ALGORITHM],
@@ -204,13 +206,14 @@ class AuthenticationService:
             # as such, we cannot simply pull the first valid audience out of cls.valid_audiences(authentication_identifier)
             # and then shove it into decode (it will raise), but we need the algorithm from validate_decoded_token that checks
             # if the audience in the token matches any of the valid audience values. Therefore do not check aud here.
-            return jwt.decode(
+            parsed_token = jwt.decode(
                 token,
                 public_key,
                 algorithms=[algorithm],
                 audience=cls.valid_audiences(authentication_identifier)[0],
                 options={"verify_exp": False, "verify_aud": False},
             )
+        return cast(dict, parsed_token)
 
     @staticmethod
     def get_backend_url() -> str:

@@ -5,9 +5,11 @@ import re
 import traceback
 from abc import abstractmethod
 from dataclasses import dataclass
+from typing import Any
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -38,6 +40,51 @@ class UnsupporterRunnerDelegateGivenError(Exception):
 
 class BpmnFileMissingExecutableProcessError(Exception):
     pass
+
+
+class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
+    def __init__(self, method_overrides: dict | None = None) -> None:
+        self.method_overrides = method_overrides
+        super().__init__()
+
+    def _get_all_methods_for_context(self, external_context: dict[str, Any] | None) -> dict:
+        methods = {
+            "get_process_initiator_user": lambda: {
+                "username": "test_username_a",
+                "tenant_specific_field_1": "test_tenant_specific_field_1_a",
+            },
+        }
+
+        if self.method_overrides:
+            methods = {**methods, **self.method_overrides}
+
+        if external_context:
+            methods.update(external_context)
+
+        return methods
+
+    def evaluate(self, task: SpiffTask, expression: str, external_context: dict[str, Any] | None = None) -> Any:
+        """
+        Evaluate the given expression, within the context of the given task and
+        return the result.
+        """
+        updated_context = self._get_all_methods_for_context(external_context)
+        return super().evaluate(task, expression, updated_context)
+
+    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
+        if script:
+            methods = self._get_all_methods_for_context(external_context)
+            super().execute(task, script, methods)
+
+        return True
+
+    def call_service(
+        self,
+        operation_name: str,
+        operation_params: dict[str, Any],
+        spiff_task: SpiffTask,
+    ) -> str:
+        raise Exception("please override this service task in your bpmn unit test json")
 
 
 @dataclass
@@ -108,6 +155,10 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             raise BpmnFileMissingExecutableProcessError(f"Executable process cannot be found in {bpmn_file}. Test cannot run.")
 
         all_related = self._find_related_bpmn_files(bpmn_file)
+
+        # get unique list of related files
+        all_related = list(set(all_related))
+
         for related_file in all_related:
             self._add_bpmn_file_to_parser(parser, related_file)
 
@@ -299,6 +350,11 @@ class ProcessModelTestRunner:
 
     def run_test_case(self, bpmn_file: str, test_case_identifier: str, test_case_contents: dict) -> None:
         bpmn_process_instance = self._instantiate_executer(bpmn_file)
+        method_overrides = {}
+        if "mocks" in test_case_contents:
+            for method_name, mock_return_value in test_case_contents["mocks"].items():
+                method_overrides[method_name] = lambda value=mock_return_value: value
+        bpmn_process_instance.script_engine = ProcessModelTestRunnerScriptEngine(method_overrides=method_overrides)
         next_task = self._get_next_task(bpmn_process_instance)
         while next_task is not None:
             test_case_task_properties = None
@@ -444,7 +500,7 @@ class ProcessModelTestRunner:
         return test_mappings
 
 
-class ProcessModeltTestRunnerBackendDelegate(ProcessModelTestRunnerMostlyPureSpiffDelegate):
+class ProcessModelTestRunnerBackendDelegate(ProcessModelTestRunnerMostlyPureSpiffDelegate):
     pass
 
 
@@ -459,7 +515,7 @@ class ProcessModelTestRunnerService:
             process_model_directory_path,
             test_case_file=test_case_file,
             test_case_identifier=test_case_identifier,
-            process_model_test_runner_delegate_class=ProcessModeltTestRunnerBackendDelegate,
+            process_model_test_runner_delegate_class=ProcessModelTestRunnerBackendDelegate,
         )
 
     def run(self) -> None:

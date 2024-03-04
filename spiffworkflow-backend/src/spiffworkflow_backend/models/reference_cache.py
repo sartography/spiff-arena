@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from flask_marshmallow import Schema  # type: ignore
+from flask_marshmallow import Schema
 from marshmallow import INCLUDE
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
@@ -142,7 +142,7 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
 
 
 # SpecReferenceSchema
-class ReferenceSchema(Schema):  # type: ignore
+class ReferenceSchema(Schema):
     class Meta:
         model = Reference
         fields = [

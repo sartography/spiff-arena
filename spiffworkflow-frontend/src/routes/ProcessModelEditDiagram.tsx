@@ -17,6 +17,9 @@ import {
   TextInput,
   Grid,
   Column,
+  Stack,
+  TextArea,
+  InlineLoading,
 } from '@carbon/react';
 import {
   SkipForward,
@@ -24,7 +27,9 @@ import {
   PlayOutline,
   Close,
   Checkmark,
+  Information,
 } from '@carbon/icons-react';
+import { gray } from '@carbon/colors';
 
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
@@ -49,6 +54,9 @@ import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
+import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
+import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
+import SpiffTooltip from '../components/SpiffTooltip';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -87,6 +95,14 @@ export default function ProcessModelEditDiagram() {
   const monacoRef = useRef(null);
 
   const failingScriptLineClassNamePrefix = 'failingScriptLineError';
+
+  const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
+  const [scriptAssistError, setScriptAssistError] = useState<string | null>(
+    null
+  );
+  const { scriptAssistEnabled } = useScriptAssistEnabled();
+  const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
+    useProcessScriptAssistMessage();
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -499,6 +515,24 @@ export default function ProcessModelEditDiagram() {
     setScriptText(value);
   };
 
+  /**
+   * When the value of the Editor is updated dynamically async,
+   * it doesn't seem to fire an onChange (discussions as recent as 4.2.1).
+   * The straightforward recommended fix is to handle manually, so when
+   * the scriptAssistResult is updated, call the handler manually.
+   */
+  useEffect(() => {
+    if (scriptAssistResult) {
+      if (scriptAssistResult.result) {
+        handleEditorScriptChange(scriptAssistResult.result);
+      } else if (scriptAssistResult.error_code && scriptAssistResult.message) {
+        setScriptAssistError(scriptAssistResult.message);
+      } else {
+        setScriptAssistError('Received unexpected response from server.');
+      }
+    }
+  }, [scriptAssistResult]);
+
   const handleEditorScriptTestUnitInputChange = (value: any) => {
     if (currentScriptUnitTest) {
       currentScriptUnitTest.inputJson.value = value;
@@ -819,10 +853,9 @@ export default function ProcessModelEditDiagram() {
     }
     return null;
   };
-  const scriptEditor = () => {
-    if (!showScriptEditor) {
-      return null;
-    }
+
+  /* Main python script editor user works in */
+  const editorWindow = () => {
     return (
       <Editor
         height={500}
@@ -830,11 +863,106 @@ export default function ProcessModelEditDiagram() {
         options={generalEditorOptions()}
         defaultLanguage="python"
         defaultValue={scriptText}
+        value={scriptText}
         onChange={handleEditorScriptChange}
         onMount={handleEditorDidMount}
       />
     );
   };
+
+  /**
+   * When user clicks script assist button, set useScriptAssistQuery hook with query.
+   * This will async update scriptAssistResult as needed.
+   */
+  const handleProcessScriptAssist = () => {
+    if (scriptAssistValue) {
+      try {
+        setScriptAssistQuery(scriptAssistValue);
+        setScriptAssistError(null);
+      } catch (error) {
+        setScriptAssistError(`Failed to process script assist query: ${error}`);
+      }
+    } else {
+      setScriptAssistError('Please provide instructions for your script!');
+    }
+  };
+
+  /* If the Script Assist tab is enabled (via scriptAssistEnabled), this is the UI */
+  const scriptAssistWindow = () => {
+    return (
+      <>
+        <TextArea
+          placeholder="Ask Spiff AI"
+          rows={20}
+          value={scriptAssistValue}
+          onChange={(e: any) => setScriptAssistValue(e.target.value)}
+        />
+        <Stack
+          className="flex-justify-end flex-align-horizontal-center"
+          orientation="horizontal"
+          gap={5}
+        >
+          {scriptAssistError && (
+            <div className="error-text-red">{scriptAssistError}</div>
+          )}
+          {scriptAssistLoading && (
+            <InlineLoading
+              status="active"
+              iconDescription="Loading"
+              description="Fetching script..."
+            />
+          )}
+          <Button
+            className="m-top-10"
+            kind="secondary"
+            onClick={() => handleProcessScriptAssist()}
+            disabled={scriptAssistLoading}
+          >
+            Ask Spiff AI
+          </Button>
+        </Stack>
+      </>
+    );
+  };
+
+  const scriptEditor = () => {
+    return (
+      <Grid fullwidth>
+        <Column lg={16} md={8} sm={4}>
+          {editorWindow()}
+        </Column>
+      </Grid>
+    );
+  };
+
+  const scriptEditorWithAssist = () => {
+    return (
+      <Grid fullwidth>
+        <Column lg={10} md={4} sm={2}>
+          {editorWindow()}
+        </Column>
+        <Column lg={6} md={4} sm={2}>
+          <Stack
+            gap={3}
+            orientation="horizontal"
+            className="stack-align-content-horizontal p-bottom-10"
+            color={gray[50]}
+          >
+            <SpiffTooltip title="Use natural language to create your script. Hint: start basic and edit to tweak.">
+              <Stack className="gray-text flex-align-horizontal-center">
+                <Information size={14} />
+                <Stack className="p-left-10 not-editable">
+                  Create a python script that...
+                </Stack>
+              </Stack>
+            </SpiffTooltip>
+          </Stack>
+          {scriptAssistWindow()}
+        </Column>
+      </Grid>
+    );
+  };
+
   const scriptEditorAndTests = () => {
     if (!showScriptEditor) {
       return null;
@@ -855,10 +983,14 @@ export default function ProcessModelEditDiagram() {
         <Tabs>
           <TabList aria-label="List of tabs" activation="manual">
             <Tab>Script Editor</Tab>
+            {scriptAssistEnabled && <Tab>Script Assist</Tab>}
             <Tab>Unit Tests</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>{scriptEditor()}</TabPanel>
+            {scriptAssistEnabled && (
+              <TabPanel>{scriptEditorWithAssist()}</TabPanel>
+            )}
             <TabPanel>{scriptUnitTestEditorElement()}</TabPanel>
           </TabPanels>
         </Tabs>
