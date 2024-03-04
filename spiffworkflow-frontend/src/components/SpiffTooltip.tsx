@@ -11,7 +11,12 @@ interface OwnProps {
 
 export default function SpiffTooltip({ title, children }: OwnProps) {
   return (
-    <Tooltip title={title} arrow enterDelay={500}>
+    <Tooltip
+      title={title}
+      arrow
+      enterDelay={500}
+      PopperProps={{ style: { zIndex: 9999 } }}
+    >
       {children}
     </Tooltip>
   );

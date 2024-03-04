@@ -19,6 +19,7 @@ paths:
       responses:
         "200":
           description: Redirects to authentication server
+
   /login:
     parameters:
       - name: authentication_identifier
@@ -172,6 +173,43 @@ paths:
       responses:
         "200":
           description: Test Return Response
+
+  /script-assist/enabled:
+    get:
+      operationId: spiffworkflow_backend.routes.script_assist_controller.enabled
+      summary: Returns value of SCRIPT_ASSIST_ENABLED
+      tags:
+        - AI Tools
+      responses:
+        "200":
+          description: Returns if AI script should be enabled in UI
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /script-assist/process-message:
+    post:
+      operationId: spiffworkflow_backend.routes.script_assist_controller.process_message
+      summary: Send natural language message in for processing by AI service
+      tags:
+        - AI Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                query:
+                  type: string
+                  description: The natural language message to be processed.
+      responses:
+        "200":
+          description: Send back AI service response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /status:
     get:
