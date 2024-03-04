@@ -1,6 +1,7 @@
 # Error Events
 
-Error Events in Business Process Model and Notation (BPMN) are pivotal in managing exceptions and errors that occur within business process workflows. These events enable processes to handle errors gracefully, ensuring that workflows are robust, resilient, and capable of addressing unforeseen issues efficiently. Below, we delve into the types of Error Events, offering definitions and enriched context for their practical applications.
+Error Events in Business Process Model and Notation (BPMN) are pivotal in managing exceptions and errors that occur within business process workflows. These events enable processes to handle errors gracefully, ensuring that workflows are robust, resilient, and capable of addressing unforeseen issues efficiently.
+ Below, we delve into the types of Error Events, offering definitions and enriched context for their practical applications.
 
 ## Types of Error Events
 
@@ -22,7 +23,7 @@ The Error Start Event triggers the start of a subprocess in reaction to an error
 In an automated supply chain system, an Error Start Event initiates a "Supplier Notification" subprocess when inventory restocking fails due to supplier issues, triggering actions such as alternative supplier selection and impact analysis.
 
 ```{admonition} Note
-⚠ The start event needs to be in an **event sub process** to be selected..
+⚠ The start event needs to be in an **event sub process** to be selected.
 ``` 
 
 ### 2. Error Intermediate Event/Error Boundary Event
@@ -42,7 +43,7 @@ Positioned within the normal flow of a process, this event signifies where an er
 
 ![Error Boundary Event Error Event](images/error_boundary_event.png)
 
-In a customer order workflow, when payment is initiated, a "Process Payment" service task interacts with an external gateway. An attached Error Boundary Event catches errors like "Payment Gateway Timeout" or "Payment Declined." For timeouts, the process redirects to "Retry Payment," allowing another attempt or urging the customer to use a different method.This setup ensures efficient error handling, guiding the process toward res olution based on the error type.
+In a customer order workflow, when payment is initiated, a "Process Payment" service task interacts with an external gateway. An attached Error Boundary Event catches errors like "Payment Gateway Timeout" or "Payment Declined." For timeouts, the process redirects to "Retry Payment," allowing another attempt or urging the customer to use a different method. This setup ensures efficient error handling, guiding the process toward resolution based on the error type.
 
 
 
@@ -62,4 +63,4 @@ In a retail inventory management workflow, an End Error Event within a stock rep
 
 ### Conclusion
 
-Error Events in BPMN offer a nuanced approach to managing errors within business processes. By defining Error Start, Intermediate, End, and Boundary Events, BPMN provides process designers with the tools necessary to anticipate, signal, and handle errors efficiently. This layered approach to error management not only enhances process resilience but also contributes to clearer, more maintainable workflow designs.
+Error Events in BPMN offer a nuanced approach to managing errors within business processes. By defining Error Start, End, and Boundary Events, BPMN provides process designers with the tools necessary to anticipate, signal, and handle errors efficiently.
