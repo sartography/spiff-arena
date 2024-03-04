@@ -82,13 +82,12 @@ class DataSetupService:
                                     correlation_key["id"],
                                     correlation_key["id"],
                                     ReferenceType.correlation_key.value,
-                                    '',
+                                    "",
                                     FileSystemService.relative_location(file),
                                     correlation_key["correlation_properties"],
                                     False,
                                 )
-                                ReferenceCacheService.add_unique_reference_cache_object(reference_objects,
-                                                                                        reference_cache)
+                                ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
 
                         for message in data["messages"]:
                             properties = []
@@ -96,12 +95,12 @@ class DataSetupService:
                                 message["id"],
                                 message["id"],
                                 ReferenceType.message.value,
-                                '',
+                                "",
                                 FileSystemService.relative_location(file),
                                 None,
                                 False,
                             )
-                            reference_cache.properties = { "correlations": [], "correlation_keys": [] }
+                            reference_cache.properties = {"correlations": [], "correlation_keys": []}
                             if "correlation_properties" in data:
                                 for correlation in data["correlation_properties"]:
                                     for retrieval_expression in correlation["retrieval_expressions"]:

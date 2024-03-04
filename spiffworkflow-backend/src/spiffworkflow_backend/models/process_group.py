@@ -20,8 +20,7 @@ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "description",
     "messages",
     "correlation_keys",
-    "correlation_properties"
-    "data_store_specifications"
+    "correlation_propertiesdata_store_specifications",
 ]
 
 
@@ -39,7 +38,6 @@ class ProcessGroup:
     messages: list[MessageModel] | None = None
     correlation_keys: list[CorrelationKey] | None = None
     correlation_properties: list[CorrelationProperty] | None = None
-
 
     # TODO: delete these once they no no longer mentioned in current
     # process_group.json files
@@ -76,14 +74,16 @@ class ProcessGroupSchema(Schema):
             "process_groups",
             "messages",
             "correlation_keys",
-            "correlation_properties"
+            "correlation_properties",
         ]
 
     process_models = marshmallow.fields.List(marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False))
     process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
     messages = marshmallow.fields.List(marshmallow.fields.Nested("MessageSchema", dump_only=True, required=False))
     correlation_keys = marshmallow.fields.List(marshmallow.fields.Nested("CorrelationKeySchema", dump_only=True, required=False))
-    correlation_properties = marshmallow.fields.List(marshmallow.fields.Nested("CorrelationPropertySchema", dump_only=True, required=False))
+    correlation_properties = marshmallow.fields.List(
+        marshmallow.fields.Nested("CorrelationPropertySchema", dump_only=True, required=False)
+    )
 
     @post_load
     def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:

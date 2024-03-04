@@ -57,7 +57,7 @@ class ReferenceCacheService:
     @classmethod
     def upsearch_locations(cls, location: str) -> list[str]:
         locations = []
-        locations.append("") # Always include the top level.
+        locations.append("")  # Always include the top level.
         while location != "":
             locations.append(location)
             location = os.path.dirname(location)

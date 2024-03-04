@@ -335,4 +335,3 @@ class SpecFileService(FileSystemService):
                 current_triggerable_processes.remove(message_triggerable_process_model)
         for trigger_pm in current_triggerable_processes:
             db.session.delete(trigger_pm)
-

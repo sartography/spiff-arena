@@ -52,10 +52,7 @@ class CorrelationKey:
 class CorrelationKeySchema(Schema):
     class Meta:
         model = MessageModel
-        fields = [
-            "id",
-            "correlation_properties"
-        ]
+        fields = ["id", "correlation_properties"]
 
     @post_load
     def make_key(self, data: dict[str, str | bool | int], **kwargs: dict) -> CorrelationKey:
@@ -69,6 +66,7 @@ class RetrievalExpression:
 
     def serialized(self) -> dict:
         return dataclasses.asdict(self)
+
 
 class RetrievalExpressionSchema(Schema):
     class Meta:

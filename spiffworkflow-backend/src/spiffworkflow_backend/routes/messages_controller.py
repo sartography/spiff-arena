@@ -22,10 +22,10 @@ from spiffworkflow_backend.services.reference_cache_service import ReferenceCach
 
 
 def reference_cache_list(
-        cache_type: str,
-        relative_location: str | None = None,
-        page: int = 1,
-        per_page: int = 100,
+    cache_type: str,
+    relative_location: str | None = None,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     query = ReferenceCacheModel.basic_query().filter_by(type=cache_type)
     if relative_location:
@@ -44,10 +44,10 @@ def reference_cache_list(
     return make_response(jsonify(response_json), 200)
 
 
-def message_model_list_old (
-        relative_location: str | None = None,
-        page: int = 1,
-        per_page: int = 100,
+def message_model_list_old(
+    relative_location: str | None = None,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     return reference_cache_list(
         cache_type=ReferenceType.message.value,
@@ -58,7 +58,6 @@ def message_model_list_old (
 
 
 def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
-
     # Returns all the messages, correlation keys, and correlation properties that exist at the given
     # relative location or higher in the directory tree, presents it in the same format as you would
     # find in a single process group file.
@@ -85,11 +84,10 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     return make_response(jsonify(response_json), 200)
 
 
-
 def correlation_key_list(
-        relative_location: str | None = None,
-        page: int = 1,
-        per_page: int = 100,
+    relative_location: str | None = None,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     return reference_cache_list(
         cache_type=ReferenceType.correlation_key.value,

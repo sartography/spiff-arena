@@ -7,18 +7,18 @@
     <bpmn:sequenceFlow id="Flow_1wvtd9f" sourceRef="StartEvent_1" targetRef="Activity_1f9v5wa" />
     <bpmn:endEvent id="Event_1wckt3w">
       <bpmn:extensionElements>
-        <spiffworkflow:instructionsForEndUser>### Checkout the BPMN! 
+        <spiffworkflow:instructionsForEndUser>### Checkout the BPMN!
 
 Open up this diagram in edit mode where you can move things around and view task properties, but you won't be able to save these demos.   To do this, click on "Displaying Content" in the Breadcrumbs above, then open the file "show-content.bpmn".  Click on the manual tasks and will see they each have content in their "Instructions" in the properties panel on the right.  You can open these instructions in the markdown editor by clicking on the "Launch Editor" button which provides a great way to see how Markdown and Jinja can be used to create content.
 
-### Build a BPMN process yourself! 
-Complete the [Request a Playground](/process-models/examples:0-4-request-permissions) task to get access to your own private area of this Demo SpiffWorkflow instance.  There you can build your own documentation! 
+### Build a BPMN process yourself!
+Complete the [Request a Playground](/process-models/examples:0-4-request-permissions) task to get access to your own private area of this Demo SpiffWorkflow instance.  There you can build your own documentation!
 
 ### Get Involved!
 Please get in touch with us!  We would love to help you build beautiful documentation into your workflows.  There is no end to what we can accomplish if we work together.  Please reach out to Dan at  [dan@sartography.com](mailto:dan@sartography.com)  to get started.
 
 ### What's Next?
-Check out the some of the other [basic examples](/process-groups/examples:1-basic-concepts) to learn more. 
+Check out the some of the other [basic examples](/process-groups/examples:1-basic-concepts) to learn more.
 
 </spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
@@ -30,14 +30,14 @@ Check out the some of the other [basic examples](/process-groups/examples:1-basi
         <spiffworkflow:instructionsForEndUser>We use two open standards for displaying content.
 
 ### 1. Markdown
-Markdown provides some minimal tools for formatting text.  It can handle basic formatting from **bold text** to headings, tables, lists, etc...  It is not the most expressive possible way of writing content, but it does help standardize your documentation and assure it can be easily updated by anyone else.   The [Markdown Guilde](https://www.markdownguide.org/getting-started/) provides excellent information on the standard, how to use it, and why it is useful.  
+Markdown provides some minimal tools for formatting text.  It can handle basic formatting from **bold text** to headings, tables, lists, etc...  It is not the most expressive possible way of writing content, but it does help standardize your documentation and assure it can be easily updated by anyone else.   The [Markdown Guilde](https://www.markdownguide.org/getting-started/) provides excellent information on the standard, how to use it, and why it is useful.
 
-### 2. Jinja  
+### 2. Jinja
 As a workflow process runs, it collects information from many sources.  User Tasks collect information from Web Forms, Service Tasks can pull information from other applications - these are just two examples of many.  This data is collected and can be used in later tasks in the process.  One way to use the information is to display it, which is where Jinja comes into play.  While there is a lot that can be done in Jinja, you can go a very long way knowing one simple rule:
 
 &gt; Wrap variables you want to display in double curly brackets like this \{\{my_variable\}\}
 
-This will allow you to take any information you have available and present it back to the end user.  You can learn more about the Jinja syntax in the [official documentation](https://jinja.palletsprojects.com/en/3.1.x/templates/).  It isn't just variable replacement.  You can use it to hide information under certain circumstances, or display lots of data in a list or table.  It is very powerful. 
+This will allow you to take any information you have available and present it back to the end user.  You can learn more about the Jinja syntax in the [official documentation](https://jinja.palletsprojects.com/en/3.1.x/templates/).  It isn't just variable replacement.  You can use it to hide information under certain circumstances, or display lots of data in a list or table.  It is very powerful.
 
 ## Whats Next:
 Let's complete a simple form so you can enter some information.  We'll also run a script in the background that will generate some additional variables.  We'll take this data, and present it in another manual task.</spiffworkflow:instructionsForEndUser>
