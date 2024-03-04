@@ -24,6 +24,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
+from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
@@ -89,13 +91,21 @@ class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
         self.method_overrides = method_overrides
         super().__init__(environment=environment)
 
-    def _get_all_methods_for_context(self, external_context: dict[str, Any] | None) -> dict:
+    def _get_all_methods_for_context(self, external_context: dict[str, Any] | None, task: SpiffTask | None = None) -> dict:
         methods = {
             "get_process_initiator_user": lambda: {
                 "username": "test_username_a",
                 "tenant_specific_field_1": "test_tenant_specific_field_1_a",
             },
         }
+
+        script_attributes_context = ScriptAttributesContext(
+            task=task,
+            environment_identifier="mocked-environment-identifier",
+            process_instance_id=1,
+            process_model_identifier="fake-test-process-model-identifier",
+        )
+        methods = Script.generate_augmented_list(script_attributes_context)
 
         if self.method_overrides:
             methods = {**methods, **self.method_overrides}
@@ -105,17 +115,15 @@ class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
 
         return methods
 
+    # Evaluate the given expression, within the context of the given task and
+    # return the result.
     def evaluate(self, task: SpiffTask, expression: str, external_context: dict[str, Any] | None = None) -> Any:
-        """
-        Evaluate the given expression, within the context of the given task and
-        return the result.
-        """
-        updated_context = self._get_all_methods_for_context(external_context)
+        updated_context = self._get_all_methods_for_context(external_context, task)
         return super().evaluate(task, expression, updated_context)
 
     def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
         if script:
-            methods = self._get_all_methods_for_context(external_context)
+            methods = self._get_all_methods_for_context(external_context, task)
             super().execute(task, script, methods)
 
         return True
