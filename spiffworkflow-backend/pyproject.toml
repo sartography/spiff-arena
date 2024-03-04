@@ -17,7 +17,7 @@ Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-flask = "2.2.5"
+flask = "2.3.3"
 flask-admin = "*"
 flask-bcrypt = "*"
 flask-cors = "*"
