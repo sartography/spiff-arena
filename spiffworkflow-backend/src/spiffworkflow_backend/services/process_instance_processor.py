@@ -1057,7 +1057,6 @@ class ProcessInstanceProcessor:
                     self._workflow_completed_handler(self.process_instance_model)
 
         db.session.add(self.process_instance_model)
-        db.session.commit()
 
         human_tasks = HumanTaskModel.query.filter_by(process_instance_id=self.process_instance_model.id, completed=False).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
@@ -1121,13 +1120,11 @@ class ProcessInstanceProcessor:
                         human_task_user = HumanTaskUserModel(user_id=potential_owner_id, human_task=human_task)
                         db.session.add(human_task_user)
 
-                    db.session.commit()
-
         if len(human_tasks) > 0:
             for at in human_tasks:
                 at.completed = True
                 db.session.add(at)
-            db.session.commit()
+        db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
         """Get a serialized version of a task spec."""
