@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
+from spiffworkflow_backend.services.message_service import MessageService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -101,7 +102,7 @@ class TestMessages(BaseTest):
         self.copy_example_process_models()
         DataSetupService.save_all_process_models()
 
-        updated_xml = MessageSerice.updateProcessModelXmlWithMessageDetails(
+        updated_xml = MessageService.updateProcessModelXmlWithMessageDetails(
             process_model_xml,
             message_details
         )
