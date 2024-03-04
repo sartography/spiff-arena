@@ -27,6 +27,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -484,8 +485,12 @@ class ProcessInstanceService:
             return
         elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
             with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                execution_strategy_name = None
+                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                    execution_strategy_name = "greedy"
+
                 # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-                processor.do_engine_steps(save=True)
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(

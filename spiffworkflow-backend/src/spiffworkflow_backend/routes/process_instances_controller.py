@@ -1,3 +1,5 @@
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
+
 # black and ruff are in competition with each other in import formatting so ignore ruff
 # ruff: noqa: I001
 
@@ -659,7 +661,12 @@ def _process_instance_run(
         if not queue_process_instance_if_appropriate(
             process_instance, execution_mode=execution_mode
         ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-            processor, _ = ProcessInstanceService.run_process_instance_with_processor(process_instance)
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                execution_strategy_name = "greedy"
+            processor, _ = ProcessInstanceService.run_process_instance_with_processor(
+                process_instance, execution_strategy_name=execution_strategy_name
+            )
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,
