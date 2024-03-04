@@ -1,13 +1,22 @@
+import decimal
 import glob
 import json
 import os
 import re
+import time
 import traceback
+import uuid
 from abc import abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
 from typing import Any
 
+import _strptime  # type: ignore
+import dateparser
+import pytz
 from lxml import etree  # type: ignore
+from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -16,6 +25,8 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
+from spiffworkflow_backend.services.jinja_service import JinjaHelpers
+from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
 
 
 class UnrunnableTestCaseError(Exception):
@@ -42,10 +53,41 @@ class BpmnFileMissingExecutableProcessError(Exception):
     pass
 
 
+def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
+    if name not in glbls:
+        raise ImportError(f"Import not allowed: {name}", name=name)
+
+
 class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
     def __init__(self, method_overrides: dict | None = None) -> None:
+        default_globals = {
+            "_strptime": _strptime,
+            "dateparser": dateparser,
+            "datetime": datetime,
+            "decimal": decimal,
+            "dict": dict,
+            "enumerate": enumerate,
+            "filter": filter,
+            "format": format,
+            "json": json,
+            "list": list,
+            "map": map,
+            "pytz": pytz,
+            "set": set,
+            "sum": sum,
+            "time": time,
+            "timedelta": timedelta,
+            "uuid": uuid,
+            **JinjaHelpers.get_helper_mapping(),
+        }
+
+        # This will overwrite the standard builtins
+        default_globals.update(safe_globals)
+        default_globals["__builtins__"]["__import__"] = _import
+
+        environment = CustomScriptEngineEnvironment(default_globals)
         self.method_overrides = method_overrides
-        super().__init__()
+        super().__init__(environment=environment)
 
     def _get_all_methods_for_context(self, external_context: dict[str, Any] | None) -> dict:
         methods = {
