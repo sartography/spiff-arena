@@ -518,6 +518,6 @@ export interface SpiffTab {
 }
 
 export interface SpiffTableHeader {
-  tooltip_text: string;
+  tooltip_text?: string;
   text: string;
 }

@@ -362,11 +362,12 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         task: SpiffTask | None = None,
         external_context: dict[str, Any] | None = None,
     ) -> Any:
+        """Evaluate the given expression, within the context of the given task and return the result."""
+
         methods = self.__get_augment_methods(task)
         if external_context:
             methods.update(external_context)
 
-        """Evaluate the given expression, within the context of the given task and return the result."""
         try:
             return super()._evaluate(expression, context, external_context=methods)
         except Exception as exception:
@@ -387,6 +388,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             methods = self.__get_augment_methods(task)
             if external_context:
                 methods.update(external_context)
+
             # do not run script if it is blank
             if script:
                 super().execute(task, script, methods)
