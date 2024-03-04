@@ -1267,6 +1267,9 @@ paths:
         description: Either run in "synchronous" or "asynchronous" mode.
         schema:
           type: string
+          enum:
+            - synchronous
+            - asynchronous
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run
       summary: Run a process instance
@@ -2368,6 +2371,9 @@ paths:
         description: Either run in "synchronous" or "asynchronous" mode.
         schema:
           type: string
+          enum:
+            - synchronous
+            - asynchronous
     get:
       tags:
         - Tasks

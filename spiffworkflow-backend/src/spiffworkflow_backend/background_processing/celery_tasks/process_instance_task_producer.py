@@ -38,6 +38,10 @@ def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta
 
 # if waiting, check all waiting tasks and see if theyt are timers. if they are timers, it's not runnable.
 def queue_process_instance_if_appropriate(process_instance: ProcessInstanceModel, execution_mode: str | None = None) -> bool:
+    # check if the enum value is valid
+    if execution_mode:
+        ProcessInstanceExecutionMode(execution_mode)
+
     if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
         return False
 
