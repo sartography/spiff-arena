@@ -75,7 +75,7 @@ class TestMessages(BaseTest):
         self.copy_example_process_models()
         DataSetupService.save_all_process_models()
         response = client.get(
-            f"/v1.0/message-models?relative_location=1-basic-concepts",
+            "/v1.0/message-models?relative_location=1-basic-concepts",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
         )
@@ -83,7 +83,7 @@ class TestMessages(BaseTest):
         assert len(response.json["messages"]) == 4
 
         response = client.get(
-            f"/v1.0/message-models?relative_location=",
+            "/v1.0/message-models?relative_location=",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
         )

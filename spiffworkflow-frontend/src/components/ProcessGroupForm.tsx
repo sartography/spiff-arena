@@ -158,7 +158,8 @@ export default function ProcessGroupForm({
       return msg.id !== messageToDelete.id;
     });
     // Remove retrieval expressions from correlation properties related to message
-    const newCorrelationProperties = correlationPropertiesWithoutMessage(messageToDelete);
+    const newCorrelationProperties =
+      correlationPropertiesWithoutMessage(messageToDelete);
 
     updateProcessGroup({
       messages: newMessages,

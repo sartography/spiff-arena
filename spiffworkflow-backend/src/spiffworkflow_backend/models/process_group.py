@@ -11,7 +11,9 @@ from marshmallow import Schema
 from marshmallow import post_load
 
 from spiffworkflow_backend.interfaces import ProcessGroupLite
-from spiffworkflow_backend.models.message_model import MessageModel, CorrelationKey, CorrelationProperty
+from spiffworkflow_backend.models.message_model import CorrelationKey
+from spiffworkflow_backend.models.message_model import CorrelationProperty
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 # we only want to save these items to the json file

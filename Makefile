@@ -58,9 +58,6 @@ be-poetry-lock:
 be-recreate-db:
 	$(IN_BACKEND) ./bin/recreate_db clean
 
-be-ruff:
-	$(IN_BACKEND) poetry run ruff --fix .
-
 be-sh:
 	$(IN_BACKEND) /bin/bash
 
@@ -95,7 +92,10 @@ poetry-i:
 pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
-run-pyl: fe-lint-fix pre-commit be-mypy be-tests-par
+ruff:
+	$(IN_ARENA) poetry run ruff --fix spiffworkflow-backend
+
+run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@/bin/true
 
 sh:
@@ -107,7 +107,7 @@ take-ownership:
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock \
-	be-recreate-db be-ruff be-sh be-sqlite be-tests be-tests-par \
+	be-recreate-db be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-i fe-sh \
-	poetry-i pre-commit run-pyl \
+	poetry-i pre-commit ruff run-pyl \
 	take-ownership

@@ -9,10 +9,10 @@ from flask import current_app
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel, ReferenceType
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.models.reference_cache import ReferenceType
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService

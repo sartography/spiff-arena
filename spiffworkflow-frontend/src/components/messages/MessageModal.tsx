@@ -86,20 +86,18 @@ export default function MessageModal({
   };
 
   const updateMessageExpression = (prop: string, value: string) => {
-    console.log("Updating message expression", prop, value);
+    console.log('Updating message expression', prop, value);
     setMessageExpressions(new Map(messageExpressions.set(prop, value)));
     let ie = false;
     messageExpressions.forEach((v: string, k: string) => {
-      console.log("valid expression", v, validExpression(v));
+      console.log('valid expression', v, validExpression(v));
       if (!validExpression(v)) {
         ie = true;
       }
     });
-    console.log("Setting invalid exressions to ", ie)
+    console.log('Setting invalid exressions to ', ie);
     setInvalidExpressions(ie);
   };
-
-
 
   const saveModel = () => {
     if (invalidMessageName || invalidExpressions) {
@@ -175,7 +173,7 @@ export default function MessageModal({
             errorMessage="Please enter a valid expression for all properties."
             invalid={invalidExpressions}
             onChange={(event: any) => {
-              console.log("The Event Value is ", event.target.value);
+              console.log('The Event Value is ', event.target.value);
               updateMessageExpression(prop, event.target.value);
             }}
           />
@@ -208,7 +206,11 @@ export default function MessageModal({
             defaultValue={messageId}
             onChange={(event: any) => {
               setMessageId(event.target.value);
-              console.log("It's changing to ",event.target.value, !validMessageName(event.target.value));
+              console.log(
+                "It's changing to ",
+                event.target.value,
+                !validMessageName(event.target.value)
+              );
               setInvalidMessageName(!validMessageName(event.target.value));
             }}
           />
