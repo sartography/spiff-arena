@@ -33,7 +33,7 @@ SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
 ```
 
 
-Checkout [the default.md config file](./src/spiffworkflow_backend/config/default.py) for more options you can specify here as needed.
+Checkout [the default.py config file](./src/spiffworkflow_backend/config/default.py) for more options you can specify here as needed.
 
 ## Step 3 - Run Configuration
 
