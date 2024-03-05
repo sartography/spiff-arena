@@ -93,6 +93,10 @@ AUTHENTICATION_EXCLUSION_LIST = {
     "test_raise_error": "spiffworkflow_backend.routes.debug_controller",
     "url_info": "spiffworkflow_backend.routes.debug_controller",
     "webhook": "spiffworkflow_backend.routes.webhooks_controller",
+    # swagger api calls
+    "console_ui_home": "connexion.apis.flask_api",
+    "console_ui_static_files": "connexion.apis.flask_api",
+    "get_json_spec": "connexion.apis.flask_api",
 }
 
 
@@ -248,7 +252,6 @@ class AuthorizationService:
 
     @classmethod
     def should_disable_auth_for_request(cls) -> bool:
-        swagger_functions = ["get_json_spec"]
         if request.method == "OPTIONS":
             return True
 
@@ -271,9 +274,7 @@ class AuthorizationService:
                 and controller_name in AUTHENTICATION_EXCLUSION_LIST[api_function_name]
             )
             or (
-                api_function_name in swagger_functions
-                or module == openid_blueprint
-                or module == scaffold  # don't check permissions for static assets
+                module == openid_blueprint or module == scaffold  # don't check permissions for static assets
             )
         ):
             return True
