@@ -791,7 +791,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - git
       responses:
@@ -810,7 +810,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OkTrue"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - git
       responses:
@@ -1848,7 +1848,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: true if user exists
@@ -2395,7 +2395,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
@@ -2793,7 +2793,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Secret"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Result of permission check
