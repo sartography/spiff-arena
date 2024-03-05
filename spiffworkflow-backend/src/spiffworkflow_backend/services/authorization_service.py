@@ -273,9 +273,7 @@ class AuthorizationService:
                 and controller_name
                 and controller_name in AUTHENTICATION_EXCLUSION_LIST[api_function_name]
             )
-            or (
-                module == openid_blueprint or module == scaffold  # don't check permissions for static assets
-            )
+            or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
         ):
             return True
 
