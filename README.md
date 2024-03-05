@@ -35,7 +35,7 @@ Please see the [PyPi mysqlclient instructions](https://pypi.org/project/mysqlcli
 Correct these, and rerun the above commands.
 
 **Using PyCharm?** If you would like to run or debug your project within an editor like PyCharm please see
-[These directions for PyCharm Setup](spiffworkflow-backend/pycharm.md).
+[These directions for PyCharm Setup](spiffworkflow-backend/docs/pycharm.md).
 
 ## Keycloak Setup
 
