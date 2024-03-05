@@ -7,7 +7,7 @@ This will prove that your libraries are properly configured.
 
 
 ## Step 1 - Python Interpreter
-Under settings assure you have set your python interpreter up to point at the poetry environment you have created
+In the settings, ensure that you have configured your Python interpreter to use the poetry environment you have created.
 
 ## Step 2 - Configuration Settings
 Create a config.py file in the src/instance directory, with the following base settings
