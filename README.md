@@ -30,7 +30,7 @@ When these are installed, you are ready for:
 
 **Mac Port Errors**: On a Mac, port 7000 (used by the backend) might be hijacked by Airplay. For those who upgraded to MacOS 12.1 and are running everything locally, your AirPlay receiver may have started on Port 7000 and your server (which uses port 7000 by default) may fail due to this port already being used. You can disable this port in System Preferences > Sharing > AirPlay receiver.
 
-**Poetry Install Errors**: If you encounter errors with the Poetry install, please note that Mysql and Postgres may require certain package exist on your system prior to installing these libraries. 
+**Poetry Install Errors**: If you encounter errors with the Poetry install, please note that MySQL and PostgreSQL may require certain packages exist on your system prior to installing these libraries. 
 Please see the [PyPi mysqlclient instructions](https://pypi.org/project/mysqlclient/) and the pre-requisites for the [Postgres psycopq2 adapter](https://www.psycopg.org/docs/install.html#prerequisites) Following the  instructions here carefully will assure your OS has the right dependencies installed.
 Correct these, and rerun the above commands.
 
