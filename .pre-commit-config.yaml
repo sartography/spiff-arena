@@ -8,6 +8,7 @@ repos:
         language: system
         files: ^spiffworkflow-backend/
         types: [python]
+        line-length: 130
         require_serial: true
         # exclude: ^migrations/
         exclude: "/migrations/"
