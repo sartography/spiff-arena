@@ -41,7 +41,7 @@ Configure your Run configuration with the following settings:
 * select Flask Server as the run type
 * set the target to:  spiffworkflow_backend
 * set the port to 7000 (-p 7000)
-* make sure your python interpreter is set to the poetry location
+* ![alt text](pycharm_config.png "PyCharm Run Configuration")
 * ![alt text](pycharm_config.png "PYCharm Run Configration")
 
 
