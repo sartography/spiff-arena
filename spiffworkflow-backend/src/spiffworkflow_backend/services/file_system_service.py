@@ -192,7 +192,8 @@ class FileSystemService:
     @staticmethod
     def full_path_to_process_model_file(process_model: ProcessModelInfo) -> str:
         return os.path.join(
-            FileSystemService.process_model_full_path(process_model), process_model.primary_file_name  # type: ignore
+            FileSystemService.process_model_full_path(process_model),
+            process_model.primary_file_name,  # type: ignore
         )
 
     def next_display_order(self, process_model: ProcessModelInfo) -> int:

@@ -794,8 +794,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       });
       if (matchingTask) {
         additionalParams = `?process_identifier=${processIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
+      } else if (
+        searchParams.get('process_identifier') &&
+        searchParams.get('bpmn_process_guid')
+      ) {
+        additionalParams = `?process_identifier=${searchParams.get(
+          'process_identifier'
+        )}&bpmn_process_guid=${searchParams.get('bpmn_process_guid')}`;
       }
     }
+
     HttpService.makeCallToBackend({
       path: `/process-data/${category}/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
       httpMethod: 'GET',

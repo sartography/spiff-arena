@@ -7,7 +7,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
-class TestJSONFileDataStore(BaseTest):
+class TestJsonFileDataStore(BaseTest):
     def test_can_execute_diagram(
         self,
         app: Flask,
