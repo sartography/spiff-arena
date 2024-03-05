@@ -231,17 +231,10 @@ export default function ProcessInstanceListTable({
   };
 
   const getProcessModelSpanTag = (
-    processInstance: ProcessInstance,
+    _processInstance: ProcessInstance,
     identifier: string
   ) => {
-    const modifiedModelId = modifyProcessIdentifierForPathParam(
-      processInstance.process_model_identifier
-    );
-    return (
-      <span>
-        <Link to={`/process-models/${modifiedModelId}`}>{identifier}</Link>
-      </span>
-    );
+    return <span>{identifier}</span>;
   };
 
   const getWaitingForTableCellComponent = (processInstanceTask: any) => {
