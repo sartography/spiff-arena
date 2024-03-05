@@ -33,3 +33,6 @@ pyupgrade = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]
 tomli = "^2.0.1"
+
+[tool.black]
+line-length = 130

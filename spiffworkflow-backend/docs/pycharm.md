@@ -6,10 +6,10 @@ This will prove that your libraries are properly configured.
 * Checkout a git repository with sample process models such as our [Sample Process Models](https://github.com/sartography/sample-process-models)
 
 
-## Step 1
+## Step 1 - Python Interpreter
 Under settings assure you have set your python interpreter up to point at the poetry environment you have created
 
-## Step 2
+## Step 2 - Configuration Settings
 Create a config.py file in the src/instance directory, with the following base settings
 ```python
 FLASK_SESSION_SECRET_KEY="[PUT SOME RANDOM STUFF HERE]"
@@ -35,7 +35,7 @@ SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
 
 Checkout [the default.md config file](./src/spiffworkflow_backend/config/default.py) for more options you can specify here as needed.
 
-## Step 3
+## Step 3 - Run Configuration
 
 Configure your Run configuration with the following settings:
 * select Flask Server as the run type
@@ -45,10 +45,10 @@ Configure your Run configuration with the following settings:
 * ![alt text](pycharm_config.png "PYCharm Run Configration")
 
 
+## Step 4 - Code Formatting
 
-Start it up using the play / debug buttons.
+We are using [Black](https://black.readthedocs.io/en/stable/) for code formatting.
+To avoid the madness of having Black enforce one style, and your editor enforcing another, you should follow [the directions outlined here](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea).
 
 
-
-
-
+Start it up using the play / debug buttons.~~
