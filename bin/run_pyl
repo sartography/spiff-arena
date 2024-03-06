@@ -17,15 +17,6 @@ react_projects=(
 
 subcommand="${1:-}"
 
-if [[ "$subcommand" == "pre" ]]; then
-  if [[ -n "$(git status --porcelain SpiffWorkflow)" ]]; then
-    echo "SpiffWorkflow has uncommitted changes. Running its test suite."
-    pushd SpiffWorkflow
-    make tests-par # run tests in parallel
-    popd
-  fi
-fi
-
 function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
