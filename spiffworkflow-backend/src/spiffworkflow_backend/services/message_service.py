@@ -1,8 +1,14 @@
+import os
+
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
@@ -12,6 +18,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -22,7 +29,11 @@ class MessageServiceError(Exception):
 
 class MessageService:
     @classmethod
-    def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> MessageInstanceModel | None:
+    def correlate_send_message(
+        cls,
+        message_instance_send: MessageInstanceModel,
+        execution_mode: str | None = None,
+    ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
@@ -56,7 +67,9 @@ class MessageService:
                     user: UserModel | None = message_instance_send.user
                     if user is None:
                         user = UserService.find_or_create_system_user()
-                    receiving_process = MessageService.start_process_with_message(message_triggerable_process_model, user)
+                    receiving_process = MessageService.start_process_with_message(
+                        message_triggerable_process_model, user, execution_mode=execution_mode
+                    )
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process.id,
                         message_type="receive",
@@ -115,15 +128,32 @@ class MessageService:
         cls,
         message_triggerable_process_model: MessageTriggerableProcessModel,
         user: UserModel,
+        execution_mode: str | None = None,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true":
+            raise MessageServiceError(
+                "Calling start_process_with_message in a celery worker. This is not supported! (We may need to add"
+                " additional_processing_identifier to this code path."
+            )
+
         process_instance_receive = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
             user,
         )
-        processor_receive = ProcessInstanceProcessor(process_instance_receive)
-        cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
-        processor_receive.do_engine_steps(save=True)
+        with ProcessInstanceQueueService.dequeued(process_instance_receive):
+            processor_receive = ProcessInstanceProcessor(process_instance_receive)
+            cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+            processor_receive.save()
+
+        if not queue_process_instance_if_appropriate(
+            process_instance_receive, execution_mode=execution_mode
+        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance_receive):
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                execution_strategy_name = "greedy"
+            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+
         return process_instance_receive
 
     @classmethod

@@ -98,6 +98,7 @@ def process_instance_terminate(
             ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(process_instance)
             processor.terminate()
+            processor.dump_to_disk()
     except (
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
