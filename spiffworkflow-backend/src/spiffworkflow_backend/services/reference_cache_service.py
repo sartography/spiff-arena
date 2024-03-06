@@ -53,13 +53,3 @@ class ReferenceCacheService:
             return reference.relative_location  # type: ignore
 
         return None
-
-    @classmethod
-    def upsearch_locations(cls, location: str) -> list[str]:
-        locations = []
-        locations.append("")  # Always include the top level.
-        while location != "":
-            locations.append(location)
-            location = os.path.dirname(location)
-
-        return locations

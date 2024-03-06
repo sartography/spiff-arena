@@ -71,7 +71,6 @@ class DataSetupService:
                         data = json.load(group_json)
                     except JSONDecodeError as ex:
                         raise Exception(f"Could not decode JSON from {file}") from ex
-                    print(data)
                     # If there are messages, add them to the reference cache
                     if "messages" in data:
                         correlation_keys = {}

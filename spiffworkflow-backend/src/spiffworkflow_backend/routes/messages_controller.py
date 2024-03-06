@@ -71,13 +71,13 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     correlation_properties = []
     for loc in locations:
         try:
-            processGroup = ProcessModelService.get_process_group(loc)
-            if processGroup.messages is not None:
-                messages.extend(processGroup.messages)
-            if processGroup.correlation_properties is not None:
-                correlation_properties.extend(processGroup.correlation_properties)
-            if processGroup.correlation_keys is not None:
-                correlation_keys.extend(processGroup.correlation_keys)
+            process_group = ProcessModelService.get_process_group(loc)
+            if process_group.messages is not None:
+                messages.extend(process_group.messages)
+            if process_group.correlation_properties is not None:
+                correlation_properties.extend(process_group.correlation_properties)
+            if process_group.correlation_keys is not None:
+                correlation_keys.extend(process_group.correlation_keys)
         except ProcessEntityNotFoundError:
             pass
     response_json = {
