@@ -1,11 +1,9 @@
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@carbon/react';
-import { useNavigate } from 'react-router-dom';
 import MessageInstanceList from '../components/messages/MessageInstanceList';
 import { setPageTitle } from '../helpers';
 import MessageModelList from '../components/messages/MessageModelList';
 
 export default function MessageListPage() {
-  const navigate = useNavigate();
   setPageTitle(['Messages']);
 
   return (

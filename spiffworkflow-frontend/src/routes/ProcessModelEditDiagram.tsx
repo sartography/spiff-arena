@@ -89,7 +89,7 @@ export default function ProcessModelEditDiagram() {
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
 
-  const [messageEventBus, setMessageEventBus] = useState<any>(null);
+  const [setMessageEventBus] = useState<any>(null);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 

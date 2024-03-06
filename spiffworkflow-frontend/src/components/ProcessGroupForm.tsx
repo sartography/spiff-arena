@@ -343,7 +343,7 @@ export default function ProcessGroupForm({
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeader style="min-width:300px">Name</TableHeader>
+              <TableHeader style={{ minWidth: '300px' }}>Name</TableHeader>
               <TableHeader>Actions</TableHeader>
             </TableRow>
             {items}

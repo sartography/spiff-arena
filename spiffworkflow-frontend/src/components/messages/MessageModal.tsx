@@ -89,7 +89,7 @@ export default function MessageModal({
     console.log('Updating message expression', prop, value);
     setMessageExpressions(new Map(messageExpressions.set(prop, value)));
     let ie = false;
-    messageExpressions.forEach((v: string, k: string) => {
+    messageExpressions.forEach((v: string, _: string) => {
       console.log('valid expression', v, validExpression(v));
       if (!validExpression(v)) {
         ie = true;
