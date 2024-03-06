@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/spiffworkflow-frontend
+      IMAGE_NAME: gsa-tts/spiffworkflow-frontend
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/spiffworkflow-backend
+      IMAGE_NAME: gsa-tts/spiffworkflow-backend
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/connector-proxy-demo
+      IMAGE_NAME: gsa-tts/connector-proxy-demo
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
     permissions:

@@ -1,9 +1,9 @@
 name: Slack Notification
 
-on:
-  workflow_run:
-    workflows: ["Tests", "Docker Image For Main Builds", "Release Builds", "Build Docs"]
-    types: [completed]
+# on:
+#   workflow_run:
+#     workflows: ["Tests", "Docker Image For Main Builds", "Release Builds", "Build Docs"]
+#     types: [completed]
 
 jobs:
   send_notification:
