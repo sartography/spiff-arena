@@ -43,6 +43,9 @@ FROM base AS setup
 RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
+# install jq so we can get values from vcap
+RUN pip install jq
+
 # default-libmysqlclient-dev for mysqlclient lib
 RUN apt-get update \
  && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
