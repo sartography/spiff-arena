@@ -557,9 +557,10 @@ def task_submit(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body)
+        return _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
 
 
 def process_instance_progress(
@@ -875,6 +876,7 @@ def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -925,6 +927,7 @@ def _task_submit_shared(
                 data=body,
                 user=g.user,
                 human_task=human_task,
+                execution_mode=execution_mode,
             )
 
     # currently task_model has the potential to be None. This should be removable once

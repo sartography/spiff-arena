@@ -791,7 +791,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - git
       responses:
@@ -810,7 +810,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OkTrue"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - git
       responses:
@@ -1261,6 +1261,15 @@ paths:
         description: Force the process instance to run even if it has already been started.
         schema:
           type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run
       summary: Run a process instance
@@ -1839,7 +1848,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: true if user exists
@@ -2356,6 +2365,15 @@ paths:
         description: Include task data for forms
         schema:
           type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
     get:
       tags:
         - Tasks
@@ -2377,7 +2395,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
@@ -2797,7 +2815,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Secret"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Result of permission check
