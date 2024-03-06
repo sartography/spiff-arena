@@ -30,9 +30,9 @@ on:
   push:
     branches:
       - main
-      - spiffdemo
-      - feature/update-extension-docs
-      - deploy-to-cloud-gov
+      # - spiffdemo
+      # - feature/update-extension-docs
+      # - deploy-to-cloud-gov
 
 jobs:
   create_frontend_docker_image:
