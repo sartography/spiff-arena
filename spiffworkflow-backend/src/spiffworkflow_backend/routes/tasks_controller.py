@@ -29,9 +29,6 @@ from sqlalchemy.orm.util import AliasedClass
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_enabled_for_process_model,
 )
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_process_instance_if_appropriate,
-)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -946,8 +943,6 @@ def _task_submit_shared(
     next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-
-    queue_process_instance_if_appropriate(process_instance)
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
