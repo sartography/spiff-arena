@@ -2538,6 +2538,15 @@ paths:
         description: The unique name of the message.
         schema:
           type: string
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
     post:
       tags:
         - Messages
