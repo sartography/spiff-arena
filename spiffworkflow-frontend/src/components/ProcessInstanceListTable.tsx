@@ -11,7 +11,7 @@ import {
 } from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   getLastMilestoneFromProcessInstance,
@@ -260,15 +260,17 @@ export default function ProcessInstanceListTable({
     processInstance: ProcessInstance,
     id: number
   ) => {
-    const modifiedModelId = modifyProcessIdentifierForPathParam(
-      processInstance.process_model_identifier
-    );
-    const piLink = `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`;
-    return (
-      <span data-qa="paginated-entity-id">
-        <Link to={piLink}>{id}</Link>
-      </span>
-    );
+    return <span data-qa="paginated-entity-id">{id}</span>;
+    // when we get rid of clickable table rows, something like this will be better
+    // const modifiedModelId = modifyProcessIdentifierForPathParam(
+    //   processInstance.process_model_identifier
+    // );
+    // const piLink = `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`;
+    // return (
+    //   <span data-qa="paginated-entity-id">
+    //     <Link to={piLink}>{id}</Link>
+    //   </span>
+    // );
   };
   const formatProcessModelIdentifier = (
     processInstance: ProcessInstance,
@@ -498,6 +500,15 @@ export default function ProcessInstanceListTable({
         }
       }
 
+      const rowStyle = { cursor: 'pointer' };
+      const modifiedModelId = modifyProcessIdentifierForPathParam(
+        processInstance.process_model_identifier
+      );
+      const navigateToProcessInstance = () => {
+        navigate(
+          `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
+        );
+      };
       let variantFromMetadata = 'all';
       if (reportMetadataFromProcessInstances) {
         reportMetadataFromProcessInstances.filter_by.forEach((filter: any) => {
@@ -513,7 +524,10 @@ export default function ProcessInstanceListTable({
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
+          style={rowStyle}
           key={processInstance.id}
+          onClick={navigateToProcessInstance}
+          onKeyDown={navigateToProcessInstance}
           className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
