@@ -82,7 +82,8 @@ describe('process-models', () => {
     cy.get('#bio-properties-panel-name').clear();
     cy.get('#bio-properties-panel-name').type('Start Event Name');
     cy.wait(500);
-    cy.contains('Save').click();
+    cy.getBySel('process-model-file-changed');
+    cy.getBySel('process-model-file-save-button').click();
     cy.contains('Start Event Name');
     cy.get(fileNameInputSelector).type(bpmnFileName);
     cy.contains(saveChangesButtonText).click();
@@ -101,7 +102,7 @@ describe('process-models', () => {
     cy.get('#bio-properties-panel-id').clear();
     cy.get('#bio-properties-panel-id').type(decisionAcceptanceTestId);
     cy.contains('General').click();
-    cy.contains('Save').click();
+    cy.getBySel('process-model-file-save-button').click();
     cy.get(fileNameInputSelector).type(dmnFileName);
     cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${dmnFileName}`);
