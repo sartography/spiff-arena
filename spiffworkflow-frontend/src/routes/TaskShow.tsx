@@ -10,10 +10,12 @@ import {
   doNothing,
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
+  renderElementsForArray,
   setPageTitle,
 } from '../helpers';
 import {
   BasicTask,
+  ElementForArray,
   ErrorForDisplay,
   EventDefinition,
   HotCrumbItem,
@@ -446,7 +448,7 @@ export default function TaskShow() {
     );
   };
 
-  const pageElements = [];
+  const pageElements: ElementForArray[] = [];
   if (basicTask) {
     let statusString = '';
     if (basicTask.state !== 'READY') {
@@ -457,28 +459,38 @@ export default function TaskShow() {
       !('allowGuest' in basicTask.extensions) ||
       basicTask.extensions.allowGuest !== 'true'
     ) {
-      pageElements.push(<ProcessBreadcrumb hotCrumbs={hotCrumbs} />);
-      pageElements.push(
-        <h3>
-          Task: {basicTask.name_for_display} (
-          {basicTask.process_model_display_name}){statusString}
-        </h3>
-      );
+      pageElements.push({
+        key: 'process-breadcrumb',
+        component: <ProcessBreadcrumb hotCrumbs={hotCrumbs} />,
+      });
+      pageElements.push({
+        key: 'task-name',
+        component: (
+          <h3>
+            Task: {basicTask.name_for_display} (
+            {basicTask.process_model_display_name}){statusString}
+          </h3>
+        ),
+      });
     }
   }
 
   if (guestConfirmationText) {
-    pageElements.push(
-      <MarkdownRenderer linkTarget="_blank" source={guestConfirmationText} />
-    );
+    pageElements.push({
+      key: 'guest-confirmation-text',
+      component: (
+        <MarkdownRenderer linkTarget="_blank" source={guestConfirmationText} />
+      ),
+    });
   } else if (basicTask && taskData) {
-    pageElements.push(<InstructionsForEndUser task={taskWithTaskData} />);
-    pageElements.push(formElement());
+    pageElements.push({
+      key: 'instructions-for-end-user',
+      component: <InstructionsForEndUser task={taskWithTaskData} />,
+    });
+    pageElements.push({ key: 'main-form', component: formElement() });
   } else if (!atLeastOneTaskFetchHasError) {
-    pageElements.push(getLoadingIcon());
+    pageElements.push({ key: 'loading-icon', component: getLoadingIcon() });
   }
 
-  // typescript gets angry if we return an array of elements not in a tag
-  // eslint-disable-next-line react/jsx-no-useless-fragment
-  return <>{pageElements}</>;
+  return <>{renderElementsForArray(pageElements)}</>;
 }
