@@ -1,3 +1,5 @@
+import { ReactElement } from 'react';
+
 export interface User {
   id: number;
   username: string;
@@ -495,4 +497,9 @@ export interface SpiffTab {
 export interface SpiffTableHeader {
   tooltip_text?: string;
   text: string;
+}
+
+export interface ElementForArray {
+  key: string;
+  component: ReactElement | null;
 }
