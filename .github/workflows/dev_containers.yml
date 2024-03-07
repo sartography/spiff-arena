@@ -1,0 +1,21 @@
+name: Dev Containers
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create dev environment
+      run: make dev-env
+      
+    - name: Backend Unit tests
+      run: make be-tests-par

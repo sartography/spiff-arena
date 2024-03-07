@@ -63,6 +63,10 @@ class FileSystemService:
         return file.endswith(cls.PROCESS_MODEL_JSON_FILE)
 
     @classmethod
+    def is_process_group_json_file(cls, file: str) -> bool:
+        return file.endswith(cls.PROCESS_GROUP_JSON_FILE)
+
+    @classmethod
     def is_data_store_json_file(cls, file: str) -> bool:
         return file.endswith("_datastore.json")
 
@@ -184,7 +188,8 @@ class FileSystemService:
     @staticmethod
     def full_path_to_process_model_file(process_model: ProcessModelInfo) -> str:
         return os.path.join(
-            FileSystemService.process_model_full_path(process_model), process_model.primary_file_name  # type: ignore
+            FileSystemService.process_model_full_path(process_model),
+            process_model.primary_file_name,  # type: ignore
         )
 
     def next_display_order(self, process_model: ProcessModelInfo) -> int:

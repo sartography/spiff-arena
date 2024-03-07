@@ -1,8 +1,8 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
 
 import flask.wrappers
+from flask import g
 from flask import jsonify
 from flask import make_response
 
@@ -11,6 +11,9 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 DATA_STORES = {
     "json": (JSONDataStore, "JSON Data Store"),
@@ -19,15 +22,24 @@ DATA_STORES = {
 }
 
 
-def data_store_list(process_group_identifier: str | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def data_store_list(
+    process_group_identifier: str | None = None, upsearch: bool = False, page: int = 1, per_page: int = 100
+) -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
+    locations_to_upsearch = []
+
+    if process_group_identifier is not None:
+        if upsearch:
+            locations_to_upsearch = UpsearchService.upsearch_locations(process_group_identifier)
+        else:
+            locations_to_upsearch.append(process_group_identifier)
 
     # Right now the only data stores we support are type ahead, kkv, json
 
-    data_stores.extend(JSONDataStore.existing_data_stores(process_group_identifier))
-    data_stores.extend(TypeaheadDataStore.existing_data_stores(process_group_identifier))
-    data_stores.extend(KKVDataStore.existing_data_stores(process_group_identifier))
+    data_stores.extend(JSONDataStore.existing_data_stores(locations_to_upsearch))
+    data_stores.extend(TypeaheadDataStore.existing_data_stores(locations_to_upsearch))
+    data_stores.extend(KKVDataStore.existing_data_stores(locations_to_upsearch))
 
     return make_response(jsonify(data_stores), 200)
 
@@ -114,18 +126,42 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     data_store_class, _ = DATA_STORES[data_store_type]
 
     if insert:
-        model = data_store_class.create_instance(identifier, location)
+        data_store_model = data_store_class.create_instance(identifier, location)
     else:
-        model = data_store_class.existing_instance(identifier, location)
+        data_store_model = data_store_class.existing_instance(identifier, location)
 
-    model.name = name
-    model.schema = schema
-    model.description = description or ""
+    data_store_model.name = name
+    data_store_model.schema = schema
+    data_store_model.description = description or ""
 
-    db.session.add(model)
+    _write_specification_to_process_group(data_store_type, data_store_model)
+
+    db.session.add(data_store_model)
     db.session.commit()
 
+    _commit_and_push_to_git(f"User: {g.user.username} added data store {data_store_model.identifier}")
     return make_response(jsonify({"ok": True}), 200)
+
+
+def _write_specification_to_process_group(
+    data_store_type: str, data_store_model: JSONDataStore | KKVDataStore | TypeaheadDataStore
+) -> None:
+    process_group = ProcessModelService.get_process_group(
+        data_store_model.location, find_direct_nested_items=False, find_all_nested_items=False, create_if_not_exists=True
+    )
+
+    if data_store_type not in process_group.data_store_specifications:
+        process_group.data_store_specifications[data_store_type] = {}
+
+    process_group.data_store_specifications[data_store_type][data_store_model.identifier] = {
+        "name": data_store_model.name,
+        "identifier": data_store_model.identifier,
+        "location": data_store_model.location,
+        "schema": data_store_model.schema,
+        "description": data_store_model.description,
+    }
+
+    ProcessModelService.update_process_group(process_group)
 
 
 def data_store_show(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:

@@ -126,6 +126,7 @@ SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 
+
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
 
@@ -347,28 +348,14 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         )
         return Script.generate_augmented_list(script_attributes_context)
 
-    def evaluate(
-        self,
-        task: SpiffTask,
-        expression: str,
-        external_context: dict[str, Any] | None = None,
-    ) -> Any:
-        return self._evaluate(expression, task.data, task, external_context)
-
-    def _evaluate(
-        self,
-        expression: str,
-        context: dict[str, Any],
-        task: SpiffTask | None = None,
-        external_context: dict[str, Any] | None = None,
-    ) -> Any:
+    def evaluate(self, task: SpiffTask, expression: str, external_context: dict[str, Any] | None = None) -> Any:
+        """Evaluate the given expression, within the context of the given task and return the result."""
         methods = self.__get_augment_methods(task)
         if external_context:
             methods.update(external_context)
 
-        """Evaluate the given expression, within the context of the given task and return the result."""
         try:
-            return super()._evaluate(expression, context, external_context=methods)
+            return super().evaluate(task, expression, external_context=methods)
         except Exception as exception:
             if task is None:
                 raise WorkflowException(
@@ -387,6 +374,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             methods = self.__get_augment_methods(task)
             if external_context:
                 methods.update(external_context)
+
             # do not run script if it is blank
             if script:
                 super().execute(task, script, methods)
@@ -1070,7 +1058,6 @@ class ProcessInstanceProcessor:
                     self._workflow_completed_handler(self.process_instance_model)
 
         db.session.add(self.process_instance_model)
-        db.session.commit()
 
         human_tasks = HumanTaskModel.query.filter_by(process_instance_id=self.process_instance_model.id, completed=False).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
@@ -1134,13 +1121,11 @@ class ProcessInstanceProcessor:
                         human_task_user = HumanTaskUserModel(user_id=potential_owner_id, human_task=human_task)
                         db.session.add(human_task_user)
 
-                    db.session.commit()
-
         if len(human_tasks) > 0:
             for at in human_tasks:
                 at.completed = True
                 db.session.add(at)
-            db.session.commit()
+        db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
         """Get a serialized version of a task spec."""

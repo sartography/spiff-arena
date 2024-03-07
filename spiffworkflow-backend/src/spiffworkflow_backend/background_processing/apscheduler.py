@@ -33,7 +33,7 @@ def start_apscheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Bac
     else:
         _add_jobs_for_non_celery_based_configuration(app, scheduler)
 
-    _add_jobs_relevant_for_all_celery_configurations(app, scheduler)
+    _add_jobs_that_should_run_regardless_of_celery_config(app, scheduler)
 
     scheduler.start()
 
@@ -78,12 +78,13 @@ def _add_jobs_for_non_celery_based_configuration(app: flask.app.Flask, scheduler
     )
 
 
-def _add_jobs_relevant_for_all_celery_configurations(app: flask.app.Flask, scheduler: BaseScheduler) -> None:
+def _add_jobs_that_should_run_regardless_of_celery_config(app: flask.app.Flask, scheduler: BaseScheduler) -> None:
     not_started_polling_interval_in_seconds = app.config[
         "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS"
     ]
 
     # TODO: see if we can queue with celery instead on celery based configuration
+    # NOTE: pass in additional_processing_identifier if we move to celery
     scheduler.add_job(
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",

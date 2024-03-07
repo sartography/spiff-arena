@@ -19,6 +19,7 @@ paths:
       responses:
         "200":
           description: Redirects to authentication server
+
   /login:
     parameters:
       - name: authentication_identifier
@@ -172,6 +173,43 @@ paths:
       responses:
         "200":
           description: Test Return Response
+
+  /script-assist/enabled:
+    get:
+      operationId: spiffworkflow_backend.routes.script_assist_controller.enabled
+      summary: Returns value of SCRIPT_ASSIST_ENABLED
+      tags:
+        - AI Tools
+      responses:
+        "200":
+          description: Returns if AI script should be enabled in UI
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /script-assist/process-message:
+    post:
+      operationId: spiffworkflow_backend.routes.script_assist_controller.process_message
+      summary: Send natural language message in for processing by AI service
+      tags:
+        - AI Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                query:
+                  type: string
+                  description: The natural language message to be processed.
+      responses:
+        "200":
+          description: Send back AI service response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /status:
     get:
@@ -753,7 +791,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - git
       responses:
@@ -772,7 +810,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OkTrue"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - git
       responses:
@@ -1223,6 +1261,15 @@ paths:
         description: Force the process instance to run even if it has already been started.
         schema:
           type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run
       summary: Run a process instance
@@ -1801,7 +1848,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: true if user exists
@@ -2318,6 +2365,15 @@ paths:
         description: Include task data for forms
         schema:
           type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
     get:
       tags:
         - Tasks
@@ -2339,7 +2395,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessGroup"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
@@ -2482,6 +2538,15 @@ paths:
         description: The unique name of the message.
         schema:
           type: string
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
     post:
       tags:
         - Messages
@@ -2737,7 +2802,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Secret"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Result of permission check
@@ -2785,6 +2850,12 @@ paths:
         description: Optional parameter to filter by a single group
         schema:
           type: string
+      - name: upsearch
+        in: query
+        required: false
+        description: Optional parameter to indicate if an upsearch should be performed
+        schema:
+          type: boolean
       - name: page
         in: query
         required: false

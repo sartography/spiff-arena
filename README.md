@@ -67,6 +67,24 @@ For full instructions, see [Running SpiffWorkflow Locally with Docker](https://w
 
 The `docker-compose.yml` file is for running a full-fledged instance of spiff-arena while `editor.docker-compose.yml` provides BPMN graphical editor capability to libraries and projects that depend on SpiffWorkflow but have no built-in BPMN edit capabilities.
 
+### Using Docker for Local Development
+
+If you have `docker` and `docker compose`, as an alternative to locally installing the required dependencies, you can leverage the development docker containers and `Makefile` while working locally. To use, clone the repo and run `make`. This will build the required images, install all dependencies, start the servers and run the linting and tests. Once complete you can [open the app](http://localhost:8001) and code changes will be reflected while running. 
+
+After the containers are set up, you can run `make start-dev` and `make stop-dev` to start and stop the servers. If the frontend or backend lock file changes, `make dev-env` will recreate the containers with the new dependencies.
+
+Please refer to the [Makefile](Makefile) as the source of truth, but for a summary of the available `make` targets:
+
+| Target | Action |
+|----|----|
+| dev-env | Builds the images, sets up the backend db and installs `npm` and `poetry` dependencies |
+| start-dev | Starts the frontend and backend servers, also stops them first if they were already running |
+| stop-dev | Stops the frontend and backend servers |
+| be-tests-par | Runs the backend unit tests in parallel |
+| fe-lint-fix | Runs `npm lint:fix` in the frontend container |
+| run-pyl | Runs all frontend and backend lints, backend unit tests |
+
+
 ## Contributing
 
 To start understanding the system, you might:
@@ -91,3 +109,4 @@ SpiffArena's main components are published under the terms of the
 
 You can find us on [our Discord Channel](https://discord.gg/BYHcc7PpUC).
 Commercial support for SpiffWorkflow is available from [Sartography](https://sartography.com).
+Please contact us via the schedule a demo link on the [SpiffWorkflow website](https://spiffworkflow.org) to discuss your needs.
