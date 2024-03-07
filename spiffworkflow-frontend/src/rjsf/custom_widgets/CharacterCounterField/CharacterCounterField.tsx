@@ -54,7 +54,7 @@ export default function CharacterCounterField({
 
   if (schema.maxLength === undefined) {
     throw new Error(
-      'CharacterCounterTextField requires a "maximum" property to be specified'
+      'CharacterCounterTextField requires a "maxLength" property to be specified in the schema'
     );
   }
 
