@@ -970,7 +970,7 @@ div.onboarding {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-inline-end: none;
+  margin-inline-end: 0;
 }
 
 .radio-button-group-column > * {
