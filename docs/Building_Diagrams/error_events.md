@@ -14,7 +14,7 @@ The Error Start Event triggers the start of a subprocess in reaction to an error
 **Reason to Use**: 
 - **Modular Error Handling**: Separates error handling logic into dedicated subprocesses, improving process organization and maintainability.
 - **Reusability**: Allows for the reuse of error handling subprocesses across multiple parent processes.
-- **Focused Recovery Strategies**: Enables the development of targeted recovery strategi   es for specific errors, enhancing error resolution effectiveness.
+- **Focused Recovery Strategies**: Enables the development of targeted recovery strategies for specific errors, enhancing error resolution effectiveness.
 
 **Example**: 
 
@@ -48,16 +48,17 @@ In a customer order workflow, when payment is initiated, a "Process Payment" ser
 
 
 ### 3. Error End Event
-![Error Error Event](images/error_end_event.png)
 
-This event marks the termination of a process path due to an error, signaling that the workflow cannot proceed beyond this point because of the encountered issue, and propagates the error to the parent process for further handling.
+![Error End Event](images/error_end_event.png)
+
+This event marks termination of a process path due to an error, signaling that the workflow cannot proceed beyond this point because of the encountered issue, and propagates the error to the parent process for further handling.
 
 **Reason to Use**: 
 
 
 **Example**: 
 
-![Error Error Event](images/ErrorEndEventExample.png)
+![Error End Event](images/ErrorEndEventExample.png)
 
 In a retail inventory management workflow, an End Error Event within a stock replenishment subprocess indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved. This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
 
