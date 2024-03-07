@@ -207,6 +207,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 # we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,
 # so instead of using config, we use os.environ directly over there.
 # config_from_env("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE", default=True)
+
+
 # adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
 # to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default=False)
