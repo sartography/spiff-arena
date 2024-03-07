@@ -34,6 +34,12 @@ See detailed instructions at the root of spiff-arena, but:
 
    $ poetry install
 
+NOTE: Mysql and Postgres may require special binary files exist on your system prior
+to installing these libraries. Please see the `PyPi mysqlclient instructions`_
+and the pre-requisites for the `Postgres psycopq2 adapter`_ Following the
+instructions here carefully will assure your OS has the right dependencies
+installed.
+
 * Setup the database - uses mysql and assumes server is running by default:
 
 .. code:: console
@@ -79,3 +85,5 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _file an issue: https://github.com/sartography/spiffworkflow-arena/issues
 .. github-only
+.. _PyPi mysqlclient instructions: https://pypi.org/project/mysqlclient/
+.. _Postgres psycopq2 adapter: https://www.psycopg.org/docs/install.html#prerequisites

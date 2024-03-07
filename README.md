@@ -21,14 +21,21 @@ There are three prerequisites for non-docker local development:
 3. mysql - the app also supports postgres. and sqlite, if you are talking local dev).
 
 When these are installed, you are ready for:
-
+```bash
     cd spiffworkflow-backend
     poetry install
     ./bin/recreate_db clean
     ./bin/run_server_locally
+```
 
-On a Mac, port 7000 (used by the backend) might be hijacked by Airplay. For those who upgraded to MacOS 12.1 and are running everything locally, your AirPlay receiver may have started on Port 7000 and your server (which uses port 7000 by default) may fail due to this port already being used. You can disable this port in System Preferences > Sharing > AirPlay receiver.
+**Mac Port Errors**: On a Mac, port 7000 (used by the backend) might be hijacked by Airplay. For those who upgraded to macOS 12.1 and are running everything locally, your AirPlay receiver may have started on Port 7000 and your server (which uses port 7000 by default) may fail due to this port already being used. You can disable this port in System Preferences > Sharing > AirPlay receiver.
 
+**Poetry Install Errors**: If you encounter errors with the Poetry install, please note that MySQL and PostgreSQL may require certain packages exist on your system prior to installing these libraries. 
+Please see the [PyPi mysqlclient instructions](https://pypi.org/project/mysqlclient/) and the pre-requisites for the [Postgres psycopq2 adapter](https://www.psycopg.org/docs/install.html#prerequisites) Following the  instructions here carefully will assure your OS has the right dependencies installed.
+Correct these, and rerun the above commands.
+
+**Using PyCharm?** If you would like to run or debug your project within an editor like PyCharm please see
+[These directions for PyCharm Setup](spiffworkflow-backend/docs/pycharm.md).
 
 ## Keycloak Setup
 
