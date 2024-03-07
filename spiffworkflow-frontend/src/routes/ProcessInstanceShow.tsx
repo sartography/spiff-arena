@@ -54,6 +54,7 @@ import {
   MULTI_INSTANCE_TASK_TYPES,
   LOOP_TASK_TYPES,
   titleizeString,
+  isURL,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -64,6 +65,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessModel,
   Task,
   TaskDefinitionPropertiesJson,
   User,
@@ -157,6 +159,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelFileCreatePath]: ['GET'],
     [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
@@ -195,10 +198,35 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const shortcutLoadPrimaryFile = () => {
+    if (ability.can('GET', targetUris.processInstanceActionPath)) {
+      const processResult = (result: ProcessModel) => {
+        const primaryFileName = result.primary_file_name;
+        if (!primaryFileName) {
+          // this should be very unlikely, since we are in the context of an instance,
+          // but it's techically possible for the file to have been subsequently deleted or something.
+          console.error('Primary file name not found for the process model.');
+          return;
+        }
+        navigate(
+          `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`
+        );
+      };
+      HttpService.makeCallToBackend({
+        path: `/process-models/${modifiedProcessModelId}`,
+        successCallback: processResult,
+      });
+    }
+  };
+
   const keyboardShortcuts: KeyboardShortcuts = {
     'f,r,enter': {
       function: forceRunProcessInstance,
-      label: 'Force run process instance',
+      label: '[F]orce [r]un process instance',
+    },
+    'd,enter': {
+      function: shortcutLoadPrimaryFile,
+      label: 'View process model [d]iagram',
     },
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
@@ -416,6 +444,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const formatMetadataValue = (value: string) => {
+    if (isURL(value)) {
+      return (
+        <a href={value} target="_blank" rel="noopener noreferrer">
+          {value}
+        </a>
+      );
+    }
+    return value;
+  };
+
   const getInfoTag = () => {
     if (!processInstance) {
       return null;
@@ -521,7 +560,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <dt title={processInstanceMetadata.key}>
                   {truncateString(processInstanceMetadata.key, 50)}:
                 </dt>
-                <dd>{processInstanceMetadata.value}</dd>
+                <dd>{formatMetadataValue(processInstanceMetadata.value)}</dd>
               </dl>
             )
           )}
@@ -755,8 +794,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       });
       if (matchingTask) {
         additionalParams = `?process_identifier=${processIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
+      } else if (
+        searchParams.get('process_identifier') &&
+        searchParams.get('bpmn_process_guid')
+      ) {
+        additionalParams = `?process_identifier=${searchParams.get(
+          'process_identifier'
+        )}&bpmn_process_guid=${searchParams.get('bpmn_process_guid')}`;
       }
     }
+
     HttpService.makeCallToBackend({
       path: `/process-data/${category}/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
       httpMethod: 'GET',

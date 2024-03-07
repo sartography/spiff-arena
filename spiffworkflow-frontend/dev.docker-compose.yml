@@ -1,0 +1,13 @@
+services:
+  spiffworkflow-frontend:
+    build:
+      context: spiffworkflow-frontend
+      dockerfile: dev.Dockerfile
+    user: "${RUN_AS}"
+    environment:
+      npm_config_cache: "/app/.cache/npm"
+      HOST: "0.0.0.0"
+      PORT: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
+      XDG_CACHE_HOME: "/app/.cache"
+    volumes:
+      - ./spiffworkflow-frontend:/app

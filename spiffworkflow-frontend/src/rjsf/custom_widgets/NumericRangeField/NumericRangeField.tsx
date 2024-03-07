@@ -4,8 +4,8 @@ import {
   getTemplate,
   getUiOptions,
 } from '@rjsf/utils';
-import { TextInput } from '@carbon/react';
 import React from 'react';
+import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
@@ -66,6 +66,8 @@ export default function NumericRangeField({
     // and a decimal point if needed. For example, 1000 will become 1,000
     // or 1000.5 will become 1,000.5
 
+    numberString = numberString.replace(/,/g, '');
+
     if (numberString) {
       const parts = numberString.split('.');
       const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -89,9 +91,9 @@ export default function NumericRangeField({
   }
   const minNumber = schema.minimum;
   const maxNumber = schema.maximum;
-  let min = formData?.min || null;
+  let min = formData?.min;
   const [minValue, setMinValue] = React.useState(min?.toString() || '');
-  let max = formData?.max || null;
+  let max = formData?.max;
   const [maxValue, setMaxValue] = React.useState(max?.toString() || '');
 
   // the text input eventually breaks when the number gets too big.
@@ -101,64 +103,13 @@ export default function NumericRangeField({
   const onChangeLocal = (nameToChange: any, event: any) => {
     event.preventDefault();
     let numberValue = parseNumberString(event.target.value);
-    if (numberValue === null || (numberValue === 0 && required)) {
-      const updatedFormData = { ...formData, [nameToChange]: null };
-      onChange(updatedFormData);
-      return;
-    }
+    // Validate and update the numeric range based on user input
     if (nameToChange === 'min') {
-      if (
-        numberValue !== null &&
-        minNumber !== undefined &&
-        maxNumber !== undefined &&
-        (numberValue < minNumber ||
-          numberValue > maxNumber ||
-          numberValue > max)
-      ) {
-        numberValue = null;
-      } else {
-        min = numberValue;
-        let currentMax = parseNumberString(maxValue);
-        if (
-          currentMax !== null &&
-          maxNumber !== undefined &&
-          currentMax >= min &&
-          currentMax <= maxNumber
-        ) {
-          max = currentMax;
-        } else {
-          max = null;
-        }
-      }
       setMinValue(formatNumberString(numberValue?.toString() || ''));
     }
     if (nameToChange === 'max') {
-      if (
-        numberValue !== null &&
-        minNumber !== undefined &&
-        maxNumber !== undefined &&
-        (numberValue > maxNumber ||
-          numberValue < minNumber ||
-          numberValue < min)
-      ) {
-        numberValue = null;
-      } else {
-        max = numberValue;
-        let currentMin = parseNumberString(minValue);
-        if (
-          currentMin !== null &&
-          currentMin <= max &&
-          minNumber !== undefined &&
-          currentMin >= minNumber
-        ) {
-          min = currentMin;
-        } else {
-          min = null;
-        }
-      }
       setMaxValue(formatNumberString(numberValue?.toString() || ''));
     }
-    const existingFormData = formData || {};
     if (!disabled && !readonly) {
       onChange({
         ...(formData || {}),
@@ -196,7 +147,7 @@ export default function NumericRangeField({
           value={formatNumberString(minValue)}
           onChange={(event: any) => {
             onChangeLocal('min', event);
-            setMinValue(event.target.value.replace(/,/g, ''));
+            setMinValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
           helperText={`Min: ${formatNumberString(minNumber?.toString() || '')}`}
@@ -211,7 +162,7 @@ export default function NumericRangeField({
           value={formatNumberString(maxValue)}
           onChange={(event: any) => {
             onChangeLocal('max', event);
-            setMaxValue(event.target.value.replace(/,/g, ''));
+            setMaxValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
           helperText={`Max: ${formatNumberString(maxNumber?.toString() || '')}`}

@@ -37,7 +37,7 @@ class ScriptUnitTestRunner:
 
         try:
             cls._script_engine.environment.clear_state()
-            cls._script_engine._execute(context=context, script=script)
+            cls._script_engine.environment.execute(script, context, external_context=None)
         except SyntaxError as ex:
             return ScriptUnitTestResult(
                 result=False,

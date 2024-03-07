@@ -29,9 +29,6 @@ from sqlalchemy.orm.util import AliasedClass
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_enabled_for_process_model,
 )
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_process_instance_if_appropriate,
-)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -544,7 +541,9 @@ def task_show(
             else:
                 task_model.form_ui_schema = {}
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model.form_ui_schema, task_model.data)
-        JinjaService.render_instructions_for_end_user(task_model, extensions)
+
+        # it should be safe to add instructions to the task spec here since we are never commiting it back to the db
+        extensions["instructionsForEndUser"] = JinjaService.render_instructions_for_end_user(task_model, extensions)
 
     task_model.extensions = extensions
 
@@ -555,9 +554,10 @@ def task_submit(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body)
+        return _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
 
 
 def process_instance_progress(
@@ -873,6 +873,7 @@ def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
     body: dict[str, Any],
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -923,6 +924,7 @@ def _task_submit_shared(
                 data=body,
                 user=g.user,
                 human_task=human_task,
+                execution_mode=execution_mode,
             )
 
     # currently task_model has the potential to be None. This should be removable once
@@ -941,8 +943,6 @@ def _task_submit_shared(
     next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-
-    queue_process_instance_if_appropriate(process_instance)
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
