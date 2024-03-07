@@ -1,3 +1,4 @@
+
 users:
   admin:
     service: local_open_id

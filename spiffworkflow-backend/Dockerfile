@@ -27,7 +27,7 @@ RUN apt-get update \
 
 # keep pip up to date
 RUN pip install --upgrade pip
-RUN pip install poetry==1.8.1
+RUN pip install poetry==1.6.1
 
 
 ######################## - SETUP

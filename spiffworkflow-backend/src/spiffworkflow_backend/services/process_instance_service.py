@@ -20,6 +20,9 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
@@ -27,7 +30,6 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
-from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -462,15 +464,13 @@ class ProcessInstanceService:
         )
         DeepMerge.merge(spiff_task.data, data)
 
-    @classmethod
+    @staticmethod
     def complete_form_task(
-        cls,
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
         human_task: HumanTaskModel,
-        execution_mode: str | None = None,
     ) -> None:
         """All the things that need to happen when we complete a form.
 
@@ -481,16 +481,12 @@ class ProcessInstanceService:
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        if queue_process_instance_if_appropriate(processor.process_instance_model, execution_mode):
-            return
-        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+        if queue_enabled_for_process_model(processor.process_instance_model):
+            queue_process_instance_if_appropriate(processor.process_instance_model)
+        else:
             with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-                execution_strategy_name = None
-                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                    execution_strategy_name = "greedy"
-
                 # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                processor.do_engine_steps(save=True)
 
     @staticmethod
     def spiff_task_to_api_task(

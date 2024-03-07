@@ -114,7 +114,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
             if expected_value is None:  # This key is not required for this instance to match.
                 continue
             try:
-                result = expression_engine.environment.evaluate(correlation_key.retrieval_expression, payload)
+                result = expression_engine._evaluate(correlation_key.retrieval_expression, payload)
             except Exception as e:
                 # the failure of a payload evaluation may not mean that matches for these
                 # message instances can't happen with other messages.  So don't error up.

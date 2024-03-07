@@ -48,7 +48,9 @@ class JinjaService:
         if extensions and "instructionsForEndUser" in extensions:
             if extensions["instructionsForEndUser"]:
                 try:
-                    return cls.render_jinja_template(extensions["instructionsForEndUser"], task)
+                    instructions = cls.render_jinja_template(extensions["instructionsForEndUser"], task)
+                    extensions["instructionsForEndUser"] = instructions
+                    return instructions
                 except TaskModelError as wfe:
                     wfe.add_note("Failed to render instructions for end user.")
                     raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe

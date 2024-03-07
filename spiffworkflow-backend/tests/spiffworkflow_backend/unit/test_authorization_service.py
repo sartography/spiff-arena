@@ -458,8 +458,6 @@ class TestAuthorizationService(BaseTest):
                 ("/process-models", "read"),
                 ("/processes", "read"),
                 ("/processes/callers/*", "read"),
-                ("/script-assist/enabled", "read"),
-                ("/script-assist/process-message", "create"),
                 ("/service-tasks", "read"),
                 ("/tasks/*", "create"),
                 ("/tasks/*", "delete"),

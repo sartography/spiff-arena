@@ -65,7 +65,6 @@ def message_instance_list(
 def message_send(
     message_name: str,
     body: dict[str, Any],
-    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     if "payload" not in body:
         raise (
@@ -88,7 +87,7 @@ def message_send(
     db.session.add(message_instance)
     db.session.commit()
     try:
-        receiver_message = MessageService.correlate_send_message(message_instance, execution_mode=execution_mode)
+        receiver_message = MessageService.correlate_send_message(message_instance)
     except Exception as e:
         db.session.delete(message_instance)
         db.session.commit()

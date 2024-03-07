@@ -1,5 +1,3 @@
-from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
-
 # black and ruff are in competition with each other in import formatting so ignore ruff
 # ruff: noqa: I001
 
@@ -76,10 +74,9 @@ def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
     force_run: bool = False,
-    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    _process_instance_run(process_instance, force_run=force_run, execution_mode=execution_mode)
+    _process_instance_run(process_instance, force_run=force_run)
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
@@ -647,7 +644,6 @@ def _get_process_instance(
 def _process_instance_run(
     process_instance: ProcessInstanceModel,
     force_run: bool = False,
-    execution_mode: str | None = None,
 ) -> None:
     if process_instance.status != "not_started" and not force_run:
         raise ApiError(
@@ -658,15 +654,10 @@ def _process_instance_run(
 
     processor = None
     try:
-        if not queue_process_instance_if_appropriate(
-            process_instance, execution_mode=execution_mode
-        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-            execution_strategy_name = None
-            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                execution_strategy_name = "greedy"
-            processor, _ = ProcessInstanceService.run_process_instance_with_processor(
-                process_instance, execution_strategy_name=execution_strategy_name
-            )
+        if queue_enabled_for_process_model(process_instance):
+            queue_process_instance_if_appropriate(process_instance)
+        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+            processor, _ = ProcessInstanceService.run_process_instance_with_processor(process_instance)
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,

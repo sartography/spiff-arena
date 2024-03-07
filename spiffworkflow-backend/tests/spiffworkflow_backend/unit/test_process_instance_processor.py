@@ -27,28 +27,33 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceProcessor(BaseTest):
+    # it's not totally obvious we want to keep this test/file
+    def test_script_engine_takes_data_and_returns_expected_results(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
+        script_engine = ProcessInstanceProcessor._default_script_engine
+
+        result = script_engine._evaluate("a", {"a": 1})
+        assert result == 1
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = None
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+
     def test_script_engine_can_use_custom_scripts(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            process_model_id="test_group/random_fact",
-            bpmn_file_name="random_fact_set.bpmn",
-            process_model_source_directory="random_fact",
-        )
-        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-
-        assert process_instance.status == ProcessInstanceStatus.complete.value
-        process_data = processor.get_data()
-        assert process_data is not None
-        assert "FactService" in process_data
-        assert (
-            process_data["FactService"]
-            == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
-        )
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
+        script_engine = ProcessInstanceProcessor._default_script_engine
+        result = script_engine._evaluate("fact_service(type='norris')", {})
+        assert result == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = None
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
     def test_sets_permission_correctly_on_human_task(
         self,

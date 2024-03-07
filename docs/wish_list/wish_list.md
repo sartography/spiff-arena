@@ -101,9 +101,4 @@ Right now we allow editing the Display name of a model or group, but it does
 not change the name of the underlying directory, making it harder and harder
 over time to look at GitHub or the file system and find what you are seeing in the display.
 
-### Fast feedback on errors with python expressions
 
-We have in the past considered changing the way lots of expressions worked such that you would have to include an equals sign in the front in order for it to be evaluated as python, like [this](https://docs.camunda.io/docs/components/concepts/expressions/#expressions-vs-static-values).
-The [status quo is confusing](https://github.com/sartography/spiff-arena/issues/1075), but Elizabeth pointed out that requiring string parsing in order to decide how to evaluate something is not necessarily better.
-If the BPMN editor was aware of the variables that existed within the workflow - defined by the json schemas of forms, messages, and service calls, or the variables that come out of script tasks, then we could immediately notify people of the issue while they are authoring the diagram rather than having to wait for a possible runtime error.
-We could also change the error message on evaluation errors to incude a reminder that quotes are needed around strings

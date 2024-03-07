@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -9,8 +9,5 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
 export SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
-
-# so we can raise if calling unsafe code in celery
-export SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER=true
 
 poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info

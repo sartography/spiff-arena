@@ -40,10 +40,6 @@ configs_with_structures = normalized_environment(environ)
 config_from_env("FLASK_SESSION_SECRET_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
 
-### AI Tools
-config_from_env("SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED", default=False)
-config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API")
-
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", default=False)
@@ -207,8 +203,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 # we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,
 # so instead of using config, we use os.environ directly over there.
 # config_from_env("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE", default=True)
-
-
 # adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
 # to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default=False)

@@ -1378,7 +1378,6 @@ class TestProcessApi(BaseTest):
         )
         assert show_response.json is not None
         assert show_response.status_code == 200
-        assert show_response.json["bpmn_xml_file_contents_retrieval_error"] is None
         file_system_root = FileSystemService.root_path()
         file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(file_path) as f_open:
@@ -1419,7 +1418,6 @@ class TestProcessApi(BaseTest):
         )
         assert show_response.json is not None
         assert show_response.status_code == 200
-        assert show_response.json["bpmn_xml_file_contents_retrieval_error"] is None
         file_system_root = FileSystemService.root_path()
         process_instance_file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(process_instance_file_path) as f_open:

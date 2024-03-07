@@ -8,7 +8,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -253,39 +252,3 @@ class TestMessageService(BaseTest):
         assert len(message_instances) == 2
         mi_statuses = [mi.status for mi in message_instances]
         assert mi_statuses == ["completed", "completed"]
-
-    def test_can_delete_message_start_events_from_database_if_model_no_longer_references_it(
-        self,
-        app: Flask,
-        with_db_and_bpmn_file_cleanup: None,
-    ) -> None:
-        process_model_without_message_start_event = load_test_spec(
-            "test_group/sample",
-            process_model_source_directory="sample",
-        )
-        old_message_triggerable_process = MessageTriggerableProcessModel(
-            message_name="travel_start_test_v2",
-            process_model_identifier=process_model_without_message_start_event.id,
-            file_name=process_model_without_message_start_event.primary_file_name,
-        )
-        db.session.add(old_message_triggerable_process)
-        db.session.commit()
-        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
-            message_name="travel_start_test_v2"
-        ).first()
-        assert message_triggerable_process_model is not None
-        assert message_triggerable_process_model.process_model_identifier == process_model_without_message_start_event.id
-
-        assert process_model_without_message_start_event.primary_file_name is not None
-        primary_file_contents = SpecFileService.get_data(
-            process_model_without_message_start_event, process_model_without_message_start_event.primary_file_name
-        )
-        SpecFileService.update_file(
-            process_model_without_message_start_event,
-            process_model_without_message_start_event.primary_file_name,
-            primary_file_contents,
-        )
-        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
-            message_name="travel_start_test_v2"
-        ).first()
-        assert message_triggerable_process_model is None

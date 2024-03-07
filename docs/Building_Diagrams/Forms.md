@@ -242,49 +242,57 @@ The schema enforces the following rules:
 - The `Preferred Delivery Date Range` must start no earlier than today and end no later than the `end_date`.
 
 ### Display Fields Side-By-Side on Same Row
-When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically. The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
 
-#### Form Schema Example:
+By default, all form fields will be laid out one on top of the other.
+In some cases, it might be more user-friendly to put two or more fields next to each other on the same conceptual "row."
+Perhaps, you want to let a user fill out a name, and have First Name and Last Name next to each other.
+Don't actually do this; use Full name as a single field. :)
+But in some other case where you actually want to have fields laid out horizontally instead of vertically, do the following:
 
-Define your form fields in the JSON schema as follows:
+Example form schema:
 
 ```json
 {
-  "title": "Side by Side Layout",
-  "description": "Demonstrating side-by-side layout",
+  "title": "Side by side",
+  "description": "A simple form demonstrating side-by-side layout of fields",
   "type": "object",
   "properties": {
-    "firstName": {"type": "string"},
-    "lastName": {"type": "string"},
-    "notes": {"type": "string"}
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
   }
 }
 ```
 
-#### `ui:layout` Configuration:
-
-The `ui:layout` attribute accepts an array of objects, each representing a conceptual "row" of fields. Here's how to use it:
+Example uiSchema:
 
 ```json
 {
   "ui:layout": [
     {
-      "firstName": {"sm": 2, "md": 2, "lg": 4},
-      "lastName": {"sm": 2, "md": 2, "lg": 4}
+      "firstName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
+      },
+      "lastName": {
+        "sm": 2,
+        "md": 2,
+        "lg": 4
+      }
     },
-    {"notes": {}}
+    {
+      "notes": {}
+    }
   ]
 }
 ```
-![Styling_Form](images/styling_forms.png)
-
-#### Key Points:
-
-- **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
-- **Responsive Columns**: Values (`sm`, `md`, `lg`) indicate the number of grid columns a field should occupy, ensuring the form remains functional and visually appealing across devices.
-- **Simplified Configuration**: If column widths are unspecified, the layout will automatically adjust, providing flexibility in design.
-
-#### Example Illustrated:
 
 In this case, we are saying that we want firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
 We are saying that firstName should take up 4 columns when a large display is used.
@@ -300,11 +308,6 @@ If you just specific a uiSchema like this, it will figure out the column widths 
         }
       ]
     }
-
-
-By leveraging the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
-
-
 
 ### Display UI Help in Web Forms
 
@@ -399,7 +402,7 @@ Below is an example JSON schema that includes the numeric range field:
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
 
-#### UI Schema Example
+#### Ui Schema Example
 
 ```json
 {

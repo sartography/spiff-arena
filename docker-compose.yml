@@ -1,12 +1,10 @@
-# version: "3.8"
-
 services:
   spiffworkflow-frontend:
     container_name: spiffworkflow-frontend
     image: ghcr.io/sartography/spiffworkflow-frontend:latest
     depends_on:
       spiffworkflow-backend:
-        condition: service_started
+        condition: service_healthy
     environment:
       APPLICATION_ROOT: "/"
       PORT0: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
@@ -41,7 +39,7 @@ services:
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
-      - ${SPIFFWORKFLOW_BACKEND_LOCAL_BPMN_SPEC_DIR:-./process_models}:/app/process_models
+      - ./process_models:/app/process_models
       - spiffworkflow_backend_db:/app/db_volume
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
@@ -64,6 +62,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+
 
 volumes:
   spiffworkflow_backend_db:
