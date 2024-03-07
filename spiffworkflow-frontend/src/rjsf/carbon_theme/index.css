@@ -27,6 +27,7 @@
   background-color: inherit;
 }
 
+
 /* for some reason it wraps the entire form using FieldTemplate.jsx, which is where we added the rjsf-field thing (which is only intended for fields, not entire forms. hence the double rjsf-field reference, only for rjsf-fields inside rjsf-fields, so we don't get double margin after the last field */
 .rjsf .rjsf-field .rjsf-field {
   margin-bottom: 2rem;
@@ -34,6 +35,10 @@
 /* only the outter rjsf-field gets the margin from the rule above but not its contents like the array-item so mention it explicitly */
 .rjsf .array-item .rjsf-field .rjsf-field {
   margin-bottom: 2rem;
+}
+
+.array-item-toolbox {
+  margin-left: 2rem;
 }
 
 .rjsf .text-input {
@@ -68,12 +73,12 @@
   display: none;
 }
 
-.rjsf .array-item .rjsf-field {
+.rjsf .array-item  .rjsf-field {
   margin-bottom: 0;
 }
 
 .rjsf .markdown-field-desc-text .field-description {
-  font-size: 0.8rem;
+  font-size: .8rem;
 }
 
 .rjsf .numeric--range-field-wrapper input {
@@ -105,20 +110,5 @@
 }
 
 .rjsf .side-by-side-column:not(:last-child) {
-  padding-right: 1rem;
-}
-
-.rjsf .array-field-container {
-  display: flex;
-}
-.rjsf .array-field-contents {
-  flex: 8;
-  margin-left: calc(3%);
-}
-.rjsf .array-field-actions {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  /* justify-content: center; */
-  align-items: center;
+    padding-right: 1rem;
 }

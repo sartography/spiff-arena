@@ -24,7 +24,6 @@ export default function ProcessInstanceCurrentTaskInfo({
     HttpService.makeCallToBackend({
       path: `/tasks/${processInstance.id}/instruction`,
       successCallback: processTaskResult,
-      failureCallback: (error: any) => console.error(error.message),
     });
   }, [processInstance]);
 

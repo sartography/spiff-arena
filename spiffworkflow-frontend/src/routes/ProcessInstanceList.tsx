@@ -41,11 +41,10 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
   };
 
   const processInstanceTitleElement = () => {
-    let headerText = 'My Process Instances';
     if (variant === 'all') {
-      headerText = 'All Process Instances';
+      return <h1>All Process Instances</h1>;
     }
-    return { text: headerText };
+    return <h1>My Process Instances</h1>;
   };
 
   return (
@@ -53,10 +52,10 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
       <ProcessInstanceListTabs variant={variant} />
       <br />
       {processInstanceBreadcrumbElement()}
+      {processInstanceTitleElement()}
       <ProcessInstanceListTableWithFilters
         variant={variant}
         showActionsColumn
-        header={processInstanceTitleElement()}
       />
     </>
   );

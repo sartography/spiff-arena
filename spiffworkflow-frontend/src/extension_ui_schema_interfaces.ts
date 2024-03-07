@@ -4,8 +4,6 @@
  * See below for more details.
  */
 
-import { FunctionComponent } from 'react';
-
 // Current version of the extension uischema.
 export type ExtensionUiSchemaVersion = '0.1' | '0.2';
 
@@ -65,7 +63,6 @@ export interface UiSchemaUxElement {
   page: string;
   display_location: UiSchemaDisplayLocation;
   location_specific_configs?: UiSchemaLocationSpecificConfig;
-  tooltip?: string;
 }
 
 export interface UiSchemaForm {
@@ -212,8 +209,4 @@ export interface ExtensionApiResponse {
   // The markdown string rendered from the process model.
   rendered_results_markdown?: string;
 }
-
-export type SupportedComponentList = {
-  [key in keyof typeof UiSchemaPageComponentList]: FunctionComponent<any>;
-};
 /** ************************************* */

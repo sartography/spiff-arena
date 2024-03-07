@@ -1,9 +1,9 @@
-import { useLocation, Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 import React, { useEffect } from 'react';
+import ProcessModelEditDiagram from './ProcessModelEditDiagram';
 import ErrorDisplay from '../components/ErrorDisplay';
 import LoginHandler from '../components/LoginHandler';
-import ProcessModelEditDiagram from './ProcessModelEditDiagram';
 
 export default function EditorRoutes() {
   const location = useLocation();

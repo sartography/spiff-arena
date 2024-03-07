@@ -9,21 +9,9 @@ export default function TaskRouteTabs() {
   }
 
   const spiffTabs: SpiffTab[] = [
-    {
-      path: '/tasks/in-progress',
-      display_name: 'In Progress',
-      tooltip: 'View running Processes',
-    },
-    {
-      path: '/tasks/completed-instances',
-      display_name: 'Completed',
-      tooltip: 'View completed Processes',
-    },
-    {
-      path: '/tasks/create-new-instance',
-      display_name: 'Start New +',
-      tooltip: 'Find and start a new Process',
-    },
+    { path: '/tasks/in-progress', display_name: 'In Progress' },
+    { path: '/tasks/completed-instances', display_name: 'Completed' },
+    { path: '/tasks/create-new-instance', display_name: 'Start New +' },
   ];
   return <SpiffTabs tabs={spiffTabs} />;
 }

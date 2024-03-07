@@ -38,6 +38,7 @@ import 'dmn-js-properties-panel/dist/assets/properties-panel.css';
 import spiffworkflow from 'bpmn-js-spiffworkflow/app/spiffworkflow';
 import 'bpmn-js-spiffworkflow/app/css/app.css';
 
+// @ts-expect-error TS(7016) FIXME
 import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle/spiffworkflow.json';
 
 // @ts-expect-error TS(7016) FIXME
@@ -91,7 +92,6 @@ type OwnProps = {
   url?: string;
   callers?: ProcessReference[];
   activeUserElement?: React.ReactElement;
-  disableSaveButton?: boolean;
 };
 
 const FitViewport = 'fit-viewport';
@@ -122,7 +122,6 @@ export default function ReactDiagramEditor({
   url,
   callers,
   activeUserElement,
-  disableSaveButton,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -710,13 +709,7 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button
-              onClick={handleSave}
-              disabled={disableSaveButton}
-              data-qa="process-model-file-save-button"
-            >
-              Save
-            </Button>
+            <Button onClick={handleSave}>Save</Button>
           </Can>
           <Can
             I="DELETE"

@@ -281,6 +281,9 @@ export default function CustomForm({
         `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
       );
     }
+    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+      errors[propertyKey].addError(`must have min less than or equal to max`);
+    }
     if (
       formDataToCheck[propertyKey].max <
       jsonSchema.properties[propertyKey].minimum

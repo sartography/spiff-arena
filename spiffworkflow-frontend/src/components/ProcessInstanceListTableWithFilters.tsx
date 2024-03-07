@@ -446,15 +446,7 @@ export default function ProcessInstanceListTableWithFilters({
     };
 
     checkFiltersAndRun();
-  }, [
-    filtersEnabled,
-    getReportMetadataWithReportHash,
-    permissionsLoaded,
-
-    // watch the variant prop so when switching between the "For Me" and "All" pi list tables
-    // the api call to find the new process instances is made and the report metadata is updated.
-    variant,
-  ]);
+  }, [filtersEnabled, getReportMetadataWithReportHash, permissionsLoaded]);
 
   const removeFieldFromReportMetadata = (
     reportMetadataToUse: ReportMetadata,
@@ -1539,23 +1531,6 @@ export default function ProcessInstanceListTableWithFilters({
     ]
   );
 
-  const filterComponent = () => {
-    return (
-      <Grid fullWidth condensed className="megacondensed">
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-          <Filters
-            filterOptions={filterOptions}
-            showFilterOptions={showFilterOptions}
-            setShowFilterOptions={setShowFilterOptions}
-            reportSearchComponent={reportSearchComponent}
-            filtersEnabled={filtersEnabled}
-            reportHash={reportHash}
-          />
-        </Column>
-      </Grid>
-    );
-  };
-
   let resultsTable = null;
   if (reportMetadata) {
     const refilterTextComponent = null;
@@ -1565,7 +1540,6 @@ export default function ProcessInstanceListTableWithFilters({
         <ProcessInstanceListTable
           autoReload={autoReloadEnabled}
           canCompleteAllTasks={canCompleteAllTasks}
-          filterComponent={filterComponent}
           header={header}
           onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
           paginationClassName={paginationClassName}
@@ -1574,7 +1548,6 @@ export default function ProcessInstanceListTableWithFilters({
           reportMetadata={reportMetadata}
           showActionsColumn={showActionsColumn}
           showLinkToReport={showLinkToReport}
-          showRefreshButton
           tableHtmlId={tableHtmlId}
           textToShowIfEmpty={textToShowIfEmpty}
           variant={variant}
@@ -1588,6 +1561,18 @@ export default function ProcessInstanceListTableWithFilters({
       {reportColumnForm()}
       {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
+      <Grid fullWidth condensed className="megacondensed">
+        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+          <Filters
+            filterOptions={filterOptions}
+            showFilterOptions={showFilterOptions}
+            setShowFilterOptions={setShowFilterOptions}
+            reportSearchComponent={reportSearchComponent}
+            filtersEnabled={filtersEnabled}
+            reportHash={reportHash}
+          />
+        </Column>
+      </Grid>
       {resultsTable}
     </div>
   );
