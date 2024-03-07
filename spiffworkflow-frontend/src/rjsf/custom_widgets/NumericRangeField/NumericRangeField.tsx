@@ -66,10 +66,10 @@ export default function NumericRangeField({
     // and a decimal point if needed. For example, 1000 will become 1,000
     // or 1000.5 will become 1,000.5
 
-    numberString = numberString.replace(/,/g, '');
+    const numberStringNoCommas = numberString.replace(/,/g, '');
 
-    if (numberString) {
-      const parts = numberString.split('.');
+    if (numberStringNoCommas) {
+      const parts = numberStringNoCommas.split('.');
       const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
     }
@@ -91,9 +91,9 @@ export default function NumericRangeField({
   }
   const minNumber = schema.minimum;
   const maxNumber = schema.maximum;
-  let min = formData?.min;
+  const min = formData?.min;
   const [minValue, setMinValue] = React.useState(min?.toString() || '');
-  let max = formData?.max;
+  const max = formData?.max;
   const [maxValue, setMaxValue] = React.useState(max?.toString() || '');
 
   // the text input eventually breaks when the number gets too big.
@@ -102,7 +102,7 @@ export default function NumericRangeField({
 
   const onChangeLocal = (nameToChange: any, event: any) => {
     event.preventDefault();
-    let numberValue = parseNumberString(event.target.value);
+    const numberValue = parseNumberString(event.target.value);
     // Validate and update the numeric range based on user input
     if (nameToChange === 'min') {
       setMinValue(formatNumberString(numberValue?.toString() || ''));
