@@ -8,7 +8,6 @@ repos:
         language: system
         files: ^spiffworkflow-backend/
         types: [python]
-        line-length: 130
         require_serial: true
         # exclude: ^migrations/
         exclude: "/migrations/"
@@ -46,6 +45,7 @@ repos:
         types: [text]
         stages: [commit, push, manual]
       - id: ruff
+        args: [ --fix ]
         files: ^spiffworkflow-backend/
         name: ruff
         entry: ruff
