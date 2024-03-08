@@ -152,3 +152,28 @@ class TestAuthentication(BaseTest):
         assert response.status_code == 500
         assert response.json is not None
         assert response.json["message"].startswith("InvalidRedirectUrlError:")
+
+    def test_can_access_public_message_forms(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        # user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/test_group_one:*")
+        user = self.find_or_create_user("testing@e.com")
+
+        # make sure running refresh_permissions doesn't remove the user from the group
+        group_info: list[GroupPermissionsDict] = [
+            {
+                "users": [],
+                "name": "group_one",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+            }
+        ]
+        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+
+        service_account_permissions_after = sorted(
+            UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
+        )
+        assert service_account_permissions_before == service_account_permissions_after

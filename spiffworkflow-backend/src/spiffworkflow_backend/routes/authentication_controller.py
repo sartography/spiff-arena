@@ -76,6 +76,16 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
         user_model = _get_user_model_from_token(decoded_token)
     elif token_info["api_key"] is not None:
         user_model = _get_user_model_from_api_key(token_info["api_key"])
+    else:
+        # if there is no token in the request, hit the database to see if this path allows unauthed access
+        # we could choose to put all of the APIs that can be accessed unauthed behind a certain path.
+        # if we did that, we would not have to hit the db on *every* tokenless request
+        api_function_full_path, _ = AuthorizationService.get_fully_qualified_api_function_from_request()
+        if api_function_full_path and api_function_full_path in [
+            "spiffworkflow_backend.routes.messages_controller.message_form_show"
+        ]:
+            # TODO: create token and user if endpoint is public and set cookie
+            print("HEY")
 
     if user_model:
         g.user = user_model

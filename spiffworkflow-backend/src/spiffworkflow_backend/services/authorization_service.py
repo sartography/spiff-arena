@@ -1,6 +1,7 @@
 import inspect
 import re
 from dataclasses import dataclass
+from typing import Tuple
 
 import yaml
 from flask import current_app
@@ -77,27 +78,27 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
-AUTHENTICATION_EXCLUSION_LIST = {
-    "authentication_begin": "spiffworkflow_backend.routes.service_tasks_controller",
-    "authentication_callback": "spiffworkflow_backend.routes.service_tasks_controller",
-    "authentication_options": "spiffworkflow_backend.routes.authentication_controller",
-    "github_webhook_receive": "spiffworkflow_backend.routes.webhooks_controller",
-    "login": "spiffworkflow_backend.routes.authentication_controller",
-    "login_api_return": "spiffworkflow_backend.routes.authentication_controller",
-    "login_return": "spiffworkflow_backend.routes.authentication_controller",
-    "login_with_access_token": "spiffworkflow_backend.routes.authentication_controller",
-    "logout": "spiffworkflow_backend.routes.authentication_controller",
-    "logout_return": "spiffworkflow_backend.routes.authentication_controller",
-    "status": "spiffworkflow_backend.routes.health_controller",
-    "task_allows_guest": "spiffworkflow_backend.routes.tasks_controller",
-    "test_raise_error": "spiffworkflow_backend.routes.debug_controller",
-    "url_info": "spiffworkflow_backend.routes.debug_controller",
-    "webhook": "spiffworkflow_backend.routes.webhooks_controller",
+AUTHENTICATION_EXCLUSION_LIST = [
+    "spiffworkflow_backend.routes.authentication_controller.authentication_options",
+    "spiffworkflow_backend.routes.authentication_controller.login",
+    "spiffworkflow_backend.routes.authentication_controller.login_api_return",
+    "spiffworkflow_backend.routes.authentication_controller.login_return",
+    "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
+    "spiffworkflow_backend.routes.authentication_controller.logout",
+    "spiffworkflow_backend.routes.authentication_controller.logout_return",
+    "spiffworkflow_backend.routes.debug_controller.test_raise_error",
+    "spiffworkflow_backend.routes.debug_controller.url_info",
+    "spiffworkflow_backend.routes.health_controller.status",
+    "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
+    "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
+    "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
+    "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
+    "spiffworkflow_backend.routes.webhooks_controller.webhook",
     # swagger api calls
-    "console_ui_home": "connexion.apis.flask_api",
-    "console_ui_static_files": "connexion.apis.flask_api",
-    "get_json_spec": "connexion.apis.flask_api",
-}
+    "connexion.apis.flask_api.console_ui_home",
+    "connexion.apis.flask_api.console_ui_static_files",
+    "connexion.apis.flask_api.get_json_spec",
+]
 
 
 class AuthorizationService:
@@ -251,6 +252,17 @@ class AuthorizationService:
         return permission_assignment
 
     @classmethod
+    def get_fully_qualified_api_function_from_request(cls) -> Tuple[str | None, any]:
+        api_view_function = current_app.view_functions[request.endpoint]
+        module = inspect.getmodule(api_view_function)
+        api_function_name = api_view_function.__name__ if api_view_function else None
+        controller_name = module.__name__ if module is not None else None
+        function_full_path = None
+        if api_function_name:
+            function_full_path = f"{controller_name}.{api_function_name}"
+        return (function_full_path, module)
+
+    @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         if request.method == "OPTIONS":
             return True
@@ -262,17 +274,10 @@ class AuthorizationService:
         if not request.endpoint:
             return True
 
-        api_view_function = current_app.view_functions[request.endpoint]
-        module = inspect.getmodule(api_view_function)
-        api_function_name = api_view_function.__name__ if api_view_function else None
-        controller_name = module.__name__ if module is not None else None
+        api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
         if (
-            api_function_name
-            and (
-                api_function_name in AUTHENTICATION_EXCLUSION_LIST
-                and controller_name
-                and controller_name in AUTHENTICATION_EXCLUSION_LIST[api_function_name]
-            )
+            api_function_full_path
+            and (api_function_full_path in AUTHENTICATION_EXCLUSION_LIST)
             or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
         ):
             return True
@@ -293,6 +298,22 @@ class AuthorizationService:
         return None
 
     @classmethod
+    def check_permission_for_request(cls) -> None:
+        permission_string = cls.get_permission_from_http_method(request.method)
+        if permission_string:
+            has_permission = AuthorizationService.user_has_permission(
+                user=g.user,
+                permission=permission_string,
+                target_uri=request.path,
+            )
+            if has_permission:
+                return None
+
+        raise NotAuthorizedError(
+            f"User {g.user.username} is not authorized to perform requested action: {permission_string} - {request.path}",
+        )
+
+    @classmethod
     def check_for_permission(cls, decoded_token: dict | None) -> None:
         if cls.should_disable_auth_for_request():
             return None
@@ -308,19 +329,7 @@ class AuthorizationService:
         if cls.request_allows_guest_access(decoded_token):
             return None
 
-        permission_string = cls.get_permission_from_http_method(request.method)
-        if permission_string:
-            has_permission = AuthorizationService.user_has_permission(
-                user=g.user,
-                permission=permission_string,
-                target_uri=request.path,
-            )
-            if has_permission:
-                return None
-
-        raise NotAuthorizedError(
-            f"User {g.user.username} is not authorized to perform requested action: {permission_string} - {request.path}",
-        )
+        cls.check_permission_for_request()
 
     @classmethod
     def request_is_excluded_from_permission_check(cls) -> bool:
