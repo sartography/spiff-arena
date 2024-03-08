@@ -52,11 +52,16 @@ be-mypy:
 be-poetry-i:
 	$(IN_BACKEND) poetry install
 
+be-poetry-lock:
+	$(IN_BACKEND) poetry lock --no-update
+
+be-poetry-rm:
+	@if [ -d "$(BACKEND_CONTAINER)/.venv" ]; then \
+		rm -rf "$(BACKEND_CONTAINER)/.venv"; \
+	fi
+
 be-recreate-db:
 	$(IN_BACKEND) ./bin/recreate_db clean
-
-be-ruff:
-	$(IN_BACKEND) poetry run ruff --fix .
 
 be-sh:
 	$(IN_BACKEND) /bin/bash
@@ -89,10 +94,18 @@ fe-sh:
 poetry-i:
 	$(IN_ARENA) poetry install --no-root
 
+poetry-rm:
+	@if [ -d ".venv" ]; then \
+		rm -rf ".venv"; \
+	fi
+
 pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
-run-pyl: fe-lint-fix pre-commit be-mypy be-tests-par
+ruff:
+	$(IN_ARENA) poetry run ruff --fix spiffworkflow-backend
+
+run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@/bin/true
 
 sh:
@@ -103,7 +116,8 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-mypy be-poetry-i be-recreate-db be-ruff be-sh be-sqlite be-tests be-tests-par \
+	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
+	be-recreate-db be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-i fe-sh \
-	poetry-i pre-commit run-pyl \
+	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
