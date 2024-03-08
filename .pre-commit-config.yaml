@@ -46,6 +46,7 @@ repos:
         types: [text]
         stages: [commit, push, manual]
       - id: ruff
+        args: [ --fix ]
         files: ^spiffworkflow-backend/
         name: ruff
         entry: ruff
