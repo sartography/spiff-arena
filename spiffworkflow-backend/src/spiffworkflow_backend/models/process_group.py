@@ -20,6 +20,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "display_name",
     "description",
+    "data_store_specifications",
     "messages",
     "correlation_keys",
     "correlation_propertiesdata_store_specifications",
