@@ -22,7 +22,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceType
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
 def reference_cache_list(
@@ -33,8 +33,8 @@ def reference_cache_list(
 ) -> flask.wrappers.Response:
     query = ReferenceCacheModel.basic_query().filter_by(type=cache_type)
     if relative_location:
-        locations = ReferenceCacheService.upsearch_locations(relative_location)
-        query = query.filter(ReferenceCacheModel.relative_location.in_(locations))
+        locations = UpsearchService.upsearch_locations(relative_location)
+        query = query.filter(ReferenceCacheModel.relative_location.in_(locations))  # type: ignore
 
     results = query.paginate(page=page, per_page=per_page, error_out=False)
     response_json = {
@@ -65,7 +65,7 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     # Returns all the messages, correlation keys, and correlation properties that exist at the given
     # relative location or higher in the directory tree, presents it in the same format as you would
     # find in a single process group file.
-    locations = ReferenceCacheService.upsearch_locations(relative_location)
+    locations = UpsearchService.upsearch_locations(relative_location)
     messages = []
     correlation_keys = []
     correlation_properties = []
