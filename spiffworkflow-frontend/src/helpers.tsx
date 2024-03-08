@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 
-import { ProcessInstance } from './interfaces';
+import { ElementForArray, ProcessInstance } from './interfaces';
 
 export const DEFAULT_PER_PAGE = 50;
 export const DEFAULT_PAGE = 1;
@@ -299,4 +299,14 @@ export const isURL = (str: string) => {
     // eslint-disable-next-line max-len
     /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
   return urlRegex.test(str);
+};
+
+// this will help maintain order when using an array of elements.
+// React needs to have a key for each component to ensure correct elements are added
+// and removed when that array is changed.
+// https://stackoverflow.com/questions/46735483/error-do-not-use-array-index-in-keys/46735689#46735689
+export const renderElementsForArray = (elements: ElementForArray[]) => {
+  return elements.map((element: any) => (
+    <div key={element.key}>{element.component}</div>
+  ));
 };
