@@ -59,12 +59,12 @@ class FileSystemService:
         return cls.non_git_dir if recursive else cls.not_recursive
 
     @classmethod
-    def is_process_group_json_file(cls, file: str) -> bool:
-        return file.endswith(cls.PROCESS_GROUP_JSON_FILE)
-
-    @classmethod
     def is_process_model_json_file(cls, file: str) -> bool:
         return file.endswith(cls.PROCESS_MODEL_JSON_FILE)
+
+    @classmethod
+    def is_process_group_json_file(cls, file: str) -> bool:
+        return file.endswith(cls.PROCESS_GROUP_JSON_FILE)
 
     @classmethod
     def is_data_store_json_file(cls, file: str) -> bool:
