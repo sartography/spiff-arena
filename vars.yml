@@ -1,4 +1,7 @@
-frontend-image: ghcr.io/gsa-tts/spiffworkflow-frontend:deploy-to-cloud-gov-latest
 backend-image: ghcr.io/gsa-tts/spiffworkflow-backend:deploy-to-cloud-gov-latest
+frontend-image: ghcr.io/gsa-tts/spiffworkflow-frontend:deploy-to-cloud-gov-latest
+
 db-instance: spiffworkflow-db
-flask-testing-key: 66eef9e98a3f4e6f85258154e4a1bdce
+flask-session-key: 66eef9e98a3f4e6f85258154e4a1bdce
+openid-secret: flarblegarble
+randomish-route: flamingo-stardust
