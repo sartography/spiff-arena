@@ -9,6 +9,7 @@ import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWid
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
+import CharacterCounterField from '../rjsf/custom_widgets/CharacterCounterField/CharacterCounterField';
 
 enum DateCheckType {
   minimum = 'minimum',
@@ -53,6 +54,7 @@ export default function CustomForm({
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
+    'character-counter': CharacterCounterField,
   };
 
   const rjsfTemplates: any = {};
@@ -250,12 +252,71 @@ export default function CustomForm({
     formDataToCheck: any,
     propertyKey: string,
     errors: any,
-    _jsonSchema: any,
+    jsonSchema: any,
     _uiSchemaPassedIn?: any
   ) => {
-    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+    if (
+      jsonSchema.required &&
+      jsonSchema.required.includes(propertyKey) &&
+      (formDataToCheck[propertyKey].min === undefined ||
+        formDataToCheck[propertyKey].max === undefined)
+    ) {
       errors[propertyKey].addError(
-        `must have min less than max on numeric range`
+        `must have valid Minimum and Maximum on ${propertyKey}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].min <
+      jsonSchema.properties[propertyKey].minimum
+    ) {
+      errors[propertyKey].addError(
+        `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].min >
+      jsonSchema.properties[propertyKey].maximum
+    ) {
+      errors[propertyKey].addError(
+        `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].max <
+      jsonSchema.properties[propertyKey].minimum
+    ) {
+      errors[propertyKey].addError(
+        `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].max >
+      jsonSchema.properties[propertyKey].maximum
+    ) {
+      errors[propertyKey].addError(
+        `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+      );
+    }
+    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+      errors[propertyKey].addError(`must have min less than or equal to max`);
+    }
+  };
+
+  const checkCharacterCounter = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    jsonSchema: any,
+    _uiSchemaPassedIn?: any
+  ) => {
+    if (
+      jsonSchema.required &&
+      jsonSchema.required.includes(propertyKey) &&
+      (formDataToCheck[propertyKey] === undefined ||
+        formDataToCheck[propertyKey] === '')
+    ) {
+      errors[propertyKey].addError(
+        `must have required property '${propertyKey}'`
       );
     }
   };
@@ -324,6 +385,20 @@ export default function CustomForm({
           currentUiSchema['ui:field'] === 'numeric-range'
         ) {
           checkNumericRange(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse,
+            currentUiSchema
+          );
+        }
+
+        if (
+          currentUiSchema &&
+          'ui:field' in currentUiSchema &&
+          currentUiSchema['ui:field'] === 'character-counter'
+        ) {
+          checkCharacterCounter(
             formDataToCheck,
             propertyKey,
             errors,
