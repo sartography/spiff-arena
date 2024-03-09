@@ -1462,13 +1462,14 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         json_data = response.json
         assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
+        assert json_data["process_instance"]["status"] == "complete"
+        assert json_data["task_data"]["invoice"] == payload
+        process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
 
@@ -1537,13 +1538,14 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         json_data = response.json
         assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
+        assert json_data["process_instance"]["status"] == "complete"
+        assert json_data["task_data"]["the_payload"] == payload
+        process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
 
@@ -1609,7 +1611,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 400
         assert response.json
@@ -1621,13 +1623,13 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         json_data = response.json
         assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
+        assert json_data["process_instance"]["status"] == "complete"
+        process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
         processor = ProcessInstanceProcessor(process_instance)
@@ -1640,7 +1642,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 400
         assert response.json
@@ -2282,22 +2284,22 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         assert response.json is not None
-        process_instance_id_one = response.json["id"]
+        process_instance_id_one = response.json["process_instance"]["id"]
 
         payload["po_number"] = "1002"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         assert response.json is not None
-        process_instance_id_two = response.json["id"]
+        process_instance_id_two = response.json["process_instance"]["id"]
 
         response = client.get(
             f"/v1.0/messages?process_instance_id={process_instance_id_one}",
