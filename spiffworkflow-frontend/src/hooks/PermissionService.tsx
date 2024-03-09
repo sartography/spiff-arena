@@ -5,6 +5,10 @@ import { useContext, useEffect, useState } from 'react';
 import { AbilityContext } from '../contexts/Can';
 import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
+import {
+  findPermissionsInCache,
+  updatePermissionsCache,
+} from '../services/PermissionCacheService';
 
 export const checkPermissions = (
   permissionsToCheck: PermissionsToCheck,
@@ -25,7 +29,6 @@ export const usePermissionFetcher = (
 ) => {
   const ability = useContext(AbilityContext);
   const [permissionsLoaded, setPermissionsLoaded] = useState<boolean>(false);
-  const [loadedPermissions, setLoadedPermissions] = useState<Array<any>>([]);
 
   useEffect(() => {
     const processPermissionResult = (result: PermissionCheckResponseBody) => {
@@ -50,47 +53,18 @@ export const usePermissionFetcher = (
         }
       });
       ability.update(rules);
-      setLoadedPermissions((prev) => [...prev, result]);
+
+      // Update the cache with the new permissions
+      updatePermissionsCache(permissionsToCheck);
       setPermissionsLoaded(true);
     };
 
     /**
-     * There can be a lot of requests for permissions (probably based on dependencies everywhere)
-     * That can lead to piles of redundant permission checks (perf, network chatter, console clutter).
-     * So, we need to check if we've already checked the permissions we're about to check.
+     * Are the incoming permission requests all in the cache?
+     * If not, make the backend call and process the results.
+     * Otherwise, we don't need to do anything, these perms are already processed.
      */
-
-    // First, get the stored result with the same key length as the permission request
-    // (We could probably do these individually, but hedging on more precision for time being).
-    const permCount = loadedPermissions.filter((perm) => {
-      if (
-        Object.keys(perm.results).length ===
-        Object.keys(permissionsToCheck).length
-      ) {
-        return perm.results;
-      }
-
-      return null;
-    });
-
-    // Now, check if the perms to check are the same as the perms that were checked
-    let foundPerm = null;
-    permCount.forEach((perm) => {
-      let foundAll = true;
-      Object.keys(permissionsToCheck).forEach((url) => {
-        if (!perm.results[url]) {
-          foundAll = false;
-        }
-      });
-
-      if (foundAll) {
-        foundPerm = perm;
-      }
-    });
-
-    // If a permission object with the same number of keys, and the same keys, is not found,
-    // then we need to check the permissions.
-    if (!foundPerm) {
+    if (!findPermissionsInCache(permissionsToCheck)) {
       checkPermissions(permissionsToCheck, processPermissionResult);
     }
   });
