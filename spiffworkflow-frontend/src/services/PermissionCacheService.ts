@@ -8,9 +8,11 @@ import { PermissionsToCheck } from '../interfaces';
 const permissionCache = new Map<string, Array<string>>();
 
 const updatePermissionsCache = (permissionsToCheck: PermissionsToCheck) => {
-  Object.keys(permissionsToCheck).forEach((path: string) => {
-    permissionCache.set(path, permissionsToCheck[path]);
-  });
+  if (permissionsToCheck) {
+    Object.keys(permissionsToCheck).forEach((path: string) => {
+      permissionCache.set(path, permissionsToCheck[path]);
+    });
+  }
 };
 
 /**
