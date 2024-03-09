@@ -4,6 +4,7 @@ import {
   getTemplate,
   getUiOptions,
 } from '@rjsf/utils';
+import React from 'react';
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
 
@@ -11,6 +12,8 @@ import { getCommonAttributes } from '../../helpers';
 //    compensation":{
 //      "title": "Compensation (yearly), USD",
 //      "type": "object",
+//      "minimum": 0,
+//      "maximum": 999999999999,
 //      "properties": {
 //        "min": {
 //          "type": "number"
@@ -59,44 +62,60 @@ export default function NumericRangeField({
   );
 
   const formatNumberString = (numberString: string): string => {
-    if (numberString) {
-      return numberString.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // this function will change the number string to a number with commas
+    // and a decimal point if needed. For example, 1000 will become 1,000
+    // or 1000.5 will become 1,000.5
+
+    const numberStringNoCommas = numberString.replace(/,/g, '');
+
+    if (numberStringNoCommas) {
+      const parts = numberStringNoCommas.split('.');
+      const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
     }
     return '';
   };
 
-  const parseNumberString = (numberString: string) =>
-    Number(numberString.replace(/,/g, ''));
+  const parseNumberString = (numberString: string) => {
+    if (
+      (numberString === '-' && numberString.length === 1) ||
+      numberString.endsWith('.')
+    ) {
+      return null;
+    }
+    return Number(numberString.replace(/,/g, ''));
+  };
 
-  // create two number inputs for min and max compensation
-  const min = formData?.min || 0;
-  const max = formData?.max || 0;
+  if (schema.minimum === undefined || schema.maximum === undefined) {
+    throw new Error('minimum and maximum not defined');
+  }
+  const minNumber = schema.minimum;
+  const maxNumber = schema.maximum;
+  const min = formData?.min;
+  const [minValue, setMinValue] = React.useState(min?.toString() || '');
+  const max = formData?.max;
+  const [maxValue, setMaxValue] = React.useState(max?.toString() || '');
 
   // the text input eventually breaks when the number gets too big.
   // we are not sure what the cut off really is but seems unlikely
   // people will need to go this high.
-  const maxNumber = 999_999_999_999;
 
   const onChangeLocal = (nameToChange: any, event: any) => {
     event.preventDefault();
     const numberValue = parseNumberString(event.target.value);
-    if (numberValue > maxNumber) {
-      return;
+    // Validate and update the numeric range based on user input
+    if (nameToChange === 'min') {
+      setMinValue(formatNumberString(numberValue?.toString() || ''));
+    }
+    if (nameToChange === 'max') {
+      setMaxValue(formatNumberString(numberValue?.toString() || ''));
     }
     if (!disabled && !readonly) {
-      if (nameToChange === 'min' && numberValue > max) {
-        onChange({
-          ...(formData || {}),
-          min: numberValue,
-          max: numberValue,
-        });
-      } else {
-        onChange({
-          ...(formData || {}),
-          ...{ max, min },
-          [nameToChange]: numberValue,
-        });
-      }
+      onChange({
+        ...(formData || {}),
+        ...{ max, min },
+        [nameToChange]: numberValue,
+      });
     }
   };
 
@@ -121,24 +140,32 @@ export default function NumericRangeField({
       <div className="numeric--range-field-inputs">
         <TextInput
           id={`${id}-min`}
+          type="text"
           labelText={(schema as any).properties?.min?.title || `Minimum`}
           disabled={disabled}
           readonly={readonly}
-          value={formatNumberString(min)}
-          onChange={(values: any) => {
-            onChangeLocal('min', values);
+          value={formatNumberString(minValue)}
+          onChange={(event: any) => {
+            onChangeLocal('min', event);
+            setMinValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
+          helperText={`Min: ${formatNumberString(minNumber?.toString() || '')}`}
           autofocus={autofocus}
         />
         <TextInput
           id={`${id}-max`}
+          type="text"
           labelText={(schema as any).properties?.max?.title || `Maximum`}
           disabled={disabled}
           readonly={readonly}
-          value={formatNumberString(max)}
-          onChange={(values: any) => onChangeLocal('max', values)}
+          value={formatNumberString(maxValue)}
+          onChange={(event: any) => {
+            onChangeLocal('max', event);
+            setMaxValue(event.target.value);
+          }}
           invalid={commonAttributes.invalid}
+          helperText={`Max: ${formatNumberString(maxNumber?.toString() || '')}`}
         />
       </div>
       {commonAttributes.errorMessageForField && (
