@@ -9,8 +9,8 @@ const permissionCache = new Map<string, Array<string>>();
 
 const updatePermissionsCache = (permissionsToCheck: PermissionsToCheck) => {
   if (permissionsToCheck) {
-    Object.keys(permissionsToCheck).forEach((path: string) => {
-      permissionCache.set(path, permissionsToCheck[path]);
+    Object.entries(permissionsToCheck).forEach(([path, permissions]) => {
+      permissionCache.set(path, permissions);
     });
   }
 };
