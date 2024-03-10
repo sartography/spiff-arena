@@ -23,8 +23,11 @@ const updatePermissionsCache = (permissionsToCheck: PermissionsToCheck) => {
  * checker might be useful.
  */
 const findPermissionsInCache = (permissionsToCheck: PermissionsToCheck) => {
-  return Object.keys(permissionsToCheck).every((path: string) =>
-    permissionCache.has(path)
+  return (
+    permissionsToCheck &&
+    Object.keys(permissionsToCheck).every((path: string) =>
+      permissionCache.has(path)
+    )
   );
 };
 
