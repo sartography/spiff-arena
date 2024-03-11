@@ -317,6 +317,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            "min": min,
+            "max": max,
             **JinjaHelpers.get_helper_mapping(),
         }
 
