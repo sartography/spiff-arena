@@ -7,6 +7,7 @@ from flask_sqlalchemy.query import Query
 from marshmallow import INCLUDE
 from marshmallow import Schema
 from sqlalchemy import ForeignKey
+from sqlalchemy import desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
@@ -197,6 +198,18 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     @classmethod
     def immediately_runnable_statuses(cls) -> list[str]:
         return ["not_started", "running"]
+
+    def get_data(self) -> dict:
+        """Returns the data of the last completed task in this process instance."""
+        last_completed_task = (
+            TaskModel.query.filter_by(process_instance_id=self.id, state="COMPLETED")
+            .order_by(desc(TaskModel.end_in_seconds))  # type: ignore
+            .first()
+        )
+        if last_completed_task:  # pragma: no cover
+            return last_completed_task.json_data()  # type: ignore
+        else:
+            return {}
 
 
 class ProcessInstanceModelSchema(Schema):

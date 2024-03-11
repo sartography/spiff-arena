@@ -90,9 +90,7 @@ class MessageService:
             message_instance_receive.status = "running"
 
             cls.process_message_receive(
-                receiving_process,
-                message_instance_receive,
-                message_instance_send,
+                receiving_process, message_instance_receive, message_instance_send, execution_mode=execution_mode
             )
             message_instance_receive.status = "completed"
             message_instance_receive.counterpart_id = message_instance_send.id
@@ -146,13 +144,7 @@ class MessageService:
             cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
             processor_receive.save()
 
-        if not queue_process_instance_if_appropriate(
-            process_instance_receive, execution_mode=execution_mode
-        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance_receive):
-            execution_strategy_name = None
-            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                execution_strategy_name = "greedy"
-            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+        processor_receive.do_engine_steps(save=True)
 
         return process_instance_receive
 
@@ -195,6 +187,7 @@ class MessageService:
         process_instance_receive: ProcessInstanceModel,
         message_instance_receive: MessageInstanceModel,
         message_instance_send: MessageInstanceModel,
+        execution_mode: str | None = None,
     ) -> None:
         correlation_properties = []
         for cr in message_instance_receive.correlation_rules:
@@ -216,7 +209,15 @@ class MessageService:
         )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.bpmn_process_instance.send_event(bpmn_event)
-        processor_receive.do_engine_steps(save=True)
+        execution_strategy_name = None
+
+        if not queue_process_instance_if_appropriate(
+            process_instance_receive, execution_mode=execution_mode
+        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance_receive):
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                execution_strategy_name = "greedy"
+            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)
         db.session.commit()
