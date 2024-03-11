@@ -6,7 +6,8 @@ import marshmallow
 from flask_sqlalchemy.query import Query
 from marshmallow import INCLUDE
 from marshmallow import Schema
-from sqlalchemy import ForeignKey, desc
+from sqlalchemy import ForeignKey
+from sqlalchemy import desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
@@ -16,7 +17,6 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
@@ -203,11 +203,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         """Returns the data of the last completed task in this process instance."""
         last_completed_task = (
             TaskModel.query.filter_by(process_instance_id=self.id, state="COMPLETED")
-            .order_by(desc(TaskModel.end_in_seconds))
+            .order_by(desc(TaskModel.end_in_seconds))  # type: ignore
             .first()
         )
         if last_completed_task:  # pragma: no cover
-            return last_completed_task.json_data()
+            return last_completed_task.json_data()  # type: ignore
         else:
             return {}
 
