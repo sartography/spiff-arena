@@ -20,6 +20,7 @@ Building_Diagrams/signal_events.md
 Building_Diagrams/timer_events.md
 Building_Diagrams/escalation_events.md
 Building_Diagrams/conditional_events.md
+Building_Diagrams/error_events.md
 Building_Diagrams/Displaying_Content.md
 Building_Diagrams/Script_Tasks.md
 Building_Diagrams/sub-processes_and_call_activities.md
