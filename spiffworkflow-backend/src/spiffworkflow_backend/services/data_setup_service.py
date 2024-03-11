@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.reference_cache import ReferenceType
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
@@ -138,20 +139,7 @@ class DataSetupService:
                     current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
                     continue
 
-                for data_store_type, specs_by_id in process_group.data_store_specifications.items():
-                    if not isinstance(specs_by_id, dict):
-                        current_app.logger.debug(f"Expected dictionary as value for key '{data_store_type}' in file @ '{file}'")
-                        continue
-
-                    for identifier, specification in specs_by_id.items():
-                        location = specification.get("location")
-                        if location is None:
-                            current_app.logger.debug(
-                                f"Location missing from data store specification '{identifier}' in file @ '{file}'"
-                            )
-                            continue
-
-                        all_data_store_specifications[(data_store_type, location, identifier)] = specification
+                cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
         ReferenceCacheService.add_new_generation(reference_objects)
@@ -159,6 +147,23 @@ class DataSetupService:
 
         return failing_process_models
 
+    @classmethod
+    def _collect_data_store_specifications(cls, process_group: ProcessGroup, file_name: str, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:
+        for data_store_type, specs_by_id in process_group.data_store_specifications.items():
+            if not isinstance(specs_by_id, dict):
+                current_app.logger.debug(f"Expected dictionary as value for key '{data_store_type}' in file @ '{file_name}'")
+                continue
+
+            for identifier, specification in specs_by_id.items():
+                location = specification.get("location")
+                if location is None:
+                    current_app.logger.debug(
+                        f"Location missing from data store specification '{identifier}' in file @ '{file_name}'"
+                    )
+                    continue
+
+                all_data_store_specifications[(data_store_type, location, identifier)] = specification
+    
     @classmethod
     def _sync_data_store_models_with_specifications(cls, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:
         all_data_store_models: dict[tuple[str, str, str], Any] = {}
