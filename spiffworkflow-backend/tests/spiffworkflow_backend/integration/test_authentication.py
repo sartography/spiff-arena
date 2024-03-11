@@ -158,22 +158,34 @@ class TestAuthentication(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        # user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/test_group_one:*")
-        user = self.find_or_create_user("testing@e.com")
-
-        # make sure running refresh_permissions doesn't remove the user from the group
         group_info: list[GroupPermissionsDict] = [
             {
                 "users": [],
-                "name": "group_one",
-                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
             }
         ]
         AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
-
-        service_account_permissions_after = sorted(
-            UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
+        response = client.get(
+            "/v1.0/public/messages/form/test_message_name",
         )
-        assert service_account_permissions_before == service_account_permissions_after
+        assert response.status_code == 200
+        headers_dict = dict(response.headers)
+        assert "Set-Cookie" in headers_dict
+        cookie = headers_dict["Set-Cookie"]
+        cookie_split = cookie.split(";")
+        access_token = [cookie for cookie in cookie_split if cookie.startswith("access_token=")][0]
+        assert access_token is not None
+        re_result = re.match(r"^access_token=[\w_\.-]+$", access_token)
+        assert re_result is not None
+
+        response = client.get(
+            "/v1.0/public/messages/form/test_message_name",
+            headers={"Authorization": "Bearer " + access_token.split("=")[1]},
+        )
+        assert response.status_code == 200
+
+        # make sure we do not create and set a new cookie with this request
+        headers_dict = dict(response.headers)
+        assert "Set-Cookie" not in headers_dict

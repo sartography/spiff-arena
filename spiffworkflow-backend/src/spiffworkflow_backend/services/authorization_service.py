@@ -1,7 +1,7 @@
 import inspect
 import re
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Any
 
 import yaml
 from flask import current_app
@@ -252,7 +252,7 @@ class AuthorizationService:
         return permission_assignment
 
     @classmethod
-    def get_fully_qualified_api_function_from_request(cls) -> Tuple[str | None, any]:
+    def get_fully_qualified_api_function_from_request(cls) -> tuple[str | None, Any]:
         api_view_function = current_app.view_functions[request.endpoint]
         module = inspect.getmodule(api_view_function)
         api_function_name = api_view_function.__name__ if api_view_function else None
@@ -301,7 +301,7 @@ class AuthorizationService:
     def check_permission_for_request(cls) -> None:
         permission_string = cls.get_permission_from_http_method(request.method)
         if permission_string:
-            has_permission = AuthorizationService.user_has_permission(
+            has_permission = cls.user_has_permission(
                 user=g.user,
                 permission=permission_string,
                 target_uri=request.path,

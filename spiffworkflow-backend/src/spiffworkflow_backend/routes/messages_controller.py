@@ -118,6 +118,6 @@ def message_send(
 
 
 def message_form_show(
-    message_name: str,
+    modified_message_name: str,
 ) -> flask.wrappers.Response:
     return make_response(jsonify({}), 200)

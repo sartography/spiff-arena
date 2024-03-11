@@ -285,3 +285,12 @@ class UserService:
             user = cls.create_user(username, "spiff_system_service", "spiff_system_service_id")
 
         return user
+
+    @classmethod
+    def create_public_user(cls) -> UserModel:
+        username = UserModel.generate_random_username()
+        user = UserService.create_user(username, "spiff_public_service", username)
+        cls.add_user_to_group_or_add_to_waiting(
+            user.username, current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]
+        )
+        return user

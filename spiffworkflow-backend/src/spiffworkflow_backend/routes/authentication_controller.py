@@ -18,6 +18,7 @@ from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -84,8 +85,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
         if api_function_full_path and api_function_full_path in [
             "spiffworkflow_backend.routes.messages_controller.message_form_show"
         ]:
-            # TODO: create token and user if endpoint is public and set cookie
-            print("HEY")
+            _check_if_request_is_public()
 
     if user_model:
         g.user = user_model
@@ -470,3 +470,26 @@ def _get_authentication_identifier_from_request() -> str:
         authentication_identifier: str = request.headers["SpiffWorkflow-Authentication-Identifier"]
         return authentication_identifier
     return "default"
+
+
+def _check_if_request_is_public() -> None:
+    permission_string = AuthorizationService.get_permission_from_http_method(request.method)
+    if permission_string:
+        public_group = GroupModel.query.filter_by(
+            identifier=current_app.config.get("SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP")
+        ).first()
+        if public_group is not None:
+            has_permission = AuthorizationService.has_permission(
+                principals=[public_group.principal],
+                permission=permission_string,
+                target_uri=request.path,
+            )
+            if has_permission:
+                g.user = UserService.create_public_user()
+                g.token = g.user.encode_auth_token(
+                    {"public": True},
+                )
+                tld = current_app.config["THREAD_LOCAL_DATA"]
+                tld.new_access_token = g.token
+                tld.new_id_token = g.token
+                tld.new_authentication_identifier = _get_authentication_identifier_from_request()
