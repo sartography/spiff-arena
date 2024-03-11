@@ -67,22 +67,13 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    if "payload" not in body:
-        raise (
-            ApiError(
-                error_code="missing_payload",
-                message="Please include a 'payload' in the JSON body that contains the message contents.",
-                status_code=400,
-            )
-        )
-
     process_instance = None
 
     # Create the send message
     message_instance = MessageInstanceModel(
         message_type="send",
         name=message_name,
-        payload=body["payload"],
+        payload=body,
         user_id=g.user.id,
     )
     db.session.add(message_instance)
@@ -110,8 +101,12 @@ def message_send(
         )
 
     process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    response_json = {
+        "task_data": process_instance.get_data(),
+        "process_instance": ProcessInstanceModelSchema().dump(process_instance),
+    }
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(response_json),
         status=200,
         mimetype="application/json",
     )
