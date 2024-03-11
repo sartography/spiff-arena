@@ -67,7 +67,6 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-
     process_instance = None
 
     # Create the send message

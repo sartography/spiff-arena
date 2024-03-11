@@ -1,5 +1,3 @@
-import json
-
 import pytest
 from flask import Flask
 from flask import g
