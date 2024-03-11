@@ -1,4 +1,3 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
 
@@ -7,13 +6,20 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
+from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 def message_instance_list(
@@ -115,4 +121,83 @@ def message_send(
 def message_form_show(
     modified_message_name: str,
 ) -> flask.wrappers.Response:
-    return make_response(jsonify({}), 200)
+    message_triggerable_process_model = _find_message_triggerable_process_model(modified_message_name)
+
+    process_instance = ProcessInstanceModel(
+        status=ProcessInstanceStatus.not_started.value,
+        process_initiator_id=None,
+        process_model_identifier=message_triggerable_process_model.process_model_identifier,
+        persistence_level="none",
+    )
+    processor = ProcessInstanceProcessor(process_instance)
+    start_tasks = processor.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
+    matching_start_tasks = [
+        t for t in start_tasks if t.task_spec.event_definition.name == message_triggerable_process_model.message_name
+    ]
+    if len(matching_start_tasks) == 0:
+        raise (
+            ApiError(
+                error_code="message_start_event_not_found",
+                message=(
+                    f"Could not find a message start event for message '{message_triggerable_process_model.message_name}' in"
+                    f" process model '{message_triggerable_process_model.process_model_identifier}'."
+                ),
+                status_code=400,
+            )
+        )
+
+    process_model = ProcessModelService.get_process_model(message_triggerable_process_model.process_model_identifier)
+
+    response_body = {}
+    extensions = matching_start_tasks[0].task_spec.extensions
+    if "properties" in extensions:
+        properties = extensions["properties"]
+        if "formJsonSchemaFilename" in properties:
+            form_schema_file_name = properties["formJsonSchemaFilename"]
+            response_body["form_schema"] = _get_json_contents_from_file(form_schema_file_name, process_model)
+        if "formUiSchemaFilename" in properties:
+            form_ui_schema_file_name = properties["formUiSchemaFilename"]
+            response_body["form_ui_schema"] = _get_json_contents_from_file(form_ui_schema_file_name, process_model)
+
+    return make_response(jsonify(response_body), 200)
+
+
+def _find_message_triggerable_process_model(modified_message_name: str) -> MessageTriggerableProcessModel:
+    message_name_array = modified_message_name.split(":")
+    message_name = message_name_array.pop()
+    process_group_identifier = "/".join(message_name_array)
+    potential_matches = MessageTriggerableProcessModel.query.filter_by(message_name=message_name).all()
+    actual_matches = []
+    for potential_match in potential_matches:
+        pgi, _ = potential_match.process_model_identifier.rsplit("/", 1)
+        if pgi.startswith(process_group_identifier):
+            actual_matches.append(potential_match)
+
+    if len(actual_matches) == 0:
+        raise (
+            ApiError(
+                error_code="message_triggerable_process_model_not_found",
+                message=(
+                    f"Could not find a message triggerable process model for {modified_message_name} in the scope of group"
+                    f" {process_group_identifier}"
+                ),
+                status_code=400,
+            )
+        )
+
+    if len(actual_matches) > 1:
+        message_names = [f"{m.process_model_identifier} - {m.message_name}" for m in actual_matches]
+        raise (
+            ApiError(
+                error_code="multiple_message_triggerable_process_models_found",
+                message=f"Found {len(actual_matches)}. Expected 1. Found entries: {message_names}",
+                status_code=400,
+            )
+        )
+    mtp: MessageTriggerableProcessModel = actual_matches[0]
+    return mtp
+
+
+def _get_json_contents_from_file(file_name: str, process_model: ProcessModelInfo) -> dict:
+    contents = SpecFileService.get_data(process_model, file_name).decode("utf-8")
+    return dict(json.loads(contents))

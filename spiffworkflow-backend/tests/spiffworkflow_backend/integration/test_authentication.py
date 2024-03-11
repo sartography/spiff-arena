@@ -14,6 +14,7 @@ from spiffworkflow_backend.services.service_account_service import ServiceAccoun
 from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthentication(BaseTest):
@@ -153,7 +154,7 @@ class TestAuthentication(BaseTest):
         assert response.json is not None
         assert response.json["message"].startswith("InvalidRedirectUrlError:")
 
-    def test_can_access_public_message_forms(
+    def test_can_access_public_endpoints_and_get_token(
         self,
         app: Flask,
         client: FlaskClient,
@@ -167,9 +168,14 @@ class TestAuthentication(BaseTest):
             }
         ]
         AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
-        response = client.get(
-            "/v1.0/public/messages/form/test_message_name",
+        process_model = load_test_spec(
+            process_model_id="test_group/message-start-event-with-form",
+            process_model_source_directory="message-start-event-with-form",
         )
+        process_group_identifier, _ = process_model.modified_process_model_identifier().rsplit(":", 1)
+        url = f"/v1.0/public/messages/form/{process_group_identifier}:bounty_start"
+
+        response = client.get(url)
         assert response.status_code == 200
         headers_dict = dict(response.headers)
         assert "Set-Cookie" in headers_dict
@@ -181,7 +187,7 @@ class TestAuthentication(BaseTest):
         assert re_result is not None
 
         response = client.get(
-            "/v1.0/public/messages/form/test_message_name",
+            url,
             headers={"Authorization": "Bearer " + access_token.split("=")[1]},
         )
         assert response.status_code == 200
@@ -189,3 +195,9 @@ class TestAuthentication(BaseTest):
         # make sure we do not create and set a new cookie with this request
         headers_dict = dict(response.headers)
         assert "Set-Cookie" not in headers_dict
+
+        response = client.get(
+            "/v1.0/process-groups",
+            headers={"Authorization": "Bearer " + access_token.split("=")[1]},
+        )
+        assert response.status_code == 403
