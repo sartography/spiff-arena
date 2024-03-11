@@ -59,4 +59,3 @@ execute the run_pyl commend in the top level spiff-arena directory and fix
 any issues it reports.
 * When doing so, be sure to have the poetry environment *AT THAT TOP LEVEL*
 is activated NOT the one in the backend.  Otherwise you will get invalid information.
-
