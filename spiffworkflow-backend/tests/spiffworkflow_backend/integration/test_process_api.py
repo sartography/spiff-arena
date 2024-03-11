@@ -550,7 +550,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(ReferenceCacheModel.basic_query().all()) == 1
+        assert ReferenceCacheModel.basic_query().count() == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
@@ -560,7 +560,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(ReferenceCacheModel.basic_query().all()) == 6
+        assert ReferenceCacheModel.basic_query().count() == 6
 
         # get the results
         response = client.get(
@@ -592,7 +592,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(ReferenceCacheModel.basic_query().all()) == 1
+        assert ReferenceCacheModel.basic_query().count() == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
@@ -602,7 +602,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(ReferenceCacheModel.basic_query().all()) == 6
+        assert ReferenceCacheModel.basic_query().count() == 6
 
         user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/test_group_one:*")
         self.add_permissions_to_user(user=user_one, target_uri="/v1.0/processes", permission_names=["read"])
@@ -642,7 +642,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(ReferenceCacheModel.basic_query().all()) == 1
+        assert ReferenceCacheModel.basic_query().count() == 1
         # but no callers are recorded
         assert ProcessCallerService.count() == 0
 
@@ -654,7 +654,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(ReferenceCacheModel.basic_query().all()) == 6
+        assert ReferenceCacheModel.basic_query().count() == 6
         # and 4 callers recorded
         assert ProcessCallerService.count() == 4
 
