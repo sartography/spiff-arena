@@ -187,7 +187,7 @@ class MessageService:
         process_instance_receive: ProcessInstanceModel,
         message_instance_receive: MessageInstanceModel,
         message_instance_send: MessageInstanceModel,
-        execution_mode: str | None,
+        execution_mode: str | None = None,
     ) -> None:
         correlation_properties = []
         for cr in message_instance_receive.correlation_rules:
