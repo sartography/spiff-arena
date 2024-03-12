@@ -162,6 +162,57 @@ def message_form_show(
     return make_response(jsonify(response_body), 200)
 
 
+def message_form_submit(
+    modified_message_name: str,
+    body: dict[str, Any],
+    execution_mode: str | None = None,
+) -> flask.wrappers.Response:
+    message_triggerable_process_model = _find_message_triggerable_process_model(modified_message_name)
+    process_instance = None
+
+    # Create the send message
+    message_instance = MessageInstanceModel(
+        message_type="send",
+        name=message_triggerable_process_model.message_name,
+        payload=body,
+        user_id=g.user.id,
+    )
+    db.session.add(message_instance)
+    db.session.commit()
+    try:
+        receiver_message = MessageService.correlate_send_message(message_instance, execution_mode=execution_mode)
+    except Exception as e:
+        db.session.delete(message_instance)
+        db.session.commit()
+        raise e
+    if not receiver_message:
+        db.session.delete(message_instance)
+        db.session.commit()
+        raise (
+            ApiError(
+                error_code="message_not_accepted",
+                message=(
+                    "No running process instances correlate with the given message"
+                    f" name of '{modified_message_name}'.  And this message name is not"
+                    " currently associated with any process Start Event. Nothing"
+                    " to do."
+                ),
+                status_code=400,
+            )
+        )
+
+    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    response_json = {
+        "task_data": process_instance.get_data(),
+        "process_instance": ProcessInstanceModelSchema().dump(process_instance),
+    }
+    return Response(
+        json.dumps(response_json),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def _find_message_triggerable_process_model(modified_message_name: str) -> MessageTriggerableProcessModel:
     message_name_array = modified_message_name.split(":")
     message_name = message_name_array.pop()
