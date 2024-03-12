@@ -206,11 +206,7 @@ def message_form_submit(
         "task_data": process_instance.get_data(),
         "process_instance": ProcessInstanceModelSchema().dump(process_instance),
     }
-    return Response(
-        json.dumps(response_json),
-        status=200,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(response_json), 200)
 
 
 def _find_message_triggerable_process_model(modified_message_name: str) -> MessageTriggerableProcessModel:

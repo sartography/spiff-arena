@@ -199,13 +199,17 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def immediately_runnable_statuses(cls) -> list[str]:
         return ["not_started", "running"]
 
-    def get_data(self) -> dict:
-        """Returns the data of the last completed task in this process instance."""
-        last_completed_task = (
+    def get_last_completed_task(self) -> TaskModel | None:
+        last_completed_task: TaskModel | None = (
             TaskModel.query.filter_by(process_instance_id=self.id, state="COMPLETED")
             .order_by(desc(TaskModel.end_in_seconds))  # type: ignore
             .first()
         )
+        return last_completed_task
+
+    def get_data(self) -> dict:
+        """Returns the data of the last completed task in this process instance."""
+        last_completed_task = self.get_last_completed_task()
         if last_completed_task:  # pragma: no cover
             return last_completed_task.json_data()  # type: ignore
         else:

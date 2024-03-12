@@ -45,7 +45,7 @@ export default function MessageStartEventForm() {
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
 
     HttpService.makeCallToBackend({
-      path: `/public/messages/submit/${params.modified_message_name}`,
+      path: `/public/messages/submit/${params.modified_message_name}?execution_mode=synchronous`,
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
