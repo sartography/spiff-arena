@@ -23,7 +23,7 @@ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "data_store_specifications",
     "messages",
     "correlation_keys",
-    "correlation_propertiesdata_store_specifications",
+    "correlation_properties",
 ]
 
 

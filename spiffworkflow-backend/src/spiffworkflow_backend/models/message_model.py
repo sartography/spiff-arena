@@ -81,7 +81,7 @@ class RetrievalExpressionSchema(Schema):
 @dataclass
 class CorrelationProperty:
     id: str  # A unique string name, lower case, under scores (ie, 'my_key')
-    retrieval_expression: list[RetrievalExpression]
+    retrieval_expressions: list[RetrievalExpression]
 
     def serialized(self) -> dict:
         return dataclasses.asdict(self)
@@ -90,7 +90,7 @@ class CorrelationProperty:
 class CorrelationPropertySchema(Schema):
     class Meta:
         model = CorrelationProperty
-        fields = ["id", "retrieval_expression"]
+        fields = ["id", "retrieval_expressions"]
 
     @post_load
     def make_prop(self, data: dict[str, str | bool | int], **kwargs: dict) -> CorrelationProperty:
