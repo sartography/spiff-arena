@@ -9,7 +9,6 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
-from spiffworkflow_backend.services.user_service import UserService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -107,7 +106,6 @@ class TestMessages(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        user = UserService.create_public_user()
         group_info: list[GroupPermissionsDict] = [
             {
                 "users": [],
@@ -125,7 +123,6 @@ class TestMessages(BaseTest):
 
         response = client.post(
             url,
-            headers=self.logged_in_headers(user, extra_token_payload={"public": True}),
             data=json.dumps(
                 {"hey": "my_val"},
             ),

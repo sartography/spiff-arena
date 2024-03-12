@@ -100,6 +100,11 @@ AUTHENTICATION_EXCLUSION_LIST = [
     "connexion.apis.flask_api.get_json_spec",
 ]
 
+PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
+    "spiffworkflow_backend.routes.messages_controller.message_form_show",
+    "spiffworkflow_backend.routes.messages_controller.message_form_submit",
+]
+
 
 class AuthorizationService:
     """Determine whether a user has permission to perform their request."""

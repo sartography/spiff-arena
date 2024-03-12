@@ -25,6 +25,7 @@ from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.authorization_service import PUBLIC_AUTHENTICATION_EXCLUSION_LIST
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -82,9 +83,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
         # we could choose to put all of the APIs that can be accessed unauthed behind a certain path.
         # if we did that, we would not have to hit the db on *every* tokenless request
         api_function_full_path, _ = AuthorizationService.get_fully_qualified_api_function_from_request()
-        if api_function_full_path and api_function_full_path in [
-            "spiffworkflow_backend.routes.messages_controller.message_form_show"
-        ]:
+        if api_function_full_path and api_function_full_path in PUBLIC_AUTHENTICATION_EXCLUSION_LIST:
             _check_if_request_is_public()
 
     if user_model:
