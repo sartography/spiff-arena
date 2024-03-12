@@ -37,6 +37,7 @@ export default function MessageStartEventForm() {
                 schema={messageResponse.form_schema}
                 uiSchema={messageResponse.form_ui_schema}
                 restrictedWidth
+                reactJsonSchemaForm="mui"
               />
             </Column>
           </Grid>
