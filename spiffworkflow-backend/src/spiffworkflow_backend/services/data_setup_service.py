@@ -1,7 +1,5 @@
-import json
 import os
 from collections import Counter
-from json import JSONDecodeError
 from typing import Any
 
 from flask import current_app
@@ -11,9 +9,9 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.reference_cache import ReferenceType
-from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
@@ -149,7 +147,9 @@ class DataSetupService:
         return failing_process_models
 
     @classmethod
-    def _collect_data_store_specifications(cls, process_group: ProcessGroup, file_name: str, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:
+    def _collect_data_store_specifications(
+        cls, process_group: ProcessGroup, file_name: str, all_data_store_specifications: dict[tuple[str, str, str], Any]
+    ) -> None:
         for data_store_type, specs_by_id in process_group.data_store_specifications.items():
             if not isinstance(specs_by_id, dict):
                 current_app.logger.debug(f"Expected dictionary as value for key '{data_store_type}' in file @ '{file_name}'")
@@ -165,9 +165,10 @@ class DataSetupService:
 
                 all_data_store_specifications[(data_store_type, location, identifier)] = specification
 
-    
     @classmethod
-    def _collect_message_specifications(cls, process_group: ProcessGroup, file_name: str, reference_objects: dict[str, ReferenceCacheModel]) -> None:
+    def _collect_message_specifications(
+        cls, process_group: ProcessGroup, file_name: str, reference_objects: dict[str, ReferenceCacheModel]
+    ) -> None:
         if not process_group.messages:
             return
 
@@ -213,7 +214,7 @@ class DataSetupService:
 
             ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
         # If there are correlation properties, update our correlation cache
-                
+
     @classmethod
     def _sync_data_store_models_with_specifications(cls, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:
         all_data_store_models: dict[tuple[str, str, str], Any] = {}
