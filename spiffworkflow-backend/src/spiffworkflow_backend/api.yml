@@ -909,11 +909,6 @@ paths:
     get:
       operationId: spiffworkflow_backend.routes.extensions_controller.extension_list
       summary: Returns the list of available extensions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - Extensions
       responses:
@@ -2556,14 +2551,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Workflow"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                properties:
+                  task_data:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                  process_instance:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /public/messages/form/{modified_message_name}:
     parameters:
@@ -3802,9 +3801,9 @@ components:
     # it will fail validation and not pass the request to the controller. that is generally not desirable
     # until we take a closer look at the schemas in here.
     AwesomeUnspecifiedPayload:
-      properties:
-        anythingyouwant:
-          type: string
+      # we know that task_submit submits no body at all, and None is not an object, as this so helpfully tells us
+      # type: "object"
+      additionalProperties: {}
     ReportMetadata:
       properties:
         columns:

@@ -11,11 +11,11 @@ export default function App() {
   const ability = defineAbility(() => {});
   const routeComponents = () => {
     return [
+      { path: 'public/*', element: <PublicRoutes /> },
       {
         path: '*',
         element: <ContainerForExtensions />,
       },
-      { path: 'public/*', element: <PublicRoutes /> },
     ];
   };
 

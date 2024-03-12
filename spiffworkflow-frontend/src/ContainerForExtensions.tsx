@@ -99,18 +99,6 @@ export default function ContainerForExtensions() {
     ability,
   ]);
 
-  // const routeComponents = () => {
-  //   return [
-  //     {
-  //       path: '*',
-  //       element: <BaseRoutes extensionUxElements={extensionUxElements} />,
-  //     },
-  //     { path: 'editor/*', element: <EditorRoutes /> },
-  //     { path: 'extensions/:page_identifier', element: <Extension /> },
-  //     { path: 'login', element: <Login /> },
-  //   ];
-  // };
-
   const routeComponents = () => {
     return (
       <Routes>
@@ -139,27 +127,15 @@ export default function ContainerForExtensions() {
     return backendIsDownPage();
   };
 
-  const layout = () => {
-    return (
-      <>
-        <NavigationBar extensionUxElements={extensionUxElements} />
-        <Content className={contentClassName}>
-          <ScrollToTop />
-          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-            {innerComponents()}
-          </ErrorBoundary>
-        </Content>
-      </>
-    );
-  };
-
-  // const router = createBrowserRouter([
-  //   {
-  //     path: '*',
-  //     Component: layout,
-  //     children: routeComponents(),
-  //   },
-  // ]);
-  // return <RouterProvider router={router} />;
-  return layout();
+  return (
+    <>
+      <NavigationBar extensionUxElements={extensionUxElements} />
+      <Content className={contentClassName}>
+        <ScrollToTop />
+        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+          {innerComponents()}
+        </ErrorBoundary>
+      </Content>
+    </>
+  );
 }
