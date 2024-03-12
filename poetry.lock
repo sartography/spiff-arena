@@ -482,17 +482,17 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyupgrade"
-version = "3.3.1"
+version = "3.15.1"
 description = "A tool to automatically upgrade syntax for newer versions."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8.1"
 files = [
-    {file = "pyupgrade-3.3.1-py2.py3-none-any.whl", hash = "sha256:3b93641963df022d605c78aeae4b5956a5296ea24701eafaef9c487527b77e60"},
-    {file = "pyupgrade-3.3.1.tar.gz", hash = "sha256:f88bce38b0ba92c2a9a5063c8629e456e8d919b67d2d42c7ecab82ff196f9813"},
+    {file = "pyupgrade-3.15.1-py2.py3-none-any.whl", hash = "sha256:c5e005de2805edcd333d1deb04553200ec69da85e4bc9db37b16345ed9e27ed9"},
+    {file = "pyupgrade-3.15.1.tar.gz", hash = "sha256:7690857cae0f6253f39241dcd2e57118c333c438b78609fc3c17a5aa61227b7d"},
 ]
 
 [package.dependencies]
-tokenize-rt = ">=3.2.0"
+tokenize-rt = ">=5.2.0"
 
 [[package]]
 name = "pyyaml"
@@ -676,13 +676,13 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
 name = "tokenize-rt"
-version = "5.0.0"
+version = "5.2.0"
 description = "A wrapper around the stdlib `tokenize` which roundtrips."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "tokenize_rt-5.0.0-py2.py3-none-any.whl", hash = "sha256:c67772c662c6b3dc65edf66808577968fb10badfc2042e3027196bed4daf9e5a"},
-    {file = "tokenize_rt-5.0.0.tar.gz", hash = "sha256:3160bc0c3e8491312d0485171dea861fc160a240f5f5766b72a1165408d10740"},
+    {file = "tokenize_rt-5.2.0-py2.py3-none-any.whl", hash = "sha256:b79d41a65cfec71285433511b50271b05da3584a1da144a0752e9c621a285289"},
+    {file = "tokenize_rt-5.2.0.tar.gz", hash = "sha256:9fe80f8a5c1edad2d3ede0f37481cc0cc1538a2f442c9c2f9e4feacd2792d054"},
 ]
 
 [[package]]
@@ -719,4 +719,4 @@ test = ["covdefaults (>=2.2.2)", "coverage (>=7.1)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "1e7e942504aa9a418f93fb9a79adef2d13df35b78c180936e1a96fadaa8bd3b0"
+content-hash = "5676e72c23514c367296c677ffad74855bfd20156ba94c078293c4dacb8a12e0"
