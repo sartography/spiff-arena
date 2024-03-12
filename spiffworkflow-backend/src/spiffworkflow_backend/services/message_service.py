@@ -8,6 +8,7 @@ from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -57,7 +58,6 @@ class MessageService:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
                     message_instance_receive = message_instance
-
             if message_instance_receive is None:
                 # Check for a message triggerable process and start that to create a new message_instance_receive
                 message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
@@ -67,9 +67,7 @@ class MessageService:
                     user: UserModel | None = message_instance_send.user
                     if user is None:
                         user = UserService.find_or_create_system_user()
-                    receiving_process = MessageService.start_process_with_message(
-                        message_triggerable_process_model, user, execution_mode=execution_mode
-                    )
+                    receiving_process = MessageService.start_process_with_message(message_triggerable_process_model, user)
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process.id,
                         message_type="receive",
@@ -90,9 +88,7 @@ class MessageService:
             message_instance_receive.status = "running"
 
             cls.process_message_receive(
-                receiving_process,
-                message_instance_receive,
-                message_instance_send,
+                receiving_process, message_instance_receive, message_instance_send, execution_mode=execution_mode
             )
             message_instance_receive.status = "completed"
             message_instance_receive.counterpart_id = message_instance_send.id
@@ -128,7 +124,6 @@ class MessageService:
         cls,
         message_triggerable_process_model: MessageTriggerableProcessModel,
         user: UserModel,
-        execution_mode: str | None = None,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
         if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true":
@@ -146,13 +141,7 @@ class MessageService:
             cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
             processor_receive.save()
 
-        if not queue_process_instance_if_appropriate(
-            process_instance_receive, execution_mode=execution_mode
-        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance_receive):
-            execution_strategy_name = None
-            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                execution_strategy_name = "greedy"
-            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+        processor_receive.do_engine_steps(save=True)
 
         return process_instance_receive
 
@@ -195,6 +184,7 @@ class MessageService:
         process_instance_receive: ProcessInstanceModel,
         message_instance_receive: MessageInstanceModel,
         message_instance_send: MessageInstanceModel,
+        execution_mode: str | None = None,
     ) -> None:
         correlation_properties = []
         for cr in message_instance_receive.correlation_rules:
@@ -216,7 +206,18 @@ class MessageService:
         )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.bpmn_process_instance.send_event(bpmn_event)
-        processor_receive.do_engine_steps(save=True)
+        execution_strategy_name = None
+
+        if should_queue_process_instance(process_instance_receive, execution_mode=execution_mode):
+            # even if we are queueing, we ran a "send_event" call up above, and it updated some tasks.
+            # we need to serialize these task updates to the db. do_engine_steps with save does that.
+            processor_receive.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
+            queue_process_instance_if_appropriate(process_instance_receive, execution_mode=execution_mode)
+        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance_receive):
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                execution_strategy_name = "greedy"
+            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)
         db.session.commit()

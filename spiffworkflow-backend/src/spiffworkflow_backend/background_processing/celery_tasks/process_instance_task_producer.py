@@ -14,6 +14,27 @@ def queue_enabled_for_process_model(process_instance: ProcessInstanceModel) -> b
     return current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] is True
 
 
+def should_queue_process_instance(process_instance: ProcessInstanceModel, execution_mode: str | None = None) -> bool:
+    # check if the enum value is valid
+    if execution_mode:
+        ProcessInstanceExecutionMode(execution_mode)
+
+    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+        return False
+
+    queue_enabled = queue_enabled_for_process_model(process_instance)
+    if execution_mode == ProcessInstanceExecutionMode.asynchronous.value and not queue_enabled:
+        raise ApiError(
+            error_code="async_mode_called_without_celery",
+            message="Execution mode asynchronous requested but SPIFFWORKFLOW_BACKEND_CELERY_ENABLED is not set to true.",
+            status_code=400,
+        )
+
+    if queue_enabled:
+        return True
+    return False
+
+
 def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta_in_seconds: float, task_guid: str) -> bool:
     if queue_enabled_for_process_model(process_instance):
         buffer = 1
@@ -36,22 +57,7 @@ def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta
 
 # if waiting, check all waiting tasks and see if theyt are timers. if they are timers, it's not runnable.
 def queue_process_instance_if_appropriate(process_instance: ProcessInstanceModel, execution_mode: str | None = None) -> bool:
-    # check if the enum value is valid
-    if execution_mode:
-        ProcessInstanceExecutionMode(execution_mode)
-
-    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-        return False
-
-    queue_enabled = queue_enabled_for_process_model(process_instance)
-    if execution_mode == ProcessInstanceExecutionMode.asynchronous.value and not queue_enabled:
-        raise ApiError(
-            error_code="async_mode_called_without_celery",
-            message="Execution mode asynchronous requested but SPIFFWORKFLOW_BACKEND_CELERY_ENABLED is not set to true.",
-            status_code=400,
-        )
-
-    if queue_enabled:
+    if should_queue_process_instance(process_instance, execution_mode):
         celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, (process_instance.id,))
         return True
     return False
