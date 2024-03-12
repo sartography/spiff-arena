@@ -966,23 +966,6 @@ div.onboarding {
   line-height: 48px;
 }
 
-.radio-button-group-column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-inline-end: 0;
-}
-
-.radio-button-group-column > * {
-  margin-bottom: 0.5rem;
-}
-
-.radio-button-group-row {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-}
-
 /* Utility classes to create horizontally centered stacks (to align icons etc) */
 .flex-align-horizontal-center {
   display: flex;
