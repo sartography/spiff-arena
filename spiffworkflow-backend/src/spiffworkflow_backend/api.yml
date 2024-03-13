@@ -2575,7 +2575,7 @@ paths:
     get:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.messages_controller.message_form_show
+      operationId: spiffworkflow_backend.routes.public_controller.message_form_show
       summary: Gets the form associated with the given message name.
       responses:
         "200":
@@ -2605,7 +2605,7 @@ paths:
     post:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.messages_controller.message_form_submit
+      operationId: spiffworkflow_backend.routes.public_controller.message_form_submit
       summary: Instantiate and run a given process model with a message start event matching given name
       requestBody:
         content:

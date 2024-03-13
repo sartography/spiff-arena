@@ -101,8 +101,8 @@ AUTHENTICATION_EXCLUSION_LIST = [
 ]
 
 PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
-    "spiffworkflow_backend.routes.messages_controller.message_form_show",
-    "spiffworkflow_backend.routes.messages_controller.message_form_submit",
+    "spiffworkflow_backend.routes.public_controller.message_form_show",
+    "spiffworkflow_backend.routes.public_controller.message_form_submit",
 ]
 
 
