@@ -58,8 +58,8 @@ export const getCommonAttributes = (
 //    * checkboxes will not accept any clicks to the checkbox
 // https://github.com/rjsf-team/react-jsonschema-form/issues/1824
 // https://stackoverflow.com/a/1349426/6090676
-export const makeid = (length: number) => {
-  let result = '';
+export const makeid = (length: number, prefix: string = '') => {
+  let result = prefix;
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const charactersLength = characters.length;
   for (let i = 0; i < length; i += 1) {

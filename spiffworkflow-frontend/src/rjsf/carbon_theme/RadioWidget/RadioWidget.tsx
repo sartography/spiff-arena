@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { RadioButtonGroup, RadioButton } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes, makeid } from '../../helpers';
@@ -8,7 +8,6 @@ function RadioWidget({
   schema,
   options,
   value,
-  required,
   disabled,
   readonly,
   label,
@@ -18,7 +17,11 @@ function RadioWidget({
   uiSchema,
   rawErrors,
 }: WidgetProps) {
-  const { enumOptions, enumDisabled } = options;
+  const { enumOptions } = options;
+
+  const uniqueId: string = useMemo(() => {
+    return makeid(10, 'radio-button-');
+  }, []);
 
   const _onChange = (newValue: any, _radioButtonId: any) => {
     if (schema.type === 'boolean') {
@@ -44,8 +47,6 @@ function RadioWidget({
     rawErrors
   );
 
-  const uniqueId = makeid(10);
-
   // pass values in as strings so we can support both boolean and string radio buttons
   return (
     <RadioButtonGroup
@@ -65,7 +66,7 @@ function RadioWidget({
         enumOptions.map((option) => {
           return (
             <RadioButton
-              id={`${id}-${option.value}`}
+              id={`${uniqueId}-${option.value}`}
               labelText={option.label}
               value={`${option.value}`}
             />

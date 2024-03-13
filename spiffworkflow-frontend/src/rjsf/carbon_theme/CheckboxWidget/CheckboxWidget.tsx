@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Checkbox } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes, makeid } from '../../helpers';
@@ -19,6 +19,11 @@ function CheckboxWidget(props: WidgetProps) {
     rawErrors,
     required,
   } = props;
+
+  const uniqueId: string = useMemo(() => {
+    return makeid(10, 'checkbox-');
+  }, []);
+
   const _onChange = (_: any, newValue: any) => {
     // if this field is required and it is not checked then change the value to undefined
     // otherwise rjsf will not flag this field as invalid
@@ -41,8 +46,6 @@ function CheckboxWidget(props: WidgetProps) {
     uiSchema,
     rawErrors
   );
-
-  const uniqueId = makeid(10);
 
   return (
     <Checkbox
