@@ -551,8 +551,8 @@ def task_submit(
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
         response_item = _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
-        if "next_human_task_assigned_to_me" in response_item:
-            response_item = response_item["next_human_task_assigned_to_me"]
+        if "next_task_assigned_to_me" in response_item:
+            response_item = response_item["next_task_assigned_to_me"]
         elif "next_task" in response_item:
             response_item = response_item["next_task"]
         return make_response(jsonify(response_item), 200)

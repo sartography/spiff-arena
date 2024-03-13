@@ -71,10 +71,10 @@ class TestPublicController(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert "form" in response.json
-        assert "instructions" in response.json
+        assert "confirmation_message_markdown" in response.json
         assert "task_guid" in response.json
         assert response.json["form"] is None
-        assert response.json["instructions"] is None
+        assert response.json["confirmation_message_markdown"] is None
         assert response.json["task_guid"] is None
 
     def test_can_submit_to_public_message_submit_and_get_and_submit_subsequent_form(
@@ -112,7 +112,7 @@ class TestPublicController(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert "form" in response.json
-        assert "instructions" in response.json
+        assert "confirmation_message_markdown" in response.json
         assert "task_guid" in response.json
         assert "process_instance_id" in response.json
         assert response.json["form"] == {
@@ -124,7 +124,7 @@ class TestPublicController(BaseTest):
             },
             "form_ui_schema": {},
         }
-        assert response.json["instructions"] is None
+        assert response.json["confirmation_message_markdown"] is None
 
         task_guid = response.json["task_guid"]
         assert task_guid is not None
@@ -143,11 +143,11 @@ class TestPublicController(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert "form" in response.json
-        assert "instructions" in response.json
+        assert "confirmation_message_markdown" in response.json
         assert "task_guid" in response.json
         assert "process_instance_id" in response.json
         assert response.json["form"] is None
-        assert response.json["instructions"] is None
+        assert response.json["confirmation_message_markdown"] is None
         assert response.json["task_guid"] is None
         assert response.json["process_instance_id"] == process_instance_id
 

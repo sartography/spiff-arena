@@ -7,6 +7,7 @@ import Page404 from '../Page404';
 import { recursivelyChangeNullAndUndefined } from '../../helpers';
 import useAPIError from '../../hooks/UseApiError';
 import { PublicTaskForm, PublicTaskSubmitResponse } from '../../interfaces';
+import MarkdownRenderer from '../../components/MarkdownRenderer';
 
 export default function MessageStartEventForm() {
   const params = useParams();
@@ -14,7 +15,9 @@ export default function MessageStartEventForm() {
   const [taskData, setTaskData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const { addError, removeError } = useAPIError();
-  const [formSubmitResult, setFormSubmitResult] = useState<string | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
+    null
+  );
   const [taskSubmitResponse, setTaskSubmitResponse] =
     useState<PublicTaskSubmitResponse | null>(null);
 
@@ -34,10 +37,10 @@ export default function MessageStartEventForm() {
     setTaskSubmitResponse(result);
     if (result.form) {
       setFormContents(result.form);
-    } else if (result.instructions) {
-      setFormSubmitResult(result.instructions);
+    } else if (result.confirmation_message_markdown) {
+      setConfirmationMessage(result.confirmation_message_markdown);
     } else {
-      setFormSubmitResult('We DONE');
+      setConfirmationMessage('Thank you!');
     }
   };
 
@@ -73,8 +76,10 @@ export default function MessageStartEventForm() {
     });
   };
 
-  if (formSubmitResult) {
-    return <h1>{formSubmitResult}</h1>;
+  if (confirmationMessage) {
+    return (
+      <MarkdownRenderer linkTarget="_blank" source={confirmationMessage} />
+    );
   }
   if (formContents) {
     if (formContents.form_schema) {

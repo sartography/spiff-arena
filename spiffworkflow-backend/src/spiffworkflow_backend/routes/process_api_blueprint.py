@@ -493,17 +493,20 @@ def _task_submit_shared(
 
     next_human_task_assigned_to_me = TaskService.next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
-        return {"next_human_task_assigned_to_me": HumanTaskModel.to_task(next_human_task_assigned_to_me)}
+        return {"next_task_assigned_to_me": HumanTaskModel.to_task(next_human_task_assigned_to_me)}
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
     spiff_task_extensions = spiff_task.task_spec.extensions
     if (
-        "allowGuest" in spiff_task_extensions
-        and spiff_task_extensions["allowGuest"] == "true"
-        and "guestConfirmation" in spiff_task.task_spec.extensions
+        # "allowGuest" in spiff_task_extensions
+        # and spiff_task_extensions["allowGuest"] == "true"
+        # and "guestConfirmation" in spiff_task_extensions
+        "guestConfirmation" in spiff_task_extensions
+        and spiff_task_extensions["guestConfirmation"]
     ):
-        return {"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}
+        guest_confirmation = JinjaService.render_jinja_template(spiff_task.task_spec.extensions["guestConfirmation"], task_model)
+        return {"guest_confirmation": guest_confirmation}
 
     if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())

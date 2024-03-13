@@ -512,5 +512,5 @@ export interface PublicTaskSubmitResponse {
   form: PublicTaskForm;
   task_guid: string;
   process_instance_id: number;
-  instructions: string;
+  confirmation_message_markdown: string;
 }

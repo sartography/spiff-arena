@@ -100,6 +100,7 @@ AUTHENTICATION_EXCLUSION_LIST = [
     "connexion.apis.flask_api.get_json_spec",
 ]
 
+# these are api calls that are allowed to generate a public jwt when called
 PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
     "spiffworkflow_backend.routes.public_controller.message_form_show",
     "spiffworkflow_backend.routes.public_controller.message_form_submit",

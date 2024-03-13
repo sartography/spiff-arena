@@ -76,7 +76,7 @@ def message_form_submit(
         "form": next_form_contents,
         "task_guid": task_guid,
         "process_instance_id": process_instance.id,
-        "instructions": None,
+        "confirmation_message_markdown": None,
     }
     return make_response(jsonify(response_json), 200)
 
@@ -91,20 +91,20 @@ def form_submit(
 
     next_form_contents = None
     next_task_guid = None
-    if "next_human_task_assigned_to_me" in response_item:
-        next_human_task_assigned_to_me = response_item["next_human_task_assigned_to_me"]
+    if "next_task_assigned_to_me" in response_item:
+        next_task_assigned_to_me = response_item["next_task_assigned_to_me"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        next_task_guid = next_human_task_assigned_to_me.task_guid
+        next_task_guid = next_task_assigned_to_me.id
         process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
         next_form_contents = _get_form_and_prepare_data(
-            process_model=process_model, task_guid=next_human_task_assigned_to_me.task_guid, process_instance=process_instance
+            process_model=process_model, task_guid=next_task_assigned_to_me.task_guid, process_instance=process_instance
         )
 
     response_json = {
         "form": next_form_contents,
         "task_guid": next_task_guid,
         "process_instance_id": process_instance_id,
-        "instructions": None,
+        "confirmation_message_markdown": response_item.get("guest_confirmation"),
     }
     return make_response(jsonify(response_json), 200)
 
