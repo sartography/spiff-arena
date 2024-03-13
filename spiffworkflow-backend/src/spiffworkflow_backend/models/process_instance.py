@@ -211,7 +211,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         """Returns the data of the last completed task in this process instance."""
         last_completed_task = self.get_last_completed_task()
         if last_completed_task:  # pragma: no cover
-            return last_completed_task.json_data()  # type: ignore
+            return last_completed_task.json_data()
         else:
             return {}
 

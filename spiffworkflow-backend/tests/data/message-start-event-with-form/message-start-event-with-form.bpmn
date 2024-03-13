@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:collaboration id="Collaboration_1h79dxi">
-    <bpmn:participant id="Participant_04cn64m" processRef="Process_with_message_start_event_bkmtffv" />
+    <bpmn:participant id="Participant_04cn64m" processRef="Process_message_start_event_with_form_bkmtffv" />
   </bpmn:collaboration>
-  <bpmn:process id="Process_with_message_start_event_bkmtffv" isExecutable="true">
+  <bpmn:process id="Process_message_start_event_with_form_bkmtffv" isExecutable="true">
     <bpmn:endEvent id="EndEvent_1">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>The process instance completed successfully.</spiffworkflow:instructionsForEndUser>

@@ -130,6 +130,7 @@ class TestMessages(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert "task_data" in response.json
-        assert "process_instance" in response.json
-        assert response.json["process_instance"]["status"] == "complete"
+        assert "next_task" in response.json
+        assert "instructions" in response.json
+        assert response.json["next_task"] is None
+        assert response.json["instructions"] is None

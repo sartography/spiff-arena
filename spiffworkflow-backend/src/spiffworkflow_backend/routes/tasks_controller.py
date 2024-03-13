@@ -20,7 +20,6 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
-from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
@@ -567,7 +566,7 @@ def process_instance_progress(
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id, include_actions=True)
 
     principal = _find_principal_or_raise()
-    next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
+    next_human_task_assigned_to_me = TaskService.next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
         response["task"] = HumanTaskModel.to_task(next_human_task_assigned_to_me)
     # this may not catch all times we should redirect to instance show page
@@ -940,7 +939,7 @@ def _task_submit_shared(
         db.session.delete(task_draft_data)
         db.session.commit()
 
-    next_human_task_assigned_to_me = _next_human_task_for_user(process_instance_id, principal.user_id)
+    next_human_task_assigned_to_me = TaskService.next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
         return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
@@ -1269,14 +1268,3 @@ def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int)
             status_code=400,
         )
     return task_model
-
-
-def _next_human_task_for_user(process_instance_id: int, user_id: int) -> HumanTaskModel | None:
-    next_human_task: HumanTaskModel | None = (
-        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
-        .order_by(asc(HumanTaskModel.id))  # type: ignore
-        .join(HumanTaskUserModel)
-        .filter_by(user_id=user_id)
-        .first()
-    )
-    return next_human_task

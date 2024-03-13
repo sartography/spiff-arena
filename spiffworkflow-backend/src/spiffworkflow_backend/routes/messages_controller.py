@@ -20,6 +20,7 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 def message_instance_list(
@@ -69,43 +70,11 @@ def message_instance_list(
 #  -H 'content-type: application/json' \
 #  --data-raw '{"payload":{"sure": "yes", "food": "spicy"}}'
 def message_send(
-    message_name: str,
+    modified_message_name: str,
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    process_instance = None
-
-    # Create the send message
-    message_instance = MessageInstanceModel(
-        message_type="send",
-        name=message_name,
-        payload=body,
-        user_id=g.user.id,
-    )
-    db.session.add(message_instance)
-    db.session.commit()
-    try:
-        receiver_message = MessageService.correlate_send_message(message_instance, execution_mode=execution_mode)
-    except Exception as e:
-        db.session.delete(message_instance)
-        db.session.commit()
-        raise e
-    if not receiver_message:
-        db.session.delete(message_instance)
-        db.session.commit()
-        raise (
-            ApiError(
-                error_code="message_not_accepted",
-                message=(
-                    "No running process instances correlate with the given message"
-                    f" name of '{message_name}'.  And this message name is not"
-                    " currently associated with any process Start Event. Nothing"
-                    " to do."
-                ),
-                status_code=400,
-            )
-        )
-
+    receiver_message = _run_process_model_from_message(modified_message_name, body, execution_mode)
     process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
     response_json = {
         "task_data": process_instance.get_data(),
@@ -167,52 +136,19 @@ def message_form_submit(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    message_triggerable_process_model = _find_message_triggerable_process_model(modified_message_name)
-    process_instance = None
-
-    # Create the send message
-    message_instance = MessageInstanceModel(
-        message_type="send",
-        name=message_triggerable_process_model.message_name,
-        payload=body,
-        user_id=g.user.id,
-    )
-    db.session.add(message_instance)
-    db.session.commit()
-    try:
-        receiver_message = MessageService.correlate_send_message(message_instance, execution_mode=execution_mode)
-    except Exception as e:
-        db.session.delete(message_instance)
-        db.session.commit()
-        raise e
-    if not receiver_message:
-        db.session.delete(message_instance)
-        db.session.commit()
-        raise (
-            ApiError(
-                error_code="message_not_accepted",
-                message=(
-                    "No running process instances correlate with the given message"
-                    f" name of '{modified_message_name}'.  And this message name is not"
-                    " currently associated with any process Start Event. Nothing"
-                    " to do."
-                ),
-                status_code=400,
-            )
-        )
-
+    receiver_message = _run_process_model_from_message(modified_message_name, body, execution_mode)
     process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    next_human_task_assigned_to_me = TaskService.next_human_task_for_user(process_instance.id, g.user.id)
+
     response_json = {
-        "task_data": process_instance.get_data(),
-        "process_instance": ProcessInstanceModelSchema().dump(process_instance),
+        "next_task": next_human_task_assigned_to_me,
+        "instructions": None,
     }
     return make_response(jsonify(response_json), 200)
 
 
 def _find_message_triggerable_process_model(modified_message_name: str) -> MessageTriggerableProcessModel:
-    message_name_array = modified_message_name.split(":")
-    message_name = message_name_array.pop()
-    process_group_identifier = "/".join(message_name_array)
+    message_name, process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
     potential_matches = MessageTriggerableProcessModel.query.filter_by(message_name=message_name).all()
     actual_matches = []
     for potential_match in potential_matches:
@@ -248,3 +184,44 @@ def _find_message_triggerable_process_model(modified_message_name: str) -> Messa
 def _get_json_contents_from_file(file_name: str, process_model: ProcessModelInfo) -> dict:
     contents = SpecFileService.get_data(process_model, file_name).decode("utf-8")
     return dict(json.loads(contents))
+
+
+def _run_process_model_from_message(
+    modified_message_name: str,
+    body: dict[str, Any],
+    execution_mode: str | None = None,
+) -> MessageInstanceModel:
+    message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
+
+    # Create the send message
+    # TODO: support the full message id - including process group - in message instance
+    message_instance = MessageInstanceModel(
+        message_type="send",
+        name=message_name,
+        payload=body,
+        user_id=g.user.id,
+    )
+    db.session.add(message_instance)
+    db.session.commit()
+    try:
+        receiver_message = MessageService.correlate_send_message(message_instance, execution_mode=execution_mode)
+    except Exception as e:
+        db.session.delete(message_instance)
+        db.session.commit()
+        raise e
+    if not receiver_message:
+        db.session.delete(message_instance)
+        db.session.commit()
+        raise (
+            ApiError(
+                error_code="message_not_accepted",
+                message=(
+                    "No running process instances correlate with the given message"
+                    f" name of '{modified_message_name}'.  And this message name is not"
+                    " currently associated with any process Start Event. Nothing"
+                    " to do."
+                ),
+                status_code=400,
+            )
+        )
+    return receiver_message

@@ -10,6 +10,7 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from sqlalchemy import asc
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
@@ -17,6 +18,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataDict
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -706,6 +708,17 @@ class TaskService:
     @classmethod
     def get_name_for_display(cls, entity: TaskDefinitionModel | BpmnProcessDefinitionModel) -> str:
         return entity.bpmn_name or entity.bpmn_identifier
+
+    @classmethod
+    def next_human_task_for_user(cls, process_instance_id: int, user_id: int) -> HumanTaskModel | None:
+        next_human_task: HumanTaskModel | None = (
+            HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+            .order_by(asc(HumanTaskModel.id))  # type: ignore
+            .join(HumanTaskUserModel)
+            .filter_by(user_id=user_id)
+            .first()
+        )
+        return next_human_task
 
     @classmethod
     def _task_subprocess(cls, spiff_task: SpiffTask) -> tuple[str | None, BpmnWorkflow | None]:

@@ -2525,12 +2525,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /messages/{message_name}:
+  /messages/{modified_message_name}:
     parameters:
-      - name: message_name
+      - name: modified_message_name
         in: path
         required: true
-        description: The unique name of the message.
+        description: The message_name, modified to replace slashes (/) with colons
         schema:
           type: string
       - name: execution_mode
