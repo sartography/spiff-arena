@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 from collections import OrderedDict
 from collections.abc import Generator
 from typing import Any
@@ -25,9 +24,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_enabled_for_process_model,
-)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -45,7 +41,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSc
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance import ProcessInstanceTaskDataCannotBeUpdatedError
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -57,11 +52,11 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_o
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
+from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
+from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.git_service import GitCommandError
-from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -70,7 +65,6 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -556,7 +550,12 @@ def task_submit(
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
+        response_item = _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
+        if "next_human_task_assigned_to_me" in response_item:
+            response_item = response_item["next_human_task_assigned_to_me"]
+        elif "next_task" in response_item:
+            response_item = response_item["next_task"]
+        return make_response(jsonify(response_item), 200)
 
 
 def process_instance_progress(
@@ -868,110 +867,6 @@ def task_save_draft(
     )
 
 
-def _task_submit_shared(
-    process_instance_id: int,
-    task_guid: str,
-    body: dict[str, Any],
-    execution_mode: str | None = None,
-) -> flask.wrappers.Response:
-    principal = _find_principal_or_raise()
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    if not process_instance.can_submit_task():
-        raise ApiError(
-            error_code="process_instance_not_runnable",
-            message=(
-                f"Process Instance ({process_instance.id}) has status "
-                f"{process_instance.status} which does not allow tasks to be submitted."
-            ),
-            status_code=400,
-        )
-
-    # we're dequeing twice in this function.
-    # tried to wrap the whole block in one dequeue, but that has the confusing side-effect that every exception
-    # in the block causes the process instance to go into an error state. for example, when
-    # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
-    # and the cost is not huge given that this function is not the most common code path in the world.
-    with ProcessInstanceQueueService.dequeued(process_instance):
-        ProcessInstanceMigrator.run(process_instance)
-
-    processor = ProcessInstanceProcessor(
-        process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
-    )
-    spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
-
-    if spiff_task.state != TaskState.READY:
-        raise (
-            ApiError(
-                error_code="invalid_state",
-                message="You may not update a task unless it is in the READY state.",
-                status_code=400,
-            )
-        )
-
-    human_task = _find_human_task_or_raise(
-        process_instance_id=process_instance_id,
-        task_guid=task_guid,
-        only_tasks_that_can_be_completed=True,
-    )
-
-    with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(process_instance):
-            ProcessInstanceService.complete_form_task(
-                processor=processor,
-                spiff_task=spiff_task,
-                data=body,
-                user=g.user,
-                human_task=human_task,
-                execution_mode=execution_mode,
-            )
-
-    # currently task_model has the potential to be None. This should be removable once
-    # we backfill the human_task table for task_guid and make that column not nullable
-    task_model: TaskModel | None = human_task.task_model
-    if task_model is None:
-        task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
-
-    # delete draft data when we submit a task to ensure cycling back to the task contains the
-    # most up-to-date data
-    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
-    if task_draft_data is not None:
-        db.session.delete(task_draft_data)
-        db.session.commit()
-
-    next_human_task_assigned_to_me = TaskService.next_human_task_for_user(process_instance_id, principal.user_id)
-    if next_human_task_assigned_to_me:
-        return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
-
-    # a guest user completed a task, it has a guest_confirmation message to display to them,
-    # and there is nothing else for them to do
-    spiff_task_extensions = spiff_task.task_spec.extensions
-    if (
-        "allowGuest" in spiff_task_extensions
-        and spiff_task_extensions["allowGuest"] == "true"
-        and "guestConfirmation" in spiff_task.task_spec.extensions
-    ):
-        return make_response(jsonify({"guest_confirmation": spiff_task.task_spec.extensions["guestConfirmation"]}), 200)
-
-    if processor.next_task():
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-        task.process_model_uses_queued_execution = queue_enabled_for_process_model(process_instance)
-        return make_response(jsonify(task), 200)
-
-    # next_task always returns something, even if the instance is complete, so we never get here
-    return Response(
-        json.dumps(
-            {
-                "ok": True,
-                "process_model_identifier": process_instance.process_model_identifier,
-                "process_instance_id": process_instance_id,
-            }
-        ),
-        status=202,
-        mimetype="application/json",
-    )
-
-
 def _get_tasks(
     processes_started_by_user: bool = True,
     has_lane_assignment_id: bool = True,
@@ -1068,71 +963,6 @@ def _get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def _prepare_form_data(
-    form_file: str, task_model: TaskModel, process_model: ProcessModelInfo, revision: str | None = None
-) -> dict:
-    if task_model.data is None:
-        return {}
-
-    try:
-        file_contents = GitService.get_file_contents_for_revision_if_git_revision(
-            process_model=process_model,
-            revision=revision,
-            file_name=form_file,
-        )
-    except GitCommandError as exception:
-        raise (
-            ApiError(
-                error_code="git_error_loading_form",
-                message=(
-                    f"Could not load form schema from: {form_file}. Was git history rewritten such that revision"
-                    f" '{revision}' no longer exists? Error was: {str(exception)}"
-                ),
-                status_code=400,
-            )
-        ) from exception
-
-    try:
-        form_contents = JinjaService.render_jinja_template(file_contents, task=task_model)
-    except TaskModelError as wfe:
-        wfe.add_note(f"Error in Json Form File '{form_file}'")
-        api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
-        api_error.file_name = form_file
-        raise api_error from wfe
-
-    try:
-        # form_contents is a str
-        hot_dict: dict = json.loads(form_contents)
-        return hot_dict
-    except Exception as exception:
-        raise (
-            ApiError(
-                error_code="error_loading_form",
-                message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
-                status_code=400,
-            )
-        ) from exception
-
-
-def _get_spiff_task_from_process_instance(
-    task_guid: str,
-    process_instance: ProcessInstanceModel,
-    processor: ProcessInstanceProcessor,
-) -> SpiffTask:
-    task_uuid = uuid.UUID(task_guid)
-    spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
-
-    if spiff_task is None:
-        raise (
-            ApiError(
-                error_code="empty_task",
-                message="Processor failed to obtain task.",
-                status_code=500,
-            )
-        )
-    return spiff_task
-
-
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict) -> None:
     for k, value in in_dict.items():
@@ -1215,32 +1045,6 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
         )
 
     return potential_owner_usernames_from_group_concat_or_similar
-
-
-def _find_human_task_or_raise(
-    process_instance_id: int,
-    task_guid: str,
-    only_tasks_that_can_be_completed: bool = False,
-) -> HumanTaskModel:
-    if only_tasks_that_can_be_completed:
-        human_task_query = HumanTaskModel.query.filter_by(
-            process_instance_id=process_instance_id,
-            task_id=task_guid,
-            completed=False,
-        )
-    else:
-        human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_guid)
-
-    human_task: HumanTaskModel = human_task_query.first()
-    if human_task is None:
-        raise (
-            ApiError(
-                error_code="no_human_task",
-                message=f"Cannot find a task to complete for task id '{task_guid}' and process instance {process_instance_id}.",
-                status_code=500,
-            )
-        )
-    return human_task
 
 
 def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(form_ui_schema: dict | None, task_data: dict) -> None:

@@ -1,0 +1,12 @@
+{
+  "title": "Your results",
+  "description": "HELLO {{incoming_request['firstName']}}",
+  "type": "object",
+  "properties": {
+    "lastName": {
+      "type": "string",
+      "title": "Last name"
+    }
+  }
+}
+

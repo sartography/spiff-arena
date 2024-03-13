@@ -2624,6 +2624,53 @@ paths:
                   process_instance:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
+  /public/tasks/{process_instance_id}/{task_guid}:
+    parameters:
+      - name: task_guid
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
+    put:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.public_controller.form_submit
+      summary: Update the form data for a tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "202":
+          description: "ok: true"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /logs/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
       - name: process_instance_id

@@ -1,5 +1,3 @@
-import json
-
 import pytest
 from flask import Flask
 from flask import g
@@ -7,11 +5,8 @@ from flask.testing import FlaskClient
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.routes.messages_controller import message_send
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessages(BaseTest):
@@ -71,66 +66,3 @@ class TestMessages(BaseTest):
         assert len(waiting_messages) == 0
         # The process has completed
         assert process_instance.status == "complete"
-
-    def test_can_get_a_form_from_message_start_event(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-    ) -> None:
-        group_info: list[GroupPermissionsDict] = [
-            {
-                "users": [],
-                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
-                "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
-            }
-        ]
-        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
-        process_model = load_test_spec(
-            process_model_id="test_group/message-start-event-with-form",
-            process_model_source_directory="message-start-event-with-form",
-        )
-        process_group_identifier, _ = process_model.modified_process_model_identifier().rsplit(":", 1)
-        url = f"/v1.0/public/messages/form/{process_group_identifier}:bounty_start"
-
-        response = client.get(url)
-        assert response.status_code == 200
-        assert response.json is not None
-        assert "form_schema" in response.json
-        assert "form_ui_schema" in response.json
-        assert response.json["form_schema"]["title"] == "Form for message start event"
-
-    def test_can_submit_to_public_message_submit(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-    ) -> None:
-        group_info: list[GroupPermissionsDict] = [
-            {
-                "users": [],
-                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
-                "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
-            }
-        ]
-        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
-        process_model = load_test_spec(
-            process_model_id="test_group/message-start-event-with-form",
-            process_model_source_directory="message-start-event-with-form",
-        )
-        process_group_identifier, _ = process_model.modified_process_model_identifier().rsplit(":", 1)
-        url = f"/v1.0/public/messages/submit/{process_group_identifier}:bounty_start?execution_mode=synchronous"
-
-        response = client.post(
-            url,
-            data=json.dumps(
-                {"hey": "my_val"},
-            ),
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert "next_task" in response.json
-        assert "instructions" in response.json
-        assert response.json["next_task"] is None
-        assert response.json["instructions"] is None
