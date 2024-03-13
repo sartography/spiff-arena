@@ -503,3 +503,14 @@ export interface ElementForArray {
   key: string;
   component: ReactElement | null;
 }
+
+export interface PublicTaskForm {
+  form_schema: any;
+  form_ui_schema: any;
+}
+export interface PublicTaskSubmitResponse {
+  form: PublicTaskForm;
+  task_guid: string;
+  process_instance_id: number;
+  instructions: string;
+}

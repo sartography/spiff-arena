@@ -6,30 +6,39 @@ import CustomForm from '../../components/CustomForm';
 import Page404 from '../Page404';
 import { recursivelyChangeNullAndUndefined } from '../../helpers';
 import useAPIError from '../../hooks/UseApiError';
+import { PublicTaskForm, PublicTaskSubmitResponse } from '../../interfaces';
 
 export default function MessageStartEventForm() {
   const params = useParams();
-  const [messageResponse, setMessageResponse] = useState<any>(null);
+  const [formContents, setFormContents] = useState<PublicTaskForm | null>(null);
   const [taskData, setTaskData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const { addError, removeError } = useAPIError();
   const [formSubmitResult, setFormSubmitResult] = useState<string | null>(null);
+  const [taskSubmitResponse, setTaskSubmitResponse] =
+    useState<PublicTaskSubmitResponse | null>(null);
 
   useEffect(() => {
     HttpService.makeCallToBackend({
       path: `/public/messages/form/${params.modified_message_name}`,
-      successCallback: (result: any) => setMessageResponse(result),
+      successCallback: (result: PublicTaskForm) => setFormContents(result),
       failureCallback: (error: any) => {
         console.error(error);
-        setMessageResponse(error);
       },
     });
   }, [params.modified_message_name]);
 
-  const processSubmitResult = (result: any) => {
+  const processSubmitResult = (result: PublicTaskSubmitResponse) => {
     removeError();
-    console.log('result', result);
-    setFormSubmitResult('YAY IT DONE');
+    setFormButtonsDisabled(false);
+    setTaskSubmitResponse(result);
+    if (result.form) {
+      setFormContents(result.form);
+    } else if (result.instructions) {
+      setFormSubmitResult(result.instructions);
+    } else {
+      setFormSubmitResult('We DONE');
+    }
   };
 
   const handleFormSubmit = (formObject: any, _event: any) => {
@@ -43,14 +52,23 @@ export default function MessageStartEventForm() {
     removeError();
 
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
+    let path = `/public/messages/submit/${params.modified_message_name}`;
+    let httpMethod = 'POST';
+    if (
+      taskSubmitResponse?.task_guid &&
+      taskSubmitResponse?.process_instance_id
+    ) {
+      path = `/public/tasks/${taskSubmitResponse.process_instance_id}/${taskSubmitResponse.task_guid}`;
+      httpMethod = 'PUT';
+    }
 
     HttpService.makeCallToBackend({
-      path: `/public/messages/submit/${params.modified_message_name}?execution_mode=synchronous`,
+      path: `${path}?execution_mode=synchronous`,
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
       },
-      httpMethod: 'POST',
+      httpMethod,
       postBody: dataToSubmit,
     });
   };
@@ -58,8 +76,8 @@ export default function MessageStartEventForm() {
   if (formSubmitResult) {
     return <h1>{formSubmitResult}</h1>;
   }
-  if (messageResponse) {
-    if (messageResponse.form_schema) {
+  if (formContents) {
+    if (formContents.form_schema) {
       return (
         <div className="fixed-width-container">
           <Grid fullWidth condensed className="megacondensed">
@@ -72,8 +90,8 @@ export default function MessageStartEventForm() {
                   setTaskData(obj.formData);
                 }}
                 onSubmit={handleFormSubmit}
-                schema={messageResponse.form_schema}
-                uiSchema={messageResponse.form_ui_schema}
+                schema={formContents.form_schema}
+                uiSchema={formContents.form_ui_schema}
                 restrictedWidth
                 reactJsonSchemaForm="mui"
               />
