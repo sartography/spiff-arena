@@ -42,10 +42,6 @@ function CheckboxWidget(props: WidgetProps) {
     rawErrors
   );
 
-  // if the parent rjsf schema is not of type "object", then rjsf sends "root" through as the id.
-  // this creates issues with the carbon checkbox where it will not accept any clicks to the checkbox
-  // so add fuzz to the id to ensure it is unique.
-  // https://github.com/rjsf-team/react-jsonschema-form/issues/1824
   const uniqueId = makeid(10);
 
   return (
