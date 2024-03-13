@@ -11,9 +11,6 @@ from marshmallow import Schema
 from marshmallow import post_load
 
 from spiffworkflow_backend.interfaces import ProcessGroupLite
-from spiffworkflow_backend.models.message_model import CorrelationKey
-from spiffworkflow_backend.models.message_model import CorrelationProperty
-from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 # we only want to save these items to the json file
@@ -38,9 +35,9 @@ class ProcessGroup:
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
     data_store_specifications: dict[str, Any] = field(default_factory=dict)
     parent_groups: list[ProcessGroupLite] | None = None
-    messages: list[MessageModel] | None = None
-    correlation_keys: list[CorrelationKey] | None = None
-    correlation_properties: list[CorrelationProperty] | None = None
+    messages: list[dict[str, Any]] | None = None
+    correlation_keys: list[dict[str, Any]] | None = None
+    correlation_properties: list[dict[str, Any]] | None = None
 
     # TODO: delete these once they no no longer mentioned in current
     # process_group.json files

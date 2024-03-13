@@ -174,14 +174,14 @@ class DataSetupService:
 
         correlation_keys = {}
         for correlation_key in process_group.correlation_keys or []:
-            correlation_keys[correlation_key.id] = correlation_key.correlation_properties
+            correlation_keys[correlation_key["id"]] = correlation_key["correlation_properties"]
             reference_cache = ReferenceCacheModel.from_params(
-                correlation_key.id,
-                correlation_key.id,
+                correlation_key["id"],
+                correlation_key["id"],
                 ReferenceType.correlation_key.value,
                 "",
                 FileSystemService.relative_location(file_name),
-                {"correlation_properties": correlation_key.correlation_properties},
+                correlation_key["correlation_properties"],
                 False,
             )
             ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
@@ -189,8 +189,8 @@ class DataSetupService:
         for message in process_group.messages:
             properties = []
             reference_cache = ReferenceCacheModel.from_params(
-                message.id,
-                message.id,
+                message["id"],
+                message["id"],
                 ReferenceType.message.value,
                 "",
                 FileSystemService.relative_location(file_name),
@@ -199,13 +199,13 @@ class DataSetupService:
             )
             reference_cache.properties = {"correlations": [], "correlation_keys": []}
             for correlation in process_group.correlation_properties or []:
-                for retrieval_expression in correlation.retrieval_expressions:
-                    if retrieval_expression.message_ref == message.id:
-                        properties.append(correlation.id)
+                for retrieval_expression in correlation["retrieval_expressions"]:
+                    if retrieval_expression["message_ref"] == message["id"]:
+                        properties.append(correlation["id"])
                         reference_cache.properties["correlations"].append(
                             {
-                                "correlation_property": correlation.id,
-                                "retrieval_expression": retrieval_expression.formal_expression,
+                                "correlation_property": correlation["id"],
+                                "retrieval_expression": retrieval_expression["formal_expression"],
                             }
                         )
             for key_id in correlation_keys:
