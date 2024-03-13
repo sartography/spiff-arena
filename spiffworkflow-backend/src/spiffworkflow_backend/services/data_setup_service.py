@@ -64,58 +64,6 @@ class DataSetupService:
                             str(ex2),
                         )
                     )
-            # elif FileSystemService.is_process_group_json_file(file):
-            #     with open(file) as group_json:
-            #         try:
-            #             data = json.load(group_json)
-            #         except JSONDecodeError as ex:
-            #             raise Exception(f"Could not decode JSON from {file}") from ex
-            #         # If there are messages, add them to the reference cache
-            #         if "messages" in data:
-            #             correlation_keys = {}
-            #             if "correlation_keys" in data:
-            #                 for correlation_key in data["correlation_keys"]:
-            #                     correlation_keys[correlation_key["id"]] = correlation_key["correlation_properties"]
-            #                     reference_cache = ReferenceCacheModel.from_params(
-            #                         correlation_key["id"],
-            #                         correlation_key["id"],
-            #                         ReferenceType.correlation_key.value,
-            #                         "",
-            #                         FileSystemService.relative_location(file),
-            #                         correlation_key["correlation_properties"],
-            #                         False,
-            #                     )
-            #                     ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-
-            #             for message in data["messages"]:
-            #                 properties = []
-            #                 reference_cache = ReferenceCacheModel.from_params(
-            #                     message["id"],
-            #                     message["id"],
-            #                     ReferenceType.message.value,
-            #                     "",
-            #                     FileSystemService.relative_location(file),
-            #                     None,
-            #                     False,
-            #                 )
-            #                 reference_cache.properties = {"correlations": [], "correlation_keys": []}
-            #                 if "correlation_properties" in data:
-            #                     for correlation in data["correlation_properties"]:
-            #                         for retrieval_expression in correlation["retrieval_expressions"]:
-            #                             if retrieval_expression["message_ref"] == message["id"]:
-            #                                 properties.append(correlation["id"])
-            #                                 reference_cache.properties["correlations"].append(
-            #                                     {
-            #                                         "correlation_property": correlation["id"],
-            #                                         "retrieval_expression": retrieval_expression["formal_expression"],
-            #                                     }
-            #                                 )
-            #                 for key_id in correlation_keys:
-            #                     if Counter(correlation_keys[key_id]) == Counter(properties):
-            #                         reference_cache.properties["correlation_keys"].append(key_id)
-
-            #                 ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-            #         # If there are correlation properties, update our correlation cache
             elif FileSystemService.is_data_store_json_file(file):
                 relative_location = FileSystemService.relative_location(file)
                 file_name = os.path.basename(file)
