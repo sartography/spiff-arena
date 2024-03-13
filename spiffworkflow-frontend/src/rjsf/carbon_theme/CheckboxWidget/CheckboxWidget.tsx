@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Checkbox } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes, makeid } from '../../helpers';
@@ -19,6 +19,11 @@ function CheckboxWidget(props: WidgetProps) {
     rawErrors,
     required,
   } = props;
+
+  const uniqueId: string = useMemo(() => {
+    return makeid(10, 'checkbox-');
+  }, []);
+
   const _onChange = (_: any, newValue: any) => {
     // if this field is required and it is not checked then change the value to undefined
     // otherwise rjsf will not flag this field as invalid
@@ -41,12 +46,6 @@ function CheckboxWidget(props: WidgetProps) {
     uiSchema,
     rawErrors
   );
-
-  // if the parent rjsf schema is not of type "object", then rjsf sends "root" through as the id.
-  // this creates issues with the carbon checkbox where it will not accept any clicks to the checkbox
-  // so add fuzz to the id to ensure it is unique.
-  // https://github.com/rjsf-team/react-jsonschema-form/issues/1824
-  const uniqueId = makeid(10);
 
   return (
     <Checkbox
