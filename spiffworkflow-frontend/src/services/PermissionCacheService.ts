@@ -5,12 +5,12 @@
 import { PermissionsToCheck } from '../interfaces';
 
 /** Map makes sense: no prototype to hack, high perf, easily wiped. */
-const permissionCache = new Map<string, Array<string>>();
+const permissionsCache = new Map<string, Array<string>>();
 
 const updatePermissionsCache = (permissionsToCheck: PermissionsToCheck) => {
-  if (permissionsToCheck) {
+  if (Object.entries(permissionsToCheck).length > 0) {
     Object.entries(permissionsToCheck).forEach(([path, permissions]) => {
-      permissionCache.set(path, permissions);
+      permissionsCache.set(path, permissions);
     });
   }
 };
@@ -26,17 +26,23 @@ const findPermissionsInCache = (permissionsToCheck: PermissionsToCheck) => {
   return (
     permissionsToCheck &&
     Object.keys(permissionsToCheck).every((path: string) =>
-      permissionCache.has(path)
+      permissionsCache.has(path)
     )
   );
 };
 
+// Don't allow retrieval or manipulation of the cache directly
+const inspectPermissionsCache = () => {
+  return new Map(permissionsCache);
+};
+
 const clearPermissionsCache = () => {
-  permissionCache.clear();
+  permissionsCache.clear();
 };
 
 export {
   updatePermissionsCache,
   findPermissionsInCache,
   clearPermissionsCache,
+  inspectPermissionsCache,
 };
