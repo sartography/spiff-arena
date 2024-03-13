@@ -1,7 +1,7 @@
 import React from 'react';
 import { RadioButtonGroup, RadioButton } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
-import { getCommonAttributes } from '../../helpers';
+import { getCommonAttributes, makeid } from '../../helpers';
 
 function RadioWidget({
   id,
@@ -44,11 +44,17 @@ function RadioWidget({
     rawErrors
   );
 
+  // if the parent rjsf schema is not of type "object", then rjsf sends "root" through as the id.
+  // this creates issues with the carbon checkbox where it will not accept any clicks to the checkbox
+  // so add fuzz to the id to ensure it is unique.
+  // https://github.com/rjsf-team/react-jsonschema-form/issues/1824
+  const uniqueId = makeid(10);
+
   // pass values in as strings so we can support both boolean and string radio buttons
   return (
     <RadioButtonGroup
-      id={id}
-      name={id}
+      id={uniqueId}
+      name={uniqueId}
       legendText={commonAttributes.helperText}
       valueSelected={`${value}`}
       invalid={commonAttributes.invalid}
