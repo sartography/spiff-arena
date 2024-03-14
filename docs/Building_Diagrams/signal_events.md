@@ -74,3 +74,55 @@ In an online shopping system, when a customer's payment is successfully processe
 **Example:**
 Signals are instrumental in coordinating workflows among varied processes, making certain that tasks adhere to a specified order. Leveraging intermediate catch and throw events allows one process to temporarily halt until tasks in a different process are finished. This is especially beneficial when certain stages can only commence after the completion of others — imagine the utility of such a system across multiple departments.
 
+This example demonstrates how Signal Events, along with a Timer Boundary Event, can be orchestrated within a BPMN process to create conditional pathways based on user actions and timed events. The process begins with a standard initiation and primarily revolves around the user interaction with a manual task that offers multiple outcomes.
+
+## Example : Using Signal Boundary Events as Buttons 
+This BPMN example showcases the flexibility of using Signal Events to create dynamic, user-driven process flows within a workflow management system like SpiffWorkflow. 
+
+By incorporating manual tasks with multiple outcomes, signal-based routing, and automated timing controls, the example illustrates how complex decision logic and external system integration can be efficiently managed within a BPMN process.
+
+### 1. **Start Event**: 
+
+Initiates the workflow, leading to the first and main manual task.
+
+![signal_event_example](images/Signal_events_spiff_example1.png) 
+
+### 2. **Manual Task with Boundary Events**:
+
+This task is unique in that it presents the user with  distinct options in the form of buttons. The default flow is a standard submission button that, when clicked, directs the workflow towards a conventional end. 
+
+![signal_event_example](images/Signal_events_spiff_example2.png) 
+
+Attached to **My Manual Task**, three Signal Boundary Events are set to listen for specific signals. These signals determine the flow of the process after the second button is pressed.
+
+#### **Signal Boundary Event 1**: 
+Catches the signal for "eat_spam" and redirects the workflow to a Manual Task named "Spam Message".
+
+![signal_event_example](images/Signal_events_spiff_example3.png) 
+
+#### **Signal Boundary Event 2**: 
+Listens for the "eat_cheetos" signal, leading the process to a Manual Task labeled "Cheetos Message".
+
+![signal_event_example](images/Signal_events_spiff_example4.png) 
+
+#### **Signal Boundary Event 3**: 
+Designed to catch the "eat_potato_chips" signal but uniquely does not lead to a user-accessible task under normal workflow conditions. This task, intended to be triggered externally (e.g., via an API call), emphasizes the capability of BPMN to integrate with external systems for event triggering.
+
+![signal_event_example](images/Signal_events_spiff_example5.png) 
+
+```{admonition} Note
+⚠  Before initiating the process, three signal event IDs must be configured: `eat_cheetos`, `eat_potato_chips`, and `eat_spam`. These IDs are essential for the Signal Boundary Events to correctly identify and react to the signals triggered by user actions or external inputs.
+
+```
+
+#### **Timer Boundary Event**:
+
+Attached to **My Manual Task**, this event is configured to trigger after a specific duration, automating the process flow if the user does not interact with the manual task within the given timeframe. Notably, this event leads the process towards an alternative path or end without requiring user input.
+
+![signal_event_example](images/Signal_events_spiff_example6.png) 
+
+### 3. **End Events**:
+
+The process includes multiple End Events. One is directly connected to **My Manual Task**, concluding the workflow if the first button is used. 
+
+The others are linked to the outcomes of the Signal Boundary Events and the Timer Boundary Event, ensuring that each possible path through the process reaches a defined conclusion.
