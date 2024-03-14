@@ -472,5 +472,7 @@ export default function CustomForm({
     // eslint-disable-next-line react/jsx-props-no-spreading
     return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
   }
+
+  console.error(`Unsupported form type: ${reactJsonSchemaForm}`);
   return null;
 }
