@@ -143,6 +143,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME")
 # FIXME: do not default this but we will need to coordinate release of it since it is a breaking change
 config_from_env("SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP", default="everybody")
+config_from_env("SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP", default="spiff_public")
 
 ### sentry
 config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_DSN", default="")

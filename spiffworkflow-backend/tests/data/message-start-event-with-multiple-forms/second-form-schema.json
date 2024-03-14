@@ -1,0 +1,11 @@
+{
+  "title": "Information request, part deux",
+  "description": "Hey, {{incoming_request['firstName']}}. Thanks for telling us who you are. Just one more field.",
+  "type": "object",
+  "properties": {
+    "lastName": {
+      "type": "string",
+      "title": "Last name"
+    }
+  }
+}

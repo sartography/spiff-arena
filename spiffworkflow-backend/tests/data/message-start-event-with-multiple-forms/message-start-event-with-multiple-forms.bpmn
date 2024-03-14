@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:collaboration id="Collaboration_1h79dxi">
+    <bpmn:participant id="Participant_04cn64m" processRef="Process_message_start_event_with_multiple_forms_bkmtffv" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_message_start_event_with_multiple_forms_bkmtffv" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_0okk2le">
+      <bpmn:lane id="Lane_0n1tm41">
+        <bpmn:flowNodeRef>message_start_event_one</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>script_task_one</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>user_task_one</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="admin" name="admin">
+        <bpmn:flowNodeRef>Event_0c0wt46</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>admin_task</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:sequenceFlow id="Flow_17db3yp" sourceRef="message_start_event_one" targetRef="script_task_one" />
+    <bpmn:sequenceFlow id="Flow_12pkbxb" sourceRef="script_task_one" targetRef="user_task_one" />
+    <bpmn:startEvent id="message_start_event_one" name="Message Start Event One" messageRef="[object Object]">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>## Enter your first name</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="entry-form-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="entry-form-uischema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_17db3yp</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_13ctnqx" messageRef="Message_1rfi4qj" />
+    </bpmn:startEvent>
+    <bpmn:scriptTask id="script_task_one" name="Script Task One">
+      <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
+      <bpmn:outgoing>Flow_12pkbxb</bpmn:outgoing>
+      <bpmn:script>a = 1</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:userTask id="user_task_one" name="User Task One">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>## Enter your last name {{incoming_request['firstName']}}</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="second-form-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="second-form-uischema.json" />
+        </spiffworkflow:properties>
+        <spiffworkflow:allowGuest>false</spiffworkflow:allowGuest>
+        <spiffworkflow:guestConfirmation># Thanks
+
+We hear you. Your name is **{{incoming_request['firstName']}} {{lastName}}**.</spiffworkflow:guestConfirmation>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_12pkbxb</bpmn:incoming>
+      <bpmn:outgoing>Flow_14h4dnh</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_0c0wt46">
+      <bpmn:incoming>Flow_1aprws7</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1aprws7" sourceRef="admin_task" targetRef="Event_0c0wt46" />
+    <bpmn:sequenceFlow id="Flow_14h4dnh" sourceRef="user_task_one" targetRef="admin_task" />
+    <bpmn:userTask id="admin_task" name="Admin task">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="admin-task-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="admin-task-uischema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_14h4dnh</bpmn:incoming>
+      <bpmn:outgoing>Flow_1aprws7</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmn:message id="Message_1rfi4qj" name="bounty_start_multiple_forms">
+    <bpmn:extensionElements>
+      <spiffworkflow:messageVariable>incoming_request</spiffworkflow:messageVariable>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1h79dxi">
+      <bpmndi:BPMNShape id="Participant_04cn64m_di" bpmnElement="Participant_04cn64m" isHorizontal="true">
+        <dc:Bounds x="40" y="52" width="600" height="370" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0w9549p_di" bpmnElement="admin" isHorizontal="true">
+        <dc:Bounds x="70" y="302" width="570" height="120" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0n1tm41_di" bpmnElement="Lane_0n1tm41" isHorizontal="true">
+        <dc:Bounds x="70" y="52" width="570" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0aasbbk_di" bpmnElement="message_start_event_one">
+        <dc:Bounds x="132" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="116" y="202" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0mqmnb0_di" bpmnElement="script_task_one">
+        <dc:Bounds x="230" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ziqn0f_di" bpmnElement="user_task_one">
+        <dc:Bounds x="400" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0c0wt46_di" bpmnElement="Event_0c0wt46">
+        <dc:Bounds x="542" y="342" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1hiuuow_di" bpmnElement="admin_task">
+        <dc:Bounds x="400" y="320" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_17db3yp_di" bpmnElement="Flow_17db3yp">
+        <di:waypoint x="168" y="177" />
+        <di:waypoint x="230" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12pkbxb_di" bpmnElement="Flow_12pkbxb">
+        <di:waypoint x="330" y="177" />
+        <di:waypoint x="400" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1aprws7_di" bpmnElement="Flow_1aprws7">
+        <di:waypoint x="500" y="360" />
+        <di:waypoint x="542" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14h4dnh_di" bpmnElement="Flow_14h4dnh">
+        <di:waypoint x="450" y="217" />
+        <di:waypoint x="450" y="320" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

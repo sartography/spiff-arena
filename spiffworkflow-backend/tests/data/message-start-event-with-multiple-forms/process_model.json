@@ -1,0 +1,9 @@
+{
+    "description": "",
+    "display_name": "message-start-event-with-multiple-forms",
+    "exception_notification_addresses": [],
+    "fault_or_suspend_on_exception": "fault",
+    "metadata_extraction_paths": null,
+    "primary_file_name": "message-start-event-with-multiple-forms.bpmn",
+    "primary_process_id": "Process_message_start_event_with_multiple_forms_bkmtffv"
+}
