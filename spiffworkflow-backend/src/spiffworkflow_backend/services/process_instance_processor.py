@@ -5,6 +5,7 @@ import decimal
 import json
 import logging
 import os
+import random
 import re
 import time
 import uuid
@@ -317,6 +318,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            "min": min,
+            "max": max,
+            "random": random,
             **JinjaHelpers.get_helper_mapping(),
         }
 

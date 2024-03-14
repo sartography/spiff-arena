@@ -44,14 +44,19 @@ class TestMessages(BaseTest):
         with pytest.raises(ApiError):
             message_send(
                 "Approval Result",
-                {"payload": {"po_number": 1001, "customer_id": "jon"}},
+                {"po_number": 1001, "customer_id": "jon"},
             )
 
         # No error when calling with the correct parameters
-        message_send(
+        response = message_send(
             "Approval Result",
-            {"payload": {"po_number": 1001, "customer_id": "Sartography"}},
+            {"po_number": 1001, "customer_id": "Sartography"},
         )
+
+        # The response's task data should also match up with the correlation keys.
+        response_json = response.json
+        assert response_json["task_data"]["po_number"] == 1001
+        assert response_json["task_data"]["customer_id"] == "Sartography"
 
         # There is no longer a waiting message
         waiting_messages = (

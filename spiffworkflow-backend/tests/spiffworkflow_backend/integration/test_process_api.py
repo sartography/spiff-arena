@@ -550,7 +550,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(ReferenceCacheModel.basic_query().all()) == 1
+        assert ReferenceCacheModel.basic_query().count() == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
@@ -560,7 +560,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(ReferenceCacheModel.basic_query().all()) == 6
+        assert ReferenceCacheModel.basic_query().count() == 6
 
         # get the results
         response = client.get(
@@ -592,7 +592,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(ReferenceCacheModel.basic_query().all()) == 1
+        assert ReferenceCacheModel.basic_query().count() == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
@@ -602,7 +602,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(ReferenceCacheModel.basic_query().all()) == 6
+        assert ReferenceCacheModel.basic_query().count() == 6
 
         user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/test_group_one:*")
         self.add_permissions_to_user(user=user_one, target_uri="/v1.0/processes", permission_names=["read"])
@@ -642,7 +642,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert len(ReferenceCacheModel.basic_query().all()) == 1
+        assert ReferenceCacheModel.basic_query().count() == 1
         # but no callers are recorded
         assert ProcessCallerService.count() == 0
 
@@ -654,7 +654,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert len(ReferenceCacheModel.basic_query().all()) == 6
+        assert ReferenceCacheModel.basic_query().count() == 6
         # and 4 callers recorded
         assert ProcessCallerService.count() == 4
 
@@ -1462,13 +1462,14 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         json_data = response.json
         assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
+        assert json_data["process_instance"]["status"] == "complete"
+        assert json_data["task_data"]["invoice"] == payload
+        process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
 
@@ -1537,13 +1538,14 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         json_data = response.json
         assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
+        assert json_data["process_instance"]["status"] == "complete"
+        assert json_data["task_data"]["the_payload"] == payload
+        process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
 
@@ -1609,7 +1611,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 400
         assert response.json
@@ -1621,13 +1623,13 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         json_data = response.json
         assert json_data
-        assert json_data["status"] == "complete"
-        process_instance_id = json_data["id"]
+        assert json_data["process_instance"]["status"] == "complete"
+        process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
         processor = ProcessInstanceProcessor(process_instance)
@@ -1640,7 +1642,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload, "process_instance_id": process_instance_id}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 400
         assert response.json
@@ -2282,22 +2284,22 @@ class TestProcessApi(BaseTest):
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         assert response.json is not None
-        process_instance_id_one = response.json["id"]
+        process_instance_id_one = response.json["process_instance"]["id"]
 
         payload["po_number"] = "1002"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps({"payload": payload}),
+            data=json.dumps(payload),
         )
         assert response.status_code == 200
         assert response.json is not None
-        process_instance_id_two = response.json["id"]
+        process_instance_id_two = response.json["process_instance"]["id"]
 
         response = client.get(
             f"/v1.0/messages?process_instance_id={process_instance_id_one}",
