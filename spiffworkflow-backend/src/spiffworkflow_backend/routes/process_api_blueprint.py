@@ -498,14 +498,8 @@ def _task_submit_shared(
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
     spiff_task_extensions = spiff_task.task_spec.extensions
-    if (
-        # "allowGuest" in spiff_task_extensions
-        # and spiff_task_extensions["allowGuest"] == "true"
-        # and "guestConfirmation" in spiff_task_extensions
-        "guestConfirmation" in spiff_task_extensions
-        and spiff_task_extensions["guestConfirmation"]
-    ):
-        guest_confirmation = JinjaService.render_jinja_template(spiff_task.task_spec.extensions["guestConfirmation"], task_model)
+    if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
+        guest_confirmation = JinjaService.render_jinja_template(spiff_task_extensions["guestConfirmation"], task_model)
         return {"guest_confirmation": guest_confirmation}
 
     if processor.next_task():

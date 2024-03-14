@@ -5,12 +5,14 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
 from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
 from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -66,18 +68,31 @@ def message_form_submit(
 
     next_form_contents = None
     task_guid = None
+    confirmation_message_markdown = None
     if next_human_task_assigned_to_me:
         task_guid = next_human_task_assigned_to_me.task_guid
         process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
         next_form_contents = _get_form_and_prepare_data(
             process_model=process_model, task_guid=next_human_task_assigned_to_me.task_guid, process_instance=process_instance
         )
+    else:
+        processor = ProcessInstanceProcessor(process_instance)
+        start_tasks = processor.bpmn_process_instance.get_tasks(spec_class=StartEventMixin, state=TaskState.COMPLETED)
+        matching_start_tasks = [t for t in start_tasks if t.task_spec.event_definition.name == receiver_message.name]
+        if len(matching_start_tasks) > 0:
+            spiff_task = matching_start_tasks[0]
+            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+            spiff_task_extensions = spiff_task.task_spec.extensions
+            if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
+                confirmation_message_markdown = JinjaService.render_jinja_template(
+                    spiff_task.task_spec.extensions["guestConfirmation"], task_model
+                )
 
     response_json = {
         "form": next_form_contents,
         "task_guid": task_guid,
         "process_instance_id": process_instance.id,
-        "confirmation_message_markdown": None,
+        "confirmation_message_markdown": confirmation_message_markdown,
     }
     return make_response(jsonify(response_json), 200)
 
@@ -147,8 +162,11 @@ def _get_form_and_prepare_data(
                     process_model=process_model,
                     revision=revision,
                 )
-        if "instructionsForEndUser" in extension_list:
+        if "instructionsForEndUser" in extension_list and extension_list["instructionsForEndUser"]:
+            task_data = {}
+            if task_model is not None and task_model.data:
+                task_data = task_model.data
             form_contents["instructions_for_end_user"] = JinjaService.render_jinja_template(
-                extension_list["instructionsForEndUser"], task_data={}
+                extension_list["instructionsForEndUser"], task_data=task_data
             )
     return form_contents

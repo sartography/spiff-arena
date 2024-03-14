@@ -148,40 +148,6 @@ class MessageService:
 
         return process_instance_receive
 
-    @classmethod
-    def _cancel_non_matching_start_events(
-        cls, processor_receive: ProcessInstanceProcessor, message_triggerable_process_model: MessageTriggerableProcessModel
-    ) -> None:
-        """Cancel any start event that does not match the start event that triggered this.
-
-        After that SpiffWorkflow and the WorkflowExecutionService can figure it out.
-        """
-        start_tasks = processor_receive.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
-        for start_task in start_tasks:
-            if not isinstance(start_task.task_spec.event_definition, MessageEventDefinition):
-                start_task.cancel()
-            elif start_task.task_spec.event_definition.name != message_triggerable_process_model.message_name:
-                start_task.cancel()
-
-    @staticmethod
-    def get_process_instance_for_message_instance(
-        message_instance_receive: MessageInstanceModel,
-    ) -> ProcessInstanceModel:
-        process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
-            id=message_instance_receive.process_instance_id
-        ).first()
-        if process_instance_receive is None:
-            raise MessageServiceError(
-                (
-                    (
-                        "Process instance cannot be found for queued message:"
-                        f" {message_instance_receive.id}. Tried with id"
-                        f" {message_instance_receive.process_instance_id}"
-                    ),
-                )
-            )
-        return process_instance_receive
-
     @staticmethod
     def process_message_receive(
         process_instance_receive: ProcessInstanceModel,
@@ -300,3 +266,37 @@ class MessageService:
                 )
             )
         return receiver_message
+
+    @classmethod
+    def _cancel_non_matching_start_events(
+        cls, processor_receive: ProcessInstanceProcessor, message_triggerable_process_model: MessageTriggerableProcessModel
+    ) -> None:
+        """Cancel any start event that does not match the start event that triggered this.
+
+        After that SpiffWorkflow and the WorkflowExecutionService can figure it out.
+        """
+        start_tasks = processor_receive.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
+        for start_task in start_tasks:
+            if not isinstance(start_task.task_spec.event_definition, MessageEventDefinition):
+                start_task.cancel()
+            elif start_task.task_spec.event_definition.name != message_triggerable_process_model.message_name:
+                start_task.cancel()
+
+    @staticmethod
+    def get_process_instance_for_message_instance(
+        message_instance_receive: MessageInstanceModel,
+    ) -> ProcessInstanceModel:
+        process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
+            id=message_instance_receive.process_instance_id
+        ).first()
+        if process_instance_receive is None:
+            raise MessageServiceError(
+                (
+                    (
+                        "Process instance cannot be found for queued message:"
+                        f" {message_instance_receive.id}. Tried with id"
+                        f" {message_instance_receive.process_instance_id}"
+                    ),
+                )
+            )
+        return process_instance_receive

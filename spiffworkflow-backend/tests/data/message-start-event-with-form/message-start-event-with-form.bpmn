@@ -14,6 +14,10 @@
     <bpmn:sequenceFlow id="Flow_12pkbxb" sourceRef="script_task_one" targetRef="EndEvent_1" />
     <bpmn:startEvent id="message_start_event_one" name="Message Start Event One" messageRef="[object Object]">
       <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>## Enter your frist name</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:guestConfirmation># Thanks
+
+We hear you. Your name is **{{incoming_request['firstName']}}**.</spiffworkflow:guestConfirmation>
         <spiffworkflow:properties>
           <spiffworkflow:property name="formJsonSchemaFilename" value="entry-form-schema.json" />
           <spiffworkflow:property name="formUiSchemaFilename" value="entry-form-uischema.json" />
@@ -23,15 +27,6 @@
       <bpmn:messageEventDefinition id="MessageEventDefinition_13ctnqx" messageRef="Message_1rfi4qj" />
     </bpmn:startEvent>
     <bpmn:scriptTask id="script_task_one" name="Script Task One">
-      <bpmn:extensionElements>
-        <spiffworkflow:instructionsForEndUser>This is an example **Manual Task**. A **Manual Task** is designed to allow someone to complete a task outside of the system and then report back that it is complete. You can click the *Continue* button to proceed. When you are done running this process, you can edit the **Process Model** to include a:
-
- * **Script Task** - write a short snippet of python code to update some data
- *  **User Task** - generate a form that collects information from a user
- * **Service Task** - communicate with an external API to fetch or update some data.
-
-You can also change the text you are reading here by updating the *Instructions* on this example manual task.</spiffworkflow:instructionsForEndUser>
-      </bpmn:extensionElements>
       <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
       <bpmn:outgoing>Flow_12pkbxb</bpmn:outgoing>
       <bpmn:script>a = 1</bpmn:script>
