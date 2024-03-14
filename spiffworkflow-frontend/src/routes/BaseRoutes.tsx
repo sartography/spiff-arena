@@ -32,7 +32,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
     );
   };
 
-  if (extensionUxElements) {
+  if (extensionUxElements !== null) {
     const extensionRoutes = ExtensionUxElementMap({
       displayLocation: 'routes',
       elementCallback,

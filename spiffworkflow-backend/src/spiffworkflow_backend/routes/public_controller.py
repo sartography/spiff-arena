@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
 from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -126,23 +127,28 @@ def _get_form_and_prepare_data(
     if process_instance:
         revision = process_instance.bpmn_version_control_identifier
 
-    form_contents = {}
-    if extension_list and "properties" in extension_list:
-        properties = extension_list["properties"]
-        if "formJsonSchemaFilename" in properties:
-            form_schema_file_name = properties["formJsonSchemaFilename"]
-            form_contents["form_schema"] = _prepare_form_data(
-                form_file=form_schema_file_name,
-                task_model=task_model,
-                process_model=process_model,
-                revision=revision,
-            )
-        if "formUiSchemaFilename" in properties:
-            form_ui_schema_file_name = properties["formUiSchemaFilename"]
-            form_contents["form_ui_schema"] = _prepare_form_data(
-                form_file=form_ui_schema_file_name,
-                task_model=task_model,
-                process_model=process_model,
-                revision=revision,
+    form_contents: dict = {}
+    if extension_list:
+        if "properties" in extension_list:
+            properties = extension_list["properties"]
+            if "formJsonSchemaFilename" in properties:
+                form_schema_file_name = properties["formJsonSchemaFilename"]
+                form_contents["form_schema"] = _prepare_form_data(
+                    form_file=form_schema_file_name,
+                    task_model=task_model,
+                    process_model=process_model,
+                    revision=revision,
+                )
+            if "formUiSchemaFilename" in properties:
+                form_ui_schema_file_name = properties["formUiSchemaFilename"]
+                form_contents["form_ui_schema"] = _prepare_form_data(
+                    form_file=form_ui_schema_file_name,
+                    task_model=task_model,
+                    process_model=process_model,
+                    revision=revision,
+                )
+        if "instructionsForEndUser" in extension_list:
+            form_contents["instructions_for_end_user"] = JinjaService.render_jinja_template(
+                extension_list["instructionsForEndUser"], task_data={}
             )
     return form_contents

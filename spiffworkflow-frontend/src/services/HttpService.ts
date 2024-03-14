@@ -96,6 +96,8 @@ backendCallProps) => {
       } else if (is403) {
         if (onUnauthorized) {
           onUnauthorized(result);
+        } else if (UserService.isPublicUser()) {
+          window.location.href = '/public/sign_out';
         } else {
           // Hopefully we can make this service a hook and use the error message context directly
           // eslint-disable-next-line no-alert

@@ -91,6 +91,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: backend_only
+        in: query
+        required: false
+        schema:
+          type: boolean
     get:
       operationId: spiffworkflow_backend.routes.authentication_controller.logout
       summary: Logout authenticated user

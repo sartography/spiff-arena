@@ -38,12 +38,12 @@ class JinjaHelpers:
 
 class JinjaService:
     @classmethod
-    def render_instructions_for_end_user(cls, task: TaskModel | SpiffTask, extensions: dict | None = None) -> str:
+    def render_instructions_for_end_user(cls, task: TaskModel | SpiffTask | None = None, extensions: dict | None = None) -> str:
         """Assure any instructions for end user are processed for jinja syntax."""
         if extensions is None:
             if isinstance(task, TaskModel):
                 extensions = TaskService.get_extensions_from_task_model(task)
-            elif hasattr(task.task_spec, "extensions"):
+            elif task and hasattr(task.task_spec, "extensions"):
                 extensions = task.task_spec.extensions
         if extensions and "instructionsForEndUser" in extensions:
             if extensions["instructionsForEndUser"]:

@@ -222,13 +222,17 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     return access_token
 
 
-def logout(id_token: str, authentication_identifier: str, redirect_url: str | None) -> Response:
+def logout(id_token: str, authentication_identifier: str, redirect_url: str | None, backend_only: bool = False) -> Response:
     if redirect_url is None:
         redirect_url = ""
     AuthenticationService.set_user_has_logged_out()
-    return AuthenticationService().logout(
-        redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
-    )
+
+    if backend_only:
+        return redirect(redirect_url)
+    else:
+        return AuthenticationService().logout(
+            redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
+        )
 
 
 def logout_return() -> Response:

@@ -8,6 +8,7 @@ import { recursivelyChangeNullAndUndefined } from '../../helpers';
 import useAPIError from '../../hooks/UseApiError';
 import { PublicTaskForm, PublicTaskSubmitResponse } from '../../interfaces';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
+import InstructionsForEndUser from '../../components/InstructionsForEndUser';
 
 export default function MessageStartEventForm() {
   const params = useParams();
@@ -54,6 +55,11 @@ export default function MessageStartEventForm() {
     setFormButtonsDisabled(true);
     removeError();
 
+    // removing form contents will force the loading icon to appear.
+    // we could also set a state for it at some point but this seemed
+    // like a way to reduce states.
+    setFormContents(null);
+
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
     let path = `/public/messages/submit/${params.modified_message_name}`;
     let httpMethod = 'POST';
@@ -85,6 +91,9 @@ export default function MessageStartEventForm() {
     if (formContents.form_schema) {
       return (
         <div className="fixed-width-container">
+          <InstructionsForEndUser
+            defaultMessage={formContents.instructions_for_end_user}
+          />
           <Grid fullWidth condensed className="megacondensed">
             <Column sm={4} md={5} lg={8}>
               <CustomForm
