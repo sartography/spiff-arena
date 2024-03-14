@@ -31,7 +31,7 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
 
     api_key_hash: str = db.Column(db.String(255), nullable=False, unique=True, index=True)
 
-    user = relationship("UserModel", uselist=False, cascade="delete", foreign_keys=[user_id])  # type: ignore
+    user = relationship("UserModel", uselist=False, foreign_keys=[user_id])  # type: ignore
 
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
