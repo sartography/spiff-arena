@@ -26,9 +26,9 @@ Multi-instance tasks comprise several key properties that define their behavior:
 1. **Input Collection**: Specifies the array or collection over which the task iterates. Each element in the collection serves as input for a task instance.
 
 
-2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results.
+2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results. Do not use this property when Loop Cardinality is specified.
 
-3. **Loop Cardinality**: Defines the exact number of times the task should iterate. This is used when the number of instances is known ahead of time and is fixed.
+3. **Loop Cardinality**: Defines the exact number of times the task should iterate. This is used when the number of instances is known ahead of time and is fixed. Do not use this property when Output Collection is specified.
 
 4. **Input Element Variable**: Represents each element in the input collection during an iteration, allowing for individual processing.
 
@@ -41,7 +41,7 @@ Multi-instance tasks comprise several key properties that define their behavior:
 
 This example outlines a BPMN process that demonstrates the use of a multi-instance task to iterate over and modify elements within a collection. 
 
-Specifically, the process manages a list of composers, their names, and genres, showcasing the dynamic handling of data objects through script and manual tasks.
+Specifically, the process manages a list of composers, their names, and genres, showcasing the dynamic handling of data through script and manual tasks.
 
 ### Process Overview:
 
@@ -70,7 +70,7 @@ This task initializes a list (array) of dictionaries, each representing a compos
 
 #### 3. **Multi-Instance Task - Edit Composer**:
 
-This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composers information within the array.
+This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
 
 ![Multi_instance_example](images/multiinstance_example3.png)
 
@@ -107,4 +107,4 @@ Signifies the successful completion of the process instance, after the list of c
 
 ### Summary:
 
-This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data objects through scripting and manual tasks. By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
+This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks. By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
