@@ -102,6 +102,7 @@ AUTHENTICATION_EXCLUSION_LIST = [
 
 # these are api calls that are allowed to generate a public jwt when called
 PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
+    "spiffworkflow_backend.routes.public_controller.form_show",
     "spiffworkflow_backend.routes.public_controller.message_form_show",
     "spiffworkflow_backend.routes.public_controller.message_form_submit",
 ]

@@ -16,7 +16,6 @@ from spiffworkflow_backend.exceptions.error import InvalidRedirectUrlError
 from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
@@ -130,14 +129,14 @@ def login(
         )
         return redirect(redirect_url)
 
-    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-        AuthenticationService.create_guest_token(
-            username=SPIFF_GUEST_USER,
-            group_identifier=SPIFF_GUEST_GROUP,
-            auth_token_properties={"only_guest_task_completion": True, "process_instance_id": process_instance_id},
-            authentication_identifier=authentication_identifier,
-        )
-        return redirect(redirect_url)
+    # if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
+    #     AuthenticationService.create_guest_token(
+    #         username=SPIFF_GUEST_USER,
+    #         group_identifier=SPIFF_GUEST_GROUP,
+    #         auth_token_properties={"only_guest_task_completion": True, "process_instance_id": process_instance_id},
+    #         authentication_identifier=authentication_identifier,
+    #     )
+    #     return redirect(redirect_url)
 
     state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
     login_redirect_url = AuthenticationService().get_login_redirect_url(
@@ -357,9 +356,9 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                 except Exception as e:
                     current_app.logger.error(f"Exception in verify_token getting user from decoded internal token. {e}")
 
-                # if the user is forced logged out then stop processing the token
-                if _force_logout_user_if_necessary(user_model, decoded_token):
-                    return None
+                # # if the user is forced logged out then stop processing the token
+                # if _force_logout_user_if_necessary(user_model, decoded_token):
+                #     return None
             else:
                 user_info = None
                 authentication_identifier = _get_authentication_identifier_from_request()

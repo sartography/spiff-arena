@@ -8,11 +8,14 @@ from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
+from spiffworkflow_backend.routes.process_api_blueprint import _get_task_model_for_request
 from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
 from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -107,13 +110,21 @@ def form_submit(
 
     next_form_contents = None
     next_task_guid = None
+
+    next_task_assigned_to_me = None
     if "next_task_assigned_to_me" in response_item:
         next_task_assigned_to_me = response_item["next_task_assigned_to_me"]
+    elif "next_task" in response_item:
+        task_model = TaskModel.query.filter_by(guid=str(response_item["next_task"].id)).first()
+        if _assign_task_if_guest(task_model):
+            next_task_assigned_to_me = response_item["next_task"]
+
+    if next_task_assigned_to_me is not None:
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        next_task_guid = next_task_assigned_to_me.id
+        next_task_guid = str(next_task_assigned_to_me.id)
         process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
         next_form_contents = _get_form_and_prepare_data(
-            process_model=process_model, task_guid=next_task_assigned_to_me.task_guid, process_instance=process_instance
+            process_model=process_model, task_guid=next_task_guid, process_instance=process_instance
         )
 
     response_json = {
@@ -121,6 +132,45 @@ def form_submit(
         "task_guid": next_task_guid,
         "process_instance_id": process_instance_id,
         "confirmation_message_markdown": response_item.get("guest_confirmation"),
+    }
+    return make_response(jsonify(response_json), 200)
+
+
+def form_show(
+    process_instance_id: int,
+    task_guid: str,
+) -> flask.wrappers.Response:
+    task_model = _get_task_model_for_request(
+        process_instance_id=process_instance_id,
+        task_guid=task_guid,
+        with_form_data=True,
+    )
+    if task_model is None or not task_model.allows_guest(task_model.process_instance_id):
+        raise (
+            ApiError(
+                error_code="task_not_found",
+                message=f"Could not find completable task for {task_guid} in process_instance {process_instance_id}.",
+                status_code=400,
+            )
+        )
+
+    _assign_task_if_guest(task_model)
+
+    instructions_for_end_user = None
+    if task_model.extensions:
+        instructions_for_end_user = task_model.extensions["instructionsForEndUser"]
+
+    form = {
+        "form_schema": task_model.form_schema,
+        "form_ui_schema": task_model.form_ui_schema,
+        "instructions_for_end_user": instructions_for_end_user,
+    }
+
+    response_json = {
+        "form": form,
+        "task_guid": task_guid,
+        "process_instance_id": process_instance_id,
+        "confirmation_message_markdown": None,
     }
     return make_response(jsonify(response_json), 200)
 
@@ -170,3 +220,34 @@ def _get_form_and_prepare_data(
                 extension_list["instructionsForEndUser"], task_data=task_data
             )
     return form_contents
+
+
+def _assign_task_if_guest(task_model: TaskModel) -> bool:
+    if not task_model.allows_guest(task_model.process_instance_id):
+        return False
+
+    human_task_user = (
+        HumanTaskUserModel.query.filter_by(user_id=g.user.id)
+        .join(HumanTaskModel, HumanTaskModel.id == HumanTaskUserModel.human_task_id)
+        .filter(HumanTaskModel.task_guid == task_model.guid)
+        .first()
+    )
+    if human_task_user is None:
+        human_task = HumanTaskModel.query.filter_by(
+            task_guid=task_model.guid, process_instance_id=task_model.process_instance_id
+        ).first()
+        if human_task is None:
+            raise (
+                ApiError(
+                    error_code="completable_task_not_found",
+                    message=(
+                        f"Could not find completable task for {task_model.guid} in process_instance"
+                        f" {task_model.process_instance_id}."
+                    ),
+                    status_code=400,
+                )
+            )
+        human_task_user = HumanTaskUserModel(user_id=g.user.id, human_task=human_task)
+        db.session.add(human_task_user)
+        db.session.commit()
+    return True
