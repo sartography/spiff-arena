@@ -11,13 +11,13 @@ from marshmallow import post_load
 @dataclass
 class MessageModel:
     id: str  # A unique string name, lower case, under scores (ie, 'my_message')
+    location: str
+    schema: dict
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, MessageModel):
             return False
-        if other.id == self.id:
-            return True
-        return False
+        return other.id == self.id and other.location == self.location
 
     def serialized(self) -> dict:
         return dataclasses.asdict(self)
