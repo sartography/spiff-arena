@@ -44,6 +44,30 @@ const checkPathForTaskShowParams = (
   return null;
 };
 
+// required for logging out
+const getIdToken = () => {
+  return getCookie('id_token');
+};
+const getAccessToken = () => {
+  return getCookie('access_token');
+};
+const getAuthenticationIdentifier = () => {
+  return getCookie('authentication_identifier');
+};
+
+const isLoggedIn = () => {
+  return !!getAccessToken();
+};
+
+const isPublicUser = () => {
+  const idToken = getIdToken();
+  if (idToken) {
+    const idObject = jwt(idToken);
+    return (idObject as any).public;
+  }
+  return false;
+};
+
 const doLogin = (
   authenticationOption?: AuthenticationOption,
   redirectUrl?: string | null
@@ -65,21 +89,6 @@ const doLogin = (
   window.location.href = url;
 };
 
-// required for logging out
-const getIdToken = () => {
-  return getCookie('id_token');
-};
-const getAccessToken = () => {
-  return getCookie('access_token');
-};
-const getAuthenticationIdentifier = () => {
-  return getCookie('authentication_identifier');
-};
-
-const isLoggedIn = () => {
-  return !!getAccessToken();
-};
-
 const doLogout = () => {
   const idToken = getIdToken();
 
@@ -89,6 +98,8 @@ const doLogout = () => {
   // edge case. if the user is already logged out, just take them somewhere that will force them to sign in.
   if (idToken === null) {
     logoutRedirectUrl = SIGN_IN_PATH;
+  } else if (isPublicUser()) {
+    logoutRedirectUrl += '&backend_only=true';
   }
 
   // Wipe all cached permissions so if user logs back in
@@ -174,6 +185,7 @@ const UserService = {
   getPreferredUsername,
   getUserEmail,
   isLoggedIn,
+  isPublicUser,
   loginIfNeeded,
   onlyGuestTaskCompletion,
 };

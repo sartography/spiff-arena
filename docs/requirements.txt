@@ -31,7 +31,7 @@ PyYAML==6.0.1
 requests==2.31.0
 six==1.16.0
 snowballstemmer==2.2.0
-soupsieve==2.4.1
+soupsieve==2.5
 Sphinx==7.2.6
 sphinx-autoapi==2.1.0
 sphinx-autobuild==2021.3.14

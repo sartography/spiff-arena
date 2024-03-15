@@ -2,7 +2,8 @@ import validator from '@rjsf/validator-ajv8';
 import { ReactNode } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@carbon/react';
-import { Form } from '../rjsf/carbon_theme';
+import { Form as MuiForm } from '@rjsf/mui';
+import { Form as CarbonForm } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
@@ -29,6 +30,7 @@ type OwnProps = {
   noValidate?: boolean;
   restrictedWidth?: boolean;
   submitButtonText?: string;
+  reactJsonSchemaForm?: string;
 };
 
 export default function CustomForm({
@@ -43,6 +45,7 @@ export default function CustomForm({
   noValidate = false,
   restrictedWidth = false,
   submitButtonText,
+  reactJsonSchemaForm = 'carbon',
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -444,24 +447,32 @@ export default function CustomForm({
     );
   }
 
-  return (
-    <Form
-      id={id}
-      disabled={disabled}
-      formData={formData}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      schema={schema}
-      uiSchema={uiSchema}
-      widgets={rjsfWidgets}
-      validator={validator}
-      customValidate={customValidate}
-      noValidate={noValidate}
-      fields={rjsfFields}
-      templates={rjsfTemplates}
-      omitExtraData
-    >
-      {childrenToUse}
-    </Form>
-  );
+  const formProps = {
+    id,
+    disabled,
+    formData,
+    onChange,
+    onSubmit,
+    schema,
+    uiSchema,
+    widgets: rjsfWidgets,
+    validator,
+    customValidate,
+    noValidate,
+    fields: rjsfFields,
+    templates: rjsfTemplates,
+    omitExtraData: true,
+  };
+  if (reactJsonSchemaForm === 'carbon') {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <CarbonForm {...formProps}>{childrenToUse}</CarbonForm>;
+  }
+
+  if (reactJsonSchemaForm === 'mui') {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
+  }
+
+  console.error(`Unsupported form type: ${reactJsonSchemaForm}`);
+  return null;
 }

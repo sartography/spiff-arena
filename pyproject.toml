@@ -24,7 +24,7 @@ ruff = "^0.2.1"
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"
 
-flake8-bugbear = "^22.10.25"
+flake8-bugbear = "^23.3.12"
 flake8-docstrings = "^1.6.0"
 flake8-rst-docstrings = "^0.2.7"
 reorder-python-imports = "^3.12.0"

@@ -1,5 +1,7 @@
 import os
+from typing import Any
 
+from flask import g
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
@@ -9,6 +11,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -145,40 +148,6 @@ class MessageService:
 
         return process_instance_receive
 
-    @classmethod
-    def _cancel_non_matching_start_events(
-        cls, processor_receive: ProcessInstanceProcessor, message_triggerable_process_model: MessageTriggerableProcessModel
-    ) -> None:
-        """Cancel any start event that does not match the start event that triggered this.
-
-        After that SpiffWorkflow and the WorkflowExecutionService can figure it out.
-        """
-        start_tasks = processor_receive.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
-        for start_task in start_tasks:
-            if not isinstance(start_task.task_spec.event_definition, MessageEventDefinition):
-                start_task.cancel()
-            elif start_task.task_spec.event_definition.name != message_triggerable_process_model.message_name:
-                start_task.cancel()
-
-    @staticmethod
-    def get_process_instance_for_message_instance(
-        message_instance_receive: MessageInstanceModel,
-    ) -> ProcessInstanceModel:
-        process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
-            id=message_instance_receive.process_instance_id
-        ).first()
-        if process_instance_receive is None:
-            raise MessageServiceError(
-                (
-                    (
-                        "Process instance cannot be found for queued message:"
-                        f" {message_instance_receive.id}. Tried with id"
-                        f" {message_instance_receive.process_instance_id}"
-                    ),
-                )
-            )
-        return process_instance_receive
-
     @staticmethod
     def process_message_receive(
         process_instance_receive: ProcessInstanceModel,
@@ -221,3 +190,113 @@ class MessageService:
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)
         db.session.commit()
+
+    @classmethod
+    def find_message_triggerable_process_model(cls, modified_message_name: str) -> MessageTriggerableProcessModel:
+        message_name, process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
+        potential_matches = MessageTriggerableProcessModel.query.filter_by(message_name=message_name).all()
+        actual_matches = []
+        for potential_match in potential_matches:
+            pgi, _ = potential_match.process_model_identifier.rsplit("/", 1)
+            if pgi.startswith(process_group_identifier):
+                actual_matches.append(potential_match)
+
+        if len(actual_matches) == 0:
+            raise (
+                ApiError(
+                    error_code="message_triggerable_process_model_not_found",
+                    message=(
+                        f"Could not find a message triggerable process model for {modified_message_name} in the scope of group"
+                        f" {process_group_identifier}"
+                    ),
+                    status_code=400,
+                )
+            )
+
+        if len(actual_matches) > 1:
+            message_names = [f"{m.process_model_identifier} - {m.message_name}" for m in actual_matches]
+            raise (
+                ApiError(
+                    error_code="multiple_message_triggerable_process_models_found",
+                    message=f"Found {len(actual_matches)}. Expected 1. Found entries: {message_names}",
+                    status_code=400,
+                )
+            )
+        mtp: MessageTriggerableProcessModel = actual_matches[0]
+        return mtp
+
+    @classmethod
+    def run_process_model_from_message(
+        cls,
+        modified_message_name: str,
+        body: dict[str, Any],
+        execution_mode: str | None = None,
+    ) -> MessageInstanceModel:
+        message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
+
+        # Create the send message
+        # TODO: support the full message id - including process group - in message instance
+        message_instance = MessageInstanceModel(
+            message_type="send",
+            name=message_name,
+            payload=body,
+            user_id=g.user.id,
+        )
+        db.session.add(message_instance)
+        db.session.commit()
+        try:
+            receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
+        except Exception as e:
+            db.session.delete(message_instance)
+            db.session.commit()
+            raise e
+        if not receiver_message:
+            db.session.delete(message_instance)
+            db.session.commit()
+            raise (
+                ApiError(
+                    error_code="message_not_accepted",
+                    message=(
+                        "No running process instances correlate with the given message"
+                        f" name of '{modified_message_name}'.  And this message name is not"
+                        " currently associated with any process Start Event. Nothing"
+                        " to do."
+                    ),
+                    status_code=400,
+                )
+            )
+        return receiver_message
+
+    @classmethod
+    def _cancel_non_matching_start_events(
+        cls, processor_receive: ProcessInstanceProcessor, message_triggerable_process_model: MessageTriggerableProcessModel
+    ) -> None:
+        """Cancel any start event that does not match the start event that triggered this.
+
+        After that SpiffWorkflow and the WorkflowExecutionService can figure it out.
+        """
+        start_tasks = processor_receive.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
+        for start_task in start_tasks:
+            if not isinstance(start_task.task_spec.event_definition, MessageEventDefinition):
+                start_task.cancel()
+            elif start_task.task_spec.event_definition.name != message_triggerable_process_model.message_name:
+                start_task.cancel()
+
+    @staticmethod
+    def get_process_instance_for_message_instance(
+        message_instance_receive: MessageInstanceModel,
+    ) -> ProcessInstanceModel:
+        process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
+            id=message_instance_receive.process_instance_id
+        ).first()
+        if process_instance_receive is None:
+            raise MessageServiceError(
+                (
+                    (
+                        "Process instance cannot be found for queued message:"
+                        f" {message_instance_receive.id}. Tried with id"
+                        f" {message_instance_receive.process_instance_id}"
+                    ),
+                )
+            )
+        return process_instance_receive
