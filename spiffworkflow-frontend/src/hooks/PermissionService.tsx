@@ -38,6 +38,7 @@ export const usePermissionFetcher = (
         const permissionVerbResults = result.results[url];
         Object.keys(permissionVerbResults).forEach((permissionVerb: string) => {
           const hasPermission = permissionVerbResults[permissionVerb];
+          console.log(hasPermission, permissionVerb, url);
           if (hasPermission) {
             can(permissionVerb, url);
           } else {
@@ -55,16 +56,20 @@ export const usePermissionFetcher = (
       ability.update(rules);
 
       // Update the cache with the new permissions
-      updatePermissionsCache(permissionsToCheck);
+      updatePermissionsCache(result);
       setPermissionsLoaded(true);
     };
 
     /**
      * Are the incoming permission requests all in the cache?
-     * If not, make the backend call and process the results.
-     * Otherwise, we don't need to do anything, these perms are already processed.
+     * If not, make the backend call, update the cache, and process the results.
+     * Otherwise, use the cached results.
      */
-    if (!findPermissionsInCache(permissionsToCheck)) {
+    const foundResults = findPermissionsInCache(permissionsToCheck);
+    if (foundResults) {
+      console.log('WE FOUND THE RESULTS', foundResults);
+      processPermissionResult(foundResults);
+    } else {
       checkPermissions(permissionsToCheck, processPermissionResult);
     }
   });
