@@ -444,11 +444,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
-  const formatMetadataValue = (value: string) => {
+  const formatMetadataValue = (key: string, value: string) => {
     if (isURL(value)) {
       return (
         <a href={value} target="_blank" rel="noopener noreferrer">
-          {value}
+          {key} link
         </a>
       );
     }
@@ -561,7 +561,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   {truncateString(processInstanceMetadata.key, 50)}:
                 </dt>
                 <dd data-qa={`metadata-value-${processInstanceMetadata.key}`}>
-                  {formatMetadataValue(processInstanceMetadata.value)}
+                  {formatMetadataValue(
+                    processInstanceMetadata.key,
+                    processInstanceMetadata.value
+                  )}
                 </dd>
               </dl>
             )
