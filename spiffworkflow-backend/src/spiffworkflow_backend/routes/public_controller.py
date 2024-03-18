@@ -156,7 +156,7 @@ def form_show(
             ApiError(
                 error_code="task_not_found",
                 message=f"Could not find completable task for {task_guid} in process_instance {process_instance_id}.",
-                status_code=400,
+                status_code=404,
             )
         )
 
