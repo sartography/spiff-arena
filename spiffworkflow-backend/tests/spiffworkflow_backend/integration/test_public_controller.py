@@ -38,9 +38,14 @@ class TestPublicController(BaseTest):
         response = client.get(url)
         assert response.status_code == 200
         assert response.json is not None
-        assert "form_schema" in response.json
-        assert "form_ui_schema" in response.json
-        assert response.json["form_schema"]["title"] == "Form for message start event"
+        assert "form" in response.json
+        assert "confirmation_message_markdown" in response.json
+        assert "task_guid" in response.json
+        assert "form_schema" in response.json["form"]
+        assert "form_ui_schema" in response.json["form"]
+        assert response.json["form"]["form_schema"]["title"] == "Form for message start event"
+        assert response.json["confirmation_message_markdown"] is None
+        assert response.json["task_guid"] is None
 
     def test_can_submit_to_public_message_submit(
         self,
