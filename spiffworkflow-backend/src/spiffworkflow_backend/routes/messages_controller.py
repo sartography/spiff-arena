@@ -6,6 +6,7 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import CorrelationKeySchema
 from spiffworkflow_backend.models.message_model import CorrelationPropertySchema
