@@ -181,6 +181,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     return (
       <>
         {breadcrumbElement}
+        {correlationsDisplayModal()}
         <PaginationForTable
           page={page}
           perPage={perPage}
