@@ -55,9 +55,15 @@ def message_form_show(
 
     process_model = ProcessModelService.get_process_model(message_triggerable_process_model.process_model_identifier)
     extensions = matching_start_tasks[0].task_spec.extensions
-    response_body = _get_form_and_prepare_data(extensions=extensions, process_model=process_model)
+    form = _get_form_and_prepare_data(extensions=extensions, process_model=process_model)
 
-    return make_response(jsonify(response_body), 200)
+    response_json = {
+        "form": form,
+        "task_guid": None,
+        "process_instance_id": None,
+        "confirmation_message_markdown": None,
+    }
+    return make_response(jsonify(response_json), 200)
 
 
 def message_form_submit(
