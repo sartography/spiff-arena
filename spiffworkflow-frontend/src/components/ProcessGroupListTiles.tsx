@@ -84,7 +84,7 @@ export default function ProcessGroupListTiles({
       displayText = (
         <p className="no-results-message">
           There are no process groups to display. You can add one by clicking
-          the &quotAdd a process group&quot button. Process groups can contain
+          the &quot;Add a process group&quot; button. Process groups can contain
           additional process groups and / or process models.
         </p>
       );
