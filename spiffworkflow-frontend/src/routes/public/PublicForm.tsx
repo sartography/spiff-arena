@@ -87,7 +87,9 @@ export default function PublicForm() {
 
   if (confirmationMessage) {
     return (
-      <MarkdownRenderer linkTarget="_blank" source={confirmationMessage} />
+      <div className="fixed-width-container">
+        <MarkdownRenderer linkTarget="_blank" source={confirmationMessage} />
+      </div>
     );
   }
   if (publicTask) {
@@ -138,10 +140,12 @@ export default function PublicForm() {
   }
   const style = { margin: '50px 0 50px 50px' };
   return (
-    <Loading
-      description="Active loading indicator"
-      withOverlay={false}
-      style={style}
-    />
+    <div className="fixed-width-container">
+      <Loading
+        description="Active loading indicator"
+        withOverlay={false}
+        style={style}
+      />
+    </div>
   );
 }
