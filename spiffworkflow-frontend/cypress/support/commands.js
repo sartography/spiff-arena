@@ -107,7 +107,11 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 // Intended to be run from the process model show page
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
-  (expectAutoRedirectToHumanTask = false, returnToProcessModelShow = true) => {
+  (
+    expectAutoRedirectToHumanTask = false,
+    returnToProcessModelShow = true,
+    processInstanceExpectedToBeComplete = true
+  ) => {
     cy.getBySel('start-process-instance').click();
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:",
@@ -117,7 +121,9 @@ Cypress.Commands.add(
     } else {
       cy.url().should('include', `/process-instances`);
       cy.contains('Process Instance Id');
-      cy.contains('complete');
+      if (processInstanceExpectedToBeComplete) {
+        cy.contains('complete');
+      }
       if (returnToProcessModelShow) {
         cy.getBySel('process-model-breadcrumb-link').click();
         cy.getBySel('process-model-show-permissions-loaded').should('exist');

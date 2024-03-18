@@ -12,7 +12,7 @@ export default function PublicRoutes() {
           element={<PublicForm />}
         />
         <Route path="/:modified_message_name" element={<PublicForm />} />
-        <Route path="/sign_out" element={<SignOut />} />
+        <Route path="/sign-out" element={<SignOut />} />
       </Routes>
     </Content>
   );

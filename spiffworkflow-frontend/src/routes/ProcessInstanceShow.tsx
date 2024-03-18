@@ -560,7 +560,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <dt title={processInstanceMetadata.key}>
                   {truncateString(processInstanceMetadata.key, 50)}:
                 </dt>
-                <dd>{formatMetadataValue(processInstanceMetadata.value)}</dd>
+                <dd data-qa={`metadata-value-${processInstanceMetadata.key}`}>
+                  {formatMetadataValue(processInstanceMetadata.value)}
+                </dd>
               </dl>
             )
           )}
