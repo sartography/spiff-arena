@@ -528,3 +528,15 @@ export interface ElementForArray {
   key: string;
   component: ReactElement | null;
 }
+
+export interface PublicTaskForm {
+  form_schema: any;
+  form_ui_schema: any;
+  instructions_for_end_user?: string;
+}
+export interface PublicTaskSubmitResponse {
+  form: PublicTaskForm;
+  task_guid: string;
+  process_instance_id: number;
+  confirmation_message_markdown: string;
+}

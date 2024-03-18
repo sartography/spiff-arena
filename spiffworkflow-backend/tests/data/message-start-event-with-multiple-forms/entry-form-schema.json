@@ -1,0 +1,11 @@
+{
+  "title": "Form for message start event",
+  "type": "object",
+  "required": ["firstName"],
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "title": "First name"
+    }
+  }
+}

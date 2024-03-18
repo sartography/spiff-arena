@@ -91,6 +91,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: backend_only
+        in: query
+        required: false
+        schema:
+          type: boolean
     get:
       operationId: spiffworkflow_backend.routes.authentication_controller.logout
       summary: Logout authenticated user
@@ -909,11 +914,6 @@ paths:
     get:
       operationId: spiffworkflow_backend.routes.extensions_controller.extension_list
       summary: Returns the list of available extensions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       tags:
         - Extensions
       responses:
@@ -2551,12 +2551,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /messages/{message_name}:
+  /messages/{modified_message_name}:
     parameters:
-      - name: message_name
+      - name: modified_message_name
         in: path
         required: true
-        description: The unique name of the message.
+        description: The message_name, modified to replace slashes (/) with colons
         schema:
           type: string
       - name: execution_mode
@@ -2577,14 +2577,125 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Workflow"
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                properties:
+                  task_data:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                  process_instance:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
+  /public/messages/form/{modified_message_name}:
+    parameters:
+      - name: modified_message_name
+        in: path
+        required: true
+        description: The message_name, modified to replace slashes (/) with colons
+        schema:
+          type: string
+    get:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.public_controller.message_form_show
+      summary: Gets the form associated with the given message name.
+      responses:
+        "200":
+          description: The json schema form.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
+  /public/messages/submit/{modified_message_name}:
+    parameters:
+      - name: modified_message_name
+        in: path
+        required: true
+        description: The message_name, modified to replace slashes (/) with colons
+        schema:
+          type: string
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
+    post:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.public_controller.message_form_submit
+      summary: Instantiate and run a given process model with a message start event matching given name
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                properties:
+                  task_data:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                  process_instance:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
+  /public/tasks/{process_instance_id}/{task_guid}:
+    parameters:
+      - name: task_guid
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
+    put:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.public_controller.form_submit
+      summary: Update the form data for a tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "202":
+          description: "ok: true"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
 
   /logs/{modified_process_model_identifier}/{process_instance_id}:
@@ -3734,9 +3845,9 @@ components:
     # it will fail validation and not pass the request to the controller. that is generally not desirable
     # until we take a closer look at the schemas in here.
     AwesomeUnspecifiedPayload:
-      properties:
-        anythingyouwant:
-          type: string
+      # we know that task_submit submits no body at all, and None is not an object, as this so helpfully tells us
+      # type: "object"
+      additionalProperties: {}
     ReportMetadata:
       properties:
         columns:

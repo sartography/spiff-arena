@@ -65,6 +65,13 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, MessageStatuses)
 
+    @classmethod
+    def split_modified_message_name(cls, modified_message_name: str) -> tuple[str, str]:
+        message_name_array = modified_message_name.split(":")
+        message_name = message_name_array.pop()
+        process_group_identifier = "/".join(message_name_array)
+        return (message_name, process_group_identifier)
+
     def correlates(self, other: Any, expression_engine: PythonScriptEngine) -> bool:
         """Returns true if the this Message correlates with the given message.
 

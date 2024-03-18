@@ -18,12 +18,14 @@ from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.authorization_service import PUBLIC_AUTHENTICATION_EXCLUSION_LIST
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -76,6 +78,13 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
         user_model = _get_user_model_from_token(decoded_token)
     elif token_info["api_key"] is not None:
         user_model = _get_user_model_from_api_key(token_info["api_key"])
+    else:
+        # if there is no token in the request, hit the database to see if this path allows unauthed access
+        # we could choose to put all of the APIs that can be accessed unauthed behind a certain path.
+        # if we did that, we would not have to hit the db on *every* tokenless request
+        api_function_full_path, _ = AuthorizationService.get_fully_qualified_api_function_from_request()
+        if api_function_full_path and api_function_full_path in PUBLIC_AUTHENTICATION_EXCLUSION_LIST:
+            _check_if_request_is_public()
 
     if user_model:
         g.user = user_model
@@ -213,13 +222,17 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     return access_token
 
 
-def logout(id_token: str, authentication_identifier: str, redirect_url: str | None) -> Response:
+def logout(id_token: str, authentication_identifier: str, redirect_url: str | None, backend_only: bool = False) -> Response:
     if redirect_url is None:
         redirect_url = ""
     AuthenticationService.set_user_has_logged_out()
-    return AuthenticationService().logout(
-        redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
-    )
+
+    if backend_only:
+        return redirect(redirect_url)
+    else:
+        return AuthenticationService().logout(
+            redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
+        )
 
 
 def logout_return() -> Response:
@@ -460,3 +473,26 @@ def _get_authentication_identifier_from_request() -> str:
         authentication_identifier: str = request.headers["SpiffWorkflow-Authentication-Identifier"]
         return authentication_identifier
     return "default"
+
+
+def _check_if_request_is_public() -> None:
+    permission_string = AuthorizationService.get_permission_from_http_method(request.method)
+    if permission_string:
+        public_group = GroupModel.query.filter_by(
+            identifier=current_app.config.get("SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP")
+        ).first()
+        if public_group is not None:
+            has_permission = AuthorizationService.has_permission(
+                principals=[public_group.principal],
+                permission=permission_string,
+                target_uri=request.path,
+            )
+            if has_permission:
+                g.user = UserService.create_public_user()
+                g.token = g.user.encode_auth_token(
+                    {"public": True},
+                )
+                tld = current_app.config["THREAD_LOCAL_DATA"]
+                tld.new_access_token = g.token
+                tld.new_id_token = g.token
+                tld.new_authentication_identifier = _get_authentication_identifier_from_request()

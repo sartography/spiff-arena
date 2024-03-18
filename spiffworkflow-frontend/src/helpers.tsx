@@ -55,6 +55,8 @@ export const getKeyByValue = (
   });
 };
 
+// NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
+// so we convert undefined values to null recursively so that we can unset values in form fields
 export const recursivelyChangeNullAndUndefined = (obj: any, newValue: any) => {
   if (obj === null || obj === undefined) {
     return newValue;
