@@ -10,6 +10,7 @@ from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskEr
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
@@ -919,7 +920,27 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        bpmn_process_dict = processor.serialize()
-        ProcessInstanceProcessor.persist_bpmn_process_dict(
-            bpmn_process_dict, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
+        bpmn_process_dict_initial = processor.serialize()
+        processor.dump_to_disk()
+
+        meta = db.metadata
+        db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
+        db.session.execute(db.update(BpmnProcessModel).values(direct_parent_process_id=None))
+
+        for table in reversed(meta.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+
+        process_model = load_test_spec(
+            process_model_id="test_group/service-task-with-data-obj",
+            process_model_source_directory="service-task-with-data-obj",
         )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        assert process_instance.bpmn_process_definition_id is None
+
+        ProcessInstanceProcessor.persist_bpmn_process_dict(
+            bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        bpmn_process_dict_after = processor.serialize()
+        assert bpmn_process_dict_initial == bpmn_process_dict_after

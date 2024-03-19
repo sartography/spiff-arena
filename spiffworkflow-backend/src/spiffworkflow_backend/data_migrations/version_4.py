@@ -1,6 +1,6 @@
-
 from flask import current_app
-from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
+
+# from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignorefrom SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -19,7 +19,6 @@ class Version4(DataMigrationBase):
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         return None
 
-
         try:
             processor = ProcessInstanceProcessor(process_instance)
             bpmn_process_dict = processor.serialize()
@@ -32,10 +31,10 @@ class Version4(DataMigrationBase):
             new_json_data = []
             new_bpmn_models = []
             for bpm in bpmn_process_models:
-                bpmn_dict = bpmn_process_dict['subprocesses'].get(bpm.guid)
+                bpmn_dict = bpmn_process_dict["subprocesses"].get(bpm.guid)
                 if bpmn_dict is None:
                     bpmn_dict = bpmn_process_dict
-                new_data = bpmn_process_dict['data']
+                new_data = bpmn_process_dict["data"]
                 json_data_dict = TaskService.update_task_data_on_bpmn_process(bpm, new_data)
                 if json_data_dict is not None:
                     new_json_data.append(json_data_dict)

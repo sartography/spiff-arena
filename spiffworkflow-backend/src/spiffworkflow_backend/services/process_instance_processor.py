@@ -508,6 +508,19 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
             process_instance_model=process_instance_model,
         )
+        task_service = TaskService(
+            process_instance=process_instance_model,
+            serializer=cls._serializer,
+            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+        )
+
+        process_copy = copy.deepcopy(bpmn_process_dict)
+        bpmn_process_instance = cls._serializer.from_dict(process_copy)
+        bpmn_process_instance.script_engine = cls._default_script_engine
+        for spiff_task in bpmn_process_instance.get_tasks():
+            task_service.update_task_model_with_spiff_task(spiff_task)
+        task_service.save_objects_to_database()
+        db.session.commit()
 
     @classmethod
     def get_process_model_and_subprocesses(
@@ -958,6 +971,7 @@ class ProcessInstanceProcessor:
                 bpmn_name=process_bpmn_name,
                 properties_json=process_bpmn_properties,
             )
+            process_bpmn_properties["task_specs"] = task_specs
             db.session.add(bpmn_process_definition)
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
