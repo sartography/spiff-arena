@@ -921,20 +921,15 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
 
         bpmn_process_dict_initial = processor.serialize()
-        processor.dump_to_disk()
 
+        # clear the database so we know the import is all new
         meta = db.metadata
         db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
         db.session.execute(db.update(BpmnProcessModel).values(direct_parent_process_id=None))
-
         for table in reversed(meta.sorted_tables):
             db.session.execute(table.delete())
         db.session.commit()
 
-        process_model = load_test_spec(
-            process_model_id="test_group/service-task-with-data-obj",
-            process_model_source_directory="service-task-with-data-obj",
-        )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         assert process_instance.bpmn_process_definition_id is None
 
@@ -943,4 +938,24 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         bpmn_process_dict_after = processor.serialize()
-        assert bpmn_process_dict_initial == bpmn_process_dict_after
+        self._round_last_state_change(bpmn_process_dict_after)
+        self._round_last_state_change(bpmn_process_dict_initial)
+
+        assert bpmn_process_dict_after == bpmn_process_dict_initial
+
+    def _round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
+        """Round last state change to the nearest 4 significant digits.
+
+        Works around imprecise floating point values in mysql json columns.
+        The values between mysql and SpiffWorkflow seem to have minor differences on randomly and since
+        we do not care about such precision for this field, round it to a value that is more likely to match.
+        """
+        if isinstance(bpmn_process_dict, dict):
+            for key, value in bpmn_process_dict.items():
+                if key == "last_state_change":
+                    bpmn_process_dict[key] = round(value, 4)
+                elif isinstance(value, dict | list):
+                    self._round_last_state_change(value)
+        elif isinstance(bpmn_process_dict, list):
+            for item in bpmn_process_dict:
+                self._round_last_state_change(item)
