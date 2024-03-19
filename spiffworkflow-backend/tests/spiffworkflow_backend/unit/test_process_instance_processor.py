@@ -904,3 +904,22 @@ class TestProcessInstanceProcessor(BaseTest):
 
         db.session.delete(process_instance)
         db.session.commit()
+
+    def test_can_persist_given_bpmn_process_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/service-task-with-data-obj",
+            process_model_source_directory="service-task-with-data-obj",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        bpmn_process_dict = processor.serialize()
+        ProcessInstanceProcessor.persist_bpmn_process_dict(
+            bpmn_process_dict, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
+        )
