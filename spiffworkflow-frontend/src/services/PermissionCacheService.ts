@@ -34,8 +34,6 @@ const updatePermissionsCache = (
       }
     );
   }
-
-  console.log(permissionsCache);
 };
 
 /**
