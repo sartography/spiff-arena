@@ -7,6 +7,7 @@ import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
 import {
   findPermissionsInCache,
+  inspectPermissionsCache,
   updatePermissionsCache,
 } from '../services/PermissionCacheService';
 
@@ -32,13 +33,13 @@ export const usePermissionFetcher = (
 
   useEffect(() => {
     const processPermissionResult = (result: PermissionCheckResponseBody) => {
+      // console.log(result);
       const oldRules = ability.rules;
       const { can, cannot, rules } = new AbilityBuilder(Ability);
       Object.keys(result.results).forEach((url: string) => {
         const permissionVerbResults = result.results[url];
         Object.keys(permissionVerbResults).forEach((permissionVerb: string) => {
           const hasPermission = permissionVerbResults[permissionVerb];
-          console.log(hasPermission, permissionVerb, url);
           if (hasPermission) {
             can(permissionVerb, url);
           } else {
@@ -66,8 +67,8 @@ export const usePermissionFetcher = (
      * Otherwise, use the cached results.
      */
     const foundResults = findPermissionsInCache(permissionsToCheck);
+    // console.log(inspectPermissionsCache());
     if (foundResults) {
-      console.log('WE FOUND THE RESULTS', foundResults);
       processPermissionResult(foundResults);
     } else {
       checkPermissions(permissionsToCheck, processPermissionResult);

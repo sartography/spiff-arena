@@ -2,10 +2,14 @@
  * There can be a lot of redundant requests for permissions (probably deps/contexts firing etc.)
  * This service provides a cache to check for already-processed perms.
  */
-import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
+import {
+  PermissionCheckResponseBody,
+  PermissionVerbResults,
+  PermissionsToCheck,
+} from '../interfaces';
 
 /** Map makes sense: no prototype to hack, high perf, easily wiped. */
-const permissionsCache = new Map<string, any>();
+const permissionsCache = new Map<string, Array<PermissionVerbResults>>();
 
 const updatePermissionsCache = (
   permissionsResponse: PermissionCheckResponseBody
@@ -13,10 +17,25 @@ const updatePermissionsCache = (
   if (Object.entries(permissionsResponse.results).length > 0) {
     Object.entries(permissionsResponse.results).forEach(
       ([path, permissions]) => {
-        permissionsCache.set(path, permissions as Record<string, boolean>);
+        if (permissionsCache.has(path)) {
+          const cachedPermissions = permissionsCache.get(path);
+          // Make sure we don't add duplicate PermissionVerb objects
+          if (
+            cachedPermissions &&
+            !cachedPermissions.some(
+              (p) => JSON.stringify(p) === JSON.stringify(permissions)
+            )
+          ) {
+            cachedPermissions.push(permissions);
+          }
+        } else {
+          permissionsCache.set(path, [permissions]);
+        }
       }
     );
   }
+
+  console.log(permissionsCache);
 };
 
 /**
@@ -26,14 +45,23 @@ const updatePermissionsCache = (
 const findPermissionsInCache = (
   permissionsToCheck: PermissionsToCheck
 ): PermissionCheckResponseBody | null => {
-  const results: Record<string, Record<string, boolean>> = {};
+  const results: Record<string, PermissionVerbResults> = {};
   if (permissionsToCheck) {
-    Object.entries(permissionsToCheck).forEach(([path]) => {
+    Object.entries(permissionsToCheck).forEach(([path, verbs]) => {
       const cachedPermissions = permissionsCache.get(path);
       if (cachedPermissions) {
-        results[path] = cachedPermissions;
+        const found = cachedPermissions.find((p) => {
+          // Note that the project config doesn't seem to support "hasOwn"
+          return Object.prototype.hasOwnProperty.call(p, verbs[0]);
+        });
+
+        if (found) {
+          results[path] = found;
+        }
       }
     });
+
+    console.log(results);
   }
 
   /**
@@ -46,7 +74,7 @@ const findPermissionsInCache = (
    */
   return Object.keys(results).length > 0 &&
     Object.keys(results).length === Object.keys(permissionsToCheck).length
-    ? { results }
+    ? { results: results as any }
     : null;
 };
 
