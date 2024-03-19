@@ -89,6 +89,10 @@ describe('tasks', () => {
 
 describe('public_tasks', () => {
   it('can start process from message form', () => {
+    // login and log out to ensure permissions are set correctly
+    cy.login();
+    cy.logout();
+
     cy.visit('public/misc:bounty_start_multiple_forms');
     cy.get('#root_firstName').type('MyFirstName');
     cy.contains('Submit').click();

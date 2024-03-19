@@ -789,6 +789,8 @@ class AuthorizationService:
         for group in group_permissions:
             group_identifier = group["name"]
             UserService.find_or_create_group(group_identifier)
+            if group_identifier == current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]:
+                unique_user_group_identifiers.add(group_identifier)
             if not group_permissions_only:
                 for username in group["users"]:
                     if user_model and username != user_model.username:
