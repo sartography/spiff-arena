@@ -122,15 +122,6 @@ const authenticationDisabled = () => {
   return false;
 };
 
-const onlyGuestTaskCompletion = () => {
-  const idToken = getIdToken();
-  if (idToken) {
-    const idObject = jwt(idToken);
-    return (idObject as any).only_guest_task_completion;
-  }
-  return false;
-};
-
 /**
  * Return prefered username
  * Somehow if using Google as the OpenID provider, the field `preferred_username` is not returned
@@ -182,7 +173,6 @@ const UserService = {
   isLoggedIn,
   isPublicUser,
   loginIfNeeded,
-  onlyGuestTaskCompletion,
 };
 
 export default UserService;

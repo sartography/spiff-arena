@@ -48,5 +48,5 @@ permissions:
 
   public_access:
     groups: [spiff_public]
-    actions: [read, create]
+    actions: [read, create, update]
     uri: /public/*
