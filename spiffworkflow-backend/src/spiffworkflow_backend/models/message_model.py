@@ -8,90 +8,108 @@ from marshmallow import Schema
 from marshmallow import post_load
 
 
-@dataclass
-class MessageModel:
-    id: str  # A unique string name, lower case, under scores (ie, 'my_message')
-    location: str
-    schema: dict
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.orm import relationship
 
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, MessageModel):
-            return False
-        return other.id == self.id and other.location == self.location
-
-    def serialized(self) -> dict:
-        return dataclasses.asdict(self)
-
-
-class MessageSchema(Schema):
-    class Meta:
-        model = MessageModel
-        fields = ["id"]
-
-    @post_load
-    def make_message(self, data: dict[str, str | bool | int], **kwargs: dict) -> MessageModel:
-        return MessageModel(**data)  # type: ignore
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
 
 
 @dataclass
-class CorrelationKey:
-    id: str  # A unique string name, lower case, under scores (ie, 'my_key')
-    correlation_properties: list[str]
+class MessageModel(SpiffworkflowBaseDBModel):
+    __tablename__ = "message"
+    __table_args__ = (UniqueConstraint("identifier", "location", name="_message_identifier_location_unique"),)
 
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, CorrelationKey):
-            return False
-        if other.id == self.id:
-            return True
-        return False
-
-    def serialized(self) -> dict:
-        return dataclasses.asdict(self)
-
-
-class CorrelationKeySchema(Schema):
-    class Meta:
-        model = MessageModel
-        fields = ["id", "correlation_properties"]
-
-    @post_load
-    def make_key(self, data: dict[str, str | bool | int], **kwargs: dict) -> CorrelationKey:
-        return CorrelationKey(**data)  # type: ignore
-
+    id: int = db.Column(db.Integer, primary_key=True)
+    identifier: str = db.Column(db.String(255), index=True, nullable=False)
+    location: str = db.Column(db.String(255), nullable=False)
+    schema: dict = db.Column(db.JSON, nullable=False)
+    updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+    created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
 @dataclass
-class RetrievalExpression:
-    message_ref: str
-    formal_expression: str
+class MessageCorrelationKeyModel(SpiffworkflowBaseDBModel):
+    __tablename__ = "message_correlation_key"
+    __table_args__ = (UniqueConstraint("identifier", "location", name="_message_correlation_key_unique"),)
 
-    def serialized(self) -> dict:
-        return dataclasses.asdict(self)
-
-
-class RetrievalExpressionSchema(Schema):
-    class Meta:
-        model = RetrievalExpression
-        fields = ["message_ref", "formal_expression"]
-
-    @post_load
-    def make_prop(self, data: dict[str, str | bool | int], **kwargs: dict) -> RetrievalExpression:
-        return RetrievalExpression(**data)  # type: ignore
-
-
+    id: int = db.Column(db.Integer, primary_key=True)
+    identifier: str = db.Column(db.String(255), index=True, nullable=False)
+    location: str = db.Column(db.String(255), nullable=False)
+    updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+    created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+    
 @dataclass
-class CorrelationProperty:
-    id: str  # A unique string name, lower case, under scores (ie, 'my_key')
-    retrieval_expressions: list[RetrievalExpression]
+class MessageCorrelationPropertyModel(SpiffworkflowBaseDBModel):
+    __tablename__ = "message_correlation_property"
+    __table_args__ = (UniqueConstraint("identifier", "location", "retrieval_expression", name="_message_correlation_property_unique"),)
 
-    def serialized(self) -> dict:
-        return dataclasses.asdict(self)
+    id: int = db.Column(db.Integer, primary_key=True)
+    identifier: str = db.Column(db.String(255), index=True, nullable=False)
+    location: str = db.Column(db.String(255), nullable=False)
+    retrieval_expression: str = db.Column(db.String(255), nullable=False)
+    updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+    created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+    
+
+# @dataclass
+# class CorrelationKey:
+#     id: str  # A unique string name, lower case, under scores (ie, 'my_key')
+#     correlation_properties: list[str]
+
+#     def __eq__(self, other: Any) -> bool:
+#         if not isinstance(other, CorrelationKey):
+#             return False
+#         if other.id == self.id:
+#             return True
+#         return False
+
+#     def serialized(self) -> dict:
+#         return dataclasses.asdict(self)
 
 
-class CorrelationPropertySchema(Schema):
-    class Meta:
-        model = CorrelationProperty
-        fields = ["id", "retrieval_expressions"]
+# class CorrelationKeySchema(Schema):
+#     class Meta:
+#         model = MessageModel
+#         fields = ["id", "correlation_properties"]
 
-    @post_load
-    def make_prop(self, data: dict[str, str | bool | int], **kwargs: dict) -> CorrelationProperty:
-        return CorrelationProperty(**data)  # type: ignore
+#     @post_load
+#     def make_key(self, data: dict[str, str | bool | int], **kwargs: dict) -> CorrelationKey:
+#         return CorrelationKey(**data)  # type: ignore
+
+
+# @dataclass
+# class RetrievalExpression:
+#     message_ref: str
+#     formal_expression: str
+
+#     def serialized(self) -> dict:
+#         return dataclasses.asdict(self)
+
+
+# class RetrievalExpressionSchema(Schema):
+#     class Meta:
+#         model = RetrievalExpression
+#         fields = ["message_ref", "formal_expression"]
+
+#     @post_load
+#     def make_prop(self, data: dict[str, str | bool | int], **kwargs: dict) -> RetrievalExpression:
+#         return RetrievalExpression(**data)  # type: ignore
+
+
+# @dataclass
+# class CorrelationProperty:
+#     id: str  # A unique string name, lower case, under scores (ie, 'my_key')
+#     retrieval_expressions: list[RetrievalExpression]
+
+#     def serialized(self) -> dict:
+#         return dataclasses.asdict(self)
+
+
+# class CorrelationPropertySchema(Schema):
+#     class Meta:
+#         model = CorrelationProperty
+#         fields = ["id", "retrieval_expressions"]
+
+#     @post_load
+#     def make_prop(self, data: dict[str, str | bool | int], **kwargs: dict) -> CorrelationProperty:
+#         return CorrelationProperty(**data)  # type: ignore
