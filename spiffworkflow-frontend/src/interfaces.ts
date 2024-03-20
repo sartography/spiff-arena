@@ -534,7 +534,7 @@ export interface PublicTaskForm {
   form_ui_schema: any;
   instructions_for_end_user?: string;
 }
-export interface PublicTaskSubmitResponse {
+export interface PublicTask {
   form: PublicTaskForm;
   task_guid: string;
   process_instance_id: number;

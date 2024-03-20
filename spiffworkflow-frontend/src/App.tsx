@@ -24,7 +24,7 @@ export default function App() {
       <div className="cds--white">
         <APIErrorProvider>
           <AbilityContext.Provider value={ability}>
-            <Outlet />;
+            <Outlet />
           </AbilityContext.Provider>
         </APIErrorProvider>
       </div>

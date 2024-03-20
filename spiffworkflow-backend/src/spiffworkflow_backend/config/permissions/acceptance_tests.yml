@@ -8,9 +8,16 @@ users:
 groups:
   admin:
     users: [ciadmin1@spiffworkflow.org]
+  spiff_public:
+    users: []
 
 permissions:
   admin:
     groups: [admin]
     actions: [create, read, update, delete]
     uri: /*
+
+  public_access:
+    groups: [spiff_public]
+    actions: [create, read, update]
+    uri: /public/*

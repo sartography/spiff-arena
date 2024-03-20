@@ -14,6 +14,7 @@
       <bpmn:extensionElements>
         <spiffworkflow:allowGuest>true</spiffworkflow:allowGuest>
         <spiffworkflow:guestConfirmation>You have completed the task.</spiffworkflow:guestConfirmation>
+        <spiffworkflow:instructionsForEndUser>We have instructions.</spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_14w7df0</bpmn:incoming>
       <bpmn:outgoing>Flow_02dvhev</bpmn:outgoing>
