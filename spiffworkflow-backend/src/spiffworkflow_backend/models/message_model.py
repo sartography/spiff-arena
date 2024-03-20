@@ -13,6 +13,7 @@ from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from sqlalchemy import ForeignKey
 
 
 @dataclass
@@ -27,29 +28,31 @@ class MessageModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
+    correlation_properties = relationship("MessageCorrelationPropertyModel", cascade="delete")
+
 @dataclass
 class MessageCorrelationKeyModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_correlation_key"
-    __table_args__ = (UniqueConstraint("identifier", "location", name="_message_correlation_key_unique"),)
+    #__table_args__ = (UniqueConstraint("identifier", "location", name="_message_correlation_key_unique"),)
 
     id: int = db.Column(db.Integer, primary_key=True)
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
-    location: str = db.Column(db.String(255), nullable=False)
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     
 @dataclass
 class MessageCorrelationPropertyModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_correlation_property"
-    __table_args__ = (UniqueConstraint("identifier", "location", "retrieval_expression", name="_message_correlation_property_unique"),)
+    __table_args__ = (UniqueConstraint("message_id", "identifier", "retrieval_expression", name="_message_correlation_property_unique"),)
 
     id: int = db.Column(db.Integer, primary_key=True)
+    message_id: int = db.Column(ForeignKey(MessageModel.id), nullable=False, index=True)  # type: ignore
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
-    location: str = db.Column(db.String(255), nullable=False)
     retrieval_expression: str = db.Column(db.String(255), nullable=False)
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
-    
+
+    message = relationship("MessageModel", back_populates="correlation_properties")
 
 # @dataclass
 # class CorrelationKey:
