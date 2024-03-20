@@ -3,6 +3,7 @@ import cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
+import { clearPermissionsCache } from './PermissionCacheService';
 
 // NOTE: this currently stores the jwt token in local storage
 // which is considered insecure. Server set cookies seem to be considered
@@ -100,6 +101,10 @@ const doLogout = () => {
   } else if (isPublicUser()) {
     logoutRedirectUrl += '&backend_only=true';
   }
+
+  // Wipe all cached permissions so if user logs back in
+  // (either as themselves or a different user), they get the correct permissions
+  clearPermissionsCache();
 
   window.location.href = logoutRedirectUrl;
 };
