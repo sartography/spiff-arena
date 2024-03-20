@@ -33,7 +33,7 @@ class MessageModel(SpiffworkflowBaseDBModel):
 @dataclass
 class MessageCorrelationPropertyModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_correlation_property"
-    __table_args__ = (UniqueConstraint("message_id", "identifier", "retrieval_expression", name="_message_correlation_property_unique"),)
+    __table_args__ = (UniqueConstraint("message_id", "identifier", name="_message_correlation_property_unique"),)
 
     id: int = db.Column(db.Integer, primary_key=True)
     message_id: int = db.Column(ForeignKey(MessageModel.id), nullable=False, index=True)  # type: ignore
