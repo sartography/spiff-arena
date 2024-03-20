@@ -5,6 +5,10 @@ import { useContext, useEffect, useState } from 'react';
 import { AbilityContext } from '../contexts/Can';
 import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
+import {
+  findPermissionsInCache,
+  updatePermissionsCache,
+} from '../services/PermissionCacheService';
 
 export const checkPermissions = (
   permissionsToCheck: PermissionsToCheck,
@@ -49,9 +53,23 @@ export const usePermissionFetcher = (
         }
       });
       ability.update(rules);
+
+      // Update the cache with the new permissions
+      updatePermissionsCache(result);
       setPermissionsLoaded(true);
     };
-    checkPermissions(permissionsToCheck, processPermissionResult);
+
+    /**
+     * Are the incoming permission requests all in the cache?
+     * If not, make the backend call, update the cache, and process the results.
+     * Otherwise, use the cached results.
+     */
+    const foundResults = findPermissionsInCache(permissionsToCheck);
+    if (foundResults) {
+      processPermissionResult(foundResults);
+    } else {
+      checkPermissions(permissionsToCheck, processPermissionResult);
+    }
   });
 
   return { ability, permissionsLoaded };
