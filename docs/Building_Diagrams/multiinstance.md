@@ -49,10 +49,7 @@ Specifically, the process manages a list of composers, their names, and genres, 
 
 Marks the initiation of the process.
 
-![Multi_instance_example](images/multiinstance_example1.png)
-
 #### 2. **Script Task - Create Dictionary**:
-
 
 This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre. The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
 
@@ -72,7 +69,7 @@ This task initializes a list (array) of dictionaries, each representing a compos
 
 This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composers information within the array.
 
-![Multi_instance_example](images/multiinstance_example3.png)
+![Multi_instance_example](images/multiinstance_ex.png)
 
 **Properties Configuration**:
 
@@ -89,7 +86,7 @@ This task is configured as a parallel multi-instance task that iterates over the
 
 This task presents the edited list of composers and their genres, using a loop to display each composer's name and genre in the format provided.
 
-![Multi_instance_example](images/multiinstance_example4.png)
+![Multi_instance_example](images/multiinstance_ex1.png)
 
 **Instructions**:
 
