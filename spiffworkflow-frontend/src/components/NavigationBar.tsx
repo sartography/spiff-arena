@@ -240,7 +240,6 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     return (
       <>
         <SpiffTooltip title="View and start Process Instances">
-          {/* <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}> */}
           <HeaderMenuItem<LinkProps>
             element={Link}
             to="/"
