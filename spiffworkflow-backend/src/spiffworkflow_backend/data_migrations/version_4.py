@@ -1,14 +1,10 @@
-import json
 from flask import current_app
-
-from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignorefrom SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
+from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.task_service import TaskService
-from sqlalchemy import or_
 
 
 class Version4(DataMigrationBase):

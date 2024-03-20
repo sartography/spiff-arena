@@ -1,4 +1,3 @@
-import json
 from uuid import UUID
 
 import pytest
@@ -930,6 +929,9 @@ class TestProcessInstanceProcessor(BaseTest):
         for table in reversed(meta.sorted_tables):
             db.session.execute(table.delete())
         db.session.commit()
+        # ensure everything is removed from the sqlalchemy cache when we clear the database
+        # otherwise it gets autoflush errors
+        db.session.expunge_all()
 
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         assert process_instance.bpmn_process_definition_id is None
@@ -939,8 +941,8 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         bpmn_process_dict_after = processor.serialize()
-        self._round_last_state_change(bpmn_process_dict_after)
-        self._round_last_state_change(bpmn_process_dict_initial)
+        self.round_last_state_change(bpmn_process_dict_after)
+        self.round_last_state_change(bpmn_process_dict_initial)
 
         assert bpmn_process_dict_after == bpmn_process_dict_initial
 

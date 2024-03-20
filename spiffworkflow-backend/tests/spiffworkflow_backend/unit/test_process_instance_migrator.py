@@ -1,18 +1,20 @@
-from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignorefrom SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects # type: ignore
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+import copy
 import json
 import os
-import copy
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.data_migrations.version_4 import Version4
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from sqlalchemy import or_
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -95,6 +97,7 @@ class TestProcessInstanceMigrator(BaseTest):
         )
         with open(version_3_json) as f:
             bpmn_process_dict_version_3 = json.loads(f.read())
+        bpmn_process_dict_version_4_from_spiff = copy.deepcopy(bpmn_process_dict_version_3)
         process_model = load_test_spec(
             process_model_id="test_group/service-task-with-data-obj",
             process_model_source_directory="service-task-with-data-obj",
@@ -111,15 +114,41 @@ class TestProcessInstanceMigrator(BaseTest):
         self.round_last_state_change(bpmn_process_dict_version_3)
         self.round_last_state_change(bpmn_process_dict_version_3_after_import)
         assert bpmn_process_dict_version_3_after_import == bpmn_process_dict_version_3
+        bpmn_process_cache_version_3 = {
+            "bpmn_process_definition_id": process_instance.bpmn_process_definition_id,
+            "bpmn_process_id": process_instance.bpmn_process_id,
+        }
 
         Version4.run(process_instance)
-        bpmn_process_dict_version_4_from_spiff = copy.deepcopy(bpmn_process_dict_version_3)
         update_data_objects(bpmn_process_dict_version_4_from_spiff)
-        with open("spiff.json", "w") as f:
-            f.write(json.dumps(bpmn_process_dict_version_4_from_spiff, indent=2))
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         bpmn_process_dict_version_4 = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_version_4)
         self.round_last_state_change(bpmn_process_dict_version_4_from_spiff)
         assert bpmn_process_dict_version_4 == bpmn_process_dict_version_4_from_spiff
+
+        bpmn_process_cache_version_4 = {
+            "bpmn_process_definition_id": process_instance.bpmn_process_definition_id,
+            "bpmn_process_id": process_instance.bpmn_process_id,
+        }
+        assert (
+            bpmn_process_cache_version_4["bpmn_process_definition_id"]
+            != bpmn_process_cache_version_3["bpmn_process_definition_id"]
+        )
+        assert bpmn_process_cache_version_4["bpmn_process_id"] == bpmn_process_cache_version_3["bpmn_process_id"]
+        assert (
+            process_instance.bpmn_process.bpmn_process_definition_id == bpmn_process_cache_version_4["bpmn_process_definition_id"]
+        )
+
+        bpmn_processes = BpmnProcessModel.query.filter(
+            or_(
+                BpmnProcessModel.id == process_instance.bpmn_process_id,
+                BpmnProcessModel.top_level_process_id == process_instance.bpmn_process_id,
+            )
+        ).all()
+        assert len(bpmn_processes) == 3
+
+        for bpmn_process in bpmn_processes:
+            for task_model in bpmn_process.tasks:
+                assert task_model.task_definition.bpmn_process_definition_id == bpmn_process.bpmn_process_definition_id

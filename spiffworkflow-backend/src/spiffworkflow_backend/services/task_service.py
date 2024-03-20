@@ -110,10 +110,12 @@ class TaskService:
         serializer: BpmnWorkflowSerializer,
         bpmn_definition_to_task_definitions_mappings: dict,
         run_started_at: float | None = None,
+        force_update_definitions: bool = False,
     ) -> None:
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
+        self.force_update_definitions = force_update_definitions
 
         self.bpmn_processes: dict[str, BpmnProcessModel] = {}
         self.task_models: dict[str, TaskModel] = {}
@@ -229,6 +231,12 @@ class TaskService:
             )
             self.process_instance_events[task_model.guid] = process_instance_event
 
+        if self.force_update_definitions is True:
+            task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
+                spiff_task.task_spec.name
+            ]
+            task_model.task_definition_id = task_definition.id
+
         self.update_bpmn_process(spiff_task.workflow, bpmn_process)
         return task_model
 
@@ -251,6 +259,12 @@ class TaskService:
         if spiff_workflow.parent_task_id:
             direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
             self.update_bpmn_process(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
+
+        if self.force_update_definitions is True:
+            bpmn_process_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_workflow.spec.name][
+                "bpmn_process_definition"
+            ]
+            bpmn_process.bpmn_process_definition_id = bpmn_process_definition.id
 
     def update_task_model(
         self,
@@ -294,17 +308,16 @@ class TaskService:
             bpmn_process = self.task_bpmn_process(
                 spiff_task,
             )
-            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
-            if task_model is None:
-                task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
-                    spiff_task.task_spec.name
-                ]
-                task_model = TaskModel(
-                    guid=spiff_task_guid,
-                    bpmn_process_id=bpmn_process.id,
-                    process_instance_id=self.process_instance.id,
-                    task_definition_id=task_definition.id,
-                )
+            task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
+                spiff_task.task_spec.name
+            ]
+            task_model = TaskModel(
+                guid=spiff_task_guid,
+                bpmn_process_id=bpmn_process.id,
+                process_instance_id=self.process_instance.id,
+                task_definition_id=task_definition.id,
+            )
+
         return (bpmn_process, task_model)
 
     def task_bpmn_process(

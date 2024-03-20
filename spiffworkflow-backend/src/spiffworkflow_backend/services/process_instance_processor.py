@@ -507,11 +507,13 @@ class ProcessInstanceProcessor:
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
             process_instance_model=process_instance_model,
+            force_update=True,
         )
         task_service = TaskService(
             process_instance=process_instance_model,
             serializer=cls._serializer,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+            force_update_definitions=True,
         )
 
         process_copy = copy.deepcopy(bpmn_process_dict)
@@ -628,9 +630,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[
-                bpmn_subprocess_definition.id
-            ] = bpmn_subprocess_definition.bpmn_identifier
+            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
+                bpmn_subprocess_definition.bpmn_identifier
+            )
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -1029,12 +1031,13 @@ class ProcessInstanceProcessor:
         bpmn_process_dict: dict,
         bpmn_definition_to_task_definitions_mappings: dict,
         process_instance_model: ProcessInstanceModel,
+        force_update: bool = False,
     ) -> None:
         """Adds serialized_bpmn_definition records to the db session.
 
         Expects the calling method to commit it.
         """
-        if process_instance_model.spiffworkflow_fully_initialized():
+        if force_update is False and process_instance_model.spiffworkflow_fully_initialized():
             return None
 
         bpmn_dict_keys = BpmnProcessDefinitionModel.keys_for_full_process_model_hash()
