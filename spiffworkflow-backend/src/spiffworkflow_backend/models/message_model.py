@@ -29,16 +29,6 @@ class MessageModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
     correlation_properties = relationship("MessageCorrelationPropertyModel", cascade="delete")
-
-@dataclass
-class MessageCorrelationKeyModel(SpiffworkflowBaseDBModel):
-    __tablename__ = "message_correlation_key"
-    #__table_args__ = (UniqueConstraint("identifier", "location", name="_message_correlation_key_unique"),)
-
-    id: int = db.Column(db.Integer, primary_key=True)
-    identifier: str = db.Column(db.String(255), index=True, nullable=False)
-    updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
-    created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     
 @dataclass
 class MessageCorrelationPropertyModel(SpiffworkflowBaseDBModel):
