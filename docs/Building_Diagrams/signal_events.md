@@ -76,7 +76,7 @@ Signals are instrumental in coordinating workflows among varied processes, makin
 This example demonstrates how Signal Events, along with a Timer Boundary Event, can be orchestrated within a BPMN process to create conditional pathways based on user actions and timed events. The process begins with a standard initiation and primarily revolves around the user interaction with a manual task that offers multiple outcomes.
 
 ## Example : Using Signal Boundary Events as Buttons 
-This BPMN example showcases the flexibility of using Signal Events to create dynamic, user-driven process flows within a workflow management system like SpiffWorkflow. 
+This BPMN example showcases the flexibility of using Signal Events to create dynamic, user-driven process flows.
 
 By incorporating manual tasks with multiple outcomes, signal-based routing, and automated timing controls, the example illustrates how complex decision logic and external system integration can be efficiently managed within a BPMN process.
 
