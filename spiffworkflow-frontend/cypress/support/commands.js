@@ -35,6 +35,8 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
 Cypress.Commands.add('navigateToHome', () => {
   cy.getBySel('header-menu-expand-button').click();
   cy.getBySel('side-nav-items').contains('Home').click();
+  // ensure we close the nav
+  cy.getBySel('header-menu-expand-button').click();
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
