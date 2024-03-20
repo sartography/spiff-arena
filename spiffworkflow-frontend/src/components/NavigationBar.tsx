@@ -59,9 +59,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   // default to readthedocs and let someone specify an environment variable to override:
   //
-  let documentationUrl = 'https://spiffworkflow.readthedocs.io';
+  let externalDocumentationUrl = 'https://spiff-arena.readthedocs.io';
   if (DOCUMENTATION_URL) {
-    documentationUrl = DOCUMENTATION_URL;
+    externalDocumentationUrl = DOCUMENTATION_URL;
   }
 
   const processGroupPath = '/process-groups';
@@ -128,9 +128,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             {username !== userEmail && <p>{userEmail}</p>}
             <hr />
             {aboutLinkElement}
-            <Link target="_blank" to={documentationUrl} rel="noreferrer">
+            <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
               Documentation
-            </Link>
+            </a>
             <ExtensionUxElementForDisplay
               displayLocation="user_profile_item"
               elementCallback={extensionUserProfileElement}
