@@ -18,7 +18,11 @@ export default function SignOut() {
         different user?
       </Typography>
       <br />
-      <Button variant="contained" onClick={logoutUser}>
+      <Button
+        variant="contained"
+        onClick={logoutUser}
+        data-qa="public-sign-out"
+      >
         Sign out
       </Button>
     </div>

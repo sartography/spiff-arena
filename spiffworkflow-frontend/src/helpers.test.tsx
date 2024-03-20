@@ -3,6 +3,7 @@ import {
   slugifyString,
   underscorizeString,
   recursivelyChangeNullAndUndefined,
+  isURL,
 } from './helpers';
 
 test('it can slugify a string', () => {
@@ -94,4 +95,25 @@ test('it can replace null values in object with undefined', () => {
   expect(result.items[2]).toEqual('HEY');
   expect(result.contacts.awesome).toEqual(false);
   expect(result.contacts.info).toEqual('');
+});
+
+test('it can identify urls', () => {
+  const urls = [
+    'http://localhost:7001/public/tasks/94/61efeb05-7278-4de8-979d-b4580cfc0233',
+    'http://localhost/public/tasks/94/61efeb05-7278-4de8-979d-b4580cfc0233',
+    'https://www.google.com',
+  ];
+  urls.forEach((url: string) => {
+    const result = isURL(url);
+    expect(result).toBe(true);
+  });
+  const badUrls = [
+    'localhost:7001/public/tasks/94/61efeb05-7278-4de8-979d-b4580cfc0233',
+    'localhost/public/tasks/94/61efeb05-7278-4de8-979d-b4580cfc0233',
+    'www.google.com',
+  ];
+  badUrls.forEach((url: string) => {
+    const result = isURL(url);
+    expect(result).toBe(false);
+  });
 });

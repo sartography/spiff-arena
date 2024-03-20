@@ -312,7 +312,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     );
   }
 
-  if (activeKey && ability && !UserService.onlyGuestTaskCompletion()) {
+  if (activeKey && ability) {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (

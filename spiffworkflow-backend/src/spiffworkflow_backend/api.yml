@@ -2673,6 +2673,18 @@ paths:
           enum:
             - synchronous
             - asynchronous
+    get:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.public_controller.form_show
+      summary: Gets one task that a user wants to complete
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
     put:
       tags:
         - Tasks
