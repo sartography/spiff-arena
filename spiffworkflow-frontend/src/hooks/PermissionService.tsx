@@ -32,7 +32,6 @@ export const usePermissionFetcher = (
 
   useEffect(() => {
     const processPermissionResult = (result: PermissionCheckResponseBody) => {
-      // console.log(result);
       const oldRules = ability.rules;
       const { can, cannot, rules } = new AbilityBuilder(Ability);
       Object.keys(result.results).forEach((url: string) => {
@@ -66,7 +65,6 @@ export const usePermissionFetcher = (
      * Otherwise, use the cached results.
      */
     const foundResults = findPermissionsInCache(permissionsToCheck);
-    // console.log(inspectPermissionsCache());
     if (foundResults) {
       processPermissionResult(foundResults);
     } else {
