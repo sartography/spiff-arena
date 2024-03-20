@@ -7,7 +7,6 @@ import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
 import {
   findPermissionsInCache,
-  inspectPermissionsCache,
   updatePermissionsCache,
 } from '../services/PermissionCacheService';
 
