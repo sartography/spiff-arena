@@ -24,8 +24,6 @@ import {
 import CustomForm from '../components/CustomForm';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
-import UserService from '../services/UserService';
-import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function TaskShow() {
   // get a basic task which doesn't get the form data so we can load
@@ -46,10 +44,6 @@ export default function TaskShow() {
   const navigate = useNavigate();
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
 
-  const [guestConfirmationText, setGuestConfirmationText] = useState<
-    string | null
-  >(null);
-
   const [taskData, setTaskData] = useState<any>(null);
   const [autosaveOnFormChanges, setAutosaveOnFormChanges] =
     useState<boolean>(true);
@@ -62,15 +56,11 @@ export default function TaskShow() {
   // always work for them so use that since it will work in all cases
   const navigateToInterstitial = useCallback(
     (myTask: BasicTask) => {
-      if (UserService.onlyGuestTaskCompletion()) {
-        setGuestConfirmationText('Thank you!');
-      } else {
-        navigate(
-          `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-            myTask.process_model_identifier
-          )}/${myTask.process_instance_id}/interstitial`
-        );
-      }
+      navigate(
+        `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+          myTask.process_model_identifier
+        )}/${myTask.process_instance_id}/interstitial`
+      );
     },
     [navigate]
   );
@@ -190,12 +180,6 @@ export default function TaskShow() {
     removeError();
     if (result.ok) {
       navigate(`/tasks`);
-    } else if ('guest_confirmation' in result) {
-      if (result.guest_confirmation) {
-        setGuestConfirmationText(result.guest_confirmation);
-      } else {
-        setGuestConfirmationText('Form submitted successfully');
-      }
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
@@ -361,10 +345,7 @@ export default function TaskShow() {
     if (taskWithTaskData.state === 'READY') {
       const submitButtonText = getSubmitButtonText(formUiSchema);
       let closeButton = null;
-      if (
-        taskWithTaskData.typename === 'UserTask' &&
-        !UserService.onlyGuestTaskCompletion()
-      ) {
+      if (taskWithTaskData.typename === 'UserTask') {
         closeButton = (
           <Button
             id="close-button"
@@ -455,34 +436,22 @@ export default function TaskShow() {
       statusString = ` ${basicTask.state}`;
     }
 
-    if (
-      !('allowGuest' in basicTask.extensions) ||
-      basicTask.extensions.allowGuest !== 'true'
-    ) {
-      pageElements.push({
-        key: 'process-breadcrumb',
-        component: <ProcessBreadcrumb hotCrumbs={hotCrumbs} />,
-      });
-      pageElements.push({
-        key: 'task-name',
-        component: (
-          <h3>
-            Task: {basicTask.name_for_display} (
-            {basicTask.process_model_display_name}){statusString}
-          </h3>
-        ),
-      });
-    }
-  }
-
-  if (guestConfirmationText) {
     pageElements.push({
-      key: 'guest-confirmation-text',
+      key: 'process-breadcrumb',
+      component: <ProcessBreadcrumb hotCrumbs={hotCrumbs} />,
+    });
+    pageElements.push({
+      key: 'task-name',
       component: (
-        <MarkdownRenderer linkTarget="_blank" source={guestConfirmationText} />
+        <h3>
+          Task: {basicTask.name_for_display} (
+          {basicTask.process_model_display_name}){statusString}
+        </h3>
       ),
     });
-  } else if (basicTask && taskData) {
+  }
+
+  if (basicTask && taskData) {
     pageElements.push({
       key: 'instructions-for-end-user',
       component: <InstructionsForEndUser task={taskWithTaskData} />,

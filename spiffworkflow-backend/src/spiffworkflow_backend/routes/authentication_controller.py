@@ -16,12 +16,10 @@ from spiffworkflow_backend.exceptions.error import InvalidRedirectUrlError
 from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -126,15 +124,6 @@ def login(
             group_identifier=SPIFF_NO_AUTH_GROUP,
             permission_target="/*",
             auth_token_properties={"authentication_disabled": True},
-            authentication_identifier=authentication_identifier,
-        )
-        return redirect(redirect_url)
-
-    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-        AuthenticationService.create_guest_token(
-            username=SPIFF_GUEST_USER,
-            group_identifier=SPIFF_GUEST_GROUP,
-            auth_token_properties={"only_guest_task_completion": True, "process_instance_id": process_instance_id},
             authentication_identifier=authentication_identifier,
         )
         return redirect(redirect_url)
@@ -298,27 +287,6 @@ def _clear_auth_tokens_from_thread_local_data() -> None:
         delattr(tld, "user_has_logged_out")
 
 
-def _force_logout_user_if_necessary(user_model: UserModel | None, decoded_token: dict) -> bool:
-    """Logs out a guest user if certain criteria gets met.
-
-    * if the user is a no auth guest and we have auth enabled
-    * if the user is a guest and goes somewhere else that does not allow guests
-    """
-    if user_model is not None:
-        if (
-            not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
-            and user_model.username == SPIFF_NO_AUTH_USER
-            and user_model.service_id == "spiff_guest_service_id"
-        ) or (
-            user_model.username == SPIFF_GUEST_USER
-            and user_model.service_id == "spiff_guest_service_id"
-            and not AuthorizationService.request_allows_guest_access(decoded_token)
-        ):
-            AuthenticationService.set_user_has_logged_out()
-            return True
-    return False
-
-
 def _find_token_from_request(token: str | None) -> dict[str, str | None]:
     api_key = None
     if not token and "Authorization" in request.headers:
@@ -356,10 +324,6 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                     user_model = _get_user_from_decoded_internal_token(decoded_token)
                 except Exception as e:
                     current_app.logger.error(f"Exception in verify_token getting user from decoded internal token. {e}")
-
-                # if the user is forced logged out then stop processing the token
-                if _force_logout_user_if_necessary(user_model, decoded_token):
-                    return None
             else:
                 user_info = None
                 authentication_identifier = _get_authentication_identifier_from_request()

@@ -31,7 +31,6 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -102,6 +101,7 @@ AUTHENTICATION_EXCLUSION_LIST = [
 
 # these are api calls that are allowed to generate a public jwt when called
 PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
+    "spiffworkflow_backend.routes.public_controller.form_show",
     "spiffworkflow_backend.routes.public_controller.message_form_show",
     "spiffworkflow_backend.routes.public_controller.message_form_submit",
 ]
@@ -332,9 +332,6 @@ class AuthorizationService:
         if cls.request_is_excluded_from_permission_check():
             return None
 
-        if cls.request_allows_guest_access(decoded_token):
-            return None
-
         cls.check_permission_for_request()
 
     @classmethod
@@ -343,31 +340,6 @@ class AuthorizationService:
         api_view_function = current_app.view_functions[request.endpoint]
         if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
             return True
-        return False
-
-    @classmethod
-    def request_allows_guest_access(cls, decoded_token: dict | None) -> bool:
-        if cls.request_is_excluded_from_permission_check():
-            return True
-
-        api_view_function = current_app.view_functions[request.endpoint]
-        if api_view_function.__name__ in ["task_show", "task_submit", "task_save_draft"]:
-            process_instance_id = int(request.path.split("/")[3])
-            task_guid = request.path.split("/")[4]
-            if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-                return True
-
-        if (
-            decoded_token is not None
-            and "process_instance_id" in decoded_token
-            and "only_guest_task_completion" in decoded_token
-            and decoded_token["only_guest_task_completion"] is True
-            and api_view_function.__name__ == "typeahead"
-            and api_view_function.__module__ == "spiffworkflow_backend.routes.connector_proxy_controller"
-        ):
-            process_instance = ProcessInstanceModel.query.filter_by(id=decoded_token["process_instance_id"]).first()
-            if process_instance is not None and not process_instance.has_terminal_status():
-                return True
         return False
 
     @staticmethod
@@ -817,6 +789,8 @@ class AuthorizationService:
         for group in group_permissions:
             group_identifier = group["name"]
             UserService.find_or_create_group(group_identifier)
+            if group_identifier == current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]:
+                unique_user_group_identifiers.add(group_identifier)
             if not group_permissions_only:
                 for username in group["users"]:
                     if user_model and username != user_model.username:

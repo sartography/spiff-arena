@@ -1,4 +1,4 @@
-import { ArrowRight, Renew } from '@carbon/icons-react';
+import { ArrowRight, Renew, ArrowUpRight } from '@carbon/icons-react';
 import {
   Grid,
   Column,
@@ -8,6 +8,7 @@ import {
   Button,
   TableHeader,
   Stack,
+  ButtonSet,
 } from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -236,6 +237,13 @@ export default function ProcessInstanceListTable({
   ) => {
     return <span>{identifier}</span>;
   };
+  const navigateToProcessInstance = (processInstance: ProcessInstance) => {
+    navigate(
+      `${processInstanceShowPathPrefix}/${modifyProcessIdentifierForPathParam(
+        processInstance.process_model_identifier
+      )}/${processInstance.id}`
+    );
+  };
 
   const getWaitingForTableCellComponent = (processInstanceTask: any) => {
     let fullUsernameString = '';
@@ -305,7 +313,10 @@ export default function ProcessInstanceListTable({
   const defaultFormatter = (_row: ProcessInstance, value: any) => {
     return value;
   };
-  const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
+  const formattedColumn = (
+    processInstance: ProcessInstance,
+    column: ReportColumn
+  ) => {
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
@@ -325,39 +336,54 @@ export default function ProcessInstanceListTable({
     const formatter = column.display_type
       ? displayTypeFormatters[column.display_type]
       : reportColumnFormatters[columnAccessor] ?? defaultFormatter;
-    const value = row[columnAccessor];
+    const value = processInstance[columnAccessor];
 
     if (columnAccessor === 'status') {
       return (
-        <td data-qa={`process-instance-status-${value}`}>
-          {formatter(row, value)}
+        <td
+          onClick={() => navigateToProcessInstance(processInstance)}
+          onKeyDown={() => navigateToProcessInstance(processInstance)}
+          data-qa={`process-instance-status-${value}`}
+        >
+          {formatter(processInstance, value)}
         </td>
       );
-    }
-    if (columnAccessor === 'process_model_display_name') {
-      return <td> {formatter(row, value)} </td>;
-    }
-    if (columnAccessor === 'waiting_for') {
-      return <td> {getWaitingForTableCellComponent(row)} </td>;
     }
     if (columnAccessor === 'updated_at_in_seconds') {
       return (
         <TableCellWithTimeAgoInWords
-          timeInSeconds={row.updated_at_in_seconds}
+          timeInSeconds={processInstance.updated_at_in_seconds}
+          onClick={() => navigateToProcessInstance(processInstance)}
+          onKeyDown={() => navigateToProcessInstance(processInstance)}
         />
       );
     }
     if (columnAccessor === 'task_updated_at_in_seconds') {
       return (
         <TableCellWithTimeAgoInWords
-          timeInSeconds={row.task_updated_at_in_seconds || 0}
+          timeInSeconds={processInstance.task_updated_at_in_seconds || 0}
+          onClick={() => navigateToProcessInstance(processInstance)}
+          onKeyDown={() => navigateToProcessInstance(processInstance)}
         />
       );
     }
+    let cellContent: any = null;
+    if (columnAccessor === 'process_model_display_name') {
+      cellContent = formatter(processInstance, value);
+    } else if (columnAccessor === 'waiting_for') {
+      cellContent = getWaitingForTableCellComponent(processInstance);
+    } else {
+      cellContent = formatter(processInstance, value);
+    }
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-      <td data-qa={`process-instance-show-link-${columnAccessor}`}>
-        {formatter(row, value)}
+      <td
+        key={processInstance.id}
+        onClick={() => navigateToProcessInstance(processInstance)}
+        onKeyDown={() => navigateToProcessInstance(processInstance)}
+        data-qa={`process-instance-show-link-${columnAccessor}`}
+      >
+        {cellContent}
       </td>
     );
   };
@@ -465,7 +491,7 @@ export default function ProcessInstanceListTable({
         return formattedColumn(processInstance, column);
       });
       if (showActionsColumn) {
-        let buttonElement = null;
+        let goButtonElement = null;
         const taskShowUrl = `/tasks/${processInstance.id}/${processInstance.task_id}`;
         const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
         let hasAccessToCompleteTask = false;
@@ -476,7 +502,7 @@ export default function ProcessInstanceListTable({
           hasAccessToCompleteTask = true;
         }
         if (hasAccessToCompleteTask && processInstance.task_id) {
-          buttonElement = (
+          goButtonElement = (
             <Button
               kind="secondary"
               href={taskShowUrl}
@@ -487,6 +513,21 @@ export default function ProcessInstanceListTable({
             </Button>
           );
         }
+        const piLink = `${processInstanceShowPathPrefix}/${modifyProcessIdentifierForPathParam(
+          processInstance.process_model_identifier
+        )}/${processInstance.id}`;
+        const piShowButtonElement = (
+          <Button
+            kind="ghost"
+            target="_blank"
+            href={piLink}
+            style={{ width: '60px' }}
+            size="sm"
+            renderIcon={ArrowUpRight}
+            iconDescription="Open instance in a new tab"
+            hasIconOnly
+          />
+        );
 
         const statusesToExcludeTaskButton = [
           'error',
@@ -494,21 +535,20 @@ export default function ProcessInstanceListTable({
           'suspended',
         ];
         if (!(processInstance.status in statusesToExcludeTaskButton)) {
-          currentRow.push(<td>{buttonElement}</td>);
+          currentRow.push(
+            <td>
+              <ButtonSet>
+                {piShowButtonElement}
+                {goButtonElement}
+              </ButtonSet>
+            </td>
+          );
         } else {
-          currentRow.push(<td aria-label="Empty table placeholder" />);
+          currentRow.push(<td>{piShowButtonElement}</td>);
         }
       }
 
       const rowStyle = { cursor: 'pointer' };
-      const modifiedModelId = modifyProcessIdentifierForPathParam(
-        processInstance.process_model_identifier
-      );
-      const navigateToProcessInstance = () => {
-        navigate(
-          `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
-        );
-      };
       let variantFromMetadata = 'all';
       if (reportMetadataFromProcessInstances) {
         reportMetadataFromProcessInstances.filter_by.forEach((filter: any) => {
@@ -526,8 +566,6 @@ export default function ProcessInstanceListTable({
         <tr
           style={rowStyle}
           key={processInstance.id}
-          onClick={navigateToProcessInstance}
-          onKeyDown={navigateToProcessInstance}
           className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}

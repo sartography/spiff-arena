@@ -5,7 +5,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticationOption } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
-import { parseTaskShowUrl } from '../helpers';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,9 +12,6 @@ export default function Login() {
   const [authenticationOptions, setAuthenticationOptions] = useState<
     AuthenticationOption[] | null
   >(null);
-  const [allowsGuestLogin, setAllowsGuestLogin] = useState<boolean | null>(
-    null
-  );
 
   const originalUrl = searchParams.get('original_url');
   const getOriginalUrl = useCallback(() => {
@@ -30,16 +26,6 @@ export default function Login() {
       path: '/authentication-options',
       successCallback: setAuthenticationOptions,
     });
-    const pathSegments = parseTaskShowUrl(getOriginalUrl() || '');
-    if (pathSegments) {
-      HttpService.makeCallToBackend({
-        path: `/tasks/${pathSegments[1]}/${pathSegments[2]}/allows-guest`,
-        successCallback: (result: any) =>
-          setAllowsGuestLogin(result.allows_guest),
-      });
-    } else {
-      setAllowsGuestLogin(false);
-    }
   }, [getOriginalUrl]);
 
   const authenticationOptionButtons = () => {
@@ -112,8 +98,8 @@ export default function Login() {
     );
   }
 
-  if (authenticationOptions !== null && allowsGuestLogin !== null) {
-    if (allowsGuestLogin || authenticationOptions.length === 1) {
+  if (authenticationOptions !== null) {
+    if (authenticationOptions.length === 1) {
       UserService.doLogin(authenticationOptions[0], getOriginalUrl());
       return null;
     }
