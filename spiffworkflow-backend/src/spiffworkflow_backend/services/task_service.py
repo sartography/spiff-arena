@@ -115,6 +115,10 @@ class TaskService:
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
+
+        # this updates the definition ids for both tasks and bpmn_processes when they are updated
+        # in case definitions were changed for the same instances.
+        # this is currently only used when importing a process instance from bpmn json or when running data migrations.
         self.force_update_definitions = force_update_definitions
 
         self.bpmn_processes: dict[str, BpmnProcessModel] = {}
