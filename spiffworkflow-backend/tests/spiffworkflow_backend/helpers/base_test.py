@@ -566,3 +566,20 @@ class BaseTest:
             yield
         finally:
             app.config[config_identifier] = initial_value
+
+    def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
+        """Round last state change to the nearest 4 significant digits.
+
+        Works around imprecise floating point values in mysql json columns.
+        The values between mysql and SpiffWorkflow seem to have minor differences on randomly and since
+        we do not care about such precision for this field, round it to a value that is more likely to match.
+        """
+        if isinstance(bpmn_process_dict, dict):
+            for key, value in bpmn_process_dict.items():
+                if key == "last_state_change":
+                    bpmn_process_dict[key] = round(value, 4)
+                elif isinstance(value, dict | list):
+                    self.round_last_state_change(value)
+        elif isinstance(bpmn_process_dict, list):
+            for item in bpmn_process_dict:
+                self.round_last_state_change(item)

@@ -22,6 +22,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -624,7 +625,7 @@ def _dequeued_interstitial_stream(
             # attempt to run the migrator even for a readonly operation if the process instance is not newest
             if (
                 process_instance.spiff_serializer_version is not None
-                and process_instance.spiff_serializer_version < ProcessInstanceMigrator.CURRENT_VERSION
+                and process_instance.spiff_serializer_version < SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
             ):
                 try:
                     with ProcessInstanceQueueService.dequeued(process_instance):
