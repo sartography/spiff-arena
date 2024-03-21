@@ -18,7 +18,7 @@ python = ">=3.11,<3.13"
 pre-commit = "^3.6.2"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
-flake8-bandit = "^2.1.2"
+flake8-bandit = "^3.0.0"
 ruff = "^0.2.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841

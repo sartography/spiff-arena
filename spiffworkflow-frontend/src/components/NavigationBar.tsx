@@ -18,20 +18,20 @@ import {
 } from '@carbon/react';
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Can } from '@casl/react';
+import { useLocation, Link, LinkProps } from 'react-router-dom';
 // @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
-import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
-import { usePermissionFetcher } from '../hooks/PermissionService';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { slugifyString } from '../helpers';
 import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 import SpiffTooltip from './SpiffTooltip';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { Can } from '../contexts/Can';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -59,9 +59,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   // default to readthedocs and let someone specify an environment variable to override:
   //
-  let documentationUrl = 'https://spiffworkflow.readthedocs.io';
+  let externalDocumentationUrl = 'https://spiff-arena.readthedocs.io';
   if (DOCUMENTATION_URL) {
-    documentationUrl = DOCUMENTATION_URL;
+    externalDocumentationUrl = DOCUMENTATION_URL;
   }
 
   const processGroupPath = '/process-groups';
@@ -101,14 +101,14 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
-    return <a href={navItemPage}>{uxElement.label}</a>;
+    return <Link to={navItemPage}>{uxElement.label}</Link>;
   };
 
   const profileToggletip = () => {
     let aboutLinkElement = null;
 
     if (Object.keys(versionInfo).length) {
-      aboutLinkElement = <a href="/about">About</a>;
+      aboutLinkElement = <Link to="/about">About</Link>;
     }
 
     return (
@@ -128,7 +128,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             {username !== userEmail && <p>{userEmail}</p>}
             <hr />
             {aboutLinkElement}
-            <a target="_blank" href={documentationUrl} rel="noreferrer">
+            <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
               Documentation
             </a>
             <ExtensionUxElementForDisplay
@@ -195,7 +195,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                   return (
                     <SpiffTooltip title="Manage Secrets and Authentication information for Service Tasks">
                       <HeaderMenuItem
-                        href="/configuration"
+                        element={Link}
+                        to="/configuration"
                         isCurrentPage={isActivePage('/configuration')}
                       >
                         Configuration
@@ -221,7 +222,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     return (
       <SpiffTooltip title={uxElement?.tooltip}>
         <HeaderMenuItem
-          href={navItemPage}
+          element={Link}
+          to={navItemPage}
           isCurrentPage={isActivePage(navItemPage)}
           data-qa={`extension-${slugifyString(uxElement.label)}`}
         >
@@ -238,14 +240,20 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     return (
       <>
         <SpiffTooltip title="View and start Process Instances">
-          <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
+          <HeaderMenuItem<LinkProps>
+            element={Link}
+            to="/"
+            isCurrentPage={isActivePage('/')}
+          >
             <div>Home</div>
           </HeaderMenuItem>
         </SpiffTooltip>
+
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
           <SpiffTooltip title="Find and organize Process Groups and Process Models">
             <HeaderMenuItem
-              href={processGroupPath}
+              element={Link}
+              to={processGroupPath}
               isCurrentPage={isActivePage(processGroupPath)}
               data-qa="header-nav-processes"
             >
@@ -260,7 +268,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         >
           <SpiffTooltip title="List of active and completed Process Instances">
             <HeaderMenuItem
-              href="/process-instances"
+              element={Link}
+              to="/process-instances"
               isCurrentPage={isActivePage('/process-instances')}
             >
               Process Instances
@@ -270,7 +279,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
           <SpiffTooltip title="Browse messages being sent and received">
             <HeaderMenuItem
-              href="/messages"
+              element={Link}
+              to="/messages"
               isCurrentPage={isActivePage('/messages')}
             >
               Messages
@@ -280,7 +290,8 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
           <SpiffTooltip title="Browse data that has been saved to Data Stores">
             <HeaderMenuItem
-              href="/data-stores"
+              element={Link}
+              to="/data-stores"
               isCurrentPage={isActivePage('/data-stores')}
             >
               Data Stores
@@ -303,7 +314,12 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       <HeaderContainer
         render={() => (
           <Header aria-label="IBM Platform Name" className="cds--g100">
-            <HeaderName href="/" prefix="" data-qa="spiffworkflow-logo">
+            <HeaderName
+              element={Link}
+              to="/"
+              prefix=""
+              data-qa="spiffworkflow-logo"
+            >
               <img src={logo} className="app-logo" alt="logo" />
             </HeaderName>
           </Header>
@@ -324,7 +340,12 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               onClick={onClickSideNavExpand}
               isActive={isSideNavExpanded}
             />
-            <HeaderName href="/" prefix="" data-qa="spiffworkflow-logo">
+            <HeaderName
+              element={Link}
+              to="/"
+              prefix=""
+              data-qa="spiffworkflow-logo"
+            >
               <img src={logo} className="app-logo" alt="logo" />
             </HeaderName>
             <HeaderNavigation
