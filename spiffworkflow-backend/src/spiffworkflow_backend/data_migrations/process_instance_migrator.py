@@ -52,7 +52,7 @@ class ProcessInstanceMigrator:
             cls.run_version(Version3, process_instance)
             cls.run_version(Version2, process_instance)
             cls.run_version(Version4, process_instance)
-        if process_instance.spiff_serializer_version < Version3.version():
+        elif process_instance.spiff_serializer_version < Version3.version():
             cls.run_version(Version3, process_instance)
             cls.run_version(Version4, process_instance)
         else:
