@@ -85,16 +85,16 @@ h3 {
   background: lightgrey;
 }
 
-.cds--breadcrumb-item a.cds--link:hover {
+.spiff-breadcrumb .MuiBreadcrumbs-li a:hover {
   color: #525252;
 }
-.cds--breadcrumb-item a.cds--link:visited {
+.spiff-breadcrumb .MuiBreadcrumbs-li a:visited {
   color: #525252;
 }
-.cds--breadcrumb-item a.cds--link:visited:hover {
+.spiff-breadcrumb .MuiBreadcrumbs-li a:visited:hover {
   color: #525252;
 }
-.cds--breadcrumb-item a.cds--link {
+.spiff-breadcrumb .MuiBreadcrumbs-li a {
   color: #525252;
 }
 
@@ -212,7 +212,7 @@ code {
   vertical-align: middle;
 }
 
-.cds--breadcrumb {
+.MuiBreadcrumbs-root.spiff-breadcrumb {
   margin-bottom: 2rem;
 }
 
@@ -354,14 +354,6 @@ dl dd {
   height: 70vh;
   width: 90vw;
   margin: auto;
-}
-
-.breadcrumb {
-  font-size: 1.5rem;
-}
-
-.breadcrumb-item.active {
-  color: black;
 }
 
 .container .nav-tabs {
