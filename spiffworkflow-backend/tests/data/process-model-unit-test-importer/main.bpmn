@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_top_level" name="Top Level Process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0j3unyw</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0j3unyw" sourceRef="StartEvent_1" targetRef="top_script_task" />
+    <bpmn:endEvent id="Event_1swh8gs">
+      <bpmn:incoming>Flow_1dbi4yf</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1dbi4yf" sourceRef="top_call_activity" targetRef="Event_1swh8gs" />
+    <bpmn:callActivity id="top_call_activity" name="Top Call Activity" calledElement="Process_sub_level">
+      <bpmn:incoming>Flow_0z2u0gc</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dbi4yf</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:sequenceFlow id="Flow_0uoa0st" sourceRef="top_script_task" targetRef="top_service_task" />
+    <bpmn:dataObjectReference id="DataObjectReference_0qfbjfj" name="top_level_data_object" dataObjectRef="top_level_data_object" />
+    <bpmn:dataObject id="top_level_data_object" name="top_level_data_object" />
+    <bpmn:scriptTask id="top_script_task" name="Top Script Task">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/GetRequestV2" resultVariable="the_response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="url" type="str" value="&#34;http://localhost:7000/v1.0/status&#34;" />
+            <spiffworkflow:parameter id="headers" type="any" />
+            <spiffworkflow:parameter id="params" type="any" />
+            <spiffworkflow:parameter id="basic_auth_username" type="str" />
+            <spiffworkflow:parameter id="basic_auth_password" type="str" />
+            <spiffworkflow:parameter id="attempts" type="int" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0j3unyw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0uoa0st</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1fxfphs">
+        <bpmn:targetRef>DataObjectReference_0qfbjfj</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:script>top_level_data_object = "a"</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_0z2u0gc" sourceRef="top_service_task" targetRef="top_call_activity" />
+    <bpmn:serviceTask id="top_service_task" name="Top Service Task">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/GetRequestV2" resultVariable="backend_status_response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="url" type="str" value="&#34;http://localhost:7000/v1.0/status&#34;" />
+            <spiffworkflow:parameter id="headers" type="any" />
+            <spiffworkflow:parameter id="params" type="any" />
+            <spiffworkflow:parameter id="basic_auth_username" type="str" />
+            <spiffworkflow:parameter id="basic_auth_password" type="str" />
+            <spiffworkflow:parameter id="attempts" type="int" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0uoa0st</bpmn:incoming>
+      <bpmn:outgoing>Flow_0z2u0gc</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_top_level">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="32" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1swh8gs_di" bpmnElement="Event_1swh8gs">
+        <dc:Bounds x="502" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18m3q89_di" bpmnElement="top_call_activity">
+        <dc:Bounds x="370" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_0qfbjfj_di" bpmnElement="DataObjectReference_0qfbjfj">
+        <dc:Bounds x="132" y="55" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="105" y="31" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0dh9loj_di" bpmnElement="top_script_task">
+        <dc:Bounds x="100" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ngnsv7_di" bpmnElement="top_service_task">
+        <dc:Bounds x="230" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0j3unyw_di" bpmnElement="Flow_0j3unyw">
+        <di:waypoint x="68" y="177" />
+        <di:waypoint x="100" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dbi4yf_di" bpmnElement="Flow_1dbi4yf">
+        <di:waypoint x="470" y="177" />
+        <di:waypoint x="502" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0uoa0st_di" bpmnElement="Flow_0uoa0st">
+        <di:waypoint x="200" y="177" />
+        <di:waypoint x="230" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1fxfphs_di" bpmnElement="DataOutputAssociation_1fxfphs">
+        <di:waypoint x="152" y="137" />
+        <di:waypoint x="153" y="105" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0z2u0gc_di" bpmnElement="Flow_0z2u0gc">
+        <di:waypoint x="330" y="177" />
+        <di:waypoint x="370" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -143,9 +143,13 @@ class TestCaseErrorDetails:
     task_error_line: str | None = None
     task_trace: list[str] | None = None
     task_bpmn_identifier: str | None = None
+    task_bpmn_type: str | None = None
     task_bpmn_name: str | None = None
     task_line_number: int | None = None
     stacktrace: list[str] | None = None
+
+    output_data: dict | None = None
+    expected_data: dict | None = None
 
 
 @dataclass
@@ -297,7 +301,7 @@ DEFAULT_NSMAP = {
 
 """
 JSON file name:
-    The name should be in format "test_BPMN_FILE_NAME_IT_TESTS.json".
+    The name should be in format "test_BPMN_FILE_NAME.json".
 
 BPMN_TASK_IDENTIIFER:
     can be either task bpmn identifier or in format:
@@ -401,6 +405,7 @@ class ProcessModelTestRunner:
     def run_test_case(self, bpmn_file: str, test_case_identifier: str, test_case_contents: dict) -> None:
         bpmn_process_instance = self._instantiate_executer(bpmn_file)
         method_overrides = {}
+        # mocking python functions within script tasks
         if "mocks" in test_case_contents:
             for method_name, mock_return_value in test_case_contents["mocks"].items():
                 method_overrides[method_name] = lambda value=mock_return_value: value
@@ -430,23 +435,23 @@ class ProcessModelTestRunner:
 
         error_message = None
         if bpmn_process_instance.is_completed() is False:
-            error_message = [
-                "Expected process instance to complete but it did not.",
-                f"Final data was: {bpmn_process_instance.last_task.data}",
-                f"Last task bpmn id: {bpmn_process_instance.last_task.task_spec.bpmn_id}",
-                f"Last task type: {bpmn_process_instance.last_task.task_spec.__class__.__name__}",
-            ]
+            error_message = {
+                "error_messages": ["Expected process instance to complete but it did not."],
+                "output_data": bpmn_process_instance.last_task.data,
+                "task_bpmn_identifier": bpmn_process_instance.last_task.task_spec.bpmn_id,
+                "task_bpmn_type": bpmn_process_instance.last_task.task_spec.__class__.__name__,
+            }
         elif bpmn_process_instance.success is False:
-            error_message = [
-                "Expected process instance to succeed but it did not.",
-                f"Final data was: {bpmn_process_instance.data}",
-            ]
+            error_message = {
+                "error_messages": ["Expected process instance to succeed but it did not."],
+                "output_data": bpmn_process_instance.data,
+            }
         elif test_case_contents["expected_output_json"] != bpmn_process_instance.data:
-            error_message = [
-                "Expected output did not match actual output:",
-                f"expected: {test_case_contents['expected_output_json']}",
-                f"actual: {bpmn_process_instance.data}",
-            ]
+            error_message = {
+                "error_messages": ["Expected output did not match actual output."],
+                "expected_data": test_case_contents["expected_output_json"],
+                "output_data": bpmn_process_instance.data,
+            }
         self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
     def _execute_task(
@@ -510,14 +515,14 @@ class ProcessModelTestRunner:
         passed: bool,
         bpmn_file: str,
         test_case_identifier: str,
-        error_messages: list[str] | None = None,
+        error_messages: dict | None = None,
         exception: Exception | None = None,
     ) -> None:
         test_case_error_details = None
         if exception is not None:
             test_case_error_details = self._exception_to_test_case_error_details(exception)
         elif error_messages:
-            test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
+            test_case_error_details = TestCaseErrorDetails(**error_messages)
 
         bpmn_file_relative = self._get_relative_path_of_bpmn_file(bpmn_file)
         test_result = TestCaseResult(

@@ -408,7 +408,6 @@ class ProcessInstanceProcessor:
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
-    VALIDATION_PROCESS_KEY = "validate_only"
 
     # __init__ calls these helpers:
     #   * get_spec, which returns a spec and any subprocesses (as IdToBpmnProcessSpecMapping dict)
@@ -416,7 +415,6 @@ class ProcessInstanceProcessor:
     def __init__(
         self,
         process_instance_model: ProcessInstanceModel,
-        validate_only: bool = False,
         script_engine: PythonScriptEngine | None = None,
         workflow_completed_handler: WorkflowCompletedHandler | None = None,
         process_id_to_run: str | None = None,
@@ -429,7 +427,6 @@ class ProcessInstanceProcessor:
         self.additional_processing_identifier = additional_processing_identifier
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model,
-            validate_only=validate_only,
             process_id_to_run=process_id_to_run,
             include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
         )
@@ -437,7 +434,6 @@ class ProcessInstanceProcessor:
     def setup_processor_with_process_instance(
         self,
         process_instance_model: ProcessInstanceModel,
-        validate_only: bool = False,
         process_id_to_run: str | None = None,
         include_task_data_for_completed_tasks: bool = False,
     ) -> None:
@@ -482,7 +478,6 @@ class ProcessInstanceProcessor:
             ) = self.__get_bpmn_process_instance(
                 process_instance_model,
                 bpmn_process_spec,
-                validate_only,
                 subprocesses=subprocesses,
             )
             self.set_script_engine(self.bpmn_process_instance, self._script_engine)
@@ -819,7 +814,6 @@ class ProcessInstanceProcessor:
     def __get_bpmn_process_instance(
         process_instance_model: ProcessInstanceModel,
         spec: BpmnProcessSpec | None = None,
-        validate_only: bool = False,
         subprocesses: IdToBpmnProcessSpecMapping | None = None,
         include_task_data_for_completed_tasks: bool = False,
     ) -> tuple[BpmnWorkflow, dict, dict]:
@@ -846,7 +840,6 @@ class ProcessInstanceProcessor:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
         else:
             bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
-            bpmn_process_instance.data[ProcessInstanceProcessor.VALIDATION_PROCESS_KEY] = validate_only
 
         return (
             bpmn_process_instance,

@@ -583,3 +583,6 @@ class BaseTest:
         elif isinstance(bpmn_process_dict, list):
             for item in bpmn_process_dict:
                 self.round_last_state_change(item)
+
+    def get_test_file(self, *args: str) -> str:
+        return os.path.join(current_app.instance_path, "..", "..", "tests", "files", *args)
