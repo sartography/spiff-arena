@@ -1,9 +1,18 @@
+from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer # type: ignore
+import copy
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 import io
+import json
 from hashlib import sha256
+from unittest.mock import patch
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -102,6 +111,55 @@ class TestProcessModelsController(BaseTest):
             client, with_super_admin_user, "bad-model-does-not-exist", expected_response=400
         )
         assert json["error_code"] == "process_model_cannot_be_found"
+
+    def test_process_model_test_generate(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        with open('process.json', 'r') as f: before = json.loads(f.read())
+        with open('tmp.json', 'r') as f: after = json.loads(f.read())
+        assert before == after
+        # process_model = load_test_spec(
+        #     process_model_id="test_group/with-service-task-call-activity-sub-process",
+        #     process_model_source_directory="with-service-task-call-activity-sub-process",
+        # )
+        # process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+        # processor = ProcessInstanceProcessor(process_instance)
+        # connector_response = {"ok": True}
+        # with patch("requests.post") as mock_post:
+        #     mock_post.return_value.status_code = 200
+        #     mock_post.return_value.ok = True
+        #     mock_post.return_value.text = json.dumps(connector_response)
+        #     processor.do_engine_steps(save=True)
+        # self.complete_next_manual_task(processor, execution_mode="synchronous")
+        # self.complete_next_manual_task(processor, execution_mode="synchronous")
+        #
+        # db.session.expire_all()
+        # process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        # assert process_instance.status == ProcessInstanceStatus.complete.value
+        #
+        # processor.dump_to_disk()
+        # # wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
+        # # serializer = BpmnWorkflowSerializer(wf_spec_converter)
+        # # process_instance_dict_copy = copy.deepcopy(processor.serialize())
+        # # bpmn_process_instance = serializer.from_dict(process_instance_dict_copy)
+        # # bpmn_process_instance.get_tasks()
+        # # import pdb; pdb.set_trace()
+        # # processor.bpmn_process_instance
+        # processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
+        # # processor.dump_to_disk()
+        # #
+        # #
+        # # url = f"/v1.0/process-model-tests/{process_model.modified_process_model_identifier()}/{process_instance.id}"
+        # # response = client.post(
+        # #     url,
+        # #     headers=self.logged_in_headers(with_super_admin_user),
+        # # )
+        # # print("➡️ ➡️ ➡️  response.json: ", response.json)
+        # # assert response.status_code == 200
 
     def _get_process_show_show_response(
         self, client: FlaskClient, user: UserModel, process_model_id: str, expected_response: int = 200

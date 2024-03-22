@@ -604,6 +604,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/File"
 
+  /process-model-tests/{modified_process_model_identifier}/{process_instance_id}:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The process_model_id, modified to replace slashes (/)
+        schema:
+          type: string
+      - name: test_case_identifier
+        in: query
+        required: false
+        description: The name of the test case file to run
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: the unique id of an existing process instance.
+        schema:
+          type: integer
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_test_generate
+      summary: Create a bpmn unit test from a process instance
+      tags:
+        - Process Model Tests
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: The generated bpmn unit test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
   /process-models/{modified_process_model_identifier}/files:
     parameters:
       - name: modified_process_model_identifier
