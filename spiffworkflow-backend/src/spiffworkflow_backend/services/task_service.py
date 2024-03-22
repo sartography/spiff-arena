@@ -12,6 +12,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import asc
 
+from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -280,6 +281,10 @@ class TaskService:
         This will NOT update start_in_seconds or end_in_seconds.
         It also returns the relating json_data object so they can be imported later.
         """
+        if str(spiff_task.id) != task_model.guid:
+            raise TaskMismatchError(
+                f"Given spiff task ({spiff_task.task_spec.bpmn_id} - {spiff_task.id}) and task ({task_model.guid}) must match"
+            )
 
         new_properties_json = self.serializer.to_dict(spiff_task)
 

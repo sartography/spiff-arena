@@ -11,6 +11,7 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
@@ -555,13 +556,14 @@ class BaseTest:
         self,
         processor: ProcessInstanceProcessor,
         execution_mode: str | None = None,
+        data: dict | None = None,
     ) -> None:
         user_task = processor.get_ready_user_tasks()[0]
-        human_task = processor.process_instance_model.human_tasks[0]
+        human_task = HumanTaskModel.query.filter_by(task_guid=str(user_task.id)).first()
         ProcessInstanceService.complete_form_task(
             processor=processor,
             spiff_task=user_task,
-            data={},
+            data=data or {},
             user=processor.process_instance_model.process_initiator,
             human_task=human_task,
             execution_mode=execution_mode,
