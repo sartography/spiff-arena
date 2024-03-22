@@ -30,6 +30,44 @@ from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
 
+DEFAULT_NSMAP = {
+    "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "dc": "http://www.omg.org/spec/DD/20100524/DC",
+}
+
+
+"""
+JSON file name:
+    The name should be in format "test_BPMN_FILE_NAME.json".
+
+BPMN_TASK_IDENTIIFER:
+    can be either task bpmn identifier or in format:
+    [BPMN_PROCESS_ID]:[TASK_BPMN_IDENTIFIER]
+    example: 'BasicServiceTaskProcess:service_task_one'
+    this allows for tasks to share bpmn identifiers across models
+    which is useful for call activities
+
+DATA for tasks:
+    This is an array of task data. This allows for the task to
+    be called multiple times and given different data each time.
+    This is useful for testing loops where each iteration needs
+    different input. The test will fail if the task is called
+    multiple times without task data input for each call.
+
+JSON file format:
+{
+    TEST_CASE_NAME: {
+        "tasks": {
+            BPMN_TASK_IDENTIIFER: {
+            "data": [DATA]
+            }
+        },
+        "expected_output_json": DATA
+    }
+}
+"""
+
 
 class UnrunnableTestCaseError(Exception):
     pass
@@ -53,6 +91,29 @@ class UnsupporterRunnerDelegateGivenError(Exception):
 
 class BpmnFileMissingExecutableProcessError(Exception):
     pass
+
+
+@dataclass
+class TestCaseErrorDetails:
+    error_messages: list[str]
+    task_error_line: str | None = None
+    task_trace: list[str] | None = None
+    task_bpmn_identifier: str | None = None
+    task_bpmn_type: str | None = None
+    task_bpmn_name: str | None = None
+    task_line_number: int | None = None
+    stacktrace: list[str] | None = None
+
+    output_data: dict | None = None
+    expected_data: dict | None = None
+
+
+@dataclass
+class TestCaseResult:
+    passed: bool
+    bpmn_file: str
+    test_case_identifier: str
+    test_case_error_details: TestCaseErrorDetails | None = None
 
 
 def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
@@ -135,29 +196,6 @@ class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
         spiff_task: SpiffTask,
     ) -> str:
         raise Exception("please override this service task in your bpmn unit test json")
-
-
-@dataclass
-class TestCaseErrorDetails:
-    error_messages: list[str]
-    task_error_line: str | None = None
-    task_trace: list[str] | None = None
-    task_bpmn_identifier: str | None = None
-    task_bpmn_type: str | None = None
-    task_bpmn_name: str | None = None
-    task_line_number: int | None = None
-    stacktrace: list[str] | None = None
-
-    output_data: dict | None = None
-    expected_data: dict | None = None
-
-
-@dataclass
-class TestCaseResult:
-    passed: bool
-    bpmn_file: str
-    test_case_identifier: str
-    test_case_error_details: TestCaseErrorDetails | None = None
 
 
 class ProcessModelTestRunnerDelegate:
@@ -290,45 +328,6 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
             if bpmn_process_element is not None:
                 bpmn_process_identifier = bpmn_process_element.attrib["id"]
                 self.bpmn_processes_to_file_mappings[bpmn_process_identifier] = file_norm
-
-
-DEFAULT_NSMAP = {
-    "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
-    "bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
-    "dc": "http://www.omg.org/spec/DD/20100524/DC",
-}
-
-
-"""
-JSON file name:
-    The name should be in format "test_BPMN_FILE_NAME.json".
-
-BPMN_TASK_IDENTIIFER:
-    can be either task bpmn identifier or in format:
-    [BPMN_PROCESS_ID]:[TASK_BPMN_IDENTIFIER]
-    example: 'BasicServiceTaskProcess:service_task_one'
-    this allows for tasks to share bpmn identifiers across models
-    which is useful for call activities
-
-DATA for tasks:
-    This is an array of task data. This allows for the task to
-    be called multiple times and given different data each time.
-    This is useful for testing loops where each iteration needs
-    different input. The test will fail if the task is called
-    multiple times without task data input for each call.
-
-JSON file format:
-{
-    TEST_CASE_NAME: {
-        "tasks": {
-            BPMN_TASK_IDENTIIFER: {
-            "data": [DATA]
-            }
-        },
-        "expected_output_json": DATA
-    }
-}
-"""
 
 
 class ProcessModelTestRunner:
