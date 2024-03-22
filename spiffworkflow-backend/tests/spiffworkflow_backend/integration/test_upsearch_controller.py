@@ -1,5 +1,4 @@
 import pytest
-from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.user import UserModel
 
@@ -17,9 +16,7 @@ class TestUpsearchControllerController(BaseTest):
     )
     def test_return_upsearch_locations_for_path(
         self,
-        app: Flask,
         client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
         location: str,
         expected: list[str],
