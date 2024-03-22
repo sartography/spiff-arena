@@ -1,3 +1,4 @@
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 import json
 import os
 import random
@@ -31,10 +32,12 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportNotFoundError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
+from spiffworkflow_backend.services.process_model_test_generator_service import ProcessModelTestGeneratorService
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -350,6 +353,38 @@ def process_model_test_run(
         "failing": process_model_test_runner.failing_tests(),
     }
     return make_response(jsonify(response_json), 200)
+
+
+def process_model_test_generate(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    test_case_identifier: str | None = None,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
+    process_instance_dict = processor.serialize()
+    test_case_name = test_case_identifier
+    if test_case_name is None:
+        test_case_name = f"test_case_for_process_instance_{process_instance_id}"
+    test_case_dict = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
+        process_instance_dict, test_case_name=test_case_name
+    )
+
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model = _get_process_model(process_model_identifier)
+
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_primary_file_not_set",
+            message="The primary file is not set for the given process model.",
+            status_code=400,
+        )
+
+    primary_file_name_without_extension = ".".join(process_model.primary_file_name.split(".")[0:-1])
+    test_case_file_name = f"test_{primary_file_name_without_extension}.json"
+    ProcessModelService.add_json_data_to_json_file(process_model, test_case_file_name, test_case_dict)
+
+    return make_response(jsonify(test_case_dict), 200)
 
 
 #   {

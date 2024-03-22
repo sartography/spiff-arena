@@ -7,7 +7,7 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 
 class ProcessModelTestGeneratorService:
     @classmethod
-    def create_test_from_process_instance_dict(
+    def generate_test_from_process_instance_dict(
         cls, process_instance_dict: dict, test_case_name: str = "auto_generated_test_case"
     ) -> dict:
         wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)

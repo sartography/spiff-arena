@@ -11,7 +11,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelTestGeneratorService(BaseTest):
-    def test_can_create_bpmn_unit_test_from_process_instance_json_and_run_it(
+    def test_can_generate_bpmn_unit_test_from_process_instance_json_and_run_it(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
         process_instance_json_file = self.get_test_file("process_model_test_importer.json")
@@ -20,7 +20,7 @@ class TestProcessModelTestGeneratorService(BaseTest):
         process_instance_dict = json.loads(process_instance_json)
         test_case_name = "our_test_case"
 
-        bpmn_unit_test_specification = ProcessModelTestGeneratorService.create_test_from_process_instance_dict(
+        bpmn_unit_test_specification = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
             process_instance_dict, test_case_name=test_case_name
         )
         expected_specification = {
