@@ -1,5 +1,5 @@
 import { Content } from '@carbon/react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -19,6 +19,7 @@ import BaseRoutes from './routes/BaseRoutes';
 import BackendIsDown from './routes/BackendIsDown';
 import Login from './routes/Login';
 import NavigationBar from './components/NavigationBar';
+import useAPIError from './hooks/UseApiError';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
@@ -37,6 +38,19 @@ export default function ContainerForExtensions() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
   );
+
+  const { removeError } = useAPIError();
+
+  const location = useLocation();
+
+  // never carry an error message across to a different path
+  useEffect(() => {
+    removeError();
+    // if we include the removeError function to the dependency array of this useEffect, it causes
+    // an infinite loop where the page with the error adds the error,
+    // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
