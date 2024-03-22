@@ -6,6 +6,7 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
@@ -971,3 +972,25 @@ class TestProcessInstanceProcessor(BaseTest):
         self.round_last_state_change(bpmn_process_dict_initial)
 
         assert bpmn_process_dict_after == bpmn_process_dict_initial
+
+    def test_returns_error_if_spiff_task_and_human_task_are_different(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/call_activity_with_manual_task",
+            process_model_source_directory="call_activity_with_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        non_manual_spiff_task = processor.bpmn_process_instance.get_tasks(manual=False)[0]
+        assert human_task_one.task_guid != str(non_manual_spiff_task.id)
+        with pytest.raises(TaskMismatchError):
+            processor.complete_task(non_manual_spiff_task, human_task_one, user=process_instance.process_initiator)
