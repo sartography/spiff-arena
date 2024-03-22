@@ -551,7 +551,7 @@ class TestProcessInstanceProcessor(BaseTest):
         }
         data_set_5 = {**data_set_4, **{"a": 1, "we_move_on": True}}
         data_set_6 = {**data_set_5, **{"set_top_level_process_script_after_gate": 1}}
-        data_set_7 = {**data_set_6, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
+        data_set_7 = {**data_set_6, **{"set_top_level_process_script_after_gate": 1}}
         expected_task_data = {
             "top_level_script": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},
             "top_level_manual_task_one": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},

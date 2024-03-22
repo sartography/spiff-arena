@@ -21,7 +21,36 @@ class TestProcessModelTestImporterService(BaseTest):
             process_instance_dict
         )
 
-        expected_specification = {'test_case_one': {'tasks': {'Process_sub_level:sub_manual_task': {'data': [{}]}, 'call_activity_sub_process:sub_level_sub_process_user_task': {'data': [{'firstName': 'Chuck'}]}, 'Process_top_level:top_service_task': {'data': [{'backend_status_response': {'body': '{"ok": true}', 'mimetype': 'application/json', 'http_status': 200, 'operator_identifier': 'http/GetRequestV2'}}]}}, 'expected_output_json': {'firstName': 'Chuck', 'data_objects': {'top_level_data_object': 'a'}, 'backend_status_response': {'body': '{"ok": true}', 'mimetype': 'application/json', 'http_status': 200, 'operator_identifier': 'http/GetRequestV2'}}}}
+        expected_specification = {
+            "test_case_one": {
+                "tasks": {
+                    "Process_sub_level:sub_manual_task": {"data": [{}]},
+                    "call_activity_sub_process:sub_level_sub_process_user_task": {"data": [{"firstName": "Chuck"}]},
+                    "Process_top_level:top_service_task": {
+                        "data": [
+                            {
+                                "backend_status_response": {
+                                    "body": '{"ok": true}',
+                                    "mimetype": "application/json",
+                                    "http_status": 200,
+                                    "operator_identifier": "http/GetRequestV2",
+                                }
+                            }
+                        ]
+                    },
+                },
+                "expected_output_json": {
+                    "firstName": "Chuck",
+                    "data_objects": {"top_level_data_object": "a"},
+                    "backend_status_response": {
+                        "body": '{"ok": true}',
+                        "mimetype": "application/json",
+                        "http_status": 200,
+                        "operator_identifier": "http/GetRequestV2",
+                    },
+                },
+            }
+        }
         assert expected_specification == bpmn_unit_test_specification
 
         process_model = load_test_spec(

@@ -1,6 +1,5 @@
 {
   "data": {
-    "validate_only": false,
     "top_level_data_object": "a",
     "sub_level_data_object_two": "c",
     "sub_level_data_object_three": "d"
@@ -12,9 +11,7 @@
     "098e4fc2-a399-4325-b0a9-76d6c330fbf4": {
       "id": "098e4fc2-a399-4325-b0a9-76d6c330fbf4",
       "parent": "142bb43d-7d87-4341-acb5-f7762e48d8d3",
-      "children": [
-        "aa3991dd-2e91-4210-89e1-594245a0cf15"
-      ],
+      "children": ["aa3991dd-2e91-4210-89e1-594245a0cf15"],
       "last_state_change": 1710947480.2315426,
       "state": 64,
       "task_spec": "StartEvent_1",
@@ -28,9 +25,7 @@
     "142bb43d-7d87-4341-acb5-f7762e48d8d3": {
       "id": "142bb43d-7d87-4341-acb5-f7762e48d8d3",
       "parent": null,
-      "children": [
-        "098e4fc2-a399-4325-b0a9-76d6c330fbf4"
-      ],
+      "children": ["098e4fc2-a399-4325-b0a9-76d6c330fbf4"],
       "last_state_change": 1710947480.210416,
       "state": 64,
       "task_spec": "Start",
@@ -42,9 +37,7 @@
     "270d76e0-c1fe-4add-b58e-d5a51214a37b": {
       "id": "270d76e0-c1fe-4add-b58e-d5a51214a37b",
       "parent": "aa3991dd-2e91-4210-89e1-594245a0cf15",
-      "children": [
-        "e1188a09-95be-4b79-9a10-f7c376fa04a0"
-      ],
+      "children": ["e1188a09-95be-4b79-9a10-f7c376fa04a0"],
       "last_state_change": 1710950132.28626,
       "state": 64,
       "task_spec": "top_call_activity",
@@ -56,9 +49,7 @@
     "973db925-12b3-4f45-95fe-53215db8929d": {
       "id": "973db925-12b3-4f45-95fe-53215db8929d",
       "parent": "e1188a09-95be-4b79-9a10-f7c376fa04a0",
-      "children": [
-        "a8052b4d-65ed-4e55-8233-062113ebe18f"
-      ],
+      "children": ["a8052b4d-65ed-4e55-8233-062113ebe18f"],
       "last_state_change": 1710950132.2983754,
       "state": 64,
       "task_spec": "Process_top_level.EndJoin",
@@ -82,9 +73,7 @@
     "aa3991dd-2e91-4210-89e1-594245a0cf15": {
       "id": "aa3991dd-2e91-4210-89e1-594245a0cf15",
       "parent": "098e4fc2-a399-4325-b0a9-76d6c330fbf4",
-      "children": [
-        "270d76e0-c1fe-4add-b58e-d5a51214a37b"
-      ],
+      "children": ["270d76e0-c1fe-4add-b58e-d5a51214a37b"],
       "last_state_change": 1710947480.247028,
       "state": 64,
       "task_spec": "top_script_task",
@@ -96,9 +85,7 @@
     "e1188a09-95be-4b79-9a10-f7c376fa04a0": {
       "id": "e1188a09-95be-4b79-9a10-f7c376fa04a0",
       "parent": "270d76e0-c1fe-4add-b58e-d5a51214a37b",
-      "children": [
-        "973db925-12b3-4f45-95fe-53215db8929d"
-      ],
+      "children": ["973db925-12b3-4f45-95fe-53215db8929d"],
       "last_state_change": 1710950132.2913136,
       "state": 64,
       "task_spec": "Event_1swh8gs",
@@ -119,9 +106,7 @@
         "description": "BPMN Task",
         "manual": false,
         "lookahead": 2,
-        "inputs": [
-          "Process_top_level.EndJoin"
-        ],
+        "inputs": ["Process_top_level.EndJoin"],
         "outputs": [],
         "bpmn_id": null,
         "bpmn_name": null,
@@ -137,12 +122,8 @@
         "description": "Default End Event",
         "manual": false,
         "lookahead": 2,
-        "inputs": [
-          "top_call_activity"
-        ],
-        "outputs": [
-          "Process_top_level.EndJoin"
-        ],
+        "inputs": ["top_call_activity"],
+        "outputs": ["Process_top_level.EndJoin"],
         "bpmn_id": "Event_1swh8gs",
         "bpmn_name": null,
         "lane": null,
@@ -163,12 +144,8 @@
         "description": "BPMN Task",
         "manual": false,
         "lookahead": 2,
-        "inputs": [
-          "Event_1swh8gs"
-        ],
-        "outputs": [
-          "End"
-        ],
+        "inputs": ["Event_1swh8gs"],
+        "outputs": ["End"],
         "bpmn_id": null,
         "bpmn_name": null,
         "lane": null,
@@ -184,9 +161,7 @@
         "manual": false,
         "lookahead": 2,
         "inputs": [],
-        "outputs": [
-          "StartEvent_1"
-        ],
+        "outputs": ["StartEvent_1"],
         "bpmn_id": null,
         "bpmn_name": null,
         "lane": null,
@@ -201,12 +176,8 @@
         "description": "Default Start Event",
         "manual": false,
         "lookahead": 2,
-        "inputs": [
-          "Start"
-        ],
-        "outputs": [
-          "top_script_task"
-        ],
+        "inputs": ["Start"],
+        "outputs": ["top_script_task"],
         "bpmn_id": "StartEvent_1",
         "bpmn_name": null,
         "lane": null,
@@ -227,12 +198,8 @@
         "description": "Call Activity",
         "manual": false,
         "lookahead": 2,
-        "inputs": [
-          "top_script_task"
-        ],
-        "outputs": [
-          "Event_1swh8gs"
-        ],
+        "inputs": ["top_script_task"],
+        "outputs": ["Event_1swh8gs"],
         "bpmn_id": "top_call_activity",
         "bpmn_name": "Top Call Activity",
         "lane": null,
@@ -251,12 +218,8 @@
         "description": "Script Task",
         "manual": false,
         "lookahead": 2,
-        "inputs": [
-          "StartEvent_1"
-        ],
-        "outputs": [
-          "top_call_activity"
-        ],
+        "inputs": ["StartEvent_1"],
+        "outputs": ["top_call_activity"],
         "bpmn_id": "top_script_task",
         "bpmn_name": "Top Script Task",
         "lane": null,
@@ -312,12 +275,8 @@
           "description": "Subprocess",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "sub_manual_task"
-          ],
-          "outputs": [
-            "sub_script_task_two"
-          ],
+          "inputs": ["sub_manual_task"],
+          "outputs": ["sub_script_task_two"],
           "bpmn_id": "call_activity_sub_process",
           "bpmn_name": "Call Activity Sub Process",
           "lane": null,
@@ -336,9 +295,7 @@
           "description": "BPMN Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "Process_sub_level.EndJoin"
-          ],
+          "inputs": ["Process_sub_level.EndJoin"],
           "outputs": [],
           "bpmn_id": null,
           "bpmn_name": null,
@@ -354,12 +311,8 @@
           "description": "Default End Event",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "sub_script_task_two"
-          ],
-          "outputs": [
-            "Process_sub_level.EndJoin"
-          ],
+          "inputs": ["sub_script_task_two"],
+          "outputs": ["Process_sub_level.EndJoin"],
           "bpmn_id": "EndEvent_1",
           "bpmn_name": null,
           "lane": null,
@@ -382,12 +335,8 @@
           "description": "BPMN Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "EndEvent_1"
-          ],
-          "outputs": [
-            "End"
-          ],
+          "inputs": ["EndEvent_1"],
+          "outputs": ["End"],
           "bpmn_id": null,
           "bpmn_name": null,
           "lane": null,
@@ -403,9 +352,7 @@
           "manual": false,
           "lookahead": 2,
           "inputs": [],
-          "outputs": [
-            "StartEvent_1"
-          ],
+          "outputs": ["StartEvent_1"],
           "bpmn_id": null,
           "bpmn_name": null,
           "lane": null,
@@ -420,12 +367,8 @@
           "description": "Default Start Event",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "Start"
-          ],
-          "outputs": [
-            "sub_script_task"
-          ],
+          "inputs": ["Start"],
+          "outputs": ["sub_script_task"],
           "bpmn_id": "StartEvent_1",
           "bpmn_name": null,
           "lane": null,
@@ -446,12 +389,8 @@
           "description": "Manual Task",
           "manual": true,
           "lookahead": 2,
-          "inputs": [
-            "sub_script_task"
-          ],
-          "outputs": [
-            "call_activity_sub_process"
-          ],
+          "inputs": ["sub_script_task"],
+          "outputs": ["call_activity_sub_process"],
           "bpmn_id": "sub_manual_task",
           "bpmn_name": "Sub Manual Task",
           "lane": null,
@@ -469,12 +408,8 @@
           "description": "Script Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "StartEvent_1"
-          ],
-          "outputs": [
-            "sub_manual_task"
-          ],
+          "inputs": ["StartEvent_1"],
+          "outputs": ["sub_manual_task"],
           "bpmn_id": "sub_script_task",
           "bpmn_name": "Sub Script Task",
           "lane": null,
@@ -500,12 +435,8 @@
           "description": "Script Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "call_activity_sub_process"
-          ],
-          "outputs": [
-            "EndEvent_1"
-          ],
+          "inputs": ["call_activity_sub_process"],
+          "outputs": ["EndEvent_1"],
           "bpmn_id": "sub_script_task_two",
           "bpmn_name": "Sub Script Task Two",
           "lane": null,
@@ -555,12 +486,8 @@
           "description": "BPMN Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "Event_00vjfmy"
-          ],
-          "outputs": [
-            "End"
-          ],
+          "inputs": ["Event_00vjfmy"],
+          "outputs": ["End"],
           "bpmn_id": null,
           "bpmn_name": null,
           "lane": null,
@@ -575,9 +502,7 @@
           "description": "BPMN Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "call_activity_sub_process.EndJoin"
-          ],
+          "inputs": ["call_activity_sub_process.EndJoin"],
           "outputs": [],
           "bpmn_id": null,
           "bpmn_name": null,
@@ -593,12 +518,8 @@
           "description": "Default End Event",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "sub_level_sub_process_script_task"
-          ],
-          "outputs": [
-            "call_activity_sub_process.EndJoin"
-          ],
+          "inputs": ["sub_level_sub_process_script_task"],
+          "outputs": ["call_activity_sub_process.EndJoin"],
           "bpmn_id": "Event_00vjfmy",
           "bpmn_name": null,
           "lane": null,
@@ -619,12 +540,8 @@
           "description": "Default Start Event",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "Start"
-          ],
-          "outputs": [
-            "sub_level_sub_process_script_task"
-          ],
+          "inputs": ["Start"],
+          "outputs": ["sub_level_sub_process_script_task"],
           "bpmn_id": "Event_0yfq3gm",
           "bpmn_name": null,
           "lane": null,
@@ -646,9 +563,7 @@
           "manual": false,
           "lookahead": 2,
           "inputs": [],
-          "outputs": [
-            "Event_0yfq3gm"
-          ],
+          "outputs": ["Event_0yfq3gm"],
           "bpmn_id": null,
           "bpmn_name": null,
           "lane": null,
@@ -663,12 +578,8 @@
           "description": "Script Task",
           "manual": false,
           "lookahead": 2,
-          "inputs": [
-            "Event_0yfq3gm"
-          ],
-          "outputs": [
-            "Event_00vjfmy"
-          ],
+          "inputs": ["Event_0yfq3gm"],
+          "outputs": ["Event_00vjfmy"],
           "bpmn_id": "sub_level_sub_process_script_task",
           "bpmn_name": "Sub Level Sub Process Script Task",
           "lane": null,
@@ -718,7 +629,6 @@
   "subprocesses": {
     "270d76e0-c1fe-4add-b58e-d5a51214a37b": {
       "data": {
-        "validate_only": false,
         "top_level_data_object": "a",
         "sub_level_data_object_two": "c",
         "sub_level_data_object_three": "d"
@@ -730,9 +640,7 @@
         "0315382d-fdf6-4c27-8d7d-63dddf0b05fb": {
           "id": "0315382d-fdf6-4c27-8d7d-63dddf0b05fb",
           "parent": "8efb7c04-82d1-459f-b0f8-778782dd7f0e",
-          "children": [
-            "5eb9e777-cfbf-4ef9-8ba8-79fa5d172b7e"
-          ],
+          "children": ["5eb9e777-cfbf-4ef9-8ba8-79fa5d172b7e"],
           "last_state_change": 1710950132.2467537,
           "state": 64,
           "task_spec": "Process_sub_level.EndJoin",
@@ -744,9 +652,7 @@
         "186869f9-6992-4a79-86dc-365c3906dd64": {
           "id": "186869f9-6992-4a79-86dc-365c3906dd64",
           "parent": null,
-          "children": [
-            "b9762626-24e2-48d8-939a-ce1b17757781"
-          ],
+          "children": ["b9762626-24e2-48d8-939a-ce1b17757781"],
           "last_state_change": 1710947480.247221,
           "state": 64,
           "task_spec": "Start",
@@ -770,9 +676,7 @@
         "688506fc-ab27-4eb2-a1fa-b435dd958561": {
           "id": "688506fc-ab27-4eb2-a1fa-b435dd958561",
           "parent": "8b51d215-15ab-4e0a-8dfc-e335e685fb52",
-          "children": [
-            "d0c6a2d9-9a43-4ccd-b4e3-ea62872f15ed"
-          ],
+          "children": ["d0c6a2d9-9a43-4ccd-b4e3-ea62872f15ed"],
           "last_state_change": 1710950131.6774,
           "state": 64,
           "task_spec": "sub_manual_task",
@@ -784,9 +688,7 @@
         "8b51d215-15ab-4e0a-8dfc-e335e685fb52": {
           "id": "8b51d215-15ab-4e0a-8dfc-e335e685fb52",
           "parent": "b9762626-24e2-48d8-939a-ce1b17757781",
-          "children": [
-            "688506fc-ab27-4eb2-a1fa-b435dd958561"
-          ],
+          "children": ["688506fc-ab27-4eb2-a1fa-b435dd958561"],
           "last_state_change": 1710947480.280872,
           "state": 64,
           "task_spec": "sub_script_task",
@@ -798,9 +700,7 @@
         "8efb7c04-82d1-459f-b0f8-778782dd7f0e": {
           "id": "8efb7c04-82d1-459f-b0f8-778782dd7f0e",
           "parent": "b482d5b3-a8e0-4903-9d48-0dbce70bd682",
-          "children": [
-            "0315382d-fdf6-4c27-8d7d-63dddf0b05fb"
-          ],
+          "children": ["0315382d-fdf6-4c27-8d7d-63dddf0b05fb"],
           "last_state_change": 1710950132.1689236,
           "state": 64,
           "task_spec": "EndEvent_1",
@@ -812,9 +712,7 @@
         "b482d5b3-a8e0-4903-9d48-0dbce70bd682": {
           "id": "b482d5b3-a8e0-4903-9d48-0dbce70bd682",
           "parent": "d0c6a2d9-9a43-4ccd-b4e3-ea62872f15ed",
-          "children": [
-            "8efb7c04-82d1-459f-b0f8-778782dd7f0e"
-          ],
+          "children": ["8efb7c04-82d1-459f-b0f8-778782dd7f0e"],
           "last_state_change": 1710950131.849423,
           "state": 64,
           "task_spec": "sub_script_task_two",
@@ -826,9 +724,7 @@
         "b9762626-24e2-48d8-939a-ce1b17757781": {
           "id": "b9762626-24e2-48d8-939a-ce1b17757781",
           "parent": "186869f9-6992-4a79-86dc-365c3906dd64",
-          "children": [
-            "8b51d215-15ab-4e0a-8dfc-e335e685fb52"
-          ],
+          "children": ["8b51d215-15ab-4e0a-8dfc-e335e685fb52"],
           "last_state_change": 1710947480.255076,
           "state": 64,
           "task_spec": "StartEvent_1",
@@ -842,9 +738,7 @@
         "d0c6a2d9-9a43-4ccd-b4e3-ea62872f15ed": {
           "id": "d0c6a2d9-9a43-4ccd-b4e3-ea62872f15ed",
           "parent": "688506fc-ab27-4eb2-a1fa-b435dd958561",
-          "children": [
-            "b482d5b3-a8e0-4903-9d48-0dbce70bd682"
-          ],
+          "children": ["b482d5b3-a8e0-4903-9d48-0dbce70bd682"],
           "last_state_change": 1710950131.8426125,
           "state": 64,
           "task_spec": "call_activity_sub_process",
@@ -861,7 +755,6 @@
     },
     "d0c6a2d9-9a43-4ccd-b4e3-ea62872f15ed": {
       "data": {
-        "validate_only": false,
         "top_level_data_object": "a",
         "sub_level_data_object_two": "c",
         "sub_level_data_object_three": "d"
@@ -873,9 +766,7 @@
         "6e6ad5c3-e701-4b59-8a81-4ed2c63bd0e1": {
           "id": "6e6ad5c3-e701-4b59-8a81-4ed2c63bd0e1",
           "parent": "b346574d-c50c-4b4b-864c-685803ebf14e",
-          "children": [
-            "af12522c-811b-4258-a569-65890838677f"
-          ],
+          "children": ["af12522c-811b-4258-a569-65890838677f"],
           "last_state_change": 1710950131.829411,
           "state": 64,
           "task_spec": "call_activity_sub_process.EndJoin",
@@ -887,9 +778,7 @@
         "95974b26-58b8-4fc3-a6d1-2158c1ab6de8": {
           "id": "95974b26-58b8-4fc3-a6d1-2158c1ab6de8",
           "parent": "b22dae80-ce20-4565-983e-e86b98625554",
-          "children": [
-            "b346574d-c50c-4b4b-864c-685803ebf14e"
-          ],
+          "children": ["b346574d-c50c-4b4b-864c-685803ebf14e"],
           "last_state_change": 1710950131.8059175,
           "state": 64,
           "task_spec": "sub_level_sub_process_script_task",
@@ -913,9 +802,7 @@
         "b22dae80-ce20-4565-983e-e86b98625554": {
           "id": "b22dae80-ce20-4565-983e-e86b98625554",
           "parent": "ca86a501-34f8-48fc-b284-cce8e8af058d",
-          "children": [
-            "95974b26-58b8-4fc3-a6d1-2158c1ab6de8"
-          ],
+          "children": ["95974b26-58b8-4fc3-a6d1-2158c1ab6de8"],
           "last_state_change": 1710950131.7874112,
           "state": 64,
           "task_spec": "Event_0yfq3gm",
@@ -929,9 +816,7 @@
         "b346574d-c50c-4b4b-864c-685803ebf14e": {
           "id": "b346574d-c50c-4b4b-864c-685803ebf14e",
           "parent": "95974b26-58b8-4fc3-a6d1-2158c1ab6de8",
-          "children": [
-            "6e6ad5c3-e701-4b59-8a81-4ed2c63bd0e1"
-          ],
+          "children": ["6e6ad5c3-e701-4b59-8a81-4ed2c63bd0e1"],
           "last_state_change": 1710950131.817766,
           "state": 64,
           "task_spec": "Event_00vjfmy",
@@ -943,9 +828,7 @@
         "ca86a501-34f8-48fc-b284-cce8e8af058d": {
           "id": "ca86a501-34f8-48fc-b284-cce8e8af058d",
           "parent": null,
-          "children": [
-            "b22dae80-ce20-4565-983e-e86b98625554"
-          ],
+          "children": ["b22dae80-ce20-4565-983e-e86b98625554"],
           "last_state_change": 1710950131.677685,
           "state": 64,
           "task_spec": "Start",
