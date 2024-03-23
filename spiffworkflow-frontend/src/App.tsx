@@ -33,7 +33,10 @@ export default function App() {
             </AbilityContext.Provider>
           </APIErrorProvider>
         </div>
-        <ReactQueryDevtools initialIsOpen={false} />
+        { 
+          // commenting for cypress 
+          // <ReactQueryDevtools initialIsOpen={false} /> 
+        }
       </QueryClientProvider>
     );
   };
