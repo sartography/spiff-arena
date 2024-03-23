@@ -25,19 +25,16 @@ export default function App() {
 
   const layout = () => {
     return (
-      <QueryClientProvider client={queryClient}>
-        <div className="cds--white">
+      <div className="cds--white">
+        <QueryClientProvider client={queryClient}>
           <APIErrorProvider>
             <AbilityContext.Provider value={ability}>
               <Outlet />
+              <ReactQueryDevtools initialIsOpen={false} />
             </AbilityContext.Provider>
           </APIErrorProvider>
-        </div>
-        { 
-          // commenting for cypress 
-          // <ReactQueryDevtools initialIsOpen={false} /> 
-        }
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </div>
     );
   };
   const router = createBrowserRouter([
