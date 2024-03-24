@@ -49,10 +49,14 @@ export const usePermissionFetcher = (
       });
     }
 
-    // Query functions must always return data, but we don't need to use it
+    /** Query functions used by TanStack Query (React Query)
+     * must always return data, but we don't need to use it
+     */
+
     return true;
   };
 
+  /** TanStack (React Query) trigger to do it's SWR state/cache thing */
   useQuery({
     queryKey: ['permissions-check', permissionsToCheck || {}],
     queryFn: () => checkPermissions(),

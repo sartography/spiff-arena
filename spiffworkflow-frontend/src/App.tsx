@@ -1,5 +1,4 @@
 import { defineAbility } from '@casl/ability';
-import React from 'react';
 
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -23,6 +22,11 @@ export default function App() {
     ];
   };
 
+  /**
+   * Note that QueryClientProvider and ReactQueryDevTools
+   * are React Qery, now branded under the Tanstack packages.
+   * https://tanstack.com/query/latest
+   */
   const layout = () => {
     return (
       <div className="cds--white">
