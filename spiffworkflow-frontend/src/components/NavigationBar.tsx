@@ -174,7 +174,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     return null;
   };
 
-  const configurationElement = () => {
+  const configurationElement = (closeSideNavMenuIfExpanded?: Function) => {
     return (
       <Can
         I="GET"
@@ -197,6 +197,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                       <HeaderMenuItem
                         element={Link}
                         to="/configuration"
+                        onClick={closeSideNavMenuIfExpanded}
                         isCurrentPage={isActivePage('/configuration')}
                       >
                         Configuration
@@ -233,7 +234,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     );
   };
 
-  const headerMenuItems = () => {
+  const headerMenuItems = (closeSideNavMenuIfExpanded?: Function) => {
     if (!UserService.isLoggedIn()) {
       return null;
     }
@@ -243,6 +244,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           <HeaderMenuItem<LinkProps>
             element={Link}
             to="/"
+            onClick={closeSideNavMenuIfExpanded}
             isCurrentPage={isActivePage('/')}
           >
             <div>Home</div>
@@ -254,6 +256,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <HeaderMenuItem
               element={Link}
               to={processGroupPath}
+              onClick={closeSideNavMenuIfExpanded}
               isCurrentPage={isActivePage(processGroupPath)}
               data-qa="header-nav-processes"
             >
@@ -270,6 +273,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <HeaderMenuItem
               element={Link}
               to="/process-instances"
+              onClick={closeSideNavMenuIfExpanded}
               isCurrentPage={isActivePage('/process-instances')}
             >
               Process Instances
@@ -281,6 +285,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <HeaderMenuItem
               element={Link}
               to="/messages"
+              onClick={closeSideNavMenuIfExpanded}
               isCurrentPage={isActivePage('/messages')}
             >
               Messages
@@ -292,13 +297,14 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <HeaderMenuItem
               element={Link}
               to="/data-stores"
+              onClick={closeSideNavMenuIfExpanded}
               isCurrentPage={isActivePage('/data-stores')}
             >
               Data Stores
             </HeaderMenuItem>
           </SpiffTooltip>
         </Can>
-        {configurationElement()}
+        {configurationElement(closeSideNavMenuIfExpanded)}
         <ExtensionUxElementForDisplay
           displayLocation="header_menu_item"
           elementCallback={extensionHeaderMenuItemElement}
@@ -331,42 +337,57 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
   if (activeKey && ability) {
     return (
       <HeaderContainer
-        render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (
-          <Header aria-label="IBM Platform Name" className="cds--g100">
-            <SkipToContent />
-            <HeaderMenuButton
-              data-qa="header-menu-expand-button"
-              aria-label="Open menu"
-              onClick={onClickSideNavExpand}
-              isActive={isSideNavExpanded}
-            />
-            <HeaderName
-              element={Link}
-              to="/"
-              prefix=""
-              data-qa="spiffworkflow-logo"
-            >
-              <img src={logo} className="app-logo" alt="logo" />
-            </HeaderName>
-            <HeaderNavigation
-              data-qa="main-nav-header"
-              aria-label="Spiffworkflow"
-            >
-              {headerMenuItems()}
-            </HeaderNavigation>
-            <SideNav
-              data-qa="side-nav-items"
-              aria-label="Side navigation"
-              expanded={isSideNavExpanded}
-              isPersistent={false}
-            >
-              <SideNavItems>
-                <HeaderSideNavItems>{headerMenuItems()}</HeaderSideNavItems>
-              </SideNavItems>
-            </SideNav>
-            <HeaderGlobalBar>{logoutAction()}</HeaderGlobalBar>
-          </Header>
-        )}
+        render={({ isSideNavExpanded, onClickSideNavExpand }: any) => {
+          // define function to call onClickSideNavExpand if the side nav is not expanded
+          // and the user clicks on a header menu item
+          function closeSideNavMenuIfExpanded() {
+            if (isSideNavExpanded) {
+              // this function that is yielded to us by carbon is more of a toggle than an expand.
+              // here we are using it to close the menu if it is open.
+              onClickSideNavExpand();
+            }
+          }
+
+          return (
+            <Header aria-label="IBM Platform Name" className="cds--g100">
+              <SkipToContent />
+              <HeaderMenuButton
+                data-qa="header-menu-expand-button"
+                aria-label="Open menu"
+                onClick={onClickSideNavExpand}
+                isActive={isSideNavExpanded}
+              />
+              <HeaderName
+                element={Link}
+                to="/"
+                onClick={closeSideNavMenuIfExpanded}
+                prefix=""
+                data-qa="spiffworkflow-logo"
+              >
+                <img src={logo} className="app-logo" alt="logo" />
+              </HeaderName>
+              <HeaderNavigation
+                data-qa="main-nav-header"
+                aria-label="Spiffworkflow"
+              >
+                {headerMenuItems()}
+              </HeaderNavigation>
+              <SideNav
+                data-qa="side-nav-items"
+                aria-label="Side navigation"
+                expanded={isSideNavExpanded}
+                isPersistent={false}
+              >
+                <SideNavItems>
+                  <HeaderSideNavItems>
+                    {headerMenuItems(closeSideNavMenuIfExpanded)}
+                  </HeaderSideNavItems>
+                </SideNavItems>
+              </SideNav>
+              <HeaderGlobalBar>{logoutAction()}</HeaderGlobalBar>
+            </Header>
+          );
+        }}
       />
     );
   }

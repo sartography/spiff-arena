@@ -35,8 +35,6 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
 Cypress.Commands.add('navigateToHome', () => {
   cy.getBySel('header-menu-expand-button').click();
   cy.getBySel('side-nav-items').contains('Home').click();
-  // ensure we close the nav
-  cy.getBySel('header-menu-expand-button').click();
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
@@ -93,7 +91,8 @@ Cypress.Commands.add('createGroup', (groupId, groupDisplayName) => {
 Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.contains(modelId).should('not.exist');
 
-  cy.contains('Add a process model').click();
+  const dasherizedGroupId = groupId.replace(/\//g, '-');
+  cy.getBySel(`add-process-model-for-group-${dasherizedGroupId}`).click();
   cy.get('input[name=display_name]').type(modelDisplayName);
   cy.get('input[name=display_name]').should('have.value', modelDisplayName);
   cy.get('input[name=id]').should('have.value', modelId);
