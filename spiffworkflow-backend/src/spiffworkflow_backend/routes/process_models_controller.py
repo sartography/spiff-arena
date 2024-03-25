@@ -355,7 +355,7 @@ def process_model_test_run(
     return make_response(jsonify(response_json), 200)
 
 
-def process_model_test_generate(modified_process_model_identifier: str, body: dict[str, str]) -> flask.wrappers.Response:
+def process_model_test_generate(modified_process_model_identifier: str, body: dict[str, str | int]) -> flask.wrappers.Response:
     process_instance_id = body["process_instance_id"]
 
     if process_instance_id is None:
@@ -370,7 +370,7 @@ def process_model_test_generate(modified_process_model_identifier: str, body: di
     processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
     process_instance_dict = processor.serialize()
     test_case_dict = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
-        process_instance_dict, test_case_identifier=test_case_identifier
+        process_instance_dict, test_case_identifier=str(test_case_identifier)
     )
 
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
