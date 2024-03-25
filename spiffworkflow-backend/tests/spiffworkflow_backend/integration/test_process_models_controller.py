@@ -138,16 +138,18 @@ class TestProcessModelsController(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
-        url = f"/v1.0/process-model-tests/{process_model.modified_process_model_identifier()}/{process_instance.id}"
+        url = f"/v1.0/process-model-tests/create/{process_model.modified_process_model_identifier()}"
         response = client.post(
             url,
             headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps({"process_instance_id": process_instance_id}),
         )
         assert response.status_code == 200
 
-        test_case_name = f"test_case_for_process_instance_{process_instance_id}"
+        test_case_identifier = f"test_case_for_process_instance_{process_instance_id}"
         expected_specification = {
-            test_case_name: {
+            test_case_identifier: {
                 "tasks": {
                     "Process_sub_level:sub_manual_task": {"data": [{}]},
                     "call_activity_sub_process:sub_level_sub_process_user_task": {"data": [{"firstName": "Chuck"}]},

@@ -72,7 +72,8 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
-    {"path": "/process-model-tests", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests/create", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests/run", "relevant_permissions": ["create"]},
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]

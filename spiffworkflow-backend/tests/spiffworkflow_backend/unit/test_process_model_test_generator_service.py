@@ -18,13 +18,13 @@ class TestProcessModelTestGeneratorService(BaseTest):
         with open(process_instance_json_file) as f:
             process_instance_json = f.read()
         process_instance_dict = json.loads(process_instance_json)
-        test_case_name = "our_test_case"
+        test_case_identifier = "our_test_case"
 
         bpmn_unit_test_specification = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
-            process_instance_dict, test_case_name=test_case_name
+            process_instance_dict, test_case_identifier=test_case_identifier
         )
         expected_specification = {
-            test_case_name: {
+            test_case_identifier: {
                 "tasks": {
                     "Process_sub_level:sub_manual_task": {"data": [{}]},
                     "call_activity_sub_process:sub_level_sub_process_user_task": {"data": [{"firstName": "Chuck"}]},
@@ -66,7 +66,7 @@ class TestProcessModelTestGeneratorService(BaseTest):
             process_model_directory_path=process_model_path,
             process_model_directory_for_test_discovery=process_model_path,
             test_case_file="test_main.json",
-            test_case_identifier=test_case_name,
+            test_case_identifier=test_case_identifier,
         )
         process_model_test_runner.run()
 

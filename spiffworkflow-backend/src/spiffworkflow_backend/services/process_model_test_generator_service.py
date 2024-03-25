@@ -8,7 +8,7 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 class ProcessModelTestGeneratorService:
     @classmethod
     def generate_test_from_process_instance_dict(
-        cls, process_instance_dict: dict, test_case_name: str = "auto_generated_test_case"
+        cls, process_instance_dict: dict, test_case_identifier: str = "auto_generated_test_case"
     ) -> dict:
         wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
         serializer = BpmnWorkflowSerializer(wf_spec_converter)
@@ -32,7 +32,7 @@ class ProcessModelTestGeneratorService:
             cls.remove_duplicates(previous_task_data, current_task_data)
             bpmn_unit_test_specification["tasks"][bpmn_task_identifier]["data"].append(current_task_data)
 
-        return {test_case_name: bpmn_unit_test_specification}
+        return {test_case_identifier: bpmn_unit_test_specification}
 
     @classmethod
     def remove_duplicates(cls, dict_one: dict, dict_two: dict) -> None:
