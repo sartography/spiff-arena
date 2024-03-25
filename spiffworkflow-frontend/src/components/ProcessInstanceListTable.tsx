@@ -9,6 +9,7 @@ import {
   TableHeader,
   Stack,
   ButtonSet,
+  TableCell,
 } from '@carbon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -519,12 +520,14 @@ export default function ProcessInstanceListTable({
         const piShowButtonElement = (
           <Button
             kind="ghost"
+            className="pi-show-new-tab-button"
             target="_blank"
             href={piLink}
-            style={{ width: '60px' }}
+            style={{ width: '50px' }}
             size="sm"
             renderIcon={ArrowUpRight}
-            iconDescription="Open instance in a new tab"
+            iconDescription="Open instance in new tab"
+            tooltipPosition="left"
             hasIconOnly
           />
         );
@@ -536,12 +539,12 @@ export default function ProcessInstanceListTable({
         ];
         if (!(processInstance.status in statusesToExcludeTaskButton)) {
           currentRow.push(
-            <td>
+            <TableCell align="right">
               <ButtonSet>
-                {piShowButtonElement}
                 {goButtonElement}
+                {piShowButtonElement}
               </ButtonSet>
-            </td>
+            </TableCell>
           );
         } else {
           currentRow.push(<td>{piShowButtonElement}</td>);
