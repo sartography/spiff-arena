@@ -52,14 +52,11 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
-  const addErrorCallback = useCallback(
-    (error: ErrorForDisplay) => {
-      addError(error);
-      // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [addError]
-  );
+  const addErrorCallback = useCallback((error: ErrorForDisplay) => {
+    addError(error);
+    // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // if a user can complete a task then the for-me page should
   // always work for them so use that since it will work in all cases
