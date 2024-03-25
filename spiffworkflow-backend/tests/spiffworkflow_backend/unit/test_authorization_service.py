@@ -468,6 +468,7 @@ class TestAuthorizationService(BaseTest):
                 ("/user-groups/for-current-user", "read"),
                 ("/users/exists/by-username", "create"),
                 ("/users/search", "read"),
+                ("/upsearch-locations", "read"),
             ]
         )
 
