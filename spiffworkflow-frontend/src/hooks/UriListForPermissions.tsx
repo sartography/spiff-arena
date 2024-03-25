@@ -10,7 +10,7 @@ export const useUriListForPermissions = () => {
       messageInstanceListPath: '/v1.0/messages',
       dataStoreListPath: '/v1.0/data-stores',
       extensionListPath: '/v1.0/extensions',
-      extensionPath: `/v1.0/extensions/${params.process_model}`,
+      extensionPath: `/v1.0/extensions/${params.page_identifier}`,
       processGroupListPath: '/v1.0/process-groups',
       processGroupShowPath: `/v1.0/process-groups/${params.process_group_id}`,
       processInstanceActionPath: `/v1.0/process-instances/${params.process_model_id}/${params.process_instance_id}`,
@@ -40,7 +40,13 @@ export const useUriListForPermissions = () => {
       userSearch: `/v1.0/users/search`,
       userExists: `/v1.0/users/exists/by-username`,
     };
-  }, [params]);
+  }, [
+    params.process_model_id,
+    params.file_name,
+    params.process_group_id,
+    params.process_instance_id,
+    params.page_identifier,
+  ]);
 
   return { targetUris };
 };

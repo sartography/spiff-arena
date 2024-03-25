@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
-import { useParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -9,7 +9,6 @@ import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessInstanceReportList() {
-  const params = useParams();
   const [processInstanceReports, setProcessInstanceReports] = useState([]);
 
   const { targetUris } = useUriListForPermissions();
@@ -23,7 +22,7 @@ export default function ProcessInstanceReportList() {
       path: `/process-instances/reports`,
       successCallback: setProcessInstanceReports,
     });
-  }, [params]);
+  }, []);
 
   const buildTable = () => {
     const rows = processInstanceReports.map((row) => {

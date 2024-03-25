@@ -218,11 +218,7 @@ export default function Extension({
       path: targetUris.extensionListPath,
       successCallback: processExtensionResult,
     });
-  }, [
-    setConfigsIfDesiredSchemaFile,
-    targetUris.extensionListPath,
-    targetUris.extensionPath,
-  ]);
+  }, [setConfigsIfDesiredSchemaFile, targetUris.extensionListPath]);
 
   const processSubmitResult = (
     pageComponent: UiSchemaPageComponent,

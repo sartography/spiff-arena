@@ -93,7 +93,7 @@ export default function ReactFormEditor() {
         successCallback: processResult,
       });
     }
-  }, [params, modifiedProcessModelId]);
+  }, [params.file_name, modifiedProcessModelId]);
 
   useEffect(() => {
     if (processModelFile && processModel) {
