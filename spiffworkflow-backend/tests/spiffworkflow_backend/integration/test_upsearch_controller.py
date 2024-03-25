@@ -29,4 +29,5 @@ class TestUpsearchControllerController(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json == expected
+        assert "locations" in response.json
+        assert response.json["locations"] == expected

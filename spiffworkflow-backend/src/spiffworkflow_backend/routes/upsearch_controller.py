@@ -11,4 +11,4 @@ def upsearch_locations(
 ) -> Any:
     upsearch_locations = UpsearchService.upsearch_locations(location)
 
-    return make_response(jsonify(upsearch_locations), 200)
+    return make_response(jsonify({"locations": upsearch_locations}), 200)
