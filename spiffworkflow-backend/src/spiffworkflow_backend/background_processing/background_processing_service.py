@@ -13,7 +13,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
@@ -50,11 +49,8 @@ class BackgroundProcessingService:
     def process_message_instances_with_app_context(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
-            try:
-                ProcessInstanceLockService.set_thread_local_locking_context("bg:messages")
-                MessageService.correlate_all_message_instances()
-            except ProcessInstanceIsAlreadyLockedError:
-                return
+            ProcessInstanceLockService.set_thread_local_locking_context("bg:messages")
+            MessageService.correlate_all_message_instances()
 
     def remove_stale_locks(self) -> None:
         """If something has been locked for a certain amount of time it is probably stale so unlock it."""
