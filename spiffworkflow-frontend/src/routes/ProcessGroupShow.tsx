@@ -71,6 +71,7 @@ export default function ProcessGroupShow() {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
+    const dasherizedProcessGroupId = modifiedProcessGroupId.replace(/:/g, '-');
     const showNoItemsDisplayText =
       (processGroup.process_groups || []).length < 1 &&
       (processGroup.process_models || []).length < 1;
@@ -129,7 +130,10 @@ export default function ProcessGroupShow() {
               a={targetUris.processModelCreatePath}
               ability={ability}
             >
-              <Button href={`/process-models/${modifiedProcessGroupId}/new`}>
+              <Button
+                href={`/process-models/${modifiedProcessGroupId}/new`}
+                data-qa={`add-process-model-for-group-${dasherizedProcessGroupId}`}
+              >
                 Add a process model
               </Button>
             </Can>

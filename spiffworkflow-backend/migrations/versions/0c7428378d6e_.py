@@ -446,7 +446,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.ForeignKeyConstraint(['task_model_id'], ['task.id'], name='human_task_ibfk_5'),
+    sa.ForeignKeyConstraint(['task_model_id'], ['task.id']),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('human_task', schema=None) as batch_op:

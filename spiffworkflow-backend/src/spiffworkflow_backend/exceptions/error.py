@@ -55,3 +55,7 @@ class InvalidPermissionError(Exception):
 
 class InvalidRedirectUrlError(Exception):
     pass
+
+
+class TaskMismatchError(Exception):
+    pass

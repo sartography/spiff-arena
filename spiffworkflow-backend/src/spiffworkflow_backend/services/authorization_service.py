@@ -72,7 +72,8 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
-    {"path": "/process-model-tests", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests/create", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests/run", "relevant_permissions": ["create"]},
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
@@ -541,8 +542,11 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/script-assist/enabled"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/script-assist/process-message"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/upsearch-locations"))
+
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/public/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
         return permissions_to_assign
 
