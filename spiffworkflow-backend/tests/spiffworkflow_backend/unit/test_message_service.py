@@ -1,3 +1,5 @@
+import time
+
 from flask import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.db import db
@@ -5,6 +7,7 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -289,3 +292,71 @@ class TestMessageService(BaseTest):
             message_name="travel_start_test_v2"
         ).first()
         assert message_triggerable_process_model is None
+
+    def test_correlate_can_handle_process_instance_already_locked(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        # self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
+
+        process_model_sender = load_test_spec(
+            "test_group/message_sender",
+            process_model_source_directory="message_send_two_conversations",
+            bpmn_file_name="message_sender",
+        )
+        load_test_spec(
+            "test_group/message_receiver_one",
+            process_model_source_directory="message_send_two_conversations",
+            bpmn_file_name="message_receiver_one",
+        )
+        load_test_spec(
+            "test_group/message_receiver_two",
+            process_model_source_directory="message_send_two_conversations",
+            bpmn_file_name="message_receiver_two",
+        )
+
+        user = self.find_or_create_user()
+
+        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model_sender.id, user
+        )
+
+        processor_sender = ProcessInstanceProcessor(process_instance)
+        processor_sender.do_engine_steps(save=True)
+
+        # At this point, the message_sender process has fired two different messages but those
+        # processes have not started, and it is now paused, waiting for to receive a message. so
+        # we should have two sends and a receive.
+        assert MessageInstanceModel.query.filter_by(process_instance_id=process_instance.id).count() == 3
+        assert MessageInstanceModel.query.count() == 3  # all messages are related to the instance
+        orig_send_messages = MessageInstanceModel.query.filter_by(message_type="send").all()
+        assert len(orig_send_messages) == 2
+        assert MessageInstanceModel.query.filter_by(message_type="receive").count() == 1
+
+        queue_entry = ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).first()
+        assert queue_entry is not None
+        queue_entry.locked_by = "test:test_waiting"
+        queue_entry.locked_at_seconds = round(time.time())
+        db.session.add(queue_entry)
+        db.session.commit()
+
+        MessageService.correlate_all_message_instances()
+
+        assert ProcessInstanceModel.query.count() == 3
+        MessageService.correlate_all_message_instances()
+
+        message_send_instances = MessageInstanceModel.query.filter_by(name="Message Response Two", message_type="send").all()
+        assert len(message_send_instances) == 1
+        message_send_instance = message_send_instances[0]
+        assert message_send_instance.status == "ready"
+        assert message_send_instance.failure_cause is None
+
+        message_receive_instances = MessageInstanceModel.query.filter_by(
+            name="Message Response Two", message_type="receive"
+        ).all()
+        assert len(message_receive_instances) == 1
+        message_receive_instance = message_receive_instances[0]
+        assert message_receive_instance.status == "ready"
+        assert message_receive_instance.failure_cause is None

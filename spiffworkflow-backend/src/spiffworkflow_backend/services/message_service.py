@@ -22,6 +22,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
@@ -82,25 +83,34 @@ class MessageService:
             # Assure we can send the message, otherwise keep going.
             if message_instance_receive is None or not receiving_process.can_receive_message():
                 message_instance_send.status = "ready"
-                message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
                 db.session.commit()
                 return None
 
-            # Set the receiving message to running, so it is not altered elswhere ...
-            message_instance_receive.status = "running"
+            try:
+                # we may have to pass in additional_processing_identifier here if we ever call this from celery.
+                # currently only controllers and apscheduler call it.
+                with ProcessInstanceQueueService.dequeued(receiving_process):
+                    # Set the receiving message to running, so it is not altered elswhere ...
+                    message_instance_receive.status = "running"
 
-            cls.process_message_receive(
-                receiving_process, message_instance_receive, message_instance_send, execution_mode=execution_mode
-            )
-            message_instance_receive.status = "completed"
-            message_instance_receive.counterpart_id = message_instance_send.id
-            db.session.add(message_instance_receive)
-            message_instance_send.status = "completed"
-            message_instance_send.counterpart_id = message_instance_receive.id
-            db.session.add(message_instance_send)
-            db.session.commit()
-            return message_instance_receive
+                    cls.process_message_receive(
+                        receiving_process, message_instance_receive, message_instance_send, execution_mode=execution_mode
+                    )
+                    message_instance_receive.status = "completed"
+                    message_instance_receive.counterpart_id = message_instance_send.id
+                    db.session.add(message_instance_receive)
+                    message_instance_send.status = "completed"
+                    message_instance_send.counterpart_id = message_instance_receive.id
+                    db.session.add(message_instance_send)
+                    db.session.commit()
+                    return message_instance_receive
+
+            except ProcessInstanceIsAlreadyLockedError:
+                message_instance_send.status = "ready"
+                db.session.add(message_instance_send)
+                db.session.commit()
+                return None
 
         except Exception as exception:
             db.session.rollback()
