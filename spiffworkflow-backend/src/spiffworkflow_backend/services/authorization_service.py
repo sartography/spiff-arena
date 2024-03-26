@@ -542,6 +542,8 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/script-assist/enabled"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/script-assist/process-message"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/upsearch-locations"))
+
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/public/*"))

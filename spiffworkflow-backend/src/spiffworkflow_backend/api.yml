@@ -457,6 +457,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessGroup"
 
+  /upsearch-locations:
+    parameters:
+      - name: location
+        in: query
+        required: false
+        description: The location to perform the upsearch
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.upsearch_controller.upsearch_locations
+      summary: Returns upsearch locations for the given location
+      tags:
+        - Upsearch
+      responses:
+        "200":
+          description: Upsearch Locations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Locations"
+
   /process-models:
     parameters:
       - name: process_group_identifier
@@ -3159,6 +3180,10 @@ components:
         ok:
           type: boolean
           example: true
+    Locations:
+      properties:
+        locations:
+          type: array
     User:
       properties:
         uid:
