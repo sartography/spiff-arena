@@ -21,7 +21,7 @@ export default function SecretShow() {
       path: `/secrets/${params.key}`,
       successCallback: setSecret,
     });
-  }, [params]);
+  }, [params.key]);
 
   const handleSecretValueChange = (event: any) => {
     if (secret) {
