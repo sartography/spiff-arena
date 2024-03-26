@@ -273,6 +273,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /debug/celery-backend-results/{process_instance_id}:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: include_all_failures
+        in: query
+        required: false
+        schema:
+          type: boolean
+    get:
+      operationId: spiffworkflow_backend.routes.debug_controller.celery_backend_results
+      summary: Returns the results from the celery backend for a process instance
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /onboarding:
     get:
       operationId: spiffworkflow_backend.routes.onboarding_controller.get_onboarding
