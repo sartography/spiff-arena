@@ -326,6 +326,10 @@ export interface ErrorForDisplay {
   task_id?: string;
   task_name?: string;
   task_trace?: string[];
+
+  task_type?: string;
+  output_data?: any;
+  expected_data?: any;
 }
 
 export interface AuthenticationParam {
@@ -420,6 +424,10 @@ export interface TestCaseErrorDetails {
   task_line_contents?: string;
   task_line_number?: number;
   task_trace?: string[];
+
+  task_bpmn_type?: string;
+  output_data?: any;
+  expected_data?: any;
 }
 
 export interface TestCaseResult {

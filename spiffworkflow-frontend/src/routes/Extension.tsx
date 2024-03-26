@@ -73,6 +73,7 @@ export default function Extension({
 
   const interpolateNavigationString = useCallback(
     (navigationString: string, baseData: any) => {
+      // This will interpolate patterns like "{task_data_var}" if found in the task data.
       let isValid = true;
       const data = { backend_base_url: BACKEND_BASE_URL, ...baseData };
       const optionString = navigationString.replace(/{(\w+)}/g, (_, k) => {
@@ -224,16 +225,20 @@ export default function Extension({
     pageComponent: UiSchemaPageComponent,
     result: ExtensionApiResponse
   ) => {
+    let taskData = result.task_data;
+    if (pageComponent.on_form_submit?.set_extension_data_from_full_api_result) {
+      taskData = result;
+    }
     if (pageComponent && pageComponent.navigate_to_on_form_submit) {
       const optionString = interpolateNavigationString(
         pageComponent.navigate_to_on_form_submit,
-        result.task_data
+        taskData
       );
       if (optionString !== null) {
         window.location.href = optionString;
       }
     } else {
-      setProcessedTaskData(result.task_data);
+      setProcessedTaskData(taskData);
       if (result.rendered_results_markdown) {
         const newMarkdown = FormattingService.checkForSpiffFormats(
           result.rendered_results_markdown
@@ -277,16 +282,18 @@ export default function Extension({
       }
     } else {
       let postBody: ExtensionPostBody = { extension_input: dataToSubmit };
-      let apiPath = targetUris.extensionPath;
+      let apiPathRaw = targetUris.extensionPath;
       if (pageComponent && pageComponent.on_form_submit) {
-        if (pageComponent.on_form_submit.is_full_api_path) {
-          apiPath = `/${pageComponent.on_form_submit.api_path}`;
-          postBody = dataToSubmit;
+        apiPathRaw = pageComponent.on_form_submit.api_path.replace(/^\/?/, '/');
+        if (!pageComponent.on_form_submit.is_full_api_path) {
+          apiPathRaw = `${targetUris.extensionListPath}/${apiPathRaw}`;
         } else {
-          apiPath = `${targetUris.extensionListPath}/${pageComponent.on_form_submit.api_path}`;
+          postBody = dataToSubmit;
         }
         postBody.ui_schema_action = pageComponent.on_form_submit;
       }
+      const apiPath =
+        interpolateNavigationString(apiPathRaw, dataToSubmit) || apiPathRaw;
 
       // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
       // so we convert undefined values to null recursively so that we can unset values in form fields
