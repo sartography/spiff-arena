@@ -462,7 +462,7 @@ def _task_submit_shared(
     # in the block causes the process instance to go into an error state. for example, when
     # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
     # and the cost is not huge given that this function is not the most common code path in the world.
-    with ProcessInstanceQueueService.dequeued(process_instance):
+    with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
         ProcessInstanceMigrator.run(process_instance)
 
     processor = ProcessInstanceProcessor(
@@ -487,7 +487,7 @@ def _task_submit_shared(
     )
 
     with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(process_instance):
+        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
             ProcessInstanceService.complete_form_task(
                 processor=processor,
                 spiff_task=spiff_task,

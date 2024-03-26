@@ -1,9 +1,12 @@
 import time
 from contextlib import suppress
 
+import pytest
 from flask.app import Flask
+from pytest_mock.plugin import MockerFixture
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -114,3 +117,24 @@ class TestProcessInstanceQueueService(BaseTest):
             assert ProcessInstanceLockService.has_lock(process_instance.id)
 
         assert not ProcessInstanceLockService.has_lock(process_instance.id)
+
+    def test_dequeue_with_retries_works(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_instance = self._create_process_instance()
+        dequeue_mocker = mocker.patch.object(
+            ProcessInstanceQueueService, "_dequeue", side_effect=ProcessInstanceIsAlreadyLockedError
+        )
+        mocker.patch("time.sleep")
+        with pytest.raises(ProcessInstanceIsAlreadyLockedError):
+            with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=5):
+                pass
+        assert dequeue_mocker.call_count == 5
+
+        with pytest.raises(ProcessInstanceIsAlreadyLockedError):
+            with ProcessInstanceQueueService.dequeued(process_instance):
+                pass
+        assert dequeue_mocker.call_count == 6
