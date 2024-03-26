@@ -16,7 +16,7 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-
+from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
 
 class DataSetupService:
     @classmethod
@@ -120,20 +120,34 @@ class DataSetupService:
         if not process_group.messages:
             return
 
-        correlation_keys = {}
-        for correlation_key in process_group.correlation_keys or []:
-            correlation_keys[correlation_key["id"]] = correlation_key["correlation_properties"]
-            reference_cache = ReferenceCacheModel.from_params(
-                correlation_key["id"],
-                correlation_key["id"],
-                ReferenceType.correlation_key.value,
-                "",
-                FileSystemService.relative_location(file_name),
-                correlation_key["correlation_properties"],
-                False,
-            )
-            ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
+        messages_by_identifier = {}
+        correlation_properties_by_message_identifier = {}
+        raw_retrieval_expressions = [expr for exprs in [p.get("retrieval_expressions", []) for p in process_group.correlation_properties or []] for expr in exprs]
 
+        for message in process_group.messages:
+            message_identifier = message.get("id")
+            
+            if not message_identifier:
+                current_app.logger.debug(f"Malformed message: {message}")
+                continue
+
+            message_schema = message.get("schema", {})
+        
+        for raw_retrieval_expression in raw_retrieval_expressions:
+            message_identifier = raw_retrieval_expression.get("message_ref")
+            identifier = raw_retrieval_expression.get("id")
+            retrieval_expression = raw_retrieval_expression.get("formal_expression")
+
+            if not message_identifier or not identifier or not retrieval_expression:
+                current_app.logger.debug(f"Malformed raw_retrieval_expression: {raw_retrieval_expression}")
+                continue
+
+            if message_id not in correlation_properties_by_message_identifier:
+                correlation_properties_by_message_id[message_identifier] = []
+
+            # TODO: wire up to the message
+            correlation_properties_by_message_identifier[message_identifier].append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
+                
         for message in process_group.messages:
             properties = []
             reference_cache = ReferenceCacheModel.from_params(
@@ -156,9 +170,6 @@ class DataSetupService:
                                 "retrieval_expression": retrieval_expression["formal_expression"],
                             }
                         )
-            for key_id in correlation_keys:
-                if Counter(correlation_keys[key_id]) == Counter(properties):
-                    reference_cache.properties["correlation_keys"].append(key_id)
 
             ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
         # If there are correlation properties, update our correlation cache
