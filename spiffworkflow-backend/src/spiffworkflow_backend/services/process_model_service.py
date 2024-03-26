@@ -115,6 +115,17 @@ class ProcessModelService(FileSystemService):
         return process_model.id.startswith(f"{configured_prefix}/")
 
     @classmethod
+    def add_json_data_to_json_file(cls, process_model: ProcessModelInfo, file_name: str, json_data: dict) -> None:
+        full_json_data = json_data
+        process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id_for_file_path()))
+        json_path = os.path.abspath(os.path.join(process_model_path, file_name))
+        if os.path.exists(json_path):
+            with open(json_path) as f:
+                existing_json = json.loads(f.read())
+            full_json_data = {**existing_json, **json_data}
+        cls.write_json_file(json_path, full_json_data)
+
+    @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id_for_file_path()))
         os.makedirs(process_model_path, exist_ok=True)

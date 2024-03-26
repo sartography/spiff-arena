@@ -1023,3 +1023,8 @@ div.onboarding {
 .not-editable {
   pointer-events: none;
 }
+
+.pi-show-new-tab-button {
+  position: relative;
+  left: 6px;
+}

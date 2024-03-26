@@ -52,5 +52,4 @@ class TestDotNotation(BaseTest):
 
         processor.do_engine_steps(save=True)
         actual_data = processor.get_data()
-        del actual_data["validate_only"]
         assert actual_data == expected

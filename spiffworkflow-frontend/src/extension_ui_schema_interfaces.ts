@@ -81,6 +81,7 @@ export interface UiSchemaAction {
    * The api_path to call.
    * This will normally just be the colon delimited process model identifier for the extension minus the extension process group.
    * For example: extensions/path/to/extension -> path:to:extension
+   * This will interpolate patterns like "{task_data_var}" if found in the task data.
    */
   api_path: string;
 
@@ -104,6 +105,13 @@ export interface UiSchemaAction {
    * This file can use jinja and can reference task data created from the process similar markdown used from within a process model.
    */
   results_markdown_filename?: string;
+
+  /**
+   * By default the extension data comes a key called "task_data" in the api result.
+   * This will instead allow the extension data to be set by the full result.
+   * this is useful when making api calls to non-extension apis.
+   */
+  set_extension_data_from_full_api_result?: string;
 
   /**
    * Parameters to grab from the search params of the url.

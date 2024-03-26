@@ -57,7 +57,7 @@ export default function ProcessInstanceReportEdit() {
     }
 
     getProcessInstanceReport();
-  }, [params]);
+  }, [params.report_identifier]);
 
   const editProcessInstanceReport = (event: any) => {
     event.preventDefault();

@@ -226,9 +226,11 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           element={Link}
           to={navItemPage}
           isCurrentPage={isActivePage(navItemPage)}
-          data-qa={`extension-${slugifyString(uxElement.label)}`}
+          data-qa={`extension-${slugifyString(
+            uxElement.label || uxElement.page
+          )}`}
         >
-          {uxElement.label}
+          {uxElement.label || uxElement.page}
         </HeaderMenuItem>
       </SpiffTooltip>
     );
