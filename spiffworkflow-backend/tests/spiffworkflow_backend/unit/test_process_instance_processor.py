@@ -6,10 +6,12 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
@@ -550,7 +552,6 @@ class TestProcessInstanceProcessor(BaseTest):
         }
         data_set_5 = {**data_set_4, **{"a": 1, "we_move_on": True}}
         data_set_6 = {**data_set_5, **{"set_top_level_process_script_after_gate": 1}}
-        data_set_7 = {**data_set_6, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
         expected_task_data = {
             "top_level_script": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},
             "top_level_manual_task_one": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},
@@ -693,7 +694,7 @@ class TestProcessInstanceProcessor(BaseTest):
             .count()
         )
         assert task_models_that_are_predicted_count == 4
-        assert processor_final.get_data() == data_set_7
+        assert processor_final.get_data() == data_set_6
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
@@ -904,3 +905,91 @@ class TestProcessInstanceProcessor(BaseTest):
 
         db.session.delete(process_instance)
         db.session.commit()
+
+    def test_can_persist_given_bpmn_process_dict_when_imported_from_scratch(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/service-task-with-data-obj",
+            process_model_source_directory="service-task-with-data-obj",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        bpmn_process_dict_initial = processor.serialize()
+
+        # clear the database so we know the import is all new
+        meta = db.metadata
+        db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
+        db.session.execute(db.update(BpmnProcessModel).values(direct_parent_process_id=None))
+        for table in reversed(meta.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+        # ensure everything is removed from the sqlalchemy cache when we clear the database
+        # otherwise it gets autoflush errors
+        db.session.expunge_all()
+
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        assert process_instance.bpmn_process_definition_id is None
+
+        ProcessInstanceProcessor.persist_bpmn_process_dict(
+            bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        bpmn_process_dict_after = processor.serialize()
+        self.round_last_state_change(bpmn_process_dict_after)
+        self.round_last_state_change(bpmn_process_dict_initial)
+
+        assert bpmn_process_dict_after == bpmn_process_dict_initial
+
+    def test_can_persist_given_bpmn_process_dict_when_loaded_before(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/service-task-with-data-obj",
+            process_model_source_directory="service-task-with-data-obj",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        bpmn_process_dict_initial = processor.serialize()
+
+        ProcessInstanceProcessor.persist_bpmn_process_dict(
+            bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        bpmn_process_dict_after = processor.serialize()
+        self.round_last_state_change(bpmn_process_dict_after)
+        self.round_last_state_change(bpmn_process_dict_initial)
+
+        assert bpmn_process_dict_after == bpmn_process_dict_initial
+
+    def test_returns_error_if_spiff_task_and_human_task_are_different(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/call_activity_with_manual_task",
+            process_model_source_directory="call_activity_with_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        non_manual_spiff_task = processor.bpmn_process_instance.get_tasks(manual=False)[0]
+        assert human_task_one.task_guid != str(non_manual_spiff_task.id)
+        with pytest.raises(TaskMismatchError):
+            processor.complete_task(non_manual_spiff_task, human_task_one, user=process_instance.process_initiator)

@@ -15,6 +15,7 @@ from spiffworkflow_backend.models.user import UserModel
 # event types take the form [SUBJECT]_[PAST_TENSE_VERB] since subject is not always the same.
 class ProcessInstanceEventType(SpiffEnum):
     process_instance_error = "process_instance_error"
+    process_instance_force_run = "process_instance_force_run"
     process_instance_resumed = "process_instance_resumed"
     process_instance_rewound_to_task = "process_instance_rewound_to_task"
     process_instance_suspended = "process_instance_suspended"
@@ -40,9 +41,7 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
 
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
 
-    error_details = relationship(
-        "ProcessInstanceErrorDetailModel", back_populates="process_instance_event", cascade="delete"
-    )  # type: ignore
+    error_details = relationship("ProcessInstanceErrorDetailModel", back_populates="process_instance_event", cascade="delete")  # type: ignore
 
     @validates("event_type")
     def validate_event_type(self, key: str, value: Any) -> Any:

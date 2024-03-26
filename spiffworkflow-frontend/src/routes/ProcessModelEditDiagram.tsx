@@ -32,7 +32,6 @@ import {
 import { gray } from '@carbon/colors';
 
 import Editor, { DiffEditor } from '@monaco-editor/react';
-
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -193,7 +192,7 @@ export default function ProcessModelEditDiagram() {
         successCallback: fileResult,
       });
     }
-  }, [processModelPath, params]);
+  }, [processModelPath, params.file_name]);
 
   useEffect(() => {
     const bpmnProcessIds = processModelFile?.bpmn_process_ids;

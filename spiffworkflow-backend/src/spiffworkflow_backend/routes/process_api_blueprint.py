@@ -167,6 +167,7 @@ def _process_data_fetcher(
 
     data_objects = bpmn_process_instance.spec.data_objects
     data_object = data_objects.get(process_data_identifier)
+
     if data_object is None:
         raise ApiError(
             error_code="data_object_not_found",
@@ -185,7 +186,7 @@ def _process_data_fetcher(
                 status_code=400,
             )
 
-    process_data_value = bpmn_process_data.get(process_data_identifier)
+    process_data_value = bpmn_process_data.get("data_objects", bpmn_process_data).get(process_data_identifier)
 
     return make_response(
         jsonify(

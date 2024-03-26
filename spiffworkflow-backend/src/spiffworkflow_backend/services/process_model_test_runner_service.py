@@ -30,6 +30,44 @@ from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
 
+DEFAULT_NSMAP = {
+    "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "dc": "http://www.omg.org/spec/DD/20100524/DC",
+}
+
+
+"""
+JSON file name:
+    The name should be in format "test_BPMN_FILE_NAME.json".
+
+BPMN_TASK_IDENTIIFER:
+    can be either task bpmn identifier or in format:
+    [BPMN_PROCESS_ID]:[TASK_BPMN_IDENTIFIER]
+    example: 'BasicServiceTaskProcess:service_task_one'
+    this allows for tasks to share bpmn identifiers across models
+    which is useful for call activities
+
+DATA for tasks:
+    This is an array of task data. This allows for the task to
+    be called multiple times and given different data each time.
+    This is useful for testing loops where each iteration needs
+    different input. The test will fail if the task is called
+    multiple times without task data input for each call.
+
+JSON file format:
+{
+    TEST_CASE_NAME: {
+        "tasks": {
+            BPMN_TASK_IDENTIIFER: {
+            "data": [DATA]
+            }
+        },
+        "expected_output_json": DATA
+    }
+}
+"""
+
 
 class UnrunnableTestCaseError(Exception):
     pass
@@ -53,6 +91,29 @@ class UnsupporterRunnerDelegateGivenError(Exception):
 
 class BpmnFileMissingExecutableProcessError(Exception):
     pass
+
+
+@dataclass
+class TestCaseErrorDetails:
+    error_messages: list[str]
+    task_error_line: str | None = None
+    task_trace: list[str] | None = None
+    task_bpmn_identifier: str | None = None
+    task_bpmn_type: str | None = None
+    task_bpmn_name: str | None = None
+    task_line_number: int | None = None
+    stacktrace: list[str] | None = None
+
+    output_data: dict | None = None
+    expected_data: dict | None = None
+
+
+@dataclass
+class TestCaseResult:
+    passed: bool
+    bpmn_file: str
+    test_case_identifier: str
+    test_case_error_details: TestCaseErrorDetails | None = None
 
 
 def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
@@ -135,25 +196,6 @@ class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
         spiff_task: SpiffTask,
     ) -> str:
         raise Exception("please override this service task in your bpmn unit test json")
-
-
-@dataclass
-class TestCaseErrorDetails:
-    error_messages: list[str]
-    task_error_line: str | None = None
-    task_trace: list[str] | None = None
-    task_bpmn_identifier: str | None = None
-    task_bpmn_name: str | None = None
-    task_line_number: int | None = None
-    stacktrace: list[str] | None = None
-
-
-@dataclass
-class TestCaseResult:
-    passed: bool
-    bpmn_file: str
-    test_case_identifier: str
-    test_case_error_details: TestCaseErrorDetails | None = None
 
 
 class ProcessModelTestRunnerDelegate:
@@ -288,45 +330,6 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
                 self.bpmn_processes_to_file_mappings[bpmn_process_identifier] = file_norm
 
 
-DEFAULT_NSMAP = {
-    "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
-    "bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
-    "dc": "http://www.omg.org/spec/DD/20100524/DC",
-}
-
-
-"""
-JSON file name:
-    The name should be in format "test_BPMN_FILE_NAME_IT_TESTS.json".
-
-BPMN_TASK_IDENTIIFER:
-    can be either task bpmn identifier or in format:
-    [BPMN_PROCESS_ID]:[TASK_BPMN_IDENTIFIER]
-    example: 'BasicServiceTaskProcess:service_task_one'
-    this allows for tasks to share bpmn identifiers across models
-    which is useful for call activities
-
-DATA for tasks:
-    This is an array of task data. This allows for the task to
-    be called multiple times and given different data each time.
-    This is useful for testing loops where each iteration needs
-    different input. The test will fail if the task is called
-    multiple times without task data input for each call.
-
-JSON file format:
-{
-    TEST_CASE_NAME: {
-        "tasks": {
-            BPMN_TASK_IDENTIIFER: {
-            "data": [DATA]
-            }
-        },
-        "expected_output_json": DATA
-    }
-}
-"""
-
-
 class ProcessModelTestRunner:
     """Runs the test case json files for a given process model directory.
 
@@ -401,6 +404,7 @@ class ProcessModelTestRunner:
     def run_test_case(self, bpmn_file: str, test_case_identifier: str, test_case_contents: dict) -> None:
         bpmn_process_instance = self._instantiate_executer(bpmn_file)
         method_overrides = {}
+        # mocking python functions within script tasks
         if "mocks" in test_case_contents:
             for method_name, mock_return_value in test_case_contents["mocks"].items():
                 method_overrides[method_name] = lambda value=mock_return_value: value
@@ -430,23 +434,23 @@ class ProcessModelTestRunner:
 
         error_message = None
         if bpmn_process_instance.is_completed() is False:
-            error_message = [
-                "Expected process instance to complete but it did not.",
-                f"Final data was: {bpmn_process_instance.last_task.data}",
-                f"Last task bpmn id: {bpmn_process_instance.last_task.task_spec.bpmn_id}",
-                f"Last task type: {bpmn_process_instance.last_task.task_spec.__class__.__name__}",
-            ]
+            error_message = {
+                "error_messages": ["Expected process instance to complete but it did not."],
+                "output_data": bpmn_process_instance.last_task.data,
+                "task_bpmn_identifier": bpmn_process_instance.last_task.task_spec.bpmn_id,
+                "task_bpmn_type": bpmn_process_instance.last_task.task_spec.__class__.__name__,
+            }
         elif bpmn_process_instance.success is False:
-            error_message = [
-                "Expected process instance to succeed but it did not.",
-                f"Final data was: {bpmn_process_instance.data}",
-            ]
+            error_message = {
+                "error_messages": ["Expected process instance to succeed but it did not."],
+                "output_data": bpmn_process_instance.data,
+            }
         elif test_case_contents["expected_output_json"] != bpmn_process_instance.data:
-            error_message = [
-                "Expected output did not match actual output:",
-                f"expected: {test_case_contents['expected_output_json']}",
-                f"actual: {bpmn_process_instance.data}",
-            ]
+            error_message = {
+                "error_messages": ["Expected output did not match actual output."],
+                "expected_data": test_case_contents["expected_output_json"],
+                "output_data": bpmn_process_instance.data,
+            }
         self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
     def _execute_task(
@@ -510,14 +514,14 @@ class ProcessModelTestRunner:
         passed: bool,
         bpmn_file: str,
         test_case_identifier: str,
-        error_messages: list[str] | None = None,
+        error_messages: dict | None = None,
         exception: Exception | None = None,
     ) -> None:
         test_case_error_details = None
         if exception is not None:
             test_case_error_details = self._exception_to_test_case_error_details(exception)
         elif error_messages:
-            test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
+            test_case_error_details = TestCaseErrorDetails(**error_messages)
 
         bpmn_file_relative = self._get_relative_path_of_bpmn_file(bpmn_file)
         test_result = TestCaseResult(

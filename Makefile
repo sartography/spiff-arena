@@ -20,6 +20,9 @@ IN_FRONTEND ?= $(DOCKER_COMPOSE) run $(FRONTEND_CONTAINER)
 
 SPIFFWORKFLOW_BACKEND_ENV ?= local_development
 
+BACKEND_SQLITE_FILE ?= src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+JUST ?=
+
 YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
 	-f $(FRONTEND_DEV_OVERLAY) \
@@ -67,17 +70,17 @@ be-sh:
 	$(IN_BACKEND) /bin/bash
 
 be-sqlite:
-	@if [ ! -f "$(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3" ]; then \
-		echo "SQLite database file does not exist: $(BACKEND_CONTAINER)/src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3"; \
+	@if [ ! -f "$(BACKEND_CONTAINER)/$(BACKEND_SQLITE_FILE)" ]; then \
+		echo "SQLite database file does not exist: $(BACKEND_CONTAINER)/$(BACKEND_SQLITE_FILE)"; \
 		exit 1; \
 	fi
-	$(IN_BACKEND) sqlite3 src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+	$(IN_BACKEND) sqlite3 $(BACKEND_SQLITE_FILE)
 
 be-tests: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest
+	$(IN_BACKEND) poetry run pytest tests/spiffworkflow_backend/$(JUST)
 
 be-tests-par: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest -n auto -x --random-order
+	$(IN_BACKEND) poetry run pytest -n auto -x --random-order tests/spiffworkflow_backend/$(JUST)
 
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix

@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight } from '@carbon/icons-react';
 import { ClickableTile } from '@carbon/react';
 import HttpService from '../services/HttpService';
@@ -25,6 +25,7 @@ export default function ProcessGroupListTiles({
   userCanCreateProcessModels,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [processGroups, setProcessGroups] = useState<ProcessGroup[] | null>(
     null
@@ -53,6 +54,10 @@ export default function ProcessGroupListTiles({
     return (pg.process_models || []).length + (pg.process_groups || []).length;
   };
 
+  const navigateToProcessGroup = (url: string) => {
+    navigate(url);
+  };
+
   const processGroupsDisplayArea = () => {
     let displayText = null;
     if (processGroups && processGroups.length > 0) {
@@ -61,9 +66,11 @@ export default function ProcessGroupListTiles({
           <ClickableTile
             id={`process-group-tile-${row.id}`}
             className="tile-process-group"
-            href={`/process-groups/${modifyProcessIdentifierForPathParam(
-              row.id
-            )}`}
+            onClick={() =>
+              navigateToProcessGroup(
+                `/process-groups/${modifyProcessIdentifierForPathParam(row.id)}`
+              )
+            }
           >
             <div className="tile-process-group-content-container">
               <ArrowRight />

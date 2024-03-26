@@ -11,7 +11,6 @@ from flask import jsonify
 from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
-from MySQLdb import OperationalError  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -19,9 +18,11 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import desc
 from sqlalchemy import func
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -624,7 +625,7 @@ def _dequeued_interstitial_stream(
             # attempt to run the migrator even for a readonly operation if the process instance is not newest
             if (
                 process_instance.spiff_serializer_version is not None
-                and process_instance.spiff_serializer_version < ProcessInstanceMigrator.CURRENT_VERSION
+                and process_instance.spiff_serializer_version < SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
             ):
                 try:
                     with ProcessInstanceQueueService.dequeued(process_instance):
