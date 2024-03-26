@@ -20,7 +20,7 @@ export default function ProcessGroupEdit() {
       path: `/process-groups/${params.process_group_id}`,
       successCallback: setProcessGroupsFromResult,
     });
-  }, [params]);
+  }, [params.process_group_id]);
 
   if (processGroup) {
     setPageTitle([`Editing ${processGroup.display_name}`]);

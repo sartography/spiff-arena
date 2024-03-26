@@ -127,7 +127,8 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model:*", "create"),
-                ("/process-model-tests/some-process-group:some-process-model:*", "create"),
+                ("/process-model-tests/create/some-process-group:some-process-model:*", "create"),
+                ("/process-model-tests/run/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
@@ -209,7 +210,8 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model/*", "create"),
-                ("/process-model-tests/some-process-group:some-process-model/*", "create"),
+                ("/process-model-tests/create/some-process-group:some-process-model/*", "create"),
+                ("/process-model-tests/run/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
@@ -458,6 +460,10 @@ class TestAuthorizationService(BaseTest):
                 ("/process-models", "read"),
                 ("/processes", "read"),
                 ("/processes/callers/*", "read"),
+                ("/public/*", "create"),
+                ("/public/*", "delete"),
+                ("/public/*", "read"),
+                ("/public/*", "update"),
                 ("/script-assist/enabled", "read"),
                 ("/script-assist/process-message", "create"),
                 ("/service-tasks", "read"),
@@ -468,6 +474,7 @@ class TestAuthorizationService(BaseTest):
                 ("/user-groups/for-current-user", "read"),
                 ("/users/exists/by-username", "create"),
                 ("/users/search", "read"),
+                ("/upsearch-locations", "read"),
             ]
         )
 

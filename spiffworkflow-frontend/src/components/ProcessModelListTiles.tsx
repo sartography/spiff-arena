@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Tile,
   // @ts-ignore
@@ -72,15 +72,15 @@ export default function ProcessModelListTiles({
           >
             <div className="tile-process-group-content-container">
               <div className="tile-title-top">
-                <a
+                <Link
                   title={row.id}
                   data-qa="process-model-show-link"
-                  href={`/process-models/${modifyProcessIdentifierForPathParam(
+                  to={`/process-models/${modifyProcessIdentifierForPathParam(
                     row.id
                   )}`}
                 >
                   {row.display_name}
-                </a>
+                </Link>
               </div>
               <p className="tile-description">
                 {truncateString(row.description || '', 100)}

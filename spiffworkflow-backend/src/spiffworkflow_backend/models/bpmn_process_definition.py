@@ -48,3 +48,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
 
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
+
+    @classmethod
+    def keys_for_full_process_model_hash(cls) -> list[str]:
+        return ["spec", "subprocess_specs", "serializer_version"]

@@ -1,6 +1,8 @@
-// @ts-ignore
-import { Breadcrumb, BreadcrumbItem } from '@carbon/react';
+import { Typography } from '@mui/material';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   HotCrumbItem,
@@ -86,9 +88,9 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
                   parentGroup.id
                 )}`;
                 return (
-                  <BreadcrumbItem key={parentGroup.id} href={fullUrl}>
+                  <Link key={parentGroup.id} to={fullUrl}>
                     {parentGroup.display_name}
-                  </BreadcrumbItem>
+                  </Link>
                 );
               }
             );
@@ -104,19 +106,15 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
                 processEntity.id
               )}`;
               breadcrumbs.push(
-                <BreadcrumbItem
-                  key={processEntity.id}
-                  href={fullUrl}
-                  data-qa={dataQaTag}
-                >
+                <Link key={processEntity.id} to={fullUrl} data-qa={dataQaTag}>
                   {processEntity.display_name}
-                </BreadcrumbItem>
+                </Link>
               );
             } else {
               breadcrumbs.push(
-                <BreadcrumbItem key={processEntity.id} isCurrentPage>
+                <Typography key={processEntity.id} color="text.primary">
                   {processEntity.display_name}
-                </BreadcrumbItem>
+                </Typography>
               );
             }
             return breadcrumbs;
@@ -126,26 +124,30 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             const url = crumb[1];
             if (!url && valueLabel) {
               return (
-                <BreadcrumbItem isCurrentPage key={valueLabel}>
+                <Typography key={valueLabel} color="text.primary">
                   {valueLabel}
-                </BreadcrumbItem>
+                </Typography>
               );
             }
             if (url && valueLabel) {
               return (
-                <BreadcrumbItem key={valueLabel} href={url}>
+                <Link key={valueLabel} to={url}>
                   {valueLabel}
-                </BreadcrumbItem>
+                </Link>
               );
             }
           }
           return null;
         }
       );
-      return <Breadcrumb noTrailingSlash>{leadingCrumbLinks}</Breadcrumb>;
+      return (
+        <Breadcrumbs className="spiff-breadcrumb">
+          {leadingCrumbLinks}
+        </Breadcrumbs>
+      );
     }
     return null;
   };
 
-  return <Breadcrumb noTrailingSlash>{hotCrumbElement()}</Breadcrumb>;
+  return <>{hotCrumbElement()}</>;
 }

@@ -12,6 +12,7 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
@@ -552,11 +553,21 @@ class BaseTest:
         db.session.delete(process_instance_report)
         db.session.commit()
 
-    def complete_next_manual_task(self, processor: ProcessInstanceProcessor) -> None:
+    def complete_next_manual_task(
+        self,
+        processor: ProcessInstanceProcessor,
+        execution_mode: str | None = None,
+        data: dict | None = None,
+    ) -> None:
         user_task = processor.get_ready_user_tasks()[0]
-        human_task = processor.process_instance_model.human_tasks[0]
+        human_task = HumanTaskModel.query.filter_by(task_guid=str(user_task.id)).first()
         ProcessInstanceService.complete_form_task(
-            processor, user_task, {}, processor.process_instance_model.process_initiator, human_task
+            processor=processor,
+            spiff_task=user_task,
+            data=data or {},
+            user=processor.process_instance_model.process_initiator,
+            human_task=human_task,
+            execution_mode=execution_mode,
         )
 
     @contextmanager
@@ -575,3 +586,23 @@ class BaseTest:
         )
         destination = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         shutil.copytree(source, destination)
+
+    def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
+        """Round last state change to the nearest 4 significant digits.
+
+        Works around imprecise floating point values in mysql json columns.
+        The values between mysql and SpiffWorkflow seem to have minor differences on randomly and since
+        we do not care about such precision for this field, round it to a value that is more likely to match.
+        """
+        if isinstance(bpmn_process_dict, dict):
+            for key, value in bpmn_process_dict.items():
+                if key == "last_state_change":
+                    bpmn_process_dict[key] = round(value, 4)
+                elif isinstance(value, dict | list):
+                    self.round_last_state_change(value)
+        elif isinstance(bpmn_process_dict, list):
+            for item in bpmn_process_dict:
+                self.round_last_state_change(item)
+
+    def get_test_file(self, *args: str) -> str:
+        return os.path.join(current_app.instance_path, "..", "..", "tests", "files", *args)

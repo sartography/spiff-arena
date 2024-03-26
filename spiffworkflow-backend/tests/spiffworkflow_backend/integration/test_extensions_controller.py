@@ -37,7 +37,6 @@ class TestExtensionsController(BaseTest):
                     "Mike": "Awesome",
                     "my_var": "Hello World",
                     "person": "Kevin",
-                    "validate_only": False,
                     "wonderfulness": "Very wonderful",
                     "OUR_AWESOME_INPUT": "the awesome value",
                 }

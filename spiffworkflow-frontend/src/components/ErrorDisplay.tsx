@@ -15,11 +15,15 @@ function errorDetailDisplay(
   title: string
 ) {
   // Creates a bit of html for displaying a single error property if it exists.
-  if (propertyName in errorObject && errorObject[propertyName]) {
+  let value = errorObject[propertyName];
+  if (propertyName in errorObject && value) {
+    if (typeof value === 'object') {
+      value = JSON.stringify(value);
+    }
     return (
       <div className="error_info">
         <span className="error_title">{title}:</span>
-        {errorObject[propertyName]}
+        {value}
       </div>
     );
   }
@@ -63,6 +67,10 @@ export const errorForDisplayFromTestCaseErrorDetails = (
     error_line: testCaseErrorDetails.task_line_contents,
     task_trace: testCaseErrorDetails.task_trace,
     stacktrace: testCaseErrorDetails.stacktrace,
+
+    task_type: testCaseErrorDetails.task_bpmn_type,
+    output_data: testCaseErrorDetails.output_data,
+    expected_data: testCaseErrorDetails.expected_data,
   };
   return errorForDisplay;
 };
@@ -94,6 +102,17 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
     'Line Number'
   );
   const errorLine = errorDetailDisplay(errorObject, 'error_line', 'Context');
+  const taskType = errorDetailDisplay(errorObject, 'task_type', 'Task Type');
+  const outputData = errorDetailDisplay(
+    errorObject,
+    'output_data',
+    'Output Data'
+  );
+  const expectedData = errorDetailDisplay(
+    errorObject,
+    'expected_data',
+    'Expected Data'
+  );
   let codeTrace = null;
   if (errorObject.task_trace && errorObject.task_trace.length > 0) {
     codeTrace = (
@@ -126,6 +145,9 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
     lineNumber,
     errorLine,
     codeTrace,
+    taskType,
+    outputData,
+    expectedData,
   ];
 };
 

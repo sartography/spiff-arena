@@ -53,6 +53,7 @@ from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from SpiffWorkflow.util.task import TaskState
 from sqlalchemy import and_
 
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
 from spiffworkflow_backend.data_stores.json import JSONFileDataStore
@@ -62,6 +63,7 @@ from spiffworkflow_backend.data_stores.kkv import KKVDataStoreConverter
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
@@ -402,13 +404,11 @@ IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, Bpm
 
 class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
-    SERIALIZER_VERSION = "3"
 
     wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
-    _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
+    _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
-    VALIDATION_PROCESS_KEY = "validate_only"
 
     # __init__ calls these helpers:
     #   * get_spec, which returns a spec and any subprocesses (as IdToBpmnProcessSpecMapping dict)
@@ -416,7 +416,6 @@ class ProcessInstanceProcessor:
     def __init__(
         self,
         process_instance_model: ProcessInstanceModel,
-        validate_only: bool = False,
         script_engine: PythonScriptEngine | None = None,
         workflow_completed_handler: WorkflowCompletedHandler | None = None,
         process_id_to_run: str | None = None,
@@ -429,7 +428,6 @@ class ProcessInstanceProcessor:
         self.additional_processing_identifier = additional_processing_identifier
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model,
-            validate_only=validate_only,
             process_id_to_run=process_id_to_run,
             include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
         )
@@ -437,7 +435,6 @@ class ProcessInstanceProcessor:
     def setup_processor_with_process_instance(
         self,
         process_instance_model: ProcessInstanceModel,
-        validate_only: bool = False,
         process_id_to_run: str | None = None,
         include_task_data_for_completed_tasks: bool = False,
     ) -> None:
@@ -482,7 +479,6 @@ class ProcessInstanceProcessor:
             ) = self.__get_bpmn_process_instance(
                 process_instance_model,
                 bpmn_process_spec,
-                validate_only,
                 subprocesses=subprocesses,
             )
             self.set_script_engine(self.bpmn_process_instance, self._script_engine)
@@ -495,6 +491,34 @@ class ProcessInstanceProcessor:
                     f" missing task '{str(ke)}'"
                 ),
             ) from ke
+
+    @classmethod
+    def persist_bpmn_process_dict(
+        cls,
+        bpmn_process_dict: dict,
+        bpmn_definition_to_task_definitions_mappings: dict,
+        process_instance_model: ProcessInstanceModel,
+    ) -> None:
+        cls._add_bpmn_process_definitions(
+            bpmn_process_dict,
+            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+            process_instance_model=process_instance_model,
+            force_update=True,
+        )
+        task_service = TaskService(
+            process_instance=process_instance_model,
+            serializer=cls._serializer,
+            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+            force_update_definitions=True,
+        )
+
+        process_copy = copy.deepcopy(bpmn_process_dict)
+        bpmn_process_instance = cls._serializer.from_dict(process_copy)
+        bpmn_process_instance.script_engine = cls._default_script_engine
+        for spiff_task in bpmn_process_instance.get_tasks():
+            task_service.update_task_model_with_spiff_task(spiff_task)
+        task_service.save_objects_to_database()
+        db.session.commit()
 
     @classmethod
     def get_process_model_and_subprocesses(
@@ -791,7 +815,6 @@ class ProcessInstanceProcessor:
     def __get_bpmn_process_instance(
         process_instance_model: ProcessInstanceModel,
         spec: BpmnProcessSpec | None = None,
-        validate_only: bool = False,
         subprocesses: IdToBpmnProcessSpecMapping | None = None,
         include_task_data_for_completed_tasks: bool = False,
     ) -> tuple[BpmnWorkflow, dict, dict]:
@@ -812,13 +835,13 @@ class ProcessInstanceProcessor:
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
                 bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
+                bpmn_process_instance.get_tasks()
             except Exception as err:
                 raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
         else:
             bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
-            bpmn_process_instance.data[ProcessInstanceProcessor.VALIDATION_PROCESS_KEY] = validate_only
 
         return (
             bpmn_process_instance,
@@ -913,9 +936,11 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
+    @classmethod
     def _store_bpmn_process_definition(
-        self,
+        cls,
         process_bpmn_properties: dict,
+        bpmn_definition_to_task_definitions_mappings: dict,
         bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
         store_bpmn_definition_mappings: bool = False,
         full_bpmn_spec_dict: dict | None = None,
@@ -943,9 +968,10 @@ class ProcessInstanceProcessor:
                 bpmn_name=process_bpmn_name,
                 properties_json=process_bpmn_properties,
             )
+            process_bpmn_properties["task_specs"] = task_specs
             db.session.add(bpmn_process_definition)
-            self._update_bpmn_definition_mappings(
-                self.bpmn_definition_to_task_definitions_mappings,
+            cls._update_bpmn_definition_mappings(
+                bpmn_definition_to_task_definitions_mappings,
                 bpmn_process_definition.bpmn_identifier,
                 bpmn_process_definition=bpmn_process_definition,
             )
@@ -960,23 +986,23 @@ class ProcessInstanceProcessor:
                 )
                 db.session.add(task_definition)
                 if store_bpmn_definition_mappings:
-                    self._update_bpmn_definition_mappings(
-                        self.bpmn_definition_to_task_definitions_mappings,
+                    cls._update_bpmn_definition_mappings(
+                        bpmn_definition_to_task_definitions_mappings,
                         process_bpmn_identifier,
                         task_definition=task_definition,
                     )
         elif store_bpmn_definition_mappings:
             # this should only ever happen when new process instances use a pre-existing bpmn process definitions
             # otherwise this should get populated on processor initialization
-            self._update_bpmn_definition_mappings(
-                self.bpmn_definition_to_task_definitions_mappings,
+            cls._update_bpmn_definition_mappings(
+                bpmn_definition_to_task_definitions_mappings,
                 process_bpmn_identifier,
                 bpmn_process_definition=bpmn_process_definition,
             )
             task_definitions = TaskDefinitionModel.query.filter_by(bpmn_process_definition_id=bpmn_process_definition.id).all()
             for task_definition in task_definitions:
-                self._update_bpmn_definition_mappings(
-                    self.bpmn_definition_to_task_definitions_mappings,
+                cls._update_bpmn_definition_mappings(
+                    bpmn_definition_to_task_definitions_mappings,
                     process_bpmn_identifier,
                     task_definition=task_definition,
                 )
@@ -994,35 +1020,43 @@ class ProcessInstanceProcessor:
                 db.session.add(bpmn_process_definition_relationship)
         return bpmn_process_definition
 
-    def _add_bpmn_process_definitions(self) -> None:
+    @classmethod
+    def _add_bpmn_process_definitions(
+        cls,
+        bpmn_process_dict: dict,
+        bpmn_definition_to_task_definitions_mappings: dict,
+        process_instance_model: ProcessInstanceModel,
+        force_update: bool = False,
+    ) -> None:
         """Adds serialized_bpmn_definition records to the db session.
 
         Expects the calling method to commit it.
         """
-        if self.process_instance_model.spiffworkflow_fully_initialized():
+        if force_update is False and process_instance_model.spiffworkflow_fully_initialized():
             return None
 
-        bpmn_dict = self.serialize()
-        bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
+        bpmn_dict_keys = BpmnProcessDefinitionModel.keys_for_full_process_model_hash()
         bpmn_spec_dict = {}
-        for bpmn_key in bpmn_dict.keys():
+        for bpmn_key in bpmn_process_dict.keys():
             if bpmn_key in bpmn_dict_keys:
-                bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
+                bpmn_spec_dict[bpmn_key] = bpmn_process_dict[bpmn_key]
 
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
-        store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
-        bpmn_process_definition_parent = self._store_bpmn_process_definition(
+        store_bpmn_definition_mappings = not bpmn_definition_to_task_definitions_mappings
+        bpmn_process_definition_parent = cls._store_bpmn_process_definition(
             bpmn_spec_dict["spec"],
+            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
             store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             full_bpmn_spec_dict=bpmn_spec_dict,
         )
         for process_bpmn_properties in bpmn_spec_dict["subprocess_specs"].values():
-            self._store_bpmn_process_definition(
+            cls._store_bpmn_process_definition(
                 process_bpmn_properties,
-                bpmn_process_definition_parent,
+                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+                bpmn_process_definition_parent=bpmn_process_definition_parent,
                 store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             )
-        self.process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
+        process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
 
         #
         # builds and caches the element units for the parent bpmn process defintion. these
@@ -1046,7 +1080,7 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        self.process_instance_model.spiff_serializer_version = self.SERIALIZER_VERSION
+        self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(
             f"the_status: {self.process_instance_model.status} for instance {self.process_instance_model.id}"
@@ -1457,7 +1491,11 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
     ) -> TaskRunnability:
-        self._add_bpmn_process_definitions()
+        self._add_bpmn_process_definitions(
+            self.serialize(),
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            process_instance_model=self.process_instance_model,
+        )
 
         task_model_delegate = TaskModelSavingDelegate(
             serializer=self._serializer,
@@ -1620,6 +1658,11 @@ class ProcessInstanceProcessor:
         return task_json
 
     def complete_task(self, spiff_task: SpiffTask, human_task: HumanTaskModel, user: UserModel) -> None:
+        if str(spiff_task.id) != human_task.task_guid:
+            raise TaskMismatchError(
+                f"Given spiff task ({spiff_task.task_spec.bpmn_id} - {spiff_task.id}) and human task ({human_task.task_name} -"
+                f" {human_task.task_guid}) must match"
+            )
         task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
         if task_model is None:
             raise TaskNotFoundError(
