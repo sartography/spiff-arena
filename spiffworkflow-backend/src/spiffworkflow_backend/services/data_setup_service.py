@@ -288,4 +288,7 @@ class DataSetupService:
         for message_model in all_message_models.values():
             db.session.add(message_model)
 
+            for correlation_property_model in message_model.correlation_properties:
+                db.session.add(correlation_property_model)
+
         db.session.commit()

@@ -38,7 +38,7 @@ class TestDataSetupService(BaseTest):
         assert "end_of_day_receipts" in message_map
         assert "basic_message" in message_map
 
-        assert message_map["order_ready"].relative_location == ""
+        assert message_map["order_ready"].location == "examples"
         assert message_map["order_ready"].properties == {
             "correlation_keys": ["order"],
             "correlations": [
