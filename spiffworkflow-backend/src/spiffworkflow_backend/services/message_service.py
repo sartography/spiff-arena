@@ -22,6 +22,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
@@ -82,25 +83,34 @@ class MessageService:
             # Assure we can send the message, otherwise keep going.
             if message_instance_receive is None or not receiving_process.can_receive_message():
                 message_instance_send.status = "ready"
-                message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
                 db.session.commit()
                 return None
 
-            # Set the receiving message to running, so it is not altered elswhere ...
-            message_instance_receive.status = "running"
+            try:
+                # currently only controllers and apscheduler call this
+                cls.raise_if_running_in_celery("correlate_send_message")
+                with ProcessInstanceQueueService.dequeued(receiving_process):
+                    # Set the receiving message to running, so it is not altered elswhere ...
+                    message_instance_receive.status = "running"
 
-            cls.process_message_receive(
-                receiving_process, message_instance_receive, message_instance_send, execution_mode=execution_mode
-            )
-            message_instance_receive.status = "completed"
-            message_instance_receive.counterpart_id = message_instance_send.id
-            db.session.add(message_instance_receive)
-            message_instance_send.status = "completed"
-            message_instance_send.counterpart_id = message_instance_receive.id
-            db.session.add(message_instance_send)
-            db.session.commit()
-            return message_instance_receive
+                    cls.process_message_receive(
+                        receiving_process, message_instance_receive, message_instance_send, execution_mode=execution_mode
+                    )
+                    message_instance_receive.status = "completed"
+                    message_instance_receive.counterpart_id = message_instance_send.id
+                    db.session.add(message_instance_receive)
+                    message_instance_send.status = "completed"
+                    message_instance_send.counterpart_id = message_instance_receive.id
+                    db.session.add(message_instance_send)
+                    db.session.commit()
+                    return message_instance_receive
+
+            except ProcessInstanceIsAlreadyLockedError:
+                message_instance_send.status = "ready"
+                db.session.add(message_instance_send)
+                db.session.commit()
+                return None
 
         except Exception as exception:
             db.session.rollback()
@@ -129,12 +139,7 @@ class MessageService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true":
-            raise MessageServiceError(
-                "Calling start_process_with_message in a celery worker. This is not supported! (We may need to add"
-                " additional_processing_identifier to this code path."
-            )
-
+        cls.raise_if_running_in_celery("start_process_with_message")
         process_instance_receive = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
             user,
@@ -300,3 +305,11 @@ class MessageService:
                 )
             )
         return process_instance_receive
+
+    @classmethod
+    def raise_if_running_in_celery(cls, method_name: str) -> None:
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true":
+            raise MessageServiceError(
+                f"Calling {method_name} in a celery worker. This is not supported! We may need to add"
+                " additional_processing_identifier to this code path."
+            )
