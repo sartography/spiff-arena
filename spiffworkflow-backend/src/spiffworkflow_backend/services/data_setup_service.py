@@ -129,13 +129,13 @@ class DataSetupService:
 
     @classmethod
     def _correlation_property_models_from_group(cls, correlation_property_group: list[dict[str, Any]], file: str) -> dict[str, list[MessageCorrelationPropertyModel]]:
-        models = {}
+        models:dict[str, list[MessageCorrelationPropertyModel]] = {}
 
         for item in correlation_property_group:
             identifier = item.get("id")
             retrieval_expressions = item.get("retrieval_expressions")
 
-            if not identifier or not retrieval_epxressions:
+            if not identifier or not retrieval_expressions:
                 current_app.logger.debug(f"Malformed correlation property: '{item}' in file @ '{file}'")
                 continue
 
@@ -162,22 +162,22 @@ class DataSetupService:
         local_message_models = {}
 
         for message in messages:
-            message_model = cls._message_model_from_message(message, file)
+            message_model = cls._message_model_from_message(message, file_name)
             if message_model is None:
                 continue
-            local_message_models[mesage_model.identifier] = message_model
+            local_message_models[message_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
             
-        correlation_property_models_by_message_identifier = cls._correlation_property_models_from_group(process_group.correlation_properties or [])
+        correlation_property_models_by_message_identifier = cls._correlation_property_models_from_group(process_group.correlation_properties or [], file_name)
 
-        for message_identifier, correlation_property_models in correlation_property_models_by_message_identifier:
+        for message_identifier, correlation_property_models in correlation_property_models_by_message_identifier.items():
             message_model = local_message_models.get(message_identifier)
 
             if message_model is None:
-                current_app.logger.debug(f"Correlation property references message that is not defined: '{message_identifier}' in file @ '{file}'")
+                current_app.logger.debug(f"Correlation property references message that is not defined: '{message_identifier}' in file @ '{file_name}'")
                 continue
 
-            message_model.correlation_properties = correlation_property_models
+            message_model.correlation_properties = correlation_property_models  # type: ignore
 
     @classmethod
     def _sync_data_store_models_with_specifications(cls, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:

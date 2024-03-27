@@ -8,9 +8,6 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_model import CorrelationKeySchema
-from spiffworkflow_backend.models.message_model import CorrelationPropertySchema
-from spiffworkflow_backend.models.message_model import MessageSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
@@ -58,30 +55,12 @@ def message_model_list_old(
 
 
 def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
-    # Returns all the messages, correlation keys, and correlation properties that exist at the given
-    # relative location or higher in the directory tree, presents it in the same format as you would
-    # find in a single process group file.
+    # Returns all the messages and correlation properties that exist at the given
+    # relative location or higher in the directory tree.
     locations = UpsearchService.upsearch_locations(relative_location)
-    messages = []
-    correlation_keys = []
-    correlation_properties = []
-    for loc in locations:
-        try:
-            process_group = ProcessModelService.get_process_group(loc)
-            if process_group.messages is not None:
-                messages.extend(process_group.messages)
-            if process_group.correlation_properties is not None:
-                correlation_properties.extend(process_group.correlation_properties)
-            if process_group.correlation_keys is not None:
-                correlation_keys.extend(process_group.correlation_keys)
-        except ProcessEntityNotFoundError:
-            pass
-    response_json = {
-        "messages": MessageSchema(many=True).dump(messages),
-        "correlation_keys": CorrelationKeySchema(many=True).dump(correlation_keys),
-        "correlation_properties": CorrelationPropertySchema(many=True).dump(correlation_properties),
-    }
-    return make_response(jsonify(response_json), 200)
+    messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
+    
+    return make_response(jsonify({"messages": messages }), 200)
 
 
 def correlation_key_list(
