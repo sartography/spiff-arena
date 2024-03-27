@@ -50,7 +50,7 @@ be-db-clean:
 	$(IN_BACKEND) ./bin/recreate_db clean
 
 be-db-migrate:
-	$(IN_BACKEND) ./bin/recreate_db clean
+	$(IN_BACKEND) ./bin/recreate_db migrate
 
 be-logs:
 	docker logs -f $(BACKEND_CONTAINER)
