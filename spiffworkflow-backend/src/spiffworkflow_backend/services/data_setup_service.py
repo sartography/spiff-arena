@@ -116,48 +116,59 @@ class DataSetupService:
                 all_data_store_specifications[(data_store_type, location, identifier)] = specification
 
     @classmethod
-    def _message_model_from_message(cls, message: dict[str, Any]) -> MessageModel | None:
+    def _message_model_from_message(cls, message: dict[str, Any], file: str) -> MessageModel | None:
         identifier = message.get("id")
         location = message.get("location")
         schema = message.get("schema")
 
         if not identifier or not location or not schema:
+            current_app.logger.debug(f"Malformed message: '{message}' in file @ '{file}'")
             return None
 
         return MessageModel(identifier=identifier, location=location, schema=schema)
+
+    @classmethod
+    def _correlation_property_models_from_group(cls, correlation_property_group: list[dict[str, Any]], file: str) -> dict[str, list[MessageCorrelationPropertyModel]]:
+        models = {}
+
+        for item in correlation_property_group:
+            identifier = item.get("id")
+            retrieval_expressions = item.get("retrieval_expressions")
+
+            if not identifier or not retrieval_epxressions:
+                current_app.logger.debug(f"Malformed correlation property: '{item}' in file @ '{file}'")
+                continue
+
+            for expression in retrieval_expressions:
+                message_identifier = expression.get("message_ref")
+                retrieval_expression = expression.get("formal_expression")
+
+                if not message_identifier or not retrieval_expression:
+                    current_app.logger.debug(f"Malformed retrieval expression: '{expression}' in file @ '{file}'")
+                    continue
+
+                if message_identifier not in models:
+                    models[message_identifier] = []
+
+                models[message_identifier].append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression)
+        
+        return models
                 
     @classmethod
     def _collect_message_models(
         cls, process_group: ProcessGroup, file_name: str, all_message_models: dict[tuple[str, str], MessageModel]
     ) -> None:
         messages = process_group.messages or []
-        message_models = {}
+        local_message_models = {}
 
         for message in messages:
-            message_model = cls._message_model_from_message(message)
+            message_model = cls._message_model_from_message(message, file)
             if message_model is None:
-                current_app.logger.debug(f"Malformed message: '{message}' in file @ '{file}'")
                 continue
-            message_models[mesage_model.identifier] = message_model
+            local_message_models[mesage_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
-
-        correlation_properties = process_group.correlation_properties or []
-        
-        if not process_group.messages:
-            return
-
-        messages_by_identifier = {}
-        correlation_properties_by_message_identifier = {}
-        raw_retrieval_expressions = [expr for exprs in [p.get("retrieval_expressions", []) for p in process_group.correlation_properties or []] for expr in exprs]
-
-        for message in process_group.messages:
-            message_identifier = message.get("id")
             
-            if not message_identifier:
-                current_app.logger.debug(f"Malformed message: {message}")
-                continue
-
-            message_schema = message.get("schema", {})
+        for correlation_property_group in process_group.correlation_properties or []:
         
         for raw_retrieval_expression in raw_retrieval_expressions:
             message_identifier = raw_retrieval_expression.get("message_ref")
