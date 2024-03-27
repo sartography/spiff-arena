@@ -121,7 +121,7 @@ class DataSetupService:
         location = message.get("location")
         schema = message.get("schema")
 
-        if not identifier or not location or not schema:
+        if identifier is None or location is None or schema is None:
             current_app.logger.debug(f"Malformed message: '{message}' in file @ '{file}'")
             return None
 
@@ -168,14 +168,10 @@ class DataSetupService:
         for message in messages:
             message_model = cls._message_model_from_message(message, file_name)
             if message_model is None:
+                print("None")
                 continue
             local_message_models[message_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
-            
-        if messages:
-            print(messages)
-            print(local_message_models)
-            assert False
 
         correlation_property_models_by_message_identifier = cls._correlation_property_models_from_group(
             process_group.correlation_properties or [], file_name
