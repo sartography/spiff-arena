@@ -25,7 +25,6 @@ FileGenerator = Generator[str, None, None]
 
 
 class FileSystemService:
-
     """Simple Service meant for extension that provides some useful
     methods for dealing with the File system.
     """

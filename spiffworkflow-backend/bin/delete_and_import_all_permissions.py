@@ -1,4 +1,5 @@
 """Deletes all permissions and then re-imports from yaml file."""
+
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 

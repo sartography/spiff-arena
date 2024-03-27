@@ -35,7 +35,6 @@ class ProcessModelWithInstancesNotDeletableError(Exception):
 
 
 class ProcessModelService(FileSystemService):
-
     """This is a way of persisting json files to the file system in a way that mimics the data
     as it would have been stored in the database. This is specific to Workflow Specifications, and
     Workflow Specification process_groups.
