@@ -6,9 +6,9 @@
     "parent_groups": null,
 
     "messages" : [
-        {"id": "table_seated"},
-        {"id": "order_ready"},
-        {"id": "end_of_day_receipts"}
+        {"id": "table_seated", "location": "examples", "schema": {} },
+        {"id": "order_ready", "location": "examples", "schema": {} },
+        {"id": "end_of_day_receipts", "location": "examples", "schema": {} }
     ],
     "correlation_keys": [
         {

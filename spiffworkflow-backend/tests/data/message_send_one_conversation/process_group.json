@@ -4,8 +4,8 @@
   "display_name": "Message Test",
   "display_order": 40,
   "messages": [
-    { "id": "request_approval"},
-    { "id": "approval_result" }
+      { "id": "request_approval", "location": "message_send_one_conversation", "schema": {} },
+      { "id": "approval_result", "location": "message_send_one_conversation", "schema": {} }
   ],
   "conversation": {
     "correlation_key": [

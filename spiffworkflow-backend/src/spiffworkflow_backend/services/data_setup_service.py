@@ -171,6 +171,11 @@ class DataSetupService:
                 continue
             local_message_models[message_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
+            
+        if messages:
+            print(messages)
+            print(local_message_models)
+            assert False
 
         correlation_property_models_by_message_identifier = cls._correlation_property_models_from_group(
             process_group.correlation_properties or [], file_name
@@ -282,4 +287,9 @@ class DataSetupService:
 
     @classmethod
     def _save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:
-        pass
+        MessageModel.query.delete()
+
+        for message_model in all_message_models.values():
+            db.session.add(message_model)
+
+        db.session.commit()
