@@ -382,19 +382,17 @@ Below is an example JSON schema that includes the numeric range field:
     "numericRange": {
       "type": "object",
       "title": "Numeric Range",
-      "properties": {
-        "min": {
+        "minimum": {
           "type": "number",
           "title": "Minimum Value"
         },
-        "max": {
+        "maximum": {
           "type": "number",
           "title": "Maximum Value"
         }
       }
     }
   }
-}
 ```
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
@@ -412,3 +410,56 @@ This schema defines a numeric range object with `min` and `max` properties, both
 #### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
+
+
+### Adding a New Button for Repeating Sections in Forms
+
+Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status. This structure can be represented in the form's schema as follows:
+
+```json
+{
+  "title": "Nested Form / Repeating Section",
+  "description": "Allow the form submitter to add multiple entries for a set of fields.",
+  "type": "object",
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "title": "Tasks",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Please describe the task to complete"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done?",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}
+```
+**Form Preview**: 
+
+![Nested Forms](images/Nested_form_display.png)
+
+**Implementation Steps:**
+
+1. **Identify the Array Field**: First, identify the array field in your schema that will utilize the repeating section. In the example above, the array field is "tasks".
+
+2. **UI Schema Configuration**: In your form's UI schema, add configuration options for the "tasks" array to include a "New" button. 
+
+3. **Button Label and Action**: Define the label for the "New" button (e.g., "Add New Task") and the action it should perform. Typically, this action involves appending a new item to the "tasks" array, which corresponds to a new set of fields in the UI for the user to fill out.
+
+4. **Styling and Placement**: Customize the appearance and placement of the "New" button according to your form's design requirements. Ensure it is positioned in an intuitive location, such as immediately below the last entry of the repeating section.
+
+5. **Event Handling**: Implement event handling for the "New" button click action. This should include validation to ensure that any required fields in the current set of entries are filled out before allowing a new entry to be added.
+
+
+By following these steps, you can effectively implement new buttons for nested forms or repeating sections, significantly improving the form's usability for collecting multiple related entries from users.

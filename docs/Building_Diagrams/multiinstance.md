@@ -131,7 +131,7 @@ Consider a process designed to increment a counter variable until it reaches a s
 
 2. **Script Task - Initialize Counter**: Initializes a counter variable, `counter`, to 0 and Script: `counter = 0;`
 
-3. **Script Loop Task - Increment Counter**: Implement the Script Loop Task with a loop marker and configure the loop condition (`counter < 10`) and increment script (`counter = counter + 1;`). The process enginer will increment the `counter` by 1 on each iteration.
+3. **Script Loop Task - Increment Counter**: Implement the Script Loop Task with a loop marker and configure the loop condition (`counter < 10`) and increment script (`counter = counter + 1;`). The process engine will increment the `counter` by 1 on each iteration.
 
 ![Loop Example](images/loop_example2.png)
 
