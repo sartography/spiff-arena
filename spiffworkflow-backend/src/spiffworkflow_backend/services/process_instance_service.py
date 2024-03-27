@@ -477,26 +477,28 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
-        ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
-        # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
-        processor.complete_task(spiff_task, human_task, user=user)
+        with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
+            ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
+            processor.complete_task(spiff_task, human_task, user=user)
 
         if queue_process_instance_if_appropriate(processor.process_instance_model, execution_mode):
             return
-        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
-            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-                execution_strategy_name = None
-                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                    execution_strategy_name = "greedy"
+        else:
+            with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
+                if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+                    with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                        execution_strategy_name = None
+                        if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                            execution_strategy_name = "greedy"
 
-                # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                        # maybe move this out once we have the interstitial page since this is
+                        # here just so we can get the next human task
+                        processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
-        add_docs_and_forms: bool = False,
     ) -> Task:
         task_type = spiff_task.task_spec.description
         task_guid = str(spiff_task.id)

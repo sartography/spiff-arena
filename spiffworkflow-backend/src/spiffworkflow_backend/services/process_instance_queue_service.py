@@ -66,7 +66,6 @@ class ProcessInstanceQueueService:
                 "locked_at_in_seconds": current_time,
             }
         )
-
         db.session.commit()
 
         queue_entry = (
@@ -83,9 +82,11 @@ class ProcessInstanceQueueService:
             )
 
         if queue_entry.locked_by != locked_by:
+            message = f"It has already been locked by {queue_entry.locked_by}."
+            if queue_entry.locked_by is None:
+                message = "It was locked by something else when we tried to lock it in the db, but it has since been unlocked."
             raise ProcessInstanceIsAlreadyLockedError(
-                f"{locked_by} cannot lock process instance {process_instance.id}. "
-                f"It has already been locked by {queue_entry.locked_by}."
+                f"{locked_by} cannot lock process instance {process_instance.id}. {message}"
             )
 
         ProcessInstanceLockService.lock(
