@@ -1,19 +1,13 @@
 from __future__ import annotations
 
-import dataclasses
 from dataclasses import dataclass
-from typing import Any
 
-from marshmallow import Schema
-from marshmallow import post_load
-
-
+from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from sqlalchemy import ForeignKey
 
 
 @dataclass
@@ -29,7 +23,8 @@ class MessageModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
     correlation_properties = relationship("MessageCorrelationPropertyModel", cascade="delete")
-    
+
+
 @dataclass
 class MessageCorrelationPropertyModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_correlation_property"

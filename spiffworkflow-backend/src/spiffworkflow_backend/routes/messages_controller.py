@@ -6,15 +6,15 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.reference_cache import ReferenceSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceType
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
@@ -59,8 +59,8 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     # relative location or higher in the directory tree.
     locations = UpsearchService.upsearch_locations(relative_location)
     messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
-    
-    return make_response(jsonify({"messages": messages }), 200)
+
+    return make_response(jsonify({"messages": messages}), 200)
 
 
 def correlation_key_list(
