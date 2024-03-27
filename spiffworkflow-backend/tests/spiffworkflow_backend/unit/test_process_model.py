@@ -1,4 +1,5 @@
 """Process Model."""
+
 import re
 
 from flask.app import Flask
