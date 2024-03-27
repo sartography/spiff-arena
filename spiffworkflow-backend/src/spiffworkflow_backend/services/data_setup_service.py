@@ -150,8 +150,8 @@ class DataSetupService:
                 if message_identifier not in models:
                     models[message_identifier] = []
 
-                models[message_identifier].append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression)
-        
+                models[message_identifier].append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
+                
         return models
                 
     @classmethod
@@ -168,48 +168,16 @@ class DataSetupService:
             local_message_models[mesage_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
             
-        for correlation_property_group in process_group.correlation_properties or []:
-        
-        for raw_retrieval_expression in raw_retrieval_expressions:
-            message_identifier = raw_retrieval_expression.get("message_ref")
-            identifier = raw_retrieval_expression.get("id")
-            retrieval_expression = raw_retrieval_expression.get("formal_expression")
+        correlation_property_models_by_message_identifier = cls._correlation_property_models_from_group(process_group.correlation_properties or [])
 
-            if not message_identifier or not identifier or not retrieval_expression:
-                current_app.logger.debug(f"Malformed raw_retrieval_expression: {raw_retrieval_expression}")
+        for message_identifier, correlation_property_models in correlation_property_models_by_message_identifier:
+            message_model = local_message_models.get(message_identifier)
+
+            if message_model is None:
+                current_app.logger.debug(f"Correlation property references message that is not defined: '{message_identifier}' in file @ '{file}'")
                 continue
 
-            if message_id not in correlation_properties_by_message_identifier:
-                correlation_properties_by_message_id[message_identifier] = []
-
-            # TODO: wire up to the message
-            correlation_properties_by_message_identifier[message_identifier].append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
-                
-        for message in process_group.messages:
-            properties = []
-            reference_cache = ReferenceCacheModel.from_params(
-                message["id"],
-                message["id"],
-                ReferenceType.message.value,
-                "",
-                FileSystemService.relative_location(file_name),
-                None,
-                False,
-            )
-            reference_cache.properties = {"correlations": [], "correlation_keys": []}
-            for correlation in process_group.correlation_properties or []:
-                for retrieval_expression in correlation["retrieval_expressions"]:
-                    if retrieval_expression["message_ref"] == message["id"]:
-                        properties.append(correlation["id"])
-                        reference_cache.properties["correlations"].append(
-                            {
-                                "correlation_property": correlation["id"],
-                                "retrieval_expression": retrieval_expression["formal_expression"],
-                            }
-                        )
-
-            ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-        # If there are correlation properties, update our correlation cache
+            message_model.correlation_properties = correlation_property_models
 
     @classmethod
     def _sync_data_store_models_with_specifications(cls, all_data_store_specifications: dict[tuple[str, str, str], Any]) -> None:
