@@ -27,7 +27,7 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             ProcessInstanceService.run_process_instance_with_processor(
                 process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index
             )
-            processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
+            _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
                 additional_processing_identifier=proc_index,
