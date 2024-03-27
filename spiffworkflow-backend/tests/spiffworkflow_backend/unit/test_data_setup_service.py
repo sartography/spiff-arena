@@ -32,7 +32,7 @@ class TestDataSetupService(BaseTest):
         message_models = MessageModel.query.all()
         assert len(message_models) == 4
         message_map = {model.identifier: model for model in message_models}
-        
+
         assert "table_seated" in message_map
         assert "order_ready" in message_map
         assert "end_of_day_receipts" in message_map
@@ -42,6 +42,6 @@ class TestDataSetupService(BaseTest):
 
         correlations = {cp.identifier: cp.retrieval_expression for cp in message_map["order_ready"].correlation_properties}
         assert correlations == {"table_number": "table_number", "franchise_id": "franchise_id"}
-        
+
         assert message_map["basic_message"].location == "examples/1-basic-concepts"
         assert message_map["basic_message"].correlation_properties == []

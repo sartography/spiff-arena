@@ -168,7 +168,6 @@ class DataSetupService:
         for message in messages:
             message_model = cls._message_model_from_message(message, file_name)
             if message_model is None:
-                print("None")
                 continue
             local_message_models[message_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
