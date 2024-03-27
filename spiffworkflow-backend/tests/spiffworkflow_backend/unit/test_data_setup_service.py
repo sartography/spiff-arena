@@ -43,10 +43,5 @@ class TestDataSetupService(BaseTest):
         correlations = {cp.identifier: cp.retrieval_expression for cp in message_map["order_ready"].correlation_properties}
         assert correlations == {"table_number": "table_number", "franchise_id": "franchise_id"}
         
-        # assert message_map["order_ready"].correlation_properties == [
-        #         {"correlation_property": "table_number", "retrieval_expression": "table_number"},
-        #         {"correlation_property": "franchise_id", "retrieval_expression": "franchise_id"},
-        #     ]
-        
         assert message_map["basic_message"].location == "examples/1-basic-concepts"
         assert message_map["basic_message"].correlation_properties == []
