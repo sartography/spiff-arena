@@ -16,7 +16,7 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
+from spiffworkflow_backend.models.message_model import MessageModel, MessageCorrelationPropertyModel
 
 class DataSetupService:
     @classmethod
@@ -36,6 +36,7 @@ class DataSetupService:
         files = FileSystemService.walk_files_from_root_path(True, None)
         reference_objects: dict[str, ReferenceCacheModel] = {}
         all_data_store_specifications: dict[tuple[str, str, str], Any] = {}
+        all_message_models: dict[tuple[str, str], MessageModel] = {}
 
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
@@ -86,11 +87,12 @@ class DataSetupService:
                     continue
 
                 cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
-                cls._collect_message_specifications(process_group, file, reference_objects)
+                cls._collect_message_models(process_group, file, all_message_models)
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
+        cls._save_all_message_models(all_message_models)
 
         return failing_process_models
 
@@ -114,9 +116,33 @@ class DataSetupService:
                 all_data_store_specifications[(data_store_type, location, identifier)] = specification
 
     @classmethod
-    def _collect_message_specifications(
-        cls, process_group: ProcessGroup, file_name: str, reference_objects: dict[str, ReferenceCacheModel]
+    def _message_model_from_message(cls, message: dict[str, Any]) -> MessageModel | None:
+        identifier = message.get("id")
+        location = message.get("location")
+        schema = message.get("schema")
+
+        if not identifier or not location or not schema:
+            return None
+
+        return MessageModel(identifier=identifier, location=location, schema=schema)
+                
+    @classmethod
+    def _collect_message_models(
+        cls, process_group: ProcessGroup, file_name: str, all_message_models: dict[tuple[str, str], MessageModel]
     ) -> None:
+        messages = process_group.messages or []
+        message_models = {}
+
+        for message in messages:
+            message_model = cls._message_model_from_message(message)
+            if message_model is None:
+                current_app.logger.debug(f"Malformed message: '{message}' in file @ '{file}'")
+                continue
+            message_models[mesage_model.identifier] = message_model
+            all_message_models[(message_model.identifier, message_model.location)] = message_model
+
+        correlation_properties = process_group.correlation_properties or []
+        
         if not process_group.messages:
             return
 
@@ -266,3 +292,10 @@ class DataSetupService:
             db.session.delete(model)
 
         db.session.commit()
+
+    @classmethod
+    def _save_all_message_models(
+        cls, all_message_models: dict[tuple[str, str], MessageModel]
+    ) -> None:
+        pass
+    
