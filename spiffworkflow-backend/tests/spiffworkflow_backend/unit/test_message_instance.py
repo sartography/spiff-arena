@@ -10,7 +10,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageInstance(BaseTest):
-    def setup_message_tests(self, client: FlaskClient) -> ProcessModelInfo:
+    def setup_message_tests(self) -> ProcessModelInfo:
         process_model_id = "testk_group/hello_world"
         bpmn_file_name = "hello_world.bpmn"
         bpmn_file_location = "hello_world"
@@ -28,7 +28,7 @@ class TestMessageInstance(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "Message Model One"
-        process_model = self.setup_message_tests(client)
+        process_model = self.setup_message_tests()
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         queued_message = MessageInstanceModel(
@@ -54,7 +54,7 @@ class TestMessageInstance(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "message_model_one"
-        process_model = self.setup_message_tests(client)
+        process_model = self.setup_message_tests()
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         with pytest.raises(ValueError) as exception:
@@ -87,7 +87,7 @@ class TestMessageInstance(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "message_model_one"
-        process_model = self.setup_message_tests(client)
+        process_model = self.setup_message_tests()
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         with pytest.raises(ValueError) as exception:
@@ -119,7 +119,7 @@ class TestMessageInstance(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "message_model_one"
-        process_model = self.setup_message_tests(client)
+        process_model = self.setup_message_tests()
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         queued_message = MessageInstanceModel(

@@ -1,10 +1,16 @@
+import time
+
 from flask import Flask
 from pytest_mock.plugin import MockerFixture
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -63,6 +69,30 @@ class TestBackgroundProcessingService(BaseTest):
             processor.resume()
             future_tasks = BackgroundProcessingService.imminent_future_tasks(99999999999999999)
             assert len(future_tasks) == 1
+
+    def test_do_waiting_errors_gracefully_when_instance_already_locked(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, status="waiting")
+        assert process_instance.status == ProcessInstanceStatus.waiting.value
+        queue_entry = ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).first()
+        assert queue_entry is not None
+        queue_entry.locked_by = "test:test_waiting"
+        queue_entry.locked_at_seconds = round(time.time())
+        db.session.add(queue_entry)
+        db.session.commit()
+
+        mocker.patch.object(ProcessInstanceQueueService, "peek_many", return_value=[process_instance.id])
+        ProcessInstanceService.do_waiting(ProcessInstanceStatus.waiting.value)
+        assert process_instance.status == ProcessInstanceStatus.waiting.value
 
     def _load_up_a_future_task_and_return_instance(self) -> ProcessInstanceModel:
         process_model = load_test_spec(
