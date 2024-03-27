@@ -106,6 +106,10 @@ from spiffworkflow_backend.models.user_property import (
 from spiffworkflow_backend.models.service_account import (
     ServiceAccountModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.message_model import (
+    MessageModel,
+    MessageCorrelationPropertyModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.future_task import (
     FutureTaskModel,
 )  # noqa: F401
