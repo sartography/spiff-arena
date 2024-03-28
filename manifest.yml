@@ -19,7 +19,8 @@ applications:
     APPLICATION_ROOT: "/"
     PORT0: "8080"
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY: "path_based"
-
+    SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api"
+    BACKEND_BASE_URL: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api"
     # We may need to set BACKEND_URL; see spiffworkflow-frontend/src/config/tsx:15-72
 
     # Other vars this image understands:
@@ -64,7 +65,7 @@ applications:
     # Hardcoded
     FLASK_DEBUG: "0"
     APPLICATION_ROOT: "/"
-    SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT: "/"
+    SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT: "/api"
     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "/app/process_models"
     # spiffworkflow_backend.config.ConfigurationError: SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND and SPIFFWORKFLOW_BACKEND_URL are incompatible. We need backend to set cookies for frontend, so they need to be on the same domain. A common setup is to have frontend on example.com and backend on api.example.com. If you do not need this functionality, you can avoid this check by setting environment variable SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY=false
     SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY: "false"
@@ -83,7 +84,7 @@ applications:
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "((openid-secret))"
     SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api/openid"
     SPIFFWORKFLOW_BACKEND_URL: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api"
-    SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "https://spiffworkflow-((randomish-route)).app.cloud.gov"
+    SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api"
     SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL: "https://spiffworkflow-connector-((randomish-route)).app.cloud.gov"
 
     #   - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqldb://root:${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}@127.0.0.1:7003/${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
