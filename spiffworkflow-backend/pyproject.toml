@@ -64,7 +64,7 @@ Flask-SQLAlchemy = "^3"
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.17.6"
-pytz = "^2023.3"
+pytz = "^2024.1"
 dateparser = "^1.2.0"
 cryptography = "^42.0"
 prometheus-flask-exporter = "^0.22.3"
