@@ -22,6 +22,15 @@ applications:
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api"
     BACKEND_BASE_URL: "https://spiffworkflow-((randomish-route)).app.cloud.gov/api"
     # We may need to set BACKEND_URL; see spiffworkflow-frontend/src/config/tsx:15-72
+    
+    # WHERE WE STOPPED:
+    #   spiffworkflow-backend/src/spiffworkflow_backend/routes/authentication_controller.py#L111-L112
+    # We are hitting: https://spiffworkflow-flamingo-stardust.app.cloud.gov/api/v1.0/login?redirect_url=https://spiffworkflow-flamingo-stardust.app.cloud.gov/&authentication_identifier=default
+    # We are seeing: {
+    #   "error_code": "internal_server_error",
+    #   "message": "InvalidRedirectUrlError: Invalid redirect url was given: 'https://spiffworkflow-flamingo-stardust.app.cloud.gov/'. It must match the domain the frontend is running on.",
+    #   "status_code": 500
+    # }
 
     # Other vars this image understands:
     # CYPRESS_RECORD_KEY
