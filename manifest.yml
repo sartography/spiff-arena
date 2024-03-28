@@ -11,7 +11,8 @@ applications:
 ################################
 - name: spiffworkflow-frontend
   <<: *defaults
-  route: spiffworkflow-((randomish-route)).app.cloud.gov
+  routes:
+    - route: spiffworkflow-((randomish-route)).app.cloud.gov
   docker:
     image: ((frontend-image))
   env:
@@ -36,7 +37,8 @@ applications:
   <<: *defaults
   disk_quota: 3G
   health_check_type: process
-  route: spiffworkflow-((randomish-route)).app.cloud.gov/api
+  routes:
+    - route: spiffworkflow-((randomish-route)).app.cloud.gov/api
 
   # With buildpack:
   # path: spiffworkflow-backend
