@@ -84,15 +84,19 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logger(app: Flask) -> None:
+    setup_logger_for_app(app, logging)
+
+
+def setup_logger_for_app(app: Flask, logger: Any) -> None:
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
-    log_level = getattr(logging, upper_log_level_string)
-    spiff_log_level = getattr(logging, upper_log_level_string)
-    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    log_level = getattr(logger, upper_log_level_string)
+    spiff_log_level = getattr(logger, upper_log_level_string)
+    log_formatter = logger.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     app.logger.debug("Printing log to create app logger")
 
@@ -115,7 +119,7 @@ def setup_logger(app: Flask) -> None:
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
-        spiff_logger_filehandler = logging.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
+        spiff_logger_filehandler = logger.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
         spiff_logger_filehandler.setLevel(spiff_log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 
@@ -143,10 +147,10 @@ def setup_logger(app: Flask) -> None:
         loggers_to_exclude_from_debug.append("sqlalchemy")
 
     # make all loggers act the same
-    for name in logging.root.manager.loggerDict:
+    for name in logger.root.manager.loggerDict:
         # use a regex so spiffworkflow_backend isn't filtered out
         if not re.match(r"^spiff\b", name):
-            the_logger = logging.getLogger(name)
+            the_logger = logger.getLogger(name)
             the_logger.setLevel(log_level)
             if spiff_logger_filehandler:
                 the_logger.handlers = []
@@ -168,8 +172,9 @@ def setup_logger(app: Flask) -> None:
                         if exclude_logger_name_from_debug:
                             the_logger.setLevel("INFO")
 
-                        if not exclude_logger_name_from_logging:
-                            the_logger.addHandler(logging.StreamHandler(sys.stdout))
+                        if exclude_logger_name_from_logging:
+                            the_logger.setLevel("ERROR")
+                        the_logger.addHandler(logger.StreamHandler(sys.stdout))
 
                 for the_handler in the_logger.handlers:
                     the_handler.setFormatter(log_formatter)
