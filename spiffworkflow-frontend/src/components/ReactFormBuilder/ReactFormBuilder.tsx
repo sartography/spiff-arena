@@ -64,6 +64,9 @@ export default function ReactFormBuilder({
   const [fetchFailed, setFetchFailed] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);
 
+  const [filenameBaseInvalid, setFilenameBaseInvalid] =
+    useState<boolean>(false);
+
   const [strSchema, setStrSchema] = useState<string>('');
   const [debouncedStrSchema] = useDebounce(strSchema, 500);
   const [strUI, setStrUI] = useState<string>('');
@@ -100,7 +103,7 @@ export default function ReactFormBuilder({
   }
 
   const saveFile = useCallback(
-    (file: File, create: boolean = false) => {
+    (file: File, create: boolean = false, callback: Function | null = null) => {
       let httpMethod = 'PUT';
       let url = `/process-models/${processModelId}/files`;
       if (create) {
@@ -114,7 +117,11 @@ export default function ReactFormBuilder({
 
       HttpService.makeCallToBackend({
         path: url,
-        successCallback: () => {},
+        successCallback: () => {
+          if (callback) {
+            callback();
+          }
+        },
         failureCallback: (e: any) => {
           setErrorMessage(`Failed to save file: '${fileName}'. ${e.message}`);
         },
@@ -125,12 +132,28 @@ export default function ReactFormBuilder({
     [processModelId, fileName]
   );
 
+  const hasValidName = (identifierToCheck: string) => {
+    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
+  };
+
   const createFiles = (base: string) => {
-    saveFile(new File(['{}'], base + SCHEMA_EXTENSION), true);
-    saveFile(new File(['{}'], base + UI_EXTENSION), true);
-    saveFile(new File(['{}'], base + DATA_EXTENSION), true);
-    setBaseFileName(base);
-    onFileNameSet(base + SCHEMA_EXTENSION);
+    if (hasValidName(base)) {
+      // meaning it switched from invalid to valid
+      if (filenameBaseInvalid) {
+        setFilenameBaseInvalid(false);
+      }
+    } else {
+      setFilenameBaseInvalid(true);
+      return;
+    }
+    saveFile(new File(['{}'], base + SCHEMA_EXTENSION), true, () => {
+      saveFile(new File(['{}'], base + UI_EXTENSION), true, () => {
+        saveFile(new File(['{}'], base + DATA_EXTENSION), true, () => {
+          setBaseFileName(base);
+          onFileNameSet(base + SCHEMA_EXTENSION);
+        });
+      });
+    });
   };
 
   const isReady = () => {
@@ -293,7 +316,7 @@ export default function ReactFormBuilder({
       setFormData(JSON.parse(result.file_contents));
     } catch (e) {
       // todo: show error message
-      console.log('Error parsing JSON:', e);
+      console.error('Error parsing JSON:', e);
     }
   }
 
@@ -373,6 +396,8 @@ export default function ReactFormBuilder({
           <TextInput
             id="file_name"
             labelText="Name:"
+            invalidText="Name is required, must be at least three characters, and must be all lowercase characters and hyphens."
+            invalid={filenameBaseInvalid}
             value={newFileName}
             onChange={(event: any) => {
               setNewFileName(event.srcElement.value);

@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.11.6-slim-bookworm AS base
+FROM python:3.12.1-slim-bookworm AS base
 
 ENV VIRTUAL_ENV=/app/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -27,7 +27,7 @@ RUN apt-get update \
 
 # keep pip up to date
 RUN pip install --upgrade pip
-RUN pip install poetry==1.6.1
+RUN pip install poetry==1.8.1
 
 
 ######################## - SETUP
@@ -45,7 +45,7 @@ RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
 RUN apt-get update \
- && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config
+ && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
 
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.

@@ -1,13 +1,16 @@
 import validator from '@rjsf/validator-ajv8';
 import { ReactNode } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
-import { Form } from '../rjsf/carbon_theme';
+import { Button } from '@carbon/react';
+import { Form as MuiForm } from '@rjsf/mui';
+import { Form as CarbonForm } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
+import CharacterCounterField from '../rjsf/custom_widgets/CharacterCounterField/CharacterCounterField';
 
 enum DateCheckType {
   minimum = 'minimum',
@@ -26,6 +29,8 @@ type OwnProps = {
   children?: ReactNode;
   noValidate?: boolean;
   restrictedWidth?: boolean;
+  submitButtonText?: string;
+  reactJsonSchemaForm?: string;
 };
 
 export default function CustomForm({
@@ -39,6 +44,8 @@ export default function CustomForm({
   children,
   noValidate = false,
   restrictedWidth = false,
+  submitButtonText,
+  reactJsonSchemaForm = 'carbon',
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -50,6 +57,7 @@ export default function CustomForm({
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
+    'character-counter': CharacterCounterField,
   };
 
   const rjsfTemplates: any = {};
@@ -247,12 +255,71 @@ export default function CustomForm({
     formDataToCheck: any,
     propertyKey: string,
     errors: any,
-    _jsonSchema: any,
+    jsonSchema: any,
     _uiSchemaPassedIn?: any
   ) => {
-    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+    if (
+      jsonSchema.required &&
+      jsonSchema.required.includes(propertyKey) &&
+      (formDataToCheck[propertyKey].min === undefined ||
+        formDataToCheck[propertyKey].max === undefined)
+    ) {
       errors[propertyKey].addError(
-        `must have min less than max on numeric range`
+        `must have valid Minimum and Maximum on ${propertyKey}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].min <
+      jsonSchema.properties[propertyKey].minimum
+    ) {
+      errors[propertyKey].addError(
+        `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].min >
+      jsonSchema.properties[propertyKey].maximum
+    ) {
+      errors[propertyKey].addError(
+        `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].max <
+      jsonSchema.properties[propertyKey].minimum
+    ) {
+      errors[propertyKey].addError(
+        `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+      );
+    }
+    if (
+      formDataToCheck[propertyKey].max >
+      jsonSchema.properties[propertyKey].maximum
+    ) {
+      errors[propertyKey].addError(
+        `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+      );
+    }
+    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+      errors[propertyKey].addError(`must have min less than or equal to max`);
+    }
+  };
+
+  const checkCharacterCounter = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    jsonSchema: any,
+    _uiSchemaPassedIn?: any
+  ) => {
+    if (
+      jsonSchema.required &&
+      jsonSchema.required.includes(propertyKey) &&
+      (formDataToCheck[propertyKey] === undefined ||
+        formDataToCheck[propertyKey] === '')
+    ) {
+      errors[propertyKey].addError(
+        `must have required property '${propertyKey}'`
       );
     }
   };
@@ -329,6 +396,20 @@ export default function CustomForm({
           );
         }
 
+        if (
+          currentUiSchema &&
+          'ui:field' in currentUiSchema &&
+          currentUiSchema['ui:field'] === 'character-counter'
+        ) {
+          checkCharacterCounter(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse,
+            currentUiSchema
+          );
+        }
+
         // recurse through all nested properties as well
         let formDataToSend = formDataToCheck[propertyKey];
         if (formDataToSend) {
@@ -357,24 +438,41 @@ export default function CustomForm({
     return checkFieldsWithCustomValidations(schema, formDataToCheck, errors);
   };
 
-  return (
-    <Form
-      id={id}
-      disabled={disabled}
-      formData={formData}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      schema={schema}
-      uiSchema={uiSchema}
-      widgets={rjsfWidgets}
-      validator={validator}
-      customValidate={customValidate}
-      noValidate={noValidate}
-      fields={rjsfFields}
-      templates={rjsfTemplates}
-      omitExtraData
-    >
-      {children}
-    </Form>
-  );
+  let childrenToUse = children;
+  if (submitButtonText) {
+    childrenToUse = (
+      <Button type="submit" id="submit-button" disabled={disabled}>
+        {submitButtonText}
+      </Button>
+    );
+  }
+
+  const formProps = {
+    id,
+    disabled,
+    formData,
+    onChange,
+    onSubmit,
+    schema,
+    uiSchema,
+    widgets: rjsfWidgets,
+    validator,
+    customValidate,
+    noValidate,
+    fields: rjsfFields,
+    templates: rjsfTemplates,
+    omitExtraData: true,
+  };
+  if (reactJsonSchemaForm === 'carbon') {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <CarbonForm {...formProps}>{childrenToUse}</CarbonForm>;
+  }
+
+  if (reactJsonSchemaForm === 'mui') {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
+  }
+
+  console.error(`Unsupported form type: ${reactJsonSchemaForm}`);
+  return null;
 }

@@ -54,6 +54,7 @@ import {
   MULTI_INSTANCE_TASK_TYPES,
   LOOP_TASK_TYPES,
   titleizeString,
+  isURL,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -64,6 +65,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessModel,
   Task,
   TaskDefinitionPropertiesJson,
   User,
@@ -157,6 +159,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelFileCreatePath]: ['GET'],
     [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
@@ -195,10 +198,35 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const shortcutLoadPrimaryFile = () => {
+    if (ability.can('GET', targetUris.processInstanceActionPath)) {
+      const processResult = (result: ProcessModel) => {
+        const primaryFileName = result.primary_file_name;
+        if (!primaryFileName) {
+          // this should be very unlikely, since we are in the context of an instance,
+          // but it's techically possible for the file to have been subsequently deleted or something.
+          console.error('Primary file name not found for the process model.');
+          return;
+        }
+        navigate(
+          `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`
+        );
+      };
+      HttpService.makeCallToBackend({
+        path: `/process-models/${modifiedProcessModelId}`,
+        successCallback: processResult,
+      });
+    }
+  };
+
   const keyboardShortcuts: KeyboardShortcuts = {
     'f,r,enter': {
       function: forceRunProcessInstance,
-      label: 'Force run process instance',
+      label: '[F]orce [r]un process instance',
+    },
+    'd,enter': {
+      function: shortcutLoadPrimaryFile,
+      label: 'View process model [d]iagram',
     },
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
@@ -208,6 +236,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
   }
+
+  const bpmnProcessGuid = searchParams.get('bpmn_process_guid');
+  const tab = searchParams.get('tab');
+  const taskSubTab = searchParams.get('taskSubTab');
+  const processIdentifier = searchParams.get('process_identifier');
 
   const handleAddErrorInUseEffect = useCallback((value: ErrorForDisplay) => {
     addError(value);
@@ -234,7 +267,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (typeof params.to_task_guid !== 'undefined') {
       taskParams = `${taskParams}&to_task_guid=${params.to_task_guid}`;
     }
-    const bpmnProcessGuid = searchParams.get('bpmn_process_guid');
     if (bpmnProcessGuid) {
       taskParams = `${taskParams}&bpmn_process_guid=${bpmnProcessGuid}`;
     }
@@ -255,13 +287,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ability,
     handleAddErrorInUseEffect,
     params.to_task_guid,
-    searchParams,
     taskListPath,
+    bpmnProcessGuid,
   ]);
 
   const getProcessInstance = useCallback(() => {
     let queryParams = '';
-    const processIdentifier = searchParams.get('process_identifier');
     if (processIdentifier) {
       queryParams = `?process_identifier=${processIdentifier}`;
     }
@@ -273,7 +304,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
       successCallback: setProcessInstance,
     });
-  }, [params, modifiedProcessModelId, searchParams, variant]);
+  }, [
+    params.process_instance_id,
+    modifiedProcessModelId,
+    variant,
+    processIdentifier,
+  ]);
 
   useEffect(() => {
     if (processInstance) {
@@ -292,20 +328,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     getProcessInstance();
     getActionableTaskList();
 
-    if (searchParams.get('tab')) {
-      setSelectedTabIndex(parseInt(searchParams.get('tab') || '0', 10));
+    if (tab) {
+      setSelectedTabIndex(parseInt(tab || '0', 10));
     }
-    if (searchParams.get('taskSubTab')) {
-      setSelectedTaskTabSubTab(
-        parseInt(searchParams.get('taskSubTab') || '0', 10)
-      );
+    if (taskSubTab) {
+      setSelectedTaskTabSubTab(parseInt(taskSubTab || '0', 10));
     }
     return undefined;
   }, [
     permissionsLoaded,
     getActionableTaskList,
     getProcessInstance,
-    searchParams,
+    tab,
+    taskSubTab,
   ]);
 
   const updateSearchParams = (value: string, key: string) => {
@@ -326,14 +361,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const queryParams = () => {
-    const processIdentifier = searchParams.get('process_identifier');
-    const callActivityTaskId = searchParams.get('bpmn_process_guid');
     const queryParamArray = [];
     if (processIdentifier) {
       queryParamArray.push(`process_identifier=${processIdentifier}`);
     }
-    if (callActivityTaskId) {
-      queryParamArray.push(`bpmn_process_guid=${callActivityTaskId}`);
+    if (bpmnProcessGuid) {
+      queryParamArray.push(`bpmn_process_guid=${bpmnProcessGuid}`);
     }
     let queryParamString = '';
     if (queryParamArray.length > 0) {
@@ -414,6 +447,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       successCallback: returnToProcessInstance,
       httpMethod: 'POST',
     });
+  };
+
+  const formatMetadataValue = (key: string, value: string) => {
+    if (isURL(value)) {
+      return (
+        <a href={value} target="_blank" rel="noopener noreferrer">
+          {key} link
+        </a>
+      );
+    }
+    return value;
   };
 
   const getInfoTag = () => {
@@ -521,7 +565,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <dt title={processInstanceMetadata.key}>
                   {truncateString(processInstanceMetadata.key, 50)}:
                 </dt>
-                <dd>{processInstanceMetadata.value}</dd>
+                <dd data-qa={`metadata-value-${processInstanceMetadata.key}`}>
+                  {formatMetadataValue(
+                    processInstanceMetadata.key,
+                    processInstanceMetadata.value
+                  )}
+                </dd>
               </dl>
             )
           )}
@@ -746,17 +795,25 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const dataObjectIdentifer = dataObjectRef.id;
     const parentProcess = shapeElement.businessObject.$parent;
-    const processIdentifier = parentProcess.id;
+    const parentProcessIdentifier = parentProcess.id;
 
     let additionalParams = '';
     if (tasks) {
       const matchingTask: Task | undefined = tasks.find((task: Task) => {
-        return task.bpmn_identifier === processIdentifier;
+        return task.bpmn_identifier === parentProcessIdentifier;
       });
       if (matchingTask) {
-        additionalParams = `?process_identifier=${processIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
+        additionalParams = `?process_identifier=${parentProcessIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
+      } else if (
+        searchParams.get('process_identifier') &&
+        searchParams.get('bpmn_process_guid')
+      ) {
+        additionalParams = `?process_identifier=${searchParams.get(
+          'process_identifier'
+        )}&bpmn_process_guid=${searchParams.get('bpmn_process_guid')}`;
       }
     }
+
     HttpService.makeCallToBackend({
       path: `/process-data/${category}/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
       httpMethod: 'GET',

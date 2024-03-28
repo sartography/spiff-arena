@@ -66,7 +66,6 @@ class ProcessInstanceQueueService:
                 "locked_at_in_seconds": current_time,
             }
         )
-
         db.session.commit()
 
         queue_entry = (
@@ -83,9 +82,11 @@ class ProcessInstanceQueueService:
             )
 
         if queue_entry.locked_by != locked_by:
+            message = f"It has already been locked by {queue_entry.locked_by}."
+            if queue_entry.locked_by is None:
+                message = "It was locked by something else when we tried to lock it in the db, but it has since been unlocked."
             raise ProcessInstanceIsAlreadyLockedError(
-                f"{locked_by} cannot lock process instance {process_instance.id}. "
-                f"It has already been locked by {queue_entry.locked_by}."
+                f"{locked_by} cannot lock process instance {process_instance.id}. {message}"
             )
 
         ProcessInstanceLockService.lock(
@@ -93,17 +94,41 @@ class ProcessInstanceQueueService:
         )
 
     @classmethod
+    def _dequeue_with_retries(
+        cls,
+        process_instance: ProcessInstanceModel,
+        additional_processing_identifier: str | None = None,
+        max_attempts: int = 1,
+    ) -> None:
+        attempt = 1
+        backoff_factor = 2
+        while True:
+            try:
+                return cls._dequeue(process_instance, additional_processing_identifier=additional_processing_identifier)
+            except ProcessInstanceIsAlreadyLockedError as exception:
+                if attempt >= max_attempts:
+                    raise exception
+                time.sleep(backoff_factor**attempt)
+                attempt += 1
+
+    @classmethod
     @contextlib.contextmanager
     def dequeued(
-        cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None
+        cls,
+        process_instance: ProcessInstanceModel,
+        additional_processing_identifier: str | None = None,
+        max_attempts: int = 1,
     ) -> Generator[None, None, None]:
         reentering_lock = ProcessInstanceLockService.has_lock(
             process_instance.id, additional_processing_identifier=additional_processing_identifier
         )
+
         if not reentering_lock:
             # this can blow up with ProcessInstanceIsNotEnqueuedError or ProcessInstanceIsAlreadyLockedError
             # that's fine, let it bubble up. and in that case, there's no need to _enqueue / unlock
-            cls._dequeue(process_instance, additional_processing_identifier=additional_processing_identifier)
+            cls._dequeue_with_retries(
+                process_instance, additional_processing_identifier=additional_processing_identifier, max_attempts=max_attempts
+            )
         try:
             yield
         except Exception as ex:

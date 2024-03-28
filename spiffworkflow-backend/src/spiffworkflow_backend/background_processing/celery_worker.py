@@ -1,5 +1,5 @@
 import logging
-import re
+
 import celery
 from flask.helpers import sys
 
@@ -7,7 +7,7 @@ from spiffworkflow_backend import create_app
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
     celery_task_process_instance_run,  # noqa: F401
 )
-from spiffworkflow_backend.services.logging_service import JsonFormatter, setup_logger
+from spiffworkflow_backend.services.logging_service import setup_logger
 
 the_flask_app = create_app()
 # logger = get_task_logger("awesome_celery_logger")

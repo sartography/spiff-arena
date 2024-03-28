@@ -38,15 +38,32 @@ For a potentially faster setup:
 
 - Use the provided commands to run the server with Docker Compose.
 
-### 4. Access Hosted Version of Spiff
+### 4. Mac install issues
+Please follow the README.md at the root of the spiff-arena repo first.
+If you're on a Mac and trying to run natively (it might translate elsewhere) and get errors when running `poetry install`, many of the issues are related to relational database engine libraries.
+You will find lots of people having pain related to these on the internet, so hopefully the solution to your particular problem is easy to find, but this is not always the case.
+You may need to install additional system dependencies.
+
+    brew install mysql-client pkg-config
+    export PKG_CONFIG_PATH="$(brew --prefix)/opt/mysql-client/lib/pkgconfig"
+    pip install mysqlclient
+    pip install psycopg2
+
+One person decided that mysqlclient and psycopg2 were more trouble than they were worth and removed them from the pyproject.toml, while doing `poetry add pymysql` instead.
+If you are using mysql, psycopg2 is not necessary, and pymysql is a pure python implementation of the MySQL client library.
+In that case, python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to __init__.py in the backend project:
+
+```python
+import pymysql;
+pymysql.install_as_MySQLdb()
+```
+### 5. Access Hosted Version of Spiff
 
 If you prefer not to install anything locally:
 
 - Navigate to [https://www.spiffworkflow.org/posts/articles/get_started](https://www.spiffworkflow.org/posts/articles/get_started).
 - Access a version of Spiff hosted on the internet.
 
-
-
-Setting up the SpiffWorkflow backend project locally can be straightforward once you're aware of the dependencies and options available. Whether you choose to clone the `sample-process-models` repository, use a different git repository, or opt for Docker Compose, the solutions provided should help you get started without any hitches. 
+Setting up the SpiffWorkflow backend project locally can be straightforward once you're aware of the dependencies and options available. Whether you choose to clone the `sample-process-models` repository, use a different git repository, or opt for Docker Compose, the solutions provided should help you get started without any hitches.
 
 If you encounter further issues, always refer back to the repository's README or seek assistance from our discord community.

@@ -21,7 +21,7 @@ export default function SecretShow() {
       path: `/secrets/${params.key}`,
       successCallback: setSecret,
     });
-  }, [params]);
+  }, [params.key]);
 
   const handleSecretValueChange = (event: any) => {
     if (secret) {
@@ -106,7 +106,7 @@ export default function SecretShow() {
                 <td>{params.key}</td>
                 {displaySecretValue && (
                   <>
-                    <td>
+                    <td aria-label="Secret value">
                       <TextInput
                         id="secret_value"
                         name="secret_value"

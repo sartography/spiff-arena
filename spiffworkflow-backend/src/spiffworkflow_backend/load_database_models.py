@@ -23,9 +23,6 @@ from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel  # noqa: F401
-from spiffworkflow_backend.models.spec_reference import (
-    SpecReferenceCache,
-)  # noqa: F401
 from spiffworkflow_backend.models.cache_generation import (
     CacheGenerationModel,
 )  # noqa: F401
@@ -93,6 +90,9 @@ from spiffworkflow_backend.models.json_data_store import (
 )  # noqa: F401
 from spiffworkflow_backend.models.kkv_data_store import (
     KKVDataStoreModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.kkv_data_store_entry import (
+    KKVDataStoreEntryModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.task_draft_data import (
     TaskDraftDataModel,

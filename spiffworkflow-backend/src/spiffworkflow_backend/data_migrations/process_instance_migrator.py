@@ -5,6 +5,7 @@ from flask import current_app
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.data_migrations.version_3 import Version3
+from spiffworkflow_backend.data_migrations.version_4 import Version4
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
@@ -29,8 +30,6 @@ def benchmark_log_func(func: Any) -> Any:
 
 
 class ProcessInstanceMigrator:
-    CURRENT_VERSION = "3"
-
     @classmethod
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         """This updates the serialization of an instance to the current expected state.
@@ -52,8 +51,12 @@ class ProcessInstanceMigrator:
         if process_instance.spiff_serializer_version < Version2.version():
             cls.run_version(Version3, process_instance)
             cls.run_version(Version2, process_instance)
-        else:
+            cls.run_version(Version4, process_instance)
+        elif process_instance.spiff_serializer_version < Version3.version():
             cls.run_version(Version3, process_instance)
+            cls.run_version(Version4, process_instance)
+        else:
+            cls.run_version(Version4, process_instance)
 
     @classmethod
     @benchmark_log_func

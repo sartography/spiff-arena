@@ -57,7 +57,6 @@ export default function ReactFormEditor() {
   })();
 
   const hasDiagram = fileExtension === 'bpmn' || fileExtension === 'dmn';
-  const hasFormBuilder = fileExtension === 'json';
   const defaultFileName = searchParams.get('default_file_name');
 
   const editorDefaultLanguage = (() => {
@@ -94,7 +93,7 @@ export default function ReactFormEditor() {
         successCallback: processResult,
       });
     }
-  }, [params, modifiedProcessModelId]);
+  }, [params.file_name, modifiedProcessModelId]);
 
   useEffect(() => {
     if (processModelFile && processModel) {
@@ -248,9 +247,6 @@ export default function ReactFormEditor() {
 
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
-    const formBuildFileParam = params.file_name
-      ? `?file_name=${params.file_name}`
-      : '';
     return (
       <main>
         <ProcessBreadcrumb
@@ -297,25 +293,6 @@ export default function ReactFormEditor() {
                 onConfirmation={deleteFile}
                 buttonLabel="Delete"
               />
-            ) : null}
-          </Can>
-          <Can
-            I="PUT"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {hasFormBuilder ? (
-              <Button
-                onClick={() =>
-                  navigate(
-                    `/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
-                  )
-                }
-                variant="danger"
-                data-qa="form-builder-button"
-              >
-                Form Builder
-              </Button>
             ) : null}
           </Can>
           <Can

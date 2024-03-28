@@ -46,12 +46,14 @@ a.cds--header__menu-item {
   font-style: italic;
 }
 
-h1 {
+h1,
+h1.MuiTypography-h1 {
   font-weight: 400;
   font-size: 28px;
   line-height: 36px;
   color: #161616;
   margin-bottom: 1rem;
+  letter-spacing: 0.00938em;
 }
 
 h2 {
@@ -83,16 +85,16 @@ h3 {
   background: lightgrey;
 }
 
-.cds--breadcrumb-item a.cds--link:hover {
+.spiff-breadcrumb .MuiBreadcrumbs-li a:hover {
   color: #525252;
 }
-.cds--breadcrumb-item a.cds--link:visited {
+.spiff-breadcrumb .MuiBreadcrumbs-li a:visited {
   color: #525252;
 }
-.cds--breadcrumb-item a.cds--link:visited:hover {
+.spiff-breadcrumb .MuiBreadcrumbs-li a:visited:hover {
   color: #525252;
 }
-.cds--breadcrumb-item a.cds--link {
+.spiff-breadcrumb .MuiBreadcrumbs-li a {
   color: #525252;
 }
 
@@ -210,7 +212,7 @@ code {
   vertical-align: middle;
 }
 
-.cds--breadcrumb {
+.MuiBreadcrumbs-root.spiff-breadcrumb {
   margin-bottom: 2rem;
 }
 
@@ -354,14 +356,6 @@ dl dd {
   margin: auto;
 }
 
-.breadcrumb {
-  font-size: 1.5rem;
-}
-
-.breadcrumb-item.active {
-  color: black;
-}
-
 .container .nav-tabs {
   margin-top: 1rem;
 }
@@ -398,6 +392,32 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   display: inline-block;
   padding-right: 5px;
   padding-left: 5px;
+}
+
+.cds--tile.tile-data-store {
+  padding: 0px;
+  margin: 12px 24px 12px 0px;
+  width: 320px;
+  height: 264px;
+  background: #f4f4f4;
+  order: 1;
+  float: left;
+}
+
+.tile-data-store-content-container {
+  width: 320px;
+  height: 264px;
+  padding: 1rem;
+  position: relative;
+}
+
+.tile-data-store-display-name {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+  order: 0;
 }
 
 .cds--tile.tile-process-group {
@@ -804,7 +824,7 @@ li.cds--accordion__item {
   max-width: 100%;
 }
 
-.process-model-search-combobox li{
+.process-model-search-combobox li {
   max-width: 100%;
 }
 
@@ -938,4 +958,73 @@ div.onboarding {
 .task-instance-modal-row-item {
   height: 48px;
   line-height: 48px;
+}
+
+/* Utility classes to create horizontally centered stacks (to align icons etc) */
+.flex-align-horizontal-center {
+  display: flex;
+  align-items: center;
+}
+
+.flex-justify-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.gray-text {
+  color: gray;
+}
+
+.error-text-red {
+  color: red;
+}
+
+/* Utility classes (carbon equivalents for stacks, columns and rows?) */
+.p-10 {
+  padding: 10px;
+}
+
+.p-top-10 {
+  padding-top: 10px;
+}
+
+.p-bottom-10 {
+  padding-bottom: 10px;
+}
+
+.p-left-10 {
+  padding-left: 10px;
+}
+
+.p-right-10 {
+  padding-right: 10px;
+}
+
+.m-10 {
+  margin: 10px;
+}
+
+.m-top-10 {
+  margin-top: 10px;
+}
+
+.m-bottom-10 {
+  margin-bottom: 10px;
+}
+
+.m-left-10 {
+  margin-left: 10px;
+}
+
+.m-right-10 {
+  margin-right: 10px;
+}
+
+.not-editable {
+  pointer-events: none;
+}
+
+.pi-show-new-tab-button {
+  position: relative;
+  left: 6px;
 }

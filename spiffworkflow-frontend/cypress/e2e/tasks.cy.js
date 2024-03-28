@@ -43,19 +43,6 @@ describe('tasks', () => {
     submitInputIntoFormField('get_form_num_two', '#root_form_num_2', 3);
 
     cy.contains('Task: get_form_num_three');
-    // TODO: remove this if we decide to completely kill form navigation
-    // cy.getBySel('form-nav-form2').click();
-    // checkFormFieldIsReadOnly(
-    //   'get_form_num_two',
-    //   '#root_form_num_2'
-    // );
-    // cy.getBySel('form-nav-form1').click();
-    // checkFormFieldIsReadOnly(
-    //   'get_form_num_one',
-    //   '#root_form_num_1'
-    // );
-    //
-    // cy.getBySel('form-nav-form3').click();
     submitInputIntoFormField('get_form_num_three', '#root_form_num_3', 4);
 
     cy.contains('Task: get_form_num_four');
@@ -98,17 +85,48 @@ describe('tasks', () => {
     cy.contains('Process Instance Id: ');
     cy.get('.process-instance-status').contains('complete');
   });
+});
 
-  // we no longer have a tasks table so these are actually covered in the process_instances test
-  // it('can paginate items', () => {
-  //   // make sure we have some tasks
-  //   kickOffModelWithForm();
-  //   kickOffModelWithForm();
-  //   kickOffModelWithForm();
-  //   kickOffModelWithForm();
-  //   kickOffModelWithForm();
-  //
-  //   cy.navigateToHome();
-  //   cy.basicPaginationTest('process-instance-show-link-id');
-  // });
+describe('public_tasks', () => {
+  it('can start process from message form', () => {
+    // login and log out to ensure permissions are set correctly
+    cy.login();
+    cy.logout();
+
+    cy.visit('public/misc:bounty_start_multiple_forms');
+    cy.get('#root_firstName').type('MyFirstName');
+    cy.contains('Submit').click();
+    cy.get('#root_lastName').type('MyLastName');
+    cy.contains('Submit').click();
+    cy.contains('We hear you. Your name is MyFirstName MyLastName.');
+  });
+
+  it('can complete a guest task', () => {
+    cy.login();
+    const groupDisplayName = 'Shared Resources';
+    const modelDisplayName = 'task-with-guest-form';
+    cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
+    cy.runPrimaryBpmnFile(false, false, false);
+
+    cy.get('[data-qa="metadata-value-first_task_url"] a')
+      .invoke('attr', 'href')
+      .then((hrefValue) => {
+        cy.logout();
+        cy.visit(hrefValue);
+        // form 1
+        cy.contains('Submit').click();
+        // form 2
+        cy.contains('Submit').click();
+        cy.contains('You are done. Yay!');
+        cy.visit(hrefValue);
+        cy.contains('Error retrieving content.');
+        cy.getBySel('public-home-link').click();
+        cy.getBySel('public-sign-out').click();
+        if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
+          cy.contains('Sign in to your account');
+        } else {
+          cy.get('#spiff-login-button').should('exist');
+        }
+      });
+  });
 });

@@ -68,7 +68,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
                 break
 
         new_task = Task(
-            task.task_id,
+            task.task_guid,
             task.task_name,
             task.task_title,
             task.task_type,

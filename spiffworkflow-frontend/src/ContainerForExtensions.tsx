@@ -1,5 +1,5 @@
 import { Content } from '@carbon/react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -19,10 +19,11 @@ import BaseRoutes from './routes/BaseRoutes';
 import BackendIsDown from './routes/BackendIsDown';
 import Login from './routes/Login';
 import NavigationBar from './components/NavigationBar';
+import useAPIError from './hooks/UseApiError';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
-  const [extensionUxElements, setExtensionNavigationItems] = useState<
+  const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
 
@@ -37,6 +38,19 @@ export default function ContainerForExtensions() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
   );
+
+  const { removeError } = useAPIError();
+
+  const location = useLocation();
+
+  // never carry an error message across to a different path
+  useEffect(() => {
+    removeError();
+    // if we include the removeError function to the dependency array of this useEffect, it causes
+    // an infinite loop where the page with the error adds the error,
+    // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
@@ -67,7 +81,7 @@ export default function ContainerForExtensions() {
         })
         .flat();
       if (eni) {
-        setExtensionNavigationItems(eni);
+        setExtensionUxElements(eni);
       }
     };
 
@@ -81,6 +95,9 @@ export default function ContainerForExtensions() {
           path: targetUris.extensionListPath,
           successCallback: processExtensionResult,
         });
+      } else {
+        // set to an empty array so we know that it loaded
+        setExtensionUxElements([]);
       }
     };
 
@@ -100,23 +117,23 @@ export default function ContainerForExtensions() {
     return (
       <Routes>
         <Route
-          path="/*"
+          path="*"
           element={<BaseRoutes extensionUxElements={extensionUxElements} />}
         />
-        <Route path="/editor/*" element={<EditorRoutes />} />
-        <Route path="/extensions/:page_identifier" element={<Extension />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="editor/*" element={<EditorRoutes />} />
+        <Route path="extensions/:page_identifier" element={<Extension />} />
+        <Route path="login" element={<Login />} />
       </Routes>
     );
   };
 
   const backendIsDownPage = () => {
-    return <BackendIsDown />;
+    return [<BackendIsDown />];
   };
 
   const innerComponents = () => {
     if (backendIsUp === null) {
-      return null;
+      return [];
     }
     if (backendIsUp) {
       return routeComponents();
@@ -126,7 +143,7 @@ export default function ContainerForExtensions() {
 
   return (
     <>
-      <NavigationBar extensionUxElements={extensionUxElements} />;
+      <NavigationBar extensionUxElements={extensionUxElements} />
       <Content className={contentClassName}>
         <ScrollToTop />
         <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>

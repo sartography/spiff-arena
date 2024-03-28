@@ -1,15 +1,11 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
 
 import flask.wrappers
-from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 
-from spiffworkflow_backend import db
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
@@ -63,54 +59,18 @@ def message_instance_list(
 #  -H 'content-type: application/json' \
 #  --data-raw '{"payload":{"sure": "yes", "food": "spicy"}}'
 def message_send(
-    message_name: str,
+    modified_message_name: str,
     body: dict[str, Any],
+    execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    if "payload" not in body:
-        raise (
-            ApiError(
-                error_code="missing_payload",
-                message="Please include a 'payload' in the JSON body that contains the message contents.",
-                status_code=400,
-            )
-        )
-
-    process_instance = None
-
-    # Create the send message
-    message_instance = MessageInstanceModel(
-        message_type="send",
-        name=message_name,
-        payload=body["payload"],
-        user_id=g.user.id,
-    )
-    db.session.add(message_instance)
-    db.session.commit()
-    try:
-        receiver_message = MessageService.correlate_send_message(message_instance)
-    except Exception as e:
-        db.session.delete(message_instance)
-        db.session.commit()
-        raise e
-    if not receiver_message:
-        db.session.delete(message_instance)
-        db.session.commit()
-        raise (
-            ApiError(
-                error_code="message_not_accepted",
-                message=(
-                    "No running process instances correlate with the given message"
-                    f" name of '{message_name}'.  And this message name is not"
-                    " currently associated with any process Start Event. Nothing"
-                    " to do."
-                ),
-                status_code=400,
-            )
-        )
-
+    receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
     process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    response_json = {
+        "task_data": process_instance.get_data(),
+        "process_instance": ProcessInstanceModelSchema().dump(process_instance),
+    }
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(response_json),
         status=200,
         mimetype="application/json",
     )

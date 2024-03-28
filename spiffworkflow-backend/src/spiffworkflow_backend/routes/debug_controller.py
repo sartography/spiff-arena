@@ -1,8 +1,13 @@
-"""APIs for dealing with process groups, process models, and process instances."""
+import json
+
+import redis
+from flask import current_app
+from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.monitoring_service import get_version_info_data
 
@@ -17,3 +22,33 @@ def version_info() -> Response:
 
 def url_info() -> Response:
     return make_response({"url": request.url, "cache": AuthenticationService.ENDPOINT_CACHE}, 200)
+
+
+def celery_backend_results(
+    process_instance_id: int,
+    include_all_failures: bool = True,
+) -> Response:
+    redis_client = redis.StrictRedis.from_url(current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"])
+    results: list = redis_client.keys("celery-task-meta-*")  # type: ignore
+    if len(results) > 1000:
+        raise ApiError(
+            error_code="too_many_entries",
+            message=f"There are too many redis entries. You probably shouldn't use this api method. count {len(results)}",
+            status_code=400,
+        )
+
+    result_values = redis_client.mget(results)  # type: ignore
+
+    return_body = []
+    for value in result_values:
+        if value is None:
+            continue
+        value_dict = json.loads(value.decode("utf-8"))
+        if (
+            value_dict["result"]
+            and "process_instance_id" in value_dict["result"]
+            and value_dict["result"]["process_instance_id"] == process_instance_id
+        ) or (value_dict["status"] == "FAILURE" and include_all_failures is True):
+            return_body.append(value_dict)
+
+    return make_response(jsonify(return_body), 200)

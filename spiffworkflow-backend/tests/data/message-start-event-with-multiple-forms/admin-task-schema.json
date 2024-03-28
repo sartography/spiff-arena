@@ -1,0 +1,15 @@
+{
+  "title": "Approval time",
+  "description": "Are we approving this?",
+  "type": "object",
+  "required": [
+    "firstName"
+  ],
+  "properties": {
+     "done": {
+      "type": "boolean",
+      "title": "Approved",
+      "default": false
+    }
+  }
+}

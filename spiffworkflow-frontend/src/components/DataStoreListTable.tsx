@@ -37,21 +37,26 @@ export default function DataStoreListTable() {
       'datastore'
     );
     const dataStoreType = searchParams.get('type') || '';
-    const dataStoreName = searchParams.get('name') || '';
+    const dataStoreIdentifier = searchParams.get('identifier') || '';
+    const dataStoreLocation = searchParams.get('location') || '';
 
-    if (dataStoreType === '' || dataStoreName === '') {
+    if (dataStoreType === '' || dataStoreIdentifier === '') {
       return;
     }
-    if (dataStores && dataStoreName && dataStoreType) {
+    if (dataStores && dataStoreIdentifier && dataStoreType) {
       dataStores.forEach((ds) => {
-        if (ds.name === dataStoreName && ds.type === dataStoreType) {
+        if (
+          ds.id === dataStoreIdentifier &&
+          ds.type === dataStoreType &&
+          ds.location === dataStoreLocation
+        ) {
           setDataStore(ds);
         }
       });
     }
-    const queryParamString = `per_page=${perPage}&page=${page}`;
+    const queryParamString = `per_page=${perPage}&page=${page}&location=${dataStoreLocation}`;
     HttpService.makeCallToBackend({
-      path: `/data-stores/${dataStoreType}/${dataStoreName}?${queryParamString}`,
+      path: `/data-stores/${dataStoreType}/${dataStoreIdentifier}/items?${queryParamString}`,
       successCallback: (response: DataStoreRecords) => {
         setResults(response.results);
         setPagination(response.pagination);
@@ -101,6 +106,10 @@ export default function DataStoreListTable() {
     );
   };
 
+  const locationDescription = (ds: DataStore) => {
+    return ds.location ? ` @ ${ds.location}` : '';
+  };
+
   const { page, perPage } = getPageInfoFromSearchParams(
     searchParams,
     10,
@@ -116,13 +125,16 @@ export default function DataStoreListTable() {
         label="Please select a data store"
         items={dataStores}
         selectedItem={dataStore}
-        itemToString={(ds: DataStore) => (ds ? `${ds.name} (${ds.type})` : '')}
+        itemToString={(ds: DataStore) =>
+          ds ? `${ds.name} (${ds.type}${locationDescription(ds)})` : ''
+        }
         onChange={(event: any) => {
           setDataStore(event.selectedItem);
           searchParams.set('datastore_page', '1');
           searchParams.set('datastore_per_page', '10');
           searchParams.set('type', event.selectedItem.type);
-          searchParams.set('name', event.selectedItem.name);
+          searchParams.set('identifier', event.selectedItem.id);
+          searchParams.set('location', event.selectedItem.location);
           setSearchParams(searchParams);
         }}
       />

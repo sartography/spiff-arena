@@ -1,7 +1,5 @@
 import json
 import logging
-import re
-import sys
 from typing import Any
 
 from flask.app import Flask

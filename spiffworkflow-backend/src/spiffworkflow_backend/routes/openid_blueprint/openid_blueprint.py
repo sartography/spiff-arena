@@ -5,6 +5,7 @@ Provides the bare minimum endpoints required by SpiffWorkflow to
 handle openid authentication -- definitely not a production ready system.
 This is just here to make local development, testing, and demonstration easier.
 """
+
 import base64
 import json
 import math

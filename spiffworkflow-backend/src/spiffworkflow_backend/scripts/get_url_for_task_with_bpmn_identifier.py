@@ -39,7 +39,14 @@ class GetUrlForTaskWithBpmnIdentifier(Script):
                 " therefore it does not have a url to retrieve"
             )
 
+        public = True
+        public_segment = ""
+        if "public" in kwargs:
+            public = kwargs["public"]
+        if public is True:
+            public_segment = "/public"
+
         guid = str(desired_spiff_task.id)
         fe_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
-        url = f"{fe_url}/tasks/{script_attributes_context.process_instance_id}/{guid}"
+        url = f"{fe_url}{public_segment}/tasks/{script_attributes_context.process_instance_id}/{guid}"
         return url

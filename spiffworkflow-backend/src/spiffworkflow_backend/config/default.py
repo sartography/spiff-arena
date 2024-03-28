@@ -40,6 +40,10 @@ configs_with_structures = normalized_environment(environ)
 config_from_env("FLASK_SESSION_SECRET_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
 
+### AI Tools
+config_from_env("SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API")
+
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", default=False)
@@ -139,6 +143,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME")
 # FIXME: do not default this but we will need to coordinate release of it since it is a breaking change
 config_from_env("SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP", default="everybody")
+config_from_env("SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP", default="spiff_public")
 
 ### sentry
 config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_DSN", default="")
@@ -164,6 +169,15 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
 config_from_env("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
+
+### webhook
+# configs for handling incoming webhooks from other systems
+# it assumes github webhooks by default, since SPIFFWORKFLOW_BACKEND_WEBHOOK_ENFORCES_GITHUB_AUTH is true,
+# but if you set that to false, you can handle webhooks from any system. just make sure you supply your
+# own auth checks in the process model.
+# the github auth will use SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET from above.
+config_from_env("SPIFFWORKFLOW_BACKEND_WEBHOOK_ENFORCES_GITHUB_AUTH", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER")
 
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors
@@ -194,6 +208,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 # we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,
 # so instead of using config, we use os.environ directly over there.
 # config_from_env("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE", default=True)
+
+
 # adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
 # to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default=False)

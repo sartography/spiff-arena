@@ -1,4 +1,5 @@
 """Wait for db to be ready."""
+
 import time
 
 from spiffworkflow_backend import create_app

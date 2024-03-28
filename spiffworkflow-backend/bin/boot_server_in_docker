@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
+
+function log_info() {
+  echo "BOOT SERVER IN DOCKER ($(date +"%Y-%m-%d %H:%M:%S")): $1"
+}
 
 # example command:
 # SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite SPIFFWORKFLOW_BACKEND_ENV=local_docker SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=true FLASK_DEBUG=0 FLASK_SESSION_SECRET_KEY=HEY SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${HOME}/projects/github/sartography/sample-process-models/" ./bin/boot_server_in_docker
@@ -68,6 +72,7 @@ if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
 fi
 
 # Assure that the the Process Models Directory is initialized as a git repo
+log_info "Running git init"
 git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 git config --global --add safe.directory "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
@@ -93,19 +98,21 @@ fi
 
 # DELETE after this runs on all necessary environments
 # TODO: make a system somewhat like schema migrations (storing versions in a db table) to handle data migrations
+log_info "Running data migrations"
 poetry run python ./bin/data_migrations/run_all.py
 
 # --worker-class is not strictly necessary, since setting threads will automatically set the worker class to gthread, but meh
+log_info "Starting gunicorn server"
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
-exec poetry run gunicorn ${additional_args}  \
-  --bind "0.0.0.0:$port"  \
+exec poetry run gunicorn ${additional_args} \
+  --bind "0.0.0.0:$port" \
   --preload \
   --worker-class "gthread" \
-  --workers="$worker_count"  \
+  --workers="$worker_count" \
   --threads "$SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER" \
-  --limit-request-line 8192  \
-  --timeout "$GUNICORN_TIMEOUT_SECONDS"  \
-  --capture-output  \
-  --access-logfile '-'  \
+  --limit-request-line 8192 \
+  --timeout "$GUNICORN_TIMEOUT_SECONDS" \
+  --capture-output \
+  --access-logfile '-' \
   --log-level "$GUNICORN_LOG_LEVEL" wsgi:app

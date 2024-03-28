@@ -1,7 +1,8 @@
-"""APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
+import random
 import re
+import string
 from hashlib import sha256
 from typing import Any
 
@@ -22,17 +23,21 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
+from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportNotFoundError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
+from spiffworkflow_backend.services.process_model_test_generator_service import ProcessModelTestGeneratorService
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -83,6 +88,15 @@ def process_model_create(
     with open(template_file) as f:
         contents = f.read()
     process_model_id_for_bpmn_file = process_model_info.id.split("/")[-1]
+
+    # convert dashes to underscores for process id
+    underscored_process_id = process_model_id_for_bpmn_file.replace("-", "_")
+
+    # make process id unique by adding random string to add
+    fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
+    process_id_with_fuzz = f"Process_{underscored_process_id}_{fuzz}"
+    contents = contents.replace("Process_replace_me_just_for_template", process_id_with_fuzz)
+
     SpecFileService.update_file(process_model_info, f"{process_model_id_for_bpmn_file}.bpmn", contents.encode())
 
     _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
@@ -154,10 +168,23 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     files = FileSystemService.get_sorted_files(process_model)
     process_model.files = files
 
+    reference_cache_processes = (
+        ReferenceCacheModel.basic_query()
+        .filter_by(
+            type="process",
+            identifier=process_model.primary_process_id,
+            relative_location=process_model.id,
+            file_name=process_model.primary_file_name,
+        )
+        .all()
+    )
+
+    ProcessModelService.embellish_with_is_executable_property([process_model], reference_cache_processes)
+
     if include_file_references:
         for file in process_model.files:
-            file.references = SpecFileService.get_references_for_file(file, process_model)
-
+            refs = SpecFileService.get_references_for_file(file, process_model)
+            file.references = refs
     process_model.parent_groups = ProcessModelService.get_parent_group_array(process_model.id)
     try:
         current_git_revision = GitService.get_current_revision()
@@ -204,6 +231,7 @@ def process_model_list(
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     process_models = ProcessModelService.get_process_models_for_api(
+        user=g.user,
         process_group_id=process_group_identifier,
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
@@ -325,6 +353,41 @@ def process_model_test_run(
         "failing": process_model_test_runner.failing_tests(),
     }
     return make_response(jsonify(response_json), 200)
+
+
+def process_model_test_generate(modified_process_model_identifier: str, body: dict[str, str | int]) -> flask.wrappers.Response:
+    process_instance_id = body["process_instance_id"]
+
+    if process_instance_id is None:
+        raise ApiError(
+            error_code="missing_process_instance_id",
+            message="Process instance id is required to be in the body of request.",
+            status_code=400,
+        )
+
+    test_case_identifier = body.get("test_case_identifier", f"test_case_for_process_instance_{process_instance_id}")
+    process_instance = _find_process_instance_by_id_or_raise(int(process_instance_id))
+    processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
+    process_instance_dict = processor.serialize()
+    test_case_dict = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
+        process_instance_dict, test_case_identifier=str(test_case_identifier)
+    )
+
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model = _get_process_model(process_model_identifier)
+
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_primary_file_not_set",
+            message="The primary file is not set for the given process model.",
+            status_code=400,
+        )
+
+    primary_file_name_without_extension = ".".join(process_model.primary_file_name.split(".")[0:-1])
+    test_case_file_name = f"test_{primary_file_name_without_extension}.json"
+    ProcessModelService.add_json_data_to_json_file(process_model, test_case_file_name, test_case_dict)
+
+    return make_response(jsonify(test_case_dict), 200)
 
 
 #   {

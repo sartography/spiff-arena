@@ -14,6 +14,7 @@ import { PermissionsToCheck, ProcessGroup } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+import DataStoreListTiles from '../components/DataStoreListTiles';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessModelListTiles from '../components/ProcessModelListTiles';
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
@@ -70,6 +71,7 @@ export default function ProcessGroupShow() {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
+    const dasherizedProcessGroupId = modifiedProcessGroupId.replace(/:/g, '-');
     const showNoItemsDisplayText =
       (processGroup.process_groups || []).length < 1 &&
       (processGroup.process_models || []).length < 1;
@@ -128,7 +130,10 @@ export default function ProcessGroupShow() {
               a={targetUris.processModelCreatePath}
               ability={ability}
             >
-              <Button href={`/process-models/${modifiedProcessGroupId}/new`}>
+              <Button
+                href={`/process-models/${modifiedProcessGroupId}/new`}
+                data-qa={`add-process-model-for-group-${dasherizedProcessGroupId}`}
+              >
                 Add a process model
               </Button>
             </Can>
@@ -160,6 +165,17 @@ export default function ProcessGroupShow() {
             userCanCreateProcessModels={ability.can(
               'POST',
               targetUris.processGroupListPath
+            )}
+          />
+          <br />
+          <br />
+          <DataStoreListTiles
+            processGroup={processGroup}
+            headerElement={<h2 className="clear-left">Data Stores</h2>}
+            showNoItemsDisplayText={showNoItemsDisplayText}
+            userCanCreateDataStores={ability.can(
+              'POST',
+              targetUris.dataStoreListPath
             )}
           />
         </ul>

@@ -1,6 +1,7 @@
 import inspect
 import re
 from dataclasses import dataclass
+from typing import Any
 
 import yaml
 from flask import current_app
@@ -30,7 +31,6 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -72,9 +72,39 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
-    {"path": "/process-model-tests", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests/create", "relevant_permissions": ["create"]},
+    {"path": "/process-model-tests/run", "relevant_permissions": ["create"]},
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
+]
+
+AUTHENTICATION_EXCLUSION_LIST = [
+    "spiffworkflow_backend.routes.authentication_controller.authentication_options",
+    "spiffworkflow_backend.routes.authentication_controller.login",
+    "spiffworkflow_backend.routes.authentication_controller.login_api_return",
+    "spiffworkflow_backend.routes.authentication_controller.login_return",
+    "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
+    "spiffworkflow_backend.routes.authentication_controller.logout",
+    "spiffworkflow_backend.routes.authentication_controller.logout_return",
+    "spiffworkflow_backend.routes.debug_controller.test_raise_error",
+    "spiffworkflow_backend.routes.debug_controller.url_info",
+    "spiffworkflow_backend.routes.health_controller.status",
+    "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
+    "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
+    "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
+    "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
+    "spiffworkflow_backend.routes.webhooks_controller.webhook",
+    # swagger api calls
+    "connexion.apis.flask_api.console_ui_home",
+    "connexion.apis.flask_api.console_ui_static_files",
+    "connexion.apis.flask_api.get_json_spec",
+]
+
+# these are api calls that are allowed to generate a public jwt when called
+PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
+    "spiffworkflow_backend.routes.public_controller.form_show",
+    "spiffworkflow_backend.routes.public_controller.message_form_show",
+    "spiffworkflow_backend.routes.public_controller.message_form_submit",
 ]
 
 
@@ -229,19 +259,18 @@ class AuthorizationService:
         return permission_assignment
 
     @classmethod
+    def get_fully_qualified_api_function_from_request(cls) -> tuple[str | None, Any]:
+        api_view_function = current_app.view_functions[request.endpoint]
+        module = inspect.getmodule(api_view_function)
+        api_function_name = api_view_function.__name__ if api_view_function else None
+        controller_name = module.__name__ if module is not None else None
+        function_full_path = None
+        if api_function_name:
+            function_full_path = f"{controller_name}.{api_function_name}"
+        return (function_full_path, module)
+
+    @classmethod
     def should_disable_auth_for_request(cls) -> bool:
-        swagger_functions = ["get_json_spec"]
-        authentication_exclusion_list = [
-            "authentication_begin",
-            "authentication_callback",
-            "authentication_options",
-            "github_webhook_receive",
-            "prometheus_metrics",
-            "status",
-            "task_allows_guest",
-            "test_raise_error",
-            "url_info",
-        ]
         if request.method == "OPTIONS":
             return True
 
@@ -252,17 +281,11 @@ class AuthorizationService:
         if not request.endpoint:
             return True
 
-        api_view_function = current_app.view_functions[request.endpoint]
-        module = inspect.getmodule(api_view_function)
+        api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
         if (
-            api_view_function
-            and api_view_function.__name__.startswith("login")
-            or api_view_function.__name__.startswith("logout")
-            or api_view_function.__name__.startswith("console_ui_")
-            or api_view_function.__name__ in authentication_exclusion_list
-            or api_view_function.__name__ in swagger_functions
-            or module == openid_blueprint
-            or module == scaffold  # don't check permissions for static assets
+            api_function_full_path
+            and (api_function_full_path in AUTHENTICATION_EXCLUSION_LIST)
+            or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
         ):
             return True
 
@@ -282,24 +305,10 @@ class AuthorizationService:
         return None
 
     @classmethod
-    def check_for_permission(cls, decoded_token: dict | None) -> None:
-        if cls.should_disable_auth_for_request():
-            return None
-
-        if not hasattr(g, "user"):
-            raise UserNotLoggedInError(
-                "User is not logged in. Please log in",
-            )
-
-        if cls.request_is_excluded_from_permission_check():
-            return None
-
-        if cls.request_allows_guest_access(decoded_token):
-            return None
-
+    def check_permission_for_request(cls) -> None:
         permission_string = cls.get_permission_from_http_method(request.method)
         if permission_string:
-            has_permission = AuthorizationService.user_has_permission(
+            has_permission = cls.user_has_permission(
                 user=g.user,
                 permission=permission_string,
                 target_uri=request.path,
@@ -312,36 +321,26 @@ class AuthorizationService:
         )
 
     @classmethod
+    def check_for_permission(cls, decoded_token: dict | None) -> None:
+        if cls.should_disable_auth_for_request():
+            return None
+
+        if not hasattr(g, "user"):
+            raise UserNotLoggedInError(
+                "User is not logged in. Please log in",
+            )
+
+        if cls.request_is_excluded_from_permission_check():
+            return None
+
+        cls.check_permission_for_request()
+
+    @classmethod
     def request_is_excluded_from_permission_check(cls) -> bool:
         authorization_exclusion_list = ["permissions_check"]
         api_view_function = current_app.view_functions[request.endpoint]
         if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
             return True
-        return False
-
-    @classmethod
-    def request_allows_guest_access(cls, decoded_token: dict | None) -> bool:
-        if cls.request_is_excluded_from_permission_check():
-            return True
-
-        api_view_function = current_app.view_functions[request.endpoint]
-        if api_view_function.__name__ in ["task_show", "task_submit", "task_save_draft"]:
-            process_instance_id = int(request.path.split("/")[3])
-            task_guid = request.path.split("/")[4]
-            if TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-                return True
-
-        if (
-            decoded_token is not None
-            and "process_instance_id" in decoded_token
-            and "only_guest_task_completion" in decoded_token
-            and decoded_token["only_guest_task_completion"] is True
-            and api_view_function.__name__ == "typeahead"
-            and api_view_function.__module__ == "spiffworkflow_backend.routes.connector_proxy_controller"
-        ):
-            process_instance = ProcessInstanceModel.query.filter_by(id=decoded_token["process_instance_id"]).first()
-            if process_instance is not None and not process_instance.has_terminal_status():
-                return True
         return False
 
     @staticmethod
@@ -518,7 +517,12 @@ class AuthorizationService:
     def set_basic_permissions(cls) -> list[PermissionToAssign]:
         permissions_to_assign: list[PermissionToAssign] = []
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/active-users/*"))
+
+        # gets lists of instances (we use a POST with a json body because there are complex filters, hence the create)
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instances/for-me"))
+        # view individual instances that require my attention
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/for-me/*"))
+
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/connector-proxy/typeahead/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/debug/version-info"))
@@ -535,8 +539,14 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*"))
 
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/script-assist/enabled"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/script-assist/process-message"))
+
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/upsearch-locations"))
+
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/public/*"))
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
         return permissions_to_assign
 
@@ -783,6 +793,8 @@ class AuthorizationService:
         for group in group_permissions:
             group_identifier = group["name"]
             UserService.find_or_create_group(group_identifier)
+            if group_identifier == current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]:
+                unique_user_group_identifiers.add(group_identifier)
             if not group_permissions_only:
                 for username in group["users"]:
                     if user_model and username != user_model.username:
@@ -865,7 +877,7 @@ class AuthorizationService:
         # do not remove the default user group
         added_group_identifiers.add(current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"])
         added_group_identifiers.add(SPIFF_GUEST_GROUP)
-        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()
+        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()  # type: ignore
         for gtd in groups_to_delete:
             db.session.delete(gtd)
 

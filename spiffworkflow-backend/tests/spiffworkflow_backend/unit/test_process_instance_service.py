@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from flask.app import Flask
-from SpiffWorkflow.bpmn.event import PendingBpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest

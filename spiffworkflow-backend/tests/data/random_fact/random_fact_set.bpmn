@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1gjhqt9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.7.0">
+  <bpmn:process id="Process_SecondFact" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1ctusgn</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:scriptTask id="Task_Get_Fact_From_API" name="Display Fact">
+      <bpmn:documentation />
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="Fact.type" />
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ctusgn</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0t29gjo</bpmn:outgoing>
+      <bpmn:script>FactService = fact_service(type='norris')</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="EndEvent_0u1cgrf">
+      <bpmn:documentation># Great Job!
+You have completed the random fact generator.
+You chose to receive a random fact of the type: "{{type}}"
+
+Your random fact is:
+{{details}}</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_0t29gjo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0t29gjo" sourceRef="Task_Get_Fact_From_API" targetRef="EndEvent_0u1cgrf" />
+    <bpmn:sequenceFlow id="Flow_1ctusgn" sourceRef="StartEvent_1" targetRef="Task_Get_Fact_From_API" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_SecondFact">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_10keafb_di" bpmnElement="Task_Get_Fact_From_API">
+        <dc:Bounds x="350" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0u1cgrf_di" bpmnElement="EndEvent_0u1cgrf">
+        <dc:Bounds x="582" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0t29gjo_di" bpmnElement="SequenceFlow_0t29gjo">
+        <di:waypoint x="450" y="250" />
+        <di:waypoint x="582" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ctusgn_di" bpmnElement="Flow_1ctusgn">
+        <di:waypoint x="188" y="250" />
+        <di:waypoint x="350" y="250" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

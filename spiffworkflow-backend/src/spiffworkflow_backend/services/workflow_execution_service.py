@@ -115,8 +115,13 @@ class ExecutionStrategy:
         spiff_task: SpiffTask,
         app: flask.app.Flask,
         user: Any | None,
+        process_model_identifier: str,
     ) -> SpiffTask:
         with app.app_context():
+            tld = current_app.config.get("THREAD_LOCAL_DATA")
+            if tld:
+                tld.process_model_identifier = process_model_identifier
+
             g.user = user
             spiff_task.run()
             return spiff_task
@@ -159,6 +164,7 @@ class ExecutionStrategy:
                                 spiff_task,
                                 current_app._get_current_object(),
                                 user,
+                                process_instance_model.process_model_identifier,
                             )
                         )
                     for future in concurrent.futures.as_completed(futures):
@@ -522,12 +528,13 @@ class WorkflowExecutionService:
         waiting_events = self.bpmn_process_instance.waiting_events()
         waiting_message_events = filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events)
         for event in waiting_message_events:
-            # Ensure we are only creating one message instance for each waiting message
+            # Ensure we are only creating one active message instance for each waiting message
             if (
                 MessageInstanceModel.query.filter_by(
                     process_instance_id=self.process_instance_model.id,
                     message_type="receive",
                     name=event.name,
+                    status="ready",
                 ).count()
                 > 0
             ):

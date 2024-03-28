@@ -3,13 +3,11 @@ repos:
     hooks:
       - id: black
         name: black
-        # entry: bash -c 'cd spiffworkflow-backend && black'
         entry: black
         language: system
         files: ^spiffworkflow-backend/
         types: [python]
         require_serial: true
-        # exclude: ^migrations/
         exclude: "/migrations/"
 
         # --preview because otherwise it will not fix long lines if the long lines contain long strings
@@ -45,6 +43,7 @@ repos:
         types: [text]
         stages: [commit, push, manual]
       - id: ruff
+        args: [ --fix ]
         files: ^spiffworkflow-backend/
         name: ruff
         entry: ruff

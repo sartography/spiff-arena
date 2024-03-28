@@ -1,4 +1,5 @@
 """This is used by bin/codemod/remove_all_unused_functions to remove a function from a file."""
+
 from bowler import Query
 
 # This came about because vulture (actually dead, from the list of Similar programs at https://pypi.org/project/vulture/)

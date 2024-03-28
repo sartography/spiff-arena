@@ -152,6 +152,8 @@ Example for UI schema:
 ### Date Validation When Compared to Another Date
 
 Date validation when compared to another date allows you to ensure that a date field meets certain criteria concerning another date field.
+
+#### Minimum date validation
 For instance, you can require that a date must be equal to or greater than another date within the form.
 
 - To implement date validation compared to another date, use the your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
@@ -169,60 +171,120 @@ This is an example where end_date must be after start_date:
     }
 
 These enhancements provide you with more flexibility and control when building forms in SpiffArena.
-By using these features, you can create dynamic, validated forms that enhance the user experience and support your business processes effectively.
 
-### Display Fields Side-By-Side on Same Row
+#### Maximum date validation
 
-By default, all form fields will be laid out one on top of the other.
-In some cases, it might be more user-friendly to put two or more fields next to each other on the same conceptual "row."
-Perhaps, you want to let a user fill out a name, and have First Name and Last Name next to each other.
-Don't actually do this; use Full name as a single field. :)
-But in some other case where you actually want to have fields laid out horizontally instead of vertically, do the following:
+Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form. This type of validation is particularly useful for setting deadlines, end dates, or latest possible dates that are contingent on other dates in the workflow.
 
-Example form schema:
+To apply maximum date validation in your JSON schema, use the `maximumDate` property and specify the field to compare with, using the format `field:field_name`. This ensures that the date chosen does not exceed the referenced field's date.
+
+Here’s an example where `delivery_date` must be on or before `end_date`:
+
+```json
+"delivery_date": {
+  "type": "string",
+  "title": "Delivery Date",
+  "format": "date",
+  "maximumDate": "field:end_date"
+}
+```
+
+If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
+
+These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where a latest permissible date is a factor.
+
+By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
+
+
+#### Date Validation Scenario: Enforcing Minimum and Maximum Date Constraints
+
+#### Scenario Overview
+Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines. This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
+
+#### JSON Schema Configuration:
+The "test-maximum-date-schema.json" process model outlines a form structure that includes fields for `end_date`, `delivery_date`, and `delivery_date_range`, each with constraints on the earliest and latest dates that can be selected.
 
 ```json
 {
-  "title": "Side by side",
-  "description": "A simple form demonstrating side-by-side layout of fields",
+  "title": "Date",
+  "description": "Test Maximum Date",
   "type": "object",
   "properties": {
-    "firstName": {
-      "type": "string"
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "End Date"
     },
-    "lastName": {
-      "type": "string"
+    "delivery_date": {
+      "type": "string",
+      "title": "Preferred Delivery Date",
+      "minimumDate": "today",
+      "maximumDate": "field:end_date"
     },
-    "notes": {
-      "type": "string"
+    "delivery_date_range": {
+      "type": "string",
+      "title": "Preferred Delivery Date Range",
+      "minimumDate": "today",
+      "maximumDate": "field:end_date"
     }
   }
 }
 ```
 
-Example uiSchema:
+#### Field Descriptions:
+- **End Date**: The final date by which all activities should be completed.
+- **Preferred Delivery Date**: A single date indicating when the delivery of a service or product is preferred, bounded by today's date and the `end_date`.
+- **Preferred Delivery Date Range**: A span of dates indicating an acceptable window for delivery, constrained by today's date and the `end_date`.
+
+### Implementation in SpiffWorkflow Forms:
+The schema enforces the following rules:
+- The `Preferred Delivery Date` cannot be earlier than today (the `minimumDate`) and not later than the `end_date` (the `maximumDate`).
+- The `Preferred Delivery Date Range` must start no earlier than today and end no later than the `end_date`.
+
+### Display Fields Side-By-Side on Same Row
+When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically. The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
+
+#### Form Schema Example:
+
+Define your form fields in the JSON schema as follows:
+
+```json
+{
+  "title": "Side by Side Layout",
+  "description": "Demonstrating side-by-side layout",
+  "type": "object",
+  "properties": {
+    "firstName": {"type": "string"},
+    "lastName": {"type": "string"},
+    "notes": {"type": "string"}
+  }
+}
+```
+
+#### `ui:layout` Configuration:
+
+The `ui:layout` attribute accepts an array of objects, each representing a conceptual "row" of fields. Here's how to use it:
 
 ```json
 {
   "ui:layout": [
     {
-      "firstName": {
-        "sm": 2,
-        "md": 2,
-        "lg": 4
-      },
-      "lastName": {
-        "sm": 2,
-        "md": 2,
-        "lg": 4
-      }
+      "firstName": {"sm": 2, "md": 2, "lg": 4},
+      "lastName": {"sm": 2, "md": 2, "lg": 4}
     },
-    {
-      "notes": {}
-    }
+    {"notes": {}}
   ]
 }
 ```
+![Styling_Form](images/styling_forms.png)
+
+#### Key Points:
+
+- **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
+- **Responsive Columns**: Values (`sm`, `md`, `lg`) indicate the number of grid columns a field should occupy, ensuring the form remains functional and visually appealing across devices.
+- **Simplified Configuration**: If column widths are unspecified, the layout will automatically adjust, providing flexibility in design.
+
+#### Example Illustrated:
 
 In this case, we are saying that we want firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
 We are saying that firstName should take up 4 columns when a large display is used.
@@ -238,6 +300,11 @@ If you just specific a uiSchema like this, it will figure out the column widths 
         }
       ]
     }
+
+
+By leveraging the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
+
+
 
 ### Display UI Help in Web Forms
 
@@ -332,7 +399,7 @@ Below is an example JSON schema that includes the numeric range field:
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
 
-#### Ui Schema Example
+#### UI Schema Example
 
 ```json
 {

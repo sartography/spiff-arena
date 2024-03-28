@@ -49,7 +49,11 @@ export default function DataStoreForm({
 
   useEffect(() => {
     const handleSetDataStoreTypesCallback = (result: any) => {
+      const dataStoreType = result.find((item: any) => {
+        return item.type === dataStore.type;
+      });
       setDataStoreTypes(result);
+      setSelectedDataStoreType(dataStoreType ?? null);
     };
 
     HttpService.makeCallToBackend({
@@ -57,7 +61,7 @@ export default function DataStoreForm({
       successCallback: handleSetDataStoreTypesCallback,
       httpMethod: 'GET',
     });
-  }, [setDataStoreTypes]);
+  }, [dataStore, setDataStoreTypes]);
 
   const navigateToDataStores = (_result: any) => {
     const location = dataStoreLocation();
@@ -99,10 +103,9 @@ export default function DataStoreForm({
     if (hasErrors) {
       return;
     }
-    let path = '/data-stores';
+    const path = '/data-stores';
     let httpMethod = 'POST';
     if (mode === 'edit') {
-      path = `/data-stores/${dataStore.id}`;
       httpMethod = 'PUT';
     }
     const postBody = {
@@ -152,8 +155,14 @@ export default function DataStoreForm({
   const onTypeChanged = (newType: any) => {
     setTypeInvalid(false);
     const newTypeSelection = newType.selectedItem;
-    const updateDict = { type: newTypeSelection.type };
-    updateDataStore(updateDict);
+    if (
+      newTypeSelection &&
+      typeof newTypeSelection === 'object' &&
+      'type' in newTypeSelection
+    ) {
+      const updateDict = { type: newTypeSelection.type };
+      updateDataStore(updateDict);
+    }
     setSelectedDataStoreType(newTypeSelection);
   };
 
@@ -161,6 +170,18 @@ export default function DataStoreForm({
     setSchemaInvalid(false);
     const updateDict = { schema: newSchema };
     updateDataStore(updateDict);
+  };
+
+  const dataStoreTypeDisplayString = (
+    dataStoreType: DataStoreType | null
+  ): string => {
+    if (dataStoreType) {
+      return `${dataStoreType.name} (${truncateString(
+        dataStoreType.description,
+        75
+      )})`;
+    }
+    return '';
   };
 
   const formElements = () => {
@@ -177,49 +198,52 @@ export default function DataStoreForm({
       />,
     ];
 
-    if (mode === 'new') {
+    textInputs.push(
+      <TextInput
+        id="data-store-identifier"
+        name="id"
+        readonly={mode === 'edit'}
+        invalidText="Identifier is required and must be all lowercase characters and hyphens."
+        invalid={identifierInvalid}
+        labelText="Identifier*"
+        value={dataStore.id}
+        onChange={(event: any) => {
+          updateDataStore({ id: event.target.value });
+          // was invalid, and now valid
+          if (identifierInvalid && hasValidIdentifier(event.target.value)) {
+            setIdentifierInvalid(false);
+          }
+          setIdHasBeenUpdatedByUser(true);
+        }}
+      />
+    );
+
+    if (mode === 'edit') {
       textInputs.push(
         <TextInput
-          id="data-store-identifier"
-          name="id"
-          invalidText="Identifier is required and must be all lowercase characters and hyphens."
-          invalid={identifierInvalid}
-          labelText="Identifier*"
-          value={dataStore.id}
-          onChange={(event: any) => {
-            updateDataStore({ id: event.target.value });
-            // was invalid, and now valid
-            if (identifierInvalid && hasValidIdentifier(event.target.value)) {
-              setIdentifierInvalid(false);
-            }
-            setIdHasBeenUpdatedByUser(true);
-          }}
+          id="data-store-type"
+          name="data-store-type"
+          readonly
+          labelText="Type*"
+          value={dataStoreTypeDisplayString(selectedDataStoreType)}
+        />
+      );
+    } else {
+      textInputs.push(
+        <ComboBox
+          onChange={onTypeChanged}
+          id="data-store-type-select"
+          data-qa="data-store-type-selection"
+          items={dataStoreTypes}
+          itemToString={dataStoreTypeDisplayString}
+          titleText="Type*"
+          invalidText="Type is required."
+          invalid={typeInvalid}
+          placeholder="Choose the data store type"
+          selectedItem={selectedDataStoreType}
         />
       );
     }
-
-    textInputs.push(
-      <ComboBox
-        onChange={onTypeChanged}
-        id="data-store-type-select"
-        data-qa="data-store-type-selection"
-        items={dataStoreTypes}
-        itemToString={(dataStoreType: DataStoreType) => {
-          if (dataStoreType) {
-            return `${dataStoreType.name} (${truncateString(
-              dataStoreType.description,
-              75
-            )})`;
-          }
-          return null;
-        }}
-        titleText="Type*"
-        invalidText="Type is required."
-        invalid={typeInvalid}
-        placeholder="Choose the data store type"
-        selectedItem={selectedDataStoreType}
-      />
-    );
 
     textInputs.push(
       <TextArea
@@ -227,7 +251,7 @@ export default function DataStoreForm({
         name="schema"
         invalidText="Schema is required and must be valid JSON."
         invalid={schemaInvalid}
-        labelText="Schema"
+        labelText="Schema*"
         value={dataStore.schema}
         onChange={(event: any) => onSchemaChanged(event.target.value)}
       />

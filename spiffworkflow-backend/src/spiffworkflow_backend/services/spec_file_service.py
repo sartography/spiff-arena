@@ -31,7 +31,6 @@ class ProcessModelFileInvalidError(Exception):
 
 
 class SpecFileService(FileSystemService):
-
     """We store spec files on the file system. This allows us to take advantage of Git for
     syncing and versioning.
      The files are stored in a directory whose path is determined by the category and spec names.
@@ -310,6 +309,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_message_trigger_cache(ref: Reference) -> None:
         """Assure we know which messages can trigger the start of a process."""
+        current_triggerable_processes = MessageTriggerableProcessModel.query.filter_by(
+            file_name=ref.file_name, process_model_identifier=ref.relative_location
+        ).all()
         for message_name in ref.start_messages:
             message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
                 message_name=message_name,
@@ -318,13 +320,21 @@ class SpecFileService(FileSystemService):
                 message_triggerable_process_model = MessageTriggerableProcessModel(
                     message_name=message_name,
                     process_model_identifier=ref.relative_location,
+                    file_name=ref.file_name,
                 )
                 db.session.add(message_triggerable_process_model)
             else:
-                if message_triggerable_process_model.process_model_identifier != ref.relative_location:
+                existing_model_identifier = message_triggerable_process_model.process_model_identifier
+                if existing_model_identifier != ref.relative_location:
                     raise ProcessModelFileInvalidError(
-                        f"Message model is already used to start process model {ref.relative_location}"
+                        f"Message model is already used to start process model {existing_model_identifier}"
                     )
+                elif message_triggerable_process_model.file_name is None:
+                    message_triggerable_process_model.file_name = ref.file_name
+                    db.session.add(message_triggerable_process_model)
+                current_triggerable_processes.remove(message_triggerable_process_model)
+        for trigger_pm in current_triggerable_processes:
+            db.session.delete(trigger_pm)
 
     @staticmethod
     def update_correlation_cache(ref: Reference) -> None:

@@ -1,0 +1,1106 @@
+{
+  "data": {
+    "firstName": "Chuck",
+    "data_objects": {
+      "top_level_data_object": "a"
+    },
+    "backend_status_response": {
+      "body": "{\"ok\": true}",
+      "mimetype": "application/json",
+      "http_status": 200,
+      "operator_identifier": "http/GetRequestV2"
+    }
+  },
+  "correlations": {},
+  "last_task": "911a8306-343c-4a83-953c-fc114b606b59",
+  "success": true,
+  "tasks": {
+    "1b83893b-8c5e-4cbf-94cc-09fc0200eca2": {
+      "id": "1b83893b-8c5e-4cbf-94cc-09fc0200eca2",
+      "parent": "88c85404-2bf6-4235-a27a-c06bfe49c5fe",
+      "children": ["db5ebc6c-7696-4705-9cf4-fb0441ab6f62"],
+      "last_state_change": 1711048490.8429425,
+      "state": 64,
+      "task_spec": "top_service_task",
+      "triggered": false,
+      "internal_data": {},
+      "data": {
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "typename": "Task"
+    },
+    "7044e74a-3b02-43c6-90ff-5c69e23662e2": {
+      "id": "7044e74a-3b02-43c6-90ff-5c69e23662e2",
+      "parent": null,
+      "children": ["babfccea-16b1-438e-83ee-33ffeade1c4e"],
+      "last_state_change": 1711048490.7585742,
+      "state": 64,
+      "task_spec": "Start",
+      "triggered": false,
+      "internal_data": {},
+      "data": {},
+      "typename": "Task"
+    },
+    "88c85404-2bf6-4235-a27a-c06bfe49c5fe": {
+      "id": "88c85404-2bf6-4235-a27a-c06bfe49c5fe",
+      "parent": "babfccea-16b1-438e-83ee-33ffeade1c4e",
+      "children": ["1b83893b-8c5e-4cbf-94cc-09fc0200eca2"],
+      "last_state_change": 1711048490.806986,
+      "state": 64,
+      "task_spec": "top_script_task",
+      "triggered": false,
+      "internal_data": {},
+      "data": {},
+      "typename": "Task"
+    },
+    "911a8306-343c-4a83-953c-fc114b606b59": {
+      "id": "911a8306-343c-4a83-953c-fc114b606b59",
+      "parent": "e95c0ea2-43b0-4bed-89a1-cfc28c8287c3",
+      "children": [],
+      "last_state_change": 1711048497.0260544,
+      "state": 64,
+      "task_spec": "End",
+      "triggered": false,
+      "internal_data": {},
+      "data": {
+        "firstName": "Chuck",
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "typename": "Task"
+    },
+    "b18bd98e-224f-462c-980e-7cfa71394e73": {
+      "id": "b18bd98e-224f-462c-980e-7cfa71394e73",
+      "parent": "db5ebc6c-7696-4705-9cf4-fb0441ab6f62",
+      "children": ["e95c0ea2-43b0-4bed-89a1-cfc28c8287c3"],
+      "last_state_change": 1711048497.008846,
+      "state": 64,
+      "task_spec": "Event_1swh8gs",
+      "triggered": false,
+      "internal_data": {},
+      "data": {
+        "firstName": "Chuck",
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "typename": "Task"
+    },
+    "babfccea-16b1-438e-83ee-33ffeade1c4e": {
+      "id": "babfccea-16b1-438e-83ee-33ffeade1c4e",
+      "parent": "7044e74a-3b02-43c6-90ff-5c69e23662e2",
+      "children": ["88c85404-2bf6-4235-a27a-c06bfe49c5fe"],
+      "last_state_change": 1711048490.7823734,
+      "state": 64,
+      "task_spec": "StartEvent_1",
+      "triggered": false,
+      "internal_data": {
+        "event_fired": true
+      },
+      "data": {},
+      "typename": "Task"
+    },
+    "db5ebc6c-7696-4705-9cf4-fb0441ab6f62": {
+      "id": "db5ebc6c-7696-4705-9cf4-fb0441ab6f62",
+      "parent": "1b83893b-8c5e-4cbf-94cc-09fc0200eca2",
+      "children": ["b18bd98e-224f-462c-980e-7cfa71394e73"],
+      "last_state_change": 1711048497.003491,
+      "state": 64,
+      "task_spec": "top_call_activity",
+      "triggered": false,
+      "internal_data": {},
+      "data": {
+        "firstName": "Chuck",
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "typename": "Task"
+    },
+    "e95c0ea2-43b0-4bed-89a1-cfc28c8287c3": {
+      "id": "e95c0ea2-43b0-4bed-89a1-cfc28c8287c3",
+      "parent": "b18bd98e-224f-462c-980e-7cfa71394e73",
+      "children": ["911a8306-343c-4a83-953c-fc114b606b59"],
+      "last_state_change": 1711048497.0182238,
+      "state": 64,
+      "task_spec": "Process_top_level.EndJoin",
+      "triggered": false,
+      "internal_data": {},
+      "data": {
+        "firstName": "Chuck",
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "typename": "Task"
+    }
+  },
+  "root": "7044e74a-3b02-43c6-90ff-5c69e23662e2",
+  "spec": {
+    "name": "Process_top_level",
+    "description": "Top Level Process",
+    "file": "main.bpmn",
+    "task_specs": {
+      "End": {
+        "name": "End",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["Process_top_level.EndJoin"],
+        "outputs": [],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "SimpleBpmnTask"
+      },
+      "Event_1swh8gs": {
+        "name": "Event_1swh8gs",
+        "description": "Default End Event",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["top_call_activity"],
+        "outputs": ["Process_top_level.EndJoin"],
+        "bpmn_id": "Event_1swh8gs",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "event_definition": {
+          "description": "Default",
+          "name": null,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "EndEvent",
+        "extensions": {}
+      },
+      "Process_top_level.EndJoin": {
+        "name": "Process_top_level.EndJoin",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["Event_1swh8gs"],
+        "outputs": ["End"],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "_EndJoin"
+      },
+      "Start": {
+        "name": "Start",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": ["StartEvent_1"],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "BpmnStartTask"
+      },
+      "StartEvent_1": {
+        "name": "StartEvent_1",
+        "description": "Default Start Event",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["Start"],
+        "outputs": ["top_script_task"],
+        "bpmn_id": "StartEvent_1",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "event_definition": {
+          "description": "Default",
+          "name": null,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "StartEvent",
+        "extensions": {}
+      },
+      "top_call_activity": {
+        "name": "top_call_activity",
+        "description": "Call Activity",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["top_service_task"],
+        "outputs": ["Event_1swh8gs"],
+        "bpmn_id": "top_call_activity",
+        "bpmn_name": "Top Call Activity",
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "prescript": null,
+        "postscript": null,
+        "spec": "Process_sub_level",
+        "typename": "CallActivity",
+        "extensions": {}
+      },
+      "top_script_task": {
+        "name": "top_script_task",
+        "description": "Script Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["StartEvent_1"],
+        "outputs": ["top_service_task"],
+        "bpmn_id": "top_script_task",
+        "bpmn_name": "Top Script Task",
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [
+          {
+            "bpmn_id": "top_level_data_object",
+            "bpmn_name": "top_level_data_object",
+            "category": null,
+            "typename": "DataObject"
+          }
+        ],
+        "io_specification": null,
+        "prescript": null,
+        "postscript": null,
+        "script": "top_level_data_object = \"a\"",
+        "typename": "ScriptTask",
+        "extensions": {
+          "serviceTaskOperator": {
+            "name": "http/GetRequestV2",
+            "parameters": {
+              "url": {
+                "type": "str",
+                "value": "\"http://localhost:7000/v1.0/status\""
+              }
+            },
+            "resultVariable": "the_response"
+          }
+        }
+      },
+      "top_service_task": {
+        "name": "top_service_task",
+        "description": "Service Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["top_script_task"],
+        "outputs": ["top_call_activity"],
+        "bpmn_id": "top_service_task",
+        "bpmn_name": "Top Service Task",
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "prescript": null,
+        "postscript": null,
+        "operation_name": "http/GetRequestV2",
+        "operation_params": {
+          "url": {
+            "type": "str",
+            "value": "\"http://localhost:7000/v1.0/status\""
+          }
+        },
+        "result_variable": "backend_status_response",
+        "typename": "ServiceTask",
+        "extensions": {
+          "serviceTaskOperator": {
+            "name": "http/GetRequestV2",
+            "parameters": {
+              "url": {
+                "type": "str",
+                "value": "\"http://localhost:7000/v1.0/status\""
+              }
+            },
+            "resultVariable": "backend_status_response"
+          }
+        }
+      }
+    },
+    "io_specification": null,
+    "data_objects": {
+      "top_level_data_object": {
+        "bpmn_id": "top_level_data_object",
+        "bpmn_name": "top_level_data_object",
+        "category": null,
+        "typename": "DataObject"
+      }
+    },
+    "correlation_keys": {},
+    "typename": "BpmnProcessSpec"
+  },
+  "subprocess_specs": {
+    "Process_sub_level": {
+      "name": "Process_sub_level",
+      "description": "Process Sub Level",
+      "file": "without-service-task.bpmn",
+      "task_specs": {
+        "call_activity_sub_process": {
+          "name": "call_activity_sub_process",
+          "description": "Subprocess",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["sub_manual_task"],
+          "outputs": ["sub_script_task_two"],
+          "bpmn_id": "call_activity_sub_process",
+          "bpmn_name": "Call Activity Sub Process",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "spec": "call_activity_sub_process",
+          "typename": "SubWorkflowTask",
+          "extensions": {}
+        },
+        "End": {
+          "name": "End",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["Process_sub_level.EndJoin"],
+          "outputs": [],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "SimpleBpmnTask"
+        },
+        "EndEvent_1": {
+          "name": "EndEvent_1",
+          "description": "Default End Event",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["sub_script_task_two"],
+          "outputs": ["Process_sub_level.EndJoin"],
+          "bpmn_id": "EndEvent_1",
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "event_definition": {
+            "description": "Default",
+            "name": null,
+            "typename": "NoneEventDefinition"
+          },
+          "typename": "EndEvent",
+          "extensions": {
+            "instructionsForEndUser": "The process instance completed successfully."
+          }
+        },
+        "Process_sub_level.EndJoin": {
+          "name": "Process_sub_level.EndJoin",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["EndEvent_1"],
+          "outputs": ["End"],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "_EndJoin"
+        },
+        "Start": {
+          "name": "Start",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [],
+          "outputs": ["StartEvent_1"],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "BpmnStartTask"
+        },
+        "StartEvent_1": {
+          "name": "StartEvent_1",
+          "description": "Default Start Event",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["Start"],
+          "outputs": ["sub_script_task"],
+          "bpmn_id": "StartEvent_1",
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "event_definition": {
+            "description": "Default",
+            "name": null,
+            "typename": "NoneEventDefinition"
+          },
+          "typename": "StartEvent",
+          "extensions": {}
+        },
+        "sub_manual_task": {
+          "name": "sub_manual_task",
+          "description": "Manual Task",
+          "manual": true,
+          "lookahead": 2,
+          "inputs": ["sub_script_task"],
+          "outputs": ["call_activity_sub_process"],
+          "bpmn_id": "sub_manual_task",
+          "bpmn_name": "Sub Manual Task",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "typename": "ManualTask",
+          "extensions": {}
+        },
+        "sub_script_task": {
+          "name": "sub_script_task",
+          "description": "Script Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["StartEvent_1"],
+          "outputs": ["sub_manual_task"],
+          "bpmn_id": "sub_script_task",
+          "bpmn_name": "Sub Script Task",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [
+            {
+              "bpmn_id": "sub_level_data_object",
+              "bpmn_name": "sub_level_data_object",
+              "category": null,
+              "typename": "DataObject"
+            }
+          ],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "script": "sub_level_data_object = \"b\"",
+          "typename": "ScriptTask",
+          "extensions": {}
+        },
+        "sub_script_task_two": {
+          "name": "sub_script_task_two",
+          "description": "Script Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["call_activity_sub_process"],
+          "outputs": ["EndEvent_1"],
+          "bpmn_id": "sub_script_task_two",
+          "bpmn_name": "Sub Script Task Two",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [
+            {
+              "bpmn_id": "sub_level_data_object_two",
+              "bpmn_name": "sub_level_data_object_two",
+              "category": null,
+              "typename": "DataObject"
+            }
+          ],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "script": "sub_level_data_object_two = 'c'",
+          "typename": "ScriptTask",
+          "extensions": {}
+        }
+      },
+      "io_specification": null,
+      "data_objects": {
+        "sub_level_data_object": {
+          "bpmn_id": "sub_level_data_object",
+          "bpmn_name": "sub_level_data_object",
+          "category": null,
+          "typename": "DataObject"
+        },
+        "sub_level_data_object_two": {
+          "bpmn_id": "sub_level_data_object_two",
+          "bpmn_name": "sub_level_data_object_two",
+          "category": null,
+          "typename": "DataObject"
+        }
+      },
+      "correlation_keys": {},
+      "typename": "BpmnProcessSpec"
+    },
+    "call_activity_sub_process": {
+      "name": "call_activity_sub_process",
+      "description": "Call Activity Sub Process",
+      "file": "without-service-task.bpmn",
+      "task_specs": {
+        "call_activity_sub_process.EndJoin": {
+          "name": "call_activity_sub_process.EndJoin",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["Event_00vjfmy"],
+          "outputs": ["End"],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "_EndJoin"
+        },
+        "End": {
+          "name": "End",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["call_activity_sub_process.EndJoin"],
+          "outputs": [],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "SimpleBpmnTask"
+        },
+        "Event_00vjfmy": {
+          "name": "Event_00vjfmy",
+          "description": "Default End Event",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["sub_level_sub_process_script_task"],
+          "outputs": ["call_activity_sub_process.EndJoin"],
+          "bpmn_id": "Event_00vjfmy",
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "event_definition": {
+            "description": "Default",
+            "name": null,
+            "typename": "NoneEventDefinition"
+          },
+          "typename": "EndEvent",
+          "extensions": {}
+        },
+        "Event_0yfq3gm": {
+          "name": "Event_0yfq3gm",
+          "description": "Default Start Event",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["Start"],
+          "outputs": ["sub_level_sub_process_user_task"],
+          "bpmn_id": "Event_0yfq3gm",
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "event_definition": {
+            "description": "Default",
+            "name": null,
+            "typename": "NoneEventDefinition"
+          },
+          "typename": "StartEvent",
+          "extensions": {}
+        },
+        "Start": {
+          "name": "Start",
+          "description": "BPMN Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": [],
+          "outputs": ["Event_0yfq3gm"],
+          "bpmn_id": null,
+          "bpmn_name": null,
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "typename": "BpmnStartTask"
+        },
+        "sub_level_sub_process_script_task": {
+          "name": "sub_level_sub_process_script_task",
+          "description": "Script Task",
+          "manual": false,
+          "lookahead": 2,
+          "inputs": ["sub_level_sub_process_user_task"],
+          "outputs": ["Event_00vjfmy"],
+          "bpmn_id": "sub_level_sub_process_script_task",
+          "bpmn_name": "Sub Level Sub Process Script Task",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [
+            {
+              "bpmn_id": "sub_level_data_object_three",
+              "bpmn_name": "sub_level_data_object_three",
+              "category": null,
+              "typename": "DataObject"
+            }
+          ],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "script": "sub_level_data_object_three = 'd'",
+          "typename": "ScriptTask",
+          "extensions": {}
+        },
+        "sub_level_sub_process_user_task": {
+          "name": "sub_level_sub_process_user_task",
+          "description": "User Task",
+          "manual": true,
+          "lookahead": 2,
+          "inputs": ["Event_0yfq3gm"],
+          "outputs": ["sub_level_sub_process_script_task"],
+          "bpmn_id": "sub_level_sub_process_user_task",
+          "bpmn_name": "Sub Level Sub Process User Task",
+          "lane": null,
+          "documentation": null,
+          "data_input_associations": [],
+          "data_output_associations": [],
+          "io_specification": null,
+          "prescript": null,
+          "postscript": null,
+          "typename": "UserTask",
+          "extensions": {
+            "properties": {
+              "formUiSchemaFilename": "sub-level-sub-process-user-form-uischema.json",
+              "formJsonSchemaFilename": "sub-level-sub-process-user-form-schema.json"
+            }
+          }
+        }
+      },
+      "io_specification": null,
+      "data_objects": {
+        "sub_level_data_object_three": {
+          "bpmn_id": "sub_level_data_object_three",
+          "bpmn_name": "sub_level_data_object_three",
+          "category": null,
+          "typename": "DataObject"
+        }
+      },
+      "correlation_keys": {},
+      "typename": "BpmnProcessSpec"
+    }
+  },
+  "subprocesses": {
+    "db5ebc6c-7696-4705-9cf4-fb0441ab6f62": {
+      "data": {
+        "firstName": "Chuck",
+        "data_objects": {
+          "sub_level_data_object": "b",
+          "sub_level_data_object_two": "c"
+        },
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "correlations": {},
+      "last_task": "4b903b29-1c46-4b2c-bf22-eabac3fb235f",
+      "success": true,
+      "tasks": {
+        "09eb3d41-eca6-425b-bacf-38e79790cf28": {
+          "id": "09eb3d41-eca6-425b-bacf-38e79790cf28",
+          "parent": "f3c8cc7f-302b-4699-b6ff-4196dcfed42c",
+          "children": ["4b903b29-1c46-4b2c-bf22-eabac3fb235f"],
+          "last_state_change": 1711048496.9747708,
+          "state": 64,
+          "task_spec": "Process_sub_level.EndJoin",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "10f09dfb-9afa-4b0e-9cd1-3e65da8ab380": {
+          "id": "10f09dfb-9afa-4b0e-9cd1-3e65da8ab380",
+          "parent": "2976389b-3748-4561-a6ff-daa445c8bb53",
+          "children": ["86ce80d7-e8fa-4184-8871-25c3711f64c9"],
+          "last_state_change": 1711048494.2738447,
+          "state": 64,
+          "task_spec": "sub_manual_task",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "2976389b-3748-4561-a6ff-daa445c8bb53": {
+          "id": "2976389b-3748-4561-a6ff-daa445c8bb53",
+          "parent": "81b8c283-696f-44df-b27d-4d5e0fd101ba",
+          "children": ["10f09dfb-9afa-4b0e-9cd1-3e65da8ab380"],
+          "last_state_change": 1711048490.8815038,
+          "state": 64,
+          "task_spec": "sub_script_task",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "4b903b29-1c46-4b2c-bf22-eabac3fb235f": {
+          "id": "4b903b29-1c46-4b2c-bf22-eabac3fb235f",
+          "parent": "09eb3d41-eca6-425b-bacf-38e79790cf28",
+          "children": [],
+          "last_state_change": 1711048496.9838288,
+          "state": 64,
+          "task_spec": "End",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "6279f995-89a1-42b6-8cee-6521a7bbb525": {
+          "id": "6279f995-89a1-42b6-8cee-6521a7bbb525",
+          "parent": "86ce80d7-e8fa-4184-8871-25c3711f64c9",
+          "children": ["f3c8cc7f-302b-4699-b6ff-4196dcfed42c"],
+          "last_state_change": 1711048496.624915,
+          "state": 64,
+          "task_spec": "sub_script_task_two",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "81b8c283-696f-44df-b27d-4d5e0fd101ba": {
+          "id": "81b8c283-696f-44df-b27d-4d5e0fd101ba",
+          "parent": "b6df484c-5d4b-4967-a169-50ac5b68ce7c",
+          "children": ["2976389b-3748-4561-a6ff-daa445c8bb53"],
+          "last_state_change": 1711048490.8500838,
+          "state": 64,
+          "task_spec": "StartEvent_1",
+          "triggered": false,
+          "internal_data": {
+            "event_fired": true
+          },
+          "data": {
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "86ce80d7-e8fa-4184-8871-25c3711f64c9": {
+          "id": "86ce80d7-e8fa-4184-8871-25c3711f64c9",
+          "parent": "10f09dfb-9afa-4b0e-9cd1-3e65da8ab380",
+          "children": ["6279f995-89a1-42b6-8cee-6521a7bbb525"],
+          "last_state_change": 1711048496.6147397,
+          "state": 64,
+          "task_spec": "call_activity_sub_process",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "b6df484c-5d4b-4967-a169-50ac5b68ce7c": {
+          "id": "b6df484c-5d4b-4967-a169-50ac5b68ce7c",
+          "parent": null,
+          "children": ["81b8c283-696f-44df-b27d-4d5e0fd101ba"],
+          "last_state_change": 1711048490.8432417,
+          "state": 64,
+          "task_spec": "Start",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "f3c8cc7f-302b-4699-b6ff-4196dcfed42c": {
+          "id": "f3c8cc7f-302b-4699-b6ff-4196dcfed42c",
+          "parent": "6279f995-89a1-42b6-8cee-6521a7bbb525",
+          "children": ["09eb3d41-eca6-425b-bacf-38e79790cf28"],
+          "last_state_change": 1711048496.905861,
+          "state": 64,
+          "task_spec": "EndEvent_1",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        }
+      },
+      "root": "b6df484c-5d4b-4967-a169-50ac5b68ce7c",
+      "parent_task_id": "db5ebc6c-7696-4705-9cf4-fb0441ab6f62",
+      "spec": "Process_sub_level",
+      "typename": "BpmnSubWorkflow"
+    },
+    "86ce80d7-e8fa-4184-8871-25c3711f64c9": {
+      "data": {
+        "firstName": "Chuck",
+        "data_objects": {
+          "sub_level_data_object_three": "d"
+        },
+        "backend_status_response": {
+          "body": "{\"ok\": true}",
+          "mimetype": "application/json",
+          "http_status": 200,
+          "operator_identifier": "http/GetRequestV2"
+        }
+      },
+      "correlations": {},
+      "last_task": "f040826c-a6fd-4df3-94a3-cb52ee69363f",
+      "success": true,
+      "tasks": {
+        "1b5305a7-19f5-4ddc-8d9b-4264677b1e1d": {
+          "id": "1b5305a7-19f5-4ddc-8d9b-4264677b1e1d",
+          "parent": "30f001e6-bde6-4b14-9b42-ebaba70c01df",
+          "children": ["5039396b-ceae-4037-8eba-afa657de7610"],
+          "last_state_change": 1711048496.5584755,
+          "state": 64,
+          "task_spec": "Event_00vjfmy",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "30f001e6-bde6-4b14-9b42-ebaba70c01df": {
+          "id": "30f001e6-bde6-4b14-9b42-ebaba70c01df",
+          "parent": "aa169404-fecc-4b39-b3cc-6f715f715eb1",
+          "children": ["1b5305a7-19f5-4ddc-8d9b-4264677b1e1d"],
+          "last_state_change": 1711048496.541719,
+          "state": 64,
+          "task_spec": "sub_level_sub_process_script_task",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "5039396b-ceae-4037-8eba-afa657de7610": {
+          "id": "5039396b-ceae-4037-8eba-afa657de7610",
+          "parent": "1b5305a7-19f5-4ddc-8d9b-4264677b1e1d",
+          "children": ["f040826c-a6fd-4df3-94a3-cb52ee69363f"],
+          "last_state_change": 1711048496.5812914,
+          "state": 64,
+          "task_spec": "call_activity_sub_process.EndJoin",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "8232668f-39c6-4932-a236-711cd455ef3a": {
+          "id": "8232668f-39c6-4932-a236-711cd455ef3a",
+          "parent": "d2b07903-d018-43a6-9927-a9d0c99ce1c9",
+          "children": ["aa169404-fecc-4b39-b3cc-6f715f715eb1"],
+          "last_state_change": 1711048494.403072,
+          "state": 64,
+          "task_spec": "Event_0yfq3gm",
+          "triggered": false,
+          "internal_data": {
+            "event_fired": true
+          },
+          "data": {
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "aa169404-fecc-4b39-b3cc-6f715f715eb1": {
+          "id": "aa169404-fecc-4b39-b3cc-6f715f715eb1",
+          "parent": "8232668f-39c6-4932-a236-711cd455ef3a",
+          "children": ["30f001e6-bde6-4b14-9b42-ebaba70c01df"],
+          "last_state_change": 1711048496.483813,
+          "state": 64,
+          "task_spec": "sub_level_sub_process_user_task",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "d2b07903-d018-43a6-9927-a9d0c99ce1c9": {
+          "id": "d2b07903-d018-43a6-9927-a9d0c99ce1c9",
+          "parent": null,
+          "children": ["8232668f-39c6-4932-a236-711cd455ef3a"],
+          "last_state_change": 1711048494.2741008,
+          "state": 64,
+          "task_spec": "Start",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        },
+        "f040826c-a6fd-4df3-94a3-cb52ee69363f": {
+          "id": "f040826c-a6fd-4df3-94a3-cb52ee69363f",
+          "parent": "5039396b-ceae-4037-8eba-afa657de7610",
+          "children": [],
+          "last_state_change": 1711048496.5936687,
+          "state": 64,
+          "task_spec": "End",
+          "triggered": false,
+          "internal_data": {},
+          "data": {
+            "firstName": "Chuck",
+            "backend_status_response": {
+              "body": "{\"ok\": true}",
+              "mimetype": "application/json",
+              "http_status": 200,
+              "operator_identifier": "http/GetRequestV2"
+            }
+          },
+          "typename": "Task"
+        }
+      },
+      "root": "d2b07903-d018-43a6-9927-a9d0c99ce1c9",
+      "parent_task_id": "86ce80d7-e8fa-4184-8871-25c3711f64c9",
+      "spec": "call_activity_sub_process",
+      "typename": "BpmnSubWorkflow"
+    }
+  },
+  "bpmn_events": [],
+  "typename": "BpmnWorkflow"
+}

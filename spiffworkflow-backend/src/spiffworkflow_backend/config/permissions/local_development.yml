@@ -1,4 +1,3 @@
-
 users:
   admin:
     service: local_open_id
@@ -19,6 +18,8 @@ groups:
     users: [dan@sartography.com]
   group3:
     users: [jon@sartography.com]
+  spiff_public:
+    users: []
 
 permissions:
   admin:
@@ -44,3 +45,8 @@ permissions:
     groups: [group3]
     actions: [read]
     uri: PG:misc
+
+  public_access:
+    groups: [spiff_public]
+    actions: [read, create, update]
+    uri: /public/*

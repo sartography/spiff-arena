@@ -18,7 +18,7 @@ ten_minutes = 60 * 10
 
 
 @shared_task(ignore_result=False, time_limit=ten_minutes)
-def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> None:
+def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
     proc_index = current_process().index
     ProcessInstanceLockService.set_thread_local_locking_context("celery:worker", additional_processing_identifier=proc_index)
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
@@ -27,7 +27,7 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             ProcessInstanceService.run_process_instance_with_processor(
                 process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index
             )
-            processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
+            _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
                 additional_processing_identifier=proc_index,
@@ -40,11 +40,13 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
                     db.session.commit()
         if task_runnability == TaskRunnability.has_ready_tasks:
             queue_process_instance_if_appropriate(process_instance)
+        return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
     except ProcessInstanceIsAlreadyLockedError as exception:
         current_app.logger.info(
             f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
             f" {str(exception)}"
         )
+        return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
     except Exception as e:
         db.session.rollback()  # in case the above left the database with a bad transaction
         error_message = (

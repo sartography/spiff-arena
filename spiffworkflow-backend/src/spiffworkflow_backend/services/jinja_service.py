@@ -38,19 +38,17 @@ class JinjaHelpers:
 
 class JinjaService:
     @classmethod
-    def render_instructions_for_end_user(cls, task: TaskModel | SpiffTask, extensions: dict | None = None) -> str:
+    def render_instructions_for_end_user(cls, task: TaskModel | SpiffTask | None = None, extensions: dict | None = None) -> str:
         """Assure any instructions for end user are processed for jinja syntax."""
         if extensions is None:
             if isinstance(task, TaskModel):
                 extensions = TaskService.get_extensions_from_task_model(task)
-            elif hasattr(task.task_spec, "extensions"):
+            elif task and hasattr(task.task_spec, "extensions"):
                 extensions = task.task_spec.extensions
         if extensions and "instructionsForEndUser" in extensions:
             if extensions["instructionsForEndUser"]:
                 try:
-                    instructions = cls.render_jinja_template(extensions["instructionsForEndUser"], task)
-                    extensions["instructionsForEndUser"] = instructions
-                    return instructions
+                    return cls.render_jinja_template(extensions["instructionsForEndUser"], task)
                 except TaskModelError as wfe:
                     wfe.add_note("Failed to render instructions for end user.")
                     raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe

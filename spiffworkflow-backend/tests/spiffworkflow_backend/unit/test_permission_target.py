@@ -1,4 +1,5 @@
 """Process Model."""
+
 import pytest
 from flask.app import Flask
 from spiffworkflow_backend.models.db import db

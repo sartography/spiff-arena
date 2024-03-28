@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from flask_marshmallow import Schema  # type: ignore
+from flask_marshmallow import Schema
 from marshmallow import INCLUDE
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
@@ -59,7 +59,6 @@ class Reference:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
 
-# SpecReferenceCache
 class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 
@@ -143,7 +142,7 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
 
 
 # SpecReferenceSchema
-class ReferenceSchema(Schema):  # type: ignore
+class ReferenceSchema(Schema):
     class Meta:
         model = Reference
         fields = [

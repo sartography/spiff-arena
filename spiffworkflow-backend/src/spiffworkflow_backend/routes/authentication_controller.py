@@ -16,14 +16,14 @@ from spiffworkflow_backend.exceptions.error import InvalidRedirectUrlError
 from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.authorization_service import PUBLIC_AUTHENTICATION_EXCLUSION_LIST
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -64,7 +64,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
     if not force_run and AuthorizationService.should_disable_auth_for_request():
         return None
 
-    token_info = _find_token_from_headers(token)
+    token_info = _find_token_from_request(token)
 
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
@@ -76,6 +76,13 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
         user_model = _get_user_model_from_token(decoded_token)
     elif token_info["api_key"] is not None:
         user_model = _get_user_model_from_api_key(token_info["api_key"])
+    else:
+        # if there is no token in the request, hit the database to see if this path allows unauthed access
+        # we could choose to put all of the APIs that can be accessed unauthed behind a certain path.
+        # if we did that, we would not have to hit the db on *every* tokenless request
+        api_function_full_path, _ = AuthorizationService.get_fully_qualified_api_function_from_request()
+        if api_function_full_path and api_function_full_path in PUBLIC_AUTHENTICATION_EXCLUSION_LIST:
+            _check_if_request_is_public()
 
     if user_model:
         g.user = user_model
@@ -117,15 +124,6 @@ def login(
             group_identifier=SPIFF_NO_AUTH_GROUP,
             permission_target="/*",
             auth_token_properties={"authentication_disabled": True},
-            authentication_identifier=authentication_identifier,
-        )
-        return redirect(redirect_url)
-
-    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-        AuthenticationService.create_guest_token(
-            username=SPIFF_GUEST_USER,
-            group_identifier=SPIFF_GUEST_GROUP,
-            auth_token_properties={"only_guest_task_completion": True, "process_instance_id": process_instance_id},
             authentication_identifier=authentication_identifier,
         )
         return redirect(redirect_url)
@@ -213,13 +211,17 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     return access_token
 
 
-def logout(id_token: str, authentication_identifier: str, redirect_url: str | None) -> Response:
+def logout(id_token: str, authentication_identifier: str, redirect_url: str | None, backend_only: bool = False) -> Response:
     if redirect_url is None:
         redirect_url = ""
     AuthenticationService.set_user_has_logged_out()
-    return AuthenticationService().logout(
-        redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
-    )
+
+    if backend_only:
+        return redirect(redirect_url)
+    else:
+        return AuthenticationService().logout(
+            redirect_url=redirect_url, id_token=id_token, authentication_identifier=authentication_identifier
+        )
 
 
 def logout_return() -> Response:
@@ -285,28 +287,7 @@ def _clear_auth_tokens_from_thread_local_data() -> None:
         delattr(tld, "user_has_logged_out")
 
 
-def _force_logout_user_if_necessary(user_model: UserModel | None, decoded_token: dict) -> bool:
-    """Logs out a guest user if certain criteria gets met.
-
-    * if the user is a no auth guest and we have auth enabled
-    * if the user is a guest and goes somewhere else that does not allow guests
-    """
-    if user_model is not None:
-        if (
-            not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
-            and user_model.username == SPIFF_NO_AUTH_USER
-            and user_model.service_id == "spiff_guest_service_id"
-        ) or (
-            user_model.username == SPIFF_GUEST_USER
-            and user_model.service_id == "spiff_guest_service_id"
-            and not AuthorizationService.request_allows_guest_access(decoded_token)
-        ):
-            AuthenticationService.set_user_has_logged_out()
-            return True
-    return False
-
-
-def _find_token_from_headers(token: str | None) -> dict[str, str | None]:
+def _find_token_from_request(token: str | None) -> dict[str, str | None]:
     api_key = None
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
@@ -343,10 +324,6 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                     user_model = _get_user_from_decoded_internal_token(decoded_token)
                 except Exception as e:
                     current_app.logger.error(f"Exception in verify_token getting user from decoded internal token. {e}")
-
-                # if the user is forced logged out then stop processing the token
-                if _force_logout_user_if_necessary(user_model, decoded_token):
-                    return None
             else:
                 user_info = None
                 authentication_identifier = _get_authentication_identifier_from_request()
@@ -440,7 +417,8 @@ def _get_decoded_token(token: str) -> dict:
     try:
         decoded_token: dict = AuthenticationService.parse_jwt_token(_get_authentication_identifier_from_request(), token)
     except Exception as e:
-        raise ApiError(error_code="invalid_token", message="Cannot decode token.") from e
+        AuthenticationService.set_user_has_logged_out()
+        raise ApiError(error_code="invalid_token", message="Cannot decode token.", status_code=401) from e
     else:
         if "iss" in decoded_token:
             return decoded_token
@@ -459,3 +437,26 @@ def _get_authentication_identifier_from_request() -> str:
         authentication_identifier: str = request.headers["SpiffWorkflow-Authentication-Identifier"]
         return authentication_identifier
     return "default"
+
+
+def _check_if_request_is_public() -> None:
+    permission_string = AuthorizationService.get_permission_from_http_method(request.method)
+    if permission_string:
+        public_group = GroupModel.query.filter_by(
+            identifier=current_app.config.get("SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP")
+        ).first()
+        if public_group is not None:
+            has_permission = AuthorizationService.has_permission(
+                principals=[public_group.principal],
+                permission=permission_string,
+                target_uri=request.path,
+            )
+            if has_permission:
+                g.user = UserService.create_public_user()
+                g.token = g.user.encode_auth_token(
+                    {"public": True},
+                )
+                tld = current_app.config["THREAD_LOCAL_DATA"]
+                tld.new_access_token = g.token
+                tld.new_id_token = g.token
+                tld.new_authentication_identifier = _get_authentication_identifier_from_request()

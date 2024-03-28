@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import math
+import random
+import string
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -15,6 +17,7 @@ from spiffworkflow_backend.models.group import GroupModel
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
+SPIFF_SYSTEM_USER = "spiff_system_user"
 SPIFF_GENERATED_JWT_KEY_ID = "spiff_backend"
 SPIFF_GENERATED_JWT_ALGORITHM = "HS256"
 SPIFF_GENERATED_JWT_AUDIENCE = "spiffworkflow-backend"
@@ -90,3 +93,46 @@ class UserModel(SpiffworkflowBaseDBModel):
         user_as_json_string = current_app.json.dumps(self)
         user_dict: dict[str, Any] = current_app.json.loads(user_as_json_string)
         return user_dict
+
+    @classmethod
+    def generate_random_username(cls, prefix: str = "public") -> str:
+        adjectives = [
+            "fluffy",
+            "cuddly",
+            "tiny",
+            "joyful",
+            "sweet",
+            "gentle",
+            "cheerful",
+            "adorable",
+            "whiskered",
+            "silky",
+        ]
+        animals = [
+            "panda",
+            "kitten",
+            "puppy",
+            "bunny",
+            "chick",
+            "duckling",
+            "chipmunk",
+            "hedgehog",
+            "lamb",
+            "fawn",
+            "otter",
+            "calf",
+            "penguin",
+            "koala",
+            "giraffe",
+            "monkey",
+            "fox",
+            "raccoon",
+            "squirrel",
+            "owl",
+        ]
+        fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
+        # this is not for cryptographic purposes
+        adjective = random.choice(adjectives)  # noqa: S311
+        animal = random.choice(animals)  # noqa: S311
+        username = f"{prefix}{adjective}{animal}{fuzz}"
+        return username

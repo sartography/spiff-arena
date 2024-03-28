@@ -25,6 +25,12 @@ from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.monitoring_service import configure_sentry
 from spiffworkflow_backend.services.monitoring_service import setup_prometheus_metrics
 
+# This commented out code is if you want to use the pymysql library with sqlalchemy rather than mysqlclient.
+# mysqlclient can be hard to install when running non-docker local dev, but it is generally worth it because it is much faster.
+# See the repo's top-level README and the linked troubleshooting guide for details.
+# import pymysql;
+# pymysql.install_as_MySQLdb()
+
 
 class MyJSONEncoder(DefaultJSONProvider):
     def default(self, obj: Any) -> Any:

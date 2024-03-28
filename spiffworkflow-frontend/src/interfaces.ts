@@ -1,3 +1,5 @@
+import { ReactElement } from 'react';
+
 export interface User {
   id: number;
   username: string;
@@ -148,9 +150,6 @@ export interface ProcessReference {
 }
 
 export type ObjectWithStringKeysAndValues = { [key: string]: string };
-export type ObjectWithStringKeysAndFunctionValues = {
-  [key: string]: Function;
-};
 
 export interface FilterOperator {
   id: string;
@@ -289,6 +288,7 @@ export interface ProcessModel {
   fault_or_suspend_on_exception?: string;
   exception_notification_addresses?: string[];
   bpmn_version_control_identifier?: string;
+  is_executable?: boolean;
   actions?: ApiActions;
 }
 
@@ -326,6 +326,10 @@ export interface ErrorForDisplay {
   task_id?: string;
   task_name?: string;
   task_trace?: string[];
+
+  task_type?: string;
+  output_data?: any;
+  expected_data?: any;
 }
 
 export interface AuthenticationParam {
@@ -364,23 +368,6 @@ export interface PermissionCheckResult {
 }
 export interface PermissionCheckResponseBody {
   results: PermissionCheckResult;
-}
-
-export interface FormField {
-  id: string;
-  title: string;
-  required?: boolean;
-  type: string;
-  enum?: string[];
-  default?: any;
-  pattern?: string;
-}
-
-export interface JsonSchemaForm {
-  file_contents: string;
-  name: string;
-  process_model_id: string;
-  required: string[];
 }
 
 export interface ProcessInstanceEventErrorDetail {
@@ -437,6 +424,10 @@ export interface TestCaseErrorDetails {
   task_line_contents?: string;
   task_line_number?: number;
   task_trace?: string[];
+
+  task_bpmn_type?: string;
+  output_data?: any;
+  expected_data?: any;
 }
 
 export interface TestCaseResult {
@@ -463,6 +454,7 @@ export interface DataStore {
   id: string;
   schema: string;
   description?: string | null;
+  location?: string | null;
 }
 
 export interface DataStoreType {
@@ -502,4 +494,32 @@ export interface KeyboardShortcut {
 
 export interface KeyboardShortcuts {
   [key: string]: KeyboardShortcut;
+}
+
+export interface SpiffTab {
+  path: string;
+  display_name: string;
+  tooltip?: string;
+}
+
+export interface SpiffTableHeader {
+  tooltip_text?: string;
+  text: string;
+}
+
+export interface ElementForArray {
+  key: string;
+  component: ReactElement | null;
+}
+
+export interface PublicTaskForm {
+  form_schema: any;
+  form_ui_schema: any;
+  instructions_for_end_user?: string;
+}
+export interface PublicTask {
+  form: PublicTaskForm;
+  task_guid: string;
+  process_instance_id: number;
+  confirmation_message_markdown: string;
 }

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from flask import current_app
-from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session
@@ -65,6 +65,13 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, MessageStatuses)
 
+    @classmethod
+    def split_modified_message_name(cls, modified_message_name: str) -> tuple[str, str]:
+        message_name_array = modified_message_name.split(":")
+        message_name = message_name_array.pop()
+        process_group_identifier = "/".join(message_name_array)
+        return (message_name, process_group_identifier)
+
     def correlates(self, other: Any, expression_engine: PythonScriptEngine) -> bool:
         """Returns true if the this Message correlates with the given message.
 
@@ -114,7 +121,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
             if expected_value is None:  # This key is not required for this instance to match.
                 continue
             try:
-                result = expression_engine._evaluate(correlation_key.retrieval_expression, payload)
+                result = expression_engine.environment.evaluate(correlation_key.retrieval_expression, payload)
             except Exception as e:
                 # the failure of a payload evaluation may not mean that matches for these
                 # message instances can't happen with other messages.  So don't error up.

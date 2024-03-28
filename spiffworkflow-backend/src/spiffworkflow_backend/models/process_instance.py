@@ -3,9 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 import marshmallow
+from flask_sqlalchemy.query import Query
 from marshmallow import INCLUDE
 from marshmallow import Schema
 from sqlalchemy import ForeignKey
+from sqlalchemy import desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
@@ -14,6 +16,8 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
 
@@ -48,9 +52,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process_definition_id: int | None = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id),
+        ForeignKey(BpmnProcessDefinitionModel.id),  # type: ignore
         nullable=True,
-        index=True,  # type: ignore
+        index=True,
     )
     bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True, index=True)  # type: ignore
 
@@ -65,7 +69,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )  # type: ignore
 
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
-    tasks = relationship("TaskModel", cascade="delete")  # type: ignore
+    tasks = relationship("TaskModel", cascade="delete")
     task_draft_data = relationship("TaskDraftDataModel", cascade="delete")  # type: ignore
     process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
     process_instance_file_data = relationship("ProcessInstanceFileDataModel", cascade="delete")  # type: ignore
@@ -119,6 +123,16 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         """
         return self.bpmn_process_definition_id is not None and self.bpmn_process_id is not None
 
+    def future_tasks_query(self) -> Query:
+        future_tasks: Query = (
+            FutureTaskModel.query.filter(
+                FutureTaskModel.completed == False,  # noqa: E712
+            )
+            .join(TaskModel, TaskModel.guid == FutureTaskModel.guid)
+            .filter(TaskModel.process_instance_id == self.id)
+        )
+        return future_tasks
+
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         return {
@@ -154,6 +168,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def can_submit_task(self) -> bool:
         return not self.has_terminal_status() and self.status != "suspended"
 
+    def allowed_to_run(self) -> bool:
+        """If this process can currently move forward with things like do_engine_steps."""
+        return not self.has_terminal_status() and self.status != "suspended"
+
     def can_receive_message(self) -> bool:
         """If this process can currently accept messages."""
         return not self.has_terminal_status() and self.status != "suspended"
@@ -180,6 +198,22 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     @classmethod
     def immediately_runnable_statuses(cls) -> list[str]:
         return ["not_started", "running"]
+
+    def get_last_completed_task(self) -> TaskModel | None:
+        last_completed_task: TaskModel | None = (
+            TaskModel.query.filter_by(process_instance_id=self.id, state="COMPLETED")
+            .order_by(desc(TaskModel.end_in_seconds))  # type: ignore
+            .first()
+        )
+        return last_completed_task
+
+    def get_data(self) -> dict:
+        """Returns the data of the last completed task in this process instance."""
+        last_completed_task = self.get_last_completed_task()
+        if last_completed_task:  # pragma: no cover
+            return last_completed_task.json_data()
+        else:
+            return {}
 
 
 class ProcessInstanceModelSchema(Schema):

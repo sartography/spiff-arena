@@ -15,6 +15,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
+from spiffworkflow_backend.models.user import SPIFF_SYSTEM_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentNotFoundError
@@ -266,11 +267,30 @@ class UserService:
 
     @classmethod
     def find_or_create_guest_user(cls, username: str = SPIFF_GUEST_USER, group_identifier: str = SPIFF_GUEST_GROUP) -> UserModel:
-        guest_user: UserModel | None = UserModel.query.filter_by(
+        user: UserModel | None = UserModel.query.filter_by(
             username=username, service="spiff_guest_service", service_id="spiff_guest_service_id"
         ).first()
-        if guest_user is None:
-            guest_user = cls.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
-            cls.add_user_to_group_or_add_to_waiting(guest_user.username, group_identifier)
+        if user is None:
+            user = cls.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
+            cls.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
 
-        return guest_user
+        return user
+
+    @classmethod
+    def find_or_create_system_user(cls, username: str = SPIFF_SYSTEM_USER) -> UserModel:
+        user: UserModel | None = UserModel.query.filter_by(
+            username=username, service="spiff_system_service", service_id="spiff_system_service_id"
+        ).first()
+        if user is None:
+            user = cls.create_user(username, "spiff_system_service", "spiff_system_service_id")
+
+        return user
+
+    @classmethod
+    def create_public_user(cls) -> UserModel:
+        username = UserModel.generate_random_username()
+        user = UserService.create_user(username, "spiff_public_service", username)
+        cls.add_user_to_group_or_add_to_waiting(
+            user.username, current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]
+        )
+        return user
