@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+import sys
 from typing import Any
 
 from flask.app import Flask
@@ -81,99 +83,94 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(message_dict, default=str)
 
 
-def setup_logger(app: Flask, logger: Any = logging.root) -> None:
-    pass
-    # stdout_handler = logging.StreamHandler(sys.stdout)
-    # logger.addHandler(stdout_handler)
-    # upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
-    # log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    #
-    # if upper_log_level_string not in log_levels:
-    #     raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
-    #
-    # log_level = getattr(logging, upper_log_level_string)
-    # spiff_log_level = getattr(logging, upper_log_level_string)
-    # log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    #
-    # app.logger.debug("Printing log to create app logger")
-    #
-    # # the json formatter is nice for real environments but makes
-    # # debugging locally a little more difficult
-    # # if app.config["ENV_IDENTIFIER"] != "local_development":
-    # json_formatter = JsonFormatter(
-    #     {
-    #         "level": "levelname",
-    #         "message": "message",
-    #         "loggerName": "name",
-    #         "processName": "processName",
-    #         "processID": "process",
-    #         "threadName": "threadName",
-    #         "threadID": "thread",
-    #         "timestamp": "asctime",
-    #     }
-    # )
-    # log_formatter = json_formatter
-    #
-    # spiff_logger_filehandler = None
-    # if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
-    #     spiff_logger_filehandler = logging.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
-    #     spiff_logger_filehandler.setLevel(spiff_log_level)
-    #     spiff_logger_filehandler.setFormatter(log_formatter)
-    #
-    # # these loggers have been deemed too verbose to be useful
-    # garbage_loggers_to_exclude = ["connexion", "flask_cors.extension", "flask_cors.core", "sqlalchemy"]
-    #
-    # # # if you actually want one of these excluded loggers, there is a config option to turn it on
-    # # loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE", [])
-    # # if loggers_to_use is None or loggers_to_use == "":
-    # #     loggers_to_use = []
-    # # else:
-    # #     loggers_to_use = loggers_to_use.split(",")
-    # # for logger_to_use in loggers_to_use:
-    # #     if logger_to_use in garbage_loggers_to_exclude:
-    # #         garbage_loggers_to_exclude.remove(logger_to_use)
-    # #     else:
-    # #         app.logger.warning(
-    # #             f"Logger '{logger_to_use}' not found in garbage_loggers_to_exclude. You do not need to add it to"
-    # #             " SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
-    # #         )
-    #
-    # loggers_to_exclude_from_debug = []
-    #
-    # # if "sqlalchemy" not in garbage_loggers_to_exclude:
-    # #     loggers_to_exclude_from_debug.append("sqlalchemy")
-    #
-    # # make all loggers act the same
-    # for name in logger.root.manager.loggerDict:
-    #     # use a regex so spiffworkflow_backend isn't filtered out
-    #     if not re.match(r"^spiff\b", name):
-    #         print(f"name", name)
-    #         the_logger = logging.getLogger(name)
-    #         the_logger.handlers = []
-    #         the_logger.setLevel(log_level)
-    #         # if spiff_logger_filehandler:
-    #         #     the_logger.handlers = []
-    #         #     the_logger.propagate = False
-    #         #     the_logger.addHandler(spiff_logger_filehandler)
-    #         # else:
-    #         #     # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
-    #         #     if upper_log_level_string == "DEBUG":
-    #         #         if len(the_logger.handlers) < 1:
-    #         #             exclude_logger_name_from_logging = False
-    #         #             for garbage_logger in garbage_loggers_to_exclude:
-    #         #                 if name.startswith(garbage_logger):
-    #         #                     exclude_logger_name_from_logging = True
-    #         #
-    #         #             exclude_logger_name_from_debug = False
-    #         #             for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
-    #         #                 if name.startswith(logger_to_exclude_from_debug):
-    #         #                     exclude_logger_name_from_debug = True
-    #         #             if exclude_logger_name_from_debug:
-    #         #                 the_logger.setLevel("INFO")
-    #         #
-    #         #             if not exclude_logger_name_from_logging:
-    #         #                 the_logger.addHandler(logging.StreamHandler(sys.stdout))
-    #         #
-    #         for the_handler in the_logger.handlers:
-    #             the_handler.setFormatter(log_formatter)
-    #             the_handler.setLevel(log_level)
+def setup_logger(app: Flask) -> None:
+    upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
+    log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+    if upper_log_level_string not in log_levels:
+        raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
+
+    log_level = getattr(logging, upper_log_level_string)
+    spiff_log_level = getattr(logging, upper_log_level_string)
+    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    app.logger.debug("Printing log to create app logger")
+
+    # the json formatter is nice for real environments but makes
+    # debugging locally a little more difficult
+    if app.config["ENV_IDENTIFIER"] != "local_development":
+        json_formatter = JsonFormatter(
+            {
+                "level": "levelname",
+                "message": "message",
+                "loggerName": "name",
+                "processName": "processName",
+                "processID": "process",
+                "threadName": "threadName",
+                "threadID": "thread",
+                "timestamp": "asctime",
+            }
+        )
+        log_formatter = json_formatter
+
+    spiff_logger_filehandler = None
+    if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
+        spiff_logger_filehandler = logging.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
+        spiff_logger_filehandler.setLevel(spiff_log_level)
+        spiff_logger_filehandler.setFormatter(log_formatter)
+
+    # these loggers have been deemed too verbose to be useful
+    garbage_loggers_to_exclude = ["connexion", "flask_cors.extension", "flask_cors.core", "sqlalchemy"]
+
+    # if you actually want one of these excluded loggers, there is a config option to turn it on
+    loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE", [])
+    if loggers_to_use is None or loggers_to_use == "":
+        loggers_to_use = []
+    else:
+        loggers_to_use = loggers_to_use.split(",")
+    for logger_to_use in loggers_to_use:
+        if logger_to_use in garbage_loggers_to_exclude:
+            garbage_loggers_to_exclude.remove(logger_to_use)
+        else:
+            app.logger.warning(
+                f"Logger '{logger_to_use}' not found in garbage_loggers_to_exclude. You do not need to add it to"
+                " SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
+            )
+
+    loggers_to_exclude_from_debug = []
+
+    if "sqlalchemy" not in garbage_loggers_to_exclude:
+        loggers_to_exclude_from_debug.append("sqlalchemy")
+
+    # make all loggers act the same
+    for name in logging.root.manager.loggerDict:
+        # use a regex so spiffworkflow_backend isn't filtered out
+        if not re.match(r"^spiff\b", name):
+            the_logger = logging.getLogger(name)
+            the_logger.setLevel(log_level)
+            if spiff_logger_filehandler:
+                the_logger.handlers = []
+                the_logger.propagate = False
+                the_logger.addHandler(spiff_logger_filehandler)
+            else:
+                # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
+                if upper_log_level_string == "DEBUG":
+                    if len(the_logger.handlers) < 1:
+                        exclude_logger_name_from_logging = False
+                        for garbage_logger in garbage_loggers_to_exclude:
+                            if name.startswith(garbage_logger):
+                                exclude_logger_name_from_logging = True
+
+                        exclude_logger_name_from_debug = False
+                        for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
+                            if name.startswith(logger_to_exclude_from_debug):
+                                exclude_logger_name_from_debug = True
+                        if exclude_logger_name_from_debug:
+                            the_logger.setLevel("INFO")
+
+                        if not exclude_logger_name_from_logging:
+                            the_logger.addHandler(logging.StreamHandler(sys.stdout))
+
+                for the_handler in the_logger.handlers:
+                    the_handler.setFormatter(log_formatter)
+                    the_handler.setLevel(log_level)
