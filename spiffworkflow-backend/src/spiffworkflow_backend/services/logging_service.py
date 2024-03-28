@@ -92,26 +92,10 @@ def setup_logger_for_app(app: Flask, logger: Any) -> None:
 
     log_level = getattr(logger, upper_log_level_string)
     spiff_log_level = getattr(logger, upper_log_level_string)
-    log_formatter = logger.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    log_formatter = get_log_formatter(app)
 
     app.logger.debug("Printing log to create app logger")
-
-    # the json formatter is nice for real environments but makes
-    # debugging locally a little more difficult
-    if app.config["ENV_IDENTIFIER"] != "local_development":
-        json_formatter = JsonFormatter(
-            {
-                "level": "levelname",
-                "message": "message",
-                "loggerName": "name",
-                "processName": "processName",
-                "processID": "process",
-                "threadName": "threadName",
-                "threadID": "thread",
-                "timestamp": "asctime",
-            }
-        )
-        log_formatter = json_formatter
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
@@ -175,3 +159,25 @@ def setup_logger_for_app(app: Flask, logger: Any) -> None:
                 for the_handler in the_logger.handlers:
                     the_handler.setFormatter(log_formatter)
                     the_handler.setLevel(log_level)
+
+
+def get_log_formatter(app: Flask) -> logging.Formatter:
+    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    # the json formatter is nice for real environments but makes
+    # debugging locally a little more difficult
+    if app.config["ENV_IDENTIFIER"] != "local_development":
+        json_formatter = JsonFormatter(
+            {
+                "level": "levelname",
+                "message": "message",
+                "loggerName": "name",
+                "processName": "processName",
+                "processID": "process",
+                "threadName": "threadName",
+                "threadID": "thread",
+                "timestamp": "asctime",
+            }
+        )
+        log_formatter = json_formatter
+    return log_formatter
