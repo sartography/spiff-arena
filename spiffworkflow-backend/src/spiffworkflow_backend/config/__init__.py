@@ -1,6 +1,7 @@
 """__init__.py."""
 
 import base64
+import logging
 import os
 import threading
 import uuid
@@ -9,7 +10,7 @@ from urllib.parse import urlparse
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
 
-from spiffworkflow_backend.services.logging_service import setup_logger
+from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
 CONNECTOR_PROXY_COMMAND_TIMEOUT = 45
@@ -216,7 +217,7 @@ def setup_config(app: Flask) -> None:
     app.config["PROCESS_UUID"] = uuid.uuid4()
 
     setup_database_configs(app)
-    setup_logger(app)
+    setup_logger_for_app(app, logging)
     app.logger.debug(
         f"SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: {app.config['SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR']}"
     )

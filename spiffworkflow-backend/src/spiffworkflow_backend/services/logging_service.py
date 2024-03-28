@@ -83,10 +83,6 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(message_dict, default=str)
 
 
-def setup_logger(app: Flask) -> None:
-    setup_logger_for_app(app, logging)
-
-
 def setup_logger_for_app(app: Flask, logger: Any) -> None:
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
