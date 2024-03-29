@@ -9,7 +9,7 @@
 
 ## 🚀 Getting Started with SpiffArena
 
-Sartography (the company developing SpiffWorkflow and SpiffArena) is providing users a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
+Sartography (the company that develops SpiffWorkflow and SpiffArena) provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
 Users can interact with pre-built models, make modifications, and visualize process flows.
 
 ## How to Login to SpiffArena
@@ -20,7 +20,7 @@ Users can interact with pre-built models, make modifications, and visualize proc
 :width: 230px
 :align: right 
 ``` 
-To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (Currently spiffdemo.org).  
+To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (currently spiffdemo.org).  
 
 On the login screen, you will find the option to log in using Single Sign-On.
 Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.
@@ -33,7 +33,7 @@ More ways to access SpiffArena are coming your way!
 
 ## How to Navigate through SpiffArena
 
-In this section, we will navigate through the platform and provide a generic overview of each section step by step, allowing you to understand and engage with the platform more effectively.
+In this section, we will navigate through the platform and provide a generic overview of each section step-by-step, allowing you to understand and engage with the platform more effectively.
 
 ### Step 1: Explore the Home section
 
@@ -91,7 +91,7 @@ Here's a step-by-step guide on how to start a process.
 The first thing you need to do is sign in to your account on SpiffWorkflow.
 Once you're signed in, you'll see three tabs in the Home section: In progress, Completed, and Start New.
 If you want to start a new process, click the "Start New +" button.
-This will bring up "Processes I can start" section.
+This will bring up the "Processes I can start" section.
 
 ![Untitled](images/Untitled_6.png)
 
@@ -163,7 +163,7 @@ Here's how you can view the steps of the process you just started.
 There are 2 ways of finding your process instances.
 
 Option 1: Once you're signed in, navigate to the home section.
-Here you will find a list of all the processes instances you've initiated.
+Here you will find a list of all the process instances you've initiated.
 
 ![Untitled](images/Untitled_11.png)
 
@@ -246,9 +246,9 @@ If you want to view or create information on specific process models, we allow y
 
 If you are creating a model, you can add information in the about section.
 We have integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform.
-In order to use this feature, simply create a **Create a README File** inside the process model called README.md and document the model so everyone can be on the same page.
+In order to use this feature, simply create a **README File** inside the process model called README.md and document the model so everyone can be on the same page.
 
-Furthermore, to check the process instances you started, you can also switch to "My process instance" tab.
+Furthermore, to check the process instances you started, you can also switch to the "My process instance" tab.
 ![View forms](images/View_Forms4.png)
 
 ---
@@ -294,7 +294,7 @@ To filter process instances by **process-defined metadata**, follow these steps:
 
 ![Untitled](images/Untitled_22.png)
 
-- The metadata fields will be displayed in dropdown. Select the field you want to display and Click on "**Save**" to apply the changes.
+- The metadata fields will be displayed in the dropdown. Select the field you want to display and Click on "**Save**" to apply the changes.
 
 ![Untitled](images/Untitled_23.png)
 
@@ -365,128 +365,4 @@ This can help you manage your workflows more efficiently and keep track of the p
 ## How to check Milestones and Events
 
 ### Milestones
-A milestone is a specific point in a process that signifies a significant event or state. It provides a high-level overview of the progress made in the process.
-
-In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, start, or end) but give it a name, it becomes a milestone.
-Essentially, a milestone is an event that hasn't been set to something specific.
-
-
-### Events
-Events provide a detailed log of everything that happens in a process. They record every task and its execution time.
-
-![Events](images/Events.png)
-
-The events tab provides a detailed log of all the tasks and their execution times.
-It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
-
----
-## How to check messages
-Messages in BPMN allow processes to communicate with each other. This communication can take various forms:
-
-- Two processes running concurrently, exchanging messages.
-- One process initiating another through a message.
-- An external system making an API call, passing a payload (like a JSON data structure) that can either communicate with an ongoing process or initiate a new one.
-
-### The Waiter-Chef Illustration
-
-To explain the concept, we are using a relatable example involving two processes: the Waiter and the Chef.
-
-**Waiter Process**:
-![Waiter Process](images/waiter.png)
-
-1. The waiter takes an order.
-2. This order is then communicated to the chef via a message.
-3. The waiter then waits for a response from the chef, indicating the order's readiness.
-
-**Chef Process**:
-
-![Chef Process](images/chef.png)
-
-1. The chef starts by receiving the order message from the waiter.
-2. After preparing the meal, the chef sends a message back to the waiter, signaling that the order is ready.
-
-
-### Setting Up the Processes
-
-The setup involves creating two process models named "Chef" and "Waiter."
-The waiter's process involves taking an order, setting up variables like table number, drink, and meal, and then sending a message to the chef.
-The chef's process starts by listening for the order message, preparing the meal, and then sending a confirmation message back to the waiter.
-
-
-### Correlation Keys and Properties
-
-One of the complexities in BPMN messaging is ensuring that the right processes are communicating with each other, especially when multiple instances are running.
-This is achieved using correlation keys and properties.
-
-![corelation](images/Corelation.png)
-
-- **Correlation Keys**: These represent the topic of the conversation. In the given example, the correlation key is the "order".
-  
-- **Correlation Properties**: These are unique identifiers within the conversation. In the example, the "table number" serves as the correlation property, ensuring the right waiter communicates with the right chef.
-
-### Execution and Observation
-
-Upon executing the waiter's process, it sends a message to the chef and waits.
-The chef's process, upon receiving the message, requires user input (indicating the meal's completion).
-Once the chef confirms the meal's readiness, a message is sent back to the waiter, completing both processes.
-
-For a more visual understanding and a step-by-step walkthrough, you can watch Dan Funk's full tutorial [here](https://www.youtube.com/watch?v=Uk7__onZiVk).
-
-
----
-## How to share process instance with Short Links
-The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs. This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
-
-To copy the short link:
-
-- **Access the Process Instance**: Open the process instance that you wish to share.
-- **Find the Short Link Icon**: Look for the link icon near the process instance heading and click on the link icon to copy the short link to your clipboard automatically. please refer to the screenshot provided.
-
-![Short Link](images/Short_link.png)
-
-Now, you can paste the short link into your desired communication medium to share it with others.
-
----
-## How to View Who Completed User Forms
-
-To access and review completed user forms within a specific process model, follow these guidelines:
-
-1. **Find the Tasks Tab in Process Instance**:  Begin by going to the process instance and scroll to locate the 'Tasks' tab. This area displays all user forms connected to the process.
-
-2. **Examine Completed Forms**: 
-   - **Forms You Completed**: In this section, you can view the forms that you have completed. It allows you to see the specific details and inputs you provided in each task.
-   ![Completed by me](images/Completed_by_me.png)
-
-   - **Forms Completed by Others**: This part shows all the forms completed by any user. You can see who completed each form and the last time it was updated. However, for privacy and security reasons, you won't be able to view the specific input details of forms completed by others.
-   ![Completed by others](images/Completed_by_others.png)
-
-This approach ensures you can monitor and review the progress of user forms within any process model while maintaining the confidentiality of inputs made by other users.
-
----
-## How to view task instance history
-
-Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow. This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
-
-### Steps to Access Task Instance History
-
-1. **Run the Process**: Initiate a workflow process in SpiffWorkflow.
-
-2. **Access the Process Instance**: After running the process, navigate to the specific process instance within the SpiffWorkflow interface. This is where you can track the progress of the tasks.
-![Access process instance](images/Access_Process_Instance.png)
-
-3. **View Task Details**: Click on the executed task or event that has been completed. For instance, in this example we clicked on "user task".
-![Access task instance](images/Task_instance.png)
-
-You will be presented with detailed information about each task instance, including its status and execution timestamp. 
-
-For example:
-   - `2 : 04-01-2024 19:58:11 - MAYBE`
-   - `3 : 04-01-2024 19:58:10 - COMPLETED`
-   - `4 : 04-01-2024 19:58:07 - COMPLETED`
-![Access task instance](images/task_instance_history.png)
-
-
-- **COMPLETED Status**: Tasks marked as 'COMPLETED' have finished their execution successfully and have moved the workflow forward.
-- **MAYBE Status**: Indicates that the task still exists within SpiffWorkflow. While these tasks could be omitted for clarity, retaining them provides a complete picture of the workflow's execution.
-
-Viewing task instance history in SpiffWorkflow is now more streamlined and informative, thanks to recent updates. Users can effectively track each task's execution, status, and timing, gaining insights into the workflow's overall performance.
+A milestone

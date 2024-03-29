@@ -93,7 +93,7 @@ Event-Based Gateway: An Event-Based Gateway is used to represent a branching poi
 
 ## Gateway Configuration
 
-Unlike most Tasks in BPMN, the configuration for Gateways is primarily set on the outgoing sequence flows, not in the Side Panel. Every Gateway, with the exception of the Parallel Gateway, requires conditions to be established on these outgoing sequence flows. These conditions dictate the direction of the process flow. It's also crucial to understand that conditions aren't required for incoming sequence flows to Gateways.
+Unlike most tasks in BPMN, the configuration for Gateways is primarily set on the outgoing sequence flows, not in the Side Panel. Every Gateway, with the exception of the Parallel Gateway, requires conditions to be established on these outgoing sequence flows. These conditions dictate the direction of the process flow. It's also crucial to understand that conditions aren't required for incoming sequence flows to Gateways.
 
 **Gateway:**
 

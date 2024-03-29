@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The welcome message is the greeting users see when they log into the platform. It sets the tone for their experience and can be customized to fit the needs of your organization or specific user groups. By customizing the welcome message, **administrators** can tailor the user experience, making it more personalized and relevant to the audience. 
+The welcome message is the greeting users see when they log into the platform. It sets the tone for their experience and can be customized to fit the needs of your organization or specific user groups. By customizing the welcome message, **administrators** can tailor the user experience, making it more personalized and relevant to the audience.
 
 This guide will walk you through the steps to modify this message in SpiffWorkflow.
 
@@ -18,19 +18,16 @@ Navigate to the onboarding process model within SpiffWorkflow.
     
     ![Access Welcome file](images/onboarding_2.png)
 
-
-4. **Locate the End Event:**  
+3. **Locate the End Event:**  
    The end event within this process contains the welcome message. Any message configured in this end event will be displayed to users upon login.     
    
    ![Click End Event](images/onboarding_3.png)
 
-
-5. **Launch the Editor:**  
+4. **Launch the Editor:**  
    Use the built-in editor to modify the content of the welcome message. Ensure that your changes are clear, concise, and welcoming to provide users with a positive experience.
    
    ![Launching Editor](images/onboarding_4.png)
 
    After making your desired modifications, save the changes to update the welcome message.
 
-
-Once you've updated the welcome message, it will be displayed prominently on the home page after users log in. The message will be positioned in a way that it's one of the first things users see, ensuring they receive the intended greeting every time they access the platform.    
+Once you've updated the welcome message, it will be displayed prominently on the home page after users log in. The message will be positioned in a way that it's one of the first things users see, ensuring they receive the intended greeting every time they access the platform.

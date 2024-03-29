@@ -62,7 +62,7 @@ After the Script Task, we have a Manual Task with a pre-script and instructions 
 
 ![Script_Task](images/Pre-post_scripts.png)
 
-- **Prescript** is added as an example. While you can have tasks that are dedicated scripts, it can become a bit noisy, and we want our diagrams to convey a clear sense of the business logic and rules. For this reason, it is also possible to add scripts to all Task types - using Pre and Post Scripts. This manual task contains a pre-script that also calculates PI using the Leibniz’s formula. Here is the pre-script:
+- **Prescript** is added as an example. While you can have tasks that are dedicated scripts, it can become a bit noisy, and we want our diagrams to convey a clear sense of the business logic and rules. For this reason, it is also possible to add scripts to all Task types - using Pre and Post Scripts. This manual task contains a pre-script that also calculates PI using Leibniz’s formula. Here is the pre-script:
 
 ``` python
 # Initialize denominator
@@ -134,7 +134,7 @@ This function returns the user that initiated the process instance.
 This function returns the value for a previously configured secret.
 
 ### `get_task_data_value`
-This function checks to see if given value is in task data and returns its value.
+This function checks to see if a given value is in task data and returns its value.
 If it does not exist or is None, it returns the default value.
 
 ### `get_toplevel_process_info`
@@ -148,7 +148,7 @@ The script task calling this MUST be in the same process as the desired task and
 This function gets the user properties for the current user.
 
 ### `markdown_file_download_link`
-This function returns a string which is a string in markdown format.
+This function returns a string which is a markdown format string.
 
 ### `refresh_permissions`
 This function adds permissions using a dictionary.

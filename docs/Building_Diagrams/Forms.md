@@ -72,7 +72,7 @@ SpiffArena has enhanced the capabilities of react-jsonschema-form to provide use
 
 ### Dynamic Enumerations
 
-Dynamic enumerations allow you to provide users with a list of options (in a select / dropdown) that can change based on variables in the process instance.
+Dynamic enumerations allow you to provide users with a list of options (in a select/dropdown) that can change based on variables in the process instance.
 This feature is useful when you want to present users with choices based on an external data source or based on something that happened while the process was running.
 To implement dynamic enumerations, update the list of enumeration values by setting a variable in task data.
 In a script task, that would look like this:
@@ -412,4 +412,3 @@ This schema defines a numeric range object with `min` and `max` properties, both
 #### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
-

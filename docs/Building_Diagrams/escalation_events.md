@@ -1,6 +1,6 @@
 # Escalation Event
 
-An Escalation Event in BPMN symbolizes a situation where an issue or condition within a process requires attention at a higher level or different domain.
+An Escalation Event in BPMN symbolizes a situation where an issue or condition within a process requires attention at a higher level or a different domain.
 This event acts as a mechanism to raise awareness or invoke intervention.
 
 ```{admonition} Note
@@ -19,7 +19,7 @@ This event acts as a mechanism to raise awareness or invoke intervention.
 A Start Escalation Event indicates the beginning of a sub-process, triggered explicitly by an escalation from another process or activity.
 
 ```{admonition} Note
-⚠  Escalation Events are typically used in scenarios where standard process flow is disrupted, and involvement from other actors becomes essential for resolution. They are mostly used to communicate from a subprocess to an upper process.
+⚠  Escalation Events are typically used in scenarios where the standard process flow is disrupted, and involvement from other actors becomes essential for resolution. They are mostly used to communicate from a subprocess to an upper process.
 ```
 
 **Example:**
@@ -68,7 +68,7 @@ In the given scenario, utilizing a subprocess can lead to the desired outcome si
 In a subsequent setup, a parallel gateway launches two simultaneous paths. While one path proceeds with the shipment as usual, the other leverages parallel processing to update the customer. The update is facilitated through a non-interrupting boundary event within a subprocess, which ensures the shipment process continues uninterrupted.
 
 ```{admonition} Note
-⚠  The same end result was achieved by three different usescases for the escalation events. The choice of event type should be based on the particular application and context, as this will inform the most appropriate design decision for your process.
+⚠  The same end result was achieved by three different use cases for the escalation events. The choice of event type should be based on the particular application and context, as this will inform the most appropriate design decision for your process.
 ```
 
 ## End Escalation Event
@@ -95,7 +95,7 @@ Setting up an escalation event within a workflow in SpiffWorkflow involves defin
 
 Here's how to set up these components:
 
-**Define the Escalation ID**: Determine the task or process stage where an escalation might need to be triggered due to exceptional circumstances. and decide on a unique identifier for your escalation event.
+**Define the Escalation ID**: Determine the task or process stage where an escalation might need to be triggered due to exceptional circumstances and decide on a unique identifier for your escalation event.
 
 ![Escalation ID](images/Escalation_ID.png)
 
@@ -104,12 +104,12 @@ Here's how to set up these components:
 ```
 
 **Define the Intermediate Throw Escalation Event**:
- Add an Intermediate Throw Escalation Event immediately after the task identified. Select escalation ID and create a unique **escalation code**. .
+ Add an Intermediate Throw Escalation Event immediately after the task identified. Select the escalation ID and create a unique **escalation code**.
 
 ![Escalation Order](images/Escalation_Order.png)
 
 ```{admonition} Note
-⚠  Escalation code is essential for matching the throw event with its corresponding catch event. Example: `OrderExceedsThreshold`.
+⚠  The escalation code is essential for matching the throw event with its corresponding catch event. Example: `OrderExceedsThreshold`.
 ```
 
 **Define the Escalation Catch Event**:
@@ -129,4 +129,4 @@ You may need to set additional properties for the escalation event, such as:
 - **Payload/Variables**: Configuring any data or process variables that should be passed along with the escalation for handling by the catch event.
 - **Documentation**: Providing details on when the escalation should be triggered and how it should be handled.
 
-After setting up the escalation event, test the workflow to ensure the escalation is triggered under the right conditions and that the catch event handles it as expected
+After setting up the escalation event, test the workflow to ensure the escalation is triggered under the right conditions and that the catch event handles it as expected.

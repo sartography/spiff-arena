@@ -46,7 +46,7 @@ An Intermediate Event takes place between the beginning and the conclusion of a 
 - To represent events that happen between the start and end of a process.
 - To indicate waiting for something to happen before the process can move forward. For instance, waiting for approval in an order processing system.
 - When the process itself needs to send out a signal or a message to another process.
-- To depict delays or time conditions, like "Wait for 5 days after sending an invoice.
+- To depict delays or time conditions, like "Wait for 5 days after sending an invoice."
 - For boundary events, which are attached to activities to indicate potential interruptions or additional conditions directly linked to that activity
 
 ## End Event
@@ -80,7 +80,7 @@ Non-Interrupting Events allow the current process or activity to continue its ex
 ![interrupting_example](images/interrupting_example.png)
 
 **Example:**
-Think of a scenario where a manager is given a specific duration to assess a request. If the manager fails to complete evaluation within this timeframe, an interrupting timer will activate, ceasing the ongoing process and initiating a different one. The original task is no longer accessible; instead, the situation has shifted. The provided example demonstrates the same function, but one is with an interrupting start event, while the other is with an interrupting boundary event.
+Think of a scenario where a manager is given a specific duration to assess a request. If the manager fails to complete the evaluation within this timeframe, an interrupting timer will activate, ceasing the ongoing process and initiating a different one. The original task is no longer accessible; instead, the situation has shifted. The provided example demonstrates the same function, but one is with an interrupting start event, while the other is with an interrupting boundary event.
 
 ### Non-Interrupting Events
 
@@ -144,11 +144,11 @@ Catch events are used to "receive" or "catch" a particular type of event. In BPM
 ![catch_example](images/catch_example.png)
 
 **Example:**
-The reception of an event can take place in various ways. Drawing from the previous example, the event can be caught at the inception of a sub-process within the same primary process. Alternatively, it could be captured at the start of an entirely distinct process. Moreover, it can also be seized by a boundary event of another task, provided that this task is active when the event is thrown, allowing it to be intercepted by its corresponding boundary event. It can also be caught in the middle of a process (refer to the last example in Non-Boundary Events section).
+The reception of an event can take place in various ways. Drawing from the previous example, the event can be caught at the inception of a sub-process within the same primary process. Alternatively, it could be captured at the start of an entirely distinct process. Moreover, it can also be seized by a boundary event of another task, provided that this task is active when the event is thrown, allowing it to be intercepted by its corresponding boundary event. It can also be caught in the middle of a process (refer to the last example in the Non-Boundary Events section).
 
 ## Boundary vs. Non-Boundary Events
 
-Boundary and Non-Boundary Events are pivotal in determining how certain events and activities are placed, handled and how they interact with other elements in a process.
+Boundary and Non-Boundary Events are pivotal in determining how certain events and activities are placed, handled, and how they interact with other elements in a process.
 
 ### Boundary Event
 
@@ -182,7 +182,7 @@ Non-boundary Events stand alone in the BPMN process flow. They aren't attached t
 
 **Example:**
 
-Consider a manufacturing scenario. If we want to initiate a separate process before starting the manufacturing task, we deploy a intermediate signal event. This event's role is specifically to trigger a distinct process. Differently from a start event, if a boundary catch event isn't active—meaning there's no active instance waiting at that signal event, the thrown signal won't be caught, and the separate process remains unused. 
+Consider a manufacturing scenario. If we want to initiate a separate process before starting the manufacturing task, we deploy an intermediate signal event. This event's role is specifically to trigger a distinct process. Unlike a start event, if a boundary catch event isn't active—meaning there's no active instance waiting at that signal event, the thrown signal won't be caught, and the separate process remains unused. 
 If our goal is to schedule the manufacturing to kick off at a specific time, say 6 pm, or delay it for a short while, we can represent this with a timer. The workflow will pause at this event until the timer's conditions are satisfied.
 Conditions function as gatekeepers. For instance, the process will halt until the 'production_sheet_signed' variable evaluates as true, indicating the production sheet has been signed and manufacturing can commence.
 The concept mirrors that of messages and signals. A message, much like a signal, will only be caught in an intermediate event if there's an instance at the ready in the associated catch event.

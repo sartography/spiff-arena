@@ -1,14 +1,11 @@
-
 # Built-in Examples Overview
 
 When logging into the dashboard, it is crucial to familiarize yourself with the functions it offers and how the underlying engine operates.
 In the demo website, we will explore two examples: the Minimal Example and the Essential Example, to provide a clear understanding of the process.
 
-![](https://lh5.googleusercontent.com/Db25xtzQon8tu4YbsOLx-DPEyONhrF5jfxhbEXOqDomT2YlGnhEWBZMVFF84ViPyCRD-HMca--Xl4bj8vIF5-KNfpoKjujUZk1wDIMuBMymbg0o1jgucPrZxSsxxT1GuLYGjXPwCyEQ8BhpSt6URJCg)
+![](https://lh5.googleusercontent.com/Db25xtzQon8tu4YbsOLx-DPEyONhrF5jfxhbEXOqDomT2YlGnhEWBZMVFF84ViPyCRD-HMca--Xl4bj8vIF5-KNfpoKjujUZk1wDIMuBMymbg0o1jgucPrZxSsxxT1GuLYGjXPwCyEQ8BhpSt6URJCg)  
 
-  
-
-##  Minimal Example
+## Minimal Example
 
 Let's begin with the Minimal Example, which serves as a "Hello World" process—a simple executable BPMN Diagram designed to demonstrate basic functionality.
 Rather than immediately starting the process, we will first examine its structure.
@@ -19,25 +16,15 @@ Rather than immediately starting the process, we will first examine its structur
 
 Clicking on the process name will open the directory dedicated to the Minimal Example process.
 From here, you can start the process if desired, but for the purpose of this example, we will proceed with an explanation of its components and functionality.
-Therefore, Locate and click on the .bpmn file to access the BPMN editor.
-
-  
+Therefore, locate and click on the .bpmn file to access the BPMN editor.
 
 ![](https://lh3.googleusercontent.com/EKwOS_K29tFCDvIpdZHI2Ca_ZA8H5fw127OkUL3aAHw-JRjnDqsemFUyLXAKxr2CnsUfuAiY3yPswM03O04O57belSJnEi2PPeAfVElU-mraD3XV0v0ggQJsAuvdaMBf2-eOGsOIS5CCBp9et3IxR70)
 
-  
-
 The BPMN editor provides a visual representation of the process workflow.
-
-  
 
 ![](https://lh4.googleusercontent.com/kvDwQPz65ABWc653Ou54r9yfwGc1RHlzufKOE4oQ0uKsM_CRnuQPObAkbh9ldoXHUkGODZrLcdInKXMGOFra0wKoPxtvsdEASORHnuSTayOe_MEChuEqymJ5ur6rcuoCMQXKH7f-dfPAEBg2vukT53w)
 
-  
-
 ### Understand the Process Workflow
-
-  
 
 The Minimal Example process consists of three key elements: a start event, a manual task, and an end event.
 It is essential to understand the purpose and functionality of the properties panel, which is an integral component of the process diagram.
@@ -47,10 +34,10 @@ Without selecting any specific task within the diagram editor, the properties pa
 
 General
 
--   Name field is usually empty unless user wants to provide it.
+-   The Name field is usually empty unless the user wants to provide it.
 It serves as a label or identifier for the process.
     
--   The ID is automatically populated by the system (default behavior) however it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
+-   The ID is automatically populated by the system (default behavior). However, it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
     
 -   By default, all processes are executable, which means the engine can run the process.
     
@@ -66,7 +53,6 @@ Data Objects
 See full article [here](https://medium.com/@danfunk/understanding-bpmns-data-objects-with-spiffworkflow-26e195e23398).
     
 
-  
 **1. Start Event**
     
 
@@ -80,7 +66,7 @@ General
 
 -   The Name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
     
--   ID is automatically populated by the system (default behavior) however it can be updated by the user, but it must remain unique within the process.
+-   ID is automatically populated by the system (default behavior). However, it can be updated by the user, but it must remain unique within the process.
 Often the ID would be updated to allow easier referencing in messages and also Logs as long as it’s unique in the process.
     
 
@@ -89,7 +75,7 @@ Documentation
 -   This field is used to provide any notes related to the element.
     
 
-  ```{admonition} Note: 
+```{admonition} Note: 
 
 In the minimal example, the Start Event is a None Start Event.
 This type of Start Event signifies that the process can be initiated without any triggering message or timer event.
@@ -137,7 +123,7 @@ To view and edit the instructions, click on the editor, and a window will open d
 ![](https://lh4.googleusercontent.com/wWNqTB2EU4W0Hgz_u2l7PiEqbGVRuZMjtbgGUrckAPP9aD2TRGFvZgVkRXWcx-CV5JsSzWYDsZuXCkTpvmyfdUmFm13bTZ5o5OOf7ykBMoJ-vGBPcxQojSpE9leMn97zZDbEdJmZPgnrChQk6tbjUc8)
 
 
-3. **End Task**
+**3. End Task**
     
 
 The next process in the workflow is an end task.
@@ -151,7 +137,7 @@ General
 
 -   The Name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
     
--   ID is automatically populated by the system (default behavior) however the user can update it, but it must remain unique within the process.
+-   ID is automatically populated by the system (default behavior). However, the user can update it, but it must remain unique within the process.
     
 
 Documentation
@@ -167,10 +153,11 @@ Instructions
 ![](https://lh5.googleusercontent.com/lcGDq-colYTa0zRq5yObuN6D5aW2wH-PheyYFMPJ9D77lZ_-fQlUrtFHNwKmCod4v1JYrWnblJEzW5VkVFM_I_Q1d8fhiWC98DPK4ZDctI7Jbqf11DdXSJAUVvZ2C2ubv-3FKXzVkbgGY8Fnk0irSdo)
 
 
-##  Essential Example
+## Essential Example
+
 Now that we have explored the minimal example, let's delve into a more comprehensive BPMN model known as the Essential Example. This example serves as a stepping stone towards a deeper understanding of BPMN, as it incorporates a variety of fundamental concepts that work harmoniously together.
 
-### **Access the Process Directory**
+### Access the Process Directory
 Clicking on the process name will open the directory dedicated to the Essential Example process. Here are the four files in the Process:
 
 **BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard. 
@@ -191,7 +178,7 @@ Here's what a DMN table looks like:
 **UI Schema**: A file that defines the layout, structure, and behavior of user interfaces, facilitating the development of intuitive and interactive user experiences.
 ![Image](images/UI-Schema.png)
 
-### **Process Workflow**
+### Process Workflow
 In this BPMN diagram example, the process is outlined step by step: The process initiates with a start event, serving as the entry point for the workflow.
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.
@@ -202,7 +189,7 @@ Next, a **User task** named "Display Questions"is added, facilitating the collec
 
 ![](images/User_EM.png)
 
- Once the user completes the form, the gathered data is passed on to a **script task** named "Modify Information", responsible for calculating the data score. The script for this calculation is embedded in the properties section.
+Once the user completes the form, the gathered data is passed on to a **script task** named "Modify Information", responsible for calculating the data score. The script for this calculation is embedded in the properties section.
 
 ![](images/Script_Em.png)
 
@@ -223,5 +210,3 @@ c. **Perfect Score**: If the score indicates a perfect score, a manual task disp
 Once the score messages are displayed, a **signal event** is included, providing users with the option to continue and conclude the process or choose to repeat the process from the beginning. Signal events enable external forces or internal errors to interact with the process, and in this scenario, a button press allows for the interruption of the diagram's normal course.
 
 ![](images/Signal_EM.png)
-
-

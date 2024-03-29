@@ -7,9 +7,9 @@ A Signal Event is a type of event that provides a mechanism for communication ac
 **Reasons to Use a Signal Event:**
 
 - A signal event is used to broadcast a message to multiple signal catch events.
-- They are ideal for scenarios where a notification is important, but a reply or acknowledgment isn't necessary
+- They are ideal for scenarios where a notification is important, but a reply or acknowledgment isn't necessary.
 - Incorporating Signal Events in BPMN diagrams provides a versatile way to model complex inter-process interactions.
-- Signal Events can trigger multiple other processes, effectively creating separate threads from a single instance. This allows for parallel processing
+- Signal Events can trigger multiple other processes, effectively creating separate threads from a single instance. This allows for parallel processing.
 - They can help synchronize multiple processes. For instance, different processes can wait for a common signal to proceed, ensuring they operate in tandem.
 
  
@@ -22,7 +22,7 @@ A Start Signal Event serves as a starting point for a process or subprocess, tri
 ![signal_event_example_2](images/signal_event_example_2.png)
 
 **Example:**
-A Start Signal Event is especially valuable in situations where a parallel process needs to commence while the primary process continues. Consider a production line in a factory where specific components are produced. Some stages of this line must occur in sequence, but others can operate concurrently. This parallel operation is what boosts the efficiency of a production line. In the image above, two processes are started, meaning three processes will run in parallel. With signals, one process can initiate another. The power of a signal is its ability to launch multiple processes simultaneously because of its one-to-many relationship. It's important to note that a Start Signal Event is typically activated by an intermediate or end throw signal event
+A Start Signal Event is especially valuable in situations where a parallel process needs to commence while the primary process continues. Consider a production line in a factory where specific components are produced. Some stages of this line must occur in sequence, but others can operate concurrently. This parallel operation is what boosts the efficiency of a production line. In the image above, two processes are started, meaning three processes will run in parallel. With signals, one process can initiate another. The power of a signal is its ability to launch multiple processes simultaneously because of its one-to-many relationship. It's important to note that a Start Signal Event is typically activated by an intermediate or end throw signal event.
 
 ## Intermediate Signal Throw Event
 
@@ -103,7 +103,6 @@ Listens for the "eat_cheetos" signal, leading the process to a Manual Task label
 Designed to catch the "eat_potato_chips" signal, but uniquely does not lead to a user-accessible task under normal workflow conditions. This task, intended to be triggered externally (e.g., via an API call), emphasizes the capability of BPMN to integrate with external systems for event triggering.
 ```{admonition} Note
 ⚠  Before initiating the process, three signal event IDs must be configured: `eat_cheetos`, `eat_potato_chips`, and `eat_spam`. These IDs are essential for the Signal Boundary Events to correctly identify and react to the signals triggered by user actions or external inputs.
-
 ```
 
 #### **Timer Boundary Event**:
@@ -119,6 +118,6 @@ The process includes multiple End Events. One is directly connected to **My Manu
 The others are linked to the outcomes of the Signal Boundary Events and the Timer Boundary Event, ensuring that each possible path through the process reaches a defined conclusion.
 
 ### Output:
-After starting the task, the signal buttons will appear "Eat Cheetos" and "Eat Spam". Upon clicking on any button will lead to the respective manual task.
+After starting the task, the signal buttons "Eat Cheetos" and "Eat Spam" will appear. Clicking on any button will lead to the respective manual task.
 
-![signal_event_example](images/Signal_events_spiff_example3.png) 
+![signal_event_example](images/Signal_events_spiff_example3.png)

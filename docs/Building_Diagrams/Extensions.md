@@ -1,6 +1,6 @@
 # Extensions
 
-Extensions in SpiffArena provide a mechanism to augment the software with custom features and functionality.
+Extensions in SpiffArena provide a mechanism to augment the software with custom features and functionalities.
 By leveraging extensions, users can implement functions or features not present in the standard offering.
 This powerful feature ensures adaptability to various business needs, from custom reports to specific user tools.
 
@@ -23,7 +23,7 @@ Here is the environmental variable:
 
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED=true
 
-By default, SpiffArena will look for extensions in `[SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR]/extensions` but that can be configured using `SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX`.
+By default, SpiffArena will look for extensions in `[SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR]/extensions`, but that can be configured using `SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX`.
 
 ### Creating an Extension
 
@@ -39,7 +39,7 @@ To create your own custom extension, follow these steps:
 ![Extension](images/Extension_UI_schema.png)
 
 As an example, we have created an extension that adds a link to the profile menu in the top right, and also adds a new "Support" page to the app so that users of the application know who to talk to if they have issues.
-You can find the full example [in GitHub](https://github.com/sartography/sample-process-models/tree/sample-models-1/extensions/support).
+You can find the full example [on GitHub](https://github.com/sartography/sample-process-models/tree/sample-models-1/extensions/support).
 
 Notice how the `display_location` "user_profile_item" tells it that the link belongs in the user profile menu (this is the top right menu where the logout link can be found).
 Also notice that the extension uischema defines a page ("/support"), and defines the list of components that should show up on this page.

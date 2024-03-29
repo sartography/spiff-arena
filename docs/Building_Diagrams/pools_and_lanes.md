@@ -5,10 +5,10 @@ A Pool represents a participant and can be seen as a self-contained process. Thi
 **Reasons to Use Pools and Lanes:**
 
 - They visually represent distinct participants in a process, such as various departments, organizations, or systems.
-- Helps depict interactions between separate business entities, like a buyer-seller dynamic.
-- Provide a clear overview of communication between different participants.
-- Categorizing tasks or activities based on specific roles.
-- Bring structure and organization to complex diagrams that involve multiple roles, departments, or stakeholders.
+- They help depict interactions between separate business entities, like a buyer-seller dynamic.
+- They provide a clear overview of communication between different participants.
+- They categorize tasks or activities based on specific roles.
+- They bring structure and organization to complex diagrams that involve multiple roles, departments, or stakeholders.
 
  
 ## Pools
@@ -17,7 +17,7 @@ A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool". Y
 
 ![pools_and_lanes](images/pools_and_lanes_1.png) 
 
-Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable. They serve to illustrate the engagement of certain entities without detailing their internal processes, for example, we dont know a customers specific process but it matters when we interact with them to complete our process.
+Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable. They serve to illustrate the engagement of certain entities without detailing their internal processes, for example, we don't know a customer's specific process but it matters when we interact with them to complete our process.
 
 Conversely, Expanded Pools are employed when the processes are known and hold relevance within the diagram's context. 
 
@@ -37,12 +37,12 @@ Lanes are incorporated into Pools when the roles they represent belong to the sa
 
 **Collapsed (Empty) Pool configuration:**
 
-Configuring an "Empty Pool" (collapsed) representing an external entity such as a customer.
+Configuring an "Empty Pool" (collapsed) to represent an external entity such as a customer.
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![participant_sales](images/participant_customer_1.png) | **Participant Name:** Sales, **Participant ID:** sales, | A clear and descriptive name serves as a human-readable label or title the participant. Additionally, a unique ID is essential to distinguish the participant from other participants. |
-| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or Refernce a Data Object to store information for sharing between entities. |
+| ![participant_sales](images/participant_customer_1.png) | **Participant Name:** Sales, **Participant ID:** sales, | A clear and descriptive name serves as a human-readable label or title for the participant. Additionally, a unique ID is essential to distinguish the participant from other participants. |
+| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or Reference a Data Object to store information for sharing between entities. |
 
 **Expanded Pool configuration:**
 
@@ -51,7 +51,7 @@ Setting up an "Expanded Pool" requires referencing the process, in contrast to t
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
 | ![participant_sales](images/participant_sales_1.png) | **Participant Name:** Sales, **Participant ID:** sales,  **Process ID:** process_order, **Process Name:** Process Order | A clear and descriptive name serves as a human-readable label or title for both the participant and the process. Additionally, a unique ID is essential to distinguish both the participant and the process from others. |
-| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or Refernce a Data Object to store information for sharing between entities. |
+| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or Reference a Data Object to store information for sharing between entities. |
 
 **Collapsed Pool configuration:**
 
@@ -63,4 +63,4 @@ Remember that each pool requires Lane configuration, even if it contains just a 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
 | ![participant_sales](images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
-| ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple.|
+| ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |

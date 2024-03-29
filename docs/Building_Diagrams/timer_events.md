@@ -6,7 +6,7 @@ Using Timer Events ensures that processes can be designed to factor in time-base
 There are 3 specific types.
 
 **Specific Date/Time Trigger:** 
-A Timer Event can be set to activate on an exact date and time. This is like setting an alarm clock. When the clock hits the designated time, the Timer Event is triggered. For instance, a monthly system backup could be initiated using a Timer Event set for the first day of every month at 2:00 AM.
+A Timer Event can be set to activate on an exact date and time. This is like setting an alarm clock. When the clock hits the designated time, the Timer Event is triggered. For instance, a monthly system backup could be initiated using a Timer Event set for the first day of each month at 2:00 AM.
 
 - **2023-12-25T09:00:00Z** - This would set the timer to trigger at 9:00 AM (UTC) on December 25, 2023.
 - **2024-01-01T00:00:00-05:00** - This would set the timer to trigger at midnight (Eastern Time) on January 1, 2024, accounting for the time zone offset.
@@ -24,7 +24,7 @@ An example scenario might be an e-commerce platform setting a Timer Event to aut
 
 **Reasons to Use a Timer Event:**
 
-- A Timer Event is perfect for processes that have to wait for a specific period or set time before starting or progressing to the next step.
+- A Timer Event is ideal for processes that have to wait for a specific period or set time before starting or progressing to the next step.
 - They allow processes to adapt and react based on time-sensitive conditions or deadlines.
 
 ## Start Timer Event
@@ -101,7 +101,7 @@ Given the unpredictability of user behavior, integrating timer events is a proac
 
 Looping based on time is also a possible use-case.
 For instance, a system might need to retry a failed task every three minutes until successful.
-Here, the Timer Event ensures that after every 3 minutes, the task is re-attempted.
+Here, the Timer Event ensures that after every 3 minutes, the task is reattempted.
 Just remember to have a mechanism in place to eventually break out of the loop after a certain number of retries or if another condition is met.
 
 ## Timer Event Configuration

@@ -1,18 +1,18 @@
 # Multi-instance Tasks
-Multi-instance tasks in BPMN (Business Process Model and Notation) represent a powerful construct for modeling processes that require repetitive actions over a collection of items. 
+Multi-instance tasks in BPMN (Business Process Model and Notation) represent a powerful tool for modeling processes that require repetitive actions over a collection of items. 
 
 These tasks automate the iteration over a list, array, or collection, executing the specified activity for each element within. Multi-instance tasks can be configured to run either in parallel, where all instances are executed simultaneously, or sequentially, where each instance is executed one after the other.
 
 ## **Sequential Execution**
 
 Tasks are executed one after another, ensuring that each task instance begins only after the previous one has completed.
-In case of a sequential multi-instance activity, the instances are executed one at a time. When one instance is completed, a new instance is created for the next element in the inputCollection.
+In the case of a sequential multi-instance activity, the instances are executed one at a time. When one instance is completed, a new instance is created for the next element in the inputCollection.
 
 ![Multi_instance_Sequential](images/multiinstance_sequential_example.png)
 
 ## **Parallel Execution**
 
-All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements. In case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated. The instances are executed concurrently and independently from each other.
+All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements. In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated. The instances are executed concurrently and independently from each other.
 
 ![Multi_instance_parallel](images/multiinstance_parallel_example.png)
 
@@ -25,17 +25,15 @@ Multi-instance tasks comprise several key properties that define their behavior:
 ``` 
 1. **Input Collection**: Specifies the array or collection over which the task iterates. Each element in the collection serves as input for a task instance.
 
+2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results. Don't use this property when Loop Cardinality is specified.
 
-2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results. Do not use this property when Loop Cardinality is specified.
-
-3. **Loop Cardinality**: Defines the exact number of times the task should iterate. This is used when the number of instances is known ahead of time and is fixed. Do not use this property when Output Collection is specified.
+3. **Loop Cardinality**: Defines the exact number of times the task should iterate. This is used when the number of instances is known ahead of time and is fixed. Don't use this property when Output Collection is specified.
 
 4. **Input Element Variable**: Represents each element in the input collection during an iteration, allowing for individual processing.
 
 5. **Output Element Variable**: Captures the result of each task instance, contributing to the output collection.
 
 6. **Completion Condition**: An optional condition that, when evaluated as true, can prematurely terminate the iterations.
-
 
 ## Example: Using Multi-Instance Tasks for Dynamic Iteration
 

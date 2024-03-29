@@ -3,7 +3,7 @@
 ![data_store](images/data_store.png) 
 
 A Data Store is a BPMN construct that represents a storage location where data is stored, retrieved, and can be accessed among multiple process instances, including different process models.
-It can represent a database, file system, or any other storage mechanism.
+It can represent a database, a file system, or any other storage mechanism.
 
 ## When to use
 
