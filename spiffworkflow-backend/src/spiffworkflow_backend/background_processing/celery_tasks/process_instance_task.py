@@ -36,6 +36,9 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
                 execution_strategy_name="queue_instructions_for_end_user",
                 additional_processing_identifier=proc_index,
             )
+            # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
+            # there is an assumption that it was successfully processed by run_process_instance_with_processor above.
+            # we might want to check that assumption.
             if task_guid is not None:
                 future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
                 if future_task is not None:
