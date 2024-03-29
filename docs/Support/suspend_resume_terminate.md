@@ -21,7 +21,7 @@ By suspending a process instance, you temporarily halt its execution, allowing y
 
 > **Step 2: Locate Suspend Icon**
 
-![suspend](images/suspend.png) 
+![suspend](images/suspend.png)
 
 - Next to the Process Instance Id, look for the icon that resembles the 'Suspend' icon and select it to initiate the suspension of the process instance.
 
@@ -32,10 +32,10 @@ Click on the 'Suspend' icon. This action will pause the process instance, granti
 ![suspend](images/active_process_instance.png)
 
 
-| ✅ Success                                                    |  
-|  :----:  | 
+| ✅ Success                                                    |
+|  :----:  |
 | Confirm that the status has changed from ‘waiting’ to ‘suspended’|
-|![suspended](images/suspended.png)| 
+|![suspended](images/suspended.png)|
 
 ## Resume a Process
 
@@ -43,7 +43,7 @@ Resuming a process is essential for ensuring that the process can continue its e
 
 > **Step 1: Locate Resume Icon**
 
-![resume](images/resume.png) 
+![resume](images/resume.png)
 
 - Next to the Process Instance Id, look for the icon that resembles the 'Resume' icon and select it to resume the suspended process instance.
 
@@ -54,24 +54,24 @@ Resuming a process is essential for ensuring that the process can continue its e
 ![suspend](images/active_process_instance.png)
 
 
-| ✅ Success                                                    | 
+| ✅ Success                                                    |
 | :----:  |
 | Confirm that the status has changed from ‘suspended’ to an active status.|
-![waiting](images/waiting.png)| 
+![waiting](images/waiting.png)|
 
 ## Terminate a Process Instance
 
-Terminating refers to ending the execution of a specific occurrence of a process before it reaches its natural completion or final outcome. There are various reasons for terminating a process instance such as the instance is no longer required or it's in an error state. 
+Terminating refers to ending the execution of a specific occurrence of a process before it reaches its natural completion or final outcome. There are various reasons for terminating a process instance such as the instance is no longer required or it's in an error state.
 
 > **Step 1: Locate Terminate Icon**
 
-![terminate](images/terminate.png) 
+![terminate](images/terminate.png)
 
 - Next to the Process Instance Id, look for the icon that resembles the 'Terminate' icon and select it to terminate the process instance.
 
 > **Step 2: Select Terminate Button**
 
-- Click on the 'Terminate' button. Note that the process instance will be terminated permanently, and this action cannot be undone. 
+- Click on the 'Terminate' button. Note that the process instance will be terminated permanently, and this action cannot be undone.
 
 > **Step 3: Confirm Termination**
 
@@ -81,8 +81,8 @@ Terminating refers to ending the execution of a specific occurrence of a process
 - The process status will now be 'Terminated' and the last active task will be highlighted in purple.
 ![suspend](images/terminated_process_instance.png)
 
-| ✅ Success                                                    | 
+| ✅ Success                                                    |
 | :----:  |
 | Confirm that the status has changed from ‘suspended’ to 'terminated'
-![suspend](images/terminated.png) | 
+![suspend](images/terminated.png) |
 

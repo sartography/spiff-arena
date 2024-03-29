@@ -2,7 +2,7 @@
 
 Events are specific occurrences that dictate the flow or outcome of processes. They are visually represented by circles. Based on their position and function, events are categorized as: Start Events, Intermediate Events, or End Events.
 
- ![start_message_event](images/events_categories.png) 
+ ![start_message_event](images/events_categories.png)
 
 Start Events initialize a process and have no incoming flows.
 Intermediate Events represent something happening during the process and can have both incoming and outgoing flows.
@@ -22,11 +22,11 @@ End Events signify the conclusion of a process and don't have outgoing flows.
 
 We will delve into the various event types, exploring their categorizations and applications. It's vital to note that not every type of event is suitable for all variations; there are specific rules and guidelines governing their use. As highlighted in the table, there are distinct limitations. For instance, while you cannot initiate a primary process with an escalation event, it's entirely permissible to kickstart a subprocess with such an event. To adhere to BPMN standards, it's crucial to consult and follow the provided guide. Always ensure that your processes and diagrams conform to these accepted norms.
 
-![events_table](images/events_table.png) 
+![events_table](images/events_table.png)
 
 ## Start Event
 
-![start_event_t](images/start_event_t.png) 
+![start_event_t](images/start_event_t.png)
 
 Start events signify the beginning of a specific process and can consist of catch, timer, or conditional events. They do not possess any incoming sequence flows.
 
@@ -70,7 +70,7 @@ Non-Interrupting Events allow the current process or activity to continue its ex
 
 ![interrupting_group](images/interrupting_group.png)
 
- When an interrupting event is triggered, it interrupts the flow of the process or activity it's attached to. Once triggered, the current activity or process is halted, and the process flow directed by the interrupting event is taken up. 
+ When an interrupting event is triggered, it interrupts the flow of the process or activity it's attached to. Once triggered, the current activity or process is halted, and the process flow directed by the interrupting event is taken up.
 
 **Reasons to Use an Interrupting Event:**
 
@@ -123,7 +123,7 @@ Throw events are used to "send" or "throw" a particular type of event. In BPMN, 
 ![throw_example](images/throw_example.png)
 
 **Example:**
-Imagine a situation where, as soon as the manufacturing of an item begins, a signal is sent to trigger a notification to another department or a customer. This signal conveys that the production task has either commenced or concluded. The throw event is immediate, causing no interruptions or delays in the main process. It's crucial to recognize that there are numerous approaches to catching or receiving this notification signal. 
+Imagine a situation where, as soon as the manufacturing of an item begins, a signal is sent to trigger a notification to another department or a customer. This signal conveys that the production task has either commenced or concluded. The throw event is immediate, causing no interruptions or delays in the main process. It's crucial to recognize that there are numerous approaches to catching or receiving this notification signal.
 
 ## Catch Event
 
@@ -165,7 +165,7 @@ Boundary events are attached to specific activities in a BPMN diagram, represent
 ![boundary_example](images/boundary_example.png)
 
 **Example:**
-In our initial scenario where a manager needs to approve or review a submission, employing a timer as a start event impacts the entire workflow. This implies that if this timer is triggered, a different process will kick off, regardless of where the main process currently stands. On the other hand, when we utilize boundary events, we can confine the timer's influence to a specific task, subprocess, or call-activity. This approach grants us greater precision over the timer's scope, as it only applies to the particular task or subprocess it's linked to, and the timer only initiates when the first task within its designated scope begins. Note that a boundary event can be interrupting or non-interrupting. 
+In our initial scenario where a manager needs to approve or review a submission, employing a timer as a start event impacts the entire workflow. This implies that if this timer is triggered, a different process will kick off, regardless of where the main process currently stands. On the other hand, when we utilize boundary events, we can confine the timer's influence to a specific task, subprocess, or call-activity. This approach grants us greater precision over the timer's scope, as it only applies to the particular task or subprocess it's linked to, and the timer only initiates when the first task within its designated scope begins. Note that a boundary event can be interrupting or non-interrupting.
 
 ## Non-Boundary Event
 
@@ -182,11 +182,11 @@ Non-boundary Events stand alone in the BPMN process flow. They aren't attached t
 
 **Example:**
 
-Consider a manufacturing scenario. If we want to initiate a separate process before starting the manufacturing task, we deploy an intermediate signal event. This event's role is specifically to trigger a distinct process. Unlike a start event, if a boundary catch event isn't active—meaning there's no active instance waiting at that signal event, the thrown signal won't be caught, and the separate process remains unused. 
+Consider a manufacturing scenario. If we want to initiate a separate process before starting the manufacturing task, we deploy an intermediate signal event. This event's role is specifically to trigger a distinct process. Unlike a start event, if a boundary catch event isn't active—meaning there's no active instance waiting at that signal event, the thrown signal won't be caught, and the separate process remains unused.
 If our goal is to schedule the manufacturing to kick off at a specific time, say 6 pm, or delay it for a short while, we can represent this with a timer. The workflow will pause at this event until the timer's conditions are satisfied.
 Conditions function as gatekeepers. For instance, the process will halt until the 'production_sheet_signed' variable evaluates as true, indicating the production sheet has been signed and manufacturing can commence.
 The concept mirrors that of messages and signals. A message, much like a signal, will only be caught in an intermediate event if there's an instance at the ready in the associated catch event.
 
 ```{admonition} Note
-⚠ Remember the key distinction between signals and message events is that while messages adhere to a one-to-one correspondence, signals can potentially relate to multiple recipients in a one-to-many fashion. 
+⚠ Remember the key distinction between signals and message events is that while messages adhere to a one-to-one correspondence, signals can potentially relate to multiple recipients in a one-to-many fashion.
 ```

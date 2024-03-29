@@ -5,7 +5,7 @@ It represents a specific moment or duration after which certain actions in a pro
 Using Timer Events ensures that processes can be designed to factor in time-based conditions, which are common in real-world scenarios.
 There are 3 specific types.
 
-**Specific Date/Time Trigger:** 
+**Specific Date/Time Trigger:**
 A Timer Event can be set to activate on an exact date and time. This is like setting an alarm clock. When the clock hits the designated time, the Timer Event is triggered. For instance, a monthly system backup could be initiated using a Timer Event set for the first day of each month at 2:00 AM.
 
 - **2023-12-25T09:00:00Z** - This would set the timer to trigger at 9:00 AM (UTC) on December 25, 2023.
@@ -20,7 +20,7 @@ An example scenario might be an e-commerce platform setting a Timer Event to aut
 
 **Recurring Trigger:** Advanced uses of Timer Events can involve recurring time patterns, like activating a process every 8 hours for 3 cycles. This pattern-based time definition can manage repetitive tasks without needing individual Timer Events for each occurrence. The R denotes recurrence, followed by the number of recurrences, and PT8H is the duration of 8 hours.
 
-- **R3/PT8H** Every 8 hours for 3 cycles. 
+- **R3/PT8H** Every 8 hours for 3 cycles.
 
 **Reasons to Use a Timer Event:**
 
@@ -37,9 +37,9 @@ A Start Timer Event marks the beginning of a process or sub-process, but only on
 
 ![start_timer_example](images/start_timer_example.png)
 
-**Timer Start Event:** Consider a company that sends out a newsletter on the first of every month. To achieve this, they could set up a 'Start Timer Event' named 'Monthly Newsletter Timer' with a cyclic timer to activate on the first day of each month. 
+**Timer Start Event:** Consider a company that sends out a newsletter on the first of every month. To achieve this, they could set up a 'Start Timer Event' named 'Monthly Newsletter Timer' with a cyclic timer to activate on the first day of each month.
 
-**Timer Start Event (interrupting):** In a different setting, let's imagine an organization that allows proposal submissions but sets a deadline for a specified date. Here, a 'Start Timer Event' can be used to automatically close the proposal submission form after this date, ensuring no entries are accepted post-deadline. 
+**Timer Start Event (interrupting):** In a different setting, let's imagine an organization that allows proposal submissions but sets a deadline for a specified date. Here, a 'Start Timer Event' can be used to automatically close the proposal submission form after this date, ensuring no entries are accepted post-deadline.
 
 **Timer Start Event (non-interrupting):**
 Taking a more customer-centric example, envision an online shopping platform. While a customer browses and adds items to the cart, they might get distracted and forget to check out. To address this, the platform can trigger a 'Non-Interrupting Timer Event' coupled with a subprocess. If the cart remains unattended for an hour, this timer triggers the subprocess, sending an email to the customer reminding them of their abandoned cart. The advantage is that it doesn't disrupt the customer's current session, providing a seamless experience.
@@ -56,7 +56,7 @@ Furthermore, as a Boundary Event, it can be linked to specific tasks or sub-proc
 
 ![timer_intermediate_example_1](images/start_timer_example_1.png)
 
-**Timer Intermediate Catch Event:** 
+**Timer Intermediate Catch Event:**
 
 The intermediate timer event dictates the timing between stages of a process.
 For example, in the context of baking, once a cake is removed from the oven, it's essential to let it cool properly before decorating.
@@ -72,7 +72,7 @@ An 'Intermediate Timer Event' can be configured here to accumulate the day's ord
 
 ![start_timer_example_2](images/start_timer_example_2.png)
 
-**Timer Boundary Event (interrupting):** 
+**Timer Boundary Event (interrupting):**
 
 Imagine an online examination system where students have exactly 1 hour to complete the exam.
 A task labeled "Take Exam" will have a timer boundary event attached to it.
@@ -82,7 +82,7 @@ On an e-commerce platform, a product is available at a flash sale price for just
 When customers add this item to their cart, a timer boundary event of 24 hours is set.
 If they don't purchase within this time frame, the timer activates, removing the limited offering.
 
-**Timer Boundary Event (non-interrupting):** 
+**Timer Boundary Event (non-interrupting):**
 
 A company prides itself on responding to customer support queries within 12 hours.
 When a new query is logged, a task named "Respond to Customer" is initiated.

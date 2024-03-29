@@ -18,7 +18,7 @@ Once `make zip` completes, `connector_proxy_lambda_demo.zip` will be available i
 
 ## Creating the Lambda Function
 
-Log in to the AWS Console and navigate to the Lambda section. 
+Log in to the AWS Console and navigate to the Lambda section.
 
 ![Screenshot from 2023-04-06 15-19-35](https://user-images.githubusercontent.com/100367399/230482600-bf5f72b4-f499-4d44-8f6b-814d8e4c67d2.png)
 

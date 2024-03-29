@@ -5,10 +5,10 @@ They aid in elucidating the data flow and dependencies within the process, thus 
 
 **Reasons to use data objects:**
 
-- To represent and manage data within a business process. 
-  
+- To represent and manage data within a business process.
+
 - When it's necessary to make a specific reference to data being used.
-  
+
 - When dependencies exist between tasks or activities based on shared data.
 
 - When data changes within a process.
@@ -19,7 +19,7 @@ They aid in elucidating the data flow and dependencies within the process, thus 
 
 ### Data Object
 
-![data_input](images/data_input.png) 
+![data_input](images/data_input.png)
 
 This represents the data or information that is needed as an input to initiate or carry out a specific task or process. BPMN input defines the data elements that must be provided or available for the task to be performed.
 
@@ -27,13 +27,13 @@ This represents the data or information that is needed as an input to initiate o
 
 ![data_output](images/data_output.png)
 
-This signifies the data or information that is created or generated as a result of executing a task or process. BPMN output describes the data elements that are produced or altered during the execution of the task. 
+This signifies the data or information that is created or generated as a result of executing a task or process. BPMN output describes the data elements that are produced or altered during the execution of the task.
 
 ### Data Object Reference
 
 ![data_object_reference](images/data_object_reference.png)
 
-A Data Object in BPMN typically signifies a particular piece of information or a data entity that is exchanged or manipulated during the course of a business process. It can represent both physical and digital data. Examples of Data Objects include documents, forms, reports, databases, or any other data entity relevant to the process. 
+A Data Object in BPMN typically signifies a particular piece of information or a data entity that is exchanged or manipulated during the course of a business process. It can represent both physical and digital data. Examples of Data Objects include documents, forms, reports, databases, or any other data entity relevant to the process.
 
 ## Data Input Configuration
 

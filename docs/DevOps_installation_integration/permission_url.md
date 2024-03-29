@@ -10,7 +10,7 @@ The permission URL, or target URI, refers to the specific endpoint or resource t
 - **ALL:** Grants access to all API endpoints, without any limitations.
 
 ```{admonition} Note
-An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, `/process-models/*`, allows access to all resources related to process models. 
+An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, `/process-models/*`, allows access to all resources related to process models.
 ```
 
 This functionality is implemented in [authorization service.py](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py).

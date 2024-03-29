@@ -1,5 +1,5 @@
 # Script Tasks
-Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system. 
+Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system.
 
 In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language. Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
@@ -15,7 +15,7 @@ In the Script Task, we have created a script that collects three variables from 
 
 ![Script_Task](images/Script_task_example.png)
 
-**Step 1**: With the script task selected, you will notice the properties tab. 
+**Step 1**: With the script task selected, you will notice the properties tab.
 
 **Step 2**: Within the properties tab, there should be a field where you can write or edit a script. You can paste or write your script in this field.
 
@@ -58,7 +58,7 @@ Now, we have configured our script task with a script and unit tests.
 
 3. **Pre Scripts and Post Scripts**
 
-After the Script Task, we have a Manual Task with a pre-script and instructions to display the score. 
+After the Script Task, we have a Manual Task with a pre-script and instructions to display the score.
 
 ![Script_Task](images/Pre-post_scripts.png)
 
@@ -67,23 +67,23 @@ After the Script Task, we have a Manual Task with a pre-script and instructions 
 ``` python
 # Initialize denominator
 k = 1
- 
+
 # Initialize sum
 s = 0
- 
+
 for i in range(1000000):
- 
+
     # even index elements are positive
     if i % 2 == 0:
         s += 4/k
     else:
- 
+
         # odd index elements are negative
         s -= 4/k
- 
+
     # denominator is odd
     k += 2
-     
+
 pi = s
 del(k)
 ```

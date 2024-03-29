@@ -3,7 +3,7 @@
 When logging into the dashboard, it is crucial to familiarize yourself with the functions it offers and how the underlying engine operates.
 In the demo website, we will explore two examples: the Minimal Example and the Essential Example, to provide a clear understanding of the process.
 
-![](https://lh5.googleusercontent.com/Db25xtzQon8tu4YbsOLx-DPEyONhrF5jfxhbEXOqDomT2YlGnhEWBZMVFF84ViPyCRD-HMca--Xl4bj8vIF5-KNfpoKjujUZk1wDIMuBMymbg0o1jgucPrZxSsxxT1GuLYGjXPwCyEQ8BhpSt6URJCg)  
+![](https://lh5.googleusercontent.com/Db25xtzQon8tu4YbsOLx-DPEyONhrF5jfxhbEXOqDomT2YlGnhEWBZMVFF84ViPyCRD-HMca--Xl4bj8vIF5-KNfpoKjujUZk1wDIMuBMymbg0o1jgucPrZxSsxxT1GuLYGjXPwCyEQ8BhpSt6URJCg)
 
 ## Minimal Example
 
@@ -36,25 +36,25 @@ General
 
 -   The Name field is usually empty unless the user wants to provide it.
 It serves as a label or identifier for the process.
-    
+
 -   The ID is automatically populated by the system (default behavior). However, it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
-    
+
 -   By default, all processes are executable, which means the engine can run the process.
-    
+
 
 Documentation
 
 -   This field can be used to provide any notes related to the process.
-    
+
 
 Data Objects
 
 -   Used to configure Data Objects added to the process.
 See full article [here](https://medium.com/@danfunk/understanding-bpmns-data-objects-with-spiffworkflow-26e195e23398).
-    
+
 
 **1. Start Event**
-    
+
 
 The first event in the minimal example is the start event.
 Each process diagram begins with a Start Event.
@@ -65,17 +65,17 @@ Now explore the properties panel when you click on the first process of the diag
 General
 
 -   The Name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
-    
+
 -   ID is automatically populated by the system (default behavior). However, it can be updated by the user, but it must remain unique within the process.
 Often the ID would be updated to allow easier referencing in messages and also Logs as long as it’s unique in the process.
-    
+
 
 Documentation
 
 -   This field is used to provide any notes related to the element.
-    
 
-```{admonition} Note: 
+
+```{admonition} Note:
 
 In the minimal example, the Start Event is a None Start Event.
 This type of Start Event signifies that the process can be initiated without any triggering message or timer event.
@@ -97,21 +97,21 @@ Panel General Section
 
 -   Enter/Edit the User Task name in this section.
 Alternatively, double-click on the User Task in the diagram.
-    
+
 -   The ID is automatically entered and can be edited for improved referencing in error messages, but it must be unique within the process.
-    
+
 
 Documentation Section
 
 -   This field is used to provide any notes related to the element.
-    
+
 
 SpiffWorkflow Scripts
 
 -   Pre-Script: Updates Task Data using Python prior to execution of the Activity.
-    
+
 -   Post-Script: Updates Task Data using Python immediately after execution of the Activity.
-    
+
 
 Instructions
 
@@ -124,7 +124,7 @@ To view and edit the instructions, click on the editor, and a window will open d
 
 
 **3. End Task**
-    
+
 
 The next process in the workflow is an end task.
 A BPMN diagram should contain an end event for every distinct end state of a process.
@@ -136,19 +136,19 @@ Now explore the properties panel when you click on the last end event process:
 General
 
 -   The Name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
-    
+
 -   ID is automatically populated by the system (default behavior). However, the user can update it, but it must remain unique within the process.
-    
+
 
 Documentation
 
 -   This field is used to provide any notes related to the element.
-    
+
 
 Instructions
 
 -   These are the Instructions for the End User, which will be displayed when this task is executed.You can click on launch editor to see the markdown file.
-    
+
 
 ![](https://lh5.googleusercontent.com/lcGDq-colYTa0zRq5yObuN6D5aW2wH-PheyYFMPJ9D77lZ_-fQlUrtFHNwKmCod4v1JYrWnblJEzW5VkVFM_I_Q1d8fhiWC98DPK4ZDctI7Jbqf11DdXSJAUVvZ2C2ubv-3FKXzVkbgGY8Fnk0irSdo)
 
@@ -160,7 +160,7 @@ Now that we have explored the minimal example, let's delve into a more comprehen
 ### Access the Process Directory
 Clicking on the process name will open the directory dedicated to the Essential Example process. Here are the four files in the Process:
 
-**BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard. 
+**BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard.
 
 ![image](images/BPMN_Editor.png)
 
@@ -202,7 +202,7 @@ After the score calculation, an **exclusive gateway** is employed to make decisi
 ![](images/Exclusive_Em.png)
 
 a. **Worst Possible Response**: If the score indicates the worst possible response, a manual task displays a message stating that it is completely wrong.
- 
+
 b. **At Least One Correct Response**: If the score indicates that at least one response was correct, a manual task displays a message acknowledging the correct response.
 
 c. **Perfect Score**: If the score indicates a perfect score, a manual task displays a message recognizing the excellent performance.

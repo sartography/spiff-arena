@@ -18,7 +18,7 @@ Service Tasks have been a huge win, there are multiple reasons why supporting mo
 ### Interstitial Performance
 Push all processing to the background so the interstitial is just querying, not running (new item)
 
-### Authentication Keys 
+### Authentication Keys
 Provide the ability to access API endpoints using an access key - or authentication process that is specifically designed for API calls.  (we currently rely on grabbing the JSON token to do this, which is not a real solution)
 
 ### Core BPMN features
@@ -34,7 +34,7 @@ This is a broad topic and will be covered in a separate document.  But consider 
 ### Improve Parallel Processing
 We should support the parallel execution of tasks within a single process whenever possible.  This is not as far-fetched or difficult as it may initially seem.  While Python is notoriously bad at parallel execution (the lovely GIL) - we have already taken the most critical steps to ensuring it is possible:
 1. A team has demonstrated parallel execution using the cure SpiffWorkflow library.
-2. We can keep a configurable number of "background" SpiffArena processes running that can pick up waiting tasks.  
+2. We can keep a configurable number of "background" SpiffArena processes running that can pick up waiting tasks.
 Given these things are already in place, we just need to lock processes at the task or branch level - so that ready tasks on parallel branches can be picked up by different background processes at the same time.
 
 ### BPMN Definitions at save time vs run time
@@ -44,7 +44,7 @@ This will also allow us to do some early and deep validation as well.
 ## End User Experience
 
 ### UI Overview
-We could really use a good UI / UX review of the site and take a stab at cleaning up the whole site to follow some consistent design patterns and resolve potential issues. 
+We could really use a good UI / UX review of the site and take a stab at cleaning up the whole site to follow some consistent design patterns and resolve potential issues.
 
 ### Customizable Home Page (non Status specific)
 Allow a way to define custom landing pages that create different experiences for different organizations / needs.
@@ -52,11 +52,11 @@ Allow a way to define custom landing pages that create different experiences for
 ### Markdown rendering could be better
 1. When creating a bulleted or numbered list, no bullets or numbers are displayed.  This is a bug in our style sheets - or something that is clearing out all styles.
 2. Limit the width of paragraphs to something reasonable.  Having a line of text stretch across the entire screen is not a good experience.
-3. Add support for MyST - this provides a set of standard extensions to Markdown and is the extension we are using for our own documentation.  
+3. Add support for MyST - this provides a set of standard extensions to Markdown and is the extension we are using for our own documentation.
 4. Add support for parsing and displaying task data / Jinja2 syntax - so you can immediately see how you are formatting the task data. Provide an additional area for setting the task data, and have it render that information in place.
 
 ## Administrator / Support Contact Information
-Allow defining contact information at the process group and process model level, perhaps at some very top level as well - which can be inherited unless overridden.  
+Allow defining contact information at the process group and process model level, perhaps at some very top level as well - which can be inherited unless overridden.
 This information could then be displayed when a process is in a non-functional state - such as an error, suspended, or terminated state.
 It might also be available in the footer or under a help icon when displaying a process instance.
 
@@ -68,12 +68,12 @@ Allow administrators to see an overlay of a BPMN diagram that shows all the proc
 ### DMN Editor Sucks
 Can we build a better DMN editor? Trisotech seems to do it very well.  Would love to have a day or two just to research this area and see if there is just another open source project we can leverage, or if we could build our own tool.
 
-### Modeler Checker 
+### Modeler Checker
 At run time, or when you save it would be great if we could execute a:
 * Validation Report - what is wrong with the model?  Is it Valid BPMN?  Are there intrinsic errors?
 * Linting Report!  Does the model follow common naming conventions, styles, are there dead-locks, etc.  Many of these tools already exist, we just need to integrate them!
 
-### Plugins and Extensions 
+### Plugins and Extensions
 * Track down our previous research and add here.  Color picker, etc....
 
 ### Automated Testing ✔️
@@ -93,7 +93,7 @@ Allow us to define a markdown file for a process group or process model, which w
 2. RJSF says it supports markdown in the headers, but it doesn't work for us.
 
 ### Text Area / Markdown / Select list for Service Task Parameters
-The text box for entering parameters for a service task is uncomfortable, verging on maddening when trying to enter long parameters.  It would also be wonderful to offer a selection list if we have a known set of options for a given parameter. 
+The text box for entering parameters for a service task is uncomfortable, verging on maddening when trying to enter long parameters.  It would also be wonderful to offer a selection list if we have a known set of options for a given parameter.
 
 ### Moving Models and Groups
 Right now we allow editing the Display name of a model or group, but it does

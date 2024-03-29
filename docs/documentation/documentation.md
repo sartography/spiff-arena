@@ -4,7 +4,7 @@ This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https
 
 Please set aside a couple of hours to work through this, as getting this setup correctly once is 10,000 times better than having problems every day for the rest of your life.
 
-## Our Methodology 
+## Our Methodology
 
 The methodology we are following is known as ["Docs as Code"](https://www.writethedocs.org/guide/docs-as-code/).
 
@@ -22,7 +22,7 @@ This is called [Ventilated Prose](https://vanemden.wordpress.com/2009/01/01/vent
 ## Our Tools
 
 [Markdown](https://www.markdownguide.org/getting-started/) is a "markup language that you can use to add formatting elements to plain text documents."
-You won't be writing the documentation in a word processor, but in simple plain text, and some special syntax that will consistently and professionally format that text.  
+You won't be writing the documentation in a word processor, but in simple plain text, and some special syntax that will consistently and professionally format that text.
 
 The basic Markdown syntax is very simple.
 Here are some [quick examples](https://commonmark.org/help/). And here is a great [10 minute tutorial](https://commonmark.org/help/tutorial/).
@@ -74,7 +74,7 @@ Make sure you have an account on GitHub and then contact `dan@sartography.com` a
 
 [Download VSCode](https://code.visualstudio.com/) and install it on your computer.
 
-### Step 3: Install Python 
+### Step 3: Install Python
 
 We need Python in order to build the website locally so we can really see what our content is going to look like once we publish.
 It's going to be handy for other reasons as well.
@@ -91,14 +91,14 @@ Here are directions for how to [clone Spiff-Arena](https://learn.microsoft.com/e
 **IMPORTANT**: Follow those directions, but be sure to checkout `https://github.com/sartography/spiff-arena` instead of the project they are using!
 
 You can save the project to any directory on your computer.
-We strongly suggest you create a sub-folder called "projects" in your "home" or "Desktop" folder and checkout the code into this directory.  
+We strongly suggest you create a sub-folder called "projects" in your "home" or "Desktop" folder and checkout the code into this directory.
 
 ### Step 5: Open just the Docs Folder
 
 We've checked out the whole spiff-arena project, but we are only going to be working inside of the docs directory.
 So let's open just that folder in VSCode.
 
-* Go to File -> Open Folder 
+* Go to File -> Open Folder
 * Select the "docs" folder inside of spiff-arena.
 
 Now click on the two pieces of paper at the top corner of your screen, and you should see a project that looks like this without all the rest of the code in your way:
@@ -122,7 +122,7 @@ This project requires a few Python dependencies to work correctly.
 We are going to set up a Virtual Environment for Python to keep us sane later on.
 You can do that by following these steps:
 
-1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command. 
+1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command.
 1. Select **Venv**
 1. Select Python 3.11 from the list of options if there is more than one thing to select.
 1. Be sure the checkbox next to "requirements.txt" is selected.
@@ -135,13 +135,13 @@ You can do that by following these steps:
 1. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 
-### Step 9:  Make a change 
+### Step 9:  Make a change
 
-1. Open up a markdown file, and make a change. 
+1. Open up a markdown file, and make a change.
 
 ### Step 10:  Commit your changes and push them up for everyone
 
-1. Select the "git" button on the left hand side of the toolbar (circles with lines between them) ![Git button](./images/git.png "Git button") 
+1. Select the "git" button on the left hand side of the toolbar (circles with lines between them) ![Git button](./images/git.png "Git button")
 
 2. Press the blue "Commit" button.
 

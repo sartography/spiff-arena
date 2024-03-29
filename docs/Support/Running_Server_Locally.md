@@ -40,7 +40,7 @@ For a potentially faster setup:
 
 ### 4. Mac Install Issues
 
-First, follow the README.md at the root of the spiff-arena repo. 
+First, follow the README.md at the root of the spiff-arena repo.
 If you're on a Mac and trying to run natively (this might also apply elsewhere) and get errors when running `poetry install`, many of these issues are related to relational database engine libraries.
 Many people have encountered these problems, so hopefully, the solution to your specific issue is easy to find, but this is not always the case.
 You may need to install additional system dependencies.
@@ -50,7 +50,7 @@ You may need to install additional system dependencies.
     pip install mysqlclient
     pip install psycopg2
 
-One person decided that mysqlclient and psycopg2 were more trouble than they were worth and removed them from the pyproject.toml, opting instead to run `poetry add pymysql`. 
+One person decided that mysqlclient and psycopg2 were more trouble than they were worth and removed them from the pyproject.toml, opting instead to run `poetry add pymysql`.
 If you are using mysql, psycopg2 is not necessary, and pymysql is a pure python implementation of the MySQL client library.
 In that case, Python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to __init__.py in the backend project:
 

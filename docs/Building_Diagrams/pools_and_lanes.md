@@ -10,20 +10,20 @@ A Pool represents a participant and can be seen as a self-contained process. Thi
 - They categorize tasks or activities based on specific roles.
 - They bring structure and organization to complex diagrams that involve multiple roles, departments, or stakeholders.
 
- 
+
 ## Pools
 
 A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool". You can choose the desired configuration 🔧 from the element's options after dragging it onto your diagram.
 
-![pools_and_lanes](images/pools_and_lanes_1.png) 
+![pools_and_lanes](images/pools_and_lanes_1.png)
 
 Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable. They serve to illustrate the engagement of certain entities without detailing their internal processes, for example, we don't know a customer's specific process but it matters when we interact with them to complete our process.
 
-Conversely, Expanded Pools are employed when the processes are known and hold relevance within the diagram's context. 
+Conversely, Expanded Pools are employed when the processes are known and hold relevance within the diagram's context.
 
 ## Lanes
 
-Lanes group activities within a single Pool, usually signifying different roles or departments. 
+Lanes group activities within a single Pool, usually signifying different roles or departments.
 
 ![lanes](images/lanes_1.png)
 

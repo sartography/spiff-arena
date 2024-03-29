@@ -1,5 +1,5 @@
 # Multi-instance Tasks
-Multi-instance tasks in BPMN (Business Process Model and Notation) represent a powerful tool for modeling processes that require repetitive actions over a collection of items. 
+Multi-instance tasks in BPMN (Business Process Model and Notation) represent a powerful tool for modeling processes that require repetitive actions over a collection of items.
 
 These tasks automate the iteration over a list, array, or collection, executing the specified activity for each element within. Multi-instance tasks can be configured to run either in parallel, where all instances are executed simultaneously, or sequentially, where each instance is executed one after the other.
 
@@ -21,8 +21,8 @@ Multi-instance tasks comprise several key properties that define their behavior:
 
 ```{image} ./images/multiinstance_properties.png
 :width: 230px
-:align: right 
-``` 
+:align: right
+```
 1. **Input Collection**: Specifies the array or collection over which the task iterates. Each element in the collection serves as input for a task instance.
 
 2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results. Don't use this property when Loop Cardinality is specified.
@@ -37,13 +37,13 @@ Multi-instance tasks comprise several key properties that define their behavior:
 
 ## Example: Using Multi-Instance Tasks for Dynamic Iteration
 
-This example outlines a BPMN process that demonstrates the use of a multi-instance task to iterate over and modify elements within a collection. 
+This example outlines a BPMN process that demonstrates the use of a multi-instance task to iterate over and modify elements within a collection.
 
 Specifically, the process manages a list of composers, their names, and genres, showcasing the dynamic handling of data through script and manual tasks.
 
 ### Process Overview:
 
-#### 1. **Start Event**: 
+#### 1. **Start Event**:
 
 Marks the initiation of the process.
 

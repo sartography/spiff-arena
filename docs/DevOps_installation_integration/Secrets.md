@@ -28,7 +28,7 @@ SpiffArena allows you to create secrets that are stored in an encrypted format i
 
 ### Using Secrets in Service Tasks
 
-1. **Open the BPMN Diagram**: Open the diagram where you want to configure the service task. 
+1. **Open the BPMN Diagram**: Open the diagram where you want to configure the service task.
 
 2. **Configure Service Task**: Click on the service task you want to configure and in the service properties panel, search for the Operator ID that you want to add a secret for and mention the response variable to capture the result of the request.
 

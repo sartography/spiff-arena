@@ -18,15 +18,15 @@ Users can interact with pre-built models, make modifications, and visualize proc
 :alt: Login Screen
 :class: bg-primary mb-1
 :width: 230px
-:align: right 
-``` 
-To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (currently spiffdemo.org).  
+:align: right
+```
+To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (currently spiffdemo.org).
 
 On the login screen, you will find the option to log in using Single Sign-On.
 Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.
 
 
-```{admonition} Note: 
+```{admonition} Note:
 Stay tuned as we expand our sign-on options beyond Gmail.
 More ways to access SpiffArena are coming your way!
 ```
@@ -65,7 +65,7 @@ The process section provides a comprehensive view of the process ecosystem by sh
 ```{admonition} Process Groups
 A **process group** is a way of grouping a bunch of **process models** and a **process model** contains all the files necessary to execute a specific process.
 ```
- 
+
 ![Untitled](images/Untitled_4.png)
 
 ### Step 3: Explore the Process Instances section
@@ -335,26 +335,26 @@ This can help you manage your workflows more efficiently and keep track of the p
 
  Here are the colors used in BPMN Process:
 
-1. **Grey Color:**  
+1. **Grey Color:**
    - **Meaning:** The task is completed.
    - **Implication:** Tasks or activities associated with this process have been successfully completed, and no further action is required.
 
 ![Colors](images/Grey_color.png)
 
-2. **Yellow Color:**  
+2. **Yellow Color:**
    - **Meaning:** The process instance has started and is currently in progress.
    - **Implication:** This color signifies that the task is active and ongoing. It may require monitoring or further inputs to proceed.
 
    ![Colors](images/Yellow.png)
 
 
-3. **Red/Pink Color:**  
+3. **Red/Pink Color:**
    - **Meaning:** Indicates errors in the task.
    - **Implication:** There might be issues or obstacles preventing the task from proceeding as expected. Immediate attention and troubleshooting may be required.
 
    ![Colors](images/Red.png)
 
-4. **Purple Color:**  
+4. **Purple Color:**
    - **Meaning:** The activity has been cancelled.
    - **Implication:** This task was intentionally stopped before completion. This could be due to time constraints, external triggers, or other predefined conditions that have been set as boundary events.
 

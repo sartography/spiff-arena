@@ -5,7 +5,7 @@ Sub-processes and call activities are both useful for simplifying and organizing
 **Reasons to use Sub-Processes or Call Activities:**
 
 - Consolidate tasks that either have common features or collaboratively form a distinct functionality. For example, a Notification Gateway, which includes script tasks and a service task, works together to construct and send a notification, such as an email.
-  
+
 - Group tasks where a Boundary Event can be efficiently applied to the entire group. For instance, instead of individually assigning a condition or timer to each task, all tasks can be included within a sub-process or call activity, where the condition or timer inherently applies to all the contained tasks.
 
 ## Call Process
@@ -30,8 +30,8 @@ A Call Process is similar to a Sub-Process in that it encapsulates part of a wor
 
 **When to use a Sub-Process:**
 
-- **Consolidate similar functionalities:** When you have a group of tasks that are closely related and work well together, but don't need to be used or replicated elsewhere in other processes. 
-  
+- **Consolidate similar functionalities:** When you have a group of tasks that are closely related and work well together, but don't need to be used or replicated elsewhere in other processes.
+
 - **Call Activity is not required:** When these tasks don't meet the conditions needed for a call activity, a sub-process can achieve the same goal.
-  
+
 - **Conditions or events need to be applied:** When specific conditions or events, such as a timer event, need to be applied to a set of tasks, but these tasks do not collectively form a reusable workflow that can be called as a separate process.
