@@ -1,6 +1,6 @@
 # Gateways
 
-Gateways in BPMN are essential for controlling the flow of a business process. They act as decision points where the process flow can diverge into multiple paths or converge back into a single flow. Gateways are used to evaluate conditions or rules and determine the appropriate path for the process to follow. 
+Gateways in BPMN are essential for controlling the flow of a business process. They act as decision points where the process flow can diverge into multiple paths or converge back into a single flow. Gateways are used to evaluate conditions or rules and determine the appropriate path for the process to follow.
 
 **Reasons to use a Gateway:**
 
@@ -9,10 +9,10 @@ Gateways in BPMN are essential for controlling the flow of a business process. T
 - Merge alternate paths together after parallel activities.
 - Handle complex process logic, accommodating various possible scenarios and outcomes.
 - Enhance process interpretation and comprehension by visually illustrating alternative or parallel paths.
-  
+
 ## Exclusive Gateway
 
-![exclusive_gateway](images/exclusive_gateway.png) 
+![exclusive_gateway](images/exclusive_gateway.png)
 
 Exclusive Gateway (XOR): An Exclusive Gateway represents a decision point where only one outgoing sequence flow can be taken. It is used when the process flow needs to make a mutually exclusive choice between different paths. Each outgoing sequence flow has a condition associated with it, and the flow with a true condition is selected.
 
@@ -20,12 +20,12 @@ Exclusive Gateway (XOR): An Exclusive Gateway represents a decision point where 
 
 Whenever the conditions on the other paths aren't met, the instance will proceed via the Default Flow. In other words, if none of the conditions for the outgoing sequence flows are met, the Default Flow provides an alternative route for the process to follow. This ensures that the process can still progress even if none of the explicitly defined conditions are satisfied, providing a fallback option for handling unexpected scenarios.
 
-![exclusive_gateway_default](images/exclusive_gateway_default.png) 
+![exclusive_gateway_default](images/exclusive_gateway_default.png)
 
 **Challenges:**
 Avoiding conflicting conditions is straightforward when evaluating only one variable that can have only one value (see image 1 below). However, with more complex conditions, it's crucial to carefully structure logical expressions ensuring that only one condition can be true at a time. This becomes especially important when dealing with multiple variables or scenarios that could potentially lead to conflicting conditions.
 
-![exclusive_gateway_examples](images/exclusive_gateway_examples.png) 
+![exclusive_gateway_examples](images/exclusive_gateway_examples.png)
 
 For example, consider a scenario where multiple variables are involved in a process, and it's possible for more than one variable to be true in the process context (see image 2 above). To guarantee that only one condition will be true, you can use additional expressions, such as "voucher == false" to specify distinct paths for each condition. This ensures that only one branch of the expression will be true, preventing conflicts and providing a clear direction for the process flow (see image 3 above).
 
@@ -40,9 +40,9 @@ While the Exclusive Merge is commonly used alongside the Exclusive Gateway, it i
 
 ## Inclusive Gateway
 
-![inclusive_gateway](images/inclusive_gateway.png) 
+![inclusive_gateway](images/inclusive_gateway.png)
 
-Inclusive Gateway (OR): Represents a decision point, but it allows multiple outgoing sequence flows to be taken. It is used when the process flow needs to make an inclusive choice, where multiple paths can be followed simultaneously. Each outgoing sequence flow can have a condition associated with it, but even if multiple conditions evaluate to true, all the flows are taken. 
+Inclusive Gateway (OR): Represents a decision point, but it allows multiple outgoing sequence flows to be taken. It is used when the process flow needs to make an inclusive choice, where multiple paths can be followed simultaneously. Each outgoing sequence flow can have a condition associated with it, but even if multiple conditions evaluate to true, all the flows are taken.
 
 ```{admonition} Note
 ⚠ Note that Default Flow is not possible with Inclusive Gateways.
@@ -80,20 +80,20 @@ Unlike other gateways, a parallel gateway does not dictate the flow based on con
 ![parallel_gateways](images/parallel_gateways.png)
 
 **Challenges:**
-Since a Parallel Gateway does not dictate the flow based on conditions, it avoids conflicts that may arise from complex decision-making logic. 
+Since a Parallel Gateway does not dictate the flow based on conditions, it avoids conflicts that may arise from complex decision-making logic.
 
 **Join:**
-Note that the behavior for a parallel join, also known as a Parallel Gateway merge, is to synchronize and consolidate multiple parallel paths into a single flow. When the process flow reaches the parallel join, it evaluates the completion of all incoming sequence flows from the corresponding parallel split. It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join. 
+Note that the behavior for a parallel join, also known as a Parallel Gateway merge, is to synchronize and consolidate multiple parallel paths into a single flow. When the process flow reaches the parallel join, it evaluates the completion of all incoming sequence flows from the corresponding parallel split. It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join.
 
 ## Event-Based Gateway
 
-![event_based_gateway](images/event_based_gateway.png) 
+![event_based_gateway](images/event_based_gateway.png)
 
 Event-Based Gateway: An Event-Based Gateway is used to represent a branching point based on events occurring in the process. It is often associated with intermediate events in the process flow. When an event occurs, the gateway determines the subsequent flow based on event definitions and conditions.
 
 ## Gateway Configuration
 
-Unlike most Tasks in BPMN, the configuration for Gateways is primarily set on the outgoing sequence flows, not in the Side Panel. Every Gateway, with the exception of the Parallel Gateway, requires conditions to be established on these outgoing sequence flows. These conditions dictate the direction of the process flow. It's also crucial to understand that conditions aren't required for incoming sequence flows to Gateways.
+Unlike most tasks in BPMN, the configuration for Gateways is primarily set on the outgoing sequence flows, not in the Side Panel. Every Gateway, with the exception of the Parallel Gateway, requires conditions to be established on these outgoing sequence flows. These conditions dictate the direction of the process flow. It's also crucial to understand that conditions aren't required for incoming sequence flows to Gateways.
 
 **Gateway:**
 

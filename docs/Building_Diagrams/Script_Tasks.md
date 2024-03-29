@@ -1,23 +1,23 @@
 # Script Tasks
-Writing scripts refers to the process of creating custom code or scripts to increase the functionality and automation of a software application or system. 
+Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system.
 
-The scripting language used for writing scripts in SpiffArena is  Python, a widely used programming language. Python provides a rich set of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
+In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language. Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
 Let's explore an example of a Script Task in our basics section:
 
 1. **Start Event and User Task - "Form"**
 
-The process begins with a Start Event, followed by a User Task named "Form." Users will fill out the form, and the three values from the form will be passed to the next task, which is a Script Task.
+The process starts with a Start Event, followed by a User Task named "Form". Users fill out the form, and the three values from the form are passed to the subsequent task, which is a Script Task.
 
 2. **Script Task to collect data**
 
-In the Script Task, we have created a script that collects three variables from the form and calculates a score based on certain conditions. The score is then stored in the "score" variable. Lets delve into how we configured the script tasks:
+In the Script Task, we have created a script that collects three variables from the form and calculates a score based on certain conditions. The score is then stored in the "score" variable. Let's delve into how we configured the script tasks:
 
 ![Script_Task](images/Script_task_example.png)
 
-**Step 1**: With the script task selected, you will notice the properties tab. 
+**Step 1**: With the script task selected, you will notice the properties tab.
 
-**Step 2**: Within the properties tab, there should be a field where you can write or edit a script. Paste or write your script in this field.
+**Step 2**: Within the properties tab, there should be a field where you can write or edit a script. You can paste or write your script in this field.
 
 Here's the script we added for this example:
 
@@ -35,7 +35,7 @@ if "curie" in woman_nobel.lower():
 
 score = int(num_correct / 3 * 100)
 ```
-**Step 3**: After adding the script, the next step is to configure unit tests. Within the unit tests section, there are fields to add test inputs and Outputs.
+**Step 3**: After adding the script, the next step is to configure unit tests. Within the unit tests section, there are fields to add test inputs and outputs.
 
 ``` json
 // Test Inputs
@@ -54,36 +54,36 @@ score = int(num_correct / 3 * 100)
   "woman_nobel": "curie"
 }
 ```
-Now we have a configured our script task with a script and unit tests.
+Now, we have configured our script task with a script and unit tests.
 
 3. **Pre Scripts and Post Scripts**
 
-After the Script Task, we have a Manual Task with a pre-script and instructions to display the score. 
+After the Script Task, we have a Manual Task with a pre-script and instructions to display the score.
 
 ![Script_Task](images/Pre-post_scripts.png)
 
-- **Prescript** is added as an example, While you can have tasks that are dedicated scripts, it can become a bit noisy, and we want our diagrams to convey a clear sense of the business logic and rules. For this reason it is also possible to add scripts to all Task types - using Pre and Post Scripts. This manual task contains a pre-script that also calculated PI using the Leibniz’s formula. Here is the pre-script:
+- **Prescript** is added as an example. While you can have tasks that are dedicated scripts, it can become a bit noisy, and we want our diagrams to convey a clear sense of the business logic and rules. For this reason, it is also possible to add scripts to all Task types - using Pre and Post Scripts. This manual task contains a pre-script that also calculates PI using Leibniz’s formula. Here is the pre-script:
 
 ``` python
 # Initialize denominator
 k = 1
- 
+
 # Initialize sum
 s = 0
- 
+
 for i in range(1000000):
- 
+
     # even index elements are positive
     if i % 2 == 0:
         s += 4/k
     else:
- 
+
         # odd index elements are negative
         s -= 4/k
- 
+
     # denominator is odd
     k += 2
-     
+
 pi = s
 del(k)
 ```
@@ -95,69 +95,69 @@ del(k)
 Please see the [implementing files themselves](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/scripts) for the gory details.
 
 ### `delete_process_instances_with_criteria`
-Deletes process instances that match the provided criteria.
+This function deletes process instances that match the provided criteria.
 
 ### `get_all_permissions`
-Get all permissions currently in the system.
+This function gets all permissions currently in the system.
 
 ### `get_current_task_info`
-Returns the information about the current task.
+This function returns the information about the current task.
 
 ### `get_current_user`
-Return the current user.
+This function returns the current user.
 
 ### `get_data_sizes`
-Returns a dictionary of information about the size of task data.
+This function returns a dictionary of information about the size of task data.
 
 ### `get_encoded_file_data`
-Returns a string which is the encoded file data. This is a very expensive call.
+This function returns a string which is the encoded file data. This is a very expensive call.
 
 ### `get_env`
-Returns the current environment - i.e., testing, staging, production.
+This function returns the current environment - i.e., testing, staging, production.
 
 ### `get_frontend_url`
-Return the URL to the frontend.
+This function returns the URL to the frontend.
 
 ### `get_group_members`
-Return the list of usernames of the users in the given group.
+This function returns the list of usernames of the users in the given group.
 
 ### `get_last_user_completing_task`
-Return the last user who completed the given task.
+This function returns the last user who completed the given task.
 
 ### `get_localtime`
-Converts a Datetime object into a Datetime object for a specific timezone.
+This function converts a Datetime object into a Datetime object for a specific timezone.
 
 ### `get_process_initiator_user`
-Return the user that initiated the process instance.
+This function returns the user that initiated the process instance.
 
 ### `get_secret`
-Returns the value for a previously configured secret.
+This function returns the value for a previously configured secret.
 
 ### `get_task_data_value`
-Checks to see if given value is in task data and returns its value.
-If does not exist or is None, it returns the default value.
+This function checks to see if a given value is in task data and returns its value.
+If it does not exist or is None, it returns the default value.
 
 ### `get_toplevel_process_info`
-Returns a dictionary of information about the currently running process.
+This function returns a dictionary of information about the currently running process.
 
 ### `get_url_for_task_with_bpmn_identifier`
-Returns the url to the task show page for a task with the given bpmn identifier.
+This function returns the URL to the task show page for a task with the given BPMN identifier.
 The script task calling this MUST be in the same process as the desired task and should be next to each other in the diagram.
 
 ### `get_user_properties`
-Gets the user properties for the current user.
+This function gets the user properties for the current user.
 
 ### `markdown_file_download_link`
-Returns a string which is a string in markdown format.
+This function returns a string which is a markdown format string.
 
 ### `refresh_permissions`
-Add permissions using a dict.
+This function adds permissions using a dictionary.
 
 ### `set_user_properties`
-Sets given user properties on the current user.
+This function sets given user properties on the current user.
 
 ### `times_executed_by_user`
-Returns a number indicating how many times the user has started an instance of the current process model.
+This function returns a number indicating how many times the user has started an instance of the current process model.
 
 ### `user_has_started_instance`
-Returns boolean to indicate if the user has started an instance of the current process model.
+This function returns a boolean to indicate if the user has started an instance of the current process model.
