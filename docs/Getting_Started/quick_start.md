@@ -12,7 +12,7 @@
 Sartography, the company that shepherds the SpiffWorkflow and SpiffArena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
 Users can interact with pre-built models, make modifications, and visualize process flows.
 
-## How to Login to SpiffArena
+## How to Log in to SpiffArena
 
 ```{image} ./images/Login.png
 :alt: Login Screen
@@ -246,7 +246,7 @@ If you want to view or create information on specific process models, we allow y
 
 If you are creating a model, you can add information in the about section.
 We have integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform.
-In order to use this feature, simply create a **README File** inside the process model called README.md and document the model so everyone can be on the same page.
+In order to use this feature, simply create a **README File** inside the process model called README.md and document the model, so everyone can be on the same page.
 
 Furthermore, to check the process instances you started, you can also switch to the "My process instance" tab.
 ![View forms](images/View_Forms4.png)
@@ -294,7 +294,7 @@ To filter process instances by **process-defined metadata**, follow these steps:
 
 ![Untitled](images/Untitled_22.png)
 
-- The metadata fields will be displayed in the dropdown. Select the field you want to display and Click on "**Save**" to apply the changes.
+- The metadata fields will be displayed in the dropdown. Select the field you want to display and click on "**Save**" to apply the changes.
 
 ![Untitled](images/Untitled_23.png)
 
