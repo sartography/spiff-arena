@@ -45,7 +45,7 @@ workflow.reset_from_task_id(start.id)
 ```
 
 ### **8. Integrating SpiffWorkflow with other Python code**
-**Q:** How do you integrate your workflow with another Python code?
+**Q:** How do you integrate your workflow with other Python code?
 **A:** Integrating SpiffWorkflow with other Python code is straightforward. You have two primary methods:
 1. **Script Tasks**: These allow you to execute Python code directly within your workflow. This method is suitable for simpler integrations where the code logic is not too complex.
 2. **Service Tasks**: For more complex integrations, you can write services that can be called via service tasks within your workflow. This method provides more flexibility and is ideal for scenarios where you need to interface with external systems or perform more intricate operations.

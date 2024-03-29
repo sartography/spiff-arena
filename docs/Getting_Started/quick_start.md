@@ -421,8 +421,7 @@ This is achieved using correlation keys and properties.
 
 - **Correlation Keys**: These represent the topic of the conversation. In the given example, the correlation key is the "order".
 
-- **Correlation Properties**: These are unique identifiers within the conversation. In the example, the "table number" serves as the correlation property, ensuring the right waiter communicates with the right ch
-f.
+- **Correlation Properties**: These are unique identifiers within the conversation. In the example, the "table number" serves as the correlation property, ensuring the right waiter communicates with the right chef.
 
 ### Execution and Observation
 
@@ -435,8 +434,7 @@ For a more visual understanding and a step-by-step walkthrough, you can watch Da
 
 ---
 ## How to share process instance with Short Links
-The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs. This feature is especially useful for quick sharing via email, messaging a
-ps, or within documentation.
+The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs. This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
 
 To copy the short link:
 
