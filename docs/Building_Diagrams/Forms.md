@@ -191,7 +191,7 @@ Here’s an example where `delivery_date` must be on or before `end_date`:
 
 If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
 
-These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where a latest permissible date is a factor.
+These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
 
 By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
 
