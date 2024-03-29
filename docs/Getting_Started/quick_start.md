@@ -9,7 +9,7 @@
 
 ## 🚀 Getting Started with SpiffArena
 
-Sartography (the company that develops SpiffWorkflow and SpiffArena) provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
+Sartography, the company that shepherds the SpiffWorkflow and SpiffArena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
 Users can interact with pre-built models, make modifications, and visualize process flows.
 
 ## How to Login to SpiffArena
