@@ -12,7 +12,7 @@
 Sartography, the company that shepherds the SpiffWorkflow and SpiffArena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
 Users can interact with pre-built models, make modifications, and visualize process flows.
 
-## How to Login to SpiffArena
+## How to Log in to SpiffArena
 
 ```{image} ./images/Login.png
 :alt: Login Screen
