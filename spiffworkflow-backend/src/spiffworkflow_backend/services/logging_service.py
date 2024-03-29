@@ -83,15 +83,15 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(message_dict, default=str)
 
 
-def setup_logger_for_app(app: Flask, logger: Any) -> None:
+def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
-    log_level = getattr(logger, upper_log_level_string)
-    spiff_log_level = getattr(logger, upper_log_level_string)
+    log_level = getattr(primary_logger, upper_log_level_string)
+    spiff_log_level = getattr(primary_logger, upper_log_level_string)
 
     log_formatter = get_log_formatter(app)
 
@@ -99,12 +99,12 @@ def setup_logger_for_app(app: Flask, logger: Any) -> None:
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
-        spiff_logger_filehandler = logger.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
+        spiff_logger_filehandler = primary_logger.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
         spiff_logger_filehandler.setLevel(spiff_log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 
     # these loggers have been deemed too verbose to be useful
-    garbage_loggers_to_exclude = ["connexion", "flask_cors.extension", "flask_cors.core", "sqlalchemy"]
+    obscure_loggers_to_exclude_from_main_logging = ["connexion", "flask_cors.extension", "flask_cors.core", "sqlalchemy"]
 
     # if you actually want one of these excluded loggers, there is a config option to turn it on
     loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE", [])
@@ -113,50 +113,57 @@ def setup_logger_for_app(app: Flask, logger: Any) -> None:
     else:
         loggers_to_use = loggers_to_use.split(",")
     for logger_to_use in loggers_to_use:
-        if logger_to_use in garbage_loggers_to_exclude:
-            garbage_loggers_to_exclude.remove(logger_to_use)
+        if logger_to_use in obscure_loggers_to_exclude_from_main_logging:
+            obscure_loggers_to_exclude_from_main_logging.remove(logger_to_use)
         else:
             app.logger.warning(
-                f"Logger '{logger_to_use}' not found in garbage_loggers_to_exclude. You do not need to add it to"
-                " SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
+                f"Logger '{logger_to_use}' not found in obscure_loggers_to_exclude_from_main_logging. "
+                "You do not need to add it to SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
             )
 
     loggers_to_exclude_from_debug = []
 
-    if "sqlalchemy" not in garbage_loggers_to_exclude:
+    # even if we say SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE=sqlalchemy, we still don't want it in DEBUG mode, just INFO
+    if "sqlalchemy" not in obscure_loggers_to_exclude_from_main_logging:
         loggers_to_exclude_from_debug.append("sqlalchemy")
 
+    # NOTE: celery sets up handlers for all loggers by default. so if we want to stop some weird logger firehosing our logging,
+    # we need to remove its handler or set its log level to a high level like ERROR. For example, sql alchemy seems to log all
+    # queries at the INFO level and frickin query RESULTS as well if level is DEBUG.
+    #
     # make all loggers act the same
-    for name in logger.root.manager.loggerDict:
+    for name in primary_logger.root.manager.loggerDict:
         # use a regex so spiffworkflow_backend isn't filtered out
         if not re.match(r"^spiff\b", name):
-            the_logger = logger.getLogger(name)
-            the_logger.setLevel(log_level)
+            sub_logger = primary_logger.getLogger(name)
+            sub_logger.setLevel(log_level)
             if spiff_logger_filehandler:
-                the_logger.handlers = []
-                the_logger.propagate = False
-                the_logger.addHandler(spiff_logger_filehandler)
+                sub_logger.handlers = []
+                sub_logger.propagate = False
+                sub_logger.addHandler(spiff_logger_filehandler)
             else:
-                # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
-                if upper_log_level_string == "DEBUG":
-                    if len(the_logger.handlers) < 1:
-                        exclude_logger_name_from_logging = False
-                        for garbage_logger in garbage_loggers_to_exclude:
-                            if name.startswith(garbage_logger):
-                                exclude_logger_name_from_logging = True
+                if len(sub_logger.handlers) < 1:
+                    exclude_logger_name_from_logging = False
+                    for logger_to_exclude in obscure_loggers_to_exclude_from_main_logging:
+                        if name.startswith(logger_to_exclude):
+                            exclude_logger_name_from_logging = True
 
+                    # it's very verbose so set all obscure loggers to ERROR if not in DEBUG
+                    if exclude_logger_name_from_logging or upper_log_level_string != "DEBUG":
+                        sub_logger.setLevel("ERROR")
+
+                    # only need to set the log level here if it is not already excluded from main logging
+                    if not exclude_logger_name_from_logging and upper_log_level_string == "DEBUG":
                         exclude_logger_name_from_debug = False
                         for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
                             if name.startswith(logger_to_exclude_from_debug):
                                 exclude_logger_name_from_debug = True
                         if exclude_logger_name_from_debug:
-                            the_logger.setLevel("INFO")
+                            sub_logger.setLevel("INFO")
 
-                        if exclude_logger_name_from_logging:
-                            the_logger.setLevel("ERROR")
-                        the_logger.addHandler(logger.StreamHandler(sys.stdout))
+                    sub_logger.addHandler(primary_logger.StreamHandler(sys.stdout))
 
-                for the_handler in the_logger.handlers:
+                for the_handler in sub_logger.handlers:
                     the_handler.setFormatter(log_formatter)
                     the_handler.setLevel(log_level)
 
