@@ -9,7 +9,7 @@
 
 ### **2. Adding Python Libraries to SpiffWorkflow**
 **Q:** Is there documentation available for adding Python libraries to SpiffWorkflow? For example, if I want to run a process to send emails, I would need `smtplib`.
-**A:** The default answer for something like sending emails would be to use a service task. We have an SMTP connector designed for this purpose. If you're using Spiff Arena, a connector proxy can provide a nice integration into the UI. Here are some helpful links:
+**A:** The default answer for something like sending emails would be to use a service task. We have an SMTP connector designed for this purpose. If you're using SpiffArena, a connector proxy can provide a nice integration into the UI. Here are some helpful links:
 - [SMTP Connector](https://github.com/sartography/connector-smtp)
 - [Spiff-Connector Demo](https://github.com/sartography/connector-proxy-demo)
 - [BPMN, DMN samples for SpiffWorkflow](https://github.com/sartography/sample-process-models/tree/jon/misc/jonjon/smtp)
@@ -100,30 +100,30 @@ if more than 2 users approve out of 3 assignees?
 **A:** Yes, SpiffWorkflow can handle complex approval processes. The [provided video](https://www.youtube.com/watch?v=EfTbTg3KRqc) link offers insights into managing such scenarios using SpiffWorkflow.
 
 
-### **20. Process Instances in Spiff Arena After Docker Compose Restart**
-**Q:** I restarted docker-compose, and my process instances in Spiff Arena aren't persistent. How can I ensure they remain after a restart?
+### **20. Process Instances in SpiffArena After Docker Compose Restart**
+**Q:** I restarted docker-compose, and my process instances in SpiffArena aren't persistent. How can I ensure they remain after a restart?
 
 **A:** Make sure you're using the updated "getting started" `docker-compose.yml` file that uses sqlite to persist the database between docker compose restarts.
 This will ensure that your process instances remain after a restart.
 
 If you're still facing issues, refer to the provided documentation on admin and permissions for further guidance.
 
-### **21: Downloading and Re-uploading Process Models in Spiff Arena**
-**Q:** Is it possible to download a process model in Spiff Arena and then re-upload it?
+### **21: Downloading and Re-uploading Process Models in SpiffArena**
+**Q:** Is it possible to download a process model in SpiffArena and then re-upload it?
 
-**A:** Yes, in Spiff Arena, you can download a process model and then re-upload it. However, it's essential to note that all process IDs must be unique across the system. If you're re-uploading a process model, its ID might need to be modified to ensure uniqueness.
+**A:** Yes, in SpiffArena, you can download a process model and then re-upload it. However, it's essential to note that all process IDs must be unique across the system. If you're re-uploading a process model, its ID might need to be modified to ensure uniqueness.
 
 
-### **22: Understanding "Notification Addresses" and "Metadata Extractions" in Spiff Arena**
-**Q:** What are the "notification addresses" and "metadata extractions" fields when creating a new process model in Spiff Arena?
+### **22: Understanding "Notification Addresses" and "Metadata Extractions" in SpiffArena**
+**Q:** What are the "notification addresses" and "metadata extractions" fields when creating a new process model in SpiffArena?
 
-**A:** When creating a new process model in Spiff Arena, the "notification addresses" field is used to specify recipients for notifications related to that process.
+**A:** When creating a new process model in SpiffArena, the "notification addresses" field is used to specify recipients for notifications related to that process.
 The "metadata extractions" field is used to extract specific metadata from the process.
 Detailed documentation for both fields is available.
 It's worth noting that the functionality of "Notification Addresses" might undergo changes in the future to centralize the logic and avoid splitting configurations.
 
-### **23: Issues with Spiff Arena Frontend Loading**
-**Q:** Why doesn't the Spiff Arena frontend always load completely?
+### **23: Issues with SpiffArena Frontend Loading**
+**Q:** Why doesn't the SpiffArena frontend always load completely?
 
 **A:** The issue might arise when the frontend cannot communicate with the backend.
 Recent updates have been made to address this specific problem.
@@ -141,31 +141,31 @@ docker compose up -d
 By doing this, you'll pull the latest images, shut down the current containers, and then start them up again with the updated configurations.
 This should help in ensuring that the frontend loads completely and communicates effectively with the backend.
 
-### **24: Resolving Docker Compose Issues on M1/M2 Mac in Spiff Arena** 
-**Q:** I'm using an M1/M2 Mac and facing issues with docker-compose in Spiff Arena. How can I resolve this?
+### **24: Resolving Docker Compose Issues on M1/M2 Mac in SpiffArena** 
+**Q:** I'm using an M1/M2 Mac and facing issues with docker-compose in SpiffArena. How can I resolve this?
 
 **A:** Ensure that you're using the latest versions of Docker and docker-compose.
 If you encounter messages about platform mismatches, note that these may just be warnings and not errors.
 Update your images and restart the containers as needed.
 Instructions in the getting started guide reference `curl`, but if that is not working for you, `wget` may be an option that is already installed on your system.
 
-### **25: Importing External Modules in Script Tasks in Spiff Arena**
-**Q:** Why can't I import an external module in a script task in Spiff Arena?
+### **25: Importing External Modules in Script Tasks in SpiffArena**
+**Q:** Why can't I import an external module in a script task in SpiffArena?
 
-**A:** In Spiff Arena, script tasks are designed for lightweight scripting and do not support importing external modules.
+**A:** In SpiffArena, script tasks are designed for lightweight scripting and do not support importing external modules.
 If you need to communicate with external systems, it's recommended to use a ServiceTask instead.
-ServiceTasks in Spiff Arena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol.
+ServiceTasks in SpiffArena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol.
 For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request.
 Detailed documentation available [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/configure_connector_proxy.html).
 If you want to bypass security features of the restricted script engine and import modules from your script tasks, you can set the environment variable: `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false`
 
-### **26:  Storage of Properties Data in Spiff Arena** 
+### **26:  Storage of Properties Data in SpiffArena** 
 **Q:** Where is the properties data stored in the properties panel?
 
 **A:** The properties data is stored directly within the XML of the BPMN diagram. Some of this data is stored in extension elements. 
 For instance, the configuration for a service task can be found [here](https://github.com/sartography/sample-process-models/blob/sample-models-1/misc/jonjon/ham/ham.bpmn#L13) and instructions can be found [here](https://github.com/sartography/sample-process-models/blob/sample-models-1/misc/documentation/user-guide-basics/user-guide-basics.bpmn#L24). If you're considering bypassing the properties panel, it's essential to ensure that the XML output remains consistent with the expected format.
 
-### **27: Starting a Task in Spiff Arena**
+### **27: Starting a Task in SpiffArena**
 **Q:** How do I start a task? What do I need besides BPMN?
 
 **A:** To start a task, you'll need to have a proper BPMN diagram and a configured environment. The docker compose file, as mentioned on the [spiffworkflow.org](https://www.spiffworkflow.org/posts/articles/get_started/) website, provides a containerized environment for both the API and asynchronous processing. For a more robust production deployment, it's recommended to use separate containers for different functionalities.
@@ -299,12 +299,12 @@ browser's developer tools. This can help you understand how the token is being p
 can copy any request to the backend as a curl command or inspect the headers to see how the bearer token is being used. 
 If the standard openid flow is not ideal for your use case, Service Account / API Token management can be implemented using a process model.
 
-### **38: Configure Spiff Arena to run behind a proxy server**
-**Q:** How can I configure Spiff Arena to run behind a proxy server, such as Traefik, and resolve issues with redirects and OpenID provider authentication?
+### **38: Configure SpiffArena to run behind a proxy server**
+**Q:** How can I configure SpiffArena to run behind a proxy server, such as Traefik, and resolve issues with redirects and OpenID provider authentication?
 
-**A:** Running Spiff Arena behind a proxy server like Traefik involves several configuration steps to ensure proper communication between the frontend, backend, and the OpenID provider. Here are key points to consider:
+**A:** Running SpiffArena behind a proxy server like Traefik involves several configuration steps to ensure proper communication between the frontend, backend, and the OpenID provider. Here are key points to consider:
 
-1. **Subdomain Configuration:** When setting up Spiff Arena with Traefik, it's common to create subdomains for different components (e.g., "traefik", "auth", "workflow", "workflow-backend"). However, you might encounter issues like redirect loops or authentication errors if the subdomains are not correctly configured.
+1. **Subdomain Configuration:** When setting up SpiffArena with Traefik, it's common to create subdomains for different components (e.g., "traefik", "auth", "workflow", "workflow-backend"). However, you might encounter issues like redirect loops or authentication errors if the subdomains are not correctly configured.
 
 2. **Environment Variable Settings:** The `SPIFFWORKFLOW_BACKEND_URL` environment variable is crucial as it informs the frontend about the backend's URL. If you're experiencing HTTP and HTTPS mismatches, it might be due to misconfiguration in Traefik and Flask communication. To resolve this, you can set the `FORWARDED_ALLOW_IPS='*'` environment variable, which allows the backend to correctly report its URL as HTTPS.
 
@@ -316,7 +316,7 @@ If the standard openid flow is not ideal for your use case, Service Account / AP
 
 6. **Community Support:** If you encounter specific issues or need further assistance, consider reaching out to the community on platforms like GitHub or Discord. Sharing your configuration and experiments in detail can help others provide more targeted advice.
 
-For more detailed guidance and examples of Spiff Arena deployment configurations, you can refer to resources like the [Terraform Kubernetes Modules](https://github.com/mingfang/terraform-k8s-modules/blob/master/examples/spiffworkflow/README.md).
+For more detailed guidance and examples of SpiffArena deployment configurations, you can refer to resources like the [Terraform Kubernetes Modules](https://github.com/mingfang/terraform-k8s-modules/blob/master/examples/spiffworkflow/README.md).
 
 Remember, each deployment scenario can be unique, so it's important to tailor these guidelines to your specific setup and
 requirements.
