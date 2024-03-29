@@ -115,7 +115,7 @@ def login(
     frontend_url = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"))
     if not redirect_url.startswith(frontend_url):
         raise InvalidRedirectUrlError(
-            f"Invalid redirect url was given: '{redirect_url}'. It must match the domain the frontend is running on."
+            f"Invalid redirect url was given: '{redirect_url}'. It must start with the frontend url: '{frontend_url}'"
         )
 
     if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
