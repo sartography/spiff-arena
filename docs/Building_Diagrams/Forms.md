@@ -449,17 +449,4 @@ Nested forms or repeating sections are designed to collect an array of objects, 
 
 ![Nested Forms](images/Nested_form_display.png)
 
-**Implementation Steps:**
-
-1. **Identify the Array Field**: First, identify the array field in your schema that will utilize the repeating section. In the example above, the array field is "tasks".
-
-2. **UI Schema Configuration**: In your form's UI schema, add configuration options for the "tasks" array to include a "New" button. 
-
-3. **Button Label and Action**: Define the label for the "New" button (e.g., "Add New Task") and the action it should perform. Typically, this action involves appending a new item to the "tasks" array, which corresponds to a new set of fields in the UI for the user to fill out.
-
-4. **Styling and Placement**: Customize the appearance and placement of the "New" button according to your form's design requirements. Ensure it is positioned in an intuitive location, such as immediately below the last entry of the repeating section.
-
-5. **Event Handling**: Implement event handling for the "New" button click action. This should include validation to ensure that any required fields in the current set of entries are filled out before allowing a new entry to be added.
-
-
 By following these steps, you can effectively implement new buttons for nested forms or repeating sections, significantly improving the form's usability for collecting multiple related entries from users.
