@@ -1,8 +1,12 @@
 # Decision Tables
 
-DMN tables are powerful tools for modeling and implementing business rules and decision logic. They allow you to define rules and their associated conditions and actions in a structured manner. By evaluating the conditions in each rule, the DMN engine can determine which rules are triggered based on the provided inputs and execute the corresponding actions. This provides a flexible and configurable approach to decision-making in various scenarios.
+DMN tables are powerful tools for modeling and implementing business rules and decision logic.
+They allow you to define rules and their associated conditions and actions in a structured manner.
+By evaluating the conditions in each rule, the DMN engine can determine which rules are triggered based on the provided inputs and execute the corresponding actions.
+This provides a flexible and configurable approach to decision-making in various scenarios.
 
-A DMN (Decision Model and Notation) table consists of several components that help define the decision logic and structure the decision-making process. The main components of a DMN table are:
+A DMN (Decision Model and Notation) table consists of several components that help define the decision logic and structure the decision-making process.
+The main components of a DMN table are:
 
 ## DMN Components
 

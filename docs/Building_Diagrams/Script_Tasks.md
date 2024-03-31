@@ -1,17 +1,21 @@
 # Script Tasks
 Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system.
 
-In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language. Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
+In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language.
+Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
 Let's explore an example of a Script Task in our basics section:
 
 1. **Start Event and User Task - "Form"**
 
-The process starts with a Start Event, followed by a User Task named "Form". Users fill out the form, and the three values from the form are passed to the subsequent task, which is a Script Task.
+The process starts with a Start Event, followed by a User Task named "Form".
+Users fill out the form, and the three values from the form are passed to the subsequent task, which is a Script Task.
 
 2. **Script Task to collect data**
 
-In the Script Task, we have created a script that collects three variables from the form and calculates a score based on certain conditions. The score is then stored in the "score" variable. Let's delve into how we configured the script tasks:
+In the Script Task, we have created a script that collects three variables from the form and calculates a score based on certain conditions.
+The score is then stored in the "score" variable.
+Let's delve into how we configured the script tasks:
 
 ![Script_Task](images/Script_task_example.png)
 
@@ -95,69 +99,92 @@ del(k)
 Please see the [implementing files themselves](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/scripts) for the gory details.
 
 ### `delete_process_instances_with_criteria`
+
 This function deletes process instances that match the provided criteria.
 
 ### `get_all_permissions`
+
 This function gets all permissions currently in the system.
 
 ### `get_current_task_info`
+
 This function returns the information about the current task.
 
 ### `get_current_user`
+
 This function returns the current user.
 
 ### `get_data_sizes`
+
 This function returns a dictionary of information about the size of task data.
 
 ### `get_encoded_file_data`
-This function returns a string which is the encoded file data. This is a very expensive call.
+
+This function returns a string which is the encoded file data.
+This is a very expensive call.
 
 ### `get_env`
+
 This function returns the current environment - i.e., testing, staging, production.
 
 ### `get_frontend_url`
+
 This function returns the URL to the frontend.
 
 ### `get_group_members`
+
 This function returns the list of usernames of the users in the given group.
 
 ### `get_last_user_completing_task`
+
 This function returns the last user who completed the given task.
 
 ### `get_localtime`
+
 This function converts a Datetime object into a Datetime object for a specific timezone.
 
 ### `get_process_initiator_user`
+
 This function returns the user that initiated the process instance.
 
 ### `get_secret`
+
 This function returns the value for a previously configured secret.
 
 ### `get_task_data_value`
+
 This function checks to see if a given value is in task data and returns its value.
 If it does not exist or is None, it returns the default value.
 
 ### `get_toplevel_process_info`
+
 This function returns a dictionary of information about the currently running process.
 
 ### `get_url_for_task_with_bpmn_identifier`
+
 This function returns the URL to the task show page for a task with the given BPMN identifier.
 The script task calling this MUST be in the same process as the desired task and should be next to each other in the diagram.
 
 ### `get_user_properties`
+
 This function gets the user properties for the current user.
 
 ### `markdown_file_download_link`
+
 This function returns a string which is a markdown format string.
 
 ### `refresh_permissions`
+
 This function adds permissions using a dictionary.
 
 ### `set_user_properties`
+
 This function sets given user properties on the current user.
 
 ### `times_executed_by_user`
+
 This function returns a number indicating how many times the user has started an instance of the current process model.
 
 ### `user_has_started_instance`
+
 This function returns a boolean to indicate if the user has started an instance of the current process model.

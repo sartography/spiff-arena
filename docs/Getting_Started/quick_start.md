@@ -109,7 +109,8 @@ Choose the process you want to initiate and click “Start”.
 
 You have successfully started a new process instance in SpiffWorkflow.
 
- If a process model doesn't have an associated BPMN file, the system will not display a start button. This is to prevent confusion and errors that might arise from attempting to start an incomplete process model.
+ If a process model doesn't have an associated BPMN file, the system will not display a start button.
+This is to prevent confusion and errors that might arise from attempting to start an incomplete process model.
 
 ---
 
@@ -372,7 +373,9 @@ Essentially, a milestone is an event that hasn't been set to something specific.
 
 
 ### Events
-Events provide a detailed log of everything that happens in a process. They record every task and its execution time.
+
+Events provide a detailed log of everything that happens in a process.
+They record every task and its execution time.
 
 ![Events](images/Events.png)
 
@@ -381,7 +384,9 @@ It can be noisy due to the granularity of the information, but it's essential fo
 
 ---
 ## How to check messages
-Messages in BPMN allow processes to communicate with each other. This communication can take various forms:
+
+Messages in BPMN allow processes to communicate with each other.
+This communication can take various forms:
 
 - Two processes running concurrently, exchanging messages.
 - One process initiating another through a message.
@@ -434,7 +439,9 @@ For a more visual understanding and a step-by-step walkthrough, you can watch Da
 
 ---
 ## How to share process instance with Short Links
-The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs. This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
+
+The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs.
+This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
 
 To copy the short link:
 
@@ -465,7 +472,8 @@ This approach ensures you can monitor and review the progress of user forms with
 ---
 ## How to view task instance history
 
-Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow. This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
+Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow.
+This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
 
 ### Steps to Access Task Instance History
 
@@ -489,4 +497,5 @@ For example:
 - **COMPLETED Status**: Tasks marked as 'COMPLETED' have finished their execution successfully and have moved the workflow forward.
 - **MAYBE Status**: Indicates that the task still exists within SpiffWorkflow. While these tasks could be omitted for clarity, retaining them provides a complete picture of the workflow's execution.
 
-Viewing task instance history in SpiffWorkflow is now more streamlined and informative, thanks to recent updates. Users can effectively track each task's execution, status, and timing, gaining insights into the workflow's overall performance.
+Viewing task instance history in SpiffWorkflow is now more streamlined and informative, thanks to recent updates.
+Users can effectively track each task's execution, status, and timing, gaining insights into the workflow's overall performance.

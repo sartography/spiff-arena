@@ -1,6 +1,10 @@
 # Signal Event
 
-A Signal Event is a type of event that provides a mechanism for communication across different processes. Unlike messages that are sent from a specific sender to a specific receiver, signals are broadcast to multiple recipients. When a signal is thrown, all active processes that are listening for that signal can catch and react to it. Signals do not have any expectation of a response. Once a signal is sent out, it does not wait for a reply.
+A Signal Event is a type of event that provides a mechanism for communication across different processes.
+Unlike messages that are sent from a specific sender to a specific receiver, signals are broadcast to multiple recipients.
+When a signal is thrown, all active processes that are listening for that signal can catch and react to it.
+Signals do not have any expectation of a response.
+Once a signal is sent out, it does not wait for a reply.
 
  ![signal_relationship](images/signal_relationships.png)
 
@@ -28,7 +32,8 @@ A Start Signal Event is especially valuable in situations where a parallel proce
 
 ![intermediate_throw_message_event](images/intermediate_throw_signal_event.png)
 
-An Intermediate Signal Throw Event is an event that happens in the middle of a process (not at the start or the end) and sends out a signal. This can be caught by another process or a different part of the same process using a Signal Catch Event.
+An Intermediate Signal Throw Event is an event that happens in the middle of a process (not at the start or the end) and sends out a signal.
+This can be caught by another process or a different part of the same process using a Signal Catch Event.
 
 ![intermediate_throw_signal_example_2](images/intermediate_throw_signal_example_2.png)
 
@@ -39,7 +44,8 @@ Using an Intermediate Throw Event aligns perfectly with the scenario illustrated
 
 ![intermediate_catch_message_event](images/intermediate_catch_signal_event.png)
 
-An Intermediate Signal Catch Event waits for a specific signal to start or continue a process. To "catch" means that this event is actively waiting or listening for that signal to be thrown from another part of the process or even from a different process.
+An Intermediate Signal Catch Event waits for a specific signal to start or continue a process.
+To "catch" means that this event is actively waiting or listening for that signal to be thrown from another part of the process or even from a different process.
 
 ![intermediate_catch_signal_example](images/intermediate_catch_signal_example.png)
 
@@ -66,16 +72,20 @@ This type of event signifies the end of a process or path and, at the same time,
 
 **Example:**
 
-In an online shopping system, when a customer's payment is successfully processed, an End Signal Event can be triggered. This signal initiates three distinct processes: (1) the "Send Notification" process alerts the customer of their successful purchase, (2) the "Pack Order" process prompts the warehouse team to prepare the item for dispatch, and (3) the "Schedule Delivery" process alerts logistics to arrange for the item's delivery. In this manner, one event efficiently orchestrates a sequence of actions across multiple departments.
+In an online shopping system, when a customer's payment is successfully processed, an End Signal Event can be triggered.
+This signal initiates three distinct processes: (1) the "Send Notification" process alerts the customer of their successful purchase, (2) the "Pack Order" process prompts the warehouse team to prepare the item for dispatch, and (3) the "Schedule Delivery" process alerts logistics to arrange for the item's delivery.
+In this manner, one event efficiently orchestrates a sequence of actions across multiple departments.
 
 ![end_signal_event_example](images/signal_sync_example.png)
 
 **Example:**
 Signals are instrumental in coordinating workflows among varied processes, making certain that tasks adhere to a specified order. Leveraging intermediate catch and throw events allows one process to temporarily halt until tasks in a different process are finished. This is especially beneficial when certain stages can only commence after the completion of others — imagine the utility of such a system across multiple departments.
 
-This example demonstrates how Signal Events, along with a Timer Boundary Event, can be orchestrated within a BPMN process to create conditional pathways based on user actions and timed events. The process begins with a standard initiation and primarily revolves around the user interaction with a manual task that offers multiple outcomes.
+This example demonstrates how Signal Events, along with a Timer Boundary Event, can be orchestrated within a BPMN process to create conditional pathways based on user actions and timed events.
+The process begins with a standard initiation and primarily revolves around the user interaction with a manual task that offers multiple outcomes.
 
 ## Example : Using Signal Boundary Events as Buttons
+
 This BPMN example showcases the flexibility of using Signal Events to create dynamic, user-driven process flows.
 
 By incorporating manual tasks with multiple outcomes, signal-based routing, and automated timing controls, the example illustrates how complex decision logic and external system integration can be efficiently managed within a BPMN process.
@@ -83,15 +93,18 @@ By incorporating manual tasks with multiple outcomes, signal-based routing, and 
 ![signal_event_example](images/Signal_events_spiff_example.png)
 
 ### 1. **Start Event**:
+
 Initiates the workflow, leading to the first and main manual task.
 
 ### 2. **Manual Task with Boundary Events**:
 
-This task is unique in that it presents the user with distinct options in the form of buttons. The default flow is a standard submission button that, when clicked, directs the workflow towards a conventional end.
+This task is unique in that it presents the user with distinct options in the form of buttons.
+The default flow is a standard submission button that, when clicked, directs the workflow towards a conventional end.
 
 ![signal_event_example](images/Signal_events_spiff_example1.png)
 
-Attached to **My Manual Task**, three Signal Boundary Events are set to listen for specific signals. These signals determine the flow of the process after the second button is pressed.
+Attached to **My Manual Task**, three Signal Boundary Events are set to listen for specific signals.
+These signals determine the flow of the process after the second button is pressed.
 
 - **Signal Boundary Event 1**:
 Catches the signal for "eat_spam" and redirects the workflow to a Manual Task named "Spam Message".
@@ -107,17 +120,21 @@ Designed to catch the "eat_potato_chips" signal, but uniquely does not lead to a
 
 #### **Timer Boundary Event**:
 
-Attached to **My Manual Task**, this event is configured to trigger after a specific duration, automating the process flow if the user does not interact with the manual task within the given timeframe. Notably, this event leads the process towards an alternative path or end without requiring user input.
+Attached to **My Manual Task**, this event is configured to trigger after a specific duration, automating the process flow if the user does not interact with the manual task within the given timeframe.
+Notably, this event leads the process towards an alternative path or end without requiring user input.
 
 ![signal_event_example](images/Signal_events_spiff_example6.png)
 
 ### 3. **End Events**:
 
-The process includes multiple End Events. One is directly connected to **My Manual Task**, concluding the workflow if the first button is used.
+The process includes multiple End Events.
+One is directly connected to **My Manual Task**, concluding the workflow if the first button is used.
 
 The others are linked to the outcomes of the Signal Boundary Events and the Timer Boundary Event, ensuring that each possible path through the process reaches a defined conclusion.
 
 ### Output:
-After starting the task, the signal buttons "Eat Cheetos" and "Eat Spam" will appear. Clicking on any button will lead to the respective manual task.
+
+After starting the task, the signal buttons "Eat Cheetos" and "Eat Spam" will appear.
+Clicking on any button will lead to the respective manual task.
 
 ![signal_event_example](images/Signal_events_spiff_example3.png)

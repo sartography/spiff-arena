@@ -1,22 +1,27 @@
 # Multi-instance Tasks
 Multi-instance tasks in BPMN (Business Process Model and Notation) represent a powerful tool for modeling processes that require repetitive actions over a collection of items.
 
-These tasks automate the iteration over a list, array, or collection, executing the specified activity for each element within. Multi-instance tasks can be configured to run either in parallel, where all instances are executed simultaneously, or sequentially, where each instance is executed one after the other.
+These tasks automate the iteration over a list, array, or collection, executing the specified activity for each element within.
+Multi-instance tasks can be configured to run either in parallel, where all instances are executed simultaneously, or sequentially, where each instance is executed one after the other.
 
 ## **Sequential Execution**
 
 Tasks are executed one after another, ensuring that each task instance begins only after the previous one has completed.
-In the case of a sequential multi-instance activity, the instances are executed one at a time. When one instance is completed, a new instance is created for the next element in the inputCollection.
+In the case of a sequential multi-instance activity, the instances are executed one at a time.
+When one instance is completed, a new instance is created for the next element in the inputCollection.
 
 ![Multi_instance_Sequential](images/multiinstance_sequential_example.png)
 
 ## **Parallel Execution**
 
-All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements. In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated. The instances are executed concurrently and independently from each other.
+All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements.
+In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated.
+The instances are executed concurrently and independently from each other.
 
 ![Multi_instance_parallel](images/multiinstance_parallel_example.png)
 
 ## Components of Multi-Instance Tasks
+
 Multi-instance tasks comprise several key properties that define their behavior:
 
 ```{image} ./images/multiinstance_properties.png
@@ -49,7 +54,8 @@ Marks the initiation of the process.
 
 #### 2. **Script Task - Create Dictionary**:
 
-This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre. The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
+This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre.
+The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
 
 ![Multi_instance_example](images/multiinstance_example2.png)
 
@@ -65,7 +71,8 @@ This task initializes a list (array) of dictionaries, each representing a compos
 
 #### 3. **Multi-Instance Task - Edit Composer**:
 
-This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
+This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task.
+It allows for the editing of each composer's information within the array.
 
 ![Multi_instance_example](images/multiinstance_ex.png)
 
@@ -102,4 +109,5 @@ Signifies the successful completion of the process instance, after the list of c
 
 ### Summary:
 
-This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks. By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
+This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks.
+By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.

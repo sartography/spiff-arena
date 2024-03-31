@@ -22,8 +22,10 @@ permissions:
 
 ### Groups
 
-The "groups" section defines a group called "admin." This group is intended for users who have administrative privileges within the system.
-In this example, the "admin" group consists of a single user with the associated email address. Multiple groups can be added.
+The "groups" section defines a group called "admin."
+This group is intended for users who have administrative privileges within the system.
+In this example, the "admin" group consists of a single user with the associated email address.
+Multiple groups can be added.
 
 ### Permissions
 
@@ -66,7 +68,9 @@ To allow reading and DISALLOW updating, it would look like this:
 
 ## Site Administration
 
-Once the basic configuration setup is completed, specifying admin rights, you generally won't require additional permissions for designing processes and using the site. However, there might be certain situations that call for access control beyond the site or group level. In such cases, you have the flexibility to define and tailor admin requirements in a more detailed manner to fulfill specific needs.
+Once the basic configuration setup is completed, specifying admin rights, you generally won't require additional permissions for designing processes and using the site.
+However, there might be certain situations that call for access control beyond the site or group level.
+In such cases, you have the flexibility to define and tailor admin requirements in a more detailed manner to fulfill specific needs.
 
 ### Step 1: Create Process Group
 
@@ -122,11 +126,13 @@ The Process Model view should now include all uploaded files.
 
 ### Step 4: Understand the Process Models
 
-[Read more about DMN tables and how they work here.](../Building_Diagrams/dmn.md)
+[Read more about DMN tables and how they work here.
+](../Building_Diagrams/dmn.md)
 
 #### Users to Groups
 
-Assess the roles and responsibilities of users within your organization or system. Look for common patterns or similarities in their job functions and tasks related to specific processes or process groups.
+Assess the roles and responsibilities of users within your organization or system.
+Look for common patterns or similarities in their job functions and tasks related to specific processes or process groups.
 
 Add a user email under the users 'column' and the group name under 'groups' and don't forget to add double quotes.
 
@@ -144,7 +150,8 @@ Now that the groups have been identified, their permissions can be set by adding
 - The hit policy is set to "Collect" which means that all conditions that are true will be applied. [Read more about DMN tables and hit policies here.](../Building_Diagrams/dmn.md)
 - The permission URL can be configured to define the user's access privileges. Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs. In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient. However, it is also feasible to directly incorporate any API URL into the permissions.
 
-In truth, what you are doing is writing an expression. In this case, it would read that if the variable 'permissions_group' type string is equal to 'permissions' variable of type string then set the 'permission_url' equal to the associated value.
+In truth, what you are doing is writing an expression.
+In this case, it would read that if the variable 'permissions_group' type string is equal to 'permissions' variable of type string then set the 'permission_url' equal to the associated value.
 
 ```{admonition} Note
 If you find coding more familiar and preferable to constructing DMN tables, you may notice similarities between this DMN table and the shared permission configuration file. This similarity can help clarify or make it easier for you to understand the DMN table structure and its relation to the permission configuration.
@@ -155,4 +162,5 @@ If you find coding more familiar and preferable to constructing DMN tables, you 
 
 ### Step 5: Start Process
 
-To ensure that User Groups and Permissions take effect, it is necessary to run the process at least once. Whenever changes are made to any of these diagrams, like adding a user group or permission, the process should be started and completed successfully in order for the changes to be applied.
+To ensure that User Groups and Permissions take effect, it is necessary to run the process at least once.
+Whenever changes are made to any of these diagrams, like adding a user group or permission, the process should be started and completed successfully in order for the changes to be applied.
