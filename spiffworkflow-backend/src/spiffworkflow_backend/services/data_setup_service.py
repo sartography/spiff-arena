@@ -16,6 +16,7 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 
 
 class DataSetupService:
@@ -87,12 +88,13 @@ class DataSetupService:
                     continue
 
                 cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
-                cls._collect_message_models(process_group, file, all_message_models)
+                MessageDefinitionService.collect_message_models(process_group, file, all_message_models)
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
         cls._save_all_message_models(all_message_models)
+        db.session.commit()
 
         return failing_process_models
 
@@ -278,8 +280,6 @@ class DataSetupService:
                 continue
             db.session.delete(model)
 
-        db.session.commit()
-
     @classmethod
     def _save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:
         MessageModel.query.delete()
@@ -289,5 +289,3 @@ class DataSetupService:
 
             for correlation_property_model in message_model.correlation_properties:
                 db.session.add(correlation_property_model)
-
-        db.session.commit()
