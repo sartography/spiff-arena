@@ -117,7 +117,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: ${{ matrix.python }}
 
@@ -216,7 +216,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: "3.11"
       - name: Install Poetry
@@ -261,7 +261,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: "3.11"
 
@@ -287,7 +287,7 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4.1.0
+        uses: codecov/codecov-action@v4.1.1
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2.1.1

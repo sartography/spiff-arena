@@ -11,11 +11,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
-from langchain.schema import (
-    AIMessage,
-    HumanMessage,
-    SystemMessage
-)
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 human_template = """
 {text}
@@ -38,15 +34,17 @@ human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
 # - clear over fun
 # - brief over verbose
 
-system_text = """You are an expert technical editor specializing in business process management documentation written for enterprise software users.
+system_text = """You are proofreading and you will receive text that is almost exactly correct, but may contain errors. You should:
 
-- Improve grammar and language
-- fix errors
-- keep tone and voice
+- Fix spelling
+- Improve grammar that is obviously wrong
+- Fix awkward language if it is really bad
+- keep everything else exactly the same, including tone and voice
 - don't change markdown syntax, e.g. keep [@reference]
-- do not remove entire sentences
+- Never remove entire sentences
 - never cut jokes
 - output 1 line per sentence (same as input)
+- Do not put multiple sentences on the same line
 """
 
 system_prompt = SystemMessage(content=system_text)
@@ -54,21 +52,22 @@ system_prompt = SystemMessage(content=system_text)
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 if openai_api_key is None:
     keyfile = "oai.key"
-    with open(keyfile, 'r') as f:
+    with open(keyfile, "r") as f:
         openai_api_key = f.read().strip()
 
-# model = "gpt-4"
-model = "gpt-3.5-turbo"
+model = "gpt-4"
+# model = "gpt-3.5-turbo"
 
 # If you get timeouts, you might have to increase timeout parameter
 llm = ChatOpenAI(openai_api_key=openai_api_key, model=model, request_timeout=240)
 
+
 def process_file(input_file):
     output_file = os.path.splitext(input_file)[0] + ".qmd"
 
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         content = f.read()
-    
+
     # Markdown splitter didn't work so well
     # splitter = MarkdownTextSplitter(chunk_size=1000, chunk_overlap=0)
 
@@ -78,16 +77,19 @@ def process_file(input_file):
     docs = [content]
 
     print("Split into {} docs".format(len(docs)))
-    chat_prompt = ChatPromptTemplate.from_messages([system_prompt, human_message_prompt])
+    chat_prompt = ChatPromptTemplate.from_messages(
+        [system_prompt, human_message_prompt]
+    )
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         for doc in docs:
             print(f"doc: {doc}")
             result = llm(chat_prompt.format_prompt(text=doc).to_messages())
             print(result.content)
-            f.write(result.content + '\n')
+            f.write(result.content + "\n")
 
     print(f"Edited file saved as {output_file}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

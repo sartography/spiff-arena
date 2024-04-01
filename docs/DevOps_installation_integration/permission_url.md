@@ -1,16 +1,16 @@
 # Permission URL
 
-The permission URL, or target URI, refers to the specific endpoint or resource that is being granted permission to perform certain actions.
+The permission URL, or target URI, refers to the specific endpoint or resource to which permission is granted to perform certain actions.
 
-- **PG:** [process_group_identifier]: Applies to the specified process group, including all sub process groups and process models.
+- **PG:** [process_group_identifier]: Applies to the specified process group, including all subprocess groups and process models.
 - **PM:** [process_model_identifier]: Applies to the specified process model.
 - **BASIC:** Allows basic access to complete tasks and use the site.
-- **SUPPORT:** BASIC permissions and add significant administrative permissions.
+- **SUPPORT:** BASIC permissions plus significant administrative permissions.
 - **ELEVATED:** Includes SUPPORT permissions and adds the ability to view and modify secrets. Does not include the ability to view or modify process groups and process models.
-- **ALL:** Grants access to all API endpoints, with no limitations.
+- **ALL:** Grants access to all API endpoints, without any limitations.
 
 ```{admonition} Note
-An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, `/process-models/*`, allows access to all resources related to process models. 
+An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, `/process-models/*`, allows access to all resources related to process models.
 ```
 
 This functionality is implemented in [authorization service.py](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py).
@@ -18,12 +18,12 @@ This functionality is implemented in [authorization service.py](https://github.c
 (pg)=
 ## PG
 
-Process Groups permissions controls access rights granted to users or entities within the given process group.
+Process Group permissions control the access rights granted to users or entities within the given process group.
 
 (pm)=
 ## PM
 
-These permissions relate to process models, and assigns permissions and access rights to users or entities specifically within a given process model.
+These permissions relate to process models and assign permissions and access rights to users or entities specifically within a given process model.
 
 ## BASIC
 
@@ -47,7 +47,7 @@ It provides administrator-level permissions, allowing the user to perform any ac
 
 ### ALL URLs
 
-% use bash syntax here to avoid syntax highlighting. otherwise it gets highlighted as if it's python
+% use bash syntax here to avoid syntax highlighting. otherwise, it gets highlighted as if it's python
 ```bash
   /active-users/unregister/{last_visited_identifier}:
   /active-users/updates/{last_visited_identifier}:
@@ -124,3 +124,4 @@ It provides administrator-level permissions, allowing the user to perform any ac
   /users/exists/by-username:
   /users/search:
 ```
+

@@ -286,7 +286,7 @@ export default function Extension({
       if (pageComponent && pageComponent.on_form_submit) {
         apiPathRaw = pageComponent.on_form_submit.api_path.replace(/^\/?/, '/');
         if (!pageComponent.on_form_submit.is_full_api_path) {
-          apiPathRaw = `${targetUris.extensionListPath}/${apiPathRaw}`;
+          apiPathRaw = `${targetUris.extensionListPath}${apiPathRaw}`;
         } else {
           postBody = dataToSubmit;
         }

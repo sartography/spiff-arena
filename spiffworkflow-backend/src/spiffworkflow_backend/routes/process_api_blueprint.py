@@ -487,15 +487,14 @@ def _task_submit_shared(
     )
 
     with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
-            ProcessInstanceService.complete_form_task(
-                processor=processor,
-                spiff_task=spiff_task,
-                data=body,
-                user=g.user,
-                human_task=human_task,
-                execution_mode=execution_mode,
-            )
+        ProcessInstanceService.complete_form_task(
+            processor=processor,
+            spiff_task=spiff_task,
+            data=body,
+            user=g.user,
+            human_task=human_task,
+            execution_mode=execution_mode,
+        )
 
     # currently task_model has the potential to be None. This should be removable once
     # we backfill the human_task table for task_guid and make that column not nullable

@@ -59,3 +59,7 @@ class InvalidRedirectUrlError(Exception):
 
 class TaskMismatchError(Exception):
     pass
+
+
+class PublishingAttemptWhileLockedError(Exception):
+    pass

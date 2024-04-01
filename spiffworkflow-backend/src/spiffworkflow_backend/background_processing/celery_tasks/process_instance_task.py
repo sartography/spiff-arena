@@ -17,6 +17,10 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskRunnab
 ten_minutes = 60 * 10
 
 
+class SpiffCeleryWorkerError(Exception):
+    pass
+
+
 @shared_task(ignore_result=False, time_limit=ten_minutes)
 def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
     proc_index = current_process().index
@@ -27,7 +31,7 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             ProcessInstanceService.run_process_instance_with_processor(
                 process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index
             )
-            processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
+            _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
                 additional_processing_identifier=proc_index,
@@ -47,12 +51,13 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             f" {str(exception)}"
         )
         return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
-    except Exception as e:
+    except Exception as exception:
         db.session.rollback()  # in case the above left the database with a bad transaction
         error_message = (
-            f"Error running process_instance {process_instance.id}" + f"({process_instance.process_model_identifier}). {str(e)}"
+            f"Error running process_instance {process_instance.id} "
+            + f"({process_instance.process_model_identifier}) and task_guid {task_guid}. {str(exception)}"
         )
         current_app.logger.error(error_message)
         db.session.add(process_instance)
         db.session.commit()
-        raise e
+        raise SpiffCeleryWorkerError(error_message) from exception
