@@ -1,5 +1,5 @@
 import { Select, SelectItem } from '@carbon/react';
-import { WidgetProps, processSelectValue } from '@rjsf/utils';
+import { WidgetProps, enumOptionsValueForIndex } from '@rjsf/utils';
 import { getCommonAttributes } from '../../helpers';
 
 function SelectWidget({
@@ -20,21 +20,21 @@ function SelectWidget({
   placeholder,
   rawErrors = [],
 }: WidgetProps) {
-  const { enumOptions } = options;
+  const { enumOptions, emptyValue: optEmptyVal } = options;
   let { enumDisabled } = options;
 
   const emptyValue = multiple ? [] : '';
 
   const _onChange = ({
     target: { value },
-  }: React.ChangeEvent<{ name?: string; value: unknown }>) =>
-    onChange(processSelectValue(schema, value, options));
+  }: React.ChangeEvent<{ name?: string; value: string }>) =>
+    onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
   const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
-    onBlur(id, processSelectValue(schema, value, options));
+    onBlur(id, enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
   const _onFocus = ({
     target: { value },
   }: React.FocusEvent<HTMLInputElement>) =>
-    onFocus(id, processSelectValue(schema, value, options));
+    onFocus(id, enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
 
   const commonAttributes = getCommonAttributes(
     label,

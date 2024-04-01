@@ -1,14 +1,14 @@
-# Articles ![data_input](images/articles.png) 
+# Articles ![data_input](images/articles.png)
 
 **[#1 - Build your own Low-Code Business Applications with SpiffWorkflow](https://medium.com/@danfunk/build-your-own-low-code-business-applications-with-spiffworkflow-1d0730acc1f3)**
 
-This article introduces SpiffWorkflow as a low-code application development tool using flow-chart diagrams. It emphasizes the involvement of clients in the architectural decision-making process and highlights the use of BPMN diagrams, user tasks, script tasks, and exclusive gateways. The article concludes by showcasing a Python code example for loading and executing BPMN diagrams with SpiffWorkflow.
+This article introduces SpiffWorkflow as a low-code application development tool that utilizes flow-chart diagrams. It emphasizes the involvement of clients in the architectural decision-making process and highlights the use of BPMN diagrams, user tasks, script tasks, and exclusive gateways. The article concludes by showcasing a Python code example for loading and executing BPMN diagrams with SpiffWorkflow.
 
 ----
 
 **[#2 - SpiffWorkflow, A New Hope](https://medium.com/@danfunk/spiffworkflow-a-new-hope-3f0c1dc72adb)**
 
-SpiffWorkflow empowers non-coders to control app logic using flow-chart diagrams. It emphasizes collaboration, integration, and future goals like custom diagram tools and process management. The article introduces components of the system and invites reader involvement.
+SpiffWorkflow empowers non-coders to control app logic using flow-chart diagrams. It emphasizes collaboration, integration, and future goals such as custom diagram tools and process management. The article introduces components of the system and invites reader involvement.
 
 ----
 
@@ -38,10 +38,10 @@ The article discusses low-code and no-code tools for software development, empha
 
 **[#7 - SpiffArena, the low-code visual workflow builder, awaits you like a clean canvas…](https://medium.com/@danfunk/spiffarena-the-low-code-visual-workflow-builder-awaits-you-like-a-clean-canvas-e7b9bd20ae71)**
 
-SpiffArena is a browser-based tool that allows you to create flow-chart-like diagrams for automating business workflows. It offers features like form builders, application connections, timers, custom APIs, and robust permissions. SpiffArena combines BPMN and Python to provide a powerful and configurable solution.
+SpiffArena is a browser-based tool that allows you to create flow-chart-like diagrams for automating business workflows. It offers features such as form builders, application connections, timers, custom APIs, and robust permissions. SpiffArena combines BPMN and Python to provide a powerful and configurable solution.
 
 ----
 
 **[#8 - A Visual Workflow Library for Python](https://medium.com/@danfunk/a-visual-workflow-library-for-python-d19e1387653)**
 
-SpiffWorkflow is a Python library that simplifies complex business logic by using BPMN diagrams, allowing non-developers to make changes to application flows. It improves communication within teams, increases contributions, and adapts to changing requirements. Visual software development environments like SpiffWorkflow are the future of solving complex problems.
+SpiffWorkflow is a Python library that simplifies complex business logic by using BPMN diagrams, allowing non-developers to make changes to application flows. It improves communication within teams, increases contributions, and adapts to changing requirements. Visual software development environments like SpiffWorkflow represent the future of solving complex problems.

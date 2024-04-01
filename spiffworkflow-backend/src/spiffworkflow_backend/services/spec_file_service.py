@@ -30,7 +30,6 @@ class ProcessModelFileInvalidError(Exception):
 
 
 class SpecFileService(FileSystemService):
-
     """We store spec files on the file system. This allows us to take advantage of Git for
     syncing and versioning.
      The files are stored in a directory whose path is determined by the category and spec names.

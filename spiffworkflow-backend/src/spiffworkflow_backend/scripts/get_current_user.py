@@ -1,4 +1,5 @@
 """Get current user."""
+
 from typing import Any
 
 from flask import g

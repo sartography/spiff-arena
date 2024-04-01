@@ -308,6 +308,13 @@ export default function ProcessInstanceListTable({
     return titleizeString((value || '').replaceAll('_', ' '));
   };
 
+  const formatDurationForDisplayForTable = (_row: any, value: any) => {
+    return DateAndTimeService.formatDurationForDisplay(value);
+  };
+  const formatDateTimeForTable = (_row: any, value: any) => {
+    return DateAndTimeService.formatDateTime(value);
+  };
+
   const formatSecondsForDisplay = (_row: ProcessInstance, seconds: any) => {
     return DateAndTimeService.convertSecondsToFormattedDateTime(seconds) || '-';
   };
@@ -330,8 +337,8 @@ export default function ProcessInstanceListTable({
       last_milestone_bpmn_name: formatLastMilestone,
     };
     const displayTypeFormatters: Record<string, any> = {
-      date_time: DateAndTimeService.formatDateTime,
-      duration: DateAndTimeService.formatDurationForDisplay,
+      date_time: formatDateTimeForTable,
+      duration: formatDurationForDisplayForTable,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type

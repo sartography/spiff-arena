@@ -13,7 +13,7 @@ Here are the ways to create forms:
 
 1. Leveraging JSON Schema
 
-JSON Schema is an standard for describing the structure of data in a JSON file.
+JSON Schema is a standard for describing the structure of data in a JSON file.
 JSON Schema forms the foundation for building forms in SpiffArena.
 
 To simplify the form creation process, we leverage the React JSON Schema Form (RJSF) library.
@@ -38,7 +38,7 @@ While the form builder provides convenience and simplicity, using the JSON edito
 
 3. Creating Forms from BPMN Editor
 
-To create forms inside editor, we utilize user tasks within the BPMN file.
+To create forms inside the editor, we utilize user tasks within the BPMN file.
 Upon creating a new BPMN file, open it to access the editor.
 
 **Initiating the Form Editor**
@@ -72,7 +72,7 @@ SpiffArena has enhanced the capabilities of react-jsonschema-form to provide use
 
 ### Dynamic Enumerations
 
-Dynamic enumerations allow you to provide users with a list of options (in a select / dropdown) that can change based on variables in the process instance.
+Dynamic enumerations allow you to provide users with a list of options (in a select/dropdown) that can change based on variables in the process instance.
 This feature is useful when you want to present users with choices based on an external data source or based on something that happened while the process was running.
 To implement dynamic enumerations, update the list of enumeration values by setting a variable in task data.
 In a script task, that would look like this:
@@ -94,11 +94,11 @@ In a script task, that would look like this:
 
 Instead of using a script task to define the options directly, you could request information from a user using a form, access an API, or query an external database.
 
-Then use json like this (note the `options_from_task_data_var:fruits`) when defining the form in order to pull information from the variable called `fruits` that you defined in task data:
+Then use JSON like this (note the `options_from_task_data_var:fruits`) when defining the form in order to pull information from the variable called `fruits` that you defined in task data:
 
     {
         "title": "Dropdown list",
-        "description": "A dropdown list with options pulled form existing Task Data. IMPORTANT - Add 'fruits' to Task Data before using this component!!!",
+        "description": "A dropdown list with options pulled from existing Task Data. IMPORTANT - Add 'fruits' to Task Data before using this component!!!",
         "type": "object",
         "properties": {
             "favoriteFruit": {
@@ -133,7 +133,7 @@ You will use this feature when building forms that involve specifying date inter
 
 Use a date range selector by creating a form field using the following structure:
 
-Example for json schema:
+Example for JSON schema:
 
     "travel_date_range": {
         "type": "string",
@@ -156,12 +156,12 @@ Date validation when compared to another date allows you to ensure that a date f
 #### Minimum date validation
 For instance, you can require that a date must be equal to or greater than another date within the form.
 
-- To implement date validation compared to another date, use the your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
+- To implement date validation compared to another date, use your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
 
 - "start_or_end" can be either "start" or "end".
-  You can choose to use end if the reference field is part of a range.
+  You can choose to use "end" if the reference field is part of a range.
 
-This is an example where end_date must be after start_date:
+This is an example where the end_date must be after the start_date:
 
     "end_date": {
       "type": "string",
@@ -174,7 +174,7 @@ These enhancements provide you with more flexibility and control when building f
 
 #### Maximum date validation
 
-Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form. This type of validation is particularly useful for setting deadlines, end dates, or latest possible dates that are contingent on other dates in the workflow.
+Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form. This type of validation is particularly useful for setting deadlines, end dates, or the latest possible dates that are contingent on other dates in the workflow.
 
 To apply maximum date validation in your JSON schema, use the `maximumDate` property and specify the field to compare with, using the format `field:field_name`. This ensures that the date chosen does not exceed the referenced field's date.
 
@@ -191,7 +191,7 @@ Here’s an example where `delivery_date` must be on or before `end_date`:
 
 If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
 
-These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where a latest permissible date is a factor.
+These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
 
 By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
 
@@ -286,11 +286,11 @@ The `ui:layout` attribute accepts an array of objects, each representing a conce
 
 #### Example Illustrated:
 
-In this case, we are saying that we want firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
-We are saying that firstName should take up 4 columns when a large display is used.
+In this case, we are saying that we want the firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
+We are saying that the firstName should take up 4 columns when a large display is used.
 The lastName also takes up 4 columns, so the two of them together fill up the whole row, which has 8 columns available for large displays.
 Medium displays have 5 columns available and small displays have 4.
-If you just specific a uiSchema like this, it will figure out the column widths for you:
+If you just specify a uiSchema like this, it will figure out the column widths for you:
 
     {
       "ui:layout": [
@@ -368,7 +368,7 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 
 #### Overview
 
-The `NumericRangeField` component is a new feature in the `spiffworkflow-frontend` that allows users to input numeric ranges. This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
+The `NumericRangeField` component is a new feature in `spiffworkflow-frontend` that allows users to input numeric ranges. This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
 
 #### JSON Schema Example
 

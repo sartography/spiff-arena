@@ -1,4 +1,5 @@
 """Get current user."""
+
 from typing import Any
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel

@@ -147,7 +147,7 @@ const secondsToDuration = (secNum: number) => {
   return duration;
 };
 
-const formatDurationForDisplay = (_row: any, value: any) => {
+const formatDurationForDisplay = (value: any) => {
   if (value === undefined) {
     return undefined;
   }
@@ -171,7 +171,7 @@ const formatDurationForDisplay = (_row: any, value: any) => {
   return durationTimes.join(' ');
 };
 
-const formatDateTime = (_row: any, value: any) => {
+const formatDateTime = (value: any) => {
   if (value === undefined || value === null) {
     return value;
   }
