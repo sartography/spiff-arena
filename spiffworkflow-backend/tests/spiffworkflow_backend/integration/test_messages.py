@@ -69,8 +69,7 @@ class TestMessages(BaseTest):
         # The process has completed
         assert process_instance.status == "complete"
 
-    # TODO: skipping for now to get tests passing for easier tests-par
-    def skip_test_message_model_list_up_search(
+    def test_message_model_list_up_search(
         self,
         app: Flask,
         client: FlaskClient,
@@ -80,10 +79,11 @@ class TestMessages(BaseTest):
         self.copy_example_process_models()
         DataSetupService.save_all_process_models()
         response = client.get(
-            "/v1.0/message-models?relative_location=1-basic-concepts",
+            "/v1.0/message-models?relative_location=examples/1-basic-concepts",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
         )
+        print(response.json)
         assert response.json is not None
         assert len(response.json["messages"]) == 4
 
@@ -93,7 +93,7 @@ class TestMessages(BaseTest):
             content_type="application/json",
         )
         assert response.json is not None
-        assert len(response.json["messages"]) == 3, "should not have access to messages defined in a sub directory"
+        assert len(response.json["messages"]) == 0, "should not have access to messages defined in a sub directory"
 
     # TODO: commenting out for now to get tests passing for easier tests-par/linting
     # def testupdate_process_model_xml_with_message_details(
