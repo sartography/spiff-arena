@@ -393,19 +393,17 @@ Below is an example JSON schema that includes the numeric range field:
     "numericRange": {
       "type": "object",
       "title": "Numeric Range",
-      "properties": {
-        "min": {
+        "minimum": {
           "type": "number",
           "title": "Minimum Value"
         },
-        "max": {
+        "maximum": {
           "type": "number",
           "title": "Maximum Value"
         }
       }
     }
   }
-}
 ```
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
@@ -423,3 +421,45 @@ This schema defines a numeric range object with `min` and `max` properties, both
 #### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
+
+
+### Adding a New Button for Repeating Sections in Forms
+
+Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status. 
+
+This structure can be represented in the form's schema as follows:
+
+```json
+{
+  "title": "Nested Form / Repeating Section",
+  "description": "Allow the form submitter to add multiple entries for a set of fields.",
+  "type": "object",
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "title": "Tasks",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Please describe the task to complete"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done?",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}
+```
+**Form Preview**: 
+
+![Nested Forms](images/Nested_form_display.png)
+
+By usign this feature, you can effectively implement new buttons for nested forms or repeating sections improving the form's usability for collecting multiple related entries from users.
