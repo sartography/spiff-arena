@@ -102,7 +102,8 @@ export default function BaseInputTemplate<
     // it should in be y-m-d when it gets here.
     let dateValue: string | null = value;
     if (value || value === 0) {
-      // assume the length of the date string should match the length of the format including delimiters
+      // it would be good if we could compare against the length of the desired format but that doesn't work in all cases and causes some issues.
+      // 10 seems to be a good value check against.
       if (value.length < 10) {
         dateValue = value;
       } else {
