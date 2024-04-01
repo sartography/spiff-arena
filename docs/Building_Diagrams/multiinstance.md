@@ -45,7 +45,6 @@ Specifically, the process manages a list of composers, their names, and genres, 
 
  1. **Start Event**: Marks the initiation of the process.
 #### 1. **Start Event**:
->>>>>>> origin/main
 
 2. **Script Task - Create Dictionary**: This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre. The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
 
