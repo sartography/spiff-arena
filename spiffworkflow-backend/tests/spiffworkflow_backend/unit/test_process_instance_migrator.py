@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_migrations.version_4 import Version4
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -119,6 +120,8 @@ class TestProcessInstanceMigrator(BaseTest):
             "bpmn_process_id": process_instance.bpmn_process_id,
         }
 
+        process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
+        pi_events_count_before = len(process_instance_events)
         Version4.run(process_instance)
         update_data_objects(bpmn_process_dict_version_4_from_spiff)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
@@ -152,3 +155,7 @@ class TestProcessInstanceMigrator(BaseTest):
         for bpmn_process in bpmn_processes:
             for task_model in bpmn_process.tasks:
                 assert task_model.task_definition.bpmn_process_definition_id == bpmn_process.bpmn_process_definition_id
+
+        process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
+        pi_events_count_after = len(process_instance_events)
+        assert pi_events_count_before == pi_events_count_after

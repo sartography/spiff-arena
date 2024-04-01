@@ -20,7 +20,10 @@ class Version4(DataMigrationBase):
             bpmn_process_dict = processor.serialize()
             update_data_objects(bpmn_process_dict)
             ProcessInstanceProcessor.persist_bpmn_process_dict(
-                bpmn_process_dict, bpmn_definition_to_task_definitions_mappings={}, process_instance_model=process_instance
+                bpmn_process_dict,
+                bpmn_definition_to_task_definitions_mappings={},
+                process_instance_model=process_instance,
+                store_process_instance_events=False,
             )
 
         except Exception as ex:
