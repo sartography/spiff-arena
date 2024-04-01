@@ -42,19 +42,6 @@ def reference_cache_list(
     return make_response(jsonify(response_json), 200)
 
 
-def message_model_list_old(
-    relative_location: str | None = None,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
-    return reference_cache_list(
-        cache_type=ReferenceType.message.value,
-        relative_location=relative_location,
-        page=page,
-        per_page=per_page,
-    )
-
-
 def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
     # Returns all the messages and correlation properties that exist at the given
     # relative location or higher in the directory tree.
