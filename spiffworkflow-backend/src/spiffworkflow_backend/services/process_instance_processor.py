@@ -498,6 +498,7 @@ class ProcessInstanceProcessor:
         bpmn_process_dict: dict,
         bpmn_definition_to_task_definitions_mappings: dict,
         process_instance_model: ProcessInstanceModel,
+        store_process_instance_events: bool = True,
     ) -> None:
         cls._add_bpmn_process_definitions(
             bpmn_process_dict,
@@ -516,7 +517,9 @@ class ProcessInstanceProcessor:
         bpmn_process_instance = cls._serializer.from_dict(process_copy)
         bpmn_process_instance.script_engine = cls._default_script_engine
         for spiff_task in bpmn_process_instance.get_tasks():
-            task_service.update_task_model_with_spiff_task(spiff_task)
+            task_service.update_task_model_with_spiff_task(
+                spiff_task, store_process_instance_events=store_process_instance_events
+            )
         task_service.save_objects_to_database()
         db.session.commit()
 
