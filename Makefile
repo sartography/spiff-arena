@@ -34,7 +34,7 @@ all: dev-env start-dev run-pyl
 build-images:
 	$(DOCKER_COMPOSE) build
 
-dev-env: stop-dev build-images poetry-i be-poetry-i be-recreate-db fe-npm-i
+dev-env: stop-dev build-images poetry-i be-poetry-i be-db-clean fe-npm-i
 	@/bin/true
 
 start-dev: stop-dev
