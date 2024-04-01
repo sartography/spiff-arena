@@ -6,10 +6,15 @@ import {
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
+import { parse } from 'date-fns';
 
 import { useCallback } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { DATE_FORMAT_CARBON, DATE_FORMAT_FOR_DISPLAY } from '../../../config';
+import {
+  DATE_FORMAT,
+  DATE_FORMAT_CARBON,
+  DATE_FORMAT_FOR_DISPLAY,
+} from '../../../config';
 import DateAndTimeService from '../../../services/DateAndTimeService';
 import { getCommonAttributes } from '../../helpers';
 
@@ -73,8 +78,12 @@ export default function BaseInputTemplate<
   );
 
   const addDebouncedOnChangeDate = useDebouncedCallback(
-    (target: React.ChangeEvent<HTMLInputElement>) => {
-      _onChange(target);
+    (fullObject: React.ChangeEvent<HTMLInputElement>) => {
+      fullObject.target.value =
+        DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
+          fullObject.target.value
+        );
+      _onChange(fullObject);
     },
     // delay in ms
     1000
@@ -93,6 +102,7 @@ export default function BaseInputTemplate<
     // it should in be y-m-d when it gets here.
     let dateValue: string | null = value;
     if (value || value === 0) {
+      // assume the length of the date string should match the length of the format including delimiters
       if (value.length < 10) {
         dateValue = value;
       } else {

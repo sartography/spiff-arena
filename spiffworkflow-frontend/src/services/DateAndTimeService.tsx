@@ -147,6 +147,28 @@ const secondsToDuration = (secNum: number) => {
   return duration;
 };
 
+const attemptToConvertUnknownDateStringFormatToKnownFormat = (
+  dateString: string
+) => {
+  let newDateString = dateString;
+  if (dateString.length >= 10) {
+    // if the date format should contain month names or abbreviations but does not have letters
+    // then attempt to parse in the same format but with digit months instead of letters
+    if (!dateString.match(/.*[a-zA-Z]+.*/) && DATE_FORMAT.match(/MMM/)) {
+      const newDate = parse(
+        dateString,
+        DATE_FORMAT.replaceAll(/MMM*/g, 'MM'),
+        new Date()
+      );
+      newDateString = convertDateObjectToFormattedString(newDate) || '';
+    } else {
+      const newDate = new Date(Date.parse(dateString));
+      newDateString = convertDateObjectToFormattedString(newDate) || '';
+    }
+  }
+  return newDateString;
+};
+
 const formatDurationForDisplay = (value: any) => {
   if (value === undefined) {
     return undefined;
@@ -193,6 +215,7 @@ const DateAndTimeService = {
   REFRESH_INTERVAL_SECONDS,
   REFRESH_TIMEOUT_SECONDS,
 
+  attemptToConvertUnknownDateStringFormatToKnownFormat,
   convertDateAndTimeStringsToDate,
   convertDateAndTimeStringsToSeconds,
   convertDateObjectToFormattedHoursMinutes,
