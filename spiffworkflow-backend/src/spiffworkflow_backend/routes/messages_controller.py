@@ -8,6 +8,7 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
@@ -59,8 +60,24 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     # relative location or higher in the directory tree.
     locations = UpsearchService.upsearch_locations(relative_location)
     messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
+    print(messages)
 
-    return make_response(jsonify({"messages": messages}), 200)
+    def correlation_property_response(correlation_property):
+        return {
+            "identifier": correlation_property.identifier,
+            "retrieval_expression": correlation_property.retrieval_expression,
+        }
+
+    def message_response(message):
+        return {
+            "identifier": message.identifier,
+            "location": message.location,
+            "schema": message.schema,
+            "correlation_properties": [correlation_property_response(cp) for cp in message.correlation_properties],
+        }
+
+    return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
+    #return make_response(jsonify({"messages": messages}), 200)
 
 
 def correlation_key_list(

@@ -86,6 +86,7 @@ class TestMessages(BaseTest):
         print(response.json)
         assert response.json is not None
         assert len(response.json["messages"]) == 4
+        assert False
 
         response = client.get(
             "/v1.0/message-models?relative_location=",
