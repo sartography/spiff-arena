@@ -249,7 +249,6 @@ class SpecFileService(FileSystemService):
     def update_caches_except_process(ref: Reference) -> None:
         SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
-        # SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
     def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
