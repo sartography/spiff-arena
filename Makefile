@@ -46,6 +46,12 @@ stop-dev:
 be-clear-log-file:
 	$(IN_BACKEND) rm -f log/unit_testing.log
 
+be-db-clean:
+	$(IN_BACKEND) ./bin/recreate_db clean
+
+be-db-migrate:
+	$(IN_BACKEND) ./bin/recreate_db migrate
+
 be-logs:
 	docker logs -f $(BACKEND_CONTAINER)
 
@@ -62,9 +68,6 @@ be-poetry-rm:
 	@if [ -d "$(BACKEND_CONTAINER)/.venv" ]; then \
 		rm -rf "$(BACKEND_CONTAINER)/.venv"; \
 	fi
-
-be-recreate-db:
-	$(IN_BACKEND) ./bin/recreate_db clean
 
 be-sh:
 	$(IN_BACKEND) /bin/bash
@@ -120,7 +123,7 @@ take-ownership:
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
-	be-recreate-db be-sh be-sqlite be-tests be-tests-par \
+	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-i fe-sh \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
