@@ -11,10 +11,13 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
+from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 
@@ -72,6 +75,13 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
 
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
+
+    all_message_models: dict[tuple[str, str], MessageModel] = {}
+    MessageDefinitionService.collect_message_models(process_group, process_group_id, all_message_models)
+    MessageDefinitionService.delete_message_models_at_location(process_group_id)
+    MessageDefinitionService.save_all_message_models(all_message_models)
+    db.session.commit()
+
     _commit_and_push_to_git(f"User: {g.user.username} updated process group {process_group_id}")
     return make_response(jsonify(process_group), 200)
 

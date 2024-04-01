@@ -1,24 +1,15 @@
-import os
 from typing import Any
 
 from flask import current_app
 
-from spiffworkflow_backend.data_stores.json import JSONDataStore
-from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
-from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
+
 
 class MessageDefinitionService:
-    
+
     @classmethod
     def _message_model_from_message(cls, message: dict[str, Any], file: str) -> MessageModel | None:
         identifier = message.get("id")
@@ -91,3 +82,18 @@ class MessageDefinitionService:
 
             message_model.correlation_properties = correlation_property_models  # type: ignore
 
+    @classmethod
+    def delete_all_message_models(cls) -> None:
+        MessageModel.query.delete()
+
+    @classmethod
+    def delete_message_models_at_location(cls, location: str) -> None:
+        MessageModel.query.filter_by(location=location).delete()
+
+    @classmethod
+    def save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:
+        for message_model in all_message_models.values():
+            db.session.add(message_model)
+
+            for correlation_property_model in message_model.correlation_properties:
+                db.session.add(correlation_property_model)
