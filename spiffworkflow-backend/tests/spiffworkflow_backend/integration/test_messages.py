@@ -83,10 +83,8 @@ class TestMessages(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
         )
-        print(response.json)
         assert response.json is not None
         assert len(response.json["messages"]) == 4
-        assert False
 
         response = client.get(
             "/v1.0/message-models?relative_location=",

@@ -60,15 +60,14 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     # relative location or higher in the directory tree.
     locations = UpsearchService.upsearch_locations(relative_location)
     messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
-    print(messages)
 
-    def correlation_property_response(correlation_property):
+    def correlation_property_response(correlation_property: MessageCorrelationPropertyModel) -> dict[str, str]:
         return {
             "identifier": correlation_property.identifier,
             "retrieval_expression": correlation_property.retrieval_expression,
         }
 
-    def message_response(message):
+    def message_response(message: MessageModel) -> dict[str, Any]:
         return {
             "identifier": message.identifier,
             "location": message.location,
@@ -77,7 +76,6 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
         }
 
     return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
-    #return make_response(jsonify({"messages": messages}), 200)
 
 
 def correlation_key_list(
