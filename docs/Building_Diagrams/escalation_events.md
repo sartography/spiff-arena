@@ -91,6 +91,7 @@ The application of the last example aligns with the first, where the escalation 
 It's crucial to remember that whether a process is created or terminated in these contexts depends on whether non-interrupting or interrupting events are utilized.
 
 ## Configuring Escalation Events Properties
+
 Setting up an escalation event within a workflow in SpiffWorkflow involves defining both the escalation trigger (throw event) and the point where the escalation is handled (catch event).
 
 Here's how to set up these components:
@@ -115,7 +116,8 @@ Here's how to set up these components:
 **Define the Escalation Catch Event**:
 This can be a boundary event attached to a task where the escalation should be caught and handled, or an intermediate event in the workflow where the escalation process converges.
 
-For a boundary catch event, attach it to the task designated to handle the escalation. For an intermediate catch event, place it at the appropriate point in the process flow.
+For a boundary catch event, attach it to the task designated to handle the escalation.
+For an intermediate catch event, place it at the appropriate point in the process flow.
 
 ![Escalation Order](images/Escalation_Order_2.png)
 

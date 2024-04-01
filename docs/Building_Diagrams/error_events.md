@@ -1,6 +1,7 @@
 # Error Events
 
-Error Events in Business Process Model and Notation (BPMN) are pivotal in managing exceptions and errors that occur within business process workflows. These events enable processes to handle errors gracefully, ensuring that workflows are robust, resilient, and capable of addressing unforeseen issues efficiently.
+Error Events in Business Process Model and Notation (BPMN) are pivotal in managing exceptions and errors that occur within business process workflows.
+These events enable processes to handle errors gracefully, ensuring that workflows are robust, resilient, and capable of addressing unforeseen issues efficiently.
 Below, we delve into the types of Error Events, offering definitions and enriched context for their practical applications.
 
 ## Types of Error Events
@@ -9,7 +10,8 @@ Below, we delve into the types of Error Events, offering definitions and enriche
 
 ![Error Start Event](images/error-events1.png)
 
-The Error Start Event triggers the start of a subprocess in reaction to an error identified in a different process or subprocess. It is a specialized event used to initiate error handling workflows dynamically.
+The Error Start Event triggers the start of a subprocess in reaction to an error identified in a different process or subprocess.
+It is a specialized event used to initiate error handling workflows dynamically.
 
 **Reason to Use**:
 - **Modular Error Handling**: Separates error handling logic into dedicated subprocesses, improving process organization and maintainability.
@@ -27,6 +29,7 @@ In an automated supply chain system, an Error Start Event initiates a "Supplier 
 ```
 
 ### 2. Error Intermediate Event/Error Boundary Event
+
 ![Error intermediate Event](images/error_intermediate_event.png)
 
 An Error Boundary Event is attached to an activity, such as a service task, and is designed to catch errors that occur during the execution of that activity, allowing for an immediate transition to an error handling flow.
@@ -43,7 +46,10 @@ Positioned within the normal flow of a process, this event signifies where an er
 
 ![Error Boundary Event Error Event](images/error_boundary_event.png)
 
-In a customer order workflow, when payment is initiated, a "Process Payment" service task interacts with an external gateway. An attached Error Boundary Event catches errors like "Payment Gateway Timeout" or "Payment Declined." For timeouts, the process redirects to "Retry Payment," allowing another attempt or urging the customer to use a different method. This setup ensures efficient error handling, guiding the process toward resolution based on the error type.
+In a customer order workflow, when payment is initiated, a "Process Payment" service task interacts with an external gateway.
+An attached Error Boundary Event catches errors like "Payment Gateway Timeout" or "Payment Declined."
+For timeouts, the process redirects to "Retry Payment," allowing another attempt or urging the customer to use a different method.
+This setup ensures efficient error handling, guiding the process toward resolution based on the error type.
 
 ### 3. Error End Event
 
@@ -60,10 +66,13 @@ This event marks the termination of a process path due to an error, signaling th
 
 ![Error End Event](images/ErrorEndEventExample.png)
 
-In a retail inventory management workflow, an End Error Event within a stock replenishment subprocess indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved. This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
+In a retail inventory management workflow, an End Error Event within a stock replenishment subprocess indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved.
+This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
 
 ## Example 1:  Error Boundary Events in SpiffArena
-In this example, we're modeling a process in BPMN that involves fetching employee data from an external HR system (BambooHR) and handling potential errors using an Error Boundary Event. This process begins with a simple task and moves through a service task designed to interact with the BambooHR API, with specific error handling in place.
+
+In this example, we're modeling a process in BPMN that involves fetching employee data from an external HR system (BambooHR) and handling potential errors using an Error Boundary Event.
+This process begins with a simple task and moves through a service task designed to interact with the BambooHR API, with specific error handling in place.
 
 ### Process Overview:
 
@@ -92,7 +101,8 @@ Prior to the service task's execution, one potential error ID (`error_0`) is def
 
 ![Error Event](images/error_event_example5.png)
 
-Attached to the service task, this event catches `error_0` ("Invalid Schema"), setting an alternative path for error handling. The error details are stored in a variable named `err0`.
+Attached to the service task, this event catches `error_0` ("Invalid Schema"), setting an alternative path for error handling.
+The error details are stored in a variable named `err0`.
 
 5. **Manual Tasks for Error Handling and Success Path**:
 
@@ -106,13 +116,17 @@ Both paths conclude with an End Event, signifying the process's completion regar
 
 ### Explanation:
 
-The process starts when a department manager requests the details of an employee for performance evaluation. The service task activates, attempting to fetch the requested data from BambooHR. If the data retrieved does not match the expected schema—perhaps due to an API update or misconfiguration—the Error Boundary Event triggers, diverting the process to a corrective task.
+The process starts when a department manager requests the details of an employee for performance evaluation.
+The service task activates, attempting to fetch the requested data from BambooHR.
+If the data retrieved does not match the expected schema—perhaps due to an API update or misconfiguration—the Error Boundary Event triggers, diverting the process to a corrective task.
 
-Here, an IT specialist might investigate the schema issue, adjust the service task's parameters, or manually retrieve the required information. Concurrently, the successful execution path without errors would lead directly to the HR department for immediate use of the employee data, streamlining departmental operations and decision-making.
+Here, an IT specialist might investigate the schema issue, adjust the service task's parameters, or manually retrieve the required information.
+Concurrently, the successful execution path without errors would lead directly to the HR department for immediate use of the employee data, streamlining departmental operations and decision-making.
 
 This BPMN example highlights the utility of Error Boundary Events in ensuring process resilience, especially when integrating external services.
 
 ## Example 2:  Error Boundary Events in Subprocess
+
 In this example, we're outlining a BPMN process that demonstrates how to handle errors within an expanded subprocess and subsequently manage the error through an Error Boundary Event.
 
 ### Process Description:
@@ -127,7 +141,11 @@ The process is triggered by a user action or system event, setting the stage for
 
 ![Error Event](images/error_boundary_event_with_expanded-subprocess2.png)
 
-This element encapsulates a more detailed process flow within itself, starting with its own Start Event and comprising several tasks. The **Start Event** marks the beginning of the subprocess. Next, the **Manual Task 1** represents an initial activity within the subprocess that could be anything from data entry to review by a human operator. Then the Error End Event is used to throw an error within the process. The setup of the error end event is:
+This element encapsulates a more detailed process flow within itself, starting with its own Start Event and comprising several tasks.
+The **Start Event** marks the beginning of the subprocess.
+Next, the **Manual Task 1** represents an initial activity within the subprocess that could be anything from data entry to review by a human operator.
+Then the Error End Event is used to throw an error within the process.
+The setup of the error end event is:
 
 - **Error ID Setup**
 
@@ -144,7 +162,8 @@ Configured to represent the occurrence of Error1, with an error code "Err1" and 
 
 ![Error Event](images/error_boundary_event_with_expanded-subprocess4.png)
 
-Attached to the Expanded Subprocess, an Error Boundary Event is designed to catch Error1 emanating from the subprocess, particularly from the Error End Event. The error caught is identified by the code "Err1", and its details are captured in a variable named `message`.
+Attached to the Expanded Subprocess, an Error Boundary Event is designed to catch Error1 emanating from the subprocess, particularly from the Error End Event.
+The error caught is identified by the code "Err1", and its details are captured in a variable named `message`.
 
 4. **Manual Task**
 
@@ -164,4 +183,5 @@ This example demonstrates the utility of expanded subprocesses for detailed inte
 
 ### Conclusion
 
-Error Events in BPMN offer a nuanced approach to managing errors within business processes. By defining Error Start, End, and Boundary Events, BPMN provides process designers with the tools necessary to anticipate, signal, and handle errors efficiently.
+Error Events in BPMN offer a nuanced approach to managing errors within business processes.
+By defining Error Start, End, and Boundary Events, BPMN provides process designers with the tools necessary to anticipate, signal, and handle errors efficiently.

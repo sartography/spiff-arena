@@ -2,7 +2,9 @@
 
 ## Introduction
 
-The welcome message is the greeting users see when they log into the platform. It sets the tone for their experience and can be customized to fit the needs of your organization or specific user groups. By customizing the welcome message, **administrators** can tailor the user experience, making it more personalized and relevant to the audience.
+The welcome message is the greeting users see when they log into the platform.
+It sets the tone for their experience and can be customized to fit the needs of your organization or specific user groups.
+By customizing the welcome message, **administrators** can tailor the user experience, making it more personalized and relevant to the audience.
 
 This guide will walk you through the steps to modify this message in SpiffWorkflow.
 
@@ -30,4 +32,5 @@ Navigate to the onboarding process model within SpiffWorkflow.
 
    After making your desired modifications, save the changes to update the welcome message.
 
-Once you've updated the welcome message, it will be displayed prominently on the home page after users log in. The message will be positioned in a way that it's one of the first things users see, ensuring they receive the intended greeting every time they access the platform.
+Once you've updated the welcome message, it will be displayed prominently on the home page after users log in.
+The message will be positioned in a way that it's one of the first things users see, ensuring they receive the intended greeting every time they access the platform.

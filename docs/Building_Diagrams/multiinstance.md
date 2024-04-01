@@ -6,17 +6,21 @@ Multi-instance tasks can be configured to run either in parallel, where all inst
 ## **Sequential Execution**
 
 Tasks are executed one after another, ensuring that each task instance begins only after the previous one has completed.
-In the case of a sequential multi-instance activity, the instances are executed one at a time. When one instance is completed, a new instance is created for the next element in the inputCollection.
+In the case of a sequential multi-instance activity, the instances are executed one at a time.
+When one instance is completed, a new instance is created for the next element in the inputCollection.
 
 ![Multi_instance_Sequential](images/multiinstance_sequential_example.png)
 
 ## **Parallel Execution**
 
-All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements. In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated. The instances are executed concurrently and independently from each other.
+All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements.
+In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated.
+The instances are executed concurrently and independently from each other.
 
 ![Multi_instance_parallel](images/multiinstance_parallel_example.png)
 
 ## Components of Multi-Instance Tasks
+
 Multi-instance tasks comprise several key properties that define their behavior:
 
 ```{image} ./images/multiinstance_properties.png
@@ -44,9 +48,8 @@ Specifically, the process manages a list of composers, their names, and genres, 
 ### Process Overview:
 
  1. **Start Event**: Marks the initiation of the process.
-#### 1. **Start Event**:
 
-2. **Script Task - Create Dictionary**: This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre. The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
+ 2. **Script Task - Create Dictionary**: This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre. The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
 
 ![Multi_instance_example](images/multiinstance_example2.png)
 
@@ -93,9 +96,10 @@ This templating syntax iterates over the `composers` array, displaying each comp
 
 ### Summary:
 
-This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks. By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
+This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks.
+By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
 
-## Loops
+### Loops
 
 Standard loops in Business Process Model and Notation (BPMN) are a fundamental mechanism to model repetitive tasks within a workflow. These loops allow for the execution of a specific task or sequence of tasks repeatedly until a predefined condition is met, mirroring traditional loop constructs found in programming languages. 
 

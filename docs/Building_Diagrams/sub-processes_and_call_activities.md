@@ -1,6 +1,7 @@
 # Sub-Processes and Call Activities
 
-Sub-processes and call activities are both useful for simplifying and organizing complex workflows within larger processes. They serve distinct purposes and are used in different scenarios.
+Sub-processes and call activities are both useful for simplifying and organizing complex workflows within larger processes.
+They serve distinct purposes and are used in different scenarios.
 
 **Reasons to use Sub-Processes or Call Activities:**
 
@@ -12,7 +13,9 @@ Sub-processes and call activities are both useful for simplifying and organizing
 
 ![active_call_process](images/active_call_process.png)
 
-A Call Process is similar to a Sub-Process in that it encapsulates part of a workflow, but it is designed to be reused across multiple different processes. It's essentially a stand-alone process that can be "called" into action as required by other processes. Using a Call Process can help to eliminate redundancy and ensure consistent execution of the process steps.
+A Call Process is similar to a Sub-Process in that it encapsulates part of a workflow, but it is designed to be reused across multiple different processes.
+It's essentially a stand-alone process that can be "called" into action as required by other processes.
+Using a Call Process can help to eliminate redundancy and ensure consistent execution of the process steps.
 
 **When to use a Call Process:**
 

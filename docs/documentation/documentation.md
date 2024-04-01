@@ -25,7 +25,8 @@ This is called [Ventilated Prose](https://vanemden.wordpress.com/2009/01/01/vent
 You won't be writing the documentation in a word processor, but in simple plain text, and some special syntax that will consistently and professionally format that text.
 
 The basic Markdown syntax is very simple.
-Here are some [quick examples](https://commonmark.org/help/). And here is a great [10 minute tutorial](https://commonmark.org/help/tutorial/).
+Here are some [quick examples](https://commonmark.org/help/).
+And here is a great [10 minute tutorial](https://commonmark.org/help/tutorial/).
 This will cover a lot of the basics, like bolding text, italics, paragraphs, lists and other common formatting techniques.
 
 ![Markdown screenshot](./images/markdown.png "Markdown example")
@@ -45,7 +46,8 @@ This is a large documentation effort.
 Many different Markdown pages will together make up the full website.
 
 You will mostly use Sphinx in the background - you won't even be aware of it.
-But if you decide that you want to alter the theme (the colors, styles, etc.) of the final website, Sphinx controls this and offers [themes](https://sphinx-themes.org/) and the ability to change styles/colors and formatting throughout the site.
+But if you decide that you want to alter the theme (the colors, styles, etc.)
+of the final website, Sphinx controls this and offers [themes](https://sphinx-themes.org/) and the ability to change styles/colors and formatting throughout the site.
 You just need to learn a little CSS to control it.
 
 
