@@ -39,13 +39,14 @@ import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
+  getGroupFromModifiedModelId,
   makeid,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
-  ProcessFile,
+  ProcessFile, ProcessGroup,
   ProcessModel,
   ProcessReference,
 } from '../interfaces';
@@ -56,6 +57,7 @@ import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import SpiffTooltip from '../components/SpiffTooltip';
+import { MessageEditor } from '../components/messages/MessageEditor';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -79,6 +81,8 @@ export default function ProcessModelEditDiagram() {
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [showMessageEditor, setShowMessageEditor] = useState(false);
+  const [messageId, setMessageId] = useState<string>('');
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
@@ -91,6 +95,8 @@ export default function ProcessModelEditDiagram() {
   const [setMessageEventBus] = useState<any>(null);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
+
+  const handleShowMessageEditor = () => setShowMessageEditor(true);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -1049,6 +1055,42 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
+  const onLaunchMessageEditor = (
+    _element: any,
+    editMessageId: string,
+    eventBus: any
+  ) => {
+    setMessageEventBus(eventBus);
+    setMessageId('someId');
+    handleShowMessageEditor();
+  };
+  const handleMessageEditorClose = (messageId: string) => {
+    setShowMessageEditor(false);
+  };
+
+  const messageEditor = () => {
+    return (
+      <Modal
+        open={showMessageEditor}
+        modalHeading="Create/Edit Message"
+        primaryButtonText="Close"
+        onRequestSubmit={handleMessageEditorClose}
+        onRequestClose={handleMessageEditorClose}
+        size="lg"
+      >
+        <div data-color-mode="light">
+          <MessageEditor
+            processGroupIdentifier={getGroupFromModifiedModelId(
+              modifiedProcessModelId
+            )}
+            height={500}
+            messageId={messageId}
+          />
+        </div>
+      </Modal>
+    );
+  };
+
   const onSearchProcessModels = (
     _processId: string,
     eventBus: any,
@@ -1312,6 +1354,7 @@ export default function ProcessModelEditDiagram() {
         {markdownEditor()}
         {jsonSchemaEditor()}
         {processModelSelector()}
+        {messageEditor()}
       </>
     );
   };
@@ -1341,7 +1384,9 @@ export default function ProcessModelEditDiagram() {
 
         {unsavedChangesMessage()}
         {saveFileMessage()}
-
+        <Button onClick={handleShowMessageEditor}>
+          Edit Message Temp Button
+        </Button>
         {appropriateEditor()}
         <div id="diagram-container" />
       </>
