@@ -178,6 +178,7 @@ class TestProcessModelsController(BaseTest):
                 },
             }
         }
+        print("➡️ ➡️ ➡️  response.json: ", json.dumps(response.json, indent=2))
         assert expected_specification == response.json
 
     def _get_process_show_show_response(
