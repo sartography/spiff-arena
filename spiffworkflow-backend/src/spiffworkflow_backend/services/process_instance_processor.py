@@ -635,9 +635,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[
-                bpmn_subprocess_definition.id
-            ] = bpmn_subprocess_definition.bpmn_identifier
+            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
+                bpmn_subprocess_definition.bpmn_identifier
+            )
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -681,11 +681,11 @@ class ProcessInstanceProcessor:
         include_task_data_for_completed_tasks: bool = False,
     ) -> None:
         json_data_hashes = set()
-        states_to_not_rehydrate_data: list[str] = []
-        if include_task_data_for_completed_tasks:
-            states_to_not_rehydrate_data = ["COMPLETED", "CANCELLED", "ERROR"]
+        states_to_exclude_from_rehydration: list[str] = []
+        if not include_task_data_for_completed_tasks:
+            states_to_exclude_from_rehydration = ["COMPLETED", "CANCELLED", "ERROR"]
         for task in tasks:
-            if task.state not in states_to_not_rehydrate_data:
+            if task.state not in states_to_exclude_from_rehydration:
                 json_data_hashes.add(task.json_data_hash)
         json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
@@ -698,7 +698,7 @@ class ProcessInstanceProcessor:
                 tasks_dict = spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid]["tasks"]
             tasks_dict[task.guid] = task.properties_json
             task_data = {}
-            if task.state not in states_to_not_rehydrate_data:
+            if task.state not in states_to_exclude_from_rehydration:
                 task_data = json_data_mappings[task.json_data_hash]
             tasks_dict[task.guid]["data"] = task_data
 
@@ -774,13 +774,12 @@ class ProcessInstanceProcessor:
                 )
                 spiff_bpmn_process_dict.update(single_bpmn_process_dict)
 
-                bpmn_subprocesses_query = (
-                    BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id)
-                    )
+                bpmn_subprocesses_query = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id)
                 if not include_completed_subprocesses:
-                    bpmn_subprocesses_query = (
-                        bpmn_subprocesses_query.join(TaskModel, TaskModel.guid == BpmnProcessModel.guid)
-                    .filter(TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"]))  # type: ignore
+                    bpmn_subprocesses_query = bpmn_subprocesses_query.join(
+                        TaskModel, TaskModel.guid == BpmnProcessModel.guid
+                    ).filter(
+                        TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"])  # type: ignore
                     )
                 bpmn_subprocesses = bpmn_subprocesses_query.all()
                 bpmn_subprocess_id_to_guid_mappings = {}
@@ -851,6 +850,7 @@ class ProcessInstanceProcessor:
                         process_instance_model,
                         bpmn_definition_to_task_definitions_mappings,
                         include_completed_subprocesses=include_completed_subprocesses,
+                        include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
                     )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
