@@ -92,7 +92,7 @@ export default function ProcessModelEditDiagram() {
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
 
-  const [setMessageEventBus] = useState<any>(null);
+  const [messageEventBus, setMessageEventBus] = useState<any>(null);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -441,16 +441,18 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-  const onMessagesRequested = (event: any) => {
-    setMessageEventBus(event.eventBus);
-
-    const updateMessageList = (result: any) => {
-      event.eventBus.fire('spiff.messages.returned', result);
+  const makeMessagesRequestedHandler = (event: any) => {
+    return function fireEvent(results: any) {
+      event.eventBus.fire('spiff.messages.returned', {
+        configuration: results,
+      });
     };
-
+  };
+  const onMessagesRequested = (event: any) => {
     HttpService.makeCallToBackend({
-      path: `/message-models?relative_location=${processModel?.id}`,
-      successCallback: updateMessageList,
+
+      path: `/message-models?relative_location=${modifiedProcessModelId}`,
+      successCallback: makeMessagesRequestedHandler(event),
     });
   };
 

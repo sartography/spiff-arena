@@ -19,7 +19,9 @@ from spiffworkflow_backend.services.upsearch_service import UpsearchService
 def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
     # Returns all the messages and correlation properties that exist at the given
     # relative location or higher in the directory tree.
-    locations = UpsearchService.upsearch_locations(relative_location)
+
+    loc = relative_location.replace(":", "/") if relative_location else ""
+    locations = UpsearchService.upsearch_locations(loc)
     messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
 
     def correlation_property_response(correlation_property: MessageCorrelationPropertyModel) -> dict[str, str]:
