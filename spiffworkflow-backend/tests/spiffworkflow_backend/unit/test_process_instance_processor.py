@@ -330,8 +330,6 @@ class TestProcessInstanceProcessor(BaseTest):
         task_model_to_reset_to = all_task_models_matching_top_level_subprocess_script[0]
         assert task_model_to_reset_to is not None
         assert len(process_instance.human_tasks) == 3, "expected 3 human tasks before reset"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
         assert len(process_instance.human_tasks) == 2, "still expected 2 human tasks after reset"
 
@@ -348,6 +346,8 @@ class TestProcessInstanceProcessor(BaseTest):
             task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script"
         )
         assert top_level_subprocess_script_spiff_task is not None
+        # make sure we did not remove the data during the reset which can happen if include_task_data_for_completed_tasks is False
+        assert top_level_subprocess_script_spiff_task.data == {"set_in_top_level_script": 1}
         processor.resume()
         assert (
             len(process_instance.human_tasks) == 2
