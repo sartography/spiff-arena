@@ -147,6 +147,46 @@ const secondsToDuration = (secNum: number) => {
   return duration;
 };
 
+const attemptToConvertUnknownDateStringFormatToKnownFormat = (
+  dateString: string,
+  targetDateFormat?: string
+) => {
+  let dateFormat = targetDateFormat;
+  if (!dateFormat) {
+    dateFormat = DATE_FORMAT;
+  }
+  let newDateString = dateString;
+  // if the date starts with 4 digits then assume in y-m-d format and avoid all of this
+  if (dateString.length >= 10 && !dateString.match(/^\d{4}/)) {
+    // if the date format should contain month names or abbreviations but does not have letters
+    // then attempt to parse in the same format but with digit months instead of letters
+
+    if (!dateString.match(/[a-zA-Z]+/) && dateFormat.match(/MMM/)) {
+      const numericalDateFormat = dateFormat.replaceAll(/MMM*/g, 'MM');
+      const dateFormatRegex = new RegExp(
+        numericalDateFormat
+          .replace('dd', '\\d{2}')
+          .replace('MM', '\\d{2}')
+          .replace('yyyy', '\\d{4}')
+      );
+      const normalizedDateString = dateString.replaceAll(/[.-/]+/g, '-');
+      if (normalizedDateString.match(dateFormatRegex)) {
+        const newDate = parse(
+          normalizedDateString,
+          dateFormat.replaceAll(/MMM*/g, 'MM'),
+          new Date()
+        );
+        newDateString = convertDateObjectToFormattedString(newDate) || '';
+      }
+    } else {
+      // NOTE: do not run Date.parse with y-m-d formats since it returns dates in a different timezone from other formats
+      const newDate = new Date(Date.parse(`${dateString}`));
+      newDateString = convertDateObjectToFormattedString(newDate) || '';
+    }
+  }
+  return newDateString;
+};
+
 const formatDurationForDisplay = (value: any) => {
   if (value === undefined) {
     return undefined;
@@ -193,6 +233,7 @@ const DateAndTimeService = {
   REFRESH_INTERVAL_SECONDS,
   REFRESH_TIMEOUT_SECONDS,
 
+  attemptToConvertUnknownDateStringFormatToKnownFormat,
   convertDateAndTimeStringsToDate,
   convertDateAndTimeStringsToSeconds,
   convertDateObjectToFormattedHoursMinutes,

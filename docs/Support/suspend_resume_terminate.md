@@ -7,7 +7,8 @@
 
 ## Suspend a Process
 
-By suspending a process instance, you temporarily halt its execution, allowing you to access and modify the necessary data or configurations associated with that specific instance. This feature is not only useful for making updates, but also enables the possibility to redo a previous step with different metadata if needed.
+By suspending a process instance, you temporarily halt its execution, allowing you to access and modify the necessary data or configurations associated with that specific instance.
+This feature is not only useful for making updates, but also enables the possibility to redo a previous step with different metadata if needed.
 
 > **Step 1: Find the Active Process Instance**
 
@@ -15,7 +16,8 @@ By suspending a process instance, you temporarily halt its execution, allowing y
 
 ```{admonition} Note
 
-⚠ Note that the suspension of a process instance is only applicable to active instances. If an instance is not active, it indicates that the process has already been completed, and therefore, it cannot be suspended.
+⚠ Note that the suspension of a process instance is only applicable to active instances.
+If an instance is not active, it indicates that the process has already been completed, and therefore, it cannot be suspended.
 
 ```
 
@@ -27,7 +29,10 @@ By suspending a process instance, you temporarily halt its execution, allowing y
 
 > **Step 3: Select Suspend Button**
 
-Click on the 'Suspend' icon. This action will pause the process instance, granting you the ability to make edits and modifications. When ready, the process instance can be resumed. The process instance remains highlighted in yellow.
+Click on the 'Suspend' icon.
+This action will pause the process instance, granting you the ability to make edits and modifications.
+When ready, the process instance can be resumed.
+The process instance remains highlighted in yellow.
 
 ![suspend](images/active_process_instance.png)
 
@@ -61,7 +66,8 @@ Resuming a process is essential for ensuring that the process can continue its e
 
 ## Terminate a Process Instance
 
-Terminating refers to ending the execution of a specific occurrence of a process before it reaches its natural completion or final outcome. There are various reasons for terminating a process instance such as the instance is no longer required or it's in an error state.
+Terminating refers to ending the execution of a specific occurrence of a process before it reaches its natural completion or final outcome.
+There are various reasons for terminating a process instance such as the instance is no longer required or it's in an error state.
 
 > **Step 1: Locate Terminate Icon**
 

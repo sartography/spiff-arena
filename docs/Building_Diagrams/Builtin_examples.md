@@ -155,10 +155,13 @@ Instructions
 
 ## Essential Example
 
-Now that we have explored the minimal example, let's delve into a more comprehensive BPMN model known as the Essential Example. This example serves as a stepping stone towards a deeper understanding of BPMN, as it incorporates a variety of fundamental concepts that work harmoniously together.
+Now that we have explored the minimal example, let's delve into a more comprehensive BPMN model known as the Essential Example.
+This example serves as a stepping stone towards a deeper understanding of BPMN, as it incorporates a variety of fundamental concepts that work harmoniously together.
 
 ### Access the Process Directory
-Clicking on the process name will open the directory dedicated to the Essential Example process. Here are the four files in the Process:
+
+Clicking on the process name will open the directory dedicated to the Essential Example process.
+Here are the four files in the Process:
 
 **BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard.
 
@@ -179,25 +182,31 @@ Here's what a DMN table looks like:
 ![Image](images/UI-Schema.png)
 
 ### Process Workflow
+
 In this BPMN diagram example, the process is outlined step by step: The process initiates with a start event, serving as the entry point for the workflow.
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.
 
 ![](images/Manual_EM.png)
 
-Next, a **User task** named "Display Questions"is added, facilitating the collection of information from real individuals through web forms. In the properties section, a JSON form is created to specify the questions for the users to respond to.
+Next, a **User task** named "Display Questions"is added, facilitating the collection of information from real individuals through web forms.
+In the properties section, a JSON form is created to specify the questions for the users to respond to.
 
 ![](images/User_EM.png)
 
-Once the user completes the form, the gathered data is passed on to a **script task** named "Modify Information", responsible for calculating the data score. The script for this calculation is embedded in the properties section.
+Once the user completes the form, the gathered data is passed on to a **script task** named "Modify Information", responsible for calculating the data score.
+The script for this calculation is embedded in the properties section.
 
 ![](images/Script_Em.png)
 
-As an alternative approach, the data score can also be determined using a **DMN table** named "Determine Score Message". Decision tables offer an effective means of defining business rules in an easily comprehensible format. The DMN table calculates the score based on pre-defined rules.
+As an alternative approach, the data score can also be determined using a **DMN table** named "Determine Score Message".
+Decision tables offer an effective means of defining business rules in an easily comprehensible format.
+The DMN table calculates the score based on pre-defined rules.
 
 ![](images/DMN_EM.png)
 
-After the score calculation, an **exclusive gateway** is employed to make decisions based on the determined score. Three manual tasks are defined, each displaying a different message based on the obtained score:
+After the score calculation, an **exclusive gateway** is employed to make decisions based on the determined score.
+Three manual tasks are defined, each displaying a different message based on the obtained score:
 
 ![](images/Exclusive_Em.png)
 
@@ -207,6 +216,7 @@ b. **At Least One Correct Response**: If the score indicates that at least one r
 
 c. **Perfect Score**: If the score indicates a perfect score, a manual task displays a message recognizing the excellent performance.
 
-Once the score messages are displayed, a **signal event** is included, providing users with the option to continue and conclude the process or choose to repeat the process from the beginning. Signal events enable external forces or internal errors to interact with the process, and in this scenario, a button press allows for the interruption of the diagram's normal course.
+Once the score messages are displayed, a **signal event** is included, providing users with the option to continue and conclude the process or choose to repeat the process from the beginning.
+Signal events enable external forces or internal errors to interact with the process, and in this scenario, a button press allows for the interruption of the diagram's normal course.
 
 ![](images/Signal_EM.png)

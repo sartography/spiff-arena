@@ -1,6 +1,9 @@
 # Pools and Lanes
 
-A Pool represents a participant and can be seen as a self-contained process. This participant can be an internal entity (e.g., a department within a company) or an external entity (e.g., a customer or another company). Lanes are helpful in highlighting which specific role or department is responsible for certain activities or tasks in a process. A process can have one or more Pools, each with one or more Lanes.
+A Pool represents a participant and can be seen as a self-contained process.
+This participant can be an internal entity (e.g., a department within a company) or an external entity (e.g., a customer or another company).
+Lanes are helpful in highlighting which specific role or department is responsible for certain activities or tasks in a process.
+A process can have one or more Pools, each with one or more Lanes.
 
 **Reasons to Use Pools and Lanes:**
 
@@ -13,11 +16,13 @@ A Pool represents a participant and can be seen as a self-contained process. Thi
 
 ## Pools
 
-A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool". You can choose the desired configuration 🔧 from the element's options after dragging it onto your diagram.
+A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool".
+You can choose the desired configuration 🔧 from the element's options after dragging it onto your diagram.
 
 ![pools_and_lanes](images/pools_and_lanes_1.png)
 
-Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable. They serve to illustrate the engagement of certain entities without detailing their internal processes, for example, we don't know a customer's specific process but it matters when we interact with them to complete our process.
+Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable.
+They serve to illustrate the engagement of certain entities without detailing their internal processes, for example, we don't know a customer's specific process but it matters when we interact with them to complete our process.
 
 Conversely, Expanded Pools are employed when the processes are known and hold relevance within the diagram's context.
 
@@ -27,7 +32,8 @@ Lanes group activities within a single Pool, usually signifying different roles 
 
 ![lanes](images/lanes_1.png)
 
-Lanes are incorporated into Pools when the roles they represent belong to the same entity. However, if a process doesn't logically fit within the same Pool, like those for different organizations or businesses, it's more appropriate to represent it as a separate Pool rather than another Lane.
+Lanes are incorporated into Pools when the roles they represent belong to the same entity.
+However, if a process doesn't logically fit within the same Pool, like those for different organizations or businesses, it's more appropriate to represent it as a separate Pool rather than another Lane.
 
 ![lanes](images/separate_pools_1.png)
 

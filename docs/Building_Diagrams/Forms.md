@@ -154,6 +154,7 @@ Example for UI schema:
 Date validation when compared to another date allows you to ensure that a date field meets certain criteria concerning another date field.
 
 #### Minimum date validation
+
 For instance, you can require that a date must be equal to or greater than another date within the form.
 
 - To implement date validation compared to another date, use your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
@@ -174,9 +175,11 @@ These enhancements provide you with more flexibility and control when building f
 
 #### Maximum date validation
 
-Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form. This type of validation is particularly useful for setting deadlines, end dates, or the latest possible dates that are contingent on other dates in the workflow.
+Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form.
+This type of validation is particularly useful for setting deadlines, end dates, or the latest possible dates that are contingent on other dates in the workflow.
 
-To apply maximum date validation in your JSON schema, use the `maximumDate` property and specify the field to compare with, using the format `field:field_name`. This ensures that the date chosen does not exceed the referenced field's date.
+To apply maximum date validation in your JSON schema, use the `maximumDate` property and specify the field to compare with, using the format `field:field_name`.
+This ensures that the date chosen does not exceed the referenced field's date.
 
 Here’s an example where `delivery_date` must be on or before `end_date`:
 
@@ -191,7 +194,8 @@ Here’s an example where `delivery_date` must be on or before `end_date`:
 
 If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
 
-These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements. Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
+These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements.
+Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
 
 By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
 
@@ -202,6 +206,7 @@ By incorporating these validations into SpiffWorkflow forms, you can create inte
 Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines. This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
 #### JSON Schema Configuration:
+
 The "test-maximum-date-schema.json" process model outlines a form structure that includes fields for `end_date`, `delivery_date`, and `delivery_date_range`, each with constraints on the earliest and latest dates that can be selected.
 
 ```json
@@ -232,17 +237,21 @@ The "test-maximum-date-schema.json" process model outlines a form structure that
 ```
 
 #### Field Descriptions:
+
 - **End Date**: The final date by which all activities should be completed.
 - **Preferred Delivery Date**: A single date indicating when the delivery of a service or product is preferred, bounded by today's date and the `end_date`.
 - **Preferred Delivery Date Range**: A span of dates indicating an acceptable window for delivery, constrained by today's date and the `end_date`.
 
 ### Implementation in SpiffWorkflow Forms:
+
 The schema enforces the following rules:
 - The `Preferred Delivery Date` cannot be earlier than today (the `minimumDate`) and not later than the `end_date` (the `maximumDate`).
 - The `Preferred Delivery Date Range` must start no earlier than today and end no later than the `end_date`.
 
 ### Display Fields Side-By-Side on Same Row
-When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically. The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
+
+When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically.
+The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
 
 #### Form Schema Example:
 
@@ -263,7 +272,8 @@ Define your form fields in the JSON schema as follows:
 
 #### `ui:layout` Configuration:
 
-The `ui:layout` attribute accepts an array of objects, each representing a conceptual "row" of fields. Here's how to use it:
+The `ui:layout` attribute accepts an array of objects, each representing a conceptual "row" of fields.
+Here's how to use it:
 
 ```json
 {
@@ -368,7 +378,8 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 
 #### Overview
 
-The `NumericRangeField` component is a new feature in `spiffworkflow-frontend` that allows users to input numeric ranges. This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
+The `NumericRangeField` component is a new feature in `spiffworkflow-frontend` that allows users to input numeric ranges.
+This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
 
 #### JSON Schema Example
 
@@ -382,19 +393,17 @@ Below is an example JSON schema that includes the numeric range field:
     "numericRange": {
       "type": "object",
       "title": "Numeric Range",
-      "properties": {
-        "min": {
+        "minimum": {
           "type": "number",
           "title": "Minimum Value"
         },
-        "max": {
+        "maximum": {
           "type": "number",
           "title": "Maximum Value"
         }
       }
     }
   }
-}
 ```
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
@@ -412,3 +421,45 @@ This schema defines a numeric range object with `min` and `max` properties, both
 #### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
+
+
+### Adding a New Button for Repeating Sections in Forms
+
+Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status. 
+
+This structure can be represented in the form's schema as follows:
+
+```json
+{
+  "title": "Nested Form / Repeating Section",
+  "description": "Allow the form submitter to add multiple entries for a set of fields.",
+  "type": "object",
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "title": "Tasks",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Please describe the task to complete"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done?",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}
+```
+**Form Preview**: 
+
+![Nested Forms](images/Nested_form_display.png)
+
+By usign this feature, you can effectively implement new buttons for nested forms or repeating sections improving the form's usability for collecting multiple related entries from users.

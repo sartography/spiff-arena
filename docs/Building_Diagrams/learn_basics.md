@@ -2,9 +2,12 @@
 
 ## BPMN and SpiffWorkflow
 
-Business Process Model and Notation (BPMN) is a diagramming language for specifying business processes. BPMN bridges the gap between business and IT, creating a shared process language for both parties.
+Business Process Model and Notation (BPMN) is a diagramming language for specifying business processes.
+BPMN bridges the gap between business and IT, creating a shared process language for both parties.
 
-BPMN efficiently depicts the details of process behaviors in a diagram. The precision of its meaning allows it to describe the technical details that control process execution in an automation engine. SpiffWorkflow enables you to create code to execute a BPMN diagram directly.
+BPMN efficiently depicts the details of process behaviors in a diagram.
+The precision of its meaning allows it to describe the technical details that control process execution in an automation engine.
+SpiffWorkflow enables you to create code to execute a BPMN diagram directly.
 
 By using SpiffWorkflow, a client can create the BPMN diagram and have their product work without the need for you to modify the Python code, thus improving response and turnaround time.
 
@@ -14,7 +17,8 @@ Flow objects are divided into three groups: Events, Gateways, and Tasks.
 
 ### Events
 
-Events, represented by circles, describe occurrences during a process. There are three main types of events in business process modeling: start events, intermediate events, and end events.
+Events, represented by circles, describe occurrences during a process.
+There are three main types of events in business process modeling: start events, intermediate events, and end events.
 
 | **Event** | **Symbol**| **Description** |
 |-----------|-----------|-----------------|
@@ -24,7 +28,9 @@ Events, represented by circles, describe occurrences during a process. There are
 
 ### Gateways
 
-Gateways represent decision points in a process. Based on certain conditions or rules, they determine which path the process will follow. There are various types of gateways:
+Gateways represent decision points in a process.
+Based on certain conditions or rules, they determine which path the process will follow.
+There are various types of gateways:
 
 | **Gateway**   | **Symbol**| **Description** |
 |---------------|-----------|-----------------|
@@ -35,7 +41,8 @@ Gateways represent decision points in a process. Based on certain conditions or 
 
 ### Tasks
 
-Tasks represent activities or work that needs to be done as part of a process. They can either be manual tasks that require human intervention or automated tasks that are performed by systems or applications.
+Tasks represent activities or work that needs to be done as part of a process.
+They can either be manual tasks that require human intervention or automated tasks that are performed by systems or applications.
 
 | **Task**   | **Symbol**                                                | **Description**                                                                                                                                                                                    |
 |---------------|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -51,7 +58,8 @@ Tasks represent activities or work that needs to be done as part of a process. T
 
 ## Connecting Objects
 
-Connecting objects are lines that connect BPMN flow objects. Three different types exist: sequence flows, message flows, and associations.
+Connecting objects are lines that connect BPMN flow objects.
+Three different types exist: sequence flows, message flows, and associations.
 
 | **Connecting Objects**   | **Symbol**                                                | **Description**                                                                                                                                                                                    |
 |---------------|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -61,7 +69,8 @@ Connecting objects are lines that connect BPMN flow objects. Three different typ
 
 ## Artifacts
 
-Artifacts are used to provide additional information or documentation within a process. They include data objects (which represent information or data needed for the process), annotations (which provide explanatory or descriptive text), and groups (which are used to visually group related elements).
+Artifacts are used to provide additional information or documentation within a process.
+They include data objects (which represent information or data needed for the process), annotations (which provide explanatory or descriptive text), and groups (which are used to visually group related elements).
 
 | **Artifact**   | **Symbol**                                                | **Description**                                                                                                                                                                                    |
 |---------------|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -72,8 +81,10 @@ Artifacts are used to provide additional information or documentation within a p
 
 ## Swimlanes
 
-Swimlanes are used in a BPMN diagram to organize aspects of a process. They visually group objects into lanes, with each aspect of the process added to a separate lane.
+Swimlanes are used in a BPMN diagram to organize aspects of a process.
+They visually group objects into lanes, with each aspect of the process added to a separate lane.
 
-These elements can be arranged either horizontally or vertically. Not only do swimlanes organize activities into separate categories, but they also reveal delays, inefficiencies, and the individuals responsible for each step in a process.
+These elements can be arranged either horizontally or vertically.
+Not only do swimlanes organize activities into separate categories, but they also reveal delays, inefficiencies, and the individuals responsible for each step in a process.
 
 ![Untitled](images/BPMN_swimlane-500x197.png)

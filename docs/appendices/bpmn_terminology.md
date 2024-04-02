@@ -2,11 +2,15 @@
 
 ## Activity
 
-This refers to the work carried out by an individual or an organization within a process. Activities can be classified into three categories: Task, Subprocess, and Call Activity. These activities can be either atomic or non-atomic. Atomic activities are indivisible and represent single tasks, while non-atomic activities involve multiple steps or subprocesses that work together to achieve a larger objective.
+This refers to the work carried out by an individual or an organization within a process.
+Activities can be classified into three categories: Task, Subprocess, and Call Activity.
+These activities can be either atomic or non-atomic.
+Atomic activities are indivisible and represent single tasks, while non-atomic activities involve multiple steps or subprocesses that work together to achieve a larger objective.
 
 ## Boundary Event
 
-This refers to an event that can be triggered while an activity is in progress. Boundary events are utilized for error and exception handling purposes.
+This refers to an event that can be triggered while an activity is in progress.
+Boundary events are utilized for error and exception handling purposes.
 
 ## BPMN Model
 
@@ -14,7 +18,8 @@ This is a visual depiction of a business process designed to be both human-reada
 
 ## Business Process
 
-This is a sequence of interconnected activities conducted by individuals and systems, following a defined order, with the aim of delivering a service or product, or accomplishing a specific business objective. These processes involve the receipt, processing, and transfer of information and resources to generate desired outputs.
+This is a sequence of interconnected activities conducted by individuals and systems, following a defined order, with the aim of delivering a service or product, or accomplishing a specific business objective.
+These processes involve the receipt, processing, and transfer of information and resources to generate desired outputs.
 
 ## Diagram
 
@@ -22,7 +27,8 @@ This is the visual platform where business processes are represented and mapped 
 
 ## Call Activity
 
-This refers to the act of a parent or higher-level process invoking a pre-defined or reusable child process, which is represented in another process diagram. This invocation allows for the utilization of the child process multiple times, enhancing reusability within the overall model.
+This refers to the act of a parent or higher-level process invoking a pre-defined or reusable child process, which is represented in another process diagram.
+This invocation allows for the utilization of the child process multiple times, enhancing reusability within the overall model.
 
 ## Collapsed Subprocess
 
@@ -30,15 +36,18 @@ This is a Subprocess that conceals the underlying process it includes.
 
 ## Connecting Element
 
-These are lines that establish connections between Flow Elements within a process, creating a Flow. There are four distinct types of connecting elements: Sequence Flows, Message Flows, Associations, and Data Associations.
+These are lines that establish connections between Flow Elements within a process, creating a Flow.
+There are four distinct types of connecting elements: Sequence Flows, Message Flows, Associations, and Data Associations.
 
 ## Elements
 
-These are the fundamental components used to construct processes. These elements encompass Flow Elements, Connecting Elements, Data Elements, Artifacts, and Swimlanes.
+These are the fundamental components used to construct processes.
+These elements encompass Flow Elements, Connecting Elements, Data Elements, Artifacts, and Swimlanes.
 
 ## End Event
 
-This marks the conclusion of a process. An End Event can result in a Message, Error, or Signal outcome.
+This marks the conclusion of a process.
+An End Event can result in a Message, Error, or Signal outcome.
 
 ## Error
 
@@ -46,7 +55,8 @@ This denotes a significant issue encountered during the execution of an Activity
 
 ## Event
 
-This is an occurrence within a process that influences the Flow and typically involves a trigger and/or a result. Events can be categorized into four types: Start, Intermediate, End, and Boundary.
+This is an occurrence within a process that influences the Flow and typically involves a trigger and/or a result.
+Events can be categorized into four types: Start, Intermediate, End, and Boundary.
 
 ## Event-Based Gateway
 
@@ -54,11 +64,13 @@ This marks a specific point within the process where alternative paths are initi
 
 ## Exception
 
-This is an Event within the process that deviates from the normal flow of execution. Exceptions can be triggered by Time, Error, or Message Events.
+This is an Event within the process that deviates from the normal flow of execution.
+Exceptions can be triggered by Time, Error, or Message Events.
 
 ## Exclusive Gateway
 
-This denotes a juncture within the process where multiple alternative paths are available, but only one path can be chosen. The decision regarding the chosen path is determined by a condition.
+This denotes a juncture within the process where multiple alternative paths are available, but only one path can be chosen.
+The decision regarding the chosen path is determined by a condition.
 
 ## Expanded Subprocess
 
@@ -66,11 +78,15 @@ This is a Subprocess that shows the process it contains.
 
 ## Gateway
 
-This is a component that governs the available paths within a process. Gateways can merge or diverge paths, or introduce additional paths based on conditions or Events. There are four types of Gateways: Exclusive, Parallel, Inclusive, and Event-Based.
+This is a component that governs the available paths within a process.
+Gateways can merge or diverge paths, or introduce additional paths based on conditions or Events.
+There are four types of Gateways: Exclusive, Parallel, Inclusive, and Event-Based.
 
 ## Intermediate Event
 
-This is an event that occurs within the middle of a process, neither at the start nor the end. It can be connected to other tasks through connectors or placed on the border of a task. It evaluates conditions and circumstances, triggering events and enabling the initiation of alternative paths within the process.
+This is an event that occurs within the middle of a process, neither at the start nor the end.
+It can be connected to other tasks through connectors or placed on the border of a task.
+It evaluates conditions and circumstances, triggering events and enabling the initiation of alternative paths within the process.
 
 ## Join
 
@@ -82,15 +98,19 @@ These are subdivisions within a Pool that are utilized to assign activities to s
 
 ## Merge
 
-This is the process in which two or more parallel Sequence Flow paths converge into a single path, achieved either through multiple incoming Sequence Flows or by utilizing an Exclusive Gateway. This merging of paths is also commonly referred to as an "OR-Join".
+This is the process in which two or more parallel Sequence Flow paths converge into a single path, achieved either through multiple incoming Sequence Flows or by utilizing an Exclusive Gateway.
+This merging of paths is also commonly referred to as an "OR-Join".
 
 ## Message
 
-This signifies the content of a communication exchanged between two Participants. The message is transmitted through a Message Flow.
+This signifies the content of a communication exchanged between two Participants.
+The message is transmitted through a Message Flow.
 
 ## Non-atomic Activity
 
-This refers to an Activity that can be further decomposed into more detailed steps or subtasks. A Subprocess is an example of a non-atomic Activity. It is also commonly referred to as a "compound" Activity.
+This refers to an Activity that can be further decomposed into more detailed steps or subtasks.
+A Subprocess is an example of a non-atomic Activity.
+It is also commonly referred to as a "compound" Activity.
 
 ## Parallel Gateway
 
@@ -126,7 +146,8 @@ This is a self-contained and compound Activity incorporated within a process, ca
 
 ## Swimlane
 
-This is a visual representation that separates processes based on the Participants responsible for performing them. Swimlanes are comprised of Pools and Lanes.
+This is a visual representation that separates processes based on the Participants responsible for performing them.
+Swimlanes are comprised of Pools and Lanes.
 
 ## Task
 
