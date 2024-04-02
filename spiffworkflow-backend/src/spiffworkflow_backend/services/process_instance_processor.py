@@ -777,8 +777,7 @@ class ProcessInstanceProcessor:
                 bpmn_subprocesses_query = (
                     BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id)
                     )
-                # if not include_completed_subprocesses:
-                if True:
+                if not include_completed_subprocesses:
                     bpmn_subprocesses_query = (
                         bpmn_subprocesses_query.join(TaskModel, TaskModel.guid == BpmnProcessModel.guid)
                     .filter(TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"]))  # type: ignore
@@ -851,7 +850,6 @@ class ProcessInstanceProcessor:
                     full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
                         process_instance_model,
                         bpmn_definition_to_task_definitions_mappings,
-                        include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
                         include_completed_subprocesses=include_completed_subprocesses,
                     )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
@@ -1267,7 +1265,9 @@ class ProcessInstanceProcessor:
         ProcessInstanceTmpService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
-        processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+        )
         deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
         spiff_tasks = processor.bpmn_process_instance.get_tasks()
 
