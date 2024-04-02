@@ -1,3 +1,4 @@
+import json
 import pytest
 from flask import Flask
 from flask import g
@@ -94,15 +95,29 @@ class TestMessages(BaseTest):
         assert response.json is not None
         assert len(response.json["messages"]) == 0, "should not have access to messages defined in a sub directory"
 
-    # TODO: commenting out for now to get tests passing for easier tests-par/linting
-    # def testupdate_process_model_xml_with_message_details(
-    #     self,
-    #     app: Flask,
-    #     client: FlaskClient,
-    #     with_db_and_bpmn_file_cleanup: None,
-    #     with_super_admin_user: UserModel,
-    # ) -> None:
-    #     self.copy_example_process_models()
-    #     DataSetupService.save_all_process_models()
+    def test_process_group_update_syncs_message_models(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("bob")
 
-    #     updated_xml = MessageService.updateProcessModelXmlWithMessageDetails(process_model_xml, message_details)
+        process_group = {
+            "admin": False,
+            "description": "Bob's Group",
+            "display_name": "Bob",
+            "display_order": 40,
+            "parent_groups": None,
+        }
+        
+        response = client.put(
+            "/v1.0/process-groups/bob",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(process_group),
+        )
+        print(response.json)
+        assert response.status_code == 200
+        
