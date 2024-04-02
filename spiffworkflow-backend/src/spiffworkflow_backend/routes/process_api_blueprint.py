@@ -20,6 +20,8 @@ from sqlalchemy import or_
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator

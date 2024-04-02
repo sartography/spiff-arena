@@ -1,4 +1,3 @@
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 import base64
 import hashlib
 import time
@@ -20,9 +19,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_process_instance_if_appropriate,
-)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError

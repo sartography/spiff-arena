@@ -1,12 +1,11 @@
 import json
-from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 import sys
 
 from spiffworkflow_backend import create_app
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 def main(process_model_identifier: str, filepath: str) -> None:
