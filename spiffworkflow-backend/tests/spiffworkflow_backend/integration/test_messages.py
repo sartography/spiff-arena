@@ -112,6 +112,14 @@ class TestMessages(BaseTest):
             "parent_groups": None,
         }
         
+        response = client.get(
+            "/v1.0/message-models?relative_location=bob",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json is not None
+        assert len(response.json["messages"]) == 0
+
         response = client.put(
             "/v1.0/process-groups/bob",
             headers=self.logged_in_headers(with_super_admin_user),
