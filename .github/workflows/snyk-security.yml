@@ -66,6 +66,15 @@ jobs:
           pip --version
           poetry --version
 
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
+
       - name: Poetry Install
         run: poetry install
 
