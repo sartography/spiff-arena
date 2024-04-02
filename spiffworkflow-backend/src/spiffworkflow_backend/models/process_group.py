@@ -63,6 +63,23 @@ class ProcessGroup:
         return self.id.replace("/", os.sep)
 
 
+class MessageSchema(Schema):
+    class Meta:
+        fields = ["id", "schema"]
+
+
+class RetrievalExpressionSchema(Schema):
+    class Meta:
+        fields = ["message_ref", "formal_expression"]
+
+
+class CorrelationPropertySchema(Schema):
+    class Meta:
+        fields = ["id", "retrieval_expression"]
+
+    retrieval_expression = marshmallow.fields.Nested(RetrievalExpressionSchema, required=False)
+
+
 class ProcessGroupSchema(Schema):
     class Meta:
         model = ProcessGroup
@@ -73,16 +90,14 @@ class ProcessGroupSchema(Schema):
             "description",
             "process_groups",
             "messages",
-            "correlation_keys",
             "correlation_properties",
         ]
 
     process_models = marshmallow.fields.List(marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False))
     process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
-    messages = marshmallow.fields.List(marshmallow.fields.Nested("MessageSchema", dump_only=True, required=False))
-    correlation_keys = marshmallow.fields.List(marshmallow.fields.Nested("CorrelationKeySchema", dump_only=True, required=False))
+    messages = marshmallow.fields.List(marshmallow.fields.Nested(MessageSchema, dump_only=True, required=False))
     correlation_properties = marshmallow.fields.List(
-        marshmallow.fields.Nested("CorrelationPropertySchema", dump_only=True, required=False)
+        marshmallow.fields.Nested(CorrelationPropertySchema, dump_only=True, required=False)
     )
 
     @post_load
