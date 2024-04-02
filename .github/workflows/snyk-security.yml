@@ -59,14 +59,12 @@ jobs:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Upgrade pip
+      - name: Install pip and poetry
         run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
           pip --version
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
+
       - name: Poetry Install
         run: poetry install
 
