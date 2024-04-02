@@ -49,7 +49,8 @@ def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta
         # (maybe due to subsecond stuff, maybe because of clock skew within the cluster of computers running spiff)
         # celery_task_process_instance_run.apply_async(kwargs=args_to_celery, countdown=countdown + 1)  # type: ignore
 
-        celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, kwargs=args_to_celery, countdown=countdown)
+        async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, kwargs=args_to_celery, countdown=countdown)
+        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({async_result.task_id})")
         return True
 
     return False
@@ -70,6 +71,7 @@ def queue_process_instance_if_appropriate(process_instance: ProcessInstanceModel
     #     )
 
     if should_queue_process_instance(process_instance, execution_mode):
-        celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, (process_instance.id,))
+        async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, (process_instance.id,))
+        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({async_result.task_id})")
         return True
     return False
