@@ -85,16 +85,18 @@ pipeline {
     }
   } // stages
   post {
-    always  { script {
-      sh 'docker image prune -f' }
-      if (params.DISCORD_WEBHOOK_CRED) {
-        def result  = currentBuild.result.toLowerCase() ?: 'unknown'
-        discordNotify(
-          header: "SpiffWorkflow Docker image build ${result}!",
-          cred: params.DISCORD_WEBHOOK_CRED,
-        )
-      }
-    } }
+    always  {
+      script {
+        sh 'docker image prune -f'
+        if (params.DISCORD_WEBHOOK_CRED) {
+          def result  = currentBuild.result.toLowerCase() ?: 'unknown'
+          discordNotify(
+            header: "SpiffWorkflow Docker image build ${result}!",
+            cred: params.DISCORD_WEBHOOK_CRED,
+          )
+        } // if
+      } // script
+    } // always
     cleanup { cleanWs() }
   } // post
 } // pipeline
