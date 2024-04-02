@@ -7,7 +7,7 @@ from flask import current_app
 
 @contextmanager
 def benchmark(message: str) -> Generator:
-    """Benchmark method useful for debugging loading times."""
+    """Benchmark method useful for debugging slow stuff."""
     t1 = time.perf_counter()
     yield
     t2 = time.perf_counter()

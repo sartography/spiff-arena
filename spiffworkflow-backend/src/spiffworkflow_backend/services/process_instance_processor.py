@@ -635,9 +635,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -845,17 +845,15 @@ class ProcessInstanceProcessor:
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                with benchmark("BACKEND LOADING"):
-                    full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
-                        process_instance_model,
-                        bpmn_definition_to_task_definitions_mappings,
-                        include_completed_subprocesses=include_completed_subprocesses,
-                        include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
-                    )
+                full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
+                    process_instance_model,
+                    bpmn_definition_to_task_definitions_mappings,
+                    include_completed_subprocesses=include_completed_subprocesses,
+                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
-                with benchmark("SPIFF LOADING"):
-                    bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
+                bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
                 bpmn_process_instance.get_tasks()
             except Exception as err:
                 raise err
