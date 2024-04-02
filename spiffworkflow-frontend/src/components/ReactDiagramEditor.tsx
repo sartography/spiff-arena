@@ -88,6 +88,7 @@ type OwnProps = {
   onDmnFilesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
+  onMessagesRequested?: (..._args: any[]) => any;
   url?: string;
   callers?: ProcessReference[];
   activeUserElement?: React.ReactElement;
@@ -115,6 +116,7 @@ export default function ReactDiagramEditor({
   onElementClick,
   onServiceTasksRequested,
   onDataStoresRequested,
+  onMessagesRequested,
   onJsonSchemaFilesRequested,
   onDmnFilesRequested,
   onSearchProcessModels,
@@ -334,6 +336,12 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function handleMessagesRequested(event: any) {
+      if (onMessagesRequested) {
+        onMessagesRequested(event);
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
@@ -397,6 +405,10 @@ export default function ReactDiagramEditor({
       handleDataStoresRequested(event);
     });
 
+    diagramModeler.on('spiff.messages.requested', (event: any) => {
+      handleMessagesRequested(event);
+    });
+
     diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       if (onJsonSchemaFilesRequested) {
         onJsonSchemaFilesRequested(event);
@@ -433,6 +445,7 @@ export default function ReactDiagramEditor({
     onDmnFilesRequested,
     onSearchProcessModels,
     onElementsChanged,
+    onMessagesRequested
   ]);
 
   useEffect(() => {

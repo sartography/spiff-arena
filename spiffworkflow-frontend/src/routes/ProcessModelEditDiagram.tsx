@@ -387,6 +387,15 @@ export default function ProcessModelEditDiagram() {
     };
   };
 
+  const makeMessagesApiHandler = (event: any) => {
+    return function fireEvent(results: any) {
+      console.log('Results', results)
+      event.eventBus.fire('spiff.messages.returned', {
+        options: results,
+      });
+    };
+  };
+
   const onServiceTasksRequested = (event: any) => {
     HttpService.makeCallToBackend({
       path: `/service-tasks`,
@@ -400,6 +409,15 @@ export default function ProcessModelEditDiagram() {
     HttpService.makeCallToBackend({
       path: `/data-stores?upsearch=true&process_group_identifier=${processGroupIdentifier}`,
       successCallback: makeDataStoresApiHandler(event),
+    });
+  };
+
+  const onMessagesRequested = (event: any) => {
+    const processGroupIdentifier =
+      processModel?.parent_groups?.slice(-1).pop()?.id ?? '';
+    HttpService.makeCallToBackend({
+      path: `/message-models?relative_location=${processGroupIdentifier}`,
+      successCallback: makeMessagesApiHandler(event),
     });
   };
 
@@ -1249,6 +1267,7 @@ export default function ProcessModelEditDiagram() {
         onDmnFilesRequested={onDmnFilesRequested}
         onSearchProcessModels={onSearchProcessModels}
         onElementsChanged={onElementsChanged}
+        onMessagesRequested={onMessagesRequested}
         callers={callers}
         activeUserElement={<ActiveUsers />}
         disableSaveButton={!diagramHasChanges}
