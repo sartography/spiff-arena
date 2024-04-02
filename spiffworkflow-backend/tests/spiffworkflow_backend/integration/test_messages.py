@@ -103,14 +103,6 @@ class TestMessages(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         self.create_process_group("bob")
-
-        process_group = {
-            "admin": False,
-            "description": "Bob's Group",
-            "display_name": "Bob",
-            "display_order": 40,
-            "parent_groups": None,
-        }
         
         response = client.get(
             "/v1.0/message-models?relative_location=bob",
@@ -120,12 +112,97 @@ class TestMessages(BaseTest):
         assert response.json is not None
         assert len(response.json["messages"]) == 0
 
+        process_group = {
+            "admin": False,
+            "description": "Bob's Group",
+            "display_name": "Bob",
+            "display_order": 40,
+            "parent_groups": None,
+            "messages" : [
+                {"id": "table_seated", "location": "bob", "schema": {} },
+                {"id": "order_ready", "location": "bob", "schema": {} },
+                {"id": "end_of_day_receipts", "location": "bob", "schema": {} }
+            ],
+            "correlation_keys": [
+                {
+                    "id": "order",
+                    "correlation_properties": [
+                        "table_number",
+                        "franchise_id"
+                    ]
+                },
+                {
+                    "id": "franchise",
+                    "correlation_properties": [
+                        "franchise_id"
+                    ]
+                }
+            ],
+            "correlation_properties": [
+                {
+                    "id": "table_number",
+                    "retrieval_expressions": [
+                        {
+                            "message_ref": "table_seated",
+                            "formal_expression": "table_number"
+                        },
+                        {
+                            "message_ref": "order_ready",
+                            "formal_expression": "table_number"
+                        }
+                    ]
+                },
+                {
+                    "id": "franchise_id",
+                    "retrieval_expressions": [
+                        {
+                            "message_ref": "table_seated",
+                            "formal_expression": "franchise_id"
+                        },
+                        {
+                            "message_ref": "order_ready",
+                            "formal_expression": "franchise_id"
+                        },
+                        {
+                            "message_ref": "franchise_report",
+                            "formal_expression": "franchise['id']"
+                        }
+                    ]
+                }
+            ]
+        }
+
         response = client.put(
             "/v1.0/process-groups/bob",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
             data=json.dumps(process_group),
         )
-        print(response.json)
         assert response.status_code == 200
+                
+        response = client.get(
+            "/v1.0/message-models?relative_location=bob",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json is not None
+        assert "messages" in response.json
+
+        messages = response.json["messages"]
+        expected_message_identifiers = set(["table_seated", "order_ready", "end_of_day_receipts"])
+        assert len(messages) == len(expected_message_identifiers)
+        
+        expected_correlation_properties = {
+            "table_seated": {"table_number": "table_number", "franchise_id": "franchise_id"},
+            "order_ready": {"table_number": "table_number", "franchise_id": "franchise_id"},
+            "end_of_day_receipts": {},
+        }
+        
+        for message in messages:
+            assert message["identifier"] in expected_message_identifiers
+            assert message["location"] == "bob"
+            assert message["schema"] == {}
+
+            cp = {p["identifier"]: p["retrieval_expression"] for p in message["correlation_properties"]}
+            assert cp == expected_correlation_properties[message["identifier"]]
         
