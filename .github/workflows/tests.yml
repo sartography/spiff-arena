@@ -124,9 +124,8 @@ jobs:
       - name: Install pip and poetry
         run: |
           pwd
-          ls
+          ls -al
           pip install --constraint=../.github/workflows/constraints.txt pip poetry
-          pip install --upgrade setuptools # https://stackoverflow.com/a/77364602/6090676
           pip --version
           poetry --version
 
@@ -221,8 +220,9 @@ jobs:
       - name: Install Poetry
         run: |
           pwd
-          ls
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          ls -al
+          pip --version
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
           poetry --version
       - name: Poetry Install
         run: poetry install
@@ -269,9 +269,8 @@ jobs:
       - name: Install pip and poetry
         run: |
           pwd
-          ls
+          ls -al
           pip install --constraint=../.github/workflows/constraints.txt pip poetry
-          pip install --upgrade setuptools # https://stackoverflow.com/a/77364602/6090676
           pip --version
           poetry --version
 
