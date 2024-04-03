@@ -6,7 +6,6 @@
 Getting_Started/quick_start.md
 ```
 
-
 ```{toctree}
 :maxdepth: 1
 :caption: Building Diagrams
@@ -48,6 +47,7 @@ DevOps_installation_integration/permission_url.md
 DevOps_installation_integration/configure_connector_proxy.md
 DevOps_installation_integration/deploy_aws_lambda.md
 DevOps_installation_integration/Secrets.md
+DevOps_installation_integration/redis_celery_broker.md
 ```
 
 ```{toctree}
@@ -71,6 +71,6 @@ wish_list/wish_list.md
 
 ## Indices and tables
 
-* [](genindex)
-* [](modindex)
-* [](search)
+- [](genindex)
+- [](modindex)
+- [](search)
