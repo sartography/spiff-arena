@@ -110,7 +110,9 @@ class TestProcessInstanceMigrator(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
 
         # ensure data was imported correctly and is in expected state
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+        )
         bpmn_process_dict_version_3_after_import = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_version_3)
         self.round_last_state_change(bpmn_process_dict_version_3_after_import)
@@ -125,7 +127,9 @@ class TestProcessInstanceMigrator(BaseTest):
         Version4.run(process_instance)
         update_data_objects(bpmn_process_dict_version_4_from_spiff)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+        )
         bpmn_process_dict_version_4 = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_version_4)
         self.round_last_state_change(bpmn_process_dict_version_4_from_spiff)
