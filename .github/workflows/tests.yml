@@ -125,7 +125,7 @@ jobs:
         run: |
           pwd
           ls -al
-          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip install --constraint=.github/workflows/constraints.txt pip poetry
           pip --version
           poetry --version
 
