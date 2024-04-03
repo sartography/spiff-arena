@@ -121,10 +121,14 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Upgrade pip
+      - name: Install pip and poetry
         run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
+          pwd
+          ls
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip install --upgrade setuptools # https://stackoverflow.com/a/77364602/6090676
           pip --version
+          poetry --version
 
       - name: Upgrade pip in virtual environments
         shell: python
@@ -134,11 +138,6 @@ jobs:
 
           with open(os.environ["GITHUB_ENV"], mode="a") as io:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
-          poetry --version
 
       # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
       # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
@@ -221,6 +220,8 @@ jobs:
           python-version: "3.11"
       - name: Install Poetry
         run: |
+          pwd
+          ls
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
       - name: Poetry Install
@@ -265,15 +266,23 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Upgrade pip
+      - name: Install pip and poetry
         run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
+          pwd
+          ls
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip install --upgrade setuptools # https://stackoverflow.com/a/77364602/6090676
           pip --version
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
+
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
         uses: actions/download-artifact@v4.1.4

@@ -16,7 +16,9 @@ class Version4(DataMigrationBase):
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         # return None
         try:
-            processor = ProcessInstanceProcessor(process_instance)
+            processor = ProcessInstanceProcessor(
+                process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+            )
             bpmn_process_dict = processor.serialize()
             update_data_objects(bpmn_process_dict)
             ProcessInstanceProcessor.persist_bpmn_process_dict(
