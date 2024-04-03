@@ -40,7 +40,9 @@ def well_known() -> dict:
 
     These urls can be very different from one openid impl to the next, this is just a small subset.
     """
-    host_url = request.host_url.strip("/")
+
+    # using or instead of setting a default so we can set the env var to None in tests and this will still work
+    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
     return {
         "issuer": f"{host_url}/openid",
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",
@@ -108,7 +110,8 @@ def token() -> Response | dict:
     authorization = base64.b64decode(authorization).decode("utf-8")
     client_id = authorization.split(":")
 
-    base_url = request.host_url + "openid"
+    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL", request.host_url.strip("/"))
+    base_url = f"{host_url}/openid"
     private_key = OpenIdConfigsForDevOnly.private_key
 
     id_token = jwt.encode(

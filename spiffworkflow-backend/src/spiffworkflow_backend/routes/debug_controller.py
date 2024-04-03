@@ -20,6 +20,9 @@ def version_info() -> Response:
     return make_response(get_version_info_data(), 200)
 
 
+# this is just to see what the protocol is, primarily. if the site is running on https in the browser, but this says "http://something.example.com",
+# that might be bad, and might require some server configuration to make sure flask knows it is running on https.
+# if using path based routing, the path will probably not be returned from this endpoint.
 def url_info() -> Response:
     return make_response({"url": request.url, "cache": AuthenticationService.ENDPOINT_CACHE}, 200)
 
