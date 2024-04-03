@@ -218,6 +218,8 @@ jobs:
           python-version: "3.11"
       - name: Install Poetry
         run: |
+          pwd
+          ls
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
           poetry --version
       - name: Poetry Install
