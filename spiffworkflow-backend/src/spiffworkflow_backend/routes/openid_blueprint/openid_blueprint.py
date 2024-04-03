@@ -55,6 +55,7 @@ def well_known() -> dict:
 @openid_blueprint.route("/auth", methods=["GET"])
 def auth() -> str:
     """Accepts a series of parameters."""
+    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
     return render_template(
         "login.html",
         state=request.args.get("state"),
@@ -63,6 +64,7 @@ def auth() -> str:
         scope=request.args.get("scope"),
         redirect_uri=request.args.get("redirect_uri"),
         error_message=request.args.get("error_message", ""),
+        host_url=host_url,
     )
 
 
@@ -81,6 +83,7 @@ def form_submit() -> Any:
         url = request.values.get("redirect_uri") + "?" + urlencode(data)
         return redirect(url)
     else:
+        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
         return render_template(
             "login.html",
             state=request.values.get("state"),
@@ -89,6 +92,7 @@ def form_submit() -> Any:
             scope=request.values.get("scope"),
             redirect_uri=request.values.get("redirect_uri"),
             error_message="Login failed.  Please try again.",
+            host_url=host_url,
         )
 
 
