@@ -2030,11 +2030,10 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert process_instance.status == "error"
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
         spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
 
-        # TODO: remove these 2 lines if we enable no task data on rehydration again from pr-661
         assert spiff_task.state == TaskState.ERROR
         assert spiff_task.data == {"my_var": "THE VAR"}
 

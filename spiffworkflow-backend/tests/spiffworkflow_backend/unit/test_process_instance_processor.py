@@ -209,7 +209,7 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
 
         # ensure this does not raise
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(process_instance, include_completed_subprocesses=True)
 
         # this task will be found within subprocesses
         spiff_task = processor.__class__.get_task_by_bpmn_identifier("level_3_script_task", processor.bpmn_process_instance)
@@ -330,8 +330,6 @@ class TestProcessInstanceProcessor(BaseTest):
         task_model_to_reset_to = all_task_models_matching_top_level_subprocess_script[0]
         assert task_model_to_reset_to is not None
         assert len(process_instance.human_tasks) == 3, "expected 3 human tasks before reset"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
         assert len(process_instance.human_tasks) == 2, "still expected 2 human tasks after reset"
 
@@ -348,6 +346,8 @@ class TestProcessInstanceProcessor(BaseTest):
             task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script"
         )
         assert top_level_subprocess_script_spiff_task is not None
+        # make sure we did not remove the data during the reset which can happen if include_task_data_for_completed_tasks is False
+        assert top_level_subprocess_script_spiff_task.data == {"set_in_top_level_script": 1}
         processor.resume()
         assert (
             len(process_instance.human_tasks) == 2
@@ -412,7 +412,6 @@ class TestProcessInstanceProcessor(BaseTest):
             "manual_task_1", processor.bpmn_process_instance
         )
         processor.suspend()
-        processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, str(reset_to_spiff_task.id))
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         human_task_one = process_instance.active_human_tasks[0]
@@ -527,9 +526,11 @@ class TestProcessInstanceProcessor(BaseTest):
 
         # recreate variables to ensure all bpmn json was recreated from scratch from the db
         process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor_final = ProcessInstanceProcessor(process_instance_relookup)
-        processor_final.do_engine_steps(save=True, execution_strategy_name="greedy")
+        processor_last_tasks = ProcessInstanceProcessor(process_instance_relookup)
+        processor_last_tasks.do_engine_steps(save=True, execution_strategy_name="greedy")
 
+        process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor_final = ProcessInstanceProcessor(process_instance_relookup, include_completed_subprocesses=True)
         assert process_instance_relookup.status == "complete"
 
         data_set_1 = {"set_in_top_level_script": 1}
