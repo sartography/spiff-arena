@@ -44,7 +44,7 @@ export default function useProcessGroupFetcher(processGroupIdentifier: string) {
         .join('/');
 
       HttpService.makeCallToBackend({
-        path: `${targetUris.processGroupListPath}?process_group_identifier=${parentProcessGroupIdentifier}`,
+        path: `${targetUris.processGroupListPath}?process_group_identifier=${parentProcessGroupIdentifier}&per_page=1000`,
         successCallback: handleProcessGroupResponse,
       });
     };

@@ -187,6 +187,7 @@ class TaskService:
         self,
         spiff_task: SpiffTask,
         start_and_end_times: StartAndEndTimes | None = None,
+        store_process_instance_events: bool = True,
     ) -> TaskModel:
         new_bpmn_process = None
         if str(spiff_task.id) in self.task_models:
@@ -216,8 +217,10 @@ class TaskService:
 
         # let failed tasks raise and we will log the event then.
         # avoid creating events for the same state transition multiple times to avoid multiple cancelled events
-        if task_model.state in ["COMPLETED", "CANCELLED"] and (
-            self.run_started_at is None or spiff_task.last_state_change >= self.run_started_at
+        if (
+            store_process_instance_events
+            and task_model.state in ["COMPLETED", "CANCELLED"]
+            and (self.run_started_at is None or spiff_task.last_state_change >= self.run_started_at)
         ):
             event_type = ProcessInstanceEventType.task_completed.value
             if task_model.state == "CANCELLED":

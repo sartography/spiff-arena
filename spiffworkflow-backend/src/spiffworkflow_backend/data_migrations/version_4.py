@@ -16,11 +16,16 @@ class Version4(DataMigrationBase):
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         # return None
         try:
-            processor = ProcessInstanceProcessor(process_instance)
+            processor = ProcessInstanceProcessor(
+                process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+            )
             bpmn_process_dict = processor.serialize()
             update_data_objects(bpmn_process_dict)
             ProcessInstanceProcessor.persist_bpmn_process_dict(
-                bpmn_process_dict, bpmn_definition_to_task_definitions_mappings={}, process_instance_model=process_instance
+                bpmn_process_dict,
+                bpmn_definition_to_task_definitions_mappings={},
+                process_instance_model=process_instance,
+                store_process_instance_events=False,
             )
 
         except Exception as ex:
