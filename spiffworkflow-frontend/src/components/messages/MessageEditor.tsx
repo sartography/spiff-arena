@@ -87,7 +87,7 @@ export function MessageEditor({
       path,
       successCallback: handleProcessGroupUpdateResponse,
       httpMethod: 'PUT',
-      postBody: updatedProcessGroup
+      postBody: updatedProcessGroup,
     });
   };
 

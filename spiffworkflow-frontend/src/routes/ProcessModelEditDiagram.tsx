@@ -46,7 +46,7 @@ import {
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
-  ProcessFile, ProcessGroup,
+  ProcessFile,
   ProcessModel,
   ProcessReference,
 } from '../interfaces';
@@ -450,7 +450,6 @@ export default function ProcessModelEditDiagram() {
   };
   const onMessagesRequested = (event: any) => {
     HttpService.makeCallToBackend({
-
       path: `/message-models?relative_location=${modifiedProcessModelId}`,
       successCallback: makeMessagesRequestedHandler(event),
     });
