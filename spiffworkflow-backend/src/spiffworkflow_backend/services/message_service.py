@@ -25,6 +25,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -190,7 +191,7 @@ class MessageService:
             # even if we are queueing, we ran a "send_event" call up above, and it updated some tasks.
             # we need to serialize these task updates to the db. do_engine_steps with save does that.
             processor_receive.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
-        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(receiving_process_instance):
+        elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(receiving_process_instance):
             execution_strategy_name = None
             if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                 execution_strategy_name = "greedy"
