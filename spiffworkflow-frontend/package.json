@@ -103,7 +103,7 @@
     "@types/cookie": "^0.5.1",
     "@types/lodash.merge": "^4.6.7",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
-    "@typescript-eslint/parser": "^5.30.6",
+    "@typescript-eslint/parser": "^5.62.0",
     "cypress": "^13",
     "cypress-file-upload": "^5.0.8",
     "cypress-slow-down": "^1.3.1",
