@@ -48,6 +48,7 @@ DevOps_installation_integration/configure_connector_proxy.md
 DevOps_installation_integration/deploy_aws_lambda.md
 DevOps_installation_integration/Secrets.md
 DevOps_installation_integration/redis_celery_broker.md
+DevOps_installation_integration/path_based_routing.md
 ```
 
 ```{toctree}
