@@ -35,3 +35,6 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=https://spiff.example.com/api/openid
 # if you can manage, use in-cluster DNS for connector. you may need a different host or port.
 SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL=http://spiffworkflow-connector:8004
 ```
+
+Backend does not support paths like `/api/v1.0/status`, but instead wants `/v1.0/status`.
+As such, a proxy in frontend of backend will need to remove the `/api` part of the path before handing the request to backend.
