@@ -11,13 +11,14 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 class MessageDefinitionService:
     @classmethod
     def _message_model_from_message(
-        cls, message: dict[str, Any], process_group: ProcessGroup, location: str
+        cls, message: dict[str, Any], process_group: ProcessGroup, definition_location: str
     ) -> MessageModel | None:
         identifier = message.get("id")
+        location = message.get("location")
         schema = message.get("schema", "{}")
 
-        if identifier is None:
-            current_app.logger.debug(f"Malformed message: '{message}' in @ '{location}'")
+        if identifier is None or location is None:
+            current_app.logger.debug(f"Malformed message: '{message}' in @ '{definition_location}'")
             return None
 
         return MessageModel(identifier=identifier, location=location, schema=schema)
