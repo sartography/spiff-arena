@@ -455,7 +455,9 @@ def process_instance_progress(
     if next_human_task_assigned_to_me:
         response["task"] = HumanTaskModel.to_task(next_human_task_assigned_to_me)
     # this may not catch all times we should redirect to instance show page
-    elif not process_instance.is_immediately_runnable():
+    elif not process_instance.is_immediately_runnable() or ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(
+        process_instance
+    ):
         # any time we assign this process_instance, the frontend progress page will redirect to process instance show
         response["process_instance"] = process_instance
 
@@ -615,7 +617,7 @@ def _dequeued_interstitial_stream(
         # need something better to show?
         if execute_tasks:
             try:
-                if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+                if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
                     with ProcessInstanceQueueService.dequeued(process_instance):
                         ProcessInstanceMigrator.run(process_instance)
                         yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)

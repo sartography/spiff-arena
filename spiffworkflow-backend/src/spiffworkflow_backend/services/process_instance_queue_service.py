@@ -174,17 +174,3 @@ class ProcessInstanceQueueService:
         queue_entries = cls.entries_with_status(status_value, None, run_at_in_seconds_threshold, min_age_in_seconds)
         ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status
-
-    @staticmethod
-    def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:
-        queue_entry = (
-            db.session.query(ProcessInstanceQueueModel)
-            .filter(ProcessInstanceQueueModel.process_instance_id == process_instance.id)
-            .first()
-        )
-
-        if queue_entry is None:
-            return False
-
-        current_time = round(time.time())
-        return queue_entry.run_at_in_seconds > current_time
