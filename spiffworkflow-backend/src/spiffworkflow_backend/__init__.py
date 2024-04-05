@@ -82,6 +82,7 @@ def create_app() -> flask.app.Flask:
     backend_auths = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
     if len(backend_auths) == 1 and backend_auths[0]["uri"] == f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/openid":
         app.register_blueprint(openid_blueprint, url_prefix="/openid")
+        app.register_blueprint(openid_blueprint, url_prefix="/api/openid", name="apiopenid")
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
@@ -90,6 +91,7 @@ def create_app() -> flask.app.Flask:
     CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
     connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
+    connexion_app.add_api("api.yml", base_path=f"/api/{V1_API_PATH_PREFIX}")
 
     mail = Mail(app)
     app.config["MAIL_APP"] = mail
