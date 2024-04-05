@@ -39,7 +39,7 @@ SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL=http://spiffworkflow-connector:8004
 Backend does not support paths like `/api/v1.0/status`, but instead wants `/v1.0/status`.
 As such, a proxy in frontend of backend will need to remove the `/api` part of the path before handing the request to backend.
 
-If you are hitting backend at a URL like spiff.example.com/api and not rewriting the path to remove the /api prefix, you can inform backend about this situation by setting this environemnt variable:
+If you are hitting backend at a URL like spiff.example.com/api and not rewriting the path to remove the /api prefix, you can inform backend about this situation by setting this environment variable:
 
 ```sh
 SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX=/api
