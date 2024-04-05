@@ -17,7 +17,6 @@ services:
     container_name: spiffworkflow-backend
     image: ghcr.io/sartography/spiffworkflow-backend:latest
     environment:
-      SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT: "/"
       SPIFFWORKFLOW_BACKEND_ENV: "local_docker"
       FLASK_DEBUG: "0"
       FLASK_SESSION_SECRET_KEY: "${FLASK_SESSION_SECRET_KEY:-super_secret_key}"
