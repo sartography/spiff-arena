@@ -18,10 +18,10 @@ server_type="${1:-api}"
 if [[ "$server_type" == "celery_worker" ]]; then
   "${script_dir}/start_celery_worker"
 else
-  if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" ]]; then
+  if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" || -n "${SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX:-}" ]]; then
+    echo "using ./bin/boot_server_in_docker because we actually load fixture data in wsgi.py, which will not be run with the typical local dev flask server"
     ./bin/boot_server_in_docker
   else
-    export FLASK_DEBUG=1
 
     if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
       SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
