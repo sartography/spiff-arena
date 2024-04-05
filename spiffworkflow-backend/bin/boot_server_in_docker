@@ -47,9 +47,13 @@ fi
 
 additional_args=""
 
-app_root="${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT:-}"
-if [[ -n "$app_root" ]] && [[ "${app_root}" != "/" ]]; then
-  additional_args="${additional_args} -e SCRIPT_NAME=${app_root}"
+path_prefix="${SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX:-}"
+if [[ -n "$path_prefix" ]] && [[ "${path_prefix}" != "/" ]]; then
+  if ! grep -E '^/' <<<"${path_prefix}"; then
+    echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX must start with a '/'. '$SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX' was used instead."
+    exit 1
+  fi
+  additional_args="${additional_args} -e SCRIPT_NAME=${path_prefix}"
 fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
