@@ -27,12 +27,19 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const [messageInstanceForModal, setMessageInstanceForModal] =
     useState<MessageInstance | null>(null);
 
+  const paginationQueryParamPrefix = 'message-list';
+
   useEffect(() => {
     const setMessageInstanceListFromResult = (result: any) => {
       setMessageInstances(result.results);
       setPagination(result.pagination);
     };
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
     let queryParamString = `per_page=${perPage}&page=${page}`;
     if (processInstanceId) {
       queryParamString += `&process_instance_id=${processInstanceId}`;
@@ -155,7 +162,12 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   };
 
   if (pagination) {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
     let breadcrumbElement = null;
     if (searchParams.get('process_instance_id')) {
       breadcrumbElement = (
@@ -187,7 +199,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          paginationQueryParamPrefix="message-list"
+          paginationQueryParamPrefix={paginationQueryParamPrefix}
         />
       </>
     );
