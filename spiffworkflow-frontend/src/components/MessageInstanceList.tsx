@@ -19,6 +19,8 @@ type OwnProps = {
   processInstanceId?: number;
 };
 
+const paginationQueryParamPrefix = 'message-list';
+
 export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const [messageIntances, setMessageInstances] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -26,8 +28,6 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
 
   const [messageInstanceForModal, setMessageInstanceForModal] =
     useState<MessageInstance | null>(null);
-
-  const paginationQueryParamPrefix = 'message-list';
 
   useEffect(() => {
     const setMessageInstanceListFromResult = (result: any) => {
