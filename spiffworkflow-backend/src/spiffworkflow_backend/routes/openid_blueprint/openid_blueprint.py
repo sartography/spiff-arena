@@ -42,7 +42,7 @@ def well_known() -> dict:
     """
 
     # using or instead of setting a default so we can set the env var to None in tests and this will still work
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
+    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
     return {
         "issuer": f"{host_url}/openid",
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",
@@ -55,7 +55,7 @@ def well_known() -> dict:
 @openid_blueprint.route("/auth", methods=["GET"])
 def auth() -> str:
     """Accepts a series of parameters."""
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
+    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
     return render_template(
         "login.html",
         state=request.args.get("state"),
@@ -83,7 +83,7 @@ def form_submit() -> Any:
         url = request.values.get("redirect_uri") + "?" + urlencode(data)
         return redirect(url)
     else:
-        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
+        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
         return render_template(
             "login.html",
             state=request.values.get("state"),
@@ -114,13 +114,12 @@ def token() -> Response | dict:
     authorization = base64.b64decode(authorization).decode("utf-8")
     client_id = authorization.split(":")
 
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL", request.host_url.strip("/"))
-    base_url = f"{host_url}/openid"
+    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
     private_key = OpenIdConfigsForDevOnly.private_key
 
     id_token = jwt.encode(
         {
-            "iss": base_url,
+            "iss": f"{host_url}/openid",
             "aud": client_id,
             "iat": math.floor(time.time()),
             "exp": round(time.time()) + 3600,
