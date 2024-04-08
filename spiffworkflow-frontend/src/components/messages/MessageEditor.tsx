@@ -3,6 +3,7 @@ import CustomForm from '../CustomForm';
 import { ProcessGroup } from '../../interfaces';
 import {
   modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
@@ -10,7 +11,7 @@ import { removeMessageFromProcessGroup } from './MessageHelper';
 
 type OwnProps = {
   height: number;
-  processGroupIdentifier: string;
+  processGroupIdentifier: string; // TODO: rename to modifiedProcessGroupIdentifier
   messageId: string;
 };
 
@@ -20,6 +21,8 @@ export function MessageEditor({
   messageId,
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
+
+  console.log("pgi: " + processGroupIdentifier);
 
   useEffect(() => {
     const processResult = (result: ProcessGroup) => {
@@ -158,7 +161,7 @@ export function MessageEditor({
     ],
   };
   const formData = {
-    processGroupIdentifier,
+    processGroupIdentifier: unModifyProcessIdentifierForPathParam(processGroupIdentifier),
     messageId,
   };
 
