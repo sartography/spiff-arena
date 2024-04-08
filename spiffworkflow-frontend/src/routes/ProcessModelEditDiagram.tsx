@@ -181,7 +181,9 @@ export default function ProcessModelEditDiagram() {
 
     HttpService.makeCallToBackend({
       path: `/${processModelPath}?include_file_references=true`,
-      successCallback: setProcessModel,
+      successCallback: (result: any) => {
+        setProcessModel(result);
+      },
     });
 
     if (params.file_name) {
@@ -418,6 +420,9 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onDmnFilesRequested = (event: any) => {
+    console.log('WE REQUEST');
+    console.log('event', event);
+    console.log('processModel at DMN', processModel);
     setFileEventBus(event.eventBus);
     if (processModel) {
       const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
