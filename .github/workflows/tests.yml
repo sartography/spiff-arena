@@ -6,6 +6,7 @@ on:
     # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
     branches:
       - main
+      - GSA-TTS-fix-path-routing-in-generated-openid-urls
   pull_request:
 
 defaults:
