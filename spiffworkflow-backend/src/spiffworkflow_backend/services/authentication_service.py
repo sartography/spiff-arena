@@ -119,8 +119,26 @@ class AuthenticationService:
     @classmethod
     def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
-        host_url = request.host_url.strip("/")
-        openid_config_url = f"{host_url}{url_for('openid.well_known')}"
+        appropriate_server_url = cls.server_url(authentication_identifier)
+        openid_config_url = f"{appropriate_server_url}/.well-known/openid-configuration"
+        spiffworkflow_backend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
+
+        # we need to avoid calling url_for("openid.well_known") if we are using a third-party openid provider
+        # but we could potentially just never call url_for, since it should match the version from server_url.
+        if openid_config_url.startswith(spiffworkflow_backend_url):
+            host_url = request.host_url.strip("/")
+            well_known_path = url_for("openid.well_known")
+            openid_config_from_url_for = f"{host_url}{well_known_path}"
+            if openid_config_url != openid_config_from_url_for:
+                raise Exception(
+                    "OpenID Config URL does not match expected URL. "
+                    f"Expected openid configuration from url_for: {openid_config_from_url_for}"
+                    f" to match version from server_url: {openid_config_url}. "
+                    f"Authentication identifier: {authentication_identifier}. "
+                    f"server_url: {appropriate_server_url}. "
+                    f"well_known_path: {well_known_path}"
+                )
+
         if authentication_identifier not in cls.ENDPOINT_CACHE:
             cls.ENDPOINT_CACHE[authentication_identifier] = {}
         if authentication_identifier not in cls.JSON_WEB_KEYSET_CACHE:
