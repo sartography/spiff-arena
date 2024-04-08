@@ -42,7 +42,7 @@ def well_known() -> dict:
     """
 
     # using or instead of setting a default so we can set the env var to None in tests and this will still work
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
+    host_url = _host_url_without_root_path()
     return {
         "issuer": f"{host_url}/openid",
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",
@@ -55,7 +55,7 @@ def well_known() -> dict:
 @openid_blueprint.route("/auth", methods=["GET"])
 def auth() -> str:
     """Accepts a series of parameters."""
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
+    host_url = _host_url_without_root_path()
     return render_template(
         "login.html",
         state=request.args.get("state"),
@@ -83,9 +83,7 @@ def form_submit() -> Any:
         url = request.values.get("redirect_uri") + "?" + urlencode(data)
         return redirect(url)
     else:
-        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip(
-            "/"
-        )
+        host_url = _host_url_without_root_path()
         return render_template(
             "login.html",
             state=request.values.get("state"),
@@ -116,7 +114,7 @@ def token() -> Response | dict:
     authorization = base64.b64decode(authorization).decode("utf-8")
     client_id = authorization.split(":")
 
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
+    host_url = _host_url_without_root_path()
     private_key = OpenIdConfigsForDevOnly.private_key
 
     id_token = jwt.encode(
@@ -181,3 +179,13 @@ def get_users() -> Any:
         return permission_cache["users"]
     else:
         return {}
+
+
+def _host_url_without_root_path() -> str:
+    host_url_from_config = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL")
+
+    # if host_url_from_config is http://localhost:7000/api and root_path is /api, this will return http://localhost:7000
+    if host_url_from_config:
+        return host_url_from_config.removesuffix(request.root_path)  # type: ignore
+    else:
+        return request.host_url.strip("/")

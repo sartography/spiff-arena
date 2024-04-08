@@ -26,7 +26,7 @@ def version_info() -> Response:
 def url_info() -> Response:
     return make_response(
         {
-            "request.root_path": request.root_path,
+            "request.root_path": request.root_path,  # type: ignore
             "request.host_url": request.host_url,
             "request.url": request.url,
             "cache": AuthenticationService.ENDPOINT_CACHE,
