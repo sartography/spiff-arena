@@ -24,7 +24,15 @@ def version_info() -> Response:
 # that might be bad, and might require some server configuration to make sure flask knows it is running on https.
 # if using path based routing, the path will probably not be returned from this endpoint.
 def url_info() -> Response:
-    return make_response({"url": request.url, "cache": AuthenticationService.ENDPOINT_CACHE}, 200)
+    return make_response(
+        {
+            "request.root_path": request.root_path,  # type: ignore
+            "request.host_url": request.host_url,
+            "request.url": request.url,
+            "cache": AuthenticationService.ENDPOINT_CACHE,
+        },
+        200,
+    )
 
 
 def celery_backend_results(
