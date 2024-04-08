@@ -469,7 +469,7 @@ def process_instance_progress(
 
 def task_with_instruction(process_instance_id: int) -> Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
+    processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
     spiff_task = processor.next_task()
     task = None
     if spiff_task is not None:
