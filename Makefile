@@ -29,13 +29,13 @@ YML_FILES := -f docker-compose.yml \
 	-f $(ARENA_DEV_OVERLAY)
 
 all: dev-env start-dev run-pyl
-	@/bin/true
+	@true
 
 build-images:
 	$(DOCKER_COMPOSE) build
 
 dev-env: stop-dev build-images poetry-i be-poetry-i be-db-clean fe-npm-i
-	@/bin/true
+	@true
 
 start-dev: stop-dev
 	$(DOCKER_COMPOSE) up -d
@@ -112,7 +112,7 @@ ruff:
 	$(IN_ARENA) poetry run ruff --fix spiffworkflow-backend
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
-	@/bin/true
+	@true
 
 sh:
 	$(IN_ARENA) /bin/bash
