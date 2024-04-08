@@ -5,14 +5,14 @@
     <link
       rel="stylesheet"
       type="text/css"
-      href="{{ host_url }}/{{ url_for('openid.static', filename='login.css') }}"
+      href="{{ host_url }}{{ url_for('openid.static', filename='login.css') }}"
     />
   </head>
   <body>
     <header>
       <img
         class="logo_small"
-        src="{{ host_url }}/{{ url_for('openid.static', filename='logo_small.png') }}"
+        src="{{ host_url }}{{ url_for('openid.static', filename='logo_small.png') }}"
         alt="Small SpiffWorkflow logo"
       />
     </header>
@@ -23,7 +23,7 @@
       <form
         id="login"
         method="post"
-        action="{{ host_url }}/{{ url_for('openid.form_submit') }}"
+        action="{{ host_url }}{{ url_for('openid.form_submit') }}"
       >
         <p>
           <b>Important:</b> This login form is for demonstration purposes only.
