@@ -23,3 +23,4 @@ node_modules
 /some_cache_dir
 /process.json
 /spiffworkflow_backend.svg
+/.venv
