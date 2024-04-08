@@ -125,7 +125,7 @@ def token() -> Response | dict:
 
     id_token = jwt.encode(
         {
-            "iss": f"{host_url}/openid",
+            "iss": f"{host_url}{url_for('openid.index')}",
             "aud": client_id,
             "iat": math.floor(time.time()),
             "exp": round(time.time()) + 3600,
