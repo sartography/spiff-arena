@@ -34,6 +34,12 @@ SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
 SPIFF_OPEN_ID_ALGORITHM = "RS256"
 
 
+# just so /openid responds so we can route to it with url_for for populating issuer
+@openid_blueprint.route("", methods=["GET"])
+def index() -> Response:
+    return make_response({"ok": True}, 200)
+
+
 @openid_blueprint.route("/.well-known/openid-configuration", methods=["GET"])
 def well_known() -> dict:
     """Open ID Discovery endpoint.
@@ -42,9 +48,9 @@ def well_known() -> dict:
     """
 
     # using or instead of setting a default so we can set the env var to None in tests and this will still work
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
+    host_url = _host_url_without_root_path()
     return {
-        "issuer": f"{host_url}/openid",
+        "issuer": f"{host_url}{url_for('openid.index')}",
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",
         "token_endpoint": f"{host_url}{url_for('openid.token')}",
         "end_session_endpoint": f"{host_url}{url_for('openid.end_session')}",
@@ -55,7 +61,7 @@ def well_known() -> dict:
 @openid_blueprint.route("/auth", methods=["GET"])
 def auth() -> str:
     """Accepts a series of parameters."""
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
+    host_url = _host_url_without_root_path()
     return render_template(
         "login.html",
         state=request.args.get("state"),
@@ -83,7 +89,7 @@ def form_submit() -> Any:
         url = request.values.get("redirect_uri") + "?" + urlencode(data)
         return redirect(url)
     else:
-        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL") or request.host_url.strip("/")
+        host_url = _host_url_without_root_path()
         return render_template(
             "login.html",
             state=request.values.get("state"),
@@ -114,13 +120,12 @@ def token() -> Response | dict:
     authorization = base64.b64decode(authorization).decode("utf-8")
     client_id = authorization.split(":")
 
-    host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL", request.host_url.strip("/"))
-    base_url = f"{host_url}/openid"
+    host_url = _host_url_without_root_path()
     private_key = OpenIdConfigsForDevOnly.private_key
 
     id_token = jwt.encode(
         {
-            "iss": base_url,
+            "iss": f"{host_url}{url_for('openid.index')}",
             "aud": client_id,
             "iat": math.floor(time.time()),
             "exp": round(time.time()) + 3600,
@@ -180,3 +185,9 @@ def get_users() -> Any:
         return permission_cache["users"]
     else:
         return {}
+
+
+# if backend is being hosted at http://localhost:7000/api because SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX=/api,
+# this will return http://localhost:7000, because url_for will add the /api for us.
+def _host_url_without_root_path() -> str:
+    return request.host_url.strip("/")
