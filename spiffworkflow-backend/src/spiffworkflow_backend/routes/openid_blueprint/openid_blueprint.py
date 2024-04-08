@@ -34,6 +34,12 @@ SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
 SPIFF_OPEN_ID_ALGORITHM = "RS256"
 
 
+# just so /openid responds so we can route to it with url_for for populating issuer
+@openid_blueprint.route("", methods=["GET"])
+def index() -> Response:
+    return make_response({"ok": True}, 200)
+
+
 @openid_blueprint.route("/.well-known/openid-configuration", methods=["GET"])
 def well_known() -> dict:
     """Open ID Discovery endpoint.
@@ -44,7 +50,7 @@ def well_known() -> dict:
     # using or instead of setting a default so we can set the env var to None in tests and this will still work
     host_url = _host_url_without_root_path()
     return {
-        "issuer": f"{host_url}/openid",
+        "issuer": f"{host_url}{url_for('openid.index')}",
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",
         "token_endpoint": f"{host_url}{url_for('openid.token')}",
         "end_session_endpoint": f"{host_url}{url_for('openid.end_session')}",
