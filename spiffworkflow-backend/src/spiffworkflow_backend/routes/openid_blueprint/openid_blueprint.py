@@ -83,7 +83,9 @@ def form_submit() -> Any:
         url = request.values.get("redirect_uri") + "?" + urlencode(data)
         return redirect(url)
     else:
-        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip("/")
+        host_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL").removesuffix(request.root_path) or request.host_url.strip(
+            "/"
+        )
         return render_template(
             "login.html",
             state=request.values.get("state"),
