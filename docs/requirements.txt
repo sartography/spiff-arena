@@ -49,4 +49,4 @@ tornado==6.4
 typeguard==3.0.2
 Unidecode==1.3.8
 urllib3==2.0.2
-wrapt==1.15.0
+wrapt==1.16.0
