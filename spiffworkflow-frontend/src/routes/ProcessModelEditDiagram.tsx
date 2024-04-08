@@ -420,9 +420,6 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onDmnFilesRequested = (event: any) => {
-    console.log('WE REQUEST');
-    console.log('event', event);
-    console.log('processModel at DMN', processModel);
     setFileEventBus(event.eventBus);
     if (processModel) {
       const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
