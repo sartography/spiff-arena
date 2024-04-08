@@ -181,11 +181,7 @@ def get_users() -> Any:
         return {}
 
 
+# if backend is being hosted at http://localhost:7000/api because SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX=/api,
+# this will return http://localhost:7000, because url_for will add the /api for us.
 def _host_url_without_root_path() -> str:
-    host_url_from_config = current_app.config.get("SPIFFWORKFLOW_BACKEND_URL")
-
-    # if host_url_from_config is http://localhost:7000/api and root_path is /api, this will return http://localhost:7000
-    if host_url_from_config:
-        return host_url_from_config.removesuffix(request.root_path)  # type: ignore
-    else:
-        return request.host_url.strip("/")
+    return request.host_url.strip("/")
