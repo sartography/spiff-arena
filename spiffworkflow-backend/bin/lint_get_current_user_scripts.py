@@ -43,9 +43,11 @@ def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type
         if script is not None and script.text is not None and "get_current_user()" in script.text:
             # Get the parent of the parent to find the actual BPMN element
             parent = script.getparent().getparent()
-            if parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}manualTask" and parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}userTask":
-                relative_path = os.path.relpath(bpmn_file_path, root_path)
-                print(f'Found get_current_user() in {script_type} of {parent.tag} with id {parent.get("id")} in file {relative_path}')
+            relative_path = os.path.relpath(bpmn_file_path, root_path)
+            tag_without_namespace = etree.QName(parent.tag).localname
+            if tag_without_namespace not in ["manualTask", "userTask"]:
+                print(f'Found get_current_user() in {script_type} of {tag_without_namespace} with id {parent.get("id")} in file {relative_path}')
+
 
 def main() -> NoReturn:
     app = create_app()
