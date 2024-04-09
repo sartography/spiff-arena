@@ -1,27 +1,30 @@
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 import glob
 import os
 from typing import NoReturn
 
 from lxml import etree
 from spiffworkflow_backend import create_app
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 
 def find_script_tasks_with_get_current_user(bpmn_file_path: str, root_path: str) -> None:
-    with open(bpmn_file_path, encoding="utf-8") as bpmn_file:
-        try:
-            tree = etree.parse(bpmn_file)
-        except etree.XMLSyntaxError:
-            print(f"Error parsing XML in file {bpmn_file_path}. Please check for syntax issues.")
-            return
+    from spiffworkflow_backend.services.spec_file_service import SpecFileService
+
+    try:
+        with open(bpmn_file_path, "rb") as bpmn_file:
+            binary_data = bpmn_file.read()
+        tree = SpecFileService.get_etree_from_xml_bytes(binary_data)
         check_script_and_prescript_elements(tree, bpmn_file_path, root_path)
+    except etree.XMLSyntaxError:
+        print(f"Error parsing XML in file {bpmn_file_path}. Please check for syntax issues.")
+        return
 
 
 def check_script_and_prescript_elements(tree, bpmn_file_path: str, root_path: str) -> None:
     # Define the namespace map to search for elements
     nsmap = {
         "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
-        "spiffworkflow": "http://spiffworkflow.org/bpmn/schema/1.0/core"
+        "spiffworkflow": "http://spiffworkflow.org/bpmn/schema/1.0/core",
     }
     # Find all script tasks and preScript elements
     script_tasks = tree.xpath("//bpmn:scriptTask", namespaces=nsmap)
@@ -38,6 +41,7 @@ def check_script_and_prescript_elements(tree, bpmn_file_path: str, root_path: st
     post_scripts = tree.xpath("//spiffworkflow:postScript", namespaces=nsmap)
     check_scripts_for_get_current_user(post_scripts, bpmn_file_path, "postScript", root_path)
 
+
 def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type: str, root_path: str) -> None:
     for script in scripts:
         if script is not None and script.text is not None and "get_current_user()" in script.text:
@@ -46,7 +50,10 @@ def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type
             relative_path = os.path.relpath(bpmn_file_path, root_path)
             tag_without_namespace = etree.QName(parent.tag).localname
             if tag_without_namespace not in ["manualTask", "userTask"]:
-                print(f'Found get_current_user() in {script_type} of {tag_without_namespace} with id {parent.get("id")} in file {relative_path}')
+                print(
+                    f"Found get_current_user() in {script_type} of {tag_without_namespace} "
+                    f'with id {parent.get("id")} in file {relative_path}'
+                )
 
 
 def main() -> NoReturn:
