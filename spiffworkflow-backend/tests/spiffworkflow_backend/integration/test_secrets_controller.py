@@ -40,7 +40,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         assert SecretService._decrypt(secret["value"]) == self.test_value
         assert secret["user_id"] == with_super_admin_user.id
 
-    def test_get_secret(
+    def test_get_secret_api(
         self,
         app: Flask,
         client: FlaskClient,
@@ -51,6 +51,24 @@ class TestSecretsController(SecretServiceTestHelpers):
         self.add_test_secret(with_super_admin_user)
         secret_response = client.get(
             f"/v1.0/secrets/{self.test_key}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert secret_response
+        assert secret_response.status_code == 200
+        assert secret_response.json
+        assert "value" not in secret_response.json
+
+    def test_get_secret_value(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test get secret."""
+        self.add_test_secret(with_super_admin_user)
+        secret_response = client.get(
+            f"/v1.0/secrets/show-value/{self.test_key}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert secret_response

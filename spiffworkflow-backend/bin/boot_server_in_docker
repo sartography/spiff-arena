@@ -17,6 +17,10 @@ function log_info() {
 # run migrations
 export FLASK_APP=/app/src/spiffworkflow_backend
 
+if [[ -z "${FLASK_DEBUG:-}" ]]; then
+  export FLASK_DEBUG=0
+fi
+
 if [[ "${SPIFFWORKFLOW_BACKEND_WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
   echo 'Waiting for db to be ready...'
   poetry run python ./bin/wait_for_db_to_be_ready.py
