@@ -24,6 +24,12 @@ def secret_show(key: str) -> Response:
     return make_response(secret_as_dict, 200)
 
 
+def secret_show_deprecated(key: str) -> Response:
+    return make_response(
+        {"deprecation_warning": "This endpoint has been deprecated. Please use '/secrets/show/[secret_identifier]' instead"}, 400
+    )
+
+
 def secret_list(
     page: int = 1,
     per_page: int = 100,
