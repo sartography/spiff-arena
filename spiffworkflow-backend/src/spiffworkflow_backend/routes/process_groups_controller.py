@@ -61,7 +61,6 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
 
 
 def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
-    """Process Group Update."""
     body_include_list = ["display_name", "description", "messages", "correlation_keys", "correlation_properties"]
     body_filtered = {include_item: body[include_item] for include_item in body_include_list if include_item in body}
 
@@ -79,6 +78,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
     all_message_models: dict[tuple[str, str], MessageModel] = {}
     MessageDefinitionService.collect_message_models(process_group, process_group_id, all_message_models)
     MessageDefinitionService.delete_message_models_at_location(process_group_id)
+    db.session.commit()
     MessageDefinitionService.save_all_message_models(all_message_models)
     db.session.commit()
 

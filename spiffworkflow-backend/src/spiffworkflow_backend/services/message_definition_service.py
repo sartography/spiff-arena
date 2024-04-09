@@ -10,18 +10,15 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 
 class MessageDefinitionService:
     @classmethod
-    def _message_model_from_message(
-        cls, message: dict[str, Any], process_group: ProcessGroup, definition_location: str
-    ) -> MessageModel | None:
+    def _message_model_from_message(cls, message: dict[str, Any], process_group: ProcessGroup) -> MessageModel | None:
         identifier = message.get("id")
-        location = message.get("location")
         schema = message.get("schema", "{}")
 
-        if identifier is None or location is None:
-            current_app.logger.debug(f"Malformed message: '{message}' in @ '{definition_location}'")
+        if identifier is None:
+            current_app.logger.debug(f"Malformed message: '{message}' in @ '{process_group.id}'")
             return None
 
-        return MessageModel(identifier=identifier, location=location, schema=schema)
+        return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
 
     @classmethod
     def _correlation_property_models_from_group(
@@ -62,7 +59,7 @@ class MessageDefinitionService:
         local_message_models = {}
 
         for message in messages:
-            message_model = cls._message_model_from_message(message, process_group, location)
+            message_model = cls._message_model_from_message(message, process_group)
             if message_model is None:
                 continue
             local_message_models[message_model.identifier] = message_model
@@ -85,11 +82,15 @@ class MessageDefinitionService:
 
     @classmethod
     def delete_all_message_models(cls) -> None:
-        MessageModel.query.delete()
+        messages = MessageModel.query.all()
+        for message in messages:
+            db.session.delete(message)
 
     @classmethod
     def delete_message_models_at_location(cls, location: str) -> None:
-        MessageModel.query.filter_by(location=location).delete()
+        messages = MessageModel.query.filter_by(location=location).all()
+        for message in messages:
+            db.session.delete(message)
 
     @classmethod
     def save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import CustomForm from '../CustomForm';
 import { ProcessGroup } from '../../interfaces';
 import {
-  modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../../helpers';
@@ -67,8 +66,10 @@ export function MessageEditor({
       let prop = updatedProcessGroup.correlation_properties?.find(
         (p) => p.id === formProp.id
       );
+
       if (!prop) {
         prop = { id: formProp.id, retrieval_expressions: [] };
+        updatedProcessGroup.correlation_properties?.push(prop);
       }
       prop.retrieval_expressions.push({
         message_ref: formData.messageId,
@@ -76,9 +77,7 @@ export function MessageEditor({
       });
     });
 
-    const path = `/process-groups/${
-      modifiedProcessGroupIdentifier
-    }`;
+    const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
 
     const handleProcessGroupUpdateResponse = (response: any) => {
       console.log('Successful post.', response);
@@ -114,9 +113,9 @@ export function MessageEditor({
         title: 'Correlation Properties',
         items: {
           type: 'object',
-          required: ['name', 'retrievalExpression'],
+          required: ['id', 'retrievalExpression'],
           properties: {
-            name: {
+            id: {
               type: 'string',
               title: 'Property Name',
               description: '',
@@ -152,14 +151,16 @@ export function MessageEditor({
           sm: 4,
           md: 4,
           lg: 8,
-          name: { sm: 2, md: 4, lg: 8 },
+          id: { sm: 2, md: 4, lg: 8 },
           extractionExpression: { sm: 2, md: 4, lg: 8 },
         },
       },
     ],
   };
   const formData = {
-    processGroupIdentifier: unModifyProcessIdentifierForPathParam(modifiedProcessGroupIdentifier),
+    processGroupIdentifier: unModifyProcessIdentifierForPathParam(
+      modifiedProcessGroupIdentifier
+    ),
     messageId,
   };
 
