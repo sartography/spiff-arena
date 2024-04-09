@@ -90,15 +90,11 @@ class EngineStepDelegate:
         pass
 
 
-SubprocessSpecLoader = Callable[[], dict[str, Any] | None]
-
-
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None):
+    def __init__(self, delegate: EngineStepDelegate, options: dict | None = None):
         self.delegate = delegate
-        self.subprocess_spec_loader = subprocess_spec_loader
         self.options = options
 
     def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
@@ -185,16 +181,8 @@ class ExecutionStrategy:
         self.delegate.add_object_to_db_session(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        tasks = [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
-
-        if len(tasks) > 0:
-            self.subprocess_spec_loader()
-
-            # TODO: verify the other execution strategies work still and delete to make this work like the name
-            # tasks = [tasks[0]]
-
-        return tasks
-
+        return [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
+    
 
 class TaskModelSavingDelegate(EngineStepDelegate):
     """Engine step delegate that takes care of saving a task model to the database.
@@ -310,8 +298,8 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
     The queue can be used to display the instructions to user later.
     """
 
-    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader, options: dict | None = None):
-        super().__init__(delegate, subprocess_spec_loader, options)
+    def __init__(self, delegate: EngineStepDelegate, options: dict | None = None):
+        super().__init__(delegate, options)
         self.tasks_that_have_been_seen: set[str] = set()
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
@@ -388,7 +376,7 @@ class SkipOneExecutionStrategy(ExecutionStrategy):
         return TaskRunnability.has_ready_tasks if len(engine_steps) > 1 else TaskRunnability.unknown_if_ready_tasks
 
 
-def execution_strategy_named(name: str, delegate: EngineStepDelegate, spec_loader: SubprocessSpecLoader) -> ExecutionStrategy:
+def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
         "queue_instructions_for_end_user": QueueInstructionsForEndUserExecutionStrategy,
@@ -397,7 +385,7 @@ def execution_strategy_named(name: str, delegate: EngineStepDelegate, spec_loade
         "skip_one": SkipOneExecutionStrategy,
     }[name]
 
-    return cls(delegate, spec_loader)
+    return cls(delegate)
 
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]

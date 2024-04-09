@@ -1531,7 +1531,7 @@ class ProcessInstanceProcessor:
                     "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
                 )
             execution_strategy = execution_strategy_named(
-                execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
+                execution_strategy_name, task_model_delegate
             )
 
         execution_service = WorkflowExecutionService(
