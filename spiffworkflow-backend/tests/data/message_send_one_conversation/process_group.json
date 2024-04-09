@@ -4,17 +4,15 @@
   "display_name": "Message Test",
   "display_order": 40,
   "messages": [
-      { "id": "request_approval", "location": "message_send_one_conversation", "schema": {} },
-      { "id": "approval_result", "location": "message_send_one_conversation", "schema": {} }
+    { "id": "request_approval", "schema": {} },
+    { "id": "approval_result", "schema": {} }
   ],
   "conversation": {
-    "correlation_key": [
-      { "id": "customer_id" },
-      { "id": "po_number" }
-    ]
+    "correlation_key": [{ "id": "customer_id" }, { "id": "po_number" }]
   },
   "correlation_properties": [
-    { "id": "customer_id",
+    {
+      "id": "customer_id",
       "retrieval_expressions": [
         {
           "messageRef": "request_approval",
@@ -26,7 +24,8 @@
         }
       ]
     },
-    { "id": "po_number",
+    {
+      "id": "po_number",
       "retrieval_expressions": [
         {
           "messageRef": "request_approval",

@@ -581,9 +581,7 @@ class BaseTest:
 
     @staticmethod
     def copy_example_process_models() -> None:
-        source = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), "..", "..", "..", "process_models_example_dir", "examples")
-        )
+        source = os.path.abspath(os.path.join(FileSystemService.root_path(), "..", "..", "..", "process_models_example_dir"))
         destination = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         shutil.copytree(source, destination)
 
