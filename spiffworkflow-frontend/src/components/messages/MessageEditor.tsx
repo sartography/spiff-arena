@@ -11,18 +11,16 @@ import { removeMessageFromProcessGroup } from './MessageHelper';
 
 type OwnProps = {
   height: number;
-  processGroupIdentifier: string; // TODO: rename to modifiedProcessGroupIdentifier
+  modifiedProcessGroupIdentifier: string;
   messageId: string;
 };
 
 export function MessageEditor({
   height,
-  processGroupIdentifier,
+  modifiedProcessGroupIdentifier,
   messageId,
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
-
-  console.log("pgi: " + processGroupIdentifier);
 
   useEffect(() => {
     const processResult = (result: ProcessGroup) => {
@@ -31,10 +29,10 @@ export function MessageEditor({
       console.log('The Results is', result);
     };
     HttpService.makeCallToBackend({
-      path: `/process-groups/${processGroupIdentifier}`,
+      path: `/process-groups/${modifiedProcessGroupIdentifier}`,
       successCallback: processResult,
     });
-  }, [processGroupIdentifier, setProcessGroup]);
+  }, [modifiedProcessGroupIdentifier, setProcessGroup]);
 
   const messageOptions = ['add new'];
   if (processGroup && processGroup.messages) {
@@ -78,9 +76,9 @@ export function MessageEditor({
       });
     });
 
-    const path = `/process-groups/${modifyProcessIdentifierForPathParam(
-      processGroupIdentifier
-    )}`;
+    const path = `/process-groups/${
+      modifiedProcessGroupIdentifier
+    }`;
 
     const handleProcessGroupUpdateResponse = (response: any) => {
       console.log('Successful post.', response);
@@ -161,7 +159,7 @@ export function MessageEditor({
     ],
   };
   const formData = {
-    processGroupIdentifier: unModifyProcessIdentifierForPathParam(processGroupIdentifier),
+    processGroupIdentifier: unModifyProcessIdentifierForPathParam(modifiedProcessGroupIdentifier),
     messageId,
   };
 

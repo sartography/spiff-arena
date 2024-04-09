@@ -1083,7 +1083,7 @@ export default function ProcessModelEditDiagram() {
       >
         <div data-color-mode="light">
           <MessageEditor
-            processGroupIdentifier={getGroupFromModifiedModelId(
+            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
               modifiedProcessModelId
             )}
             height={500}
