@@ -69,62 +69,64 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 type OwnProps = {
   processModelId: string;
   diagramType: string;
-  tasks?: Task[] | null;
-  saveDiagram?: (..._args: any[]) => any;
-  onDeleteFile?: (..._args: any[]) => any;
-  isPrimaryFile?: boolean;
-  onSetPrimaryFile?: (..._args: any[]) => any;
+  activeUserElement?: React.ReactElement;
+  callers?: ProcessReference[];
   diagramXML?: string | null;
+  disableSaveButton?: boolean;
   fileName?: string;
-  onLaunchScriptEditor?: (..._args: any[]) => any;
-  onLaunchMarkdownEditor?: (..._args: any[]) => any;
-  onLaunchBpmnEditor?: (..._args: any[]) => any;
-  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
-  onLaunchDmnEditor?: (..._args: any[]) => any;
-  onElementClick?: (..._args: any[]) => any;
-  onServiceTasksRequested?: (..._args: any[]) => any;
+  isPrimaryFile?: boolean;
   onDataStoresRequested?: (..._args: any[]) => any;
-  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
+  onDeleteFile?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
+  onElementClick?: (..._args: any[]) => any;
+  onElementsChanged?: (..._args: any[]) => any;
+  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
+  onLaunchBpmnEditor?: (..._args: any[]) => any;
+  onLaunchDmnEditor?: (..._args: any[]) => any;
+  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
+  onLaunchMarkdownEditor?: (..._args: any[]) => any;
+  onLaunchScriptEditor?: (..._args: any[]) => any;
+  onLaunchMessageEditor?: (..._args: any[]) => any;
   onMessagesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
-  onElementsChanged?: (..._args: any[]) => any;
+  onServiceTasksRequested?: (..._args: any[]) => any;
+  onSetPrimaryFile?: (..._args: any[]) => any;
+  saveDiagram?: (..._args: any[]) => any;
+  tasks?: Task[] | null;
   url?: string;
-  callers?: ProcessReference[];
-  activeUserElement?: React.ReactElement;
-  disableSaveButton?: boolean;
 };
 
 const FitViewport = 'fit-viewport';
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
-  processModelId,
+  activeUserElement,
+  callers,
   diagramType,
-  tasks,
-  saveDiagram,
-  onDeleteFile,
-  isPrimaryFile,
-  onSetPrimaryFile,
   diagramXML,
+  disableSaveButton,
   fileName,
-  onLaunchScriptEditor,
-  onLaunchMarkdownEditor,
-  onLaunchBpmnEditor,
-  onLaunchJsonSchemaEditor,
-  onLaunchDmnEditor,
-  onElementClick,
-  onServiceTasksRequested,
+  isPrimaryFile,
   onDataStoresRequested,
-  onJsonSchemaFilesRequested,
+  onDeleteFile,
   onDmnFilesRequested,
+  onElementClick,
+  onElementsChanged,
+  onJsonSchemaFilesRequested,
+  onLaunchBpmnEditor,
+  onLaunchDmnEditor,
+  onLaunchJsonSchemaEditor,
+  onLaunchMarkdownEditor,
+  onLaunchScriptEditor,
+  onLaunchMessageEditor,
   onMessagesRequested,
   onSearchProcessModels,
-  onElementsChanged,
+  onServiceTasksRequested,
+  onSetPrimaryFile,
+  processModelId,
+  saveDiagram,
+  tasks,
   url,
-  callers,
-  activeUserElement,
-  disableSaveButton,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -426,22 +428,29 @@ export default function ReactDiagramEditor({
         onSearchProcessModels(event.value, event.eventBus, event.element);
       }
     });
+
+    diagramModeler.on('spiff.message.edit', (event: any) => {
+      if (onLaunchMessageEditor) {
+        onLaunchMessageEditor(event.value, event.eventBus, event.listenEvent);
+      }
+    });
   }, [
     diagramModelerState,
     diagramType,
-    onLaunchScriptEditor,
-    onLaunchMarkdownEditor,
+    onDataStoresRequested,
+    onDmnFilesRequested,
+    onElementClick,
+    onElementsChanged,
+    onJsonSchemaFilesRequested,
     onLaunchBpmnEditor,
     onLaunchDmnEditor,
     onLaunchJsonSchemaEditor,
-    onElementClick,
-    onServiceTasksRequested,
-    onDataStoresRequested,
-    onJsonSchemaFilesRequested,
-    onDmnFilesRequested,
+    onLaunchMarkdownEditor,
+    onLaunchScriptEditor,
+    onLaunchMessageEditor,
     onMessagesRequested,
     onSearchProcessModels,
-    onElementsChanged,
+    onServiceTasksRequested,
   ]);
 
   useEffect(() => {

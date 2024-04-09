@@ -1059,12 +1059,12 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchMessageEditor = (
-    _element: any,
     editMessageId: string,
-    eventBus: any
+    eventBus: any,
+    _listenEvent: any
   ) => {
     setMessageEventBus(eventBus);
-    setMessageId('someId');
+    setMessageId(editMessageId);
     handleShowMessageEditor();
   };
   const handleMessageEditorClose = (messageId: string) => {
@@ -1290,29 +1290,30 @@ export default function ProcessModelEditDiagram() {
     }
     return (
       <ReactDiagramEditor
-        processModelId={params.process_model_id || ''}
-        saveDiagram={saveDiagram}
-        onDeleteFile={onDeleteFile}
-        isPrimaryFile={params.file_name === processModel?.primary_file_name}
-        onSetPrimaryFile={onSetPrimaryFileCallback}
-        diagramXML={bpmnXmlForDiagramRendering}
-        fileName={params.file_name}
+        activeUserElement={<ActiveUsers />}
+        callers={callers}
         diagramType="bpmn"
-        onLaunchScriptEditor={onLaunchScriptEditor}
-        onServiceTasksRequested={onServiceTasksRequested}
+        diagramXML={bpmnXmlForDiagramRendering}
+        disableSaveButton={!diagramHasChanges}
+        fileName={params.file_name}
+        isPrimaryFile={params.file_name === processModel?.primary_file_name}
         onDataStoresRequested={onDataStoresRequested}
-        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
-        onLaunchBpmnEditor={onLaunchBpmnEditor}
-        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
-        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
-        onLaunchDmnEditor={onLaunchDmnEditor}
+        onDeleteFile={onDeleteFile}
         onDmnFilesRequested={onDmnFilesRequested}
+        onElementsChanged={onElementsChanged}
+        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
+        onLaunchBpmnEditor={onLaunchBpmnEditor}
+        onLaunchDmnEditor={onLaunchDmnEditor}
+        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
+        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
+        onLaunchScriptEditor={onLaunchScriptEditor}
+        onLaunchMessageEditor={onLaunchMessageEditor}
         onMessagesRequested={onMessagesRequested}
         onSearchProcessModels={onSearchProcessModels}
-        onElementsChanged={onElementsChanged}
-        callers={callers}
-        activeUserElement={<ActiveUsers />}
-        disableSaveButton={!diagramHasChanges}
+        onServiceTasksRequested={onServiceTasksRequested}
+        onSetPrimaryFile={onSetPrimaryFileCallback}
+        processModelId={params.process_model_id || ''}
+        saveDiagram={saveDiagram}
       />
     );
   };
