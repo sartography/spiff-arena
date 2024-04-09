@@ -2954,7 +2954,7 @@ paths:
           type: string
     get:
       operationId: spiffworkflow_backend.routes.secrets_controller.secret_show
-      summary: Return a secret value for a key
+      summary: Return info about a secret for a key. Does not include the value.
       tags:
         - Secrets
       responses:
@@ -2997,6 +2997,27 @@ paths:
           description: Unauthorized to update secret
         "404":
           description: Secret does not exist
+
+  /secrets/show-value/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        description: The key we are using
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show_value
+      summary: Return a secret value for a key
+      tags:
+        - Secrets
+      responses:
+        "200":
+          description: We return a secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
 
   /permissions-check:
     post:
