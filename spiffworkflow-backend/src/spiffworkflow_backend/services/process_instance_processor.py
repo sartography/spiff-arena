@@ -1236,7 +1236,7 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
             execution_strategy = SkipOneExecutionStrategy(
-                task_model_delegate, self.lazy_load_subprocess_specs, {"spiff_task": spiff_task}
+                task_model_delegate, {"spiff_task": spiff_task}
             )
             self.do_engine_steps(save=True, execution_strategy=execution_strategy)
 
@@ -1458,27 +1458,7 @@ class ProcessInstanceProcessor:
 
         return None
 
-    def lazy_load_subprocess_specs(self) -> None:
-        tasks = self.bpmn_process_instance.get_tasks(state=TaskState.DEFINITE_MASK)
-        loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
-        for task in tasks:
-            if task.task_spec.__class__.__name__ != "CallActivity":
-                continue
-            spec_to_check = task.task_spec.spec
-
-            if spec_to_check not in loaded_specs:
-                lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
-                if lazy_subprocess_specs is None:
-                    continue
-
-                for name, spec in lazy_subprocess_specs.items():
-                    if name not in loaded_specs:
-                        self.bpmn_process_instance.subprocess_specs[name] = spec
-                        self.refresh_waiting_tasks()
-                        loaded_specs.add(name)
-
     def refresh_waiting_tasks(self) -> None:
-        self.lazy_load_subprocess_specs()
         self.bpmn_process_instance.refresh_waiting_tasks()
 
     def do_engine_steps(
