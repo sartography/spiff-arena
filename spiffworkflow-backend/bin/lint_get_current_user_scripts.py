@@ -25,7 +25,6 @@ def check_script_and_prescript_elements(tree, bpmn_file_path: str) -> None:
     # Find all script tasks and preScript elements
     script_tasks = tree.xpath("//bpmn:scriptTask", namespaces=nsmap)
     pre_scripts = tree.xpath("//spiffworkflow:preScript", namespaces=nsmap)
-    post_scripts = tree.xpath("//spiffworkflow:postScript", namespaces=nsmap)
 
     # Check script tasks for get_current_user() calls
     for task in script_tasks:
@@ -34,20 +33,17 @@ def check_script_and_prescript_elements(tree, bpmn_file_path: str) -> None:
             print(f'Found get_current_user() in script task {task.get("id")} of file {bpmn_file_path}')
 
     # Check preScript elements for get_current_user() calls
-    for pre_script in pre_scripts:
-        if pre_script is not None and pre_script.text is not None and "get_current_user()" in pre_script.text:
-            # Get the parent of the parent to find the actual BPMN element
-            parent = pre_script.getparent().getparent()
-            if parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}manualTask" and parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}userTask":
-                print(f'Found get_current_user() in preScript of {parent.tag} with id {parent.get("id")} in file {bpmn_file_path}')
-    # Check postScript elements for get_current_user() calls
-    for post_script in post_scripts:
-        if post_script is not None and post_script.text is not None and "get_current_user()" in post_script.text:
-            # Get the parent of the parent to find the actual BPMN element
-            parent = post_script.getparent().getparent()
-            if parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}manualTask" and parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}userTask":
-                print(f'Found get_current_user() in postScript of {parent.tag} with id {parent.get("id")} in file {bpmn_file_path}')
+    check_scripts_for_get_current_user(pre_scripts, bpmn_file_path, "preScript")
+    post_scripts = tree.xpath("//spiffworkflow:postScript", namespaces=nsmap)
+    check_scripts_for_get_current_user(post_scripts, bpmn_file_path, "postScript")
 
+def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type: str) -> None:
+    for script in scripts:
+        if script is not None and script.text is not None and "get_current_user()" in script.text:
+            # Get the parent of the parent to find the actual BPMN element
+            parent = script.getparent().getparent()
+            if parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}manualTask" and parent.tag != "{http://www.omg.org/spec/BPMN/20100524/MODEL}userTask":
+                print(f'Found get_current_user() in {script_type} of {parent.tag} with id {parent.get("id")} in file {bpmn_file_path}')
 
 def main() -> NoReturn:
     app = create_app()
