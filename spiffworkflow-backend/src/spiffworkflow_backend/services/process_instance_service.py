@@ -49,6 +49,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -480,7 +481,7 @@ class ProcessInstanceService:
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if not should_queue_process_instance(processor.process_instance_model, execution_mode):
-            if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+            if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
                 with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
                     execution_strategy_name = None
                     if execution_mode == ProcessInstanceExecutionMode.synchronous.value:

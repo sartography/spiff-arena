@@ -8,10 +8,12 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 ten_minutes = 60 * 10
@@ -26,7 +28,16 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
     proc_index = current_process().index
     ProcessInstanceLockService.set_thread_local_locking_context("celery:worker", additional_processing_identifier=proc_index)
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+
+    if task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+        return {
+            "ok": True,
+            "process_instance_id": process_instance_id,
+            "task_guid": task_guid,
+            "message": "Skipped because the process instance is set to run in the future.",
+        }
     try:
+        task_guid_for_requeueing = task_guid
         with ProcessInstanceQueueService.dequeued(process_instance, additional_processing_identifier=proc_index):
             ProcessInstanceService.run_process_instance_with_processor(
                 process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index
@@ -40,13 +51,20 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             # there is an assumption that it was successfully processed by run_process_instance_with_processor above.
             # we might want to check that assumption.
             if task_guid is not None:
-                future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
-                if future_task is not None:
-                    future_task.completed = True
-                    db.session.add(future_task)
-                    db.session.commit()
+                completed_task_model = (
+                    TaskModel.query.filter_by(guid=task_guid)
+                    .filter(TaskModel.state.in_(["COMPLETED", "ERROR", "CANCELLED"]))  # type: ignore
+                    .first()
+                )
+                if completed_task_model is not None:
+                    future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
+                    if future_task is not None:
+                        future_task.completed = True
+                        db.session.add(future_task)
+                        db.session.commit()
+                        task_guid_for_requeueing = None
         if task_runnability == TaskRunnability.has_ready_tasks:
-            queue_process_instance_if_appropriate(process_instance)
+            queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
         return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
     except ProcessInstanceIsAlreadyLockedError as exception:
         current_app.logger.info(

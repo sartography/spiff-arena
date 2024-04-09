@@ -26,5 +26,5 @@ class GetGroupMembers(Script):
         if group is None:
             raise GroupNotFoundError(f"Script 'get_group_members' could not find group with identifier '{group_identifier}'.")
 
-        usernames = [u.username for u in group.users]
+        usernames = sorted([u.username for u in group.users])
         return usernames

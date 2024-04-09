@@ -524,7 +524,7 @@ export default function ReactDiagramEditor({
           let className = '';
           if (task.state === 'COMPLETED') {
             className = 'completed-task-highlight';
-          } else if (task.state === 'READY' || task.state === 'WAITING') {
+          } else if (['READY', 'WAITING', 'STARTED'].includes(task.state)) {
             className = 'active-task-highlight';
           } else if (task.state === 'CANCELLED') {
             className = 'cancelled-task-highlight';
