@@ -729,23 +729,6 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings,
             )
 
-            subprocess_specs_for_ready_tasks = set()
-            full_process_model_hash = bpmn_process_definition.full_process_model_hash
-
-            if full_process_model_hash is not None:
-                process_id = bpmn_process_definition.bpmn_identifier
-                element_id = bpmn_process_definition.bpmn_identifier
-
-                subprocess_specs_for_ready_tasks = {
-                    r.bpmn_identifier
-                    for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
-                    .join(TaskDefinitionModel)
-                    .join(TaskModel)
-                    .filter(TaskModel.process_instance_id == process_instance_model.id)
-                    .filter(TaskModel.state == "READY")
-                    .all()
-                }
-
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(
@@ -1195,9 +1178,7 @@ class ProcessInstanceProcessor:
                 process_instance=self.process_instance_model,
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
-            execution_strategy = SkipOneExecutionStrategy(
-                task_model_delegate, {"spiff_task": spiff_task}
-            )
+            execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
             self.do_engine_steps(save=True, execution_strategy=execution_strategy)
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
@@ -1448,9 +1429,7 @@ class ProcessInstanceProcessor:
                 raise ExecutionStrategyNotConfiguredError(
                     "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
                 )
-            execution_strategy = execution_strategy_named(
-                execution_strategy_name, task_model_delegate
-            )
+            execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
 
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,

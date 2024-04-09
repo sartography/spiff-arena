@@ -182,7 +182,7 @@ class ExecutionStrategy:
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         return [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
-    
+
 
 class TaskModelSavingDelegate(EngineStepDelegate):
     """Engine step delegate that takes care of saving a task model to the database.
