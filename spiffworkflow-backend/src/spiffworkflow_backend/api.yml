@@ -2953,8 +2953,8 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show_deprecated
-      summary: DEPRECATED Return a secret value for a key
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show
+      summary: Return info about a secret for a key. Does not include the value.
       tags:
         - Secrets
       responses:
@@ -2998,7 +2998,7 @@ paths:
         "404":
           description: Secret does not exist
 
-  /secrets/show/{key}:
+  /secrets/show-value/{key}:
     parameters:
       - name: key
         in: path
@@ -3007,7 +3007,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show_value
       summary: Return a secret value for a key
       tags:
         - Secrets

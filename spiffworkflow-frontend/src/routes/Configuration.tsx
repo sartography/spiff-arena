@@ -98,7 +98,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
         <Route path="/" element={<SecretList />} />
         <Route path="secrets" element={<SecretList />} />
         <Route path="secrets/new" element={<SecretNew />} />
-        <Route path="secrets/:key" element={<SecretShow />} />
+        <Route path="secrets/:secret_identifier" element={<SecretShow />} />
         <Route path="authentications" element={<AuthenticationList />} />
         <Route
           path="extension/:page_identifier"
