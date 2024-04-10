@@ -127,6 +127,6 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	fe-lint-fix fe-logs fe-npm-i fe-shfe-unimported  \
+	fe-lint-fix fe-logs fe-npm-i fe-sh fe-unimported  \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
