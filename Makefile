@@ -112,7 +112,7 @@ pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
 ruff:
-	$(IN_ARENA) poetry run ruff --fix spiffworkflow-backend
+	$(IN_ARENA) poetry run ruff check --fix spiffworkflow-backend
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@true
