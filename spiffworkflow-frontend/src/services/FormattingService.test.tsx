@@ -8,15 +8,6 @@ test('it can convert date string to date for display', () => {
   );
 });
 
-// timezones for the lose
-// test('it can convert seconds to date time for display', () => {
-//   const markdown =
-//     'HEY SPIFF_FORMAT:::convert_seconds_to_date_time_for_display(10000)';
-//   expect(FormattingService.checkForSpiffFormats(markdown)).toEqual(
-//     'HEY 1969-12-31 21:46:40'
-//   );
-// });
-
 test('it can convert seconds to duration time for display', () => {
   const markdown =
     'HEY SPIFF_FORMAT:::convert_seconds_to_duration_for_display(10000)';
