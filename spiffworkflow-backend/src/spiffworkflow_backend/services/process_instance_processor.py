@@ -90,7 +90,6 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
-from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -730,42 +729,6 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings,
             )
 
-            #
-            # see if we have any cached element units and if so step on the spec and subprocess_specs.
-            # in the early stages of development this will return the full workflow when the feature
-            # flag is set to on. as time goes we will need to think about how this plays in with the
-            # bpmn definition tables more.
-            #
-
-            subprocess_specs_for_ready_tasks = set()
-            element_unit_process_dict = None
-            full_process_model_hash = bpmn_process_definition.full_process_model_hash
-
-            if full_process_model_hash is not None:
-                process_id = bpmn_process_definition.bpmn_identifier
-                element_id = bpmn_process_definition.bpmn_identifier
-
-                subprocess_specs_for_ready_tasks = {
-                    r.bpmn_identifier
-                    for r in db.session.query(BpmnProcessDefinitionModel.bpmn_identifier)  # type: ignore
-                    .join(TaskDefinitionModel)
-                    .join(TaskModel)
-                    .filter(TaskModel.process_instance_id == process_instance_model.id)
-                    .filter(TaskModel.state == "READY")
-                    .all()
-                }
-
-                element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
-                    full_process_model_hash, process_id, element_id
-                )
-
-            if element_unit_process_dict is not None:
-                spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
-                keys = list(spiff_bpmn_process_dict["subprocess_specs"].keys())
-                for k in keys:
-                    if k not in subprocess_specs_for_ready_tasks and k not in element_unit_process_dict["subprocess_specs"]:
-                        spiff_bpmn_process_dict["subprocess_specs"].pop(k)
-
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(
@@ -1076,26 +1039,6 @@ class ProcessInstanceProcessor:
             )
         process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
 
-        #
-        # builds and caches the element units for the parent bpmn process defintion. these
-        # element units can then be queried using the same hash for later execution.
-        #
-        # TODO: this seems to be run each time a process instance is started, so element
-        # units will only be queried after a save/resume point. the hash used as the key
-        # can be anything, so possibly some hash of all files required to form the process
-        # definition and their hashes could be used? Not sure how that plays in with the
-        # bpmn_process_defintion hash though.
-        #
-
-        # TODO: first time through for an instance the bpmn_spec_dict seems to get mutated,
-        # so for now we don't seed the cache until the second instance. not immediately a
-        # problem and can be part of the larger discussion mentioned in the TODO above.
-
-        full_process_model_hash = bpmn_process_definition_parent.full_process_model_hash
-
-        if full_process_model_hash is not None and "task_specs" in bpmn_spec_dict["spec"]:
-            ElementUnitsService.cache_element_units_for_workflow(full_process_model_hash, bpmn_spec_dict)
-
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
@@ -1235,9 +1178,7 @@ class ProcessInstanceProcessor:
                 process_instance=self.process_instance_model,
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
-            execution_strategy = SkipOneExecutionStrategy(
-                task_model_delegate, self.lazy_load_subprocess_specs, {"spiff_task": spiff_task}
-            )
+            execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
             self.do_engine_steps(save=True, execution_strategy=execution_strategy)
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
@@ -1436,49 +1377,7 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    def element_unit_specs_loader(self, process_id: str, element_id: str) -> dict[str, Any] | None:
-        full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
-        if full_process_model_hash is None:
-            return None
-
-        element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
-            full_process_model_hash,
-            process_id,
-            element_id,
-        )
-
-        if element_unit_process_dict is not None:
-            spec_dict = element_unit_process_dict["spec"]
-            subprocess_specs_dict = element_unit_process_dict["subprocess_specs"]
-
-            restored_specs = {k: self.wf_spec_converter.restore(v) for k, v in subprocess_specs_dict.items()}
-            restored_specs[spec_dict["name"]] = self.wf_spec_converter.restore(spec_dict)
-
-            return restored_specs
-
-        return None
-
-    def lazy_load_subprocess_specs(self) -> None:
-        tasks = self.bpmn_process_instance.get_tasks(state=TaskState.DEFINITE_MASK)
-        loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
-        for task in tasks:
-            if task.task_spec.__class__.__name__ != "CallActivity":
-                continue
-            spec_to_check = task.task_spec.spec
-
-            if spec_to_check not in loaded_specs:
-                lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
-                if lazy_subprocess_specs is None:
-                    continue
-
-                for name, spec in lazy_subprocess_specs.items():
-                    if name not in loaded_specs:
-                        self.bpmn_process_instance.subprocess_specs[name] = spec
-                        self.refresh_waiting_tasks()
-                        loaded_specs.add(name)
-
     def refresh_waiting_tasks(self) -> None:
-        self.lazy_load_subprocess_specs()
         self.bpmn_process_instance.refresh_waiting_tasks()
 
     def do_engine_steps(
@@ -1530,9 +1429,7 @@ class ProcessInstanceProcessor:
                 raise ExecutionStrategyNotConfiguredError(
                     "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
                 )
-            execution_strategy = execution_strategy_named(
-                execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
-            )
+            execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
 
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
