@@ -163,6 +163,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <HeaderGlobalAction
               title={`The current SpiffWorkflow environment is: ${SPIFF_ENVIRONMENT}`}
               className="spiff-environment-header-text unclickable-text"
+              aria-label="our-aria-label"
             >
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>

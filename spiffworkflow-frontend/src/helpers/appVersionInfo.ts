@@ -6,14 +6,12 @@ const appVersionInfo = () => {
   );
   let versionInfo: ObjectWithStringKeysAndValues = {};
   if (versionInfoFromHtmlMetaTag) {
-    console.log('versionInfoFromHtmlMetaTag', versionInfoFromHtmlMetaTag);
     const versionInfoContentString =
       versionInfoFromHtmlMetaTag.getAttribute('content');
     if (
       versionInfoContentString &&
       versionInfoContentString !== '%VITE_VERSION_INFO%'
     ) {
-      console.log('versionInfoContentString', versionInfoContentString);
       versionInfo = JSON.parse(versionInfoContentString);
     }
   }
