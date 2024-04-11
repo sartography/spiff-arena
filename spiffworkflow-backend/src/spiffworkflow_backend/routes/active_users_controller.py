@@ -1,3 +1,4 @@
+import sqlalchemy
 import json
 import time
 
@@ -13,17 +14,30 @@ from spiffworkflow_backend.models.user import UserModel
 
 
 def active_user_updates(last_visited_identifier: str) -> Response:
-    active_user = ActiveUserModel.query.filter_by(user_id=g.user.id, last_visited_identifier=last_visited_identifier).first()
+    current_time = round(time.time())
+    query_args = {"user_id": g.user.id, "last_visited_identifier": last_visited_identifier}
+    active_user = ActiveUserModel.query.filter_by(**query_args).first()
+
     if active_user is None:
         active_user = ActiveUserModel(
-            user_id=g.user.id, last_visited_identifier=last_visited_identifier, last_seen_in_seconds=round(time.time())
+            user_id=g.user.id, last_visited_identifier=last_visited_identifier, last_seen_in_seconds=current_time
         )
         db.session.add(active_user)
-        db.session.commit()
-
-    active_user.last_seen_in_seconds = round(time.time())
-    db.session.add(active_user)
-    db.session.commit()
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError:
+            # duplicate entry. two processes are trying to create the same entry at the same time. it is fine to drop one request.
+            db.session.rollback()
+    else:
+        try:
+            db.session.query(ActiveUserModel).filter_by(**query_args).update({"last_seen_in_seconds": current_time})
+            db.session.commit()
+        except sqlalchemy.exc.OperationalError as exception:
+            if "Deadlock" in str(exception):
+                # two processes are trying to update the same entry at the same time. it is fine to drop one request.
+                db.session.rollback()
+            else:
+                raise
 
     cutoff_time_in_seconds = time.time() - 30
     active_users = (

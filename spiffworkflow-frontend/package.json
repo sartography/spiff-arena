@@ -2,6 +2,7 @@
   "name": "spiffworkflow-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@babel/core": "^7.24.3",
     "@babel/plugin-transform-react-jsx": "^7.18.6",
@@ -100,6 +101,7 @@
   },
   "devDependencies": {
     "@cypress/grep": "^3.1.0",
+    "@preact/preset-vite": "^2.8.2",
     "@tanstack/eslint-plugin-query": "^5.28.6",
     "@types/carbon__colors": "^10.31.3",
     "@types/cookie": "^0.5.1",
@@ -122,8 +124,10 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-sonarjs": "^0.15.0",
     "eslint-plugin-unused-imports": "^2.0.0",
+    "inherits-browser": "^0.0.1",
     "prettier": "^2.7.1",
     "safe-regex": "^2.1.1",
+    "tiny-svg": "^2.2.3",
     "ts-migrate": "^0.1.30"
   }
 }
