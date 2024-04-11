@@ -10,7 +10,7 @@
 
     "lib": ["dom", "dom.iterable", "esnext"],
     "target": "esNext",
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "isolatedModules": true
   },
   "include": ["src/**/*"]

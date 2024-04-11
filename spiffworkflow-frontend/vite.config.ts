@@ -9,6 +9,16 @@ export default defineConfig({
   server: {
     // this ensures that the browser DOES NOT open upon server start
     open: false,
-    port: 7000,
+    port: 7001,
   },
+  // esbuild: {
+  //   loader: 'tsx',
+  // },
+  // optimizeDeps: {
+  //   esbuildOptions: {
+  //     loader: {
+  //       '.js': 'tsx',
+  //     },
+  //   },
+  // },
 });

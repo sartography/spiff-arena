@@ -3,7 +3,7 @@ const { defineConfig } = require('cypress');
 const { rm } = require('fs/promises');
 
 // yes use video compression in CI, where we will set the env var so we upload to cypress dashboard
-const useVideoCompression = !!process.env.CYPRESS_RECORD_KEY;
+const useVideoCompression = !!import.meta.env.CYPRESS_RECORD_KEY;
 
 // https://github.com/cypress-io/cypress/issues/2522
 const deleteVideosOnSuccess = (on) => {
@@ -25,11 +25,11 @@ const deleteVideosOnSuccess = (on) => {
 };
 
 let spiffWorkflowFrontendUrl = `http://localhost:${
-  process.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001
+  import.meta.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001
 }`;
 
-if (process.env.SPIFFWORKFLOW_FRONTEND_URL) {
-  spiffWorkflowFrontendUrl = process.env.SPIFFWORKFLOW_FRONTEND_URL;
+if (import.meta.env.SPIFFWORKFLOW_FRONTEND_URL) {
+  spiffWorkflowFrontendUrl = import.meta.env.SPIFFWORKFLOW_FRONTEND_URL;
 }
 
 const cypressConfig = {
@@ -51,7 +51,7 @@ const cypressConfig = {
   scrollBehavior: 'center',
 };
 
-if (!process.env.CYPRESS_RECORD_KEY) {
+if (!import.meta.env.CYPRESS_RECORD_KEY) {
   // since it's slow
   cypressConfig.videoCompression = false;
 }

@@ -9,52 +9,53 @@ import {
 } from '@carbon/react';
 import { JsonSchemaExample } from '../../interfaces';
 
+declare let require: any;
 const examples: JsonSchemaExample[] = [];
-examples.push({
-  schema: require('../../resources/json_schema_examples/text-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/text-uischema.json'), // eslint-disable-line global-require
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/textarea-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/textarea-uischema.json'), // eslint-disable-line global-require
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/checkbox-schema.json'), // eslint-disable-line global-require
-  ui: {},
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/date-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/date-uischema.json'), // eslint-disable-line global-require
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/dropdown-schema.json'), // eslint-disable-line global-require
-  ui: {},
-  data: require('../../resources/json_schema_examples/dropdown-exampledata.json'), // eslint-disable-line global-require
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/multiple-choice-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/multiple-choice-uischema.json'), // eslint-disable-line global-require
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/password-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/password-uischema.json'), // eslint-disable-line global-require
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/nested-schema.json'), // eslint-disable-line global-require
-  ui: {},
-  data: {},
-});
-examples.push({
-  schema: require('../../resources/json_schema_examples/typeahead-schema.json'), // eslint-disable-line global-require
-  ui: require('../../resources/json_schema_examples/typeahead-uischema.json'), // eslint-disable-line global-require
-  data: {},
-});
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/text-schema.json'), // eslint-disable-line global-require
+//   ui: require('../../resources/json_schema_examples/text-uischema.json'), // eslint-disable-line global-require
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/textarea-schema.json'), // eslint-disable-line global-require
+//   ui: require('../../resources/json_schema_examples/textarea-uischema.json'), // eslint-disable-line global-require
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/checkbox-schema.json'), // eslint-disable-line global-require
+//   ui: {},
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/date-schema.json'), // eslint-disable-line global-require
+//   ui: require('../../resources/json_schema_examples/date-uischema.json'), // eslint-disable-line global-require
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/dropdown-schema.json'), // eslint-disable-line global-require
+//   ui: {},
+//   data: require('../../resources/json_schema_examples/dropdown-exampledata.json'), // eslint-disable-line global-require
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/multiple-choice-schema.json'), // eslint-disable-line global-require
+//   ui: require('../../resources/json_schema_examples/multiple-choice-uischema.json'), // eslint-disable-line global-require
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/password-schema.json'), // eslint-disable-line global-require
+//   ui: require('../../resources/json_schema_examples/password-uischema.json'), // eslint-disable-line global-require
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/nested-schema.json'), // eslint-disable-line global-require
+//   ui: {},
+//   data: {},
+// });
+// examples.push({
+//   schema: require('../../resources/json_schema_examples/typeahead-schema.json'), // eslint-disable-line global-require
+//   ui: require('../../resources/json_schema_examples/typeahead-uischema.json'), // eslint-disable-line global-require
+//   data: {},
+// });
 
 type OwnProps = {
   onSelect: Function;
