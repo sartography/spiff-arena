@@ -6,7 +6,7 @@ import viteTsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   // depending on your application, base can also be "/"
-  base: '',
+  base: '/',
   // plugins: [react(), viteTsconfigPaths(), preact()],
   plugins: [
     // react(),
@@ -16,6 +16,9 @@ export default defineConfig({
   server: {
     // this ensures that the browser DOES NOT open upon server start
     open: false,
+    port: 7001,
+  },
+  preview: {
     port: 7001,
   },
   // optimizeDeps: {

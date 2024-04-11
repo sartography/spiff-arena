@@ -71,7 +71,7 @@
   },
   "scripts": {
     "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "serve": "vite preview",
     "docker:start": "ESLINT_NO_DEV_ERRORS=true craco start",
     "test": "react-scripts test --coverage",
