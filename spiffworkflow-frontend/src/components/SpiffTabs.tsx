@@ -10,7 +10,7 @@ type OwnProps = {
 
 export default function SpiffTabs({ tabs }: OwnProps) {
   const location = useLocation();
-  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,12 +33,15 @@ export default function SpiffTabs({ tabs }: OwnProps) {
     );
   });
 
-  return (
-    <>
-      <Tabs selectedIndex={selectedTabIndex}>
-        <TabList aria-label="List of tabs">{tabComponents}</TabList>
-      </Tabs>
-      <br />
-    </>
-  );
+  if (selectedTabIndex && tabComponents.length > selectedTabIndex) {
+    return (
+      <>
+        <Tabs selectedIndex={selectedTabIndex}>
+          <TabList aria-label="List of tabs">{tabComponents}</TabList>
+        </Tabs>
+        <br />
+      </>
+    );
+  }
+  return null;
 }
