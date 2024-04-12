@@ -8,8 +8,8 @@
     "strict": true,
     "resolveJsonModule": true,
 
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "target": "esNext",
+    "lib": ["dom", "dom.iterable", "es2021"],
+    "target": "es2021",
     "types": ["vite/client", "node"],
     "isolatedModules": true
   },

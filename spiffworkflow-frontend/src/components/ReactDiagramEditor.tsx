@@ -595,7 +595,9 @@ export default function ReactDiagramEditor({
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
       }
-      fetchDiagramFromURL(`${import.meta.env.PUBLIC_URL}/${newDiagramFileName}`);
+      fetchDiagramFromURL(
+        `${import.meta.env.PUBLIC_URL}/${newDiagramFileName}`
+      );
       return undefined;
     }
 

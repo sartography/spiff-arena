@@ -28,6 +28,10 @@ export default defineConfig({
     alias: {
       'bpmn-js':
         '/home/jason/projects/github/sartography/spiff-arena/spiffworkflow-frontend/node_modules/bpmn-js',
+      inferno:
+        process.env.NODE_ENV !== 'production'
+          ? 'inferno/dist/index.dev.esm.js'
+          : 'inferno/dist/index.esm.js',
     },
     preserveSymlinks: true,
   },
