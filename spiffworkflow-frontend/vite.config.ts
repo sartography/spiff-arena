@@ -26,7 +26,7 @@ export default defineConfig({
   // },
   resolve: {
     alias: {
-      'bpmn-js': `${process.env.HOME}/projects/github/sartography/spiff-arena/spiffworkflow-frontend/node_modules/bpmn-js`,
+      // 'bpmn-js': `${process.env.HOME}/projects/github/sartography/spiff-arena/spiffworkflow-frontend/node_modules/bpmn-js`,
       inferno:
         process.env.NODE_ENV !== 'production'
           ? 'inferno/dist/index.dev.esm.js'
