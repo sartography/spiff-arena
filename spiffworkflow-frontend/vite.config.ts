@@ -1,16 +1,16 @@
 import preact from '@preact/preset-vite';
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+// import react from '@vitejs/plugin-react';
 
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   // depending on your application, base can also be "/"
   base: '/',
-  // plugins: [react(), viteTsconfigPaths(), preact()],
   plugins: [
     // react(),
-    preact({ prerender: { enabled: false } }),
+    // we need preact for bpmn-js-spiffworkflow. see https://forum.bpmn.io/t/custom-prop-for-service-tasks-typeerror-cannot-add-property-object-is-not-extensible/8487
+    preact(),
     viteTsconfigPaths(),
   ],
   server: {
@@ -21,13 +21,8 @@ export default defineConfig({
   preview: {
     port: 7001,
   },
-  // optimizeDeps: {
-  //   includes: ['bpmn-js-spiffworkflow'],
-  // },
   resolve: {
     alias: {
-      'bpmn-js':
-        '/home/jason/projects/github/sartography/spiff-arena/spiffworkflow-frontend/node_modules/bpmn-js',
       inferno:
         process.env.NODE_ENV !== 'production'
           ? 'inferno/dist/index.dev.esm.js'
@@ -35,14 +30,4 @@ export default defineConfig({
     },
     preserveSymlinks: true,
   },
-  // esbuild: {
-  //   loader: 'tsx',
-  // },
-  // optimizeDeps: {
-  //   esbuildOptions: {
-  //     loader: {
-  //       '.js': 'tsx',
-  //     },
-  //   },
-  // },
 });

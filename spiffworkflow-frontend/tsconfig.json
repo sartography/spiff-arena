@@ -3,14 +3,17 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "module": "commonjs",
     "skipLibCheck": true,
     "strict": true,
     "resolveJsonModule": true,
 
-    "lib": ["dom", "dom.iterable", "es2021"],
-    "target": "es2021",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "types": ["vite/client", "node"],
+
+    "module": "esnext",
+    "target": "ESNext",
+    "moduleResolution": "Node",
+
     "isolatedModules": true
   },
   "include": ["src/**/*"]
