@@ -45,7 +45,7 @@ RUN ./bin/build
 ######################## - FINAL
 
 # Use nginx as the base image
-FROM nginx:latest
+FROM nginx:1.25.4-bookworm
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*
