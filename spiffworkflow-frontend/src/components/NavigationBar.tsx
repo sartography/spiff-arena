@@ -101,7 +101,11 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
-    return <Link to={navItemPage}>{uxElement.label}</Link>;
+    return (
+      <Link key={navItemPage} to={navItemPage}>
+        {uxElement.label}
+      </Link>
+    );
   };
 
   const profileToggletip = () => {
@@ -222,7 +226,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       setActiveKey(navItemPage);
     }
     return (
-      <SpiffTooltip title={uxElement?.tooltip}>
+      <SpiffTooltip key={navItemPage} title={uxElement?.tooltip}>
         <HeaderMenuItem
           as={Link}
           to={navItemPage}

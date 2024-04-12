@@ -16,6 +16,7 @@
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.4.5",
     "@mui/material": "^5.10.14",
+    "@prefresh/vite": "^2.4.5",
     "@react-icons/all-files": "^4.1.0",
     "@rjsf/core": "5.0.0-beta.20",
     "@rjsf/mui": "5.0.0-beta.20",
