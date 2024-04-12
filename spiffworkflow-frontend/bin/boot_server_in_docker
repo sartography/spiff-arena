@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -10,19 +10,19 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # sort of like https://lithic.tech/blog/2020-05/react-dynamic-config, but without golang
 react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_" || echo '')
 if [[ -n "$react_configs" ]]; then
-  index_html_file="./build/index.html"
+  index_html_file="./dist/index.html"
   if [[ ! -f "$index_html_file" ]]; then
-    >&2 echo "ERROR: Could not find '${index_html_file}'. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
+    echo >&2 "ERROR: Could not find '${index_html_file}'. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
     exit 1
   fi
 
-  if ! command -v sed >/dev/null ; then
-    >&2 echo "ERROR: sed command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
+  if ! command -v sed >/dev/null; then
+    echo >&2 "ERROR: sed command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
     exit 1
   fi
 
-  if ! command -v perl >/dev/null ; then
-    >&2 echo "ERROR: perl command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
+  if ! command -v perl >/dev/null; then
+    echo >&2 "ERROR: perl command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
     exit 1
   fi
 
@@ -30,7 +30,7 @@ if [[ -n "$react_configs" ]]; then
     react_config_without_prefix=$(sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_([^=]*)=(.*)/\1=\\"\2\\"/' <<<"${react_config}")
 
     if [[ -z "$react_config_without_prefix" ]]; then
-      >&2 echo "ERROR: Could not parse react config line: '${react_config}'."
+      echo >&2 "ERROR: Could not parse react config line: '${react_config}'."
       exit 1
     fi
 
@@ -39,10 +39,16 @@ if [[ -n "$react_configs" ]]; then
     perl -pi -e "s/(window.spiffworkflowFrontendJsenv=\{\})/\1;window.spiffworkflowFrontendJsenv.${escaped_react_config}/" "$index_html_file"
 
     if ! grep -Eq "${react_config_without_prefix}" "$index_html_file"; then
-      >&2 echo "ERROR: Could not find '${react_config_without_prefix}' in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
+      echo >&2 "ERROR: Could not find '${react_config_without_prefix}' in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
       exit 1
     fi
   done
 fi
 
-exec ./node_modules/.bin/serve -s build -l "$PORT0"
+port_to_use="${PORT0:-80}"
+if [[ -n "${SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT:-}" ]]; then
+  port_to_use="$SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT"
+fi
+perl -p -e "s/{{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}}/${port_to_use}/" /var/tmp/nginx.conf.template >/etc/nginx/conf.d/default.conf
+
+exec nginx -g "daemon off;"

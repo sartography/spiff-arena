@@ -1,5 +1,5 @@
 server {
-   listen 80;
+   listen {{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}};
     server_name localhost;
 
     location / {
