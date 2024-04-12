@@ -8,7 +8,7 @@
     "resolveJsonModule": true,
 
     "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["vite/client", "node"],
+    "types": ["vite/client", "node", "vitest/globals"],
 
     "module": "esnext",
     "target": "ESNext",
