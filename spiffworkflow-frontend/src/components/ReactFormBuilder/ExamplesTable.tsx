@@ -74,7 +74,7 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
         <td>{example.schema.description}</td>
         <td>
           <Button
-            kind="secondary"
+            kind="primary"
             size="sm"
             onClick={() => selectExample(index)}
           >

@@ -155,18 +155,13 @@ export default function ReactDiagramEditor({
         if (diagramType === 'dmn') {
           modeler = (diagramModelerState as any).getActiveViewer();
         }
-        try {
+        if (modeler) {
           if (amount === 0) {
             const canvas = modeler.get('canvas');
             canvas.zoom(FitViewport, 'auto');
           } else {
             modeler.get('zoomScroll').stepZoom(amount);
           }
-        } catch (e) {
-          console.error(
-            'zoom failed, certain modes in DMN do not support zooming.',
-            e
-          );
         }
       }
     },

@@ -796,7 +796,7 @@ export default function ProcessInstanceListTableWithFilters({
     return (
       <ProcessInstanceListSaveAsReport
         onSuccess={onSaveReportSuccess}
-        buttonClassName="button-white-background narrow-button"
+        buttonClassName="narrow-button"
         buttonText="Save"
         processInstanceReportSelection={processInstanceReportSelection}
         reportMetadata={reportMetadata}
@@ -1040,6 +1040,7 @@ export default function ProcessInstanceListTableWithFilters({
       formElements.push(
         <Dropdown
           titleText="Display type"
+          label="Display type"
           id="report-column-display-type"
           items={[''].concat(Object.values(filterDisplayTypes))}
           selectedItem={
@@ -1064,6 +1065,7 @@ export default function ProcessInstanceListTableWithFilters({
       formElements.push(
         <Dropdown
           titleText="Operator"
+          label="Operator"
           id="report-column-condition-operator"
           items={Object.keys(filterOperatorMappings)}
           selectedItem={operator || null}
@@ -1110,6 +1112,7 @@ export default function ProcessInstanceListTableWithFilters({
         onRequestSubmit={handleUpdateReportColumn}
         onRequestClose={handleColumnFormClose}
         hasScrollingContent
+        aria-label={modalHeading}
       >
         {formElements}
       </Modal>
@@ -1202,6 +1205,7 @@ export default function ProcessInstanceListTableWithFilters({
             <Dropdown
               id="system-report-dropdown"
               titleText="System report"
+              label="System report"
               items={['', ...systemReportOptions]}
               itemToString={(item: any) => titleizeString(item)}
               selectedItem={systemReport}
@@ -1221,6 +1225,7 @@ export default function ProcessInstanceListTableWithFilters({
             <Dropdown
               id="user-group-dropdown"
               titleText="Assigned user group"
+              label="Assigned user group"
               items={['', ...userGroups]}
               itemToString={(item: any) => item}
               selectedItem={selectedUserGroup}
@@ -1282,6 +1287,7 @@ export default function ProcessInstanceListTableWithFilters({
         onRequestSubmit={handleAdvancedOptionsClose}
         onRequestClose={handleAdvancedOptionsClose}
         hasScrollingContent
+        aria-label="advanced filter options"
         size="lg"
       >
         {formElements}
@@ -1457,8 +1463,8 @@ export default function ProcessInstanceListTableWithFilters({
           <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <Button
-                kind=""
-                className="button-white-background narrow-button"
+                kind="tertiary"
+                className="narrow-button"
                 onClick={clearFilters}
               >
                 Clear

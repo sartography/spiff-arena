@@ -77,7 +77,7 @@ export function Notification({
           className="cds--inline-notification__close-button"
           hasIconOnly
           size="sm"
-          kind=""
+          kind="ghost"
           onClick={onClose}
         />
       )}
@@ -86,7 +86,7 @@ export function Notification({
           data-qa="close-publish-notification"
           className="cds--inline-notification__close-button"
           size="sm"
-          kind=""
+          kind="ghost"
           onClick={() => setShowMessage(!showMessage)}
         >
           {showMessage ? 'Hide' : 'Details'}&nbsp;

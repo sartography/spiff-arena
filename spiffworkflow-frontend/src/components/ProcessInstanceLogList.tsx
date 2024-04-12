@@ -499,16 +499,16 @@ export default function ProcessInstanceLogList({
           <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <Button
-                kind=""
-                className="button-white-background narrow-button"
+                kind="tertiary"
+                className="narrow-button"
                 onClick={resetFiltersAndRun}
               >
                 Reset
               </Button>
               {shouldDisplayClearButton && (
                 <Button
-                  kind=""
-                  className="button-white-background narrow-button"
+                  kind="tertiary"
+                  className="narrow-button"
                   onClick={clearFilters}
                 >
                   Clear

@@ -144,17 +144,69 @@ h3 {
  * so they match our normal scheme better
  */
 .cds--btn--tertiary:focus {
-  color: white;
-  border-color: #393939;
+  color: #f4f4f4;
+  border-color: #f4f4f4;
   background-color: #393939;
 }
 .cds--btn--tertiary:hover {
-  color: white;
+  color: #161616;
+  border-color: #161616;
+  background-color: #f4f4f4;
+}
+.cds--btn--tertiary:visited:hover {
+  color: #161616;
+  border-color: #161616;
+  background-color: #f4f4f4;
+}
+
+.cds--btn--secondary {
+  color: #161616;
+  border-color: #efefef;
+  background-color: #efefef;
+}
+.cds--btn--secondary:visited {
+  color: #161616;
+  border-color: #efefef;
+  background-color: #efefef;
+}
+.cds--btn--secondary:focus {
+  color: #161616;
+  border-color: #efefef;
+  background-color: #efefef;
+}
+.cds--btn--secondary:hover {
+  color: #161616;
+  border-color: #dddddd;
+  background-color: #dddddd;
+}
+.cds--btn--secondary:visited:hover {
+  color: #161616;
+  border-color: #dddddd;
+  background-color: #dddddd;
+}
+
+.cds--modal-footer .cds--btn--secondary {
+  color: #ffffff;
+  border-color: #393939;
+  background-color: #393939;
+}
+.cds--modal-footer .cds--btn--secondary:visited {
+  color: #ffffff;
+  border-color: #393939;
+  background-color: #393939;
+}
+.cds--modal-footer .cds--btn--secondary:focus {
+  color: #ffffff;
+  border-color: #393939;
+  background-color: #393939;
+}
+.cds--modal-footer .cds--btn--secondary:hover {
+  color: #ffffff;
   border-color: #474747;
   background-color: #474747;
 }
-.cds--btn--tertiary:visited:hover {
-  color: white;
+.cds--modal-footer .cds--btn--secondary:visited:hover {
+  color: #ffffff;
   border-color: #474747;
   background-color: #474747;
 }

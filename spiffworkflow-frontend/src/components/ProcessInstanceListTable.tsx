@@ -386,7 +386,7 @@ export default function ProcessInstanceListTable({
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
       <td
-        key={processInstance.id}
+        key={`${columnAccessor}-${processInstance.id}`}
         onClick={() => navigateToProcessInstance(processInstance)}
         onKeyDown={() => navigateToProcessInstance(processInstance)}
         data-qa={`process-instance-show-link-${columnAccessor}`}
@@ -512,7 +512,7 @@ export default function ProcessInstanceListTable({
         if (hasAccessToCompleteTask && processInstance.task_id) {
           goButtonElement = (
             <Button
-              kind="secondary"
+              kind="primary"
               href={taskShowUrl}
               style={{ width: '60px' }}
               size="sm"

@@ -99,12 +99,13 @@ export default function ProcessInstanceListSaveAsReport({
         onRequestSubmit={addProcessInstanceReport}
         onRequestClose={handleSaveFormClose}
         hasScrollingContent
+        aria-label="save perspective"
       >
         <p className="data-table-description">{descriptionText}</p>
         {textInputComponent}
       </Modal>
       <Button
-        kind=""
+        kind="tertiary"
         className={buttonClassName}
         onClick={() => {
           setIdentifier(processInstanceReportSelection?.identifier || '');
