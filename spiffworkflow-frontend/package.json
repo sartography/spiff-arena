@@ -39,7 +39,7 @@
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#vite-support",
     "cookie": "^0.6.0",
     "craco": "^0.0.3",
-    "date-fns": "^2.28.0",
+    "date-fns": "^3.6.0",
     "diagram-js": "^11.9.1",
     "dmn-js": "^16.0.0",
     "dmn-js-properties-panel": "^3.0.0",
