@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM = "contents:in:filesystem"
+PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT = 2
 
 
 @dataclass
@@ -27,14 +28,33 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
     def store_file_on_file_system(self) -> None:
-        filename = self.digest
-        filepath = os.path.join(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], filename)
+        filepath = self.get_full_filepath()
+        os.makedirs(os.path.dirname(filepath))
         with open(filepath, "w") as f:
             f.write(self.contents.decode("utf-8"))
         self.contents = PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM.encode()
 
     def get_contents_on_file_system(self) -> bytes:
-        filename = self.digest
-        filepath = os.path.join(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], filename)
+        filepath = self.get_full_filepath()
         with open(filepath) as f:
             return f.read().encode()
+
+    def get_full_filepath(self) -> str:
+        dir_parts = self.__class__.get_hashed_directory_structure(self.digest)
+        return os.path.join(
+            current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, self.digest
+        )
+
+    @classmethod
+    def get_hashed_directory_structure(cls, digest: str) -> list[str]:
+        dir_parts = []
+        for ii in range(PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT):
+            dir_parts.append(
+                digest[
+                    ii
+                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT : ii
+                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
+                    + PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
+                ]
+            )
+        return dir_parts

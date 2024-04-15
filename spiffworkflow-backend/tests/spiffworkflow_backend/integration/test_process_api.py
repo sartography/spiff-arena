@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
@@ -1559,6 +1560,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
+        # it's just for convenience, since the root_path gets deleted after every test
         with self.app_config_mock(
             app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH", ProcessModelService.root_path()
         ):
@@ -1628,6 +1630,12 @@ class TestProcessApi(BaseTest):
                 )
                 assert response.status_code == 200
                 assert response.data == expected_content
+
+                dir_parts = ProcessInstanceFileDataModel.get_hashed_directory_structure(digest)
+                filepath = os.path.join(
+                    app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, digest
+                )
+                assert os.path.isfile(filepath)
 
     def test_process_instance_can_be_terminated(
         self,
