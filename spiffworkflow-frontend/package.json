@@ -36,7 +36,7 @@
     "axios": "^0.27.2",
     "bpmn-js": "^13.2.2",
     "bpmn-js-properties-panel": "^1.22.0",
-    "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#vite-support",
+    "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^0.6.0",
     "craco": "^0.0.3",
     "date-fns": "^3.6.0",
