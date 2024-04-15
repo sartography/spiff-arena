@@ -10,7 +10,7 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # sort of like https://lithic.tech/blog/2020-05/react-dynamic-config, but without golang
 react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_" || echo '')
 if [[ -n "$react_configs" ]]; then
-  index_html_file="./dist/index.html"
+  index_html_file="/usr/share/nginx/html/index.html"
   if [[ ! -f "$index_html_file" ]]; then
     echo >&2 "ERROR: Could not find '${index_html_file}'. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
     exit 1
