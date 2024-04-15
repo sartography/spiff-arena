@@ -9,7 +9,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
-PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM = "contents:in:filesystem"
+PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM = "contents_in:filesystem"
 PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT = 2
 
 
@@ -26,6 +26,12 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
     digest: str = db.Column(db.String(64), nullable=False, index=True)
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+
+    def get_contents(self) -> bytes:
+        file_contents = self.contents
+        if current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+            file_contents = self.get_contents_on_file_system()
+        return file_contents
 
     def store_file_on_file_system(self) -> None:
         filepath = self.get_full_filepath()
@@ -51,9 +57,7 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
         for ii in range(PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT):
             dir_parts.append(
                 digest[
-                    ii
-                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT : ii
-                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
+                    ii : ii * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
                     + PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
                 ]
             )
