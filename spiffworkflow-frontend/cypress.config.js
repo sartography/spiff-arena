@@ -1,9 +1,10 @@
 /* eslint-disable */
-const { defineConfig } = require('cypress');
-const { rm } = require('fs/promises');
+import { defineConfig } from 'cypress';
+import { rm } from 'fs/promises';
+import config from '@cypress/grep/src/plugin';
 
 // yes use video compression in CI, where we will set the env var so we upload to cypress dashboard
-const useVideoCompression = !!import.meta.env.CYPRESS_RECORD_KEY;
+const useVideoCompression = !!process.env.CYPRESS_RECORD_KEY;
 
 // https://github.com/cypress-io/cypress/issues/2522
 const deleteVideosOnSuccess = (on) => {
@@ -25,11 +26,11 @@ const deleteVideosOnSuccess = (on) => {
 };
 
 let spiffWorkflowFrontendUrl = `http://localhost:${
-  import.meta.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001
+  process.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001
 }`;
 
-if (import.meta.env.SPIFFWORKFLOW_FRONTEND_URL) {
-  spiffWorkflowFrontendUrl = import.meta.env.SPIFFWORKFLOW_FRONTEND_URL;
+if (process.env.SPIFFWORKFLOW_FRONTEND_URL) {
+  spiffWorkflowFrontendUrl = process.env.SPIFFWORKFLOW_FRONTEND_URL;
 }
 
 const cypressConfig = {
@@ -40,7 +41,6 @@ const cypressConfig = {
     baseUrl: spiffWorkflowFrontendUrl,
     setupNodeEvents(on, config) {
       deleteVideosOnSuccess(on);
-      require('@cypress/grep/src/plugin')(config);
       return config;
     },
   },
@@ -51,9 +51,9 @@ const cypressConfig = {
   scrollBehavior: 'center',
 };
 
-if (!import.meta.env.CYPRESS_RECORD_KEY) {
+if (!process.env.CYPRESS_RECORD_KEY) {
   // since it's slow
   cypressConfig.videoCompression = false;
 }
 
-module.exports = defineConfig(cypressConfig);
+export default defineConfig(cypressConfig);
