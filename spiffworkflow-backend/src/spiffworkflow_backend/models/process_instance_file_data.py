@@ -55,12 +55,7 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
     def get_hashed_directory_structure(cls, digest: str) -> list[str]:
         dir_parts = []
         for ii in range(PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT):
-            dir_parts.append(
-                digest[
-                    ii
-                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT : ii
-                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
-                    + PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
-                ]
-            )
+            start_index = ii * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
+            end_index = start_index + PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
+            dir_parts.append(digest[start_index:end_index])
         return dir_parts
