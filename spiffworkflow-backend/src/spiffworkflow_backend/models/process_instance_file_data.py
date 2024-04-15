@@ -57,7 +57,9 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
         for ii in range(PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT):
             dir_parts.append(
                 digest[
-                    ii : ii * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
+                    ii
+                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT : ii
+                    * PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
                     + PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT
                 ]
             )
