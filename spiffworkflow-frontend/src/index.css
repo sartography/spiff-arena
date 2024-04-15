@@ -144,9 +144,9 @@ h3 {
  * so they match our normal scheme better
  */
 .cds--btn--tertiary:focus {
-  color: #f4f4f4;
-  border-color: #f4f4f4;
-  background-color: #393939;
+  color: #161616;
+  border-color: #161616;
+  background-color: #f4f4f4;
 }
 .cds--btn--tertiary:hover {
   color: #161616;
