@@ -8,7 +8,7 @@ It can represent a database, file system, or any other storage mechanism.
 ## When to use
 
 You might use a Data Store when it is not sufficient for data to be accessible in just a single process instance, but it needs to be shared across process instances.
-If you a have a use case where you need to store data and access it from multiple different process instances, you could also consider using a Service Task to contact a database external to SpiffWorkflow, either via a database library in a connector or using a database via API.
+If you have a use case where you need to store data and access it from multiple different process instances, you could also consider using a Service Task to contact a database external to SpiffWorkflow, either via a database library in a connector or using a database via API.
 All of these mechanisms work well in SpiffWorkflow, so the choice will depend on your storage and performance requirements.
 
 ## Types of Data Store
@@ -38,17 +38,19 @@ Here's how to depict such interactions using a BPMN example focused on movie dat
 
 3. **Script Task: Extract Single Record**
     - Retrieves specific movie details from the "Movies" data store.
-    - A script extracts information about "Django Unchained" using the KKV path, illustrating how to access nested data.
-    - **Script**: `django = movies["Quentin Tarantino"]["Django Unchained"]`
+    - The kkv data store places a function pointer in task data when a read arrow is drawn from the data store. This allows just reading data for a top level/secondary key combination without loading all the data. In this case the read would look like `django = movies("Quentin Tarantino", "Django Unchained")`.
 
 5. **Script Task: Insert A Single Record**
     - Adds a new movie entry to the data store under a different key.
     - Demonstrates adding an entry for a Wes Craven movie to the "Movies" data store, showcasing how new data can be structured and inserted.
-    - **Script**:
+    - For a KKV, write the movies variable that will be read from task data and should be initialized to a new value that you intend to add or update:
+    
      ```python
-     movies["Wes Craven"]["Swamp Thing"] = [
-       {"name": "Dr. Alec Hollard", "actor": "Ray Wise", "description": "whatever"}
-     ]
+    movies = {
+    "Wes Craven": {
+        "Swamp Thing: 
+        [ {"name": "Dr. Alec Hollard", "actor": "Ray Wise", "description": "whatever"}]
+    } }
      ```
 
 6. **End Event**: Marks the completion of the workflow.
@@ -63,7 +65,7 @@ After running the process, You can view the new movies data in data store:
 
 ### JSON Data Store
 
-In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process. A structured file or set of files that uses the JSON format to store data in a hierarchical key-value pair system. This approach is particularly beneficial for BPMN processes requiring access to configurable, structured data without needing a connection to a database.
+In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process. A JSON data store is structured file or set of files that uses the JSON format to store data.
 
 #### JSON Data Store: Gatorade Flavors
 
@@ -103,13 +105,13 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
     - **Script**: 
      ```python
      gator_select = []
-     for flavor in gatoraide_flavors:
+     for flavor in gatorade_flavors:
          gator_select.append({
              "label": flavor["name"],
              "value": flavor["name"]
          })
      ```
-    This task creates an array `gator_select` with objects formatted for dropdown list usage from the `gatoraide_flavors` array.
+    This task creates an array `gator_select` with objects formatted for dropdown list usage from the `gatorade_flavors` array.
 
 3. **User Task: Select A Gatorade**
     - Use a dropdown list for users to select their Gatorade flavor.
@@ -133,9 +135,9 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
      - The JSON schema defines the structure for the user form, sourcing options from the `gator_select` array.
 
 4. **Manual Task: View Gatorade Selection**
-    - **Pre-Script**: Matches the user-selected flavor to its full details in the `gatoraide_flavors` array.
+    - **Pre-Script**: Matches the user-selected flavor to its full details in the `gatorade_flavors` array.
      ```python
-     for flavor in gatoraide_flavors:
+     for flavor in gatorade_flavors:
          if flavor["name"] == selected:
              selected_flavor = flavor
      ```
