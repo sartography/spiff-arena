@@ -248,6 +248,13 @@ def setup_config(app: Flask) -> None:
         app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"] = "greedy"
         app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"] = "run_until_user_message"
 
+    if app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+        if not os.path.isdir(app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"]):
+            raise ConfigurationError(
+                "Could not directory specified with SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH: "
+                f"{app.config['SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH']}"
+            )
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)

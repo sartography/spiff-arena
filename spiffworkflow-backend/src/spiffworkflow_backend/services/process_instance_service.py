@@ -388,7 +388,7 @@ class ProcessInstanceService:
                     process_instance_id=process_instance_id,
                     mimetype=mimetype,
                     filename=filename,
-                    contents=contents,  # type: ignore
+                    contents=contents,
                     digest=digest,
                     updated_at_in_seconds=now_in_seconds,
                     created_at_in_seconds=now_in_seconds,
@@ -443,6 +443,8 @@ class ProcessInstanceService:
         models = cls.replace_file_data_with_digest_references(data, process_instance_id)
 
         for model in models:
+            if current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+                model.store_file_on_file_system()
             db.session.add(model)
         db.session.commit()
 

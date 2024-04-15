@@ -238,6 +238,8 @@ def process_data_file_download(
     mimetype = file_data.mimetype
     filename = file_data.filename
     file_contents = file_data.contents
+    if current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+        file_contents = file_data.get_contents_on_file_system()
 
     return Response(
         file_contents,
