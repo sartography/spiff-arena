@@ -10,7 +10,7 @@ const appVersionInfo = () => {
       versionInfoFromHtmlMetaTag.getAttribute('content');
     if (
       versionInfoContentString &&
-      versionInfoContentString !== '%REACT_APP_VERSION_INFO%'
+      versionInfoContentString !== '%VITE_VERSION_INFO%'
     ) {
       versionInfo = JSON.parse(versionInfoContentString);
     }

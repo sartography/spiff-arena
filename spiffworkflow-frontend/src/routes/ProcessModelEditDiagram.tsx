@@ -915,7 +915,7 @@ export default function ProcessModelEditDiagram() {
           )}
           <Button
             className="m-top-10"
-            kind="secondary"
+            kind="primary"
             onClick={() => handleProcessScriptAssist()}
             disabled={scriptAssistLoading}
           >

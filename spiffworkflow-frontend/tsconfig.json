@@ -3,11 +3,18 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "module": "commonjs",
     "skipLibCheck": true,
     "strict": true,
-    "target": "es2021",
     "resolveJsonModule": true,
+
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["vite/client", "node", "vitest/globals"],
+
+    "module": "esnext",
+    "target": "ESNext",
+    "moduleResolution": "Node",
+
+    "isolatedModules": true
   },
-  "include": ["src/**/*"]
+  "include": ["src", "test/vitest.setup.ts"]
 }

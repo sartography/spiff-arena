@@ -4,14 +4,12 @@ type OwnProps = {
   displayLocation: string;
   elementCallback: Function;
   extensionUxElements?: UiSchemaUxElement[] | null;
-  elementCallbackIfNotFound?: Function;
 };
 
 export function ExtensionUxElementMap({
   displayLocation,
   elementCallback,
   extensionUxElements,
-  elementCallbackIfNotFound,
 }: OwnProps) {
   if (!extensionUxElements) {
     return null;
@@ -23,15 +21,11 @@ export function ExtensionUxElementMap({
         return uxElement.display_location === displayLocation;
       }
     );
-    const elementMap = elementsForDisplayLocation.map(
+    return elementsForDisplayLocation.map(
       (uxElement: UiSchemaUxElement, index: number) => {
         return elementCallback(uxElement, index);
       }
     );
-    if (elementMap.length === 0 && elementCallbackIfNotFound) {
-      return elementCallbackIfNotFound();
-    }
-    return elementMap;
   };
   return mainElement();
 }

@@ -159,6 +159,7 @@ export default function SecretShow() {
                       <TextInput
                         id="secret_value"
                         name="secret_value"
+                        labelText="Secret value"
                         value={secret.value}
                         onChange={handleSecretValueChange}
                         disabled={

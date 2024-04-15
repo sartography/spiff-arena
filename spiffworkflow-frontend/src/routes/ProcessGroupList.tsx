@@ -74,7 +74,7 @@ export default function ProcessGroupList() {
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
         <Stack orientation="horizontal" gap={3}>
           <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
-            <Button kind="secondary" href="/process-groups/new">
+            <Button kind="primary" href="/process-groups/new">
               Add a process group
             </Button>
           </Can>

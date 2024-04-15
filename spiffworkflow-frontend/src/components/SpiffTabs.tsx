@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabList, Tab } from '@carbon/react';
 import { SpiffTab } from '../interfaces';
-import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   tabs: SpiffTab[];
@@ -10,7 +9,7 @@ type OwnProps = {
 
 export default function SpiffTabs({ tabs }: OwnProps) {
   const location = useLocation();
-  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,20 +24,19 @@ export default function SpiffTabs({ tabs }: OwnProps) {
 
   const tabComponents = tabs.map((spiffTab: SpiffTab) => {
     return (
-      <SpiffTooltip title={spiffTab?.tooltip}>
-        <Tab onClick={() => navigate(spiffTab.path)}>
-          {spiffTab.display_name}
-        </Tab>
-      </SpiffTooltip>
+      <Tab onClick={() => navigate(spiffTab.path)}>{spiffTab.display_name}</Tab>
     );
   });
 
-  return (
-    <>
-      <Tabs selectedIndex={selectedTabIndex}>
-        <TabList aria-label="List of tabs">{tabComponents}</TabList>
-      </Tabs>
-      <br />
-    </>
-  );
+  if (selectedTabIndex !== null && tabComponents.length > selectedTabIndex) {
+    return (
+      <>
+        <Tabs selectedIndex={selectedTabIndex}>
+          <TabList aria-label="List of tabs">{tabComponents}</TabList>
+        </Tabs>
+        <br />
+      </>
+    );
+  }
+  return null;
 }
