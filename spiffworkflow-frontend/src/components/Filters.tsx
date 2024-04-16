@@ -41,7 +41,7 @@ export default function Filters({
       elements.push(
         <Button
           onClick={copyReportLink}
-          kind=""
+          kind="secondary"
           renderIcon={LinkIcon}
           iconDescription="Copy shareable link"
           hasIconOnly

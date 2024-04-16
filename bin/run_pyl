@@ -24,7 +24,7 @@ function get_python_dirs() {
 function run_autofixers() {
   python_dirs="$(get_python_dirs) bin"
   # shellcheck disable=2086
-  poetry run ruff --fix $python_dirs || echo ''
+  poetry run ruff check --fix $python_dirs || echo ''
 }
 
 function run_pre_commmit() {

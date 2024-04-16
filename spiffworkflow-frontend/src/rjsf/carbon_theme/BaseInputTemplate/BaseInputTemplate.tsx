@@ -146,6 +146,7 @@ export default function BaseInputTemplate<
         <TextInput
           id={id}
           className="text-input"
+          labelText=""
           helperText={commonAttributes.helperText}
           invalid={commonAttributes.invalid}
           invalidText={commonAttributes.errorMessageForField}

@@ -55,15 +55,17 @@ class SpecFileService(FileSystemService):
 
     @classmethod
     def get_references_for_file(cls, file: File, process_model_info: ProcessModelInfo) -> list[Reference]:
-        full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
-        file_contents: bytes = b""
-        with open(full_file_path) as f:
-            file_contents = f.read().encode()
+        full_file_path = cls.full_file_path(process_model_info, file.name)
+        with open(full_file_path, "rb") as f:
+            file_contents = f.read()
         return cls.get_references_for_file_contents(process_model_info, file.name, file_contents)
 
+    # This is designed to isolate xml parsing, which is a security issue, and make it as safe as possible.
+    # S320 indicates that xml parsing with lxml is unsafe. To mitigate this, we add options to the parser
+    # to make it as safe as we can. No exploits have been demonstrated with this parser, but we will try to stay alert.
     @classmethod
     def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
-        etree_xml_parser = etree.XMLParser(resolve_entities=False)
+        etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True)
         return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
 
     @classmethod

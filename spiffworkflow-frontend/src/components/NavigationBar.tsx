@@ -101,7 +101,11 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
   const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
-    return <Link to={navItemPage}>{uxElement.label}</Link>;
+    return (
+      <Link key={navItemPage} to={navItemPage}>
+        {uxElement.label}
+      </Link>
+    );
   };
 
   const profileToggletip = () => {
@@ -163,6 +167,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <HeaderGlobalAction
               title={`The current SpiffWorkflow environment is: ${SPIFF_ENVIRONMENT}`}
               className="spiff-environment-header-text unclickable-text"
+              aria-label="our-aria-label"
             >
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>
@@ -195,10 +200,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                   return (
                     <SpiffTooltip title="Manage Secrets and Authentication information for Service Tasks">
                       <HeaderMenuItem
-                        element={Link}
+                        as={Link}
                         to="/configuration"
                         onClick={closeSideNavMenuIfExpanded}
-                        isCurrentPage={isActivePage('/configuration')}
+                        isActive={isActivePage('/configuration')}
                       >
                         Configuration
                       </HeaderMenuItem>
@@ -221,11 +226,11 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       setActiveKey(navItemPage);
     }
     return (
-      <SpiffTooltip title={uxElement?.tooltip}>
+      <SpiffTooltip key={navItemPage} title={uxElement?.tooltip}>
         <HeaderMenuItem
-          element={Link}
+          as={Link}
           to={navItemPage}
-          isCurrentPage={isActivePage(navItemPage)}
+          isActive={isActivePage(navItemPage)}
           data-qa={`extension-${slugifyString(
             uxElement.label || uxElement.page
           )}`}
@@ -244,10 +249,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       <>
         <SpiffTooltip title="View and start Process Instances">
           <HeaderMenuItem<LinkProps>
-            element={Link}
+            as={Link}
             to="/"
             onClick={closeSideNavMenuIfExpanded}
-            isCurrentPage={isActivePage('/')}
+            isActive={isActivePage('/')}
           >
             <div>Home</div>
           </HeaderMenuItem>
@@ -256,10 +261,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
           <SpiffTooltip title="Find and organize Process Groups and Process Models">
             <HeaderMenuItem
-              element={Link}
+              as={Link}
               to={processGroupPath}
               onClick={closeSideNavMenuIfExpanded}
-              isCurrentPage={isActivePage(processGroupPath)}
+              isActive={isActivePage(processGroupPath)}
               data-qa="header-nav-processes"
             >
               Processes
@@ -273,10 +278,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         >
           <SpiffTooltip title="List of active and completed Process Instances">
             <HeaderMenuItem
-              element={Link}
+              as={Link}
               to="/process-instances"
               onClick={closeSideNavMenuIfExpanded}
-              isCurrentPage={isActivePage('/process-instances')}
+              isActive={isActivePage('/process-instances')}
             >
               Process Instances
             </HeaderMenuItem>
@@ -285,10 +290,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
           <SpiffTooltip title="Browse messages being sent and received">
             <HeaderMenuItem
-              element={Link}
+              as={Link}
               to="/messages"
               onClick={closeSideNavMenuIfExpanded}
-              isCurrentPage={isActivePage('/messages')}
+              isActive={isActivePage('/messages')}
             >
               Messages
             </HeaderMenuItem>
@@ -297,10 +302,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
           <SpiffTooltip title="Browse data that has been saved to Data Stores">
             <HeaderMenuItem
-              element={Link}
+              as={Link}
               to="/data-stores"
               onClick={closeSideNavMenuIfExpanded}
-              isCurrentPage={isActivePage('/data-stores')}
+              isActive={isActivePage('/data-stores')}
             >
               Data Stores
             </HeaderMenuItem>
@@ -322,12 +327,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
       <HeaderContainer
         render={() => (
           <Header aria-label="IBM Platform Name" className="cds--g100">
-            <HeaderName
-              element={Link}
-              to="/"
-              prefix=""
-              data-qa="spiffworkflow-logo"
-            >
+            <HeaderName as={Link} to="/" prefix="" data-qa="spiffworkflow-logo">
               <img src={logo} className="app-logo" alt="logo" />
             </HeaderName>
           </Header>
@@ -360,7 +360,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                 isActive={isSideNavExpanded}
               />
               <HeaderName
-                element={Link}
+                as={Link}
                 to="/"
                 onClick={closeSideNavMenuIfExpanded}
                 prefix=""

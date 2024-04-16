@@ -9,7 +9,7 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 if [[ -f "version_info.json" ]]; then
   version_info=$(cat version_info.json)
-  export REACT_APP_VERSION_INFO="$version_info"
+  export VITE_VERSION_INFO="$version_info"
 fi
 
 npm run build

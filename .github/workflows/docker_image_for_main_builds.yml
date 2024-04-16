@@ -32,6 +32,7 @@ on:
       - main
       - spiffdemo
       - GSA-TTS-fix-path-routing-in-generated-openid-urls
+      - use-vite-to-build
 
 jobs:
   create_frontend_docker_image:

@@ -97,6 +97,9 @@ fe-npm-i:
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
 
+fe-unimported:
+	$(IN_FRONTEND) npx unimported
+
 poetry-i:
 	$(IN_ARENA) poetry install --no-root
 
@@ -109,7 +112,7 @@ pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
 ruff:
-	$(IN_ARENA) poetry run ruff --fix spiffworkflow-backend
+	$(IN_ARENA) poetry run ruff check --fix spiffworkflow-backend
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@true
@@ -124,6 +127,6 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	fe-lint-fix fe-logs fe-npm-i fe-sh \
+	fe-lint-fix fe-logs fe-npm-i fe-sh fe-unimported  \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership

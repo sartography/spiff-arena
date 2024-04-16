@@ -10,7 +10,7 @@ type OwnProps = {
   title?: string;
   confirmButtonLabel?: string;
   kind?: string;
-  renderIcon?: boolean;
+  renderIcon?: Element;
   iconDescription?: string | null;
   hasIconOnly?: boolean;
   classNameForModal?: string;
@@ -24,7 +24,7 @@ export default function ButtonWithConfirmation({
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
   kind = 'danger',
-  renderIcon = false,
+  renderIcon,
   iconDescription = null,
   hasIconOnly = false,
   classNameForModal,

@@ -1,6 +1,7 @@
 /* eslint-disable */
-const { defineConfig } = require('cypress');
-const { rm } = require('fs/promises');
+import { defineConfig } from 'cypress';
+import { rm } from 'fs/promises';
+import config from '@cypress/grep/src/plugin';
 
 // yes use video compression in CI, where we will set the env var so we upload to cypress dashboard
 const useVideoCompression = !!process.env.CYPRESS_RECORD_KEY;
@@ -40,7 +41,6 @@ const cypressConfig = {
     baseUrl: spiffWorkflowFrontendUrl,
     setupNodeEvents(on, config) {
       deleteVideosOnSuccess(on);
-      require('@cypress/grep/src/plugin')(config);
       return config;
     },
   },
@@ -56,4 +56,4 @@ if (!process.env.CYPRESS_RECORD_KEY) {
   cypressConfig.videoCompression = false;
 }
 
-module.exports = defineConfig(cypressConfig);
+export default defineConfig(cypressConfig);

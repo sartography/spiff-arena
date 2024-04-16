@@ -71,11 +71,7 @@ export default function SecretNew() {
             }}
           />
           <ButtonSet>
-            <Button
-              kind=""
-              className="button-white-background"
-              onClick={navigateToSecrets}
-            >
+            <Button kind="tertiary" onClick={navigateToSecrets}>
               Cancel
             </Button>
             <Button kind="primary" type="submit">

@@ -1,3 +1,5 @@
+declare const window: Window & typeof globalThis;
+
 const { port, hostname } = window.location;
 let protocol = 'https';
 
@@ -56,23 +58,16 @@ if (!backendBaseUrl) {
   }
 
   backendBaseUrl = `${protocol}://${hostAndPortAndPathPrefix}/v1.0`;
-
-  // this can only ever work locally since this is a static site.
-  // use spiffworkflowFrontendJsenv if you want to inject env vars
-  // that can be read by the static site.
-  if (process.env.REACT_APP_BACKEND_BASE_URL) {
-    backendBaseUrl = process.env.REACT_APP_BACKEND_BASE_URL;
-  }
 }
 
 if (!backendBaseUrl.endsWith('/v1.0')) {
   backendBaseUrl += '/v1.0';
 }
 
-export const BACKEND_BASE_URL = backendBaseUrl;
-export const DOCUMENTATION_URL = documentationUrl;
+const BACKEND_BASE_URL = backendBaseUrl;
+const DOCUMENTATION_URL = documentationUrl;
 
-export const PROCESS_STATUSES = [
+const PROCESS_STATUSES = [
   'complete',
   'error',
   'not_started',
@@ -122,11 +117,23 @@ const carbonDateFormat = generalDateFormat
   .replace(/\bMMM\b/, 'M')
   .replace(/\bMMMM\b/, 'F')
   .replace(/\bdd\b/, 'd');
-export const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
-export const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
-export const DATE_FORMAT = generalDateFormat;
-export const DATE_FORMAT_CARBON = carbonDateFormat;
-export const DATE_FORMAT_FOR_DISPLAY = generalDateFormat.toLowerCase();
-export const DATE_RANGE_DELIMITER = ':::';
+const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
+const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
+const DATE_FORMAT = generalDateFormat;
+const DATE_FORMAT_CARBON = carbonDateFormat;
+const DATE_FORMAT_FOR_DISPLAY = generalDateFormat.toLowerCase();
+const DATE_RANGE_DELIMITER = ':::';
 
-export const SPIFF_ENVIRONMENT = spiffEnvironment;
+const SPIFF_ENVIRONMENT = spiffEnvironment;
+export {
+  DATE_TIME_FORMAT,
+  TIME_FORMAT_HOURS_MINUTES,
+  DATE_FORMAT,
+  DATE_FORMAT_CARBON,
+  DATE_FORMAT_FOR_DISPLAY,
+  DATE_RANGE_DELIMITER,
+  BACKEND_BASE_URL,
+  DOCUMENTATION_URL,
+  PROCESS_STATUSES,
+  SPIFF_ENVIRONMENT,
+};
