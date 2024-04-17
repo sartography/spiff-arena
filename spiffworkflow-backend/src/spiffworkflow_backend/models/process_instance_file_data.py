@@ -35,9 +35,13 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
 
     def store_file_on_file_system(self) -> None:
         filepath = self.get_full_filepath()
-        os.makedirs(os.path.dirname(filepath))
-        with open(filepath, "w") as f:
-            f.write(self.contents.decode("utf-8"))
+        try:
+            os.makedirs(os.path.dirname(filepath))
+        except FileExistsError:
+            pass
+
+        with open(filepath, "wb") as f:
+            f.write(self.contents)
         self.contents = PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM.encode()
 
     def get_contents_on_file_system(self) -> bytes:
