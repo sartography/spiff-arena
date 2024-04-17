@@ -14,6 +14,8 @@ class UpdateTaskDataWithDictionary(Script):
         return "Updates task data, creating or updating variables named 'key' with 'value' from the given dictionary."
 
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
+        if not args or not isinstance(args[0], dict):
+            raise ValueError("Expected a dictionary as the first argument.")
         updates = args[0]
         spiff_task = script_attributes_context.task
 
