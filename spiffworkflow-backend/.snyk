@@ -13,6 +13,16 @@ ignore:
   #       reason: No current resolution
   #       expires: 2024-12-15T19:52:08.948Z
   #       created: 2023-11-15T19:52:08.954Z
+  SNYK-PYTHON-GUNICORN-6615672:
+    - '*':
+        reason: No current resolution
+        expires: 2024-05-16T14:21:10.348Z
+        created: 2024-04-16T14:21:10.357Z
+  SNYK-PYTHON-CRYPTOGRAPHY-6592767:
+    - '*':
+        reason: No current resolution
+        expires: 2024-05-16T14:21:30.321Z
+        created: 2024-04-16T14:21:30.331Z
 
 patch: {}
 
