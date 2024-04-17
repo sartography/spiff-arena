@@ -4,8 +4,11 @@ on:
   push:
     # hitting just main on push suffices to avoid duplicate runs for PRs, since PRs never update main.
     # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
     branches:
       - main
+      - "hotfix/**"
+
   pull_request:
 
 defaults:
