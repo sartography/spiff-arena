@@ -6,6 +6,9 @@ import { defineConfig } from 'vite';
 
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 
+let host = process.env.HOST ?? 'localhost';
+let port = process.env.PORT ? parseInt(process.env.PORT) : 7001;
+
 export default defineConfig({
   // depending on your application, base can also be "/"
   base: '/',
@@ -25,10 +28,12 @@ export default defineConfig({
   server: {
     // this ensures that the browser DOES NOT open upon server start
     open: false,
-    port: 7001,
+    host,
+    port,
   },
   preview: {
-    port: 7001,
+    host,
+    port,
   },
   resolve: {
     alias: {
