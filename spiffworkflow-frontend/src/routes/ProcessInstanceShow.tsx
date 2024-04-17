@@ -859,7 +859,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const handleTaskDataDisplayClose = () => {
-    console.log('WE HERE');
     setTaskToDisplay(null);
     initializeTaskDataToDisplay(null);
     initializeTaskInstancesToDisplay(null);
