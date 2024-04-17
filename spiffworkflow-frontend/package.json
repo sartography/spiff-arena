@@ -18,7 +18,7 @@
     "@mui/material": "^5.15.15",
     "@prefresh/vite": "^2.4.5",
     "@react-icons/all-files": "^4.1.0",
-    "@rjsf/core": "5.0.0-beta.20",
+    "@rjsf/core": "5.0.0",
     "@rjsf/mui": "5.0.0-beta.20",
     "@rjsf/utils": "5.0.0-beta.20",
     "@rjsf/validator-ajv8": "5.0.0",
