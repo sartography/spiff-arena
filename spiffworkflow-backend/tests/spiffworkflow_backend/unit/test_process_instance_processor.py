@@ -918,7 +918,9 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_source_directory="service-task-with-data-obj",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         processor.do_engine_steps(save=True)
 
         bpmn_process_dict_initial = processor.serialize()
@@ -940,7 +942,9 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
@@ -958,7 +962,9 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_source_directory="service-task-with-data-obj",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         processor.do_engine_steps(save=True)
 
         bpmn_process_dict_initial = processor.serialize()
@@ -966,7 +972,9 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
