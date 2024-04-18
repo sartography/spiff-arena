@@ -44,6 +44,34 @@ export class UnexpectedResponseError extends Error {
   }
 }
 
+const messageForHttpError = (statusCode: number, statusText: string) => {
+  let errorMessage = `HTTP Error ${statusCode}`;
+  if (statusText) {
+    errorMessage += `: ${statusText}`;
+  } else {
+    switch (statusCode) {
+      case 400:
+        errorMessage += ': Bad Request';
+        break;
+      case 401:
+        errorMessage += ': Unauthorized';
+        break;
+      case 403:
+        errorMessage += ': Forbidden';
+        break;
+      case 404:
+        errorMessage += ': Not Found';
+        break;
+      case 413:
+        errorMessage += ': Payload Too Large';
+        break;
+      default:
+        break;
+    }
+  }
+  return errorMessage;
+};
+
 const makeCallToBackend = ({
   path,
   successCallback,
@@ -96,11 +124,15 @@ backendCallProps) => {
       try {
         jsonResult = JSON.parse(result.text);
       } catch (error) {
+        const httpStatusMesage = messageForHttpError(
+          result.response.status,
+          result.response.statusText
+        );
+        const baseMessage = `Received unexpected response from server. Status: ${httpStatusMesage}.`;
         if (error instanceof SyntaxError) {
-          throw new UnexpectedResponseError(
-            `Received unexpected response from server. Status: ${result.response.status}: ${result.response.statusText}. Body: ${result.text}`
-          );
+          throw new UnexpectedResponseError(baseMessage);
         }
+        console.error(`${baseMessage} Body: ${result.text}`);
         throw error;
       }
       if (result.response.status === 403) {
