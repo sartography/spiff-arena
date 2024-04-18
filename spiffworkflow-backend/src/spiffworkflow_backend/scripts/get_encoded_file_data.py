@@ -32,7 +32,7 @@ class GetEncodedFileData(Script):
             process_instance_id=process_instance_id,
         ).first()
 
-        base64_value = base64.b64encode(file_data.contents).decode("ascii")
+        base64_value = base64.b64encode(file_data.get_contents()).decode("ascii")
         encoded_file_data = f"data:{file_data.mimetype};name={file_data.filename};base64,{base64_value}"
 
         return encoded_file_data
