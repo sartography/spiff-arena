@@ -103,7 +103,7 @@ backendCallProps) => {
         }
         throw error;
       }
-      if (result.status === 403) {
+      if (result.response.status === 403) {
         if (onUnauthorized) {
           onUnauthorized(jsonResult);
         } else if (UserService.isPublicUser()) {
