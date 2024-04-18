@@ -918,8 +918,14 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_source_directory="service-task-with-data-obj",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         processor.do_engine_steps(save=True)
+        initial_completed_spiff_task = processor.get_all_completed_tasks()[0]
+        initial_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert initial_completed_task_model.start_in_seconds is not None
+        assert initial_completed_task_model.end_in_seconds is not None
 
         bpmn_process_dict_initial = processor.serialize()
 
@@ -940,12 +946,17 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
 
         assert bpmn_process_dict_after == bpmn_process_dict_initial
+        final_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert final_completed_task_model.start_in_seconds is not None
+        assert final_completed_task_model.end_in_seconds is not None
 
     def test_can_persist_given_bpmn_process_dict_when_loaded_before(
         self,
@@ -958,20 +969,31 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_source_directory="service-task-with-data-obj",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         processor.do_engine_steps(save=True)
+        initial_completed_spiff_task = processor.get_all_completed_tasks()[0]
+        initial_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert initial_completed_task_model.start_in_seconds is not None
+        assert initial_completed_task_model.end_in_seconds is not None
 
         bpmn_process_dict_initial = processor.serialize()
 
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
 
         assert bpmn_process_dict_after == bpmn_process_dict_initial
+        final_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert final_completed_task_model.start_in_seconds is not None
+        assert final_completed_task_model.end_in_seconds is not None
 
     def test_returns_error_if_spiff_task_and_human_task_are_different(
         self,
