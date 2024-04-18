@@ -352,10 +352,12 @@ class TestProcessInstanceProcessor(BaseTest):
         assert (
             len(process_instance.human_tasks) == 2
         ), "expected 2 human tasks after resume since resume does not do anything in that regard"
+        started_spiff_tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.STARTED)
+        assert len(started_spiff_tasks) == 1
+        assert "top_level_subprocess" == started_spiff_tasks[0].task_spec.name
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
-        assert len(ready_or_waiting_tasks) == 2
-        ready_or_waiting_task_identifiers = [t.task_spec.name for t in ready_or_waiting_tasks]
-        assert sorted(["top_level_subprocess_script", "top_level_subprocess"]) == sorted(ready_or_waiting_task_identifiers)
+        assert len(ready_or_waiting_tasks) == 1
+        assert "top_level_subprocess_script" == ready_or_waiting_tasks[0].task_spec.name
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
