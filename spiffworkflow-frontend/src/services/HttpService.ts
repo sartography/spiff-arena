@@ -49,24 +49,37 @@ const messageForHttpError = (statusCode: number, statusText: string) => {
   if (statusText) {
     errorMessage += `: ${statusText}`;
   } else {
+    let httpTextForCode = '';
     switch (statusCode) {
       case 400:
-        errorMessage += ': Bad Request';
+        httpTextForCode = 'Bad Request';
         break;
       case 401:
-        errorMessage += ': Unauthorized';
+        httpTextForCode = 'Unauthorized';
         break;
       case 403:
-        errorMessage += ': Forbidden';
+        httpTextForCode = 'Forbidden';
         break;
       case 404:
-        errorMessage += ': Not Found';
+        httpTextForCode = 'Not Found';
         break;
       case 413:
-        errorMessage += ': Payload Too Large';
+        httpTextForCode = 'Payload Too Large';
+        break;
+      case 500:
+        httpTextForCode = 'Internal Server Error';
+        break;
+      case 502:
+        httpTextForCode = 'Bad Gateway';
+        break;
+      case 503:
+        httpTextForCode = 'Service Unavailable';
         break;
       default:
         break;
+    }
+    if (httpTextForCode) {
+      errorMessage += `: ${httpTextForCode}`;
     }
   }
   return errorMessage;
@@ -128,11 +141,11 @@ backendCallProps) => {
           result.response.status,
           result.response.statusText
         );
-        const baseMessage = `Received unexpected response from server. Status: ${httpStatusMesage}.`;
+        const baseMessage = `Received unexpected response from server. ${httpStatusMesage}.`;
+        console.error(`${baseMessage} Body: ${result.text}`);
         if (error instanceof SyntaxError) {
           throw new UnexpectedResponseError(baseMessage);
         }
-        console.error(`${baseMessage} Body: ${result.text}`);
         throw error;
       }
       if (result.response.status === 403) {
@@ -180,6 +193,7 @@ backendCallProps) => {
 const HttpService = {
   HttpMethods,
   makeCallToBackend,
+  messageForHttpError,
 };
 
 export default HttpService;
