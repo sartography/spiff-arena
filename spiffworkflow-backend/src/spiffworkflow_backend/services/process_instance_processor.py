@@ -98,6 +98,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import CustomServiceTask
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
@@ -521,7 +522,7 @@ class ProcessInstanceProcessor:
         bpmn_process_instance = cls._serializer.from_dict(process_copy)
         bpmn_process_instance.script_engine = cls._default_script_engine
         for spiff_task in bpmn_process_instance.get_tasks():
-            start_and_end_times = None
+            start_and_end_times: StartAndEndTimes | None = None
             if spiff_task.has_state(TaskState.COMPLETED | TaskState.ERROR):
                 start_and_end_times = {
                     "start_in_seconds": spiff_task.last_state_change,
@@ -639,9 +640,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[
-                bpmn_subprocess_definition.id
-            ] = bpmn_subprocess_definition.bpmn_identifier
+            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
+                bpmn_subprocess_definition.bpmn_identifier
+            )
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -1693,8 +1694,8 @@ class ProcessInstanceProcessor:
         return [t for t in all_tasks if t.task_spec.manual]
 
     def get_all_completed_tasks(self) -> list[SpiffTask]:
-        all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
-        return [t for t in all_tasks if t.task_spec.manual and t.state in [TaskState.COMPLETED, TaskState.CANCELLED]]
+        return_tasks: list[SpiffTask] = self.bpmn_process_instance.get_tasks(state=TaskState.COMPLETED | TaskState.CANCELLED)
+        return return_tasks
 
     def get_all_waiting_tasks(self) -> list[SpiffTask]:
         all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
