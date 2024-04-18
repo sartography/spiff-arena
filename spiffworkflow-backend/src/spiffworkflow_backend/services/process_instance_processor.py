@@ -521,8 +521,14 @@ class ProcessInstanceProcessor:
         bpmn_process_instance = cls._serializer.from_dict(process_copy)
         bpmn_process_instance.script_engine = cls._default_script_engine
         for spiff_task in bpmn_process_instance.get_tasks():
+            start_and_end_times = None
+            if spiff_task.has_state(TaskState.COMPLETED | TaskState.ERROR):
+                start_and_end_times = {
+                    "start_in_seconds": spiff_task.last_state_change,
+                    "end_in_seconds": spiff_task.last_state_change,
+                }
             task_service.update_task_model_with_spiff_task(
-                spiff_task, store_process_instance_events=store_process_instance_events
+                spiff_task, store_process_instance_events=store_process_instance_events, start_and_end_times=start_and_end_times
             )
         task_service.save_objects_to_database()
         db.session.commit()
@@ -633,9 +639,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
