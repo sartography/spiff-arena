@@ -155,18 +155,13 @@ export default function ReactDiagramEditor({
         if (diagramType === 'dmn') {
           modeler = (diagramModelerState as any).getActiveViewer();
         }
-        try {
+        if (modeler) {
           if (amount === 0) {
             const canvas = modeler.get('canvas');
             canvas.zoom(FitViewport, 'auto');
           } else {
             modeler.get('zoomScroll').stepZoom(amount);
           }
-        } catch (e) {
-          console.error(
-            'zoom failed, certain modes in DMN do not support zooming.',
-            e
-          );
         }
       }
     },
@@ -515,7 +510,7 @@ export default function ReactDiagramEditor({
           let className = '';
           if (task.state === 'COMPLETED') {
             className = 'completed-task-highlight';
-          } else if (task.state === 'READY' || task.state === 'WAITING') {
+          } else if (['READY', 'WAITING', 'STARTED'].includes(task.state)) {
             className = 'active-task-highlight';
           } else if (task.state === 'CANCELLED') {
             className = 'cancelled-task-highlight';
@@ -595,7 +590,7 @@ export default function ReactDiagramEditor({
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
       }
-      fetchDiagramFromURL(`${process.env.PUBLIC_URL}/${newDiagramFileName}`);
+      fetchDiagramFromURL(`/${newDiagramFileName}`);
       return undefined;
     }
 

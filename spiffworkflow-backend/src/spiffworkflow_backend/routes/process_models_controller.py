@@ -367,7 +367,9 @@ def process_model_test_generate(modified_process_model_identifier: str, body: di
 
     test_case_identifier = body.get("test_case_identifier", f"test_case_for_process_instance_{process_instance_id}")
     process_instance = _find_process_instance_by_id_or_raise(int(process_instance_id))
-    processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
+    processor = ProcessInstanceProcessor(
+        process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+    )
     process_instance_dict = processor.serialize()
     test_case_dict = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
         process_instance_dict, test_case_identifier=str(test_case_identifier)

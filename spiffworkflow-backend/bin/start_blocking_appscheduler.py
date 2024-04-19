@@ -1,4 +1,5 @@
 """Start the appscheduler in blocking mode."""
+
 import time
 
 from apscheduler.schedulers.background import BlockingScheduler  # type: ignore

@@ -27,6 +27,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
     return (
       <Route
         path={uxElement.page}
+        key={uxElement.page}
         element={<Extension pageIdentifier={uxElement.page} />}
       />
     );

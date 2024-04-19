@@ -9,12 +9,12 @@ WORKDIR /app
 # procps for debugging
 # vim ftw
 RUN apt-get update \
- && apt-get clean -y \
- && apt-get install -y -q \
- curl \
- procps \
- vim-tiny \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get clean -y \
+  && apt-get install -y -q \
+  curl \
+  procps \
+  vim-tiny \
+  && rm -rf /var/lib/apt/lists/*
 
 # this matches total memory on spiffworkflow-demo
 ENV NODE_OPTIONS=--max_old_space_size=2048
@@ -44,19 +44,17 @@ RUN ./bin/build
 
 ######################## - FINAL
 
-# Final image without setup dependencies.
-FROM base AS final
+# Use nginx as the base image
+FROM nginx:1.25.4-bookworm
 
-LABEL description="Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
+# Remove default nginx configuration
+RUN rm -rf /etc/nginx/conf.d/*
 
-# WARNING: On localhost frontend assumes backend is one port lower.
-ENV PORT0=7001
+# Copy the nginx configuration file
+COPY docker_build/nginx.conf.template /var/tmp
 
-COPY --from=setup /app/build /app/build
+# Copy the built static files into the nginx directory
+COPY --from=setup /app/dist /usr/share/nginx/html
 COPY --from=setup /app/bin /app/bin
-COPY --from=setup /app/node_modules.justserve /app/node_modules
 
-RUN chown -R node:node /app
-
-USER node
 CMD ["/app/bin/boot_server_in_docker"]

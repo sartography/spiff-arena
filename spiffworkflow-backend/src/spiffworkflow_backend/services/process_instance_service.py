@@ -19,9 +19,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_process_instance_if_appropriate,
-)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -51,6 +49,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -389,7 +388,7 @@ class ProcessInstanceService:
                     process_instance_id=process_instance_id,
                     mimetype=mimetype,
                     filename=filename,
-                    contents=contents,  # type: ignore
+                    contents=contents,
                     digest=digest,
                     updated_at_in_seconds=now_in_seconds,
                     created_at_in_seconds=now_in_seconds,
@@ -444,6 +443,8 @@ class ProcessInstanceService:
         models = cls.replace_file_data_with_digest_references(data, process_instance_id)
 
         for model in models:
+            if current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+                model.store_file_on_file_system()
             db.session.add(model)
         db.session.commit()
 
@@ -478,25 +479,24 @@ class ProcessInstanceService:
         a multi-instance task.
         """
         ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
-        # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        if queue_process_instance_if_appropriate(processor.process_instance_model, execution_mode):
-            return
-        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
-            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-                execution_strategy_name = None
-                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                    execution_strategy_name = "greedy"
+        # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
+        if not should_queue_process_instance(processor.process_instance_model, execution_mode):
+            if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+                with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                    execution_strategy_name = None
+                    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                        execution_strategy_name = "greedy"
 
-                # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                    # maybe move this out once we have the interstitial page since this is
+                    # here just so we can get the next human task
+                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
-        add_docs_and_forms: bool = False,
     ) -> Task:
         task_type = spiff_task.task_spec.description
         task_guid = str(spiff_task.id)

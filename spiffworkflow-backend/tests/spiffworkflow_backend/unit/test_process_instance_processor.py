@@ -209,7 +209,7 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
 
         # ensure this does not raise
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(process_instance, include_completed_subprocesses=True)
 
         # this task will be found within subprocesses
         spiff_task = processor.__class__.get_task_by_bpmn_identifier("level_3_script_task", processor.bpmn_process_instance)
@@ -330,8 +330,6 @@ class TestProcessInstanceProcessor(BaseTest):
         task_model_to_reset_to = all_task_models_matching_top_level_subprocess_script[0]
         assert task_model_to_reset_to is not None
         assert len(process_instance.human_tasks) == 3, "expected 3 human tasks before reset"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
         assert len(process_instance.human_tasks) == 2, "still expected 2 human tasks after reset"
 
@@ -348,14 +346,18 @@ class TestProcessInstanceProcessor(BaseTest):
             task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script"
         )
         assert top_level_subprocess_script_spiff_task is not None
+        # make sure we did not remove the data during the reset which can happen if include_task_data_for_completed_tasks is False
+        assert top_level_subprocess_script_spiff_task.data == {"set_in_top_level_script": 1}
         processor.resume()
         assert (
             len(process_instance.human_tasks) == 2
         ), "expected 2 human tasks after resume since resume does not do anything in that regard"
+        started_spiff_tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.STARTED)
+        assert len(started_spiff_tasks) == 1
+        assert "top_level_subprocess" == started_spiff_tasks[0].task_spec.name
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
-        assert len(ready_or_waiting_tasks) == 2
-        ready_or_waiting_task_identifiers = [t.task_spec.name for t in ready_or_waiting_tasks]
-        assert sorted(["top_level_subprocess_script", "top_level_subprocess"]) == sorted(ready_or_waiting_task_identifiers)
+        assert len(ready_or_waiting_tasks) == 1
+        assert "top_level_subprocess_script" == ready_or_waiting_tasks[0].task_spec.name
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
@@ -412,7 +414,6 @@ class TestProcessInstanceProcessor(BaseTest):
             "manual_task_1", processor.bpmn_process_instance
         )
         processor.suspend()
-        processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, str(reset_to_spiff_task.id))
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         human_task_one = process_instance.active_human_tasks[0]
@@ -527,9 +528,11 @@ class TestProcessInstanceProcessor(BaseTest):
 
         # recreate variables to ensure all bpmn json was recreated from scratch from the db
         process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor_final = ProcessInstanceProcessor(process_instance_relookup)
-        processor_final.do_engine_steps(save=True, execution_strategy_name="greedy")
+        processor_last_tasks = ProcessInstanceProcessor(process_instance_relookup)
+        processor_last_tasks.do_engine_steps(save=True, execution_strategy_name="greedy")
 
+        process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor_final = ProcessInstanceProcessor(process_instance_relookup, include_completed_subprocesses=True)
         assert process_instance_relookup.status == "complete"
 
         data_set_1 = {"set_in_top_level_script": 1}
@@ -917,8 +920,14 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_source_directory="service-task-with-data-obj",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         processor.do_engine_steps(save=True)
+        initial_completed_spiff_task = processor.get_all_completed_tasks()[0]
+        initial_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert initial_completed_task_model.start_in_seconds is not None
+        assert initial_completed_task_model.end_in_seconds is not None
 
         bpmn_process_dict_initial = processor.serialize()
 
@@ -939,12 +948,17 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
 
         assert bpmn_process_dict_after == bpmn_process_dict_initial
+        final_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert final_completed_task_model.start_in_seconds is not None
+        assert final_completed_task_model.end_in_seconds is not None
 
     def test_can_persist_given_bpmn_process_dict_when_loaded_before(
         self,
@@ -957,20 +971,31 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_source_directory="service-task-with-data-obj",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         processor.do_engine_steps(save=True)
+        initial_completed_spiff_task = processor.get_all_completed_tasks()[0]
+        initial_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert initial_completed_task_model.start_in_seconds is not None
+        assert initial_completed_task_model.end_in_seconds is not None
 
         bpmn_process_dict_initial = processor.serialize()
 
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_initial, process_instance_model=process_instance, bpmn_definition_to_task_definitions_mappings={}
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
 
         assert bpmn_process_dict_after == bpmn_process_dict_initial
+        final_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
+        assert final_completed_task_model.start_in_seconds is not None
+        assert final_completed_task_model.end_in_seconds is not None
 
     def test_returns_error_if_spiff_task_and_human_task_are_different(
         self,

@@ -333,8 +333,7 @@ export default function ProcessModelForm({
           <Button
             data-qa="add-notification-address-button"
             renderIcon={AddAlt}
-            className="button-white-background"
-            kind=""
+            kind="tertiary"
             size="sm"
             onClick={() => {
               addBlankNotificationAddress();
@@ -365,8 +364,7 @@ export default function ProcessModelForm({
           <Button
             data-qa="add-metadata-extraction-path-button"
             renderIcon={AddAlt}
-            className="button-white-background"
-            kind=""
+            kind="tertiary"
             size="sm"
             onClick={() => {
               addBlankMetadataExtractionPath();
@@ -383,7 +381,7 @@ export default function ProcessModelForm({
 
   const formButtons = () => {
     return (
-      <Button kind="secondary" type="submit">
+      <Button kind="primary" type="submit">
         Submit
       </Button>
     );

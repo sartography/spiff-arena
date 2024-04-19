@@ -3,9 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Stack, Table, Button, TextInput } from '@carbon/react';
 import HttpService from '../services/HttpService';
-import { Secret } from '../interfaces';
+import { PermissionsToCheck, Secret } from '../interfaces';
 import { Notification } from '../components/Notification';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { Can } from '../contexts/Can';
 
 export default function SecretShow() {
   const navigate = useNavigate();
@@ -16,12 +19,21 @@ export default function SecretShow() {
   const [showSuccessNotification, setShowSuccessNotification] =
     useState<boolean>(false);
 
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.secretShowPath]: ['PUT', 'DELETE', 'GET'],
+    [targetUris.secretShowValuePath]: ['GET'],
+  };
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
+
   useEffect(() => {
     HttpService.makeCallToBackend({
-      path: `/secrets/${params.key}`,
+      path: `/secrets/${params.secret_identifier}`,
       successCallback: setSecret,
     });
-  }, [params.key]);
+  }, [params.secret_identifier]);
 
   const handleSecretValueChange = (event: any) => {
     if (secret) {
@@ -67,26 +79,63 @@ export default function SecretShow() {
     />
   );
 
-  if (secret) {
+  const handleShowSecretValue = () => {
+    if (secret === null) {
+      return;
+    }
+    HttpService.makeCallToBackend({
+      path: `/secrets/show-value/${secret.key}`,
+      successCallback: (result: Secret) => {
+        setSecret(result);
+        setDisplaySecretValue(true);
+      },
+    });
+  };
+
+  if (secret && permissionsLoaded) {
     return (
       <>
         {showSuccessNotification && successNotificationComponent}
         <h1>Secret Key: {secret.key}</h1>
         <Stack orientation="horizontal" gap={3}>
-          <ButtonWithConfirmation
-            description="Delete Secret?"
-            onConfirmation={deleteSecret}
-            buttonLabel="Delete"
-          />
-          <Button
-            disabled={displaySecretValue}
-            variant="warning"
-            onClick={() => {
-              setDisplaySecretValue(true);
-            }}
+          <Can I="DELETE" a={targetUris.secretShowPath} ability={ability}>
+            <ButtonWithConfirmation
+              description="Delete Secret?"
+              onConfirmation={deleteSecret}
+              buttonLabel="Delete"
+            />
+          </Can>
+          <Can
+            I="GET"
+            a={targetUris.secretShowValuePath}
+            ability={ability}
+            passThrough
           >
-            Retrieve secret value
-          </Button>
+            {(secretReadAllowed: boolean) => {
+              if (secretReadAllowed) {
+                return (
+                  <Button
+                    disabled={displaySecretValue}
+                    variant="warning"
+                    onClick={handleShowSecretValue}
+                  >
+                    Retrieve secret value
+                  </Button>
+                );
+              }
+              return (
+                <Can I="PUT" a={targetUris.secretShowPath} ability={ability}>
+                  <Button
+                    disabled={displaySecretValue}
+                    variant="warning"
+                    onClick={() => setDisplaySecretValue(true)}
+                  >
+                    Edit secret value
+                  </Button>
+                </Can>
+              );
+            }}
+          </Can>
         </Stack>
         <div>
           <Table striped bordered>
@@ -103,23 +152,33 @@ export default function SecretShow() {
             </thead>
             <tbody>
               <tr>
-                <td>{params.key}</td>
+                <td>{params.secret_identifier}</td>
                 {displaySecretValue && (
                   <>
                     <td aria-label="Secret value">
                       <TextInput
                         id="secret_value"
                         name="secret_value"
+                        labelText="Secret value"
                         value={secret.value}
                         onChange={handleSecretValueChange}
+                        disabled={
+                          !ability.can('PUT', targetUris.secretShowPath)
+                        }
                       />
                     </td>
                     <td>
-                      {displaySecretValue && (
-                        <Button variant="warning" onClick={updateSecretValue}>
-                          Update Value
-                        </Button>
-                      )}
+                      <Can
+                        I="PUT"
+                        a={targetUris.secretShowPath}
+                        ability={ability}
+                      >
+                        {displaySecretValue && (
+                          <Button variant="warning" onClick={updateSecretValue}>
+                            Update Value
+                          </Button>
+                        )}
+                      </Can>
                     </td>
                   </>
                 )}

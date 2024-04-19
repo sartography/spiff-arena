@@ -49,15 +49,31 @@ def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta
         # (maybe due to subsecond stuff, maybe because of clock skew within the cluster of computers running spiff)
         # celery_task_process_instance_run.apply_async(kwargs=args_to_celery, countdown=countdown + 1)  # type: ignore
 
-        celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, kwargs=args_to_celery, countdown=countdown)
+        async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, kwargs=args_to_celery, countdown=countdown)
+        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({async_result.task_id})")
         return True
 
     return False
 
 
 # if waiting, check all waiting tasks and see if theyt are timers. if they are timers, it's not runnable.
-def queue_process_instance_if_appropriate(process_instance: ProcessInstanceModel, execution_mode: str | None = None) -> bool:
+def queue_process_instance_if_appropriate(
+    process_instance: ProcessInstanceModel, execution_mode: str | None = None, task_guid: str | None = None
+) -> bool:
+    # FIXME: we should only run this check if we are NOT in a celery worker
+    #
+    # # ideally, if this code were run from the backgrond processing celery worker,
+    # # we should be passing in the additional processing identifier,
+    # # but we don't have it, so basically this assertion won't help there.
+    # # at least it will help find issues with non-celery code.
+    # if ProcessInstanceLockService.has_lock(process_instance_id=process_instance.id):
+    #     raise PublishingAttemptWhileLockedError(
+    #         f"Attempted to queue task for process instance {process_instance.id} while the process already has it locked. This"
+    #         " can lead to further locking issues."
+    #     )
+
     if should_queue_process_instance(process_instance, execution_mode):
-        celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, (process_instance.id,))
+        async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, (process_instance.id, task_guid))
+        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({async_result.task_id})")
         return True
     return False

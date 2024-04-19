@@ -1,5 +1,7 @@
 """__init__.py."""
+
 import base64
+import logging
 import os
 import threading
 import uuid
@@ -8,7 +10,7 @@ from urllib.parse import urlparse
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
 
-from spiffworkflow_backend.services.logging_service import setup_logger
+from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
 CONNECTOR_PROXY_COMMAND_TIMEOUT = 45
@@ -215,7 +217,7 @@ def setup_config(app: Flask) -> None:
     app.config["PROCESS_UUID"] = uuid.uuid4()
 
     setup_database_configs(app)
-    setup_logger(app)
+    setup_logger_for_app(app, logging)
     app.logger.debug(
         f"SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: {app.config['SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR']}"
     )
@@ -245,6 +247,13 @@ def setup_config(app: Flask) -> None:
     else:
         app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"] = "greedy"
         app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"] = "run_until_user_message"
+
+    if app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+        if not os.path.isdir(app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"]):
+            raise ConfigurationError(
+                "Could not find the directory specified with SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH: "
+                f"{app.config['SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH']}"
+            )
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data

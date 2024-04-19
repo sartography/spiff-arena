@@ -16,8 +16,8 @@ export interface ApiActions {
 export interface Secret {
   id: number;
   key: string;
-  value: string;
   creator_user_id: string;
+  value?: string;
 }
 
 export interface Onboarding {

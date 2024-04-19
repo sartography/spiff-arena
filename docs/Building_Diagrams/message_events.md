@@ -1,8 +1,10 @@
 # Message Event
 
-A Message Event acts as a channel for the exchange of information between different process participants or external systems. While it might be tempting to associate "message events" with emails, their scope extends beyond digital correspondence. It signifies the transmission of information between various process components, whether within the same process or across different processes.
+A Message Event acts as a channel for the exchange of information between different process participants or external systems.
+While it might be tempting to associate "message events" with emails, their scope extends beyond digital correspondence.
+They signify the transmission of information between various process components, whether within the same process or across different processes.
 
- ![message_relationship](images/relationship_message.png) 
+ ![message_relationship](images/relationship_message.png)
 
 **Reasons to Use a Message Event:**
 
@@ -11,14 +13,14 @@ A Message Event acts as a channel for the exchange of information between differ
 - Visually, they illustrate communication among various participants or across different pools and lanes.
 - They clarify how data or events are shared, fostering collaboration among different business process components.
 
- 
+
 ## Start Message Event
 
-![start_message_event](images/start_message_event_1.png) 
+![start_message_event](images/start_message_event_1.png)
 
 A Message Start Event serves as a starting point for a process, activated specifically by a message received from another process or external system.
 
-![message_event_example_4](images/msg_event_example_3.png) 
+![message_event_example_4](images/msg_event_example_3.png)
 
 In the given example, a process can be initiated either by a message from an external system or by capturing a throw event from another process.
 
@@ -30,27 +32,35 @@ In a subsequent example, it's clarified that message events can span multiple BP
 
 ![intermediate_throw_message_event](images/intermediate_throw_msg_event.png)
 
-An Intermediate Throw Event sends a message from within the process to a receiver. When the process execution reaches this event, it triggers a message event that can be captured by a corresponding Message Catch Event in another process or by an external system.
+An Intermediate Throw Event sends a message from within the process to a receiver.
+When the process execution reaches this event, it triggers a message event that can be captured by a corresponding Message Catch Event in another process or by an external system.
 
-![message_event_example_4](images/msg_event_example_2.png) 
+![message_event_example_4](images/msg_event_example_2.png)
 
-In the example provided, once a quote is finalized, the sales team forwards a formal quotation. Similarly, upon receiving a purchase order from the customer, the sales department generates an order confirmation receipt and sends it to the customer.  
+In the example provided, once a quote is finalized, the sales team forwards a formal quotation.
+Similarly, upon receiving a purchase order from the customer, the sales department generates an order confirmation receipt and sends it to the customer.
 
 ## Intermediate Message Catch Event
 
 ![intermediate_catch_message_event](images/intermediate_catch_msg_event.png)
 
-An Intermediate Catch Event is used to wait for and capture a specific message from another source. Once activated upon receiving the designated message, it allows the process flow to continue from that point onward. It's crucial to understand that the process instance remains in a waiting state until triggered by another source or process. This fundamental distinction sets Intermediate Catch Events apart from Intermediate Throw Events, as Catch Events exclusively await external triggers, while Throw Events initiate those triggers.
+An Intermediate Catch Event is used to wait for and capture a specific message from another source.
+Once activated upon receiving the designated message, it allows the process flow to continue from that point onward.
+It's crucial to understand that the process instance remains in a waiting state until triggered by another source or process.
+This fundamental distinction sets Intermediate Catch Events apart from Intermediate Throw Events, as Catch Events exclusively await external triggers, while Throw Events initiate those triggers.
 
-![message_event_example_5](images/msg_event_example_5.png) 
+![message_event_example_5](images/msg_event_example_5.png)
 
-Alternatively, Message Events can be utilized beyond the confines of pools and lanes. The process outlined in the previous section can be split into two distinct BPMN files without affecting its functionality, as demonstrated in the example above.
+Alternatively, Message Events can be utilized beyond the confines of pools and lanes.
+The process outlined in the previous section can be split into two distinct BPMN files without affecting its functionality, as demonstrated in the example above.
 
 ```{admonition} Note
-⚠ It should be noted that, in this situation, connectors cannot visually represent the link between the throw and catch events. Further in this document, the topic of correlation is discussed to clarify how these events are interconnected
+⚠ It should be noted that, in this situation, connectors cannot visually represent the link between the throw and catch events. Further in this document, the topic of correlation is discussed to clarify how these events are interconnected.
 ```
 
-In the given example, there are two Intermediate Catch Events. One waits for confirmation from the customer, and the other depends on the shipping department's verification of dispatch before producing the invoice. Without feedback from both the customer and the shipping department at this stage, the process instance won't move to the subsequent step.
+In the given example, there are two Intermediate Catch Events.
+One waits for confirmation from the customer, and the other depends on the shipping department's verification of dispatch before producing the invoice.
+Without feedback from both the customer and the shipping department at this stage, the process instance won't move to the subsequent step.
 
 ```{admonition} Note
 ⚠ While it is generally true that most Throw Events have corresponding Catch Events, it is not an absolute rule. The need for a Catch Event alongside a Throw Event varies depending on the specific scenario and the requirements of the process. There may be cases where a Throw Event initiates an action without requiring a subsequent Catch Event to capture its effects. The decision to use a Catch Event in conjunction with a Throw Event is determined by the requirements of the particular process.
@@ -58,13 +68,16 @@ In the given example, there are two Intermediate Catch Events. One waits for con
 
 ## End Message Event
 
-![end_message_event](images/end_msg_event.png) 
+![end_message_event](images/end_msg_event.png)
 
-This type of event signifies the completion of a process and indicates that a message is sent to an external recipient to notify them of the process's conclusion. It serves as the endpoint of the process and sends a message when the process reaches this event.
+This type of event signifies the completion of a process and indicates that a message is sent to an external recipient to notify them of the process's conclusion.
+It serves as the endpoint of the process and sends a message when the process reaches this event.
 
-![message_event_example_4](images/msg_event_example_4.png) 
+![message_event_example_4](images/msg_event_example_4.png)
 
-Please note that the End Event when using pools, signifies the conclusion of the process within that specific pool, but it does not necessarily indicate the end of the entire process. In the provided example, the final step involves sending the customer an invoice. Prior to this, the last step for the shipping department was to send a confirmation. 
+Please note that the End Event, when using pools, signifies the conclusion of the process within that specific pool, but it does not necessarily indicate the end of the entire process.
+In the provided example, the final step involves sending the customer an invoice.
+Prior to this, the last step for the shipping department was to send a confirmation.
 
 ```{admonition} Note
 ⚠ Start Events mark the initiation point of a process. Intermediate Events occur during the course of the process, throwing, capturing and reacting to specific occurrences or messages from external sources or other processes. On the other hand, End Events denote the conclusion of the process, signifying its termination or reaching a final state.
@@ -72,17 +85,19 @@ Please note that the End Event when using pools, signifies the conclusion of the
 
 ## Correlation
 
-A singular Throw Message Event corresponds exclusively to a single active Catch Message Event. This correlation is one-to-one, unlike Signal Events that could be sent to multiple active Signal Catch Events. It is important to configure the correlation of the Catch and Throw Events.
+A singular Throw Message Event corresponds exclusively to a single active Catch Message Event.
+This correlation is one-to-one, unlike Signal Events that could be sent to multiple active Signal Catch Events.
+It is important to configure the correlation of the Catch and Throw Events.
 
 
 ## Message Event Configuration
 
-3 seperate configurations needs to be completed. 
+Three separate configurations need to be completed.
 
 - Collaboration
 - Throw Message Event
 - Catch Message Event
-  
+
 
 **Default configuration:**
 
@@ -94,7 +109,7 @@ A singular Throw Message Event corresponds exclusively to a single active Catch 
 
 **Collaboration:**
 
-![collaboration](images/collaboration_msg.png) 
+![collaboration](images/collaboration_msg.png)
 
 The identical configuration must be applied to every BPMN diagram if messages extend across multiple diagrams.
 

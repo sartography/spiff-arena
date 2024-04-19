@@ -4,8 +4,11 @@ on:
   push:
     # hitting just main on push suffices to avoid duplicate runs for PRs, since PRs never update main.
     # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
     branches:
       - main
+      - "hotfix/**"
+
   pull_request:
 
 defaults:
@@ -117,14 +120,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Upgrade pip
+      - name: Install pip and poetry
         run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
+          pwd
+          ls -al
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
           pip --version
+          poetry --version
 
       - name: Upgrade pip in virtual environments
         shell: python
@@ -134,11 +140,6 @@ jobs:
 
           with open(os.environ["GITHUB_ENV"], mode="a") as io:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
-          poetry --version
 
       # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
       # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
@@ -216,12 +217,15 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: "3.11"
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pwd
+          ls -al
+          pip --version
+          pip install --constraint=.github/workflows/constraints.txt pip poetry
           poetry --version
       - name: Poetry Install
         run: poetry install
@@ -261,19 +265,26 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: "3.11"
 
-      - name: Upgrade pip
+      - name: Install pip and poetry
         run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip
+          pwd
+          ls -al
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
           pip --version
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=../.github/workflows/constraints.txt poetry
           poetry --version
+
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
         uses: actions/download-artifact@v4.1.4
@@ -287,7 +298,7 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4.1.0
+        uses: codecov/codecov-action@v4.3.0
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2.1.1

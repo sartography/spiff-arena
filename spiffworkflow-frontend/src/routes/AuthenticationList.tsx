@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-// @ts-ignore
 import { Table } from '@carbon/react';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -92,10 +91,10 @@ export default function AuthenticationList() {
     return (
       <>
         {buildTable()}
-        {AuthenticationConfiguration()}
+        <AuthenticationConfiguration />
       </>
     );
   }
 
-  return <main />;
+  return null;
 }

@@ -339,7 +339,7 @@ export default function ProcessModelShow() {
         let actionsTableCell = null;
         if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
           actionsTableCell = (
-            <TableCell key={`${processModelFile.name}-cell`} align="right">
+            <TableCell key={`${processModelFile.name}-action`} align="right">
               {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
             </TableCell>
           );

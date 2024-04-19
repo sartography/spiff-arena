@@ -15,10 +15,10 @@ They continuously evaluate the given condition and act when the condition is met
 
 ## Start Conditional Event
 
-![start_signal_event](images/start_conditional_event.png)![start_signal_event](images/non_interrupting_conditional_start_event.png)
+![start_signal_event](images/start_conditional_event.png)
+![start_signal_event](images/non_interrupting_conditional_start_event.png)
 
 A Start Conditional Event marks the beginning of a process or a sub-process, triggered when a specific condition is fulfilled, or in other terms, when the condition evaluates to true.
-
 
 **Example:**
 
@@ -32,7 +32,8 @@ In the subsequent scenario, as an online order is placed by a customer, our inve
 
 ## Intermediate Conditional Event
 
-![intermediate_conditional_event](images/intermediate_conditional_event.png) ![intermediate_conditional_event](images/non_interrupting_intermediate_conditional_event.png)
+![intermediate_conditional_event](images/intermediate_conditional_event.png)
+![intermediate_conditional_event](images/non_interrupting_intermediate_conditional_event.png)
 
 An Intermediate Conditional Event serves as a gate or checkpoint within the flow of a process.
 The process flow will proceed once the attached condition evaluates to true.
@@ -56,15 +57,15 @@ Given that our pastries need a specific temperature for baking, only when this c
 
 ![conditional_intermediate_example_2](images/conditional_intermediate_example_2.png)
 
-**Conditional Boundary Event (interrupting):** 
-Boundary events allows us to redirect our processes based on shifts in certain conditions. It's wise to consider such a strategy since it's unrealistic to expect every process to proceed without hiccups. Therefore, planning for alternative pathways becomes essential.
+**Conditional Boundary Event (interrupting):**
+Boundary events allow us to redirect our processes based on shifts in certain conditions. It's wise to consider such a strategy since it's unrealistic to expect every process to proceed without hiccups. Therefore, planning for alternative pathways becomes essential.
 
 Imagine a user in the midst of completing a form suddenly opting to cancel the process.
 Or consider a scenario where a user is finalizing an order, only to find that due to a changed condition, the desired product is no longer available.
 In such cases, the interrupting event ensures we don't proceed on the originally planned course because the order will not be fulfilled.
-Instead, we shift and use the alternative route to inform the user that the intended process can't progress further, we order more stock or we place the user on a list to be notified when product becomes available again.
+Instead, we shift and use the alternative route to inform the user that the intended process can't progress further, order more stock, or place the user on a list to be notified when the product becomes available again.
 
-**Conditional Boundary Event (non-interrupting):** 
+**Conditional Boundary Event (non-interrupting):**
 It's also beneficial in scenarios where there's no need to disrupt the initial workflow, like when receiving a change request. The task still requires completion, but there's an additional remark or modification we must be mindful of.
 
 **Best Modeling Practices:**
@@ -85,3 +86,4 @@ Always revert the condition to its default state to ensure appropriate behavior.
 
 ```{admonition} Note
 ⚠  When configuring the conditional expression, ensure there's such a variable in your process context.
+```

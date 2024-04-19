@@ -2,6 +2,7 @@ import time
 
 from flask import current_app
 from spiffworkflow_backend import create_app
+from spiffworkflow_backend.data_migrations.process_instance_file_data_migrator import ProcessInstanceFileDataMigrator
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.models.db import db
@@ -105,6 +106,8 @@ def main() -> None:
             run_version_1()
             # this will run while using the new per instance on demand data migration framework
             # run_version_2(process_instances)
+        if app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+            ProcessInstanceFileDataMigrator.migrate_from_database_to_filesystem()
 
         end_time = time.time()
         current_app.logger.debug(

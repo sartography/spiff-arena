@@ -181,7 +181,9 @@ export default function ProcessModelEditDiagram() {
 
     HttpService.makeCallToBackend({
       path: `/${processModelPath}?include_file_references=true`,
-      successCallback: setProcessModel,
+      successCallback: (result: any) => {
+        setProcessModel(result);
+      },
     });
 
     if (params.file_name) {
@@ -913,7 +915,7 @@ export default function ProcessModelEditDiagram() {
           )}
           <Button
             className="m-top-10"
-            kind="secondary"
+            kind="primary"
             onClick={() => handleProcessScriptAssist()}
             disabled={scriptAssistLoading}
           >

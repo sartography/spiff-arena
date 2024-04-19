@@ -66,6 +66,7 @@ export default function ContainerForExtensions() {
                 extensionUiSchemaFile.file_contents
               );
               if (
+                extensionUiSchema &&
                 extensionUiSchema.ux_elements &&
                 !extensionUiSchema.disabled
               ) {

@@ -65,6 +65,7 @@ export default function ProcessGroupListTiles({
         return (
           <ClickableTile
             id={`process-group-tile-${row.id}`}
+            key={`process-group-tile-${row.id}`}
             className="tile-process-group"
             onClick={() =>
               navigateToProcessGroup(

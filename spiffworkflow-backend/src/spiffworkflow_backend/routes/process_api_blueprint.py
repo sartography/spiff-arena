@@ -21,6 +21,9 @@ from sqlalchemy import or_
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_enabled_for_process_model,
 )
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
@@ -234,7 +237,7 @@ def process_data_file_download(
         )
     mimetype = file_data.mimetype
     filename = file_data.filename
-    file_contents = file_data.contents
+    file_contents = file_data.get_contents()
 
     return Response(
         file_contents,
@@ -487,7 +490,7 @@ def _task_submit_shared(
     )
 
     with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+        with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
             ProcessInstanceService.complete_form_task(
                 processor=processor,
                 spiff_task=spiff_task,
@@ -496,6 +499,7 @@ def _task_submit_shared(
                 human_task=human_task,
                 execution_mode=execution_mode,
             )
+        queue_process_instance_if_appropriate(process_instance, execution_mode)
 
     # currently task_model has the potential to be None. This should be removable once
     # we backfill the human_task table for task_guid and make that column not nullable

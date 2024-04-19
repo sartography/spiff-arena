@@ -308,6 +308,13 @@ export default function ProcessInstanceListTable({
     return titleizeString((value || '').replaceAll('_', ' '));
   };
 
+  const formatDurationForDisplayForTable = (_row: any, value: any) => {
+    return DateAndTimeService.formatDurationForDisplay(value);
+  };
+  const formatDateTimeForTable = (_row: any, value: any) => {
+    return DateAndTimeService.formatDateTime(value);
+  };
+
   const formatSecondsForDisplay = (_row: ProcessInstance, seconds: any) => {
     return DateAndTimeService.convertSecondsToFormattedDateTime(seconds) || '-';
   };
@@ -330,8 +337,8 @@ export default function ProcessInstanceListTable({
       last_milestone_bpmn_name: formatLastMilestone,
     };
     const displayTypeFormatters: Record<string, any> = {
-      date_time: DateAndTimeService.formatDateTime,
-      duration: DateAndTimeService.formatDurationForDisplay,
+      date_time: formatDateTimeForTable,
+      duration: formatDurationForDisplayForTable,
     };
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type
@@ -379,7 +386,7 @@ export default function ProcessInstanceListTable({
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
       <td
-        key={processInstance.id}
+        key={`td-${columnAccessor}-${processInstance.id}`}
         onClick={() => navigateToProcessInstance(processInstance)}
         onKeyDown={() => navigateToProcessInstance(processInstance)}
         data-qa={`process-instance-show-link-${columnAccessor}`}
@@ -505,7 +512,7 @@ export default function ProcessInstanceListTable({
         if (hasAccessToCompleteTask && processInstance.task_id) {
           goButtonElement = (
             <Button
-              kind="secondary"
+              kind="primary"
               href={taskShowUrl}
               style={{ width: '60px' }}
               size="sm"

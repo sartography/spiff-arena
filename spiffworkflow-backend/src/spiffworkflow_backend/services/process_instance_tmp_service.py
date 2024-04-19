@@ -8,6 +8,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 
 
 class ProcessInstanceTmpService:
@@ -76,3 +77,17 @@ class ProcessInstanceTmpService:
             if add_to_db_session:
                 db.session.add(process_instance_error_detail)
         return (process_instance_event, process_instance_error_detail)
+
+    @staticmethod
+    def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:
+        queue_entry = (
+            db.session.query(ProcessInstanceQueueModel)
+            .filter(ProcessInstanceQueueModel.process_instance_id == process_instance.id)
+            .first()
+        )
+
+        if queue_entry is None:
+            return False
+
+        current_time = round(time.time())
+        return queue_entry.run_at_in_seconds > current_time

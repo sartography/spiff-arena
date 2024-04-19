@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
-class TestFlaskOpenId(BaseTest):
+class TestOpenidBlueprint(BaseTest):
     """An integrated Open ID that responds to openID requests.
 
     By referencing a build in YAML file.  Useful for
@@ -21,11 +21,21 @@ class TestFlaskOpenId(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test discovery endpoints."""
+
+        # SPIFFWORKFLOW_BACKEND_URL is set to http://localhost in unit_testing.py, but we ignore it anyway. See mock below.
         response = client.get("/openid/.well-known/openid-configuration")
         discovered_urls = response.json
         assert "http://localhost/openid" == discovered_urls["issuer"]
         assert "http://localhost/openid/auth" == discovered_urls["authorization_endpoint"]
         assert "http://localhost/openid/token" == discovered_urls["token_endpoint"]
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", None):
+            response = client.get("/openid/.well-known/openid-configuration")
+            discovered_urls = response.json
+            # in unit tests, request.host_url will not have the port but it will have it in actual localhost flask server
+            assert "http://localhost/openid" == discovered_urls["issuer"]
+            assert "http://localhost/openid/auth" == discovered_urls["authorization_endpoint"]
+            assert "http://localhost/openid/token" == discovered_urls["token_endpoint"]
 
     def test_get_login_page(
         self,

@@ -21,6 +21,7 @@ IN_FRONTEND ?= $(DOCKER_COMPOSE) run $(FRONTEND_CONTAINER)
 SPIFFWORKFLOW_BACKEND_ENV ?= local_development
 
 BACKEND_SQLITE_FILE ?= src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+NODE_MODULES_DIR ?= spiffworkflow-frontend/node_modules
 JUST ?=
 
 YML_FILES := -f docker-compose.yml \
@@ -29,13 +30,13 @@ YML_FILES := -f docker-compose.yml \
 	-f $(ARENA_DEV_OVERLAY)
 
 all: dev-env start-dev run-pyl
-	@/bin/true
+	@true
 
 build-images:
 	$(DOCKER_COMPOSE) build
 
-dev-env: stop-dev build-images poetry-i be-poetry-i be-recreate-db fe-npm-i
-	@/bin/true
+dev-env: stop-dev build-images poetry-i be-poetry-i be-db-clean fe-npm-i
+	@true
 
 start-dev: stop-dev
 	$(DOCKER_COMPOSE) up -d
@@ -45,6 +46,12 @@ stop-dev:
 
 be-clear-log-file:
 	$(IN_BACKEND) rm -f log/unit_testing.log
+
+be-db-clean:
+	$(IN_BACKEND) ./bin/recreate_db clean
+
+be-db-migrate:
+	$(IN_BACKEND) ./bin/recreate_db migrate
 
 be-logs:
 	docker logs -f $(BACKEND_CONTAINER)
@@ -62,9 +69,6 @@ be-poetry-rm:
 	@if [ -d "$(BACKEND_CONTAINER)/.venv" ]; then \
 		rm -rf "$(BACKEND_CONTAINER)/.venv"; \
 	fi
-
-be-recreate-db:
-	$(IN_BACKEND) ./bin/recreate_db clean
 
 be-sh:
 	$(IN_BACKEND) /bin/bash
@@ -91,8 +95,16 @@ fe-logs:
 fe-npm-i:
 	$(IN_FRONTEND) npm i && git checkout -- spiffworkflow-frontend/package-lock.json
 
+fe-npm-rm:
+	@if [ -d "$(NODE_MODULES_DIR)" ]; then \
+		rm -rf "$(NODE_MODULES_DIR)"; \
+	fi
+
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
+
+fe-unimported:
+	$(IN_FRONTEND) npx unimported
 
 poetry-i:
 	$(IN_ARENA) poetry install --no-root
@@ -106,10 +118,10 @@ pre-commit:
 	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
 
 ruff:
-	$(IN_ARENA) poetry run ruff --fix spiffworkflow-backend
+	$(IN_ARENA) poetry run ruff check --fix spiffworkflow-backend
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
-	@/bin/true
+	@true
 
 sh:
 	$(IN_ARENA) /bin/bash
@@ -120,7 +132,7 @@ take-ownership:
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
-	be-recreate-db be-sh be-sqlite be-tests be-tests-par \
-	fe-lint-fix fe-logs fe-npm-i fe-sh \
+	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
+	fe-lint-fix fe-logs fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership

@@ -32,9 +32,13 @@ if [[ "$process_model_dir" == "acceptance" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
 elif [[ "$process_model_dir" == "localopenid" ]]; then
+  backend_base_url="$SPIFFWORKFLOW_BACKEND_URL"
+  if [[ -z "$backend_base_url" ]]; then
+    backend_base_url="http://localhost:$port"
+  fi
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="default"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="internal openid"
-  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="http://localhost:$port/openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="${backend_base_url}/openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
@@ -64,8 +68,6 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
 fi
 
 export FLASK_SESSION_SECRET_KEY="e7711a3ba96c46c68e084a86952de16f"
-export SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT="/"
-
 export FLASK_DEBUG=1
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP:-}" ]]; then

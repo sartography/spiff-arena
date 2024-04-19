@@ -360,7 +360,7 @@ export default function TaskShow() {
             id="close-button"
             onClick={handleCloseButton}
             disabled={formButtonsDisabled}
-            kind="secondary"
+            kind="primary"
             title="Save data as draft and close the form."
           >
             Save and close

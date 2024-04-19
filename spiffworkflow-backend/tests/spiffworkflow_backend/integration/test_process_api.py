@@ -13,11 +13,11 @@ from flask.testing import FlaskClient
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
@@ -668,175 +668,6 @@ class TestProcessApi(BaseTest):
         assert len(response.json) == 1
         caller = response.json[0]
         assert caller["identifier"] == "Level1"
-
-    def test_process_group_add(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group = ProcessGroup(
-            id="test",
-            display_name="Another Test Category",
-            display_order=0,
-            admin=False,
-            description="Test Description",
-        )
-        response = client.post(
-            "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(process_group.serialized()),
-        )
-        assert response.status_code == 201
-        assert response.json
-
-        # Check what is returned
-        result = ProcessGroup(**response.json)
-        assert result is not None
-        assert result.display_name == "Another Test Category"
-        assert result.id == "test"
-        assert result.description == "Test Description"
-
-        # Check what is persisted
-        persisted = ProcessModelService.get_process_group("test")
-        assert persisted.display_name == "Another Test Category"
-        assert persisted.id == "test"
-        assert persisted.description == "Test Description"
-
-    def test_process_group_delete(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        process_group_id = "test"
-        process_group_display_name = "My Process Group"
-
-        self.create_process_group_with_api(
-            client,
-            with_super_admin_user,
-            process_group_id,
-            display_name=process_group_display_name,
-        )
-        persisted = ProcessModelService.get_process_group(process_group_id)
-        assert persisted is not None
-        assert persisted.id == process_group_id
-
-        client.delete(
-            f"/v1.0/process-groups/{process_group_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-
-        with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService.get_process_group(process_group_id)
-
-    def test_process_group_update(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test Process Group Update."""
-        group_id = "test_process_group"
-        group_display_name = "Test Group"
-
-        self.create_process_group_with_api(client, with_super_admin_user, group_id, display_name=group_display_name)
-        process_group = ProcessModelService.get_process_group(group_id)
-
-        assert process_group.display_name == group_display_name
-
-        process_group.display_name = "Modified Display Name"
-
-        response = client.put(
-            f"/v1.0/process-groups/{group_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(process_group.serialized()),
-        )
-        assert response.status_code == 200
-
-        process_group = ProcessModelService.get_process_group(group_id)
-        assert process_group.display_name == "Modified Display Name"
-
-    def test_process_group_list(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        # add 5 groups
-        for i in range(5):
-            group_id = f"test_process_group_{i}"
-            group_display_name = f"Test Group {i}"
-            self.create_process_group_with_api(client, with_super_admin_user, group_id, display_name=group_display_name)
-
-        # get all groups
-        response = client.get(
-            "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-        assert len(response.json["results"]) == 5
-        assert response.json["pagination"]["count"] == 5
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 1
-
-        # get first page, one per page
-        response = client.get(
-            "/v1.0/process-groups?page=1&per_page=1",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "test_process_group_0"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 5
-
-        # get second page, one per page
-        response = client.get(
-            "/v1.0/process-groups?page=2&per_page=1",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "test_process_group_1"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 5
-
-        # get first page, 3 per page
-        response = client.get(
-            "/v1.0/process-groups?page=1&per_page=3",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.json is not None
-        assert len(response.json["results"]) == 3
-        assert response.json["results"][0]["id"] == "test_process_group_0"
-        assert response.json["results"][1]["id"] == "test_process_group_1"
-        assert response.json["results"][2]["id"] == "test_process_group_2"
-        assert response.json["pagination"]["count"] == 3
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 2
-
-        # get second page, 3 per page
-        response = client.get(
-            "/v1.0/process-groups?page=2&per_page=3",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        # there should only be 2 left
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["id"] == "test_process_group_3"
-        assert response.json["results"][1]["id"] == "test_process_group_4"
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 2
 
     def test_process_model_file_update_fails_if_no_file_given(
         self,
@@ -1722,6 +1553,90 @@ class TestProcessApi(BaseTest):
             assert response.status_code == 200
             assert response.data == expected_content
 
+    def test_can_download_uploaded_file_from_file_system(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        # it's just for convenience, since the root_path gets deleted after every test
+        with self.app_config_mock(
+            app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH", ProcessModelService.root_path()
+        ):
+            process_group_id = "test_message_send"
+            process_model_id = "message_sender"
+            bpmn_file_name = "message_sender.bpmn"
+            bpmn_file_location = "message_send_one_conversation"
+            process_model = self.create_group_and_model_with_bpmn(
+                client,
+                with_super_admin_user,
+                process_group_id=process_group_id,
+                process_model_id=process_model_id,
+                bpmn_file_name=bpmn_file_name,
+                bpmn_file_location=bpmn_file_location,
+            )
+
+            def _file_data(i: int, c: bytes) -> str:
+                b64 = base64.b64encode(c).decode()
+                return f"data:some/mimetype;name=testing{i}.txt;base64,{b64}"
+
+            def _digest_reference(i: int, sha: str) -> str:
+                b64 = f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}{sha}"
+                return f"data:some/mimetype;name=testing{i}.txt;base64,{b64}"
+
+            file_contents = [f"contents{i}".encode() for i in range(3)]
+            file_data = [_file_data(i, c) for i, c in enumerate(file_contents)]
+            digests = [sha256(c).hexdigest() for c in file_contents]
+            [_digest_reference(i, d) for i, d in enumerate(digests)]
+
+            payload = {
+                "customer_id": "sartography",
+                "po_number": "1001",
+                "amount": "One Billion Dollars! Mwhahahahahaha",
+                "description": "But seriously.",
+                "file0": file_data[0],
+                "key": [{"file1": file_data[1]}],
+                "key2": {"key3": [{"key4": file_data[2], "key5": "bob"}]},
+            }
+
+            response = self.create_process_instance_from_process_model_id_with_api(
+                client,
+                process_model.id,
+                self.logged_in_headers(with_super_admin_user),
+            )
+            assert response.json is not None
+            process_instance_id = response.json["id"]
+
+            process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.do_engine_steps(save=True)
+            task = processor.get_all_user_tasks()[0]
+            human_task = process_instance.active_human_tasks[0]
+
+            ProcessInstanceService.complete_form_task(
+                processor,
+                task,
+                payload,
+                with_super_admin_user,
+                human_task,
+            )
+            processor.save()
+
+            for expected_content, digest in zip(file_contents, digests, strict=True):
+                response = client.get(
+                    f"/v1.0/process-data-file-download/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{digest}",
+                    headers=self.logged_in_headers(with_super_admin_user),
+                )
+                assert response.status_code == 200
+                assert response.data == expected_content
+
+                dir_parts = ProcessInstanceFileDataModel.get_hashed_directory_structure(digest)
+                filepath = os.path.join(
+                    app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, digest
+                )
+                assert os.path.isfile(filepath)
+
     def test_process_instance_can_be_terminated(
         self,
         app: Flask,
@@ -2200,11 +2115,10 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert process_instance.status == "error"
-        processor = ProcessInstanceProcessor(process_instance)
+        processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
         spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
 
-        # TODO: remove these 2 lines if we enable no task data on rehydration again from pr-661
         assert spiff_task.state == TaskState.ERROR
         assert spiff_task.data == {"my_var": "THE VAR"}
 

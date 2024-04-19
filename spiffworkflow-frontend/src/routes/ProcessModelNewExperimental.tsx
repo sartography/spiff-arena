@@ -64,7 +64,7 @@ export default function ProcessModelNewExperimental() {
             setProcessModelDescriptiveText(event.target.value)
           }
         />
-        <Button kind="secondary" type="submit">
+        <Button kind="primary" type="submit">
           Submit
         </Button>
       </Form>

@@ -1,10 +1,10 @@
 # How to Contribute to the Documentation
 
-This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/)
+This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/).
 
 Please set aside a couple of hours to work through this, as getting this setup correctly once is 10,000 times better than having problems every day for the rest of your life.
 
-## Our Methodology 
+## Our Methodology
 
 The methodology we are following is known as ["Docs as Code"](https://www.writethedocs.org/guide/docs-as-code/).
 
@@ -22,10 +22,11 @@ This is called [Ventilated Prose](https://vanemden.wordpress.com/2009/01/01/vent
 ## Our Tools
 
 [Markdown](https://www.markdownguide.org/getting-started/) is a "markup language that you can use to add formatting elements to plain text documents."
-You won't be writing the documentation in a word processor, but in simple plain text, and some special syntax that will consistently and professionally format that text.  
+You won't be writing the documentation in a word processor, but in simple plain text, and some special syntax that will consistently and professionally format that text.
 
 The basic Markdown syntax is very simple.
-Here are some [quick examples](https://commonmark.org/help/). And here is a great [10 minute tutorial](https://commonmark.org/help/tutorial/).
+Here are some [quick examples](https://commonmark.org/help/).
+And here is a great [10 minute tutorial](https://commonmark.org/help/tutorial/).
 This will cover a lot of the basics, like bolding text, italics, paragraphs, lists and other common formatting techniques.
 
 ![Markdown screenshot](./images/markdown.png "Markdown example")
@@ -44,18 +45,19 @@ There is [excellent documentation on MyST](https://myst-parser.readthedocs.io/en
 This is a large documentation effort.
 Many different Markdown pages will together make up the full website.
 
-You will mostly use Sphinx in the background - you won't be aware of it.
-But if you decide that you want to alter the theme (the colors, styles, etc...) of the final website, Sphinx controls this and offers [themes](https://sphinx-themes.org/) and the ability to change styles / colors and formatting through the site.
+You will mostly use Sphinx in the background - you won't even be aware of it.
+But if you decide that you want to alter the theme (the colors, styles, etc.)
+of the final website, Sphinx controls this and offers [themes](https://sphinx-themes.org/) and the ability to change styles/colors and formatting throughout the site.
 You just need to learn a little CSS to control it.
 
 
 ### GitHub
 
 Our project is managed by a version control system called Git.
-You can use GIT to submit changes to the documentation, in the same we use to submit changes to our code.
+You can use Git to submit changes to the documentation, in the same way we use to submit changes to our code.
 It is available on GitHub as the [spiff-arena project](https://github.com/sartography/spiff-arena).
 GitHub also manages versions of the code and handles running tests.
-Readthedocs observes changes in git and manages an automated process that causes our documentation to be built and deployed.
+Readthedocs observes changes in git and manages an automated process that triggers our documentation to be built and deployed.
 It will take a bit to get comfortable with Git, but when you do, you will come to love it (or maybe hate it, but with a lot of respect).
 
 ## Setup
@@ -66,7 +68,7 @@ But you will find that most of it just works - and that once you get into a regu
 
 ### Step 1:  Pre-Requisites
 
-Assure you have been granted write access to our git repository.
+Ensure you have been granted write access to our git repository.
 Make sure you have an account on GitHub and then contact `dan@sartography.com` and ask him to add you as a contributor.
 
 
@@ -74,31 +76,31 @@ Make sure you have an account on GitHub and then contact `dan@sartography.com` a
 
 [Download VSCode](https://code.visualstudio.com/) and install it on your computer.
 
-### Step 3: Install Python 
+### Step 3: Install Python
 
-We need python in order to build the website locally so we can really see what our content is going to look like once we publish.
+We need Python in order to build the website locally so we can really see what our content is going to look like once we publish.
 It's going to be handy for other reasons as well.
-We'll want python to be properly set up inside of VS Code.
-Follow [these directions and brief tutorial](https://code.visualstudio.com/docs/python/python-tutorial) to assure this is set up.
+We'll want Python to be properly set up inside of VS Code.
+Follow [these directions and brief tutorial](https://code.visualstudio.com/docs/python/python-tutorial) to ensure this is set up.
 
 
-### Step 3: Connect VSCode to Git
+### Step 4: Connect VSCode to Git
 
 VSCode comes with Git built in.
-So you can use VSCode to "pull" changes from others down to your local computer and "push" changes back up to share with others (and to cause our docs site to rebuild).
+So you can use VSCode to "pull" changes from others down to your local computer and "push" changes back up to share with others (and to trigger our docs site to rebuild).
 
 Here are directions for how to [clone Spiff-Arena](https://learn.microsoft.com/en-us/azure/developer/javascript/how-to/with-visual-studio-code/clone-github-repository?tabs=create-repo-command-palette%2Cinitialize-repo-activity-bar%2Ccreate-branch-command-palette%2Ccommit-changes-command-palette%2Cpush-command-palette#clone-repository).
 **IMPORTANT**: Follow those directions, but be sure to checkout `https://github.com/sartography/spiff-arena` instead of the project they are using!
 
 You can save the project to any directory on your computer.
-We strongly suggest you create a sub-folder called "projects" in your "home" or "Desktop" folder and checkout the code into this directory.  
+We strongly suggest you create a sub-folder called "projects" in your "home" or "Desktop" folder and checkout the code into this directory.
 
-### Step 4: Open just the Docs Folder
+### Step 5: Open just the Docs Folder
 
 We've checked out the whole spiff-arena project, but we are only going to be working inside of the docs directory.
 So let's open just that folder in VSCode.
 
-* Go to File -> Open Folder 
+* Go to File -> Open Folder
 * Select the "docs" folder inside of spiff-arena.
 
 Now click on the two pieces of paper at the top corner of your screen, and you should see a project that looks like this without all the rest of the code in your way:
@@ -106,7 +108,7 @@ Now click on the two pieces of paper at the top corner of your screen, and you s
 ![Docs Directory](./images/docs_dir.png "Docs Directory")
 
 
-### Step 4: Add some extensions
+### Step 6: Add some extensions
 
 * Inside VSCode, go to File -> Preferences -> Extensions
 * Search for "myst"
@@ -116,32 +118,32 @@ Now click on the two pieces of paper at the top corner of your screen, and you s
 ![Myst Extension](./images/myst.png "Search or MyST in extensions")
 
 
-### Step 5: Install Python Dependencies
+### Step 7: Install Python Dependencies
 
 This project requires a few Python dependencies to work correctly.
 We are going to set up a Virtual Environment for Python to keep us sane later on.
 You can do that by following these steps:
 
-1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command. 
+1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command.
 1. Select **Venv**
 1. Select Python 3.11 from the list of options if there is more than one thing to select.
 1. Be sure the checkbox next to "requirements.txt" is selected.
 1. Click OK.
 
-### Step 6: Fire up the website
+### Step 8: Fire up the website
 
 1. Go to Terminal ->  New Terminal
 1. type:  **sphinx-autobuild . _build/html  -W -a -j auto -n** at the prompt and hit enter.
 1. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 
-### Step 7:  Make a change 
+### Step 9:  Make a change
 
-1. Open up a markdown file, and make a change. 
+1. Open up a markdown file, and make a change.
 
-### Step 8:  Commit your changes and push them up for everyone
+### Step 10:  Commit your changes and push them up for everyone
 
-1. Select the "git" button on the left hand side of the toolbar (circles with lines between them) ![Git button](./images/git.png "Git button") 
+1. Select the "git" button on the left hand side of the toolbar (circles with lines between them) ![Git button](./images/git.png "Git button")
 
 2. Press the blue "Commit" button.
 
