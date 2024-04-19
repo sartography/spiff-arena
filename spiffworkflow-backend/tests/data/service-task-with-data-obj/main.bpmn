@@ -34,7 +34,8 @@
       <bpmn:dataOutputAssociation id="DataOutputAssociation_1fxfphs">
         <bpmn:targetRef>DataObjectReference_0qfbjfj</bpmn:targetRef>
       </bpmn:dataOutputAssociation>
-      <bpmn:script>top_level_data_object = "a"</bpmn:script>
+      <bpmn:script>top_level_data_object = "a"
+top_level_var = "b"</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

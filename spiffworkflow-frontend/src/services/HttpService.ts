@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { BACKEND_BASE_URL } from '../config';
 import { objectIsEmpty } from '../helpers';
 import UserService from './UserService';
@@ -35,6 +36,54 @@ export class UnauthenticatedError extends Error {
     this.name = 'UnauthenticatedError';
   }
 }
+
+export class UnexpectedResponseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnexpectedResponseError';
+  }
+}
+
+const messageForHttpError = (statusCode: number, statusText: string) => {
+  let errorMessage = `HTTP Error ${statusCode}`;
+  if (statusText) {
+    errorMessage += `: ${statusText}`;
+  } else {
+    let httpTextForCode = '';
+    switch (statusCode) {
+      case 400:
+        httpTextForCode = 'Bad Request';
+        break;
+      case 401:
+        httpTextForCode = 'Unauthorized';
+        break;
+      case 403:
+        httpTextForCode = 'Forbidden';
+        break;
+      case 404:
+        httpTextForCode = 'Not Found';
+        break;
+      case 413:
+        httpTextForCode = 'Payload Too Large';
+        break;
+      case 500:
+        httpTextForCode = 'Internal Server Error';
+        break;
+      case 502:
+        httpTextForCode = 'Bad Gateway';
+        break;
+      case 503:
+        httpTextForCode = 'Service Unavailable';
+        break;
+      default:
+        break;
+    }
+    if (httpTextForCode) {
+      errorMessage += `: ${httpTextForCode}`;
+    }
+  }
+  return errorMessage;
+};
 
 const makeCallToBackend = ({
   path,
@@ -74,47 +123,55 @@ backendCallProps) => {
 
   const updatedPath = path.replace(/^\/v1\.0/, '');
 
-  let isSuccessful = true;
-  // this fancy 403 handling is like this because we want to get the response body.
-  // otherwise, we would just throw an exception.
-  let is403 = false;
   fetch(`${BACKEND_BASE_URL}${updatedPath}`, httpArgs)
     .then((response) => {
       if (response.status === 401) {
         throw new UnauthenticatedError('You must be authenticated to do this.');
-      } else if (response.status === 403) {
-        is403 = true;
-        isSuccessful = false;
-      } else if (!response.ok) {
-        isSuccessful = false;
       }
-      return response.json();
+      return response.text().then((result: any) => {
+        return { response, text: result };
+      });
     })
     .then((result: any) => {
-      if (isSuccessful) {
-        successCallback(result);
-      } else if (is403) {
+      let jsonResult = null;
+      try {
+        jsonResult = JSON.parse(result.text);
+      } catch (error) {
+        const httpStatusMesage = messageForHttpError(
+          result.response.status,
+          result.response.statusText
+        );
+        const baseMessage = `Received unexpected response from server. ${httpStatusMesage}.`;
+        console.error(`${baseMessage} Body: ${result.text}`);
+        if (error instanceof SyntaxError) {
+          throw new UnexpectedResponseError(baseMessage);
+        }
+        throw error;
+      }
+      if (result.response.status === 403) {
         if (onUnauthorized) {
-          onUnauthorized(result);
+          onUnauthorized(jsonResult);
         } else if (UserService.isPublicUser()) {
           window.location.href = '/public/sign-out';
         } else {
           // Hopefully we can make this service a hook and use the error message context directly
           // eslint-disable-next-line no-alert
-          alert(result.message);
+          alert(jsonResult.message);
         }
-      } else {
-        let message = 'A server error occurred.';
-        if (result.message) {
-          message = result.message;
-        }
+      } else if (!result.response.ok) {
         if (failureCallback) {
-          failureCallback(result);
+          failureCallback(jsonResult);
         } else {
+          let message = 'A server error occurred.';
+          if (jsonResult.message) {
+            message = jsonResult.message;
+          }
           console.error(message);
           // eslint-disable-next-line no-alert
           alert(message);
         }
+      } else {
+        successCallback(jsonResult);
       }
     })
     .catch((error) => {
@@ -136,6 +193,7 @@ backendCallProps) => {
 const HttpService = {
   HttpMethods,
   makeCallToBackend,
+  messageForHttpError,
 };
 
 export default HttpService;

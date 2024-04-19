@@ -98,7 +98,7 @@ class TestProcessInstanceService(BaseTest):
             assert model.process_instance_id == process_instance_id
             assert model.mimetype == "some/mimetype"
             assert model.filename == f"testing{i}.txt"
-            assert model.contents == _file_content(i)  # type: ignore
+            assert model.contents == _file_content(i)
             assert model.digest == _digest(i)
 
     def test_does_not_skip_events_it_does_not_know_about(self) -> None:

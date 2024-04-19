@@ -21,6 +21,7 @@ IN_FRONTEND ?= $(DOCKER_COMPOSE) run $(FRONTEND_CONTAINER)
 SPIFFWORKFLOW_BACKEND_ENV ?= local_development
 
 BACKEND_SQLITE_FILE ?= src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
+NODE_MODULES_DIR ?= spiffworkflow-frontend/node_modules
 JUST ?=
 
 YML_FILES := -f docker-compose.yml \
@@ -94,6 +95,11 @@ fe-logs:
 fe-npm-i:
 	$(IN_FRONTEND) npm i && git checkout -- spiffworkflow-frontend/package-lock.json
 
+fe-npm-rm:
+	@if [ -d "$(NODE_MODULES_DIR)" ]; then \
+		rm -rf "$(NODE_MODULES_DIR)"; \
+	fi
+
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
 
@@ -127,6 +133,6 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	fe-lint-fix fe-logs fe-npm-i fe-sh fe-unimported  \
+	fe-lint-fix fe-logs fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership

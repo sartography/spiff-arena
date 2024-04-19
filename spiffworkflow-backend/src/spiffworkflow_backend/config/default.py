@@ -191,6 +191,11 @@ config_from_env(
 )
 config_from_env("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY")
 
+
+### process instance file data
+# if set then it will save files associated with process instances to this location
+config_from_env("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH")
+
 ### locking
 # timeouts for process instances locks as they are run to avoid stale locks
 config_from_env("SPIFFWORKFLOW_BACKEND_ALLOW_CONFISCATING_LOCK_AFTER_SECONDS", default="600")
