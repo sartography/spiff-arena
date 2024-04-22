@@ -463,7 +463,14 @@ export default function TaskShow() {
   if (basicTask && taskData) {
     pageElements.push({
       key: 'instructions-for-end-user',
-      component: <InstructionsForEndUser task={taskWithTaskData} />,
+      component: (
+        <InstructionsForEndUser
+          task={taskWithTaskData}
+          allowCollapse
+          expandedByDefault
+          className="with-bottom-margin"
+        />
+      ),
     });
     pageElements.push({ key: 'main-form', component: formElement() });
   } else if (!atLeastOneTaskFetchHasError) {
