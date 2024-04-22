@@ -61,6 +61,7 @@ function RadioWidget({
       onBlur={_onBlur}
       onFocus={_onFocus}
       orientation={row ? 'horizontal' : 'vertical'}
+      className="radio-button-group"
     >
       {Array.isArray(enumOptions) &&
         enumOptions.map((option) => {
