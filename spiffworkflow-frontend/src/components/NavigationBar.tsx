@@ -112,7 +112,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     let aboutLinkElement = null;
 
     if (Object.keys(versionInfo).length) {
-      aboutLinkElement = <Link to="/about">About</Link>;
+      aboutLinkElement = <Link to="/about">Sobre</Link>;
     }
 
     return (
@@ -149,7 +149,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                   onClick={handleLogout}
                 >
                   <Logout />
-                  &nbsp;&nbsp;Sign out
+                  &nbsp;&nbsp;Sair
                 </Button>
               </>
             ) : null}
@@ -205,7 +205,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                         onClick={closeSideNavMenuIfExpanded}
                         isActive={isActivePage('/configuration')}
                       >
-                        Configuration
+                        Configuração
                       </HeaderMenuItem>
                     </SpiffTooltip>
                   );
@@ -247,19 +247,19 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     }
     return (
       <>
-        <SpiffTooltip title="View and start Process Instances">
+        <SpiffTooltip title="Visualizar e Iniciar Tarefas dos Processos">
           <HeaderMenuItem<LinkProps>
             as={Link}
             to="/"
             onClick={closeSideNavMenuIfExpanded}
             isActive={isActivePage('/')}
           >
-            <div>Home</div>
+            <div>Início</div>
           </HeaderMenuItem>
         </SpiffTooltip>
 
         <Can I="GET" a={targetUris.processGroupListPath} ability={ability}>
-          <SpiffTooltip title="Find and organize Process Groups and Process Models">
+          <SpiffTooltip title="Encontrar e organizar Grupos de Processos e Modelos de Processos">
             <HeaderMenuItem
               as={Link}
               to={processGroupPath}
@@ -267,7 +267,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               isActive={isActivePage(processGroupPath)}
               data-qa="header-nav-processes"
             >
-              Processes
+              Processos
             </HeaderMenuItem>
           </SpiffTooltip>
         </Can>
@@ -276,31 +276,31 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           a={targetUris.processInstanceListForMePath}
           ability={ability}
         >
-          <SpiffTooltip title="List of active and completed Process Instances">
+          <SpiffTooltip title="Lista de tarefas dos Processos Ativas e Concluídas">
             <HeaderMenuItem
               as={Link}
               to="/process-instances"
               onClick={closeSideNavMenuIfExpanded}
               isActive={isActivePage('/process-instances')}
             >
-              Process Instances
+              Tarefas dos Processos
             </HeaderMenuItem>
           </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
-          <SpiffTooltip title="Browse messages being sent and received">
+          <SpiffTooltip title="Mensagens Enviadas e Recebidas">
             <HeaderMenuItem
               as={Link}
               to="/messages"
               onClick={closeSideNavMenuIfExpanded}
               isActive={isActivePage('/messages')}
             >
-              Messages
+              Menssages
             </HeaderMenuItem>
           </SpiffTooltip>
         </Can>
         <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
-          <SpiffTooltip title="Browse data that has been saved to Data Stores">
+          <SpiffTooltip title="Explorar Data Stores">
             <HeaderMenuItem
               as={Link}
               to="/data-stores"

@@ -25,7 +25,15 @@ ENV NODE_OPTIONS=--max_old_space_size=2048
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
+# Install dos2unix for converting files to Unix format
+RUN apt-get update \
+    && apt-get install -y dos2unix \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY . /app/
+
+# Convert files to Unix format
+RUN find /app -type f -print0 | xargs -0 dos2unix
 
 RUN cp /app/package.json /app/package.json.bak
 ADD justservewebserver.package.json /app/package.json
