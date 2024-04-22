@@ -89,6 +89,19 @@ export default function BaseInputTemplate<
     1000
   );
 
+  let enableCounter = false;
+  let maxCount = undefined;
+  if (options && options.counter) {
+    enableCounter = true;
+    if (schema && schema.maxLength) {
+      maxCount = schema.maxLength;
+    } else {
+      throw new Error(
+        `Counter was requested but no maxLength given on the ${label}`
+      );
+    }
+  }
+
   const commonAttributes = getCommonAttributes(
     label,
     schema,
@@ -157,6 +170,8 @@ export default function BaseInputTemplate<
           onChange={_onChange}
           onBlur={_onBlur}
           onFocus={_onFocus}
+          enableCounter={enableCounter}
+          maxCount={maxCount}
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...inputProps}
         />
