@@ -125,6 +125,7 @@ export default function BaseInputTemplate<
           placeholder={DATE_FORMAT_FOR_DISPLAY}
           helperText={commonAttributes.helperText}
           type="text"
+          labelText=""
           size="md"
           value={dateValue}
           autocomplete="off"
