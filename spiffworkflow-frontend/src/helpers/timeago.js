@@ -6,19 +6,19 @@ export const TimeAgo = (function awesomeFunc() {
   // Public Methods
   self.locales = {
     prefix: '',
-    sufix: 'ago',
+    sufix: 'atrás',
 
-    seconds: 'less than a minute',
-    minute: 'about a minute',
-    minutes: '%d minutes',
-    hour: 'about an hour',
-    hours: 'about %d hours',
-    day: 'a day',
-    days: '%d days',
-    month: 'about a month',
-    months: '%d months',
-    year: 'about a year',
-    years: '%d years',
+    seconds: 'alguns segundos atrás',
+    minute: 'cerca de um minuto',
+    minutes: '%d minutos',
+    hour: 'cerca de uma hora',
+    hours: 'cerca de %d horas',
+    day: 'um dia',
+    days: '%d dias',
+    month: 'cerca de um mês',
+    months: '%d meses',
+    year: 'cerca de um ano',
+    years: '%d anos',
   };
 
   self.inWords = function inWords(timeAgo) {
