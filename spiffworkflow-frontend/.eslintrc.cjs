@@ -4,11 +4,8 @@ module.exports = {
     es2021: true,
   },
   extends: [
-    'react-app',
-    'react-app/jest',
     'plugin:react/recommended',
     'airbnb',
-    'plugin:jest/recommended',
     'plugin:prettier/recommended',
     'plugin:sonarjs/recommended',
     'plugin:import/errors',
