@@ -14,6 +14,7 @@ type OwnProps = {
   taskInstructionForEndUser?: TaskInstructionForEndUser;
   defaultMessage?: string;
   allowCollapse?: boolean;
+  className?: string;
 };
 
 export default function InstructionsForEndUser({
@@ -21,6 +22,7 @@ export default function InstructionsForEndUser({
   taskInstructionForEndUser,
   defaultMessage = '',
   allowCollapse = false,
+  className,
 }: OwnProps) {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [collapsable, setCollapsable] = useState<boolean>(false);
@@ -87,15 +89,15 @@ export default function InstructionsForEndUser({
     return null;
   };
 
-  let className = 'markdown';
+  let mdClassName = 'markdown';
   if (collapsed) {
-    className += ' markdown-collapsed';
+    mdClassName += ' markdown-collapsed';
   }
 
   if (instructions) {
     return (
-      <div>
-        <div className={className}>
+      <div className={className}>
+        <div className={mdClassName}>
           {/*
           https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
