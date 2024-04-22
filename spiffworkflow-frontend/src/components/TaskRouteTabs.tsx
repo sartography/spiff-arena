@@ -11,18 +11,18 @@ export default function TaskRouteTabs() {
   const spiffTabs: SpiffTab[] = [
     {
       path: '/tasks/in-progress',
-      display_name: 'In Progress',
-      tooltip: 'View running Processes',
+      display_name: 'Em Andamento',
+      tooltip: 'Visualizar Processos em andamento',
     },
     {
       path: '/tasks/completed-instances',
-      display_name: 'Completed',
-      tooltip: 'View completed Processes',
+      display_name: 'Finalizado',
+      tooltip: 'Visualizar Processos finalizados',
     },
     {
       path: '/tasks/create-new-instance',
-      display_name: 'Start New +',
-      tooltip: 'Find and start a new Process',
+      display_name: 'Novo Processo +',
+      tooltip: 'Iniciar um Novo Processo',
     },
   ];
   return <SpiffTabs tabs={spiffTabs} />;
