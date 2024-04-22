@@ -92,13 +92,16 @@ fe-lint-fix:
 fe-logs:
 	docker logs -f $(FRONTEND_CONTAINER)
 
+fe-npm-clean:
+	@if [ -d "$(NODE_MODULES_DIR)" ]; then \
+		rm -rf "$(NODE_MODULES_DIR)"; \
+	fi
+
 fe-npm-i:
 	$(IN_FRONTEND) npm i && git checkout -- spiffworkflow-frontend/package-lock.json
 
 fe-npm-rm:
-	@if [ -d "$(NODE_MODULES_DIR)" ]; then \
-		rm -rf "$(NODE_MODULES_DIR)"; \
-	fi
+	$(IN_FRONTEND) npm rm $(JUST)
 
 fe-sh:
 	$(IN_FRONTEND) /bin/bash
@@ -133,6 +136,6 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	fe-lint-fix fe-logs fe-npm-i fe-npm-rm fe-sh fe-unimported  \
+	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
