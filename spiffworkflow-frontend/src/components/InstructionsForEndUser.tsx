@@ -14,7 +14,6 @@ type OwnProps = {
   taskInstructionForEndUser?: TaskInstructionForEndUser;
   defaultMessage?: string;
   allowCollapse?: boolean;
-  expandedByDefault?: boolean;
   className?: string;
 };
 
@@ -23,7 +22,6 @@ export default function InstructionsForEndUser({
   taskInstructionForEndUser,
   defaultMessage = '',
   allowCollapse = false,
-  expandedByDefault = false,
   className,
 }: OwnProps) {
   const [collapsed, setCollapsed] = useState<boolean>(false);
@@ -66,16 +64,12 @@ export default function InstructionsForEndUser({
         wordCount(instructions) > maxWordCount)
     ) {
       setCollapsable(true);
-      if (expandedByDefault) {
-        setCollapsed(false);
-      } else {
-        setCollapsed(true);
-      }
+      setCollapsed(true);
     } else {
       setCollapsable(false);
       setCollapsed(false);
     }
-  }, [allowCollapse, instructions, expandedByDefault]);
+  }, [allowCollapse, instructions]);
 
   const toggleCollapse = () => {
     setCollapsed(!collapsed);
@@ -87,7 +81,6 @@ export default function InstructionsForEndUser({
         <Toggle
           labelA="Show More"
           labelB="Show Less"
-          defaultToggled={!collapsed}
           onToggle={toggleCollapse}
           id="toggle-collapse"
         />

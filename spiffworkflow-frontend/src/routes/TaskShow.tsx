@@ -467,7 +467,6 @@ export default function TaskShow() {
         <InstructionsForEndUser
           task={taskWithTaskData}
           allowCollapse
-          expandedByDefault
           className="with-bottom-margin"
         />
       ),
