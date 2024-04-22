@@ -198,7 +198,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               {(secretAllowed: boolean) => {
                 if (secretAllowed || authenticationAllowed) {
                   return (
-                    <SpiffTooltip title="Manage Secrets and Authentication information for Service Tasks">
+                    <SpiffTooltip title="Gerenciar Segredos e Informações de Autenticação para Tarefas de Serviço">
                       <HeaderMenuItem
                         as={Link}
                         to="/configuration"
