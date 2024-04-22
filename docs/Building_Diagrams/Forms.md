@@ -199,10 +199,10 @@ Utilizing maximum date validation, you can prevent dates from exceeding a certai
 
 By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
 
-
 #### Date Validation Scenario: Enforcing Minimum and Maximum Date Constraints
 
 #### Scenario Overview
+
 Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines. This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
 #### JSON Schema Configuration:
@@ -242,9 +242,10 @@ The "test-maximum-date-schema.json" process model outlines a form structure that
 - **Preferred Delivery Date**: A single date indicating when the delivery of a service or product is preferred, bounded by today's date and the `end_date`.
 - **Preferred Delivery Date Range**: A span of dates indicating an acceptable window for delivery, constrained by today's date and the `end_date`.
 
-### Implementation in SpiffWorkflow Forms:
+#### Implementation in SpiffWorkflow Forms:
 
 The schema enforces the following rules:
+
 - The `Preferred Delivery Date` cannot be earlier than today (the `minimumDate`) and not later than the `end_date` (the `maximumDate`).
 - The `Preferred Delivery Date Range` must start no earlier than today and end no later than the `end_date`.
 
@@ -263,9 +264,9 @@ Define your form fields in the JSON schema as follows:
   "description": "Demonstrating side-by-side layout",
   "type": "object",
   "properties": {
-    "firstName": {"type": "string"},
-    "lastName": {"type": "string"},
-    "notes": {"type": "string"}
+    "firstName": { "type": "string" },
+    "lastName": { "type": "string" },
+    "notes": { "type": "string" }
   }
 }
 ```
@@ -279,13 +280,14 @@ Here's how to use it:
 {
   "ui:layout": [
     {
-      "firstName": {"sm": 2, "md": 2, "lg": 4},
-      "lastName": {"sm": 2, "md": 2, "lg": 4}
+      "firstName": { "sm": 2, "md": 2, "lg": 4 },
+      "lastName": { "sm": 2, "md": 2, "lg": 4 }
     },
-    {"notes": {}}
+    { "notes": {} }
   ]
 }
 ```
+
 ![Styling_Form](images/styling_forms.png)
 
 #### Key Points:
@@ -311,10 +313,7 @@ If you just specify a uiSchema like this, it will figure out the column widths f
       ]
     }
 
-
 By leveraging the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
-
-
 
 ### Display UI Help in Web Forms
 
@@ -393,17 +392,17 @@ Below is an example JSON schema that includes the numeric range field:
     "numericRange": {
       "type": "object",
       "title": "Numeric Range",
-        "minimum": {
-          "type": "number",
-          "title": "Minimum Value"
-        },
-        "maximum": {
-          "type": "number",
-          "title": "Maximum Value"
-        }
+      "minimum": {
+        "type": "number",
+        "title": "Minimum Value"
+      },
+      "maximum": {
+        "type": "number",
+        "title": "Maximum Value"
       }
     }
   }
+}
 ```
 
 This schema defines a numeric range object with `min` and `max` properties, both of which are required.
@@ -422,10 +421,9 @@ This schema defines a numeric range object with `min` and `max` properties, both
 
 This will automatically validate that the max value cannot be less than the min value.
 
-
 ### Adding a New Button for Repeating Sections in Forms
 
-Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status. 
+Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
 
 This structure can be represented in the form's schema as follows:
 
@@ -458,8 +456,44 @@ This structure can be represented in the form's schema as follows:
   }
 }
 ```
-**Form Preview**: 
+
+**Form Preview**:
 
 ![Nested Forms](images/Nested_form_display.png)
 
 By usign this feature, you can effectively implement new buttons for nested forms or repeating sections improving the form's usability for collecting multiple related entries from users.
+
+### Character counter
+
+To give the user feedback about how they are doing in terms of staying within the limits imposed by the field, you can display a character counter.
+
+#### JSON Schema Configuration
+
+To do this, your json schema must contain a string with a maxLength, like this:
+
+```json
+{
+  "title": "String with character counter",
+  "type": "object",
+  "properties": {
+    "my_hot_string": {
+      "type": "string",
+      "maxLength": 100
+    }
+  }
+}
+```
+
+#### UI Schema Configuration
+
+Your UI Schema will need a ui:options specifying counter true, like this:
+
+```json
+{
+  "my_hot_string": {
+    "ui:options": {
+      "counter": true
+    }
+  }
+}
+```

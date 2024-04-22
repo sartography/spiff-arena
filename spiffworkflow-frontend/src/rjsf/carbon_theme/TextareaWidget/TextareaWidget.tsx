@@ -59,6 +59,19 @@ function TextareaWidget<
     rawErrors
   );
 
+  let enableCounter = false;
+  let maxCount = undefined;
+  if (options && options.counter) {
+    enableCounter = true;
+    if (schema && schema.maxLength) {
+      maxCount = schema.maxLength;
+    } else {
+      throw new Error(
+        `Counter was requested but no maxLength given on the ${label}`
+      );
+    }
+  }
+
   return (
     <TextArea
       id={id}
@@ -78,6 +91,8 @@ function TextareaWidget<
       onChange={handleChange}
       invalid={commonAttributes.invalid}
       invalidText={commonAttributes.errorMessageForField}
+      enableCounter={enableCounter}
+      maxCount={maxCount}
     />
   );
 }
