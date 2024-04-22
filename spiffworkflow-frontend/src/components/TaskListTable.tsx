@@ -151,7 +151,7 @@ export default function TaskListTable({
           properties: {
             isManualTask: {
               type: 'boolean',
-              title: 'Is ManualTask',
+              title: 'Tarefa Manual',
               default: true,
             },
           },
@@ -173,7 +173,7 @@ export default function TaskListTable({
           className="completed-task-modal"
         >
           <div className="indented-content explanatory-message">
-            ✅ You completed this task{' '}
+            ✅ Você completou está tarefa{' '}
             {TimeAgo.inWords(formSubmissionTask.end_in_seconds)}
             <div>
               <Stack orientation="horizontal" gap={2}>
@@ -220,7 +220,7 @@ export default function TaskListTable({
         <Link
           data-qa="process-instance-show-link-id"
           to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
-          title={`View process instance ${processInstanceTask.process_instance_id}`}
+          title={`Visualizar Tarefas do Processo ${processInstanceTask.process_instance_id}`}
         >
           {processInstanceTask.process_instance_id}
         </Link>
@@ -290,7 +290,7 @@ export default function TaskListTable({
           variant="primary"
           onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
         >
-          View task
+          Visualizar Tarefa
         </Button>
       );
     }
@@ -352,26 +352,26 @@ export default function TaskListTable({
       tableHeaders.push('Id');
     }
     if (showProcessModelIdentifier) {
-      tableHeaders.push('Process');
+      tableHeaders.push('Processo');
     }
-    tableHeaders.push('Task');
+    tableHeaders.push('Tarefa');
     if (showStartedBy) {
-      tableHeaders.push('Started by');
+      tableHeaders.push('Iniciada Por');
     }
     if (showWaitingOn) {
-      tableHeaders.push('Waiting for');
+      tableHeaders.push('Aguardando Por');
     }
     if (showCompletedBy) {
-      tableHeaders.push('Completed by');
+      tableHeaders.push('Finalizada Por');
     }
     if (showDateStarted) {
-      tableHeaders.push('Date started');
+      tableHeaders.push('Data Início');
     }
     if (showLastUpdated) {
-      tableHeaders.push('Last updated');
+      tableHeaders.push('Ultima Atualização');
     }
     if (showActionsColumn) {
-      tableHeaders = tableHeaders.concat(['Actions']);
+      tableHeaders = tableHeaders.concat(['Ação']);
     }
     return tableHeaders;
   };
