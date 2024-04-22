@@ -19,10 +19,10 @@ export default function InProgressInstances() {
     }
 
     return userGroups.map((userGroup: string) => {
-      const titleText = `This is a list of instances with tasks that are waiting for the ${userGroup} group.`;
+      const titleText = `Esta é uma lista de processos com tarefas que estão aguardando pelo grupo ${userGroup}.`;
       const headerElement = {
         tooltip_text: titleText,
-        text: `Waiting for **${userGroup}**`,
+        text: `Aguardando por **${userGroup}**`,
       };
       const identifierForTable = `waiting-for-${slugifyString(userGroup)}`;
       return (
@@ -39,24 +39,24 @@ export default function InProgressInstances() {
           showActionsColumn
           showLinkToReport
           tableHtmlId={identifierForTable}
-          textToShowIfEmpty="This group has no instances waiting on it at this time."
+          textToShowIfEmpty="Este grupo não tem processos aguardando neste momento."
         />
       );
     });
   };
 
   const startedByMeTitleText =
-    'This is a list of open instances that you started.';
+    'Esta é uma lista de processos em andamento que você iniciou.';
   const startedByMeHeaderElement = {
     tooltip_text: startedByMeTitleText,
-    text: 'Started by me',
+    text: 'Iniciados por mim',
   };
 
   const waitingForMeTitleText =
-    'This is a list of instances that have tasks that you can complete.';
+    'Esta é uma lista de processos que têm tarefas que você pode completar.';
   const waitingForMeHeaderElement = {
     tooltip_text: waitingForMeTitleText,
-    text: 'Waiting for me',
+    text: 'Aguardando por mim',
   };
 
   return (
@@ -71,7 +71,7 @@ export default function InProgressInstances() {
         showActionsColumn
         showLinkToReport
         tableHtmlId="open-instances-started-by-me"
-        textToShowIfEmpty="There are no open instances you started at this time."
+        textToShowIfEmpty="No momento, não há processos em andamento que você iniciou."
       />
       <ProcessInstanceListTable
         autoReload
@@ -83,7 +83,7 @@ export default function InProgressInstances() {
         showActionsColumn
         showLinkToReport
         tableHtmlId="waiting-for-me"
-        textToShowIfEmpty="There are no instances waiting on you at this time."
+        textToShowIfEmpty="No momento, não há processos aguardando sua ação."
       />
       {groupTableComponents()}
     </>
