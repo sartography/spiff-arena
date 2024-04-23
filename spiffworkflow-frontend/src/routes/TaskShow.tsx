@@ -87,7 +87,7 @@ export default function TaskShow() {
         }
       }
       const hotCrumbList: HotCrumbItem[] = [
-        ['Process Groups', '/process-groups'],
+        ['Grupos de Processo', '/process-groups'],
         {
           entityToExplode: result.process_model_identifier,
           entityType: 'process-model-id',
@@ -95,12 +95,12 @@ export default function TaskShow() {
           checkPermission: true,
         },
         [
-          `Process Instance Id: ${result.process_instance_id}`,
+          `Tarefa do Processo: ${result.process_instance_id}`,
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
             result.process_model_identifier
           )}/${result.process_instance_id}`,
         ],
-        [`Task: ${result.name_for_display || result.id}`],
+        [`Atividade: ${result.name_for_display || result.id}`],
       ];
       setHotCrumbs(hotCrumbList);
     },
@@ -302,11 +302,11 @@ export default function TaskShow() {
       return null;
     }
     const submitButtonOptions = getSubmitButtonOptions(formUiSchema);
-    let submitButtonText = 'Submit';
+    let submitButtonText = 'Enviar';
     if ('submitText' in submitButtonOptions) {
       submitButtonText = submitButtonOptions.submitText as string;
     } else if (taskWithTaskData.typename === 'ManualTask') {
-      submitButtonText = 'Continue';
+      submitButtonText = 'Continuar';
     }
     return submitButtonText;
   };
@@ -326,7 +326,7 @@ export default function TaskShow() {
         properties: {
           isManualTask: {
             type: 'boolean',
-            title: 'Is ManualTask',
+            title: 'Atividade Manual',
             default: true,
           },
         },
@@ -361,9 +361,9 @@ export default function TaskShow() {
             onClick={handleCloseButton}
             disabled={formButtonsDisabled}
             kind="primary"
-            title="Save data as draft and close the form."
-          >
-            Save and close
+            title="Salvar dados como rascunho e fechar o formulário."
+            >
+            Salvar e Fechar
           </Button>
         );
       }
@@ -431,7 +431,7 @@ export default function TaskShow() {
     const style = { margin: '50px 0 50px 50px' };
     return (
       <Loading
-        description="Active loading indicator"
+        description="Indicador de carregamento ativo"
         withOverlay={false}
         style={style}
       />
@@ -453,7 +453,7 @@ export default function TaskShow() {
       key: 'task-name',
       component: (
         <h3>
-          Task: {basicTask.name_for_display} (
+          Atividade: {basicTask.name_for_display} (
           {basicTask.process_model_display_name}){statusString}
         </h3>
       ),

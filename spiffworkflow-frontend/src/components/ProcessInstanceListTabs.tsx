@@ -36,7 +36,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
               navigate('/process-instances/for-me');
             }}
           >
-            For Me
+            Por Mim
           </Tab>
         </SpiffTooltip>
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
@@ -47,7 +47,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
                 navigate('/process-instances/all');
               }}
             >
-              All
+              Todos
             </Tab>
           </SpiffTooltip>
         </Can>
@@ -58,7 +58,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
               navigate('/process-instances/find-by-id');
             }}
           >
-            Find By Id
+            Buscar Por Id
           </Tab>
         </SpiffTooltip>
       </TabList>

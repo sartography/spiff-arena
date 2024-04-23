@@ -43,7 +43,7 @@ export default function Filters({
           onClick={copyReportLink}
           kind="secondary"
           renderIcon={LinkIcon}
-          iconDescription="Copy shareable link"
+          iconDescription="Copiar link compartilhável"
           hasIconOnly
           size="md"
         />
@@ -53,7 +53,7 @@ export default function Filters({
       <Button
         data-qa="filter-section-expand-toggle"
         renderIcon={Filter}
-        iconDescription="Filter Options"
+        iconDescription="Opções de Filtros"
         hasIconOnly
         size="md"
         onClick={toggleShowFilterOptions}
@@ -64,7 +64,7 @@ export default function Filters({
         <Notification
           onClose={() => setCopiedReportLinkToClipboard(false)}
           type="success"
-          title="Copied link to clipboard"
+          title="Link copiado para a área de transferência"
           timeout={2000}
           hideCloseButton
           withBottomMargin={false}

@@ -26,7 +26,7 @@ export default function AddButton<
       disabled={disabled}
       registry={registry}
     >
-      Add new
+    Adicionar Novo
     </Button>
   );
 }

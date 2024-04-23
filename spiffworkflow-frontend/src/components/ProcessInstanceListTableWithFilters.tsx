@@ -555,13 +555,13 @@ export default function ProcessInstanceListTableWithFilters({
 
   const processInstanceReportSaveTag = () => {
     if (processInstanceReportJustSaved) {
-      let titleOperation = 'Updated';
+      let titleOperation = 'Atualizado';
       if (processInstanceReportJustSaved === 'new') {
-        titleOperation = 'Created';
+        titleOperation = 'Criado';
       }
       return (
         <Notification
-          title={`Perspective: ${titleOperation}`}
+          title={`Perspectiva: ${titleOperation}`}
           onClose={() => setProcessInstanceReportJustSaved(null)}
         >
           <span>{`'${
@@ -619,22 +619,22 @@ export default function ProcessInstanceListTableWithFilters({
 
     let message = '';
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
-      message = '"Start date from" cannot be after "start date to"';
+      message = '"Data de início de" não pode ser depois de "Data de início até"';
     }
     if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
-      message = '"End date from" cannot be after "end date to"';
+      message = '"Data de término de" não pode ser depois de "Data de término até"';
     }
     if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
-      message = '"Start date from" cannot be after "end date from"';
+      message = '"Data de início de" não pode ser depois de "Data de término de"';
     }
     if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
-      message = '"Start date to" cannot be after "end date to"';
+      message = '"Data de início até" não pode ser depois de "Data de término até"';
     }
     if (message !== '') {
       addError({ message } as ErrorForDisplay);
     } else {
       removeError();
-    }
+    }    
   };
 
   const reportColumns = () => {
@@ -700,7 +700,7 @@ export default function ProcessInstanceListTableWithFilters({
         <TimePicker
           invalid={timeInvalid}
           id={`time-picker-${name}`}
-          labelText="Select a time"
+          labelText="Selecione uma hora"
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
           value={initialTime}
           onChange={(event: any) => {
@@ -737,7 +737,7 @@ export default function ProcessInstanceListTableWithFilters({
     }
     return (
       <MultiSelect
-        label="Choose Status"
+        label="Escolha um Status"
         className="our-class"
         id="process-instance-status-select"
         titleText="Status"
@@ -797,7 +797,7 @@ export default function ProcessInstanceListTableWithFilters({
       <ProcessInstanceListSaveAsReport
         onSuccess={onSaveReportSuccess}
         buttonClassName="narrow-button"
-        buttonText="Save"
+        buttonText="Salvar"
         processInstanceReportSelection={processInstanceReportSelection}
         reportMetadata={reportMetadata}
       />
@@ -1012,8 +1012,8 @@ export default function ProcessInstanceListTableWithFilters({
             return null;
           }}
           shouldFilterItem={shouldFilterReportColumn}
-          placeholder="Choose a column to show"
-          titleText="Column"
+          placeholder="Selecione uma coluna para exibir"
+          titleText="Coluna"
           selectedItem={reportColumnToOperateOn}
         />
       );
@@ -1064,8 +1064,8 @@ export default function ProcessInstanceListTableWithFilters({
       );
       formElements.push(
         <Dropdown
-          titleText="Operator"
-          label="Operator"
+          titleText="Operador"
+          label="Operador"
           id="report-column-condition-operator"
           items={Object.keys(filterOperatorMappings)}
           selectedItem={operator || null}
@@ -1083,7 +1083,7 @@ export default function ProcessInstanceListTableWithFilters({
           <TextInput
             id="report-column-condition-value"
             name="report-column-condition-value"
-            labelText="Condition Value"
+            labelText="Valor da condição"
             value={
               reportColumnToOperateOn
                 ? reportColumnToOperateOn.filter_field_value
@@ -1099,15 +1099,15 @@ export default function ProcessInstanceListTableWithFilters({
     );
     const modalHeading =
       reportColumnFormMode === 'new'
-        ? 'Add Column'
-        : `Edit ${
+        ? 'Adicionar Coluna'
+        : `Editar ${
             reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
-          } column`;
+          } coluna`;
     return (
       <Modal
         open={showReportColumnForm}
         modalHeading={modalHeading}
-        primaryButtonText="Save"
+        primaryButtonText="Salvar"
         primaryButtonDisabled={!reportColumnToOperateOn}
         onRequestSubmit={handleUpdateReportColumn}
         onRequestClose={handleColumnFormClose}
@@ -1143,7 +1143,7 @@ export default function ProcessInstanceListTableWithFilters({
                 kind="ghost"
                 size="sm"
                 className={`button-tag ${tagTypeClass}`}
-                title={`Edit ${reportColumnForEditing.accessor} column`}
+                title={`Editar ${reportColumnForEditing.accessor} coluna`}
                 onClick={() => {
                   setReportColumnToOperateOn(reportColumnForEditing);
                   setShowReportColumnForm(true);
@@ -1155,7 +1155,7 @@ export default function ProcessInstanceListTableWithFilters({
               <Button
                 data-qa="remove-report-column"
                 renderIcon={Close}
-                iconDescription="Remove Column"
+                iconDescription="Remover Coluna"
                 className={`button-tag-icon ${tagTypeClass}`}
                 hasIconOnly
                 size="sm"
@@ -1173,7 +1173,7 @@ export default function ProcessInstanceListTableWithFilters({
             <Button
               data-qa="add-column-button"
               renderIcon={AddAlt}
-              iconDescription="Column options"
+              iconDescription="Opções da Coluna"
               className="with-tiny-top-margin"
               kind="ghost"
               hasIconOnly
@@ -1205,7 +1205,7 @@ export default function ProcessInstanceListTableWithFilters({
             <Dropdown
               id="system-report-dropdown"
               titleText="System report"
-              label="System report"
+              label="Reportar Sistema"
               items={['', ...systemReportOptions]}
               itemToString={(item: any) => titleizeString(item)}
               selectedItem={systemReport}
@@ -1224,8 +1224,8 @@ export default function ProcessInstanceListTableWithFilters({
           <Column md={4} lg={8} sm={2}>
             <Dropdown
               id="user-group-dropdown"
-              titleText="Assigned user group"
-              label="Assigned user group"
+              titleText="Grupo de usuário atribuído"
+              label="Grupo de usuário atribuído"
               items={['', ...userGroups]}
               itemToString={(item: any) => item}
               selectedItem={selectedUserGroup}
@@ -1244,7 +1244,7 @@ export default function ProcessInstanceListTableWithFilters({
         <Grid fullWidth>
           <Column md={4} lg={8} sm={2}>
             <Checkbox
-              labelText="Include oldest open task information"
+              labelText="Incluir informações sobre a atividade aberta mais antiga."
               id="with-oldest-open-task-checkbox"
               checked={withOldestOpenTask}
               disabled={showActionsColumn}
@@ -1261,7 +1261,7 @@ export default function ProcessInstanceListTableWithFilters({
           {variant === 'all' ? (
             <Column md={4} lg={8} sm={2}>
               <Checkbox
-                labelText="Include tasks for me"
+                labelText="Incluir atividades para mim."
                 id="with-relation-to-me"
                 checked={withRelationToMe}
                 onChange={(value: any) => {
@@ -1282,8 +1282,8 @@ export default function ProcessInstanceListTableWithFilters({
     return (
       <Modal
         open={showAdvancedOptions}
-        modalHeading="Advanced filter options"
-        primaryButtonText="Close"
+        modalHeading="Opções avançadas de filtro"
+        primaryButtonText="Fechar"
         onRequestSubmit={handleAdvancedOptionsClose}
         onRequestClose={handleAdvancedOptionsClose}
         hasScrollingContent
@@ -1320,7 +1320,7 @@ export default function ProcessInstanceListTableWithFilters({
       <>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8} lg={16} sm={4}>
-            <FormLabel>Columns</FormLabel>
+            <FormLabel>Colunas</FormLabel>
             <br />
             {columnSelections()}
           </Column>
@@ -1367,8 +1367,8 @@ export default function ProcessInstanceListTableWithFilters({
                       id="process-instance-initiator-search"
                       data-qa="process-instance-initiator-search"
                       items={processInstanceInitiatorOptions}
-                      placeholder="Start typing username"
-                      titleText="Started by"
+                      placeholder="Comece a digitar o nome de usuário"
+                      titleText="Iniciado por"
                       selectedItem={processInitiatorSelection}
                     />
                   );
@@ -1376,8 +1376,8 @@ export default function ProcessInstanceListTableWithFilters({
                 return (
                   <TextInput
                     id="process-instance-initiator-search"
-                    placeholder="Enter username"
-                    labelText="Started by"
+                    placeholder="Digite o nome de usuário"
+                    labelText="Iniciado por"
                     onChange={(event: any) => {
                       insertOrUpdateFieldInReportMetadata(
                         reportMetadata,
@@ -1396,7 +1396,7 @@ export default function ProcessInstanceListTableWithFilters({
         <Grid fullWidth className="with-bottom-margin">
           <Column md={4}>
             {dateComponent(
-              'Start date from',
+              'Data de início a partir de',
               'start-from',
               startFromDate,
               startFromTime,
@@ -1412,7 +1412,7 @@ export default function ProcessInstanceListTableWithFilters({
           </Column>
           <Column md={4}>
             {dateComponent(
-              'Start date to',
+              'Data de início até',
               'start-to',
               startToDate,
               startToTime,
@@ -1428,7 +1428,7 @@ export default function ProcessInstanceListTableWithFilters({
           </Column>
           <Column md={4}>
             {dateComponent(
-              'End date from',
+              'Data de fim a partir de',
               'end-from',
               endFromDate,
               endFromTime,
@@ -1444,7 +1444,7 @@ export default function ProcessInstanceListTableWithFilters({
           </Column>
           <Column md={4}>
             {dateComponent(
-              'End date to',
+              'Data de fim até',
               'end-to',
               endToDate,
               endToTime,
@@ -1467,7 +1467,7 @@ export default function ProcessInstanceListTableWithFilters({
                 className="narrow-button"
                 onClick={clearFilters}
               >
-                Clear
+                Limpar
               </Button>
             </ButtonSet>
           </Column>
@@ -1482,7 +1482,7 @@ export default function ProcessInstanceListTableWithFilters({
               data-qa="advanced-options-filters"
               className="narrow-button button-link float-right"
             >
-              Advanced
+              Avançado
             </Button>
           </Column>
         </Grid>

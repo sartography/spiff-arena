@@ -16,7 +16,7 @@ export default function ProcessModelSearch({
   processModels,
   selectedItem,
   onChange,
-  titleText = 'Process',
+  titleText = 'Processos',
   truncateProcessModelDisplayName = false,
 }: OwnProps) {
   const getParentGroupsDisplayName = (processModel: ProcessModel) => {
@@ -76,7 +76,7 @@ export default function ProcessModelSearch({
         return null;
       }}
       shouldFilterItem={shouldFilterProcessModel}
-      placeholder="Choose a process model"
+      placeholder="Escolha um modelo de processo"
       titleText={titleText}
       selectedItem={selectedItem}
       className="process-model-search-combobox"
