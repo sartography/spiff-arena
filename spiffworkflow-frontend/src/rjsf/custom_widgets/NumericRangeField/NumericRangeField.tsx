@@ -120,7 +120,7 @@ export default function NumericRangeField({
   let maxHelperText = '';
   if (minNumber !== undefined || maxNumber !== undefined) {
     minHelperText = `Min: ${
-      formatNumberString(minNumber?.toString() || '') || '∞'
+      formatNumberString(minNumber?.toString() || '') || '-∞'
     }`;
     maxHelperText = `Max: ${
       formatNumberString(maxNumber?.toString() || '') || '∞'
