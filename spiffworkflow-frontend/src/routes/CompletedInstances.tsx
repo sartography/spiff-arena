@@ -19,10 +19,10 @@ export default function CompletedInstances() {
     }
 
     return userGroups.map((userGroup: string) => {
-      const titleText = `This is a list of instances with tasks that were completed by the ${userGroup} group.`;
+      const titleText = `Esta é uma lista de processos com tarefas que foram concluídas pelo grupo ${userGroup}.`;
       const headerElement = {
         tooltip_text: titleText,
-        text: `Instances with tasks completed by **${userGroup}**`,
+        text: `Processos com tarefas concluídas pelo grupo **${userGroup}**`,
       };
       const identifierForTable = `completed-by-group-${slugifyString(
         userGroup
@@ -40,23 +40,23 @@ export default function CompletedInstances() {
           showActionsColumn
           showLinkToReport
           tableHtmlId={identifierForTable}
-          textToShowIfEmpty="This group has no completed instances at this time."
+          textToShowIfEmpty="Este grupo não possui processos concluídos neste momento."
         />
       );
     });
   };
 
   const startedByMeTitleText =
-    'This is a list of instances you started that are now complete.';
+    'Esta é uma lista de processos que você iniciou e que agora estão concluídos.';
   const startedByMeHeaderElement = {
     tooltip_text: startedByMeTitleText,
-    text: 'Started by me',
+    text: 'Iniciados por mim',
   };
   const withTasksCompletedByMeTitleText =
-    'This is a list of instances where you have completed tasks.';
+    'Esta é uma lista de processos onde você completou tarefas.';
   const withTasksHeaderElement = {
     tooltip_text: withTasksCompletedByMeTitleText,
-    text: 'Instances with tasks completed by me',
+    text: 'Processos com tarefas concluídas por mim',
   };
 
   return (
@@ -70,7 +70,7 @@ export default function CompletedInstances() {
         showActionsColumn
         showLinkToReport
         tableHtmlId="my-completed-instances"
-        textToShowIfEmpty="You have no completed instances at this time."
+        textToShowIfEmpty="No momento, você não possui processos concluídos."
       />
       <ProcessInstanceListTable
         header={withTasksHeaderElement}
@@ -81,7 +81,7 @@ export default function CompletedInstances() {
         showActionsColumn
         showLinkToReport
         tableHtmlId="with-tasks-completed-by-me"
-        textToShowIfEmpty="You have no completed instances at this time."
+        textToShowIfEmpty="No momento, você não possui processos concluídos."
       />
       {groupTableComponents()}
     </>
