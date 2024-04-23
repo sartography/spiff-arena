@@ -16,7 +16,7 @@ type OwnProps = {
 
 export default function ProcessInstanceList({ variant }: OwnProps) {
   const [searchParams] = useSearchParams();
-  setPageTitle(['Process Instances']);
+  setPageTitle(['Tarefas dos Processos']);
 
   const processInstanceBreadcrumbElement = () => {
     const processModelFullIdentifier =
@@ -34,16 +34,16 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
             entityType: 'process-model-id',
             linkLastItem: true,
           },
-          ['Process Instances'],
+          ['Tarefas dos Processos'],
         ]}
       />
     );
   };
 
   const processInstanceTitleElement = () => {
-    let headerText = 'My Process Instances';
+    let headerText = 'Minhas Tarefas dos Processos';
     if (variant === 'all') {
-      headerText = 'All Process Instances';
+      headerText = 'Todas as Tarefas dos Processos';
     }
     return { text: headerText };
   };

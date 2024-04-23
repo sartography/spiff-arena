@@ -21,7 +21,7 @@ export default function ProcessInstanceListSaveAsReport({
   onSuccess,
   processInstanceReportSelection,
   buttonClassName,
-  buttonText = 'Save as Perspective',
+  buttonText = 'Salvar a Perspectiva',
   reportMetadata,
 }: OwnProps) {
   const [identifier, setIdentifier] = useState<string>(
@@ -74,7 +74,7 @@ export default function ProcessInstanceListSaveAsReport({
     <TextInput
       id="identifier"
       name="identifier"
-      labelText="Identifier"
+      labelText="Identificador"
       className="no-wrap"
       inline
       value={identifier}
@@ -83,18 +83,18 @@ export default function ProcessInstanceListSaveAsReport({
   );
 
   let descriptionText =
-    'Save the current columns and filters as a perspective so you can come back to this view in the future.';
+    'Salve as colunas e filtros atuais como uma perspectiva para que você possa voltar a esta visualização no futuro.';
   if (processInstanceReportSelection) {
     descriptionText =
-      'Keep the identifier the same and click Save to update the current perspective. Change the identifier if you want to save the current view with a new name.';
+    'Mantenha o mesmo identificador e clique em Salvar para atualizar a perspectiva atual. Mude o identificador se quiser salvar a visualização atual com um novo nome.';  
   }
 
   return (
     <Stack gap={5} orientation="horizontal">
       <Modal
         open={showSaveForm}
-        modalHeading="Save Perspective"
-        primaryButtonText="Save"
+        modalHeading="Salva Perspectiva"
+        primaryButtonText="Salvar"
         primaryButtonDisabled={!identifier}
         onRequestSubmit={addProcessInstanceReport}
         onRequestClose={handleSaveFormClose}

@@ -51,22 +51,22 @@ export default function ProcessInstanceCurrentTaskInfo({
     }
 
     if (!task.can_complete && HUMAN_TASK_TYPES.includes(task.type)) {
-      let message = 'This next task is assigned to a different person or team.';
+      let message = 'Esta próxima atividade é atribuída a uma pessoa ou equipe diferente.'
       if (task.assigned_user_group_identifier) {
-        message = `This next task is assigned to group: ${task.assigned_user_group_identifier}.`;
+        message = `Esta próxima atividade está atribuída ao grupo: ${task.assigned_user_group_identifier}.`;
       } else if (task.potential_owner_usernames) {
         let potentialOwnerArray = task.potential_owner_usernames.split(',');
         if (potentialOwnerArray.length > 2) {
           potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
         }
-        message = `This next task is assigned to user(s): ${potentialOwnerArray.join(
+        message = `Esta próxima atividade está atribuída ao(s) usuário(s): ${potentialOwnerArray.join(
           ', '
         )}.`;
       }
 
       return inlineMessage(
         '',
-        `${message} There is no action for you to take at this time.`
+        `${message} Não há nenhuma ação para você tomar neste momento.`
       );
     }
     if (task && task.can_complete && HUMAN_TASK_TYPES.includes(task.type)) {
@@ -85,25 +85,25 @@ export default function ProcessInstanceCurrentTaskInfo({
     }
     if (['terminated', 'suspended'].includes(processInstance.status)) {
       return inlineMessage(
-        `Process ${processInstance.status}`,
-        `This process instance was ${processInstance.status} by an administrator. Please get in touch with them for more information.`,
+        `Processo ${processInstance.status}`,
+        `Esta tarefa do processo foi ${processInstance.status} por um administrador. Por favor, entre em contato com eles para obter mais informações.`,
         'warning'
       );
     }
     if (processInstance.status === 'error') {
-      let errMessage = `This process instance experienced an unexpected error and cannot continue. Please get in touch with an administrator for more information and next steps.`;
+      let errMessage = `Esta tarefa do processo encontrou um erro inesperado e não pode continuar. Por favor, entre em contato com um administrador para mais informações e próximos passos.`;
       if (task && task.error_message) {
         errMessage = ` ${errMessage.concat(task.error_message)}`;
       }
-      return inlineMessage(`Process Error`, errMessage, 'error');
+      return inlineMessage(`Erro no Processo`, errMessage, 'error');
     }
 
     if (task) {
       return taskUserMessage();
     }
     const defaultMsg =
-      'There are no additional instructions or information for this process.';
-    return inlineMessage(`Process Error`, defaultMsg, 'info');
+    'Não há instruções ou informações adicionais para este processo.';  
+    return inlineMessage(`Erro no Processo`, defaultMsg, 'info');
   };
 
   if (processInstance && taskResult) {

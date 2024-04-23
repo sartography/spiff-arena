@@ -429,7 +429,7 @@ export default function ProcessInstanceListTable({
               kind="ghost"
               data-qa="refresh-process-instance-table"
               renderIcon={Renew}
-              iconDescription="Refresh data in the table"
+              iconDescription="Atualizar dados da tabela"
               hasIconOnly
               onClick={() => getProcessInstances()}
             />
@@ -491,7 +491,7 @@ export default function ProcessInstanceListTable({
       return column.Header;
     });
     if (showActionsColumn) {
-      headers.push('Action');
+      headers.push('Ação');
     }
 
     const rows = processInstances.map((processInstance: ProcessInstance) => {
@@ -517,7 +517,7 @@ export default function ProcessInstanceListTable({
               style={{ width: '60px' }}
               size="sm"
             >
-              Go
+              Ir
             </Button>
           );
         }
@@ -533,7 +533,7 @@ export default function ProcessInstanceListTable({
             style={{ width: '50px' }}
             size="sm"
             renderIcon={ArrowUpRight}
-            iconDescription="Open instance in new tab"
+            iconDescription="Abrir processo em nova aba"
             tooltipPosition="left"
             hasIconOnly
           />
@@ -596,7 +596,7 @@ export default function ProcessInstanceListTable({
             {headers.map((tableRowHeader: any) => (
               <TableHeader
                 key={tableRowHeader}
-                title={tableRowHeader === 'Id' ? 'Process Instance Id' : null}
+                title={tableRowHeader === 'Id' ? 'Id Tarefa do Processo' : null}
               >
                 {tableRowHeader}
               </TableHeader>
@@ -611,15 +611,15 @@ export default function ProcessInstanceListTable({
   const errors: string[] = [];
   if (additionalReportFilters && reportMetadata) {
     errors.push(
-      'Both reportMetadata and additionalReportFilters were provided. ' +
-        'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.'
-    );
+      'Tanto reportMetadata quanto additionalReportFilters foram fornecidos. ' +
+      'É recomendado usar apenas additionalReportFilters com reportIdentifier e especificar TODOS os filtros em reportMetadata se não estiver usando reportIdentifier.'
+      );
   }
   if (reportIdentifier && reportMetadata) {
     errors.push(
-      'Both reportIdentifier and reportMetadata were provided. ' +
-        'You must use one or the other.'
-    );
+      'Tanto reportIdentifier quanto reportMetadata foram fornecidos. ' +
+      'Você deve usar um ou outro.'
+      );
   }
   if (errors.length > 0) {
     return (

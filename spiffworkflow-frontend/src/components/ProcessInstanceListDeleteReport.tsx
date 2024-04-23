@@ -21,9 +21,9 @@ export default function ProcessInstanceListDeleteReport({
 
   return (
     <ButtonWithConfirmation
-      description={`Delete Perspective ${processInstanceReportSelection.identifier}?`}
+      description={`Deletar a Perspectiva ${processInstanceReportSelection.identifier}?`}
       onConfirmation={deleteProcessInstanceReport}
-      buttonLabel="Delete"
+      buttonLabel="Deletar"
     />
   );
 }
