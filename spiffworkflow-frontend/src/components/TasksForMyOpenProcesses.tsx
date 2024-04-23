@@ -7,10 +7,10 @@ export default function MyOpenProcesses() {
     <TaskListTable
       apiPath="/tasks/for-my-open-processes"
       paginationQueryParamPrefix={paginationQueryParamPrefix}
-      tableTitle="Tasks for my open instances"
-      tableDescription="These tasks are for processes you started which are not complete. You may not have an action to take at this time. See below for tasks waiting on you."
+      tableTitle="Tarefas para minhas instâncias abertas"
+      tableDescription="Essas tarefas são para processos que você iniciou e que não foram concluídos. Você pode não ter nenhuma ação a ser tomada no momento. Veja abaixo as tarefas que estão aguardando sua ação"
       paginationClassName="with-large-bottom-margin"
-      textToShowIfEmpty="There are no tasks for processes you started at this time."
+      textToShowIfEmpty="Não há tarefas para os processos que você iniciou neste momento."
       autoReload
       showStartedBy={false}
     />

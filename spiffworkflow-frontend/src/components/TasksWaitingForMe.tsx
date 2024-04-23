@@ -5,10 +5,10 @@ export default function TasksWaitingForMe() {
     <TaskListTable
       apiPath="/tasks/for-me"
       paginationQueryParamPrefix="tasks_waiting_for_me"
-      tableTitle="Tasks waiting for me"
-      tableDescription="These processes are waiting on you to complete the next task. All are processes created by others that are now actionable by you."
+      tableTitle="Tarefas aguardando por mim"
+      tableDescription="Esses processos estão aguardando você para completar a próxima tarefa. Todos são processos criados por outros que agora podem ser realizados por você."
       paginationClassName="with-large-bottom-margin"
-      textToShowIfEmpty="No tasks are waiting for you."
+      textToShowIfEmpty="Não há tarefas aguardando por você."
       autoReload
       showWaitingOn={false}
       canCompleteAllTasks

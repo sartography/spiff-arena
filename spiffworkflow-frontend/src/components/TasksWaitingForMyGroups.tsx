@@ -23,10 +23,10 @@ export default function TasksWaitingForMyGroups() {
           apiPath="/tasks/for-my-groups"
           additionalParams={`user_group_identifier=${userGroup}`}
           paginationQueryParamPrefix={`group-tasks-${userGroup}`}
-          tableTitle={`Tasks waiting for group: ${userGroup}`}
-          tableDescription={`This is a list of tasks for the ${userGroup} group. They can be completed by any member of the group.`}
+          tableTitle={`Tarefas aguardando pelo grupo: ${userGroup}`}
+          tableDescription={`Esta é uma lista de tarefas para o grupo ${userGroup}. Elas podem ser concluídas por qualquer membro do grupo.`}
           paginationClassName="with-large-bottom-margin"
-          textToShowIfEmpty="This group has no task assignments at this time."
+          textToShowIfEmpty="Este grupo não possui atribuições de tarefas neste momento."
           autoReload
           showWaitingOn={false}
           canCompleteAllTasks

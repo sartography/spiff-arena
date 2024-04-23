@@ -262,9 +262,9 @@ export default function ProcessInstanceLogList({
     let taskName = logEntry.task_definition_name;
     if (!taskName && !isEventsView) {
       if (logEntry.bpmn_task_type === 'StartEvent') {
-        taskName = 'Started';
+        taskName = 'Inciado';
       } else if (logEntry.bpmn_task_type === 'EndEvent') {
-        taskName = 'Completed';
+        taskName = 'Completado';
       }
     }
     const taskNameCell = <td>{taskName}</td>;

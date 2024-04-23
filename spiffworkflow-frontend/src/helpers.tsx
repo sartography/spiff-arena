@@ -265,13 +265,13 @@ export const getLastMilestoneFromProcessInstance = (
   let valueToUse = value;
   if (!valueToUse) {
     if (processInstance.status === 'not_started') {
-      valueToUse = 'Created';
+      valueToUse = 'Criado';
     } else if (
       ['complete', 'error', 'terminated'].includes(processInstance.status)
     ) {
-      valueToUse = 'Completed';
+      valueToUse = 'Completado';
     } else {
-      valueToUse = 'Started';
+      valueToUse = 'Iniciado';
     }
   }
   let truncatedValue = valueToUse;

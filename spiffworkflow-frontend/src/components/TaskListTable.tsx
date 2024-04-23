@@ -304,7 +304,7 @@ export default function TaskListTable({
 
     rowElements.push(
       <td
-        title={`task id: ${processInstanceTask.name}, spiffworkflow task guid: ${processInstanceTask.id}`}
+        title={`id da tarefa: ${processInstanceTask.name}, spiffworkflow tarefa guid: ${processInstanceTask.id}`}
       >
         {processInstanceTask.task_title
           ? processInstanceTask.task_title

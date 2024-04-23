@@ -64,7 +64,7 @@ export default function UserSearch({
         }
         return null;
       }}
-      placeholder="Start typing username"
+      placeholder="Comece a digitar o nome de usuário"
       titleText={label}
       selectedItem={selectedUser}
     />

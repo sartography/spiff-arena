@@ -82,7 +82,7 @@ export default function ProcessGroupListTiles({
                 {truncateString(row.description || '', 100)}
               </p>
               <p className="tile-process-group-children-count tile-pin-bottom">
-                Total Sub Items: {processGroupDirectChildrenCount(row)}
+                Total Sub Itens: {processGroupDirectChildrenCount(row)}
               </p>
             </div>
           </ClickableTile>
