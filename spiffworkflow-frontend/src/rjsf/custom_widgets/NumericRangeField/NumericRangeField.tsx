@@ -139,7 +139,7 @@ export default function NumericRangeField({
           <div className="markdown-field-desc-text">
             <DescriptionFieldTemplate
               id={descriptionId(idSchema)}
-              description={`${description} OUR DESCR`}
+              description={description}
               schema={schema}
               uiSchema={uiSchema}
               registry={registry}
