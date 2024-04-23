@@ -27,7 +27,9 @@ RUN apt-get update \
 
 # keep pip up to date
 RUN pip install --upgrade pip
-RUN pip install poetry==1.8.1
+RUN pip install poetry==1.8.1 hdbcli oracledb
+
+RUN apt-get update && apt-get install -y libpq5
 
 
 ######################## - SETUP
@@ -45,16 +47,24 @@ RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
 RUN apt-get update \
- && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
+ && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev dos2unix git
+
+RUN pip install hdbcli
 
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.
 COPY pyproject.toml poetry.lock /app/
 RUN poetry install --without dev
 
-COPY . /app
-RUN poetry install --without dev
+RUN git clone https://github.com/emersonlgregorio/connectordb.git
 
+RUN mv connectordb /app/venv/lib/python3.12/site-packages/
+
+COPY . /app
+
+RUN dos2unix /app/bin/boot_server_in_docker
+
+RUN poetry install --without dev
 
 ######################## - FINAL
 
