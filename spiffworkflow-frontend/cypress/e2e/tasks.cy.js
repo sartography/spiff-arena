@@ -2,7 +2,7 @@ const submitInputIntoFormField = (taskName, fieldKey, fieldValue) => {
   cy.contains(`Task: ${taskName}`, { timeout: 10000 });
   cy.get(fieldKey).clear();
   cy.get(fieldKey).type(fieldValue);
-  cy.contains('Submit').click();
+  cy.contains('Enviar').click();
 };
 
 // const checkFormFieldIsReadOnly = (formName, fieldKey) => {
@@ -95,9 +95,9 @@ describe('public_tasks', () => {
 
     cy.visit('public/misc:bounty_start_multiple_forms');
     cy.get('#root_firstName').type('MyFirstName');
-    cy.contains('Submit').click();
+    cy.contains('Enviar').click();
     cy.get('#root_lastName').type('MyLastName');
-    cy.contains('Submit').click();
+    cy.contains('Enviar').click();
     cy.contains('We hear you. Your name is MyFirstName MyLastName.');
   });
 
@@ -114,9 +114,9 @@ describe('public_tasks', () => {
         cy.logout();
         cy.visit(hrefValue);
         // form 1
-        cy.contains('Submit').click();
+        cy.contains('Enviar').click();
         // form 2
-        cy.contains('Submit').click();
+        cy.contains('Enviar').click();
         cy.contains('You are done. Yay!');
         cy.visit(hrefValue);
         cy.contains('Error retrieving content.');

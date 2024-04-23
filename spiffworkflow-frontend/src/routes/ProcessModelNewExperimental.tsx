@@ -65,7 +65,7 @@ export default function ProcessModelNewExperimental() {
           }
         />
         <Button kind="primary" type="submit">
-          Submit
+        Enviar
         </Button>
       </Form>
     </>

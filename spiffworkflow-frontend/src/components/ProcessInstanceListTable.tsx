@@ -457,7 +457,7 @@ export default function ProcessInstanceListTable({
           <Button
             data-qa="process-instance-list-link"
             renderIcon={ArrowRight}
-            iconDescription="View Filterable List"
+            iconDescription="Visualizar Lista Filtrável"
             hasIconOnly
             size="md"
             onClick={() =>

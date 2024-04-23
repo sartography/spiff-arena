@@ -382,7 +382,7 @@ export default function ProcessModelForm({
   const formButtons = () => {
     return (
       <Button kind="primary" type="submit">
-        Submit
+        Enviar
       </Button>
     );
   };

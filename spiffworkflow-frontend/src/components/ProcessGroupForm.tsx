@@ -160,7 +160,7 @@ export default function ProcessGroupForm({
   };
 
   const formButtons = () => {
-    return <Button type="submit">Submit</Button>;
+    return <Button type="submit">Enviar</Button>;
   };
 
   return (

@@ -75,7 +75,7 @@ export default function SecretNew() {
               Cancel
             </Button>
             <Button kind="primary" type="submit">
-              Submit
+              Enviar
             </Button>
           </ButtonSet>
         </Stack>

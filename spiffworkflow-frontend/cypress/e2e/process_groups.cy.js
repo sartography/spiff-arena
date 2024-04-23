@@ -23,7 +23,7 @@ describe('process-groups', () => {
     cy.wait(1000); // wait for the page to load before clearing the field
     cy.getBySel('process-group-display-name-input').clear();
     cy.getBySel('process-group-display-name-input').type(newGroupDisplayName);
-    cy.contains('Submit').click();
+    cy.contains('Enviar').click();
     cy.contains(`Process Group: ${newGroupDisplayName}`);
 
     cy.getBySel('delete-process-group-button').click();

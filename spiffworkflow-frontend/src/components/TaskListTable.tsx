@@ -280,7 +280,7 @@ export default function TaskListTable({
           disabled={!hasAccessToCompleteTask}
           size="sm"
         >
-          Go
+          Ir
         </Button>
       );
     }

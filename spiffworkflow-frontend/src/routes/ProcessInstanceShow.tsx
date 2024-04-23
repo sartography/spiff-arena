@@ -1572,7 +1572,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <div className="indented-content">
             <Stack orientation="horizontal" gap={2}>
               {completionViewLink(
-                'Visualizar tarefas do processo no momento em que esta atividade estava ativa.'
+                'Visualizar tarefas do processo no momento em que esta atividade estava ativa.',
                 taskToUse.guid
               )}
             </Stack>

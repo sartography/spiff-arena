@@ -64,7 +64,7 @@ export default function ProcessInstanceFindById() {
   };
 
   const formButtons = () => {
-    return <Button type="submit">Submit</Button>;
+    return <Button type="submit">Enviar</Button>;
   };
 
   return (

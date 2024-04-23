@@ -104,7 +104,7 @@ export default function ProcessInstanceReportNew() {
           />
         </label>
         <br />
-        <button type="submit">Submit</button>
+        <button type="submit">Enviar</button>
       </form>
     </>
   );

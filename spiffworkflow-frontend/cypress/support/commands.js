@@ -82,7 +82,7 @@ Cypress.Commands.add('createGroup', (groupId, groupDisplayName) => {
   cy.get('input[name=display_name]').type(groupDisplayName);
   cy.get('input[name=display_name]').should('have.value', groupDisplayName);
   cy.get('input[name=id]').should('have.value', groupId);
-  cy.contains('Submit').click();
+  cy.contains('Enviar').click();
 
   cy.url().should('include', `process-groups/${groupId}`);
   cy.contains(`Process Group: ${groupDisplayName}`);
@@ -96,7 +96,7 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.get('input[name=display_name]').type(modelDisplayName);
   cy.get('input[name=display_name]').should('have.value', modelDisplayName);
   cy.get('input[name=id]').should('have.value', modelId);
-  cy.contains('Submit').click();
+  cy.contains('Enviar').click();
 
   cy.url().should(
     'include',
