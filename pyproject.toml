@@ -15,7 +15,7 @@ classifiers = [
 python = ">=3.11,<3.13"
 
 [tool.poetry.dev-dependencies]
-pre-commit = "^3.6.2"
+pre-commit = "^3.7.0"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
 flake8-bandit = "^3.0.0"
