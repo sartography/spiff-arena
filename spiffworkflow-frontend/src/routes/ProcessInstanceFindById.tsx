@@ -54,9 +54,9 @@ export default function ProcessInstanceFindById() {
     return (
       <TextInput
         id="process-instance-id-input"
-        invalidText="Process Instance Id must be a number."
+        invalidText="O Id da Tarefa do Processo deve ser um número."
         invalid={!processInstanceIdValid}
-        labelText="Process Instance Id*"
+        labelText="Id da Tarefa do Processo *"
         value={processInstanceId}
         onChange={handleProcessInstanceIdChange}
       />

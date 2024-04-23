@@ -2,10 +2,10 @@ import MessageInstanceList from '../components/MessageInstanceList';
 import { setPageTitle } from '../helpers';
 
 export default function MessageListPage() {
-  setPageTitle(['Messages']);
+  setPageTitle(['Mensagens']);
   return (
     <>
-      <h1>Messages</h1>
+      <h1>Mensagens</h1>
       <MessageInstanceList />
     </>
   );

@@ -185,7 +185,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
                 'process_model_id'
               )}/${searchParams.get('process_instance_id')}`,
             ],
-            ['Messages'],
+            ['Mensagens'],
           ]}
         />
       );
