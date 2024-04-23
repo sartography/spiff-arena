@@ -517,12 +517,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </dd>
           </dl>
           <dl>
-            <dt>Started by:</dt>
+            <dt>Iniciado por:</dt>
             <dd> {processInstance.process_initiator_username}</dd>
           </dl>
           {processInstance.process_model_with_diagram_identifier ? (
             <dl>
-              <dt>Current diagram: </dt>
+              <dt>Diagrama Atual: </dt>
               <dd>
                 <Link
                   data-qa="go-to-current-diagram-process-model"
@@ -536,7 +536,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </dl>
           ) : null}
           <dl>
-            <dt>Started:</dt>
+            <dt>Iniciado há:</dt>
             <dd>
               {DateAndTimeService.convertSecondsToFormattedDateTime(
                 processInstance.start_in_seconds || 0
@@ -545,13 +545,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </dl>
           {lastUpdatedTimeTag}
           <dl>
-            <dt>Last milestone:</dt>
+            <dt>Ultima Ação:</dt>
             <dd title={lastMilestoneFullValue}>
               {lastMilestoneTruncatedValue}
             </dd>
           </dl>
           <dl>
-            <dt>Revision:</dt>
+            <dt>Revisão:</dt>
             <dd>
               {processInstance.bpmn_version_control_identifier} (
               {processInstance.bpmn_version_control_type})
