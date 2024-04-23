@@ -47,7 +47,7 @@ export default function PaginationForTable({
       pagination.pages < maxPages ? pagination.total : maxPages * perPage;
     const itemText = () => {
       const start = (page - 1) * perPage + 1;
-      return `Items ${start} to ${start + pagination.count} of ${
+      return `Itens ${start} to ${start + pagination.count} of ${
         pagination.total
       }`;
     };
@@ -58,11 +58,11 @@ export default function PaginationForTable({
         <Pagination
           className={paginationClassName}
           data-qa={paginationDataQATag}
-          backwardText="Previous page"
-          forwardText="Next page"
-          itemsPerPageText="Items per page:"
+          backwardText="Página anterior"
+          forwardText="Proxima página"
+          itemsPerPageText="Itens por página:"
           page={page}
-          pageNumberText="Page Number"
+          pageNumberText="Número da página"	
           itemText={itemText}
           pageSize={perPage}
           pageSizes={perPageOptions || PER_PAGE_OPTIONS}
