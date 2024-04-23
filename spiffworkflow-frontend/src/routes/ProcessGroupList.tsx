@@ -44,7 +44,7 @@ export default function ProcessGroupList() {
       path: `/process-models?per_page=1000&recursive=true&include_parent_groups=true`,
       successCallback: processResultForProcessModels,
     });
-    setPageTitle(['Process Groups']);
+    setPageTitle(['Grupo de Processos']);
   }, []);
 
   const processModelSearchArea = () => {
@@ -63,7 +63,7 @@ export default function ProcessGroupList() {
       <ProcessModelSearch
         onChange={processModelSearchOnChange}
         processModels={processModelAvailableItems}
-        titleText="Process model search"
+        titleText="Busca de modelos de processos"
       />
     );
   };
@@ -71,16 +71,16 @@ export default function ProcessGroupList() {
   if (processModelAvailableItems) {
     return (
       <>
-        <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
+        <ProcessBreadcrumb hotCrumbs={[['Grupo de Processos']]} />
         <Stack orientation="horizontal" gap={3}>
           <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
             <Button kind="primary" href="/process-groups/new">
-              Add a process group
+              Adicionar um grupo de processos
             </Button>
           </Can>
           <Can I="POST" a={targetUris.dataStoreListPath} ability={ability}>
             <Button href="/data-stores/new?parentGroupId=">
-              Add a data store
+              Adicionar um Data Store
             </Button>
           </Can>
         </Stack>
