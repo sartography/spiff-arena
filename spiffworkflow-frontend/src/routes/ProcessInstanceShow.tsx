@@ -315,7 +315,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (processInstance) {
       setPageTitle([
         processInstance.process_model_display_name,
-        `Process Instance ${processInstance.id}`,
+        `Tarefa do Processo ${processInstance.id}`,
       ]);
     }
     return undefined;
@@ -464,10 +464,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!processInstance) {
       return null;
     }
-    let lastUpdatedTimeLabel = 'Updated';
+    let lastUpdatedTimeLabel = 'Atualizado em';
     let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
     if (processInstance.end_in_seconds) {
-      lastUpdatedTimeLabel = 'Completed';
+      lastUpdatedTimeLabel = 'Finalizado em';
       lastUpdatedTime = processInstance.end_in_seconds;
     }
     const lastUpdatedTimeTag = (
@@ -596,11 +596,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <ButtonWithConfirmation
           kind="ghost"
           renderIcon={StopOutline}
-          iconDescription="Terminate"
+          iconDescription="Terminar"
           hasIconOnly
-          description={`Terminate Process Instance: ${processInstance.id}`}
+          description={`Terminar Tarefa do Processo: ${processInstance.id}`}
           onConfirmation={terminateProcessInstance}
-          confirmButtonLabel="Terminate"
+          confirmButtonLabel="Terminar"
         />
       );
     }
@@ -621,7 +621,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClick={suspendProcessInstance}
           kind="ghost"
           renderIcon={PauseOutline}
-          iconDescription="Suspend"
+          iconDescription="Suspendido"
           hasIconOnly
           size="lg"
         />
@@ -636,7 +636,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         onClick={copyProcessInstanceShortLink}
         kind="ghost"
         renderIcon={LinkIcon}
-        iconDescription="Copy shareable short link"
+        iconDescription="Copiar link curto compartilhável"
         hasIconOnly
         size="lg"
       />
@@ -650,7 +650,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClick={resumeProcessInstance}
           kind="ghost"
           renderIcon={PlayOutline}
-          iconDescription="Resume"
+          iconDescription="Resumo"
           hasIconOnly
           size="lg"
         />
@@ -669,11 +669,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           data-qa="process-instance-delete"
           kind="ghost"
           renderIcon={TrashCan}
-          iconDescription="Delete"
+          iconDescription="Deletar"
           hasIconOnly
-          description={`Delete Process Instance: ${processInstance.id}`}
+          description={`Deletar Tarefa do Processo: ${processInstance.id}`}
           onConfirmation={deleteProcessInstance}
-          confirmButtonLabel="Delete"
+          confirmButtonLabel="Deletar"
         />
       );
     }
@@ -736,7 +736,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (processDataToDisplay) {
       let bodyComponent = (
         <>
-          <p>Value:</p>
+          <p>Valor:</p>
           <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
         </>
       );
@@ -755,7 +755,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           passiveModal
           onRequestClose={handleProcessDataDisplayClose}
         >
-          <h2>Data Object: {processDataToDisplay.process_data_identifier}</h2>
+          <h2>Objeto de Dados: {processDataToDisplay.process_data_identifier}</h2>
           <br />
           {bodyComponent}
         </Modal>
@@ -1090,7 +1090,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           align="top-left"
           renderIcon={RuleDraft}
-          iconDescription="Create Script Unit Test"
+          iconDescription="Criar Teste Unitário de Script"
           hasIconOnly
           data-qa="create-script-unit-test-button"
           onClick={createScriptUnitTest}
@@ -1107,7 +1107,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           to={`${window.location.pathname}?process_identifier=${taskDefinitionPropertiesJson.spec}&bpmn_process_guid=${task.guid}`}
           target="_blank"
         >
-          View Call Activity Diagram
+          Visualizar Diagrama de Atividade de Chamada
         </Link>
       );
     }
@@ -1118,7 +1118,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           renderIcon={Edit}
           align="top-left"
-          iconDescription="Edit Task Data"
+          iconDescription="Editar Dados da Atividade"
           hasIconOnly
           data-qa="edit-task-data-button"
           onClick={() => setEditingTaskData(true)}
@@ -1132,7 +1132,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           renderIcon={UserFollow}
           align="top-left"
           iconDescription="Assign user"
-          title="Allow an additional user to complete this task"
+          title="Permitir que um usuário adicional complete esta atividade"
           hasIconOnly
           data-qa="add-potential-owners-button"
           onClick={() => setAddingPotentialOwners(true)}
@@ -1145,7 +1145,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           renderIcon={Play}
           align="top-left"
-          iconDescription="Execute Task"
+          iconDescription="Executar Atividade"
           hasIconOnly
           data-qa="execute-task-complete-button"
           onClick={() => completeTask(true)}
@@ -1158,12 +1158,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           renderIcon={SkipForward}
           align="top-left"
-          iconDescription="Skip Task"
+          iconDescription="Pular Atividade"
           hasIconOnly
           data-qa="mark-task-complete-button"
           onClick={() => completeTask(false)}
         >
-          Skip Task
+          Pular Atividade
         </Button>
       );
     }
@@ -1173,28 +1173,28 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           renderIcon={Send}
           align="top-left"
-          iconDescription="Send Event"
+          iconDescription="Enviar Evento"
           hasIconOnly
           data-qa="select-event-button"
           onClick={() => setSelectingEvent(true)}
         >
-          Send Event
+          Enviar Evento
         </Button>
       );
     }
     if (canResetProcess(task)) {
       let titleText =
-        'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
-      titleText += 'Yes, we invented a time machine. ';
+        'Isso irá redefinir (voltar) o processo para colocá-lo em um estado como se a execução do processo nunca tivesse passado por esta tarefa. ';
+      titleText += 'Sim, nós inventamos uma máquina do tempo. ';
       titleText +=
-        'And no, you cannot change your mind after using this feature.';
+        'E não, você não pode mudar de ideia depois de usar este recurso.';
       buttons.push(
         <Button
           kind="ghost"
           renderIcon={Reset}
           align="top-left"
           hasIconOnly
-          iconDescription="Reset Process Here"
+          iconDescription="Redefinir Processo Aqui"
           title={titleText}
           data-qa="reset-process-button"
           onClick={() => resetProcessInstance()}
@@ -1218,13 +1218,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       scrollEnabled = true;
       minimapEnabled = true;
     }
-    let taskDataHeader = 'Task data';
+    let taskDataHeader = 'Dados da atividade';
     let editorReadOnly = true;
     let taskDataHeaderClassName = 'with-half-rem-bottom-margin';
 
     if (editingTaskData) {
       editorReadOnly = false;
-      taskDataHeader = 'Edit task data';
+      taskDataHeader = 'Editar dados da atividade';
       taskDataHeaderClassName = 'task-data-details-header';
     }
 
@@ -1265,10 +1265,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const potentialOwnerSelector = () => {
     return (
       <Stack orientation="vertical">
-        <h3 className="task-data-details-header">Update task ownership</h3>
+        <h3 className="task-data-details-header">Atualizar reponsabilidade da atividade</h3>
         <div className="indented-content">
           <p className="explanatory-message with-tiny-bottom-margin">
-            Select a user who should be allowed to complete this task
+          Selecione um usuário que deve ser permitido a completar esta atividade
           </p>
           <UserSearch
             className="modal-dropdown"
@@ -1299,11 +1299,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     return (
       <Stack orientation="vertical">
-        <h3 className="task-data-details-header">Choose event to send</h3>
+        <h3 className="task-data-details-header">Escolher evento para enviar</h3>
         <div className="indented-content">
           <p className="explanatory-message with-tiny-bottom-margin">
-            Select an event to send. A message event will require a body as
-            well.
+            Selecione um evento para enviar. Um evento de mensagem exigirá um corpo também.
           </p>
           <Dropdown
             id="process-instance-select-event"
@@ -1498,33 +1497,33 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
 
-    let primaryButtonText = 'Close';
+    let primaryButtonText = 'Fechar';
     let secondaryButtonText = null;
     let onRequestSubmit = handleTaskDataDisplayClose;
     let onSecondarySubmit = handleTaskDataDisplayClose;
     let dangerous = false;
     if (editingTaskData) {
-      primaryButtonText = 'Save';
-      secondaryButtonText = 'Cancel';
+      primaryButtonText = 'Salvar';
+      secondaryButtonText = 'Cancelar';
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = saveTaskData;
       dangerous = true;
     } else if (selectingEvent) {
-      primaryButtonText = 'Send';
-      secondaryButtonText = 'Cancel';
+      primaryButtonText = 'Enviar';
+      secondaryButtonText = 'Cancelar';
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = sendEvent;
       dangerous = true;
     } else if (addingPotentialOwners) {
-      primaryButtonText = 'Add';
-      secondaryButtonText = 'Cancel';
+      primaryButtonText = 'Adicionar';
+      secondaryButtonText = 'Cancelar';
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = addPotentialOwners;
       dangerous = true;
     }
     if (taskToUse.runtime_info) {
       if (typeof taskToUse.runtime_info.instance !== 'undefined') {
-        secondaryButtonText = 'Return to MultiInstance Task';
+        secondaryButtonText = 'Voltar para Atividade MultiInstância';
         onSecondarySubmit = () => {
           switchToTask(taskToUse.properties_json.parent, [
             ...(tasks || []),
@@ -1532,7 +1531,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           ]);
         };
       } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
-        secondaryButtonText = 'Return to Loop Task';
+        secondaryButtonText = 'Voltar para Atividade de Loop';
         onSecondarySubmit = () => {
           switchToTask(taskToUse.properties_json.parent, [
             ...(tasks || []),
@@ -1557,14 +1556,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {taskToUse.bpmn_name ? (
             <div>
               <Stack orientation="horizontal" gap={2}>
-                Name: {taskToUse.bpmn_name}
+                Nome: {taskToUse.bpmn_name}
               </Stack>
             </div>
           ) : null}
 
           <div>
             <Stack orientation="horizontal" gap={2}>
-              Guid: {taskToUse.guid}
+              Guia: {taskToUse.guid}
             </Stack>
           </div>
         </div>
@@ -1573,7 +1572,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <div className="indented-content">
             <Stack orientation="horizontal" gap={2}>
               {completionViewLink(
-                'View process instance at the time when this task was active.',
+                'Visualizar tarefas do processo no momento em que esta atividade estava ativa.'
                 taskToUse.guid
               )}
             </Stack>
@@ -1611,7 +1610,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Notification
           onClose={() => setCopiedShortLinkToClipboard(false)}
           type="success"
-          title="Copied link to clipboard"
+          title="Link copiado para a área de transferência"
           timeout={3000}
           hideCloseButton
           withBottomMargin={false}
@@ -1632,20 +1631,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Grid condensed fullWidth>
           <Column md={8} lg={16} sm={4}>
             <p>
-              Viewing process instance at the time when{' '}
+            Visualizando a tarefa do processo no momento em que{' '}
               <span title={title}>
                 <strong>
                   {taskToTimeTravelTo.bpmn_name ||
                     taskToTimeTravelTo.bpmn_identifier}
                 </strong>
               </span>{' '}
-              was active.{' '}
+              estava ativa.{' '}
               <Link
                 reloadDocument
                 data-qa="process-instance-view-active-task-link"
                 to={processInstanceShowPageBaseUrl}
               >
-                View current process instance state.
+                Visualizar estado atual da tarefa do processo.
               </Link>
             </p>
           </Column>
@@ -1671,7 +1670,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
     return processInstance.bpmn_xml_file_contents_retrieval_error ? (
       <Notification
-        title="Failed to load diagram"
+        title="Falha ao Carrega o Diagrama"
         type="error"
         hideCloseButton
         allowTogglingFullMessage
@@ -1714,8 +1713,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         onChange={updateSelectedTaskTabSubTab}
       >
         <TabList aria-label="List of tabs">
-          <Tab>Completed by me</Tab>
-          <Tab>All completed</Tab>
+          <Tab>Completada por mim</Tab>
+          <Tab>Todas Completadas</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>
@@ -1723,7 +1722,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <TaskListTable
                 apiPath={`/tasks/completed-by-me/${processInstance.id}`}
                 paginationClassName="with-large-bottom-margin"
-                textToShowIfEmpty="You have not completed any tasks for this process instance."
+                textToShowIfEmpty="Você não completou nenhuma atividade para esta tarefa do processo."
                 shouldPaginateTable={false}
                 showProcessModelIdentifier={false}
                 showProcessId={false}
@@ -1742,7 +1741,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <TaskListTable
                 apiPath={`/tasks/completed/${processInstance.id}`}
                 paginationClassName="with-large-bottom-margin"
-                textToShowIfEmpty="There are no completed tasks for this process instance."
+                textToShowIfEmpty="Não há atividades concluídas para esta tarefa do processo."
                 shouldPaginateTable={false}
                 showProcessModelIdentifier={false}
                 showProcessId={false}
@@ -1788,11 +1787,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return (
         <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
           <TabList aria-label="List of tabs">
-            <Tab>Diagram</Tab>
-            <Tab disabled={!canViewLogs}>Milestones</Tab>
-            <Tab disabled={!canViewLogs}>Events</Tab>
-            <Tab disabled={!canViewMsgs}>Messages</Tab>
-            <Tab>Tasks</Tab>
+            <Tab>Diagrama</Tab>
+            <Tab disabled={!canViewLogs}>Passos</Tab>
+            <Tab disabled={!canViewLogs}>Eventos</Tab>
+            <Tab disabled={!canViewMsgs}>Mensages</Tab>
+            <Tab>Atividades</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -1835,13 +1834,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupos de Processo', '/process-groups'],
             {
               entityToExplode: processModelId,
               entityType: 'process-model-id',
               linkLastItem: true,
             },
-            [`Process Instance Id: ${processInstance.id}`],
+            [`Id Tarefa do Processo: ${processInstance.id}`],
           ]}
         />
         {keyboardShortcutArea}
@@ -1850,7 +1849,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {viewMostRecentStateComponent()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
-            Process Instance Id: {processInstance.id}
+            Id da Tarefa do Processo: {processInstance.id}
           </h1>
           {buttonIcons()}
         </Stack>
@@ -1861,10 +1860,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <TaskListTable
           apiPath="/tasks"
           additionalParams={`process_instance_id=${processInstance.id}`}
-          tableTitle="Tasks I can complete"
-          tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+          tableTitle="Tarefas que posso completar"
+          tableDescription="Estas são atividade que podem ser completadas por você, seja porque foram atribuídas a um grupo do qual você faz parte, ou porque foram atribuídas diretamente a você."
           paginationClassName="with-large-bottom-margin"
-          textToShowIfEmpty="There are no tasks you can complete for this process instance."
+          textToShowIfEmpty="Não há atividade que você possa completar para esta tarefa de processo."
           shouldPaginateTable={false}
           showProcessModelIdentifier={false}
           showProcessId={false}
