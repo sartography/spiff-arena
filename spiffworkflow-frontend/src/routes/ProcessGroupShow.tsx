@@ -79,7 +79,7 @@ export default function ProcessGroupShow() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupo de Processos', '/process-groups'],
             {
               entityToExplode: processGroupForBreadcrumb,
               entityType: 'process-group',
@@ -88,18 +88,18 @@ export default function ProcessGroupShow() {
         />
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
-            Process Group: {processGroup.display_name}
+            Grupo de Processos: {processGroup.display_name}
           </h1>
           <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
             <Button
               kind="ghost"
               data-qa="edit-process-group-button"
               renderIcon={Edit}
-              iconDescription="Edit Process Group"
+              iconDescription="Editar Grupo de Processos"
               hasIconOnly
               href={`/process-groups/${modifiedProcessGroupId}/edit`}
             >
-              Edit process group
+              Editar Grupo de Processos
             </Button>
           </Can>
           <Can I="DELETE" a={targetUris.processGroupShowPath} ability={ability}>
@@ -107,9 +107,9 @@ export default function ProcessGroupShow() {
               kind="ghost"
               data-qa="delete-process-group-button"
               renderIcon={TrashCan}
-              iconDescription="Delete Process Group"
+              iconDescription="Deletar Grupo de Processos"
               hasIconOnly
-              description={`Delete process group: ${processGroup.display_name}`}
+              description={`Deletar Grupo de Processos: ${processGroup.display_name}`}
               onConfirmation={deleteProcessGroup}
               confirmButtonLabel="Delete"
             />
@@ -122,7 +122,7 @@ export default function ProcessGroupShow() {
               <Button
                 href={`/process-groups/new?parentGroupId=${processGroup.id}`}
               >
-                Add a process group
+                Adicionar um Grupo de Processos
               </Button>
             </Can>
             <Can
@@ -134,21 +134,21 @@ export default function ProcessGroupShow() {
                 href={`/process-models/${modifiedProcessGroupId}/new`}
                 data-qa={`add-process-model-for-group-${dasherizedProcessGroupId}`}
               >
-                Add a process model
+                Adicionar um Modelo de Processo
               </Button>
             </Can>
             <Can I="POST" a={targetUris.dataStoreListPath} ability={ability}>
               <Button
                 href={`/data-stores/new?parentGroupId=${processGroup.id}`}
               >
-                Add a data store
+                Adicionar um Data Store
               </Button>
             </Can>
           </Stack>
           <br />
           <br />
           <ProcessModelListTiles
-            headerElement={<h2>Process Models</h2>}
+            headerElement={<h2>Modelos de Processos</h2>}
             processGroup={processGroup}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
@@ -160,7 +160,7 @@ export default function ProcessGroupShow() {
           <br />
           <ProcessGroupListTiles
             processGroup={processGroup}
-            headerElement={<h2 className="clear-left">Process Groups</h2>}
+            headerElement={<h2 className="clear-left">Grupos de Processos</h2>}
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',

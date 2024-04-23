@@ -12,9 +12,9 @@ export default function ProcessGroupNew() {
     display_name: '',
     description: '',
   });
-  setPageTitle(['New Process Group']);
+  setPageTitle(['Novo Grupo de Processos']);
 
-  const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
+  const hotCrumbs: HotCrumbItem[] = [['Grupo de Processos', '/process-groups']];
   if (parentGroupId) {
     hotCrumbs.push({
       entityToExplode: parentGroupId,
@@ -26,7 +26,7 @@ export default function ProcessGroupNew() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <h1>Add Process Group</h1>
+      <h1>Adicionar Grupo de Processos</h1>
       <ProcessGroupForm
         mode="new"
         processGroup={processGroup}

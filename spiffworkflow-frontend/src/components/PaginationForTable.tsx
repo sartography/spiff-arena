@@ -47,7 +47,7 @@ export default function PaginationForTable({
       pagination.pages < maxPages ? pagination.total : maxPages * perPage;
     const itemText = () => {
       const start = (page - 1) * perPage + 1;
-      return `Itens ${start} to ${start + pagination.count} of ${
+      return `Itens ${start} de ${start + pagination.count} até ${
         pagination.total
       }`;
     };

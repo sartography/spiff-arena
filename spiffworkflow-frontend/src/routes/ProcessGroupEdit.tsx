@@ -28,7 +28,7 @@ export default function ProcessGroupEdit() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupo de Processos', '/process-groups'],
             {
               entityToExplode: processGroup,
               entityType: 'process-group',
@@ -36,7 +36,7 @@ export default function ProcessGroupEdit() {
             },
           ]}
         />
-        <h1>Edit Process Group: {(processGroup as any).id}</h1>
+        <h1>Editar Grupo de Processos: {(processGroup as any).id}</h1>
         <ProcessGroupForm
           mode="edit"
           processGroup={processGroup}
