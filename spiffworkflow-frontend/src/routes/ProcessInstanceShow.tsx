@@ -1349,10 +1349,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
     if (taskListToUse && taskToDisplay) {
-      // set to null right away to hopefully avoid using the incorrect task later
-      setTaskToDisplay(null);
       const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
       if (task) {
+        // set to null right away to hopefully avoid using the incorrect task later
+        setTaskToDisplay(null);
         setTaskToDisplay(task);
         initializeTaskDataToDisplay(task);
       }
@@ -1399,7 +1399,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const createButtonsForMultiTasks = (instances: number[]) => {
+  const createButtonsForMultiTasks = (
+    instances: number[],
+    infoType: string
+  ) => {
     if (!tasks || !taskToDisplay) {
       return [];
     }
@@ -1407,6 +1410,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return (
         <Button
           kind="ghost"
+          key={`btn-switch-instance-${infoType}-${v}`}
           onClick={() =>
             switchToTask(taskToDisplay.runtime_info.instance_map[v], tasks)
           }
@@ -1430,6 +1434,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       accordionItems.push(
         <AccordionItem
+          key="mi-task-instances"
           title={`Task instances (${taskInstancesToDisplay.length})`}
           className="task-info-modal-accordion"
         >
@@ -1442,25 +1447,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ['completed', 'running', 'future'].forEach((infoType: string) => {
         let taskInstances: ReactElement[] = [];
         const infoArray = taskToDisplay.runtime_info[infoType];
-        if (taskToDisplay.runtime_info.completed.length > 0) {
-          taskInstances = createButtonsForMultiTasks(infoArray);
-          accordionItems.push(
-            <AccordionItem
-              title={`${titleizeString(infoType)} instances for MI task (${
-                taskInstances.length
-              })`}
-            >
-              {taskInstances}
-            </AccordionItem>
-          );
-        }
+        taskInstances = createButtonsForMultiTasks(infoArray, infoType);
+        accordionItems.push(
+          <AccordionItem
+            key={`mi-instance-${titleizeString(infoType)}`}
+            title={`${titleizeString(infoType)} instances for MI task (${
+              taskInstances.length
+            })`}
+          >
+            {taskInstances}
+          </AccordionItem>
+        );
       });
     }
     if (LOOP_TASK_TYPES.includes(taskToDisplay.typename)) {
       const loopTaskInstanceIndexes = [
         ...Array(taskToDisplay.runtime_info.iterations_completed).keys(),
       ];
-      const buttons = createButtonsForMultiTasks(loopTaskInstanceIndexes);
+      const buttons = createButtonsForMultiTasks(
+        loopTaskInstanceIndexes,
+        'mi-loop-iterations'
+      );
       let text = '';
       if (
         typeof taskToDisplay.runtime_info.iterations_remaining !==
@@ -1470,7 +1477,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         text += `${taskToDisplay.runtime_info.iterations_remaining} remaining`;
       }
       accordionItems.push(
-        <AccordionItem title={`Loop iterations (${buttons.length})`}>
+        <AccordionItem
+          key="mi-loop-iterations"
+          title={`Loop iterations (${buttons.length})`}
+        >
           <div>{text}</div>
           <div>{buttons}</div>
         </AccordionItem>

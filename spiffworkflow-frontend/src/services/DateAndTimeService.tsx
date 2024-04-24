@@ -41,6 +41,9 @@ const convertDateObjectToFormattedString = (dateObject: Date) => {
 };
 
 const dateStringToYMDFormat = (dateString: string) => {
+  if (dateString === undefined || dateString === null) {
+    return dateString;
+  }
   if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateString;
   }

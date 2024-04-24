@@ -492,7 +492,12 @@ def _process_instance_task_list(
                 full_bpmn_process_path = bpmn_process_cache[task_model.bpmn_process_guid]
 
             row_key = f"{':::'.join(full_bpmn_process_path)}:::{task_model.bpmn_identifier}"
-            if (
+            if task_model.runtime_info and ("instance" in task_model.runtime_info or "iteration" in task_model.runtime_info):
+                # This handles adding all instances of a MI and iterations of loop tasks
+                additional_tasks.append(task_model)
+                if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
+                    relevant_subprocess_guids.add(task_model.guid)
+            elif (
                 row_key not in most_recent_tasks
                 or most_recent_tasks[row_key].properties_json["last_state_change"]
                 < task_model.properties_json["last_state_change"]
@@ -503,9 +508,6 @@ def _process_instance_task_list(
                 # since any task like would no longer be in the list anyway and therefore will not be returned
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
-            elif task_model.runtime_info and ("instance" in task_model.runtime_info or "iteration" in task_model.runtime_info):
-                # This handles adding all instances of a MI and iterations of loop tasks
-                additional_tasks.append(task_model)
 
         task_models = [
             task_model

@@ -237,7 +237,7 @@ def process_data_file_download(
         )
     mimetype = file_data.mimetype
     filename = file_data.filename
-    file_contents = file_data.contents
+    file_contents = file_data.get_contents()
 
     return Response(
         file_contents,

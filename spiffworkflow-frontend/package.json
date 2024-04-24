@@ -38,7 +38,6 @@
     "bpmn-js-properties-panel": "^1.22.0",
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#feature/spiff-message-branch",
     "cookie": "^0.6.0",
-    "craco": "^0.0.3",
     "date-fns": "^3.6.0",
     "diagram-js": "^11.9.1",
     "dmn-js": "^16.0.0",

@@ -4,8 +4,11 @@ on:
   push:
     # hitting just main on push suffices to avoid duplicate runs for PRs, since PRs never update main.
     # more ideas at https://github.com/orgs/community/discussions/26940 including branches-ignore
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
     branches:
       - main
+      - "hotfix/**"
+
   pull_request:
 
 defaults:
@@ -284,7 +287,7 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
-        uses: actions/download-artifact@v4.1.4
+        uses: actions/download-artifact@v4.1.6
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path

@@ -9,7 +9,7 @@ import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
-//    compensation":{
+//    "compensation":{
 //      "title": "Compensation (yearly), USD",
 //      "type": "object",
 //      "minimum": 0,
@@ -26,7 +26,7 @@ import { getCommonAttributes } from '../../helpers';
 //
 //  Example uiSchema:
 //    "compensation": {
-//      "ui:field": "numeric-range",
+//      "ui:field": "numeric-range"
 //    }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -86,9 +86,6 @@ export default function NumericRangeField({
     return Number(numberString.replace(/,/g, ''));
   };
 
-  if (schema.minimum === undefined || schema.maximum === undefined) {
-    throw new Error('minimum and maximum not defined');
-  }
   const minNumber = schema.minimum;
   const maxNumber = schema.maximum;
   const min = formData?.min;
@@ -119,11 +116,22 @@ export default function NumericRangeField({
     }
   };
 
+  let minHelperText = '';
+  if (minNumber !== undefined) {
+    minHelperText = `Min: ${formatNumberString(minNumber?.toString() || '')}`;
+  }
+  let maxHelperText = '';
+  if (maxNumber !== undefined) {
+    maxHelperText = `Max: ${formatNumberString(maxNumber?.toString() || '')}`;
+  }
+
   return (
     <div className="numeric--range-field-wrapper">
       <div className="numeric--range-field-label">
         <h5>
-          {required ? `${commonAttributes.label} *` : commonAttributes.label}
+          {required
+            ? commonAttributes.labelWithRequiredIndicator
+            : commonAttributes.label}
         </h5>
         {description && (
           <div className="markdown-field-desc-text">
@@ -150,7 +158,7 @@ export default function NumericRangeField({
             setMinValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
-          helperText={`Min: ${formatNumberString(minNumber?.toString() || '')}`}
+          helperText={minHelperText}
           autofocus={autofocus}
         />
         <TextInput
@@ -165,7 +173,7 @@ export default function NumericRangeField({
             setMaxValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
-          helperText={`Max: ${formatNumberString(maxNumber?.toString() || '')}`}
+          helperText={maxHelperText}
         />
       </div>
       {commonAttributes.errorMessageForField && (

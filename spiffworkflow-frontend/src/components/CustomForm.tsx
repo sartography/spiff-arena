@@ -10,7 +10,6 @@ import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWid
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
-import CharacterCounterField from '../rjsf/custom_widgets/CharacterCounterField/CharacterCounterField';
 
 enum DateCheckType {
   minimum = 'minimum',
@@ -57,7 +56,6 @@ export default function CustomForm({
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
-    'character-counter': CharacterCounterField,
   };
 
   const rjsfTemplates: any = {};
