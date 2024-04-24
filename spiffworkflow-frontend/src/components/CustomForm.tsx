@@ -262,9 +262,7 @@ export default function CustomForm({
       (formDataToCheck[propertyKey].min === undefined ||
         formDataToCheck[propertyKey].max === undefined)
     ) {
-      errors[propertyKey].addError(
-        `must have valid Minimum and Maximum on ${propertyKey}`
-      );
+      errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
     if (
       formDataToCheck[propertyKey].min <

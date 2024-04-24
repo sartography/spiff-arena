@@ -117,17 +117,19 @@ export default function NumericRangeField({
   };
 
   let minHelperText = '';
-  if (minNumber !== undefined) {
-    minHelperText = `Min: ${formatNumberString(minNumber?.toString() || '')}`;
-  }
   let maxHelperText = '';
-  if (maxNumber !== undefined) {
-    maxHelperText = `Max: ${formatNumberString(maxNumber?.toString() || '')}`;
+  if (minNumber !== undefined || maxNumber !== undefined) {
+    minHelperText = `Min: ${
+      formatNumberString(minNumber?.toString() || '') || '-∞'
+    }`;
+    maxHelperText = `Max: ${
+      formatNumberString(maxNumber?.toString() || '') || '∞'
+    }`;
   }
 
   return (
     <div className="numeric--range-field-wrapper">
-      <div className="numeric--range-field-label">
+      <div>
         <h5>
           {required
             ? commonAttributes.labelWithRequiredIndicator
