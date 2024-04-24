@@ -92,10 +92,14 @@ class TaskModel(SpiffworkflowBaseDBModel):
     def json_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
 
-    def parent_task_model(self) -> TaskModel | None:
+    def parent_guid(self) -> str | None:
         if "parent" not in self.properties_json:
             return None
-        task_model: TaskModel = self.__class__.query.filter_by(guid=self.properties_json["parent"]).first()
+        parent_guid: str = self.properties_json["parent"]
+        return parent_guid
+
+    def parent_task_model(self) -> TaskModel | None:
+        task_model: TaskModel = self.__class__.query.filter_by(guid=self.parent_guid()).first()
         return task_model
 
     @classmethod
