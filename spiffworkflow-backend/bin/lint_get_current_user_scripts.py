@@ -68,7 +68,8 @@ def main() -> NoReturn:
             parent_directory = os.path.dirname(bpmn_file)
             # check if parent directory contains a file named 'extension_uischema.json'
             # in which case it's an extension, and it is not necessary to include in this analysis, since
-            # extensions typically run using nonpersistent process instances, and therefore have no running-in-background type issues.
+            # extensions typically run using nonpersistent process instances, and therefore have no
+            # running-in-background type issues.
             if parent_directory and not os.path.exists(f"{parent_directory}/extension_uischema.json"):
                 find_script_tasks_with_get_current_user(bpmn_file, hot_dir)
 
