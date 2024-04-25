@@ -7,6 +7,7 @@ import {
 import React from 'react';
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
+import { matchNumberRegex } from '../../../helpers';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
 //    "compensation":{
@@ -67,7 +68,7 @@ export default function NumericRangeField({
     // or 1000.5 will become 1,000.5
 
     // if it does not look like a number then just return it
-    if (!numberString.match(/^[0-9,.]*$/)) {
+    if (!numberString.match(matchNumberRegex)) {
       return numberString;
     }
 

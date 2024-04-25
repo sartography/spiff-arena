@@ -10,6 +10,7 @@ import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWid
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
+import { matchNumberRegex } from '../helpers';
 
 enum DateCheckType {
   minimum = 'minimum',
@@ -265,8 +266,8 @@ export default function CustomForm({
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
     if (
-      !formDataToCheck[propertyKey].min.toString().match(/^[0-9,.]*$/) ||
-      !formDataToCheck[propertyKey].max.toString().match(/^[0-9,.]*$/)
+      !formDataToCheck[propertyKey].min.toString().match(matchNumberRegex) ||
+      !formDataToCheck[propertyKey].max.toString().match(matchNumberRegex)
     ) {
       errors[propertyKey].addError('must have valid numbers');
     }
