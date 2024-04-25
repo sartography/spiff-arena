@@ -295,7 +295,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
               onClick={closeSideNavMenuIfExpanded}
               isActive={isActivePage('/messages')}
             >
-              Menssages
+              Mensagens
             </HeaderMenuItem>
           </SpiffTooltip>
         </Can>
