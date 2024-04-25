@@ -66,6 +66,11 @@ export default function NumericRangeField({
     // and a decimal point if needed. For example, 1000 will become 1,000
     // or 1000.5 will become 1,000.5
 
+    // if it does not look like a number then just return it
+    if (!numberString.match(/^[0-9,.]*$/)) {
+      return numberString;
+    }
+
     const numberStringNoCommas = numberString.replace(/,/g, '');
 
     if (numberStringNoCommas) {

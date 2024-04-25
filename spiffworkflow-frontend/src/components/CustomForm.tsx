@@ -265,6 +265,12 @@ export default function CustomForm({
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
     if (
+      !formDataToCheck[propertyKey].min.toString().match(/^[0-9,.]*$/) ||
+      !formDataToCheck[propertyKey].max.toString().match(/^[0-9,.]*$/)
+    ) {
+      errors[propertyKey].addError('must have valid numbers');
+    }
+    if (
       formDataToCheck[propertyKey].min <
       jsonSchema.properties[propertyKey].minimum
     ) {
