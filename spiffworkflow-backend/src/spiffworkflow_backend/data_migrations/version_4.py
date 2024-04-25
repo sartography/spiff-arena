@@ -14,7 +14,6 @@ class Version4(DataMigrationBase):
 
     @classmethod
     def run(cls, process_instance: ProcessInstanceModel) -> None:
-        # return None
         try:
             processor = ProcessInstanceProcessor(
                 process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True

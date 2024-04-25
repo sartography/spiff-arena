@@ -14,8 +14,6 @@ from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryM
 
 
 class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
-    """KKVDataStore."""
-
     @staticmethod
     def create_instance(identifier: str, location: str) -> Any:
         return KKVDataStoreModel(
