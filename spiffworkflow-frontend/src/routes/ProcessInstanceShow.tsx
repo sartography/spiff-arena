@@ -315,7 +315,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (processInstance) {
       setPageTitle([
         processInstance.process_model_display_name,
-        `Tarefa do Processo ${processInstance.id}`,
+        `Instância do Processo ${processInstance.id}`,
       ]);
     }
     return undefined;
@@ -598,7 +598,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           renderIcon={StopOutline}
           iconDescription="Terminar"
           hasIconOnly
-          description={`Terminar Tarefa do Processo: ${processInstance.id}`}
+          description={`Terminar Instância do Processo: ${processInstance.id}`}
           onConfirmation={terminateProcessInstance}
           confirmButtonLabel="Terminar"
         />
@@ -671,7 +671,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           renderIcon={TrashCan}
           iconDescription="Deletar"
           hasIconOnly
-          description={`Deletar Tarefa do Processo: ${processInstance.id}`}
+          description={`Deletar Instância do Processo: ${processInstance.id}`}
           onConfirmation={deleteProcessInstance}
           confirmButtonLabel="Deletar"
         />
@@ -1840,7 +1840,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               entityType: 'process-model-id',
               linkLastItem: true,
             },
-            [`Id Tarefa do Processo: ${processInstance.id}`],
+            [`Id Instância do Processo: ${processInstance.id}`],
           ]}
         />
         {keyboardShortcutArea}
@@ -1849,7 +1849,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {viewMostRecentStateComponent()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
-            Id da Tarefa do Processo: {processInstance.id}
+            Id da Instância do Processo: {processInstance.id}
           </h1>
           {buttonIcons()}
         </Stack>
@@ -1860,10 +1860,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <TaskListTable
           apiPath="/tasks"
           additionalParams={`process_instance_id=${processInstance.id}`}
-          tableTitle="Tarefas que posso completar"
+          tableTitle="Instâncias que posso completar"
           tableDescription="Estas são atividade que podem ser completadas por você, seja porque foram atribuídas a um grupo do qual você faz parte, ou porque foram atribuídas diretamente a você."
           paginationClassName="with-large-bottom-margin"
-          textToShowIfEmpty="Não há atividade que você possa completar para esta tarefa de processo."
+          textToShowIfEmpty="Não há atividade que você possa completar para esta instâncias de processo."
           shouldPaginateTable={false}
           showProcessModelIdentifier={false}
           showProcessId={false}

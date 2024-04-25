@@ -345,7 +345,7 @@ export default function ProcessInstanceLogList({
       tableHeaders.push(
         <>
           <th>Id</th>
-          <th>Bpmn process</th>
+          <th>Processo BPMN</th>
           <th>{taskNameHeader}</th>
         </>
       );
@@ -353,17 +353,17 @@ export default function ProcessInstanceLogList({
       tableHeaders.push(
         <>
           <th>{taskNameHeader}</th>
-          <th>Bpmn process</th>
+          <th>Processo BPMN</th>
         </>
       );
     }
     if (isEventsView) {
       tableHeaders.push(
         <>
-          <th>Task identifier</th>
-          <th>Task type</th>
-          <th>Event type</th>
-          <th>User</th>
+          <th>Identificador da Instância</th>
+          <th>Tipo da Instância</th>
+          <th>Tipo do Evento</th>
+          <th>Usuário</th>
         </>
       );
     }
@@ -408,9 +408,9 @@ export default function ProcessInstanceLogList({
     }
 
     const filterElements = [];
-    let taskNameFilterPlaceholder = 'Choose a milestone';
+    let taskNameFilterPlaceholder = 'Escolha um passo';
     if (isEventsView) {
-      taskNameFilterPlaceholder = 'Choose a task bpmn name';
+      taskNameFilterPlaceholder = 'Escolha um nome para o BPMN da tarefa';
     }
     filterElements.push(
       <Column md={4}>
@@ -447,8 +447,8 @@ export default function ProcessInstanceLogList({
                 return value;
               }}
               shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose a task bpmn identifier"
-              titleText="Task identifier"
+              placeholder="Escolha um identificador para o BPMN da tarefa"
+              titleText="Identificado da tarefa"
               selectedItem={searchParams.get('bpmn_identifier')}
             />
           </Column>
@@ -465,7 +465,7 @@ export default function ProcessInstanceLogList({
               }}
               shouldFilterItem={shouldFilterStringItem}
               placeholder="Choose a task type"
-              titleText="Task type"
+              titleText="Tipo da tarefa"
               selectedItem={searchParams.get('task_type')}
             />
           </Column>
@@ -481,8 +481,8 @@ export default function ProcessInstanceLogList({
                 return value;
               }}
               shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose an event type"
-              titleText="Event type"
+              placeholder="Escolha um tipo de evento"
+              titleText="Tipo de evento"
               selectedItem={searchParams.get('event_type')}
             />
           </Column>
@@ -503,7 +503,7 @@ export default function ProcessInstanceLogList({
                 className="narrow-button"
                 onClick={resetFiltersAndRun}
               >
-                Reset
+                Resetar
               </Button>
               {shouldDisplayClearButton && (
                 <Button
@@ -511,7 +511,7 @@ export default function ProcessInstanceLogList({
                   className="narrow-button"
                   onClick={clearFilters}
                 >
-                  Clear
+                  Limpar
                 </Button>
               )}
             </ButtonSet>
@@ -528,7 +528,7 @@ export default function ProcessInstanceLogList({
     paginationQueryParamPrefix
   );
   if (clearAll) {
-    return <p>Page cleared 👍</p>;
+    return <p>Página Limpa 👍</p>;
   }
 
   return (

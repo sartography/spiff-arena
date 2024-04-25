@@ -596,7 +596,7 @@ export default function ProcessInstanceListTable({
             {headers.map((tableRowHeader: any) => (
               <TableHeader
                 key={tableRowHeader}
-                title={tableRowHeader === 'Id' ? 'Id Tarefa do Processo' : null}
+                title={tableRowHeader === 'Id' ? 'Id Instância do Processo' : null}
               >
                 {tableRowHeader}
               </TableHeader>

@@ -34,7 +34,7 @@ export default function InProgressInstances() {
           header={headerElement}
           paginationClassName="with-large-bottom-margin"
           paginationQueryParamPrefix={identifierForTable.replace('-', '_')}
-          perPageOptions={[2, 5, 25]}
+          perPageOptions={[50, 25, 10, 5]}
           reportIdentifier="system_report_in_progress_instances_with_tasks"
           showActionsColumn
           showLinkToReport
@@ -66,7 +66,7 @@ export default function InProgressInstances() {
         header={startedByMeHeaderElement}
         paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="open_instances_started_by_me"
-        perPageOptions={[2, 5, 25]}
+        perPageOptions={[50, 25, 10, 5]}
         reportIdentifier="system_report_in_progress_instances_initiated_by_me"
         showActionsColumn
         showLinkToReport
@@ -78,7 +78,7 @@ export default function InProgressInstances() {
         header={waitingForMeHeaderElement}
         paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="waiting_for_me"
-        perPageOptions={[2, 5, 25]}
+        perPageOptions={[50, 25, 10, 5]}
         reportIdentifier="system_report_in_progress_instances_with_tasks_for_me"
         showActionsColumn
         showLinkToReport

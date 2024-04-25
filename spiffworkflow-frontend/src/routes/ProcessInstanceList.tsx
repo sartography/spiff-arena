@@ -16,7 +16,7 @@ type OwnProps = {
 
 export default function ProcessInstanceList({ variant }: OwnProps) {
   const [searchParams] = useSearchParams();
-  setPageTitle(['Tarefas dos Processos']);
+  setPageTitle(['Instâncias dos Processos']);
 
   const processInstanceBreadcrumbElement = () => {
     const processModelFullIdentifier =
@@ -28,22 +28,22 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
     return (
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          ['Grupos de Processo Groups', '/process-groups'],
           {
             entityToExplode: processModelFullIdentifier,
             entityType: 'process-model-id',
             linkLastItem: true,
           },
-          ['Tarefas dos Processos'],
+          ['Instâncias dos Processos'],
         ]}
       />
     );
   };
 
   const processInstanceTitleElement = () => {
-    let headerText = 'Minhas Tarefas dos Processos';
+    let headerText = 'Minhas Instâncias dos Processos';
     if (variant === 'all') {
-      headerText = 'Todas as Tarefas dos Processos';
+      headerText = 'Todas as Instâncias dos Processos';
     }
     return { text: headerText };
   };

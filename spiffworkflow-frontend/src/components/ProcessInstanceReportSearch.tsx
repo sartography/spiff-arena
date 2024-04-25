@@ -22,7 +22,7 @@ export default function ProcessInstanceReportSearch({
   onChange,
   selectedReportId,
   handleSetSelectedReportCallback,
-  titleText = 'Process instance perspectives',
+  titleText = 'Perspectivas da instância de processo',
 }: OwnProps) {
   const [processInstanceReports, setProcessInstanceReports] = useState<
     ProcessInstanceReport[] | null
@@ -85,7 +85,7 @@ export default function ProcessInstanceReportSearch({
               return null;
             }}
             shouldFilterItem={shouldFilterProcessInstanceReport}
-            placeholder="Choose a process instance perspective"
+            placeholder="Escolha uma perspectiva de instância de processo"
             selectedItem={selectedItem}
           />
         </Column>

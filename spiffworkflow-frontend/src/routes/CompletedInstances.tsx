@@ -19,10 +19,10 @@ export default function CompletedInstances() {
     }
 
     return userGroups.map((userGroup: string) => {
-      const titleText = `Esta é uma lista de processos com tarefas que foram concluídas pelo grupo ${userGroup}.`;
+      const titleText = `Esta é uma lista de processos com instâncias que foram concluídas pelo grupo ${userGroup}.`;
       const headerElement = {
         tooltip_text: titleText,
-        text: `Processos com tarefas concluídas pelo grupo **${userGroup}**`,
+        text: `Processos com instâncias concluídas pelo grupo **${userGroup}**`,
       };
       const identifierForTable = `completed-by-group-${slugifyString(
         userGroup
@@ -35,7 +35,7 @@ export default function CompletedInstances() {
           header={headerElement}
           paginationClassName="with-large-bottom-margin"
           paginationQueryParamPrefix="group_completed_instances"
-          perPageOptions={[2, 5, 25]}
+          perPageOptions={[50, 25, 10, 5]}
           reportIdentifier="system_report_completed_instances"
           showActionsColumn
           showLinkToReport
@@ -65,7 +65,7 @@ export default function CompletedInstances() {
         header={startedByMeHeaderElement}
         paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_instances"
-        perPageOptions={[2, 5, 25]}
+        perPageOptions={[50, 25, 10, 5]}
         reportIdentifier="system_report_completed_instances_initiated_by_me"
         showActionsColumn
         showLinkToReport
@@ -76,7 +76,7 @@ export default function CompletedInstances() {
         header={withTasksHeaderElement}
         paginationClassName="with-large-bottom-margin"
         paginationQueryParamPrefix="my_completed_tasks"
-        perPageOptions={[2, 5, 25]}
+        perPageOptions={[50, 25, 10, 5]}
         reportIdentifier="system_report_completed_instances_with_tasks_completed_by_me"
         showActionsColumn
         showLinkToReport

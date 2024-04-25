@@ -137,7 +137,7 @@ export default function ProcessInstanceProgress({
         <>
           {ErrorDisplayStateless(currentPageError)}
           <p>
-            Go to <a href={processInstanceShowPageUrl}>Process Instance</a>
+            Ir para <a href={processInstanceShowPageUrl}>Instância de Processo</a>
           </p>
         </>
       );

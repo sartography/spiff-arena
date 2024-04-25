@@ -29,7 +29,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
   return (
     <Tabs selectedIndex={selectedTabIndex}>
       <TabList aria-label="List of tabs">
-      <SpiffTooltip title="Mostrar apenas tarefas de processo para o usuário atual">
+      <SpiffTooltip title="Mostrar apenas instâncias de processo para o usuário atual">
           <Tab
             data-qa="process-instance-list-for-me"
             onClick={() => {
@@ -40,7 +40,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           </Tab>
         </SpiffTooltip>
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
-        <SpiffTooltip title="Mostrar tarefas de processo para todos os usuários">
+        <SpiffTooltip title="Mostrar instâncias de processo para todos os usuários">
             <Tab
               data-qa="process-instance-list-all"
               onClick={() => {
@@ -51,7 +51,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
             </Tab>
           </SpiffTooltip>
         </Can>
-        <SpiffTooltip title="Pesquisar uma tarefa de processo por id">
+        <SpiffTooltip title="Pesquisar uma instâncias de processo por id">
           <Tab
             data-qa="process-instance-list-find-by-id"
             onClick={() => {

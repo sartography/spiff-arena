@@ -99,16 +99,16 @@ export default function ProcessModelListTiles({
     } else if (userCanCreateProcessModels) {
       displayText = (
         <p className="no-results-message">
-          There are no process models to display. You can add one by clicking
-          the &quot;Add a process model&quot; button. Process models will
-          contain the bpmn diagrams and supporting files needed to create a
-          runnable workflow.
+          Não há modelos de processos para exibir. Você pode adicionar 
+          um clicando no botão "Adicionar um modelo de processo". 
+          Os modelos de processos conterão os diagramas bpmn e arquivos 
+          de suporte necessários para criar um fluxo de trabalho executável.
         </p>
       );
     } else {
       displayText = (
         <p className="no-results-message">
-          There are no process models to display
+          Não há modelos de processo para exibir.
         </p>
       );
     }

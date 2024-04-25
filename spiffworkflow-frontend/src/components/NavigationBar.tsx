@@ -133,7 +133,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
             <hr />
             {aboutLinkElement}
             <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
-              Documentation
+              Documentação
             </a>
             <ExtensionUxElementForDisplay
               displayLocation="user_profile_item"
@@ -247,7 +247,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
     }
     return (
       <>
-        <SpiffTooltip title="Visualizar e Iniciar Tarefas dos Processos">
+        <SpiffTooltip title="Visualizar e Iniciar Instância dos Processos">
           <HeaderMenuItem<LinkProps>
             as={Link}
             to="/"
@@ -276,14 +276,14 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           a={targetUris.processInstanceListForMePath}
           ability={ability}
         >
-          <SpiffTooltip title="Lista de tarefas dos Processos Ativas e Concluídas">
+          <SpiffTooltip title="Lista de instância dos Processos Ativas e Concluídas">
             <HeaderMenuItem
               as={Link}
               to="/process-instances"
               onClick={closeSideNavMenuIfExpanded}
               isActive={isActivePage('/process-instances')}
             >
-              Tarefas dos Processos
+              Instância dos Processos
             </HeaderMenuItem>
           </SpiffTooltip>
         </Can>

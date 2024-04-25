@@ -220,7 +220,7 @@ export default function TaskListTable({
         <Link
           data-qa="process-instance-show-link-id"
           to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
-          title={`Visualizar Tarefas do Processo ${processInstanceTask.process_instance_id}`}
+          title={`Visualizar Instâncias do Processo ${processInstanceTask.process_instance_id}`}
         >
           {processInstanceTask.process_instance_id}
         </Link>

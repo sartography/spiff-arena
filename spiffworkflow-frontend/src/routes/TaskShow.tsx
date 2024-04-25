@@ -95,7 +95,7 @@ export default function TaskShow() {
           checkPermission: true,
         },
         [
-          `Tarefa do Processo: ${result.process_instance_id}`,
+          `Instância do Processo: ${result.process_instance_id}`,
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
             result.process_model_identifier
           )}/${result.process_instance_id}`,

@@ -91,15 +91,16 @@ export default function ProcessGroupListTiles({
     } else if (userCanCreateProcessModels) {
       displayText = (
         <p className="no-results-message">
-          There are no process groups to display. You can add one by clicking
-          the &quot;Add a process group&quot; button. Process groups can contain
-          additional process groups and / or process models.
+          Não há grupos de processos para exibir. Você pode adicionar 
+          um clicando no botão "Adicionar um grupo de processos". 
+          Grupos de processos podem conter grupos de processos 
+          adicionais e/ou modelos de processo.
         </p>
       );
     } else {
       displayText = (
         <p className="no-results-message">
-          There are no process groups to display
+          Não há grupos de processos para exibir
         </p>
       );
     }

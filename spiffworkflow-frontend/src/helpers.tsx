@@ -238,7 +238,7 @@ export const getBpmnProcessIdentifiers = (rootBpmnElement: any) => {
 };
 
 export const setPageTitle = (items: Array<string>) => {
-  document.title = ['SpiffWorkflow'].concat(items).join(' - ');
+  document.title = ['Crestani Processos'].concat(items).join(' - ');
 };
 
 // calling it isANumber to avoid confusion with other libraries

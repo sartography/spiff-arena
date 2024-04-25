@@ -684,7 +684,7 @@ export default function ProcessModelShow() {
                       field_value: processModel.id,
                     },
                   ]}
-                  perPageOptions={[2, 5, 25]}
+                  perPageOptions={[50, 25, 10, 5]}
                   showLinkToReport
                   variant="for-me"
                 />
