@@ -1,4 +1,3 @@
-from spiffworkflow_backend.models.user import UserModel
 import sys
 
 from spiffworkflow_backend import create_app

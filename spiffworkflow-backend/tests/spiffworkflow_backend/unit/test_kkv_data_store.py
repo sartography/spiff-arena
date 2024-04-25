@@ -1,19 +1,19 @@
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-from flask.testing import FlaskClient
 from collections.abc import Generator
 from dataclasses import dataclass
 from typing import Any
 
 import pytest
 from flask.app import Flask
+from flask.testing import FlaskClient
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 @dataclass
@@ -200,4 +200,4 @@ class TestKkvDataStore(BaseTest):
         assert process_instance is not None
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        assert process_instance.status == "running"
+        assert process_instance.status == "complete"
