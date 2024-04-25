@@ -290,8 +290,6 @@ class ProcessInstanceService:
                 process_instance,
                 workflow_completed_handler=cls.schedule_next_process_model_cycle,
                 additional_processing_identifier=additional_processing_identifier,
-                include_task_data_for_completed_tasks=True,
-                include_completed_subprocesses=True,
             )
 
         # if status_value is user_input_required (we are processing instances with that status from background processor),
@@ -482,7 +480,6 @@ class ProcessInstanceService:
         """
         ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
         processor.complete_task(spiff_task, human_task, user=user)
-        processor.dump_to_disk("old_proc.json")
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if not should_queue_process_instance(processor.process_instance_model, execution_mode):
