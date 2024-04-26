@@ -14,8 +14,6 @@ from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryM
 
 
 class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
-    """KKVDataStore."""
-
     @staticmethod
     def create_instance(identifier: str, location: str) -> Any:
         return KKVDataStoreModel(
@@ -68,9 +66,20 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
             "data": data,
         }
 
-    def get(self, my_task: SpiffTask) -> None:
-        """get."""
+    @classmethod
+    def add_data_store_getters_to_spiff_task(cls, spiff_task: SpiffTask) -> None:
+        """Adds the data store getters onto the task if necessary.
 
+        This is because the getters are methods and methods are stripped out of task data when we serialize.
+        These methods are added to task data when the task is marked as READY and therefore may not be there
+        when the task actually runs.
+        """
+        data_input_associations = spiff_task.task_spec.data_input_associations
+        for dia in data_input_associations:
+            if isinstance(dia, KKVDataStore):
+                dia.get(spiff_task)
+
+    def get(self, my_task: SpiffTask) -> None:
         def getter(top_level_key: str, secondary_key: str | None) -> Any | None:
             location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
             store_model: KKVDataStoreModel | None = None
@@ -105,7 +114,6 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         my_task.data[self.bpmn_id] = getter
 
     def set(self, my_task: SpiffTask) -> None:
-        """set."""
         location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
         store_model: KKVDataStoreModel | None = None
 
@@ -175,10 +183,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
 
 class KKVDataStoreConverter(BpmnConverter):  # type: ignore
-    """KKVDataStoreConverter."""
-
     def to_dict(self, spec: Any) -> dict[str, Any]:
-        """to_dict."""
         return {
             "bpmn_id": spec.bpmn_id,
             "bpmn_name": spec.bpmn_name,
@@ -187,5 +192,4 @@ class KKVDataStoreConverter(BpmnConverter):  # type: ignore
         }
 
     def from_dict(self, dct: dict[str, Any]) -> KKVDataStore:
-        """from_dict."""
         return KKVDataStore(**dct)

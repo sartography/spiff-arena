@@ -23,6 +23,7 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_future_task_if_appropriate,
 )
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import db
@@ -219,6 +220,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self._should_update_task_model():
             self.spiff_task_timestamps[spiff_task.id] = {"start_in_seconds": time.time(), "end_in_seconds": None}
             self.current_task_start_in_seconds = time.time()
+
+        KKVDataStore.add_data_store_getters_to_spiff_task(spiff_task)
 
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
