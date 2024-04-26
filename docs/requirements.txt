@@ -9,7 +9,7 @@ certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
-docutils==0.20.1
+docutils==0.21.2
 esbonio==0.16.4
 furo==2024.1.29
 idna==3.7
