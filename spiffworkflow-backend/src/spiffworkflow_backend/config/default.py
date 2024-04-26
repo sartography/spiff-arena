@@ -97,6 +97,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", de
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
 # comma-separated list.
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_IAT", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_NBF", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
