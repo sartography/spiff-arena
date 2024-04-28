@@ -664,3 +664,12 @@ class ProcessModelService(FileSystemService):
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         return process_model_info
+
+    @classmethod
+    def get_process_group_with_permission_check(cls, process_group_id: str, user: UserModel) -> ProcessGroup:
+        process_models = cls.get_process_models_for_api(user=user, process_group_id=process_group_id, recursive=False)
+        if not process_models:
+            raise ProcessEntityNotFoundError("User has no access to contained models, and therefore no access to group.")
+
+        # do not return child models and groups here since this call does not check permissions of them
+        return cls.get_process_group(process_group_id, find_direct_nested_items=False)
