@@ -43,13 +43,20 @@ export default function ContainerForExtensions() {
 
   const location = useLocation();
 
+  // NEWUI: This a hack to hide the navigation bar in the "old" UI
+  const [showToolbar, setShowToolbar] = useState(true);
+  useEffect(() => {
+    if (location.pathname === '/newui') {
+      setShowToolbar(false);
+    }
+  }, []);
+
   // never carry an error message across to a different path
   useEffect(() => {
     removeError();
     // if we include the removeError function to the dependency array of this useEffect, it causes
     // an infinite loop where the page with the error adds the error,
     // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -144,7 +151,9 @@ export default function ContainerForExtensions() {
 
   return (
     <>
-      <NavigationBar extensionUxElements={extensionUxElements} />
+      {showToolbar && (
+        <NavigationBar extensionUxElements={extensionUxElements} />
+      )}
       <Content className={contentClassName}>
         <ScrollToTop />
         <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
