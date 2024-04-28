@@ -24,7 +24,7 @@ export default function App() {
 
   /**
    * Note that QueryClientProvider and ReactQueryDevTools
-   * are React Qery, now branded under the Tanstack packages.
+   * are React Query, now branded under the Tanstack packages.
    * https://tanstack.com/query/latest
    */
   const layout = () => {

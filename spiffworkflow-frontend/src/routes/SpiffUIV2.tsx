@@ -1,10 +1,30 @@
-import { Stack, Typography } from '@mui/material';
+import { Divider, Stack } from '@mui/material';
+import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
+import { grey } from '@mui/material/colors';
 
 export default function SpiffUIV2() {
   return (
-    <Stack>
-      <Typography variant="h4">Here is the New UI!!!</Typography>
-      <Typography variant="h3">Making sure MUI basic things work</Typography>
+    <Stack
+      direction="row"
+      spacing={8}
+      divider={
+        <Divider
+          orientation="vertical"
+          sx={{ height: '100%', backgroundColor: 'grey' }}
+        />
+      }
+      sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      <Stack>
+        <SideMenu />
+      </Stack>
+      <Stack>Content</Stack>
     </Stack>
   );
 }
