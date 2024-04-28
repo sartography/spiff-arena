@@ -100,7 +100,8 @@ def process_group_list(
     return make_response(jsonify(response_json), 200)
 
 
-# this action is excluded from authorization checks, so it is important that it call AuthorizationService.check_permission_for_request()
+# this action is excluded from authorization checks, so it is important that it call:
+# AuthorizationService.check_permission_for_request()
 # it also allows access to the process group if the user has access to read any of the process models contained in the group
 def process_group_show(
     modified_process_group_id: str,
