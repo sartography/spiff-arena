@@ -337,9 +337,12 @@ class AuthorizationService:
 
     @classmethod
     def request_is_excluded_from_permission_check(cls) -> bool:
-        authorization_exclusion_list = ["permissions_check"]
-        api_view_function = current_app.view_functions[request.endpoint]
-        if api_view_function and api_view_function.__name__ in authorization_exclusion_list:
+        authorization_exclusion_list = [
+            "spiffworkflow_backend.routes.process_api_blueprint.permissions_check",
+            "spiffworkflow_backend.routes.process_groups_controller.process_group_show",
+        ]
+        api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
+        if api_function_full_path and (api_function_full_path in authorization_exclusion_list):
             return True
         return False
 
