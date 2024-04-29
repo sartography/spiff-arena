@@ -190,11 +190,8 @@ class ExecutionStrategy:
         # service tasks at once - many api calls, and then get those responses back without
         # waiting for each individual task to complete.
         futures = []
-        initial_order = []
-        did_complete_order = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for spiff_task in engine_steps:
-                initial_order.append(f"{spiff_task.task_spec.bpmn_id}:{str(spiff_task.id)}")
                 self.delegate.will_complete_task(spiff_task)
                 futures.append(
                     executor.submit(
@@ -209,7 +206,6 @@ class ExecutionStrategy:
                 spiff_task = future.result()
 
             for spiff_task in engine_steps:
-                did_complete_order.append(f"{spiff_task.task_spec.bpmn_id}:{str(spiff_task.id)}")
                 self.delegate.did_complete_task(spiff_task)
 
     def _run_engine_steps_without_threads(
