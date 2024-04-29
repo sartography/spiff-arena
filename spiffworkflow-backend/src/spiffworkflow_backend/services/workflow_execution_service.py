@@ -13,6 +13,7 @@ from flask import current_app
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -148,7 +149,18 @@ class ExecutionStrategy:
                 if hasattr(g, "user"):
                     user = g.user
 
-                if current_app.config["SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION"]:
+                # When a task with a gateway is completed it marks the gateway as either WAITING or READY.
+                # The problem is if two of these parent tasks mark their gateways as READY then both are processed
+                # and end up being marked completed, when in fact only one gateway attached to the same bpmn bpmn_id
+                # is allowed to be READY/COMPLETED. If two are READY and execute, then the tasks after the gateway will
+                # be unintentially duplicated.
+                has_gateway_children = False
+                for spiff_task in engine_steps:
+                    for child_task in spiff_task.children:
+                        if isinstance(child_task.task_spec, UnstructuredJoin):
+                            has_gateway_children = True
+
+                if current_app.config["SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION"] and not has_gateway_children:
                     self._run_engine_steps_with_threads(engine_steps, process_instance_model, user)
                 else:
                     self._run_engine_steps_without_threads(engine_steps, process_instance_model, user)
@@ -178,8 +190,11 @@ class ExecutionStrategy:
         # service tasks at once - many api calls, and then get those responses back without
         # waiting for each individual task to complete.
         futures = []
+        initial_order = []
+        did_complete_order = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for spiff_task in engine_steps:
+                initial_order.append(f"{spiff_task.task_spec.bpmn_id}:{str(spiff_task.id)}")
                 self.delegate.will_complete_task(spiff_task)
                 futures.append(
                     executor.submit(
@@ -192,12 +207,16 @@ class ExecutionStrategy:
                 )
             for future in concurrent.futures.as_completed(futures):
                 spiff_task = future.result()
+
+            for spiff_task in engine_steps:
+                did_complete_order.append(f"{spiff_task.task_spec.bpmn_id}:{str(spiff_task.id)}")
                 self.delegate.did_complete_task(spiff_task)
 
     def _run_engine_steps_without_threads(
         self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
     ) -> None:
         for spiff_task in engine_steps:
+            self.delegate.will_complete_task(spiff_task)
             self._run(
                 spiff_task,
                 current_app._get_current_object(),
