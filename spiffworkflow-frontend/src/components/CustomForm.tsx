@@ -266,8 +266,8 @@ export default function CustomForm({
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
     if (
-      !formDataToCheck[propertyKey].min.toString().match(matchNumberRegex) ||
-      !formDataToCheck[propertyKey].max.toString().match(matchNumberRegex)
+      !formDataToCheck[propertyKey].min?.toString().match(matchNumberRegex) ||
+      !formDataToCheck[propertyKey].max?.toString().match(matchNumberRegex)
     ) {
       errors[propertyKey].addError('must have valid numbers');
     }
