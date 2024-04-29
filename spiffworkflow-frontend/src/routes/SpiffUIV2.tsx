@@ -1,6 +1,5 @@
 import { Divider, Stack } from '@mui/material';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
-import { grey } from '@mui/material/colors';
 
 export default function SpiffUIV2() {
   return (
