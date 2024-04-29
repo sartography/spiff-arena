@@ -3,13 +3,11 @@ import { ReactNode } from 'react';
 
 export default function MenuItem({
   data,
-  iconsize,
 }: {
   data: { label: string; icon: ReactNode; path: string };
-  iconsize?: string;
 }) {
   return (
-    <Stack direction="row">
+    <Stack direction="row" gap={3}>
       {data.icon}
       <Typography>{data.label}</Typography>
     </Stack>

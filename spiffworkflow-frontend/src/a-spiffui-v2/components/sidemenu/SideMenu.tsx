@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import SpiffLogo from '../SpiffLogo';
 import MenuItem from '../MenuItem';
@@ -30,16 +30,18 @@ export default function SideMenu() {
   ];
 
   return (
-    <Stack>
-      <Stack width="240px">
-        <SpiffLogo />
-        <Stack>
+    <Stack width={240} padding={2} gap={2} height="100%">
+      <Stack height="inherit">
+        <Box width="85%">
+          <SpiffLogo />
+        </Box>
+        <Stack gap={5} padding={2}>
           {navMenuItemData.map((item) => (
             <MenuItem data={item} key={item.label} />
           ))}
         </Stack>
       </Stack>
-      <Stack>
+      <Stack height={275} gap={5} padding={2}>
         {userMenuItemData.map((item) => (
           <MenuItem data={item} key={item.label} />
         ))}

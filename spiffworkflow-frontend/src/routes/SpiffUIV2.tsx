@@ -17,7 +17,7 @@ export default function SpiffUIV2() {
     <ThemeProvider theme={muiTheme}>
       <Stack
         direction="row"
-        spacing={8}
+        gap={2}
         divider={
           <Divider
             orientation="vertical"
