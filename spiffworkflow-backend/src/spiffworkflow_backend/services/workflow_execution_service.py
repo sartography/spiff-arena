@@ -33,6 +33,7 @@ from spiffworkflow_backend.models.message_instance_correlation import MessageIns
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -143,30 +144,15 @@ class ExecutionStrategy:
                 spiff_task.run()
                 self.delegate.did_complete_task(spiff_task)
             elif num_steps > 1:
-                # This only works because of the GIL, and the fact that we are not actually executing
-                # code in parallel, we are just waiting for I/O in parallel.  So it can run a ton of
-                # service tasks at once - many api calls, and then get those responses back without
-                # waiting for each individual task to complete.
-                futures = []
                 user = None
                 if hasattr(g, "user"):
                     user = g.user
 
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    for spiff_task in engine_steps:
-                        self.delegate.will_complete_task(spiff_task)
-                        futures.append(
-                            executor.submit(
-                                self._run,
-                                spiff_task,
-                                current_app._get_current_object(),
-                                user,
-                                process_instance_model.process_model_identifier,
-                            )
-                        )
-                    for future in concurrent.futures.as_completed(futures):
-                        spiff_task = future.result()
-                        self.delegate.did_complete_task(spiff_task)
+                if current_app.config["SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION"]:
+                    self._run_engine_steps_with_threads(engine_steps, process_instance_model, user)
+                else:
+                    self._run_engine_steps_without_threads(engine_steps, process_instance_model, user)
+
             if self.should_break_after(engine_steps):
                 # we could call the stuff at the top of the loop again and find out, but let's not do that unless we need to
                 task_runnability = TaskRunnability.unknown_if_ready_tasks
@@ -183,6 +169,42 @@ class ExecutionStrategy:
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         return [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
+
+    def _run_engine_steps_with_threads(
+        self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
+    ) -> None:
+        # This only works because of the GIL, and the fact that we are not actually executing
+        # code in parallel, we are just waiting for I/O in parallel.  So it can run a ton of
+        # service tasks at once - many api calls, and then get those responses back without
+        # waiting for each individual task to complete.
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for spiff_task in engine_steps:
+                self.delegate.will_complete_task(spiff_task)
+                futures.append(
+                    executor.submit(
+                        self._run,
+                        spiff_task,
+                        current_app._get_current_object(),
+                        user,
+                        process_instance.process_model_identifier,
+                    )
+                )
+            for future in concurrent.futures.as_completed(futures):
+                spiff_task = future.result()
+                self.delegate.did_complete_task(spiff_task)
+
+    def _run_engine_steps_without_threads(
+        self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
+    ) -> None:
+        for spiff_task in engine_steps:
+            self._run(
+                spiff_task,
+                current_app._get_current_object(),
+                user,
+                process_instance.process_model_identifier,
+            )
+            self.delegate.did_complete_task(spiff_task)
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):

@@ -221,3 +221,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 # adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
 # to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default=False)
+
+# for DEUBGGING - turn off thread execution if tasks are possibly getting executed in an odd ordering
+config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)
