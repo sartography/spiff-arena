@@ -9,7 +9,7 @@ export const doNothing = () => {
   return undefined;
 };
 
-export const matchNumberRegex = /^[0-9,.]*$/;
+export const matchNumberRegex = /^[0-9,.-]*$/;
 
 // https://www.30secondsofcode.org/js/s/slugify
 export const slugifyString = (str: string) => {

@@ -166,6 +166,7 @@ export default function NumericRangeField({
             setMinValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
+          invalidText={minHelperText}
           helperText={minHelperText}
           autofocus={autofocus}
         />
@@ -181,6 +182,7 @@ export default function NumericRangeField({
             setMaxValue(event.target.value);
           }}
           invalid={commonAttributes.invalid}
+          invalidText={maxHelperText}
           helperText={maxHelperText}
         />
       </div>
