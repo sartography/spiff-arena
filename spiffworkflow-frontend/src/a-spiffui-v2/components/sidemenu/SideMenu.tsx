@@ -11,6 +11,7 @@ import DataBase from '../../assets/icons/database.svg';
 import Settings from '../../assets/icons/settings.svg';
 import Moon from '../../assets/icons/moon.svg';
 import Logout from '../../assets/icons/logout.svg';
+import UserService from '../../../services/UserService';
 
 export default function SideMenu() {
   const navMenuItemData = [
@@ -26,7 +27,11 @@ export default function SideMenu() {
   const userMenuItemData = [
     { label: 'Dark Mode', icon: <Moon />, path: '/' },
     { label: 'Logout', icon: <Logout />, path: '/' },
-    { label: 'Happy User', icon: <PersonOutline />, path: '/' },
+    {
+      label: UserService.getPreferredUsername(),
+      icon: <PersonOutline />,
+      path: '/',
+    },
   ];
 
   return (
@@ -35,13 +40,13 @@ export default function SideMenu() {
         <Box width="85%">
           <SpiffLogo />
         </Box>
-        <Stack gap={5} padding={2}>
+        <Stack gap={2} padding={1}>
           {navMenuItemData.map((item) => (
             <MenuItem data={item} key={item.label} />
           ))}
         </Stack>
       </Stack>
-      <Stack height={275} gap={5} padding={2}>
+      <Stack height={275} gap={2} padding={2}>
         {userMenuItemData.map((item) => (
           <MenuItem data={item} key={item.label} />
         ))}
