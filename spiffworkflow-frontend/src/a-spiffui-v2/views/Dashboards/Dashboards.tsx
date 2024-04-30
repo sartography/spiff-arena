@@ -14,25 +14,27 @@ import {
   Tabs,
   TextField,
 } from '@mui/material';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import MonetizationOnOutlinedIcon from '@mui/icons-material/MonetizationOnOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
+import { blue, grey, red, yellow } from '@mui/material/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Grid from '../../assets/icons/grid.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
-import { blue, grey, purple, red, yellow } from '@mui/material/colors';
-import { title } from 'process';
 import FilterCard from './FilterCard';
+import useProcessInstances from '../../hooks/useProcessInstances';
 
 export default function Dashboards() {
   const [selectedTab, setSelectedTab] = useState('myProcesses');
   const [selectedFilter, setSelectedFilter] = useState('new');
+
+  const { processInstances } = useProcessInstances();
 
   const tabData = [
     {
@@ -148,7 +150,7 @@ export default function Dashboards() {
       lastMilestone: 'Edit Approval',
     },
     {
-      id: '5027',
+      id: '50271',
       processName: 'Request Goods or Services',
       details: '$5k for 5 software licenses',
       lastUpdate: '2 days ago',
@@ -156,7 +158,7 @@ export default function Dashboards() {
       lastMilestone: 'Budget Approval',
     },
     {
-      id: '5028',
+      id: '50281',
       processName: 'Request some other things',
       details: '$50 for some other things',
       lastUpdate: '3 days ago',
@@ -164,7 +166,7 @@ export default function Dashboards() {
       lastMilestone: 'Data Analysis',
     },
     {
-      id: '5029',
+      id: '50291',
       processName: 'Request More Things',
       details: '$2k for 2 more things',
       lastUpdate: '4 days ago',
@@ -172,7 +174,7 @@ export default function Dashboards() {
       lastMilestone: 'Edit Approval',
     },
     {
-      id: '5027',
+      id: '50272',
       processName: 'Request Goods or Services',
       details: '$5k for 5 software licenses',
       lastUpdate: '2 days ago',
@@ -180,7 +182,7 @@ export default function Dashboards() {
       lastMilestone: 'Budget Approval',
     },
     {
-      id: '5028',
+      id: '50282',
       processName: 'Request some other things',
       details: '$50 for some other things',
       lastUpdate: '3 days ago',
@@ -188,7 +190,7 @@ export default function Dashboards() {
       lastMilestone: 'Data Analysis',
     },
     {
-      id: '5029',
+      id: '50292',
       processName: 'Request More Things',
       details: '$2k for 2 more things',
       lastUpdate: '4 days ago',
@@ -196,7 +198,7 @@ export default function Dashboards() {
       lastMilestone: 'Edit Approval',
     },
     {
-      id: '5027',
+      id: '50273',
       processName: 'Request Goods or Services',
       details: '$5k for 5 software licenses',
       lastUpdate: '2 days ago',
@@ -204,7 +206,7 @@ export default function Dashboards() {
       lastMilestone: 'Budget Approval',
     },
     {
-      id: '5028',
+      id: '50283',
       processName: 'Request some other things',
       details: '$50 for some other things',
       lastUpdate: '3 days ago',
@@ -212,7 +214,7 @@ export default function Dashboards() {
       lastMilestone: 'Data Analysis',
     },
     {
-      id: '5029',
+      id: '50293',
       processName: 'Request More Things',
       details: '$2k for 2 more things',
       lastUpdate: '4 days ago',
@@ -230,6 +232,10 @@ export default function Dashboards() {
   const handleFilterSelectChange = (event: SelectChangeEvent) => {
     setSelectedFilter(event.target.value);
   };
+
+  useEffect(() => {
+    console.log(processInstances);
+  }, [processInstances]);
 
   return (
     <Stack>
