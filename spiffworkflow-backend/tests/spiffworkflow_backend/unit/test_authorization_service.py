@@ -347,13 +347,12 @@ class TestAuthorizationService(BaseTest):
         UserService.add_user_to_group(user, user_group)
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:anotherprefix:yo")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey") is False
+
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:/hey/yo")
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "DENY:read", "PG:hey:yo:who")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey:yo")
-
-        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey:yo")
-        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "DENY:read", "PG:hey:yo:who")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/who") is False
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/who/what") is False
 
@@ -369,6 +368,7 @@ class TestAuthorizationService(BaseTest):
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PM:hey:yo:wow:hot")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/wow")
 
     def test_explode_permissions_with_invalid_target_uri(
         self,
