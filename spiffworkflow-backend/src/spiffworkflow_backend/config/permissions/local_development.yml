@@ -41,10 +41,6 @@ permissions:
     groups: [group3]
     actions: [read]
     uri: PM:site-administration:set-permissions
-  pg-read:
-    groups: [group3]
-    actions: [read]
-    uri: PG:misc
 
   public_access:
     groups: [spiff_public]
