@@ -115,7 +115,10 @@ def process_group_show(
 
     try:
         user = UserService.current_user()
-        if has_access_to_group_without_considering_subgroups_and_models or AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, process_group_id):
+        if (
+            has_access_to_group_without_considering_subgroups_and_models
+            or AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, process_group_id)
+        ):
             # do not return child models and groups here since this call does not check permissions of them
             process_group = ProcessModelService.get_process_group(process_group_id, find_direct_nested_items=False)
         else:

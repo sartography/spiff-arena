@@ -1,4 +1,3 @@
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
@@ -351,7 +350,12 @@ class TestAuthorizationService(BaseTest):
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:/hey/yo")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo")
-        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/sure")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey:yo")
+
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey:yo")
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "DENY:read", "PG:hey:yo:who")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/who") is False
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/who/what") is False
 
     def test_granting_access_to_model_gives_access_to_process_group_show_for_parent_groups_to_allow_navigating_to_model(
         self,
@@ -363,8 +367,6 @@ class TestAuthorizationService(BaseTest):
         user_group = UserService.find_or_create_group("group_one")
         UserService.add_user_to_group(user, user_group)
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PM:hey:yo:wow:hot")
-        # self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
-        # self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey")
         assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo")
 
