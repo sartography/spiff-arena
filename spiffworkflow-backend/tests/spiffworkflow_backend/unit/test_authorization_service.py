@@ -1,3 +1,4 @@
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
@@ -334,6 +335,38 @@ class TestAuthorizationService(BaseTest):
         AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
+
+    # https://github.com/sartography/spiff-arena/issues/1090 describes why we need access to process_group_show for parents
+    def test_granting_access_to_subgroup_gives_access_to_subgroup_its_subgroups_and_even_show_for_its_parents(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.find_or_create_user(username="user_one")
+        user_group = UserService.find_or_create_group("group_one")
+        UserService.add_user_to_group(user, user_group)
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:anotherprefix:yo")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey") is False
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:/hey/yo")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo/sure")
+
+    def test_granting_access_to_model_gives_access_to_process_group_show_for_parent_groups_to_allow_navigating_to_model(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.find_or_create_user(username="user_one")
+        user_group = UserService.find_or_create_group("group_one")
+        UserService.add_user_to_group(user, user_group)
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PM:hey:yo:wow:hot")
+        # self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+        # self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey")
+        assert AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, "hey/yo")
 
     def test_explode_permissions_with_invalid_target_uri(
         self,

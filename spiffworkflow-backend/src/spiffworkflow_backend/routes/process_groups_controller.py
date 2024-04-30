@@ -107,19 +107,19 @@ def process_group_show(
     modified_process_group_id: str,
 ) -> Any:
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
-    has_access_to_group_without_considering_process_models = True
+    has_access_to_group_without_considering_subgroups_and_models = True
     try:
         AuthorizationService.check_permission_for_request()
     except NotAuthorizedError:
-        has_access_to_group_without_considering_process_models = False
+        has_access_to_group_without_considering_subgroups_and_models = False
 
     try:
-        if has_access_to_group_without_considering_process_models:
+        user = UserService.current_user()
+        if has_access_to_group_without_considering_subgroups_and_models or AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, process_group_id):
             # do not return child models and groups here since this call does not check permissions of them
             process_group = ProcessModelService.get_process_group(process_group_id, find_direct_nested_items=False)
         else:
-            user = UserService.current_user()
-            process_group = ProcessModelService.get_process_group_with_permission_check(process_group_id, user)
+            raise ProcessEntityNotFoundError("viewing this process group is not authorized")
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(

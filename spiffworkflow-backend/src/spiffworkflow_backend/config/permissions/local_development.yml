@@ -37,6 +37,20 @@ permissions:
     actions: [read]
     uri: PG:ALL
 
+  # pg-read:
+  #   groups: [group3]
+  #   actions: [read]
+  #   uri: PG:extensions:test1
+  # pg-read-2:
+  #   groups: [group3]
+  #   actions: [read]
+  #   uri: PG:hey:yo:sure
+  #
+  # pm-read-2:
+  #   groups: [group3]
+  #   actions: [read]
+  #   uri: PM:extensions:test1:sure
+
   pm-read:
     groups: [group3]
     actions: [read]

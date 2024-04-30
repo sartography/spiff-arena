@@ -178,11 +178,14 @@ class AuthorizationService:
         if len(matching_permission_assignments) == 0:
             return False
 
-        all_permissions_permit = True
-        for permission_assignment in matching_permission_assignments:
+        return cls.all_permissions_permit(matching_permission_assignments)
+
+    @classmethod
+    def all_permissions_permit(cls, permission_assignments: list[PermissionAssignmentModel]) -> bool:
+        for permission_assignment in permission_assignments:
             if permission_assignment.grant_type == "deny":
-                all_permissions_permit = False
-        return all_permissions_permit
+                return False
+        return True
 
     @classmethod
     def target_uri_matches_actual_uri(cls, target_uri: str, actual_uri: str) -> bool:
@@ -204,6 +207,19 @@ class AuthorizationService:
         for group in GroupModel.query.all():
             db.session.delete(group)
         db.session.commit()
+
+    @classmethod
+    def is_user_allowed_to_view_process_group_with_id(cls, user: UserModel, group_identifier: str) -> bool:
+        all_permission_assignments = cls.all_permission_assignments_for_user(user)
+        matching_permission_assignments = []
+        for permission_assignment in all_permission_assignments:
+            uri = permission_assignment.permission_target.uri
+            if (
+            permission_assignment.permission == "read"
+            and (uri.startswith(f"/process-groups/{group_identifier}") or uri.startswith(f"/process-models/{group_identifier}"))
+            ):
+                matching_permission_assignments.append(permission_assignment)
+        return len(matching_permission_assignments) > 0 and cls.all_permissions_permit(matching_permission_assignments)
 
     @classmethod
     def associate_user_with_group(cls, user: UserModel, group: GroupModel) -> None:
