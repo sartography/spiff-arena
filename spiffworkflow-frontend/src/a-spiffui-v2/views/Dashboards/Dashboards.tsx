@@ -27,6 +27,8 @@ import Grid from '../../assets/icons/grid.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
 import { blue, grey, purple, red, yellow } from '@mui/material/colors';
+import { title } from 'process';
+import FilterCard from './FilterCard';
 
 export default function Dashboards() {
   const [selectedTab, setSelectedTab] = useState('myProcesses');
@@ -44,6 +46,13 @@ export default function Dashboards() {
       icon: <MonetizationOnOutlinedIcon />,
     },
     { label: 'Support', value: 'support', icon: <GroupsIcon /> },
+  ];
+
+  const filterCardData = [
+    { count: '1', title: 'New Recommended' },
+    { count: '12', title: 'Waiting for me' },
+    { count: '1', title: 'Rejected' },
+    { count: '36', title: 'Completed' },
   ];
 
   const filterSelectData = [
@@ -238,6 +247,12 @@ export default function Dashboards() {
           ))}
         </Tabs>
       </Box>
+
+      <Stack direction="row" gap={2} padding={2}>
+        {filterCardData.map((filter) => (
+          <FilterCard count={filter.count} title={filter.title} />
+        ))}
+      </Stack>
       <Stack direction="row" gap={2} padding={2}>
         <FormControl sx={{ minWidth: 300 }}>
           <InputLabel id="filter-select-label">Filter</InputLabel>
@@ -276,6 +291,7 @@ export default function Dashboards() {
             ),
           }}
         />
+
         <Stack direction="row" gap={2} padding={2}>
           <FilterAltOutlinedIcon />
           <Columns />
