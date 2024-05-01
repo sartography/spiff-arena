@@ -472,17 +472,17 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
         "required": [],
     }
 
-    SpecFileService.add_file(
+    SpecFileService.update_file(
         process_model_info,
         f"{process_model_identifier}.bpmn",
         str.encode(bpmn_template_contents),
     )
-    SpecFileService.add_file(
+    SpecFileService.update_file(
         process_model_info,
         f"{form_identifier}-schema.json",
         str.encode(json.dumps(form_schema_json)),
     )
-    SpecFileService.add_file(
+    SpecFileService.update_file(
         process_model_info,
         f"{form_identifier}-uischema.json",
         str.encode(json.dumps(form_uischema_json)),
@@ -585,7 +585,7 @@ def _create_or_update_process_model_file(
 
     file = None
     try:
-        file = SpecFileService.update_file(process_model, request_file.filename, request_file_contents, user=g.user)
+        file, _ = SpecFileService.update_file(process_model, request_file.filename, request_file_contents, user=g.user)
     except ProcessModelFileInvalidError as exception:
         raise (
             ApiError(

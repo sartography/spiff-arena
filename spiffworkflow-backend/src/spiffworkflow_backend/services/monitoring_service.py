@@ -41,10 +41,7 @@ def traces_sampler(sampling_context: Any) -> Any:
 
         # tasks_controller.task_submit
         # this is the current pain point as of 31 jan 2023.
-        if path_info and (
-            (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
-            or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
-        ):
+        if path_info and (path_info.startswith("/v1.0/process-models/") and request_method == "PUT"):
             return 1
 
     # Default sample rate for all others (replaces traces_sample_rate)

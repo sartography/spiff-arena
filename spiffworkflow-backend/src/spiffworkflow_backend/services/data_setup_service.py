@@ -10,7 +10,6 @@ from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_caller_service import CallingProcessNotFoundError
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -100,22 +99,22 @@ class DataSetupService:
 
                         all_data_store_specifications[(data_store_type, location, identifier)] = specification
 
+        current_app.logger.debug("DataSetupService.save_all_process_models() end")
+
+        ReferenceCacheService.add_new_generation(reference_objects)
+        cls._sync_data_store_models_with_specifications(all_data_store_specifications)
+
         for ref in references:
             try:
                 SpecFileService.update_caches_except_process(ref)
                 db.session.commit()
-            except CallingProcessNotFoundError as ex:
+            except Exception as ex:
                 failing_process_models.append(
                     (
                         f"{ref.relative_location}/{ref.file_name}",
                         repr(ex),
                     )
                 )
-
-        current_app.logger.debug("DataSetupService.save_all_process_models() end")
-
-        ReferenceCacheService.add_new_generation(reference_objects)
-        cls._sync_data_store_models_with_specifications(all_data_store_specifications)
 
         return failing_process_models
 

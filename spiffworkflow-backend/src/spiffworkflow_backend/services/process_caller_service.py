@@ -18,18 +18,18 @@ class CallingProcessNotFoundError(Exception):
 class ProcessCallerService:
     @staticmethod
     def count() -> int:
-        return ProcessCallerCacheModel.query.count()  # type: ignore
+        return ProcessCallerRelationshipModel.query.count()  # type: ignore
 
     @staticmethod
     def clear_cache() -> None:
-        db.session.query(ProcessCallerCacheModel).delete()
+        db.session.query(ProcessCallerRelationshipModel).delete()
 
     @staticmethod
-    def clear_cache_for_process_ids(process_ids: list[str]) -> None:
+    def clear_cache_for_process_ids(reference_cache_ids: list[int]) -> None:
         db.session.query(ProcessCallerCacheModel).filter(
             or_(
-                ProcessCallerCacheModel.process_identifier.in_(process_ids),
-                ProcessCallerCacheModel.calling_process_identifier.in_(process_ids),
+                ProcessCallerRelationshipModel.called_reference_cache_process_id.in_(reference_cache_ids),
+                ProcessCallerRelationshipModel.calling_reference_cache_process_id.in_(reference_cache_ids),
             )
         ).delete()
 
@@ -37,9 +37,7 @@ class ProcessCallerService:
     def add_caller(process_id: str, called_process_ids: list[str]) -> None:
         reference_cache_records = (
             ReferenceCacheModel.basic_query()
-            .filter(
-                ReferenceCacheModel.identifier.in_(called_process_ids + [process_id])  # type: ignore
-            )
+            .filter(ReferenceCacheModel.identifier.in_(called_process_ids + [process_id]))  # type: ignore
             .all()
         )
         reference_cache_dict = {r.identifier: r.id for r in reference_cache_records}
@@ -52,11 +50,9 @@ class ProcessCallerService:
                 raise CalledProcessNotFoundError(
                     f"Could not find called process id '{called_process_id}' in reference_cache table."
                 )
-            db.session.add(
-                ProcessCallerRelationshipModel(
-                    called_reference_cache_process_id=reference_cache_dict[called_process_id],
-                    calling_reference_cache_process_id=reference_cache_dict[process_id],
-                )
+            ProcessCallerRelationshipModel.insert_or_update(
+                called_reference_cache_process_id=reference_cache_dict[called_process_id],
+                calling_reference_cache_process_id=reference_cache_dict[process_id],
             )
 
     @staticmethod

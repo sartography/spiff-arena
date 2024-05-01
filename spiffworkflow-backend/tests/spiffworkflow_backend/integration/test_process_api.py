@@ -663,6 +663,7 @@ class TestProcessApi(BaseTest):
             "/v1.0/processes/callers/Level2",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
         # We should get 1 back, Level1 calls Level2
         assert len(response.json) == 1

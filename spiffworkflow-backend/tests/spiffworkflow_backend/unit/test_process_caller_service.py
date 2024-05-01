@@ -2,8 +2,11 @@ from collections.abc import Generator
 
 import pytest
 from flask.app import Flask
+from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller import ProcessCallerCacheModel
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -23,16 +26,62 @@ def with_no_process_callers(with_clean_cache: None) -> Generator[None, None, Non
 
 @pytest.fixture()
 def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, None]:
-    db.session.add(ProcessCallerCacheModel(process_identifier="called_once", calling_process_identifier="one_caller"))
+    cache_generation = CacheGenerationModel(cache_table="reference_cache")
+    db.session.add(cache_generation)
+    db.session.commit()
+    called_cache = ReferenceCacheModel.from_params(
+        identifier="called_once",
+        type="process",
+        display_name="called_once",
+        file_name="called_once",
+        relative_location="called_once",
+        use_current_cache_generation=True,
+    )
+    calling_cache = ReferenceCacheModel.from_params(
+        identifier="calling_cache",
+        type="process",
+        display_name="calling_cache",
+        file_name="calling_cache",
+        relative_location="calling_cache",
+        use_current_cache_generation=True,
+    )
+    db.session.add(called_cache)
+    db.session.add(calling_cache)
+    db.session.commit()
+    caller_relationship = ProcessCallerRelationshipModel(
+        called_reference_cache_process_id=called_cache.id, calling_reference_cache_process_id=calling_cache.id
+    )
+    db.session.add(caller_relationship)
     db.session.commit()
     yield
 
 
 @pytest.fixture()
 def with_multiple_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
-    db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="one_caller"))
-    db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="two_caller"))
-    db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="three_caller"))
+    called_cache = ReferenceCacheModel(identifier="called_many", type="process")
+    calling_cache_one = ReferenceCacheModel(identifier="one_caller", type="process")
+    calling_cache_two = ReferenceCacheModel(identifier="two_caller", type="process")
+    calling_cache_three = ReferenceCacheModel(identifier="three_caller", type="process")
+    db.session.add(called_cache)
+    db.session.add(calling_cache_one)
+    db.session.add(calling_cache_two)
+    db.session.add(calling_cache_three)
+    db.session.commit()
+    db.session.add(
+        ProcessCallerRelationshipModel(
+            called_reference_cache_process_id=called_cache.id, calling_reference_cache_process_id=calling_cache_one.id
+        )
+    )
+    db.session.add(
+        ProcessCallerRelationshipModel(
+            called_reference_cache_process_id=called_cache.id, calling_reference_cache_process_id=calling_cache_two.id
+        )
+    )
+    db.session.add(
+        ProcessCallerRelationshipModel(
+            called_reference_cache_process_id=called_cache.id, calling_reference_cache_process_id=calling_cache_three.id
+        )
+    )
     db.session.commit()
     yield
 
@@ -55,7 +104,9 @@ class TestProcessCallerService(BaseTest):
         assert ProcessCallerService.count() == 0
 
     def test_can_clear_the_cache_for_process_id(self, with_single_process_caller: None) -> None:
-        ProcessCallerService.clear_cache_for_process_ids(["called_once"])
+        reference_cache = ReferenceCacheModel.query.filter_by(identifier="called_once").first()
+        assert reference_cache is not None
+        ProcessCallerService.clear_cache_for_process_ids([reference_cache.id])
         assert ProcessCallerService.count() == 0
 
     def test_can_clear_the_cache_for_calling_process_id(self, with_multiple_process_callers: None) -> None:

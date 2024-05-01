@@ -17,6 +17,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_enabled_for_process_model,
@@ -47,7 +48,6 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -125,17 +125,20 @@ def process_list() -> Any:
 
 # if we pass in bpmn_process_identifiers of [a], a is "called" and we want to find which processes are *callers* of a
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
-    # callers = ProcessCallerService.callers(bpmn_process_identifiers)
+    called_reference_alias = aliased(ReferenceCacheModel)
     references = (
         ReferenceCacheModel.basic_query()
         .join(
             ProcessCallerRelationshipModel,
-            ProcessCallerRelationshipModel.called_reference_cache_process_id == ReferenceCacheModel.id,
+            ProcessCallerRelationshipModel.calling_reference_cache_process_id == ReferenceCacheModel.id,
         )
-        .filter(ReferenceCacheModel.type == "process")
-        .filter(ReferenceCacheModel.identifier.in_(bpmn_process_identifiers))  # type: ignore
-        .all()
-    )
+        .join(
+            called_reference_alias,
+            called_reference_alias.id == ProcessCallerRelationshipModel.called_reference_cache_process_id,
+        )
+        .filter(called_reference_alias.identifier.in_(bpmn_process_identifiers))
+    ).all()
+
     return ReferenceSchema(many=True).dump(references)
 
 
