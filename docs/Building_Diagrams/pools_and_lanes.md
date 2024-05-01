@@ -70,3 +70,46 @@ Remember that each pool requires Lane configuration, even if it contains just a 
 | --- | --- | --- |
 | ![participant_sales](images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
 | ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
+
+### Example: Using Lanes and Pools for Petty Cash Request Process
+This example demonstrates the application of Lanes and pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization. 
+
+The process is structured around different tasks allocated to  lane and pools, emphasizing role-based access and task execution.
+
+#### BPMN Diagram
+![Lanes and Pools Example](images/lanes_pools_example_1.png)
+
+**Process Flow:**
+
+1. **Start Task**: The workflow kicks off with start event signaling the initiation of a petty cash request.
+
+2. **User Task: Petty Cash Request**: This task uses a form to collect petty cash requests, including the requested amount and the reason for the request.
+
+    ![Lanes and Pools Example](images/lanes_pools_example_2.png)
+
+3. **Script Task: Assign Lanes** : This script dynamically designates the lane owner for the next task based on the user's role, ensuring the "Cashier" is set as the lane owner for subsequent approval tasks.
+
+    **Script**:
+     ```python
+     requested_by = get_current_user()['username']
+     lane_owners = {"Cashier": [get_current_user()['username']]}
+     ```
+     
+   The process transitions from the Requester Lane to the Cashier Lane within the Cashier Pool for approval.
+
+5. **User Task: Approve Petty Cash**: In this task, cashiers review and approve the petty cash request, recording the approver’s name for accountability.
+    ![Lanes and Pools Example](images/lanes_pools_example_3.png)
+
+   After approval, the workflow returns to the Requester Lane for final confirmation and display of the approval outcome.
+
+7. **Manual Task: Display Output**:
+
+   **Display Message**:
+     ```
+     #### Your petty cash request for {{amount}} has been approved by {{approved_by}}
+     ```
+     This message informs the requester of the approval status, including the approved amount and the name of the approver. After manual task, marks the end of the process.
+    <img src= "images/lanes_pools_example_4.png" style="border: 2px solid grey;">
+
+#### Conclusion
+This BPMN diagram effectively uses Lanes and pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized. The dynamic assignment of lane owners and the structured flow between lanes ensure that the process is both efficient and secure, adhering to organizational protocols.
