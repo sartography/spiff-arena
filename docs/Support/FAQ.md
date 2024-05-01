@@ -393,7 +393,8 @@ Yes, SpiffWorkflow is well-suited for integrating with external systems, includi
    - Workflows in SpiffWorkflow can be triggered from an external CRM via API endpoints. This capability enables you to start workflows in response to specific events or conditions within the CRM, creating a responsive and interconnected system environment.
 
 **Example and Resources**:
-   - For practical implementation, refer to examples and guides available on SpiffWorkflow’s documentation site, such as the [external services integration example](https://spiffdemo.org/process-groups/examples:2-in-depth:2-2-external-services). This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
+
+For practical implementation, refer to examples and guides available on SpiffWorkflow’s documentation site, such as the [external services integration example](https://spiffdemo.org/process-groups/examples:2-in-depth:2-2-external-services). This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
 By adjusting the return value of your script task's `execute` method and understanding the underlying mechanics of task state management in SpiffWorkflow, you can effectively control the flow of your workflow processes.
 
 ### **40: Event Design in SpiffWorkflow**
@@ -406,28 +407,15 @@ By adjusting the return value of your script task's `execute` method and underst
    - **Event Translation and Messaging:** External systems should translate their events into SpiffWorkflow's format and call `send_events` to trigger the workflow. SpiffWorkflow collects all unhandled events, which the workflow system should periodically check using `get_events`. This process allows for the translation and sending of these events to external systems.
    - **Practical Application:** In real-world applications, tasks like UserTasks can be mapped to ApprovalTasks or FormTasks, and ServiceTasks can be mapped to API calls to external systems. The approach to handling events or messages, such as using RabbitMQ for pub/sub events or direct messaging via email or SMS, depends on the specific requirements and design of the workflow system.
 
-### **41: Integration with External Systems**
 
-**Q:**  Can SpiffWorkflow be used to integrate with external systems, such as a CRM?
-
-**A:** Yes, SpiffWorkflow is well-suited for integrating with external systems, including CRM platforms. SpiffWorkflow can interact with these systems through various mechanisms to enhance your workflow capabilities.
-
-- **Service Tasks for External Communication**: SpiffWorkflow supports the use of Service Tasks to connect to external applications like a CRM. These tasks can perform operations such as showing user dialogs, creating, reading, updating, and deleting (CRUD) objects within the CRM.
-
-- **Control and Automation**: You can control your CRM directly from the workflow engine, allowing for dynamic interactions based on workflow conditions. This includes automating data exchange between SpiffWorkflow and the CRM to streamline processes and reduce manual intervention.
-
-- **API Triggers**: Workflows in SpiffWorkflow can be triggered from an external CRM via API endpoints. This capability enables you to start workflows in response to specific events or conditions within the CRM, creating a responsive and interconnected system environment.
-
-For practical implementation, refer to examples and guides available on SpiffWorkflow’s documentation site, such as the [external services integration example](https://spiffdemo.org/process-groups/examples:2-in-depth:2-2-external-services). This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
-
-### **42: SpiffWorkflow Backend Support**
+### **41: SpiffWorkflow Backend Support**
 
 **Q:** How does the SpiffWorkflow backend support different worker types and modular integrations?
 
 **A:**
 The SpiffWorkflow backend is highly modular, supporting various worker types through well-defined mechanisms:
 - **External APIs and Service Tasks:** We utilize Service Tasks and a Connector Proxy to facilitate connections to external APIs. This setup allows for parameters of service calls to be directly accessible under the Service Task properties in the BPMN diagram, enabling custom task configurations.
-- **Custom Tasks and Workflow Nesting:** SpiffWorkflow allows the nesting of workflows and the creation of custom tasks through service tasks, scripts, and Decision Model and Notation (DMN). This flexibility supports embedding reusable BPMN diagrams within other diagrams as Call Activities, fostering extensive customization and reusability.
+- **Custom Tasks and Workflow Nesting:** SpiffWorkflow allows the nesting of workflows and the creation of custom tasks through service tasks, scripts, and Decision Model and Notation (DMN). 
 
 
 **Q:** Do multiple instances of the SpiffWorkflow backend require a shared filesystem for storing process models?
@@ -445,7 +433,7 @@ print(current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND'])
 ```
 If issues persist, consider deploying an updated version of your backend from the main branch, which might include improved error messages that can help diagnose the problem.
 
-### **43: Managing Service Task Connectors**
+### **42: Managing Service Task Connectors**
 
 **Q:** Is it possible to manage service-task connectors via the API instead of including them in the main deployment?
 
@@ -454,7 +442,7 @@ Service-task connectors in SpiffWorkflow are typically included in the deploymen
 
 For a detailed guide on setting up and managing a connector proxy in just five minutes, refer to the [Connector Proxy Quick Start Guide](https://github.com/sartography/spiff-arena/wiki/Connector-Proxy-in-5-mins).
 
-### **44: Implementing and Troubleshooting Service Tasks in SpiffWorkflow**
+### **43: Implementing and Troubleshooting Service Tasks in SpiffWorkflow**
 
 **Q:** How can I create a process that retrieves data from a REST endpoint using a service task in SpiffWorkflow?
 
