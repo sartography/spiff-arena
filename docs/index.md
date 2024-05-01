@@ -8,6 +8,14 @@ Getting_Started/quick_start.md
 
 ```{toctree}
 :maxdepth: 1
+:caption: Technical Docs
+dev/index.md
+dev/backend.md
+dev/frontend.md
+```
+
+```{toctree}
+:maxdepth: 1
 :caption: Building Diagrams
 Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
