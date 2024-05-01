@@ -23,14 +23,14 @@ import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { blue, grey, red, yellow } from '@mui/material/colors';
+import { green } from '@carbon/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
-import GridIcon from '../../assets/icons/grid.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
 import useProcessInstances from '../../hooks/useProcessInstances';
-import { wrap } from 'module';
+import ProcessInstanceCard from './ProcessInstanceCard';
 
 export default function Dashboards() {
   const [selectedTab, setSelectedTab] = useState('myProcesses');
@@ -38,8 +38,11 @@ export default function Dashboards() {
   // TODO: Type of this doesn't seem to be ProcessInstance
   // Find out and remove "any""
   const [processInstanceColumns, setProcessInstanceColumns] = useState<
-    Record<string, any>
-  >({});
+    GridColDef[]
+  >([]);
+  const [processInstanceRows, setProcessInstanceRows] = useState<
+    GridRowsProp[]
+  >([]);
 
   const { processInstances } = useProcessInstances();
 
@@ -73,162 +76,14 @@ export default function Dashboards() {
 
   const chipBackground = (params: any) => {
     switch (params.value) {
-      case 'High':
-        return { backgroundColor: red[50], color: red[900], width: '100%' };
-      case 'Medium':
-        return {
-          backgroundColor: yellow[100],
-          color: grey[800],
-          width: '100%',
-        };
-      case 'Low':
+      case 'Completed':
         return { backgroundColor: blue[50], color: blue[900], width: '100%' };
+      case 'Started':
+        return { backgroundColor: green[10], color: green[90], width: '100%' };
       default:
         return { backgroundColor: grey[100], color: grey[900], width: '100%' };
     }
   };
-
-  const columns: GridColDef[] = [
-    {
-      field: 'id',
-      headerName: 'ID#',
-      flex: 0.5,
-      headerAlign: 'center',
-      align: 'center',
-    },
-    {
-      field: 'processName',
-      headerName: 'Process Name',
-      flex: 1,
-      headerAlign: 'center',
-    },
-    { field: 'details', headerName: 'Details', flex: 1, headerAlign: 'center' },
-    {
-      field: 'lastUpdate',
-      headerName: 'Last Update',
-      flex: 0.5,
-    },
-    {
-      field: 'priorityLevel',
-      headerName: 'Priority Level',
-      flex: 1,
-      headerAlign: 'center',
-      align: 'center',
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          variant="filled"
-          sx={chipBackground(params)}
-        />
-      ),
-    },
-    {
-      field: 'lastMilestone',
-      headerName: 'Last Milestone',
-      flex: 1,
-      headerAlign: 'center',
-      align: 'center',
-    },
-  ];
-
-  const rows: GridRowsProp = [
-    {
-      id: '5027',
-      processName: 'Request Goods or Services',
-      details: '$5k for 5 software licenses',
-      lastUpdate: '2 days ago',
-      priorityLevel: 'High',
-      lastMilestone: 'Budget Approval',
-    },
-    {
-      id: '5028',
-      processName: 'Request some other things',
-      details: '$50 for some other things',
-      lastUpdate: '3 days ago',
-      priorityLevel: 'Medium',
-      lastMilestone: 'Data Analysis',
-    },
-    {
-      id: '5029',
-      processName: 'Request More Things',
-      details: '$2k for 2 more things',
-      lastUpdate: '4 days ago',
-      priorityLevel: 'Low',
-      lastMilestone: 'Edit Approval',
-    },
-    {
-      id: '50271',
-      processName: 'Request Goods or Services',
-      details: '$5k for 5 software licenses',
-      lastUpdate: '2 days ago',
-      priorityLevel: 'High',
-      lastMilestone: 'Budget Approval',
-    },
-    {
-      id: '50281',
-      processName: 'Request some other things',
-      details: '$50 for some other things',
-      lastUpdate: '3 days ago',
-      priorityLevel: 'Medium',
-      lastMilestone: 'Data Analysis',
-    },
-    {
-      id: '50291',
-      processName: 'Request More Things',
-      details: '$2k for 2 more things',
-      lastUpdate: '4 days ago',
-      priorityLevel: 'Low',
-      lastMilestone: 'Edit Approval',
-    },
-    {
-      id: '50272',
-      processName: 'Request Goods or Services',
-      details: '$5k for 5 software licenses',
-      lastUpdate: '2 days ago',
-      priorityLevel: 'High',
-      lastMilestone: 'Budget Approval',
-    },
-    {
-      id: '50282',
-      processName: 'Request some other things',
-      details: '$50 for some other things',
-      lastUpdate: '3 days ago',
-      priorityLevel: 'Medium',
-      lastMilestone: 'Data Analysis',
-    },
-    {
-      id: '50292',
-      processName: 'Request More Things',
-      details: '$2k for 2 more things',
-      lastUpdate: '4 days ago',
-      priorityLevel: 'Low',
-      lastMilestone: 'Edit Approval',
-    },
-    {
-      id: '50273',
-      processName: 'Request Goods or Services',
-      details: '$5k for 5 software licenses',
-      lastUpdate: '2 days ago',
-      priorityLevel: 'High',
-      lastMilestone: 'Budget Approval',
-    },
-    {
-      id: '50283',
-      processName: 'Request some other things',
-      details: '$50 for some other things',
-      lastUpdate: '3 days ago',
-      priorityLevel: 'Medium',
-      lastMilestone: 'Data Analysis',
-    },
-    {
-      id: '50293',
-      processName: 'Request More Things',
-      details: '$2k for 2 more things',
-      lastUpdate: '4 days ago',
-      priorityLevel: 'Low',
-      lastMilestone: 'Edit Approval',
-    },
-  ];
 
   type TabData = { label: string; value: string; icon: ReactNode };
   const handleTabChange = (tab: TabData) => {
@@ -242,18 +97,36 @@ export default function Dashboards() {
 
   useEffect(() => {
     if ('report_metadata' in processInstances) {
-      console.log(processInstances.results);
       const mappedColumns = processInstances.report_metadata?.columns.map(
         (column: Record<string, any>) => ({
           field: column.accessor,
           headerName: column.Header,
-          flex: 1,
-          headerAlign: 'center',
-          align: 'center',
+          flex: (() => {
+            switch (column.Header) {
+              case 'Id':
+                return 0.5;
+              case 'Start':
+              case 'End':
+                return 0.75;
+              default:
+                return 1;
+            }
+          })(),
+          renderCell:
+            column.Header === 'Last milestone'
+              ? (params: Record<string, any>) => (
+                  <Chip
+                    label={params.value}
+                    variant="filled"
+                    sx={chipBackground(params)}
+                  />
+                )
+              : null,
         })
       );
 
       setProcessInstanceColumns(mappedColumns);
+      setProcessInstanceRows(processInstances.results);
     }
   }, [processInstances]);
 
@@ -337,13 +210,22 @@ export default function Dashboards() {
             </Stack>
           </Stack>
 
-          <DataGrid
-            sx={{
-              '&, [class^=MuiDataGrid]': { border: 'none' },
-            }}
-            rows={rows}
-            columns={columns}
-          />
+          <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+            <DataGrid
+              sx={{
+                '&, [class^=MuiDataGrid]': { border: 'none' },
+              }}
+              rows={processInstanceRows}
+              columns={processInstanceColumns}
+            />
+          </Box>
+          <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+            <Stack>
+              {processInstanceRows.map((instance: Record<string, any>) => (
+                <ProcessInstanceCard instance={instance} />
+              ))}
+            </Stack>
+          </Box>
         </Stack>
       </Grid>
     </Grid>

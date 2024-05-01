@@ -1,9 +1,9 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Box, Container, Divider, Grid, Stack } from '@mui/material';
+import { Box, Container, Divider, Grid } from '@mui/material';
+import { grey } from '@mui/material/colors';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { globalTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
-import { grey } from '@mui/material/colors';
 
 export default function SpiffUIV2() {
   const muiTheme = createTheme(globalTheme);
@@ -18,17 +18,19 @@ export default function SpiffUIV2() {
           top: 0,
           left: 0,
           alignItems: 'center',
+          width: '100%',
+          height: '100%',
         }}
       >
-        <Grid container>
+        <Grid container sx={{ height: '100%' }}>
           <Grid item>
-            <Box sx={{ display: { xs: 'none', md: 'block' } }} padding={2}>
+            <Box sx={{ display: { xs: 'none', md: 'block' }, height: '100%' }}>
               <SideMenu />
             </Box>
           </Grid>
-          <Grid item>
+          <Grid item padding={2}>
             <Divider
-              sx={{ width: '1px', height: '100%', backgroundColor: grey[200] }}
+              sx={{ width: '1px', height: '100%', backgroundColor: grey[400] }}
             />
           </Grid>
           <Grid item xs={4} sm={12} md={8} lg={9} xl={10} padding={2}>
