@@ -262,7 +262,13 @@ export default function Dashboards() {
       <Grid item xs={12}>
         <Stack>
           <Toolbar />
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
             <Tabs value={selectedTab} variant="fullWidth">
               {tabData.map((tab) => (
                 <Tab
@@ -332,7 +338,9 @@ export default function Dashboards() {
           </Stack>
 
           <DataGrid
-            sx={{ '&, [class^=MuiDataGrid]': { border: 'none' } }}
+            sx={{
+              '&, [class^=MuiDataGrid]': { border: 'none' },
+            }}
             rows={rows}
             columns={columns}
           />

@@ -18,7 +18,7 @@ export default function Toolbar() {
       <Grid item xs={12} sm={10}>
         <Box
           sx={{
-            display: 'flex',
+            display: { xs: 'none', md: 'flex' },
             justifyContent: { xs: '', sm: 'flex-end' },
             alignItems: 'center',
             height: '100%',
