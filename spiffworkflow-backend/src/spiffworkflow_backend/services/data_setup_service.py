@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_caller_service import CallingProcessNotFoundError
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -33,6 +34,7 @@ class DataSetupService:
         files = FileSystemService.walk_files_from_root_path(True, None)
         reference_objects: dict[str, ReferenceCacheModel] = {}
         all_data_store_specifications: dict[tuple[str, str, str], Any] = {}
+        references = []
 
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
@@ -46,13 +48,13 @@ class DataSetupService:
                         try:
                             reference_cache = ReferenceCacheModel.from_spec_reference(ref)
                             ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-                            SpecFileService.update_caches_except_process(ref)
                             db.session.commit()
+                            references.append(ref)
                         except Exception as ex:
                             failing_process_models.append(
                                 (
                                     f"{ref.relative_location}/{ref.file_name}",
-                                    str(ex),
+                                    repr(ex),
                                 )
                             )
                 except Exception as ex2:
@@ -97,6 +99,18 @@ class DataSetupService:
                             continue
 
                         all_data_store_specifications[(data_store_type, location, identifier)] = specification
+
+        for ref in references:
+            try:
+                SpecFileService.update_caches_except_process(ref)
+                db.session.commit()
+            except CallingProcessNotFoundError as ex:
+                failing_process_models.append(
+                    (
+                        f"{ref.relative_location}/{ref.file_name}",
+                        repr(ex),
+                    )
+                )
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
 
