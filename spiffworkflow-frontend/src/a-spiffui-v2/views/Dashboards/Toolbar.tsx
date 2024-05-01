@@ -1,4 +1,4 @@
-import { Stack, Typography, Button } from '@mui/material';
+import { Stack, Typography, Button, Grid, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NotificationBell from '../../assets/icons/notification-bell.svg';
 
@@ -8,23 +8,34 @@ export default function Toolbar() {
   };
 
   return (
-    <Stack direction="row">
-      <Stack width={210}>
+    <Grid container>
+      <Grid item xs={2}>
         <Typography variant="h4">Dashboards</Typography>
-        <Typography variant="caption">Last Updated: {showTime()}</Typography>
-      </Stack>
-      <Stack
-        width="100%"
-        direction="row"
-        flexDirection="row-reverse"
-        height={45}
-        gap={3}
-      >
-        <NotificationBell />
-        <Button title="Hello" variant="contained" startIcon={<AddIcon />}>
-          Start New Process
-        </Button>
-      </Stack>
-    </Stack>
+        <Typography variant="caption" noWrap>
+          Last Updated: {showTime()}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} sm={10}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: { xs: '', sm: 'flex-end' },
+            alignItems: 'center',
+            height: '100%',
+          }}
+          gap={2}
+        >
+          <Button
+            title="Hello"
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{ width: 200, height: 40 }}
+          >
+            Start New Process
+          </Button>
+          <NotificationBell />
+        </Box>
+      </Grid>
+    </Grid>
   );
 }

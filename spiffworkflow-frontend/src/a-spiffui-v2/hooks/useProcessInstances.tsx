@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import HttpService from '../../services/HttpService';
-import { ProcessInstance, ReportMetadata } from '../../interfaces';
+import { ReportMetadata } from '../../interfaces';
 
 export default function useProcessInstances() {
-  const [processInstances, setProcessInstances] = useState<ProcessInstance[]>(
-    []
+  // TODO: ProcessInstance type didn't seem right
+  // Find out and remove "any"
+  const [processInstances, setProcessInstances] = useState<Record<string, any>>(
+    {}
   );
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +17,9 @@ export default function useProcessInstances() {
     order_by: [],
   };
 
-  const processInstancesResult = (result: ProcessInstance[]) => {
+  // TODO: ProcessInstance didn't seem to be the right type
+  // Find out and remove "any"
+  const processInstancesResult = (result: any[]) => {
     setProcessInstances(result);
     setLoading(false);
   };
@@ -40,7 +44,7 @@ export default function useProcessInstances() {
 
   /** TanStack (React Query) trigger to do it's SWR state/cache thing */
   useQuery({
-    queryKey: ['/process-instances/for-me', {}],
+    queryKey: ['/process-instances/for-me', processInstances],
     queryFn: () => getProcessInstances(),
   });
 

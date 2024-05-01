@@ -2,6 +2,7 @@ import {
   Box,
   Chip,
   FormControl,
+  Grid,
   InputAdornment,
   InputLabel,
   ListItemIcon,
@@ -24,15 +25,21 @@ import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { blue, grey, red, yellow } from '@mui/material/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
-import Grid from '../../assets/icons/grid.svg';
+import GridIcon from '../../assets/icons/grid.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
 import useProcessInstances from '../../hooks/useProcessInstances';
+import { wrap } from 'module';
 
 export default function Dashboards() {
   const [selectedTab, setSelectedTab] = useState('myProcesses');
   const [selectedFilter, setSelectedFilter] = useState('new');
+  // TODO: Type of this doesn't seem to be ProcessInstance
+  // Find out and remove "any""
+  const [processInstanceColumns, setProcessInstanceColumns] = useState<
+    Record<string, any>
+  >({});
 
   const { processInstances } = useProcessInstances();
 
@@ -234,84 +241,103 @@ export default function Dashboards() {
   };
 
   useEffect(() => {
-    console.log(processInstances);
+    if ('report_metadata' in processInstances) {
+      console.log(processInstances.results);
+      const mappedColumns = processInstances.report_metadata?.columns.map(
+        (column: Record<string, any>) => ({
+          field: column.accessor,
+          headerName: column.Header,
+          flex: 1,
+          headerAlign: 'center',
+          align: 'center',
+        })
+      );
+
+      setProcessInstanceColumns(mappedColumns);
+    }
   }, [processInstances]);
 
   return (
-    <Stack>
-      <Toolbar />
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={selectedTab} variant="fullWidth">
-          {tabData.map((tab) => (
-            <Tab
-              label={tab.label}
-              value={tab.value}
-              onClick={() => handleTabChange(tab)}
-              icon={tab.icon}
-              iconPosition="start"
-            />
-          ))}
-        </Tabs>
-      </Box>
+    <Grid container spacing={2} xs={12}>
+      <Grid item xs={12}>
+        <Stack>
+          <Toolbar />
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={selectedTab} variant="fullWidth">
+              {tabData.map((tab) => (
+                <Tab
+                  label={tab.label}
+                  value={tab.value}
+                  onClick={() => handleTabChange(tab)}
+                  icon={tab.icon}
+                  iconPosition="start"
+                />
+              ))}
+            </Tabs>
+          </Box>
 
-      <Stack direction="row" gap={2} padding={2}>
-        {filterCardData.map((filter) => (
-          <FilterCard count={filter.count} title={filter.title} />
-        ))}
-      </Stack>
-      <Stack direction="row" gap={2} padding={2}>
-        <FormControl sx={{ minWidth: 300 }}>
-          <InputLabel id="filter-select-label">Filter</InputLabel>
-          <Select
-            labelId="filter-select-label"
-            id="filter-select"
-            value={selectedFilter}
-            label="Filter"
-            onChange={handleFilterSelectChange}
-          >
-            <MenuItem value="">
-              <ListItemIcon>
-                <FilterAltOutlinedIcon />
-              </ListItemIcon>
-              <ListItemText primary="Filter..." />
-            </MenuItem>
-            {filterSelectData.map((filter) => (
-              <MenuItem value={filter.value}>
-                <Stack direction="row" gap={2}>
-                  <FilterAltOutlinedIcon />
-                  {filter.label}
-                </Stack>
-              </MenuItem>
+          <Stack direction="row" gap={2} padding={2} sx={{ flexWrap: 'wrap' }}>
+            {filterCardData.map((filter) => (
+              <FilterCard count={filter.count} title={filter.title} />
             ))}
-          </Select>
-        </FormControl>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlinedIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+          </Stack>
+          <Stack direction="row" gap={2} padding={2} sx={{ flexWrap: 'wrap' }}>
+            <FormControl sx={{ minWidth: 300 }}>
+              <InputLabel id="filter-select-label">Filter</InputLabel>
+              <Select
+                labelId="filter-select-label"
+                id="filter-select"
+                value={selectedFilter}
+                label="Filter"
+                onChange={handleFilterSelectChange}
+              >
+                <MenuItem value="">
+                  <ListItemIcon>
+                    <FilterAltOutlinedIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Filter..." />
+                </MenuItem>
+                {filterSelectData.map((filter) => (
+                  <MenuItem value={filter.value}>
+                    <Stack direction="row" gap={2}>
+                      <FilterAltOutlinedIcon />
+                      {filter.label}
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ flexGrow: 1 }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchOutlinedIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-        <Stack direction="row" gap={2} padding={2}>
-          <FilterAltOutlinedIcon />
-          <Columns />
-          <Share />
-          <Grid />
-          <Download />
+            <Stack direction="row" gap={2} padding={2}>
+              <FilterAltOutlinedIcon />
+              <Columns />
+              <Share />
+              <Grid />
+              <Download />
+            </Stack>
+          </Stack>
+
+          <DataGrid
+            sx={{ '&, [class^=MuiDataGrid]': { border: 'none' } }}
+            rows={rows}
+            columns={columns}
+          />
         </Stack>
-      </Stack>
-
-      <DataGrid
-        sx={{ '&, [class^=MuiDataGrid]': { border: 'none' } }}
-        rows={rows}
-        columns={columns}
-      />
-    </Stack>
+      </Grid>
+    </Grid>
   );
 }
