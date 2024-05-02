@@ -14,6 +14,7 @@ dev/setup.md
 dev/backend.md
 dev/frontend.md
 dev/connector_proxy.md
+dev/process.md
 ```
 
 ```{toctree}
