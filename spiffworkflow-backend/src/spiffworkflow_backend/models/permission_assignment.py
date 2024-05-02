@@ -52,3 +52,10 @@ class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
     @validates("permission")
     def validate_permission(self, key: str, value: str) -> Any:
         return self.validate_enum_field(key, value, Permission)
+
+    def __repr__(self) -> str:
+        value = (
+            f"PermissionAssignmentModel(id={self.id}, target={self.permission_target.uri}, "
+            f"permission={self.permission}, grant_type={self.grant_type})"
+        )
+        return value

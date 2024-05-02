@@ -198,6 +198,13 @@ class AuthenticationService:
             algorithm = str(header.get("alg"))
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
             public_key: Any = None
+            jwt_decode_options = {
+                "verify_exp": False,
+                "verify_aud": False,
+                "verify_iat": current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_IAT"],
+                "verify_nbf": current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_NBF"],
+                "leeway": current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY"],
+            }
 
             if "x5c" not in json_key_configs:
                 public_key = cls.public_key_from_rsa_public_numbers(json_key_configs)
@@ -214,7 +221,7 @@ class AuthenticationService:
                 public_key,
                 algorithms=[algorithm],
                 audience=cls.valid_audiences(authentication_identifier)[0],
-                options={"verify_exp": False, "verify_aud": False},
+                options=jwt_decode_options,
             )
         return cast(dict, parsed_token)
 
@@ -303,8 +310,8 @@ class AuthenticationService:
         valid = True
         now = round(time.time())
 
-        # give a 5 second leeway to iat in case keycloak server time doesn't match backend server
-        iat_clock_skew_leeway = 5
+        # TODO: use verify_exp True in jwt decode to check this instead
+        iat_clock_skew_leeway = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY"]
 
         iss = decoded_token["iss"]
         aud = decoded_token["aud"] if "aud" in decoded_token else None

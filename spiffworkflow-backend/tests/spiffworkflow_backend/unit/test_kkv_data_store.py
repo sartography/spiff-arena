@@ -4,12 +4,16 @@ from typing import Any
 
 import pytest
 from flask.app import Flask
+from flask.testing import FlaskClient
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 @dataclass
@@ -42,7 +46,7 @@ def with_key1_key2_record(with_clean_data_store: KKVDataStoreModel) -> Generator
     yield with_clean_data_store
 
 
-class TestKKVDataStore(BaseTest):
+class TestKkvDataStore(BaseTest):
     """Infer from class name."""
 
     def _entry_count(self, model: KKVDataStoreModel) -> int:
@@ -159,3 +163,41 @@ class TestKKVDataStore(BaseTest):
         kkv_data_store.get(my_task)
         result = my_task.data["the_id"]("newKey3", "newKey4")
         assert result == "newValue2"
+
+    def test_can_retrieve_data_store_from_script_task(
+        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_clean_data_store: KKVDataStoreModel
+    ) -> None:
+        process_model_identifier = "simple_data_store"
+        bpmn_file_location = "data_store_simple"
+        bpmn_file_name = "data-store-simple.bpmn"
+        process_model = load_test_spec(
+            process_model_id=process_model_identifier,
+            bpmn_file_name=bpmn_file_name,
+            process_model_source_directory=bpmn_file_location,
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == "complete"
+
+    def test_can_retrieve_data_store_from_script_task_with_instructions(
+        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_clean_data_store: KKVDataStoreModel
+    ) -> None:
+        process_model_identifier = "simple_data_store"
+        bpmn_file_location = "data_store_simple"
+        bpmn_file_name = "data-store-simple.bpmn"
+        process_model = load_test_spec(
+            process_model_id=process_model_identifier,
+            bpmn_file_name=bpmn_file_name,
+            process_model_source_directory=bpmn_file_location,
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="run_until_user_message")
+        assert process_instance.status == "running"
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance is not None
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == "complete"
