@@ -18,11 +18,17 @@ export default function SpiffUIV2() {
           top: 0,
           left: 0,
           alignItems: 'center',
+          height: '100%',
         }}
       >
-        <Grid container>
+        <Grid container sx={{ height: '100%' }}>
           <Grid item>
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Box
+              sx={{
+                display: { xs: 'none', md: 'block' },
+                height: '100%',
+              }}
+            >
               <SideMenu />
             </Box>
           </Grid>

@@ -35,8 +35,8 @@ export default function SideMenu() {
   ];
 
   return (
-    <Stack padding={2} gap={2} height="100vh">
-      <Stack height="inherit">
+    <Stack padding={2} gap={2} height="100%">
+      <Stack height="100%">
         <Box width="85%">
           <SpiffLogo />
         </Box>
