@@ -52,6 +52,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
@@ -125,20 +126,7 @@ def process_list() -> Any:
 
 # if we pass in bpmn_process_identifiers of [a], a is "called" and we want to find which processes are *callers* of a
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
-    called_reference_alias = aliased(ReferenceCacheModel)
-    references = (
-        ReferenceCacheModel.basic_query()
-        .join(
-            ProcessCallerRelationshipModel,
-            ProcessCallerRelationshipModel.calling_reference_cache_process_id == ReferenceCacheModel.id,
-        )
-        .join(
-            called_reference_alias,
-            called_reference_alias.id == ProcessCallerRelationshipModel.called_reference_cache_process_id,
-        )
-        .filter(called_reference_alias.identifier.in_(bpmn_process_identifiers))
-    ).all()
-
+    references = ReferenceCacheService.get_reference_cache_entries_calling_process(bpmn_process_identifiers)
     return ReferenceSchema(many=True).dump(references)
 
 

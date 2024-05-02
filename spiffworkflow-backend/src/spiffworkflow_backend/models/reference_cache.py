@@ -13,6 +13,7 @@ from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 
 
 # SpecReferenceNotFoundError
@@ -82,6 +83,20 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     # is_primary = db.Column(db.Boolean())
 
     generation = relationship(CacheGenerationModel)
+
+    process_callers = relationship(
+        "ProcessCallerRelationshipModel",
+        foreign_keys="[ProcessCallerRelationshipModel.called_reference_cache_process_id]",
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
+
+    calling_processes = relationship(
+        "ProcessCallerRelationshipModel",
+        foreign_keys="[ProcessCallerRelationshipModel.calling_reference_cache_process_id]",
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
 
     def relative_path(self) -> str:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)

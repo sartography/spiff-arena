@@ -1,3 +1,5 @@
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
+from sqlalchemy.orm import aliased
 from sqlalchemy import insert
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
@@ -49,3 +51,20 @@ class ReferenceCacheService:
             return reference.relative_location  # type: ignore
 
         return None
+
+    @classmethod
+    def get_reference_cache_entries_calling_process(cls, bpmn_process_identifiers: list[str]) -> list[ReferenceCacheModel]:
+        called_reference_alias = aliased(ReferenceCacheModel)
+        references: list[ReferenceCacheModel] = (
+            ReferenceCacheModel.basic_query()
+            .join(
+                ProcessCallerRelationshipModel,
+                ProcessCallerRelationshipModel.calling_reference_cache_process_id == ReferenceCacheModel.id,
+            )
+            .join(
+                called_reference_alias,
+                called_reference_alias.id == ProcessCallerRelationshipModel.called_reference_cache_process_id,
+            )
+            .filter(called_reference_alias.identifier.in_(bpmn_process_identifiers))
+        ).all()
+        return references
