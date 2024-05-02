@@ -472,21 +472,13 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
         "required": [],
     }
 
-    SpecFileService.update_file(
-        process_model_info,
-        f"{process_model_identifier}.bpmn",
-        str.encode(bpmn_template_contents),
-    )
-    SpecFileService.update_file(
-        process_model_info,
-        f"{form_identifier}-schema.json",
-        str.encode(json.dumps(form_schema_json)),
-    )
-    SpecFileService.update_file(
-        process_model_info,
-        f"{form_identifier}-uischema.json",
-        str.encode(json.dumps(form_uischema_json)),
-    )
+    files_to_update = {
+        f"{process_model_identifier}.bpmn": str.encode(bpmn_template_contents),
+        f"{form_identifier}-schema.json": str.encode(json.dumps(form_schema_json)),
+        f"{form_identifier}-uischema.json": str.encode(json.dumps(form_uischema_json)),
+    }
+    for file_name, contents in files_to_update.items():
+        SpecFileService.update_file(process_model_info, file_name, contents)
 
     _commit_and_push_to_git(f"User: {g.user.username} created process model via natural language: {process_model_info.id}")
 

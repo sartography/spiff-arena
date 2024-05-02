@@ -274,13 +274,6 @@ class SpecFileService(FileSystemService):
             db.session.delete(record)
 
         ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
-        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
-
-    @staticmethod
-    def clear_caches() -> None:
-        db.session.query(ReferenceCacheModel).delete()
-        ProcessCallerService.clear_cache()
-        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
     def update_process_cache(ref: Reference) -> None:
