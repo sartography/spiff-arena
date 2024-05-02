@@ -22,7 +22,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { blue, grey, red, yellow } from '@mui/material/colors';
+import { blue, grey } from '@mui/material/colors';
 import { green } from '@carbon/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
@@ -130,8 +130,8 @@ export default function Dashboards() {
   }, [processInstances]);
 
   return (
-    <Grid container spacing={2}>
-      <Grid item>
+    <Grid container spacing={2} width="100%">
+      <Grid item sx={{ width: '100%' }}>
         <Stack>
           <Toolbar />
           <Box
@@ -209,7 +209,11 @@ export default function Dashboards() {
             </Stack>
           </Stack>
 
-          <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+          <Box
+            sx={{
+              display: { xs: 'none', lg: 'block' },
+            }}
+          >
             <DataGrid
               sx={{
                 '&, [class^=MuiDataGrid]': { border: 'none' },
@@ -218,7 +222,11 @@ export default function Dashboards() {
               columns={processInstanceColumns}
             />
           </Box>
-          <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+          <Box
+            sx={{
+              display: { xs: 'block', lg: 'none' },
+            }}
+          >
             <Stack
               gap={2}
               sx={{

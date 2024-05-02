@@ -12,7 +12,6 @@ import Settings from '../../assets/icons/settings.svg';
 import Moon from '../../assets/icons/moon.svg';
 import Logout from '../../assets/icons/logout.svg';
 import UserService from '../../../services/UserService';
-import { grey } from '@mui/material/colors';
 
 export default function SideMenu() {
   const navMenuItemData = [
@@ -36,7 +35,7 @@ export default function SideMenu() {
   ];
 
   return (
-    <Stack padding={2} gap={2} height="100%">
+    <Stack padding={2} gap={2} height="100vh">
       <Stack height="inherit">
         <Box width="85%">
           <SpiffLogo />

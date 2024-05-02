@@ -18,21 +18,15 @@ export default function SpiffUIV2() {
           top: 0,
           left: 0,
           alignItems: 'center',
-          width: '100%',
-          height: '100%',
         }}
       >
-        <Grid container sx={{ height: '100%' }}>
+        <Grid container>
           <Grid item>
-            <Box sx={{ display: { xs: 'none', md: 'block' }, height: '100%' }}>
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
               <SideMenu />
             </Box>
           </Grid>
-          <Grid
-            item
-            padding={2}
-            sx={{ display: { xs: 'none', md: 'block' }, height: '100%' }}
-          >
+          <Grid item padding={2} sx={{ display: { xs: 'none', md: 'block' } }}>
             <Divider
               orientation="vertical"
               variant="middle"
@@ -43,7 +37,7 @@ export default function SpiffUIV2() {
               }}
             />
           </Grid>
-          <Grid item xs={4} sm={12} md={8} lg={9} xl={10} padding={2}>
+          <Grid item xs={12} md={8} lg={9} padding={2}>
             <Dashboards />
           </Grid>
         </Grid>
