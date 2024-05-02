@@ -34,15 +34,19 @@ def traces_sampler(sampling_context: Any) -> Any:
     if sampling_context["parent_sampled"] is not None:
         return sampling_context["parent_sampled"]
 
-    if "wsgi_environ" in sampling_context:
-        wsgi_environ = sampling_context["wsgi_environ"]
-        path_info = wsgi_environ.get("PATH_INFO")
-        request_method = wsgi_environ.get("REQUEST_METHOD")
-
-        # tasks_controller.task_submit
-        # this is the current pain point as of 31 jan 2023.
-        if path_info and (path_info.startswith("/v1.0/process-models/") and request_method == "PUT"):
-            return 1
+    # sample some requests at a higher rate
+    # if "wsgi_environ" in sampling_context:
+    #     wsgi_environ = sampling_context["wsgi_environ"]
+    #     path_info = wsgi_environ.get("PATH_INFO")
+    #     request_method = wsgi_environ.get("REQUEST_METHOD")
+    #
+    #     # tasks_controller.task_submit
+    #     # this is the current pain point as of 31 jan 2023.
+    #     if path_info and (
+    #         (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
+    #         or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
+    #     ):
+    #         return 1
 
     # Default sample rate for all others (replaces traces_sample_rate)
     return 0.01
