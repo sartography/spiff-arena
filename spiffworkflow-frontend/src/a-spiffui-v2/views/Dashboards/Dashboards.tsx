@@ -87,7 +87,6 @@ export default function Dashboards() {
 
   type TabData = { label: string; value: string; icon: ReactNode };
   const handleTabChange = (tab: TabData) => {
-    console.log(tab);
     setSelectedTab(tab.value);
   };
 
@@ -131,8 +130,8 @@ export default function Dashboards() {
   }, [processInstances]);
 
   return (
-    <Grid container spacing={2} xs={12}>
-      <Grid item xs={12}>
+    <Grid container spacing={2}>
+      <Grid item>
         <Stack>
           <Toolbar />
           <Box
@@ -188,7 +187,7 @@ export default function Dashboards() {
             </FormControl>
             <Box sx={{ flexGrow: 1 }}>
               <TextField
-                fullWidth
+                sx={{ width: { xs: 300, sm: '100%' } }}
                 variant="outlined"
                 placeholder="Search"
                 InputProps={{
@@ -220,7 +219,14 @@ export default function Dashboards() {
             />
           </Box>
           <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
-            <Stack>
+            <Stack
+              gap={2}
+              sx={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+              }}
+            >
               {processInstanceRows.map((instance: Record<string, any>) => (
                 <ProcessInstanceCard instance={instance} />
               ))}

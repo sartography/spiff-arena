@@ -28,9 +28,19 @@ export default function SpiffUIV2() {
               <SideMenu />
             </Box>
           </Grid>
-          <Grid item padding={2}>
+          <Grid
+            item
+            padding={2}
+            sx={{ display: { xs: 'none', md: 'block' }, height: '100%' }}
+          >
             <Divider
-              sx={{ width: '1px', height: '100%', backgroundColor: grey[400] }}
+              orientation="vertical"
+              variant="middle"
+              sx={{
+                width: '1px',
+                height: '100%',
+                backgroundColor: grey[600],
+              }}
             />
           </Grid>
           <Grid item xs={4} sm={12} md={8} lg={9} xl={10} padding={2}>

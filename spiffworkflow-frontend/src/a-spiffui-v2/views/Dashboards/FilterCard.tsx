@@ -12,13 +12,13 @@ export default function FilterCard({
     <Stack
       direction="row"
       gap={2}
-      flex={1}
       padding={3}
       alignItems="center"
       sx={{
         backgroundColor: grey[200],
         height: 72,
         borderRadius: 2,
+        flexGrow: 1,
         ':hover': { backgroundColor: purple[50] },
       }}
     >
