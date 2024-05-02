@@ -10,8 +10,10 @@ Getting_Started/quick_start.md
 :maxdepth: 1
 :caption: Technical Docs
 dev/index.md
+dev/setup.md
 dev/backend.md
 dev/frontend.md
+dev/connector_proxy.md
 ```
 
 ```{toctree}
