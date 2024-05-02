@@ -1,6 +1,5 @@
 import { Divider, Grid, Stack, Typography } from '@mui/material';
 import { grey, purple } from '@mui/material/colors';
-import { useEffect } from 'react';
 
 export default function ProcessInstanceCard({
   instance,
@@ -10,9 +9,6 @@ export default function ProcessInstanceCard({
   const fontSize = 12;
   const fontWeight = 600;
 
-  useEffect(() => {
-    console.log(instance);
-  }, []);
   return (
     <Grid
       container
