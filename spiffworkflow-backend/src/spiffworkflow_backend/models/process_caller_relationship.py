@@ -8,6 +8,14 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 
 
+class CalledProcessNotFoundError(Exception):
+    pass
+
+
+class CallingProcessNotFoundError(Exception):
+    pass
+
+
 class ProcessCallerRelationshipModel(SpiffworkflowBaseDBModel):
     """A cache of calling process ids for all Processes defined in all files."""
 
