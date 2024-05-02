@@ -104,6 +104,28 @@ export default function Dashboards() {
     setSelectedFilter(event.target.value);
   };
 
+  const onSearchChange = (search: string) => {
+    const filtered = search
+      ? processInstances.results.filter((instance: any) => {
+          const searchFields = [
+            'process_model_display_name',
+            'last_milestone_bpmn_name',
+            'process_initiator_username',
+            'status',
+          ];
+
+          return searchFields.some((field) =>
+            (instance[field] || '')
+              .toString()
+              .toLowerCase()
+              .includes(search.toLowerCase())
+          );
+        })
+      : processInstances.results;
+
+    setProcessInstanceRows(filtered);
+  };
+
   useEffect(() => {
     if ('report_metadata' in processInstances) {
       const mappedColumns = processInstances.report_metadata?.columns.map(
@@ -135,7 +157,7 @@ export default function Dashboards() {
       );
 
       setProcessInstanceColumns(mappedColumns);
-      setProcessInstanceRows(processInstances.results);
+      setProcessInstanceRows([...processInstances.results]);
     }
   }, [processInstances]);
 
@@ -200,6 +222,7 @@ export default function Dashboards() {
                 sx={{ width: { xs: 300, sm: '100%' } }}
                 variant="outlined"
                 placeholder="Search"
+                onChange={(e) => onSearchChange(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
