@@ -1,9 +1,9 @@
-from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
-from sqlalchemy.orm import aliased
 from sqlalchemy import insert
+from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 

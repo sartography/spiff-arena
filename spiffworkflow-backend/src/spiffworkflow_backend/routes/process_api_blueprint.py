@@ -17,7 +17,6 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
-from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_enabled_for_process_model,
@@ -35,7 +34,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel

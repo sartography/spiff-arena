@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -85,14 +87,14 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     generation = relationship(CacheGenerationModel)
 
     process_callers = relationship(
-        "ProcessCallerRelationshipModel",
+        ProcessCallerRelationshipModel,
         foreign_keys="[ProcessCallerRelationshipModel.called_reference_cache_process_id]",
         cascade="all, delete-orphan",
         single_parent=True,
     )
 
     calling_processes = relationship(
-        "ProcessCallerRelationshipModel",
+        ProcessCallerRelationshipModel,
         foreign_keys="[ProcessCallerRelationshipModel.calling_reference_cache_process_id]",
         cascade="all, delete-orphan",
         single_parent=True,
@@ -119,7 +121,7 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
         relative_location: str,
         properties: dict | None = None,
         use_current_cache_generation: bool = False,
-    ) -> "ReferenceCacheModel":
+    ) -> ReferenceCacheModel:
         reference_cache = cls(
             identifier=identifier,
             display_name=display_name,
@@ -139,7 +141,7 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
         return reference_cache
 
     @classmethod
-    def from_spec_reference(cls, ref: Reference, use_current_cache_generation: bool = False) -> "ReferenceCacheModel":
+    def from_spec_reference(cls, ref: Reference, use_current_cache_generation: bool = False) -> ReferenceCacheModel:
         reference_cache = cls.from_params(
             identifier=ref.identifier,
             display_name=ref.display_name,

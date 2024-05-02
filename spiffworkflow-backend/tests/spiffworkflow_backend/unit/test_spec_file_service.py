@@ -1,4 +1,3 @@
-from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 import os
 import sys
 
@@ -10,6 +9,7 @@ from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
