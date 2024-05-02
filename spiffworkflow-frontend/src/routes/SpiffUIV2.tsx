@@ -5,6 +5,11 @@ import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { globalTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 
+/**
+ * This is the main entry point for the new SpiffUI V2.
+ * It's a full screen app that will be rendered on top of the old SpiffUI.
+ * To access: localhost:7001/newui
+ */
 export default function SpiffUIV2() {
   const muiTheme = createTheme(globalTheme);
 
