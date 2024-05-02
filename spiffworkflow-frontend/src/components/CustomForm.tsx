@@ -256,6 +256,7 @@ export default function CustomForm({
     errors: any,
     jsonSchema: any,
     _uiSchemaPassedIn?: any
+    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     if (
       jsonSchema.required &&
@@ -265,43 +266,51 @@ export default function CustomForm({
     ) {
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
-    if (
-      !formDataToCheck[propertyKey].min?.toString().match(matchNumberRegex) ||
-      !formDataToCheck[propertyKey].max?.toString().match(matchNumberRegex)
-    ) {
-      errors[propertyKey].addError('must have valid numbers');
+    if (formDataToCheck[propertyKey].min) {
+      if (
+        !formDataToCheck[propertyKey].min.toString().match(matchNumberRegex)
+      ) {
+        errors[propertyKey].addError('must have valid numbers');
+      }
+      if (
+        formDataToCheck[propertyKey].min <
+        jsonSchema.properties[propertyKey].minimum
+      ) {
+        errors[propertyKey].addError(
+          `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+        );
+      }
+      if (
+        formDataToCheck[propertyKey].min >
+        jsonSchema.properties[propertyKey].maximum
+      ) {
+        errors[propertyKey].addError(
+          `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+        );
+      }
     }
-    if (
-      formDataToCheck[propertyKey].min <
-      jsonSchema.properties[propertyKey].minimum
-    ) {
-      errors[propertyKey].addError(
-        `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
-      );
-    }
-    if (
-      formDataToCheck[propertyKey].min >
-      jsonSchema.properties[propertyKey].maximum
-    ) {
-      errors[propertyKey].addError(
-        `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
-      );
-    }
-    if (
-      formDataToCheck[propertyKey].max <
-      jsonSchema.properties[propertyKey].minimum
-    ) {
-      errors[propertyKey].addError(
-        `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
-      );
-    }
-    if (
-      formDataToCheck[propertyKey].max >
-      jsonSchema.properties[propertyKey].maximum
-    ) {
-      errors[propertyKey].addError(
-        `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
-      );
+    if (formDataToCheck[propertyKey].max) {
+      if (
+        !formDataToCheck[propertyKey].max.toString().match(matchNumberRegex)
+      ) {
+        errors[propertyKey].addError('must have valid numbers');
+      }
+      if (
+        formDataToCheck[propertyKey].max <
+        jsonSchema.properties[propertyKey].minimum
+      ) {
+        errors[propertyKey].addError(
+          `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+        );
+      }
+      if (
+        formDataToCheck[propertyKey].max >
+        jsonSchema.properties[propertyKey].maximum
+      ) {
+        errors[propertyKey].addError(
+          `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+        );
+      }
     }
     if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
       errors[propertyKey].addError(`must have min less than or equal to max`);
