@@ -24,12 +24,16 @@ class ProcessCallerRelationshipModel(SpiffworkflowBaseDBModel):
         PrimaryKeyConstraint(
             "called_reference_cache_process_id",
             "calling_reference_cache_process_id",
-            name="process_caller_relationship_primary_key",
+            name="process_caller_relationship_pk",
         ),
     )
 
-    called_reference_cache_process_id = db.Column(ForeignKey("reference_cache.id"), nullable=False, index=True)
-    calling_reference_cache_process_id = db.Column(ForeignKey("reference_cache.id"), nullable=False, index=True)
+    called_reference_cache_process_id = db.Column(
+        ForeignKey("reference_cache.id", name="called_reference_cache_process_id_fk"), nullable=False, index=True
+    )
+    calling_reference_cache_process_id = db.Column(
+        ForeignKey("reference_cache.id", name="calling_reference_cache_process_id_fk"), nullable=False, index=True
+    )
 
     @classmethod
     def insert_or_update(cls, called_reference_cache_process_id: int, calling_reference_cache_process_id: int) -> None:
