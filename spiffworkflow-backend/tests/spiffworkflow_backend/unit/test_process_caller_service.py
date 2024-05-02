@@ -45,22 +45,8 @@ def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, 
     cache_generation = CacheGenerationModel(cache_table="reference_cache")
     db.session.add(cache_generation)
     db.session.commit()
-    called_cache = ReferenceCacheModel.from_params(
-        identifier="called_once",
-        type="process",
-        display_name="called_once",
-        file_name="called_once",
-        relative_location="called_once",
-        use_current_cache_generation=True,
-    )
-    calling_cache = ReferenceCacheModel.from_params(
-        identifier="calling_cache",
-        type="process",
-        display_name="calling_cache",
-        file_name="calling_cache",
-        relative_location="calling_cache",
-        use_current_cache_generation=True,
-    )
+    called_cache = create_reference_cache("called_once")
+    calling_cache = create_reference_cache("calling_cache")
     db.session.add(called_cache)
     db.session.add(calling_cache)
     db.session.commit()
