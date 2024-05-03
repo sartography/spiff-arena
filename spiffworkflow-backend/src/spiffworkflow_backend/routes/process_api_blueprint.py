@@ -149,7 +149,11 @@ def _process_data_fetcher(
         )
 
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
+    processor = ProcessInstanceProcessor(
+        process_instance,
+        include_task_data_for_completed_tasks=True,
+        include_completed_subprocesses=True,
+    )
 
     bpmn_process_instance = processor.bpmn_process_instance
     bpmn_process_data = processor.get_data()
