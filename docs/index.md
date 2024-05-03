@@ -53,6 +53,7 @@ Debugging_Diagrams/Private_data.md
 ```{toctree}
 :maxdepth: 1
 :caption: DevOps - Installation & Integration
+DevOps_installation_integration/deployment.md
 DevOps_installation_integration/admin_and_permissions.md
 DevOps_installation_integration/permission_url.md
 DevOps_installation_integration/configure_connector_proxy.md
