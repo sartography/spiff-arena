@@ -1,4 +1,3 @@
-from unittest.mock import patch
 import base64
 import io
 import json
@@ -6,6 +5,7 @@ import os
 import time
 from hashlib import sha256
 from typing import Any
+from unittest.mock import patch
 
 import flask
 import pytest
@@ -3366,7 +3366,8 @@ class TestProcessApi(BaseTest):
         bpmn_process = bpmn_processes[0]
 
         response = client.get(
-            f"/v1.0/process-data/default/{self.modify_process_identifier_for_path_param(process_model.id)}/sub_level_data_object_three/{process_instance_one.id}?process_identifier={process_identifier}&bpmn_process_guid={bpmn_process.guid}",
+            f"/v1.0/process-data/default/{self.modify_process_identifier_for_path_param(process_model.id)}/sub_level_data_object_three/"
+            f"{process_instance_one.id}?process_identifier={process_identifier}&bpmn_process_guid={bpmn_process.guid}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
