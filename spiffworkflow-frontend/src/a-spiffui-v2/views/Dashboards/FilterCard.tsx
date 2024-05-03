@@ -1,6 +1,10 @@
 import { Stack, Typography } from '@mui/material';
 import { grey, purple } from '@mui/material/colors';
 
+/**
+ * Appears in the FilterCard area of the Dashboards view.
+ * Doesn't do much other than satisfy the design.
+ */
 export default function FilterCard({
   count,
   title,

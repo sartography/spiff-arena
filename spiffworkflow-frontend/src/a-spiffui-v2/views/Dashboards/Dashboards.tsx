@@ -32,6 +32,9 @@ import FilterCard from './FilterCard';
 import useProcessInstances from '../../hooks/useProcessInstances';
 import ProcessInstanceCard from './ProcessInstanceCard';
 
+/**
+ * This "Dashboards" view is the home view for the new Spiff UI.
+ */
 export default function Dashboards() {
   const [selectedTab, setSelectedTab] = useState('myProcesses');
   const [selectedFilter, setSelectedFilter] = useState('new');

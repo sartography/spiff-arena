@@ -1,6 +1,11 @@
 import { Divider, Grid, Stack, Typography } from '@mui/material';
 import { grey, purple } from '@mui/material/colors';
 
+/**
+ * Appears when we need to display process instances in a responsive view.
+ * Was quickly made for demo.
+ * TODO: Talk to designer about this.
+ */
 export default function ProcessInstanceCard({
   instance,
 }: {

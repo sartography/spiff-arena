@@ -1,7 +1,8 @@
-import { Stack, Typography, Button, Grid, Box } from '@mui/material';
+import { Typography, Button, Grid, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NotificationBell from '../../assets/icons/notification-bell.svg';
 
+/** Appears at the top of the Dashboards view. */
 export default function Toolbar() {
   const showTime = () => {
     return new Date().toDateString();
