@@ -73,7 +73,10 @@ if [[ "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" == "true" ]]; then
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-  SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
+  if [[ -z "${SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS:-}" ]]; then
+    export SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false
+  fi
+  poetry run python bin/save_all_bpmn.py
 fi
 
 if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
