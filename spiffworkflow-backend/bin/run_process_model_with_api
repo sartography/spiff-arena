@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 
 if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
   export KEYCLOAK_BASE_URL="http://localhost:7002"
@@ -21,7 +24,7 @@ username="${2:-admin}"
 password="${3:-admin}"
 realm_name="${4:-spiffworkflow}"
 if [[ -z "${1:-}" ]]; then
-  >&2 echo "usage: $(basename "$0") [process_model_identifier] [username: OPTONAL] [password: OPTONAL] [realm_name: OPTONAL]"
+  echo >&2 "usage: $(basename "$0") [process_model_identifier] [username: OPTONAL] [password: OPTONAL] [realm_name: OPTONAL]"
   exit 1
 fi
 
@@ -31,27 +34,48 @@ function check_result_for_error() {
   local result="$1"
   error_code=$(jq '.error_code' <<<"$result")
   if [[ -n "$error_code" && "$error_code" != "null" ]]; then
-    >&2 echo "ERROR: Failed to run process instance. Received error: $result"
+    echo >&2 "ERROR: Failed to run process instance. Received error: $result"
     exit 1
   fi
 }
 
 function process_next_task() {
-  local next_task="$1"
+  local task="$1"
 
-  if [[ -n "$next_task" && "$next_task" != "null" ]]; then
-    task_type=$(jq -r '.type' <<<"$next_task")
-    task_state=$(jq -r '.state' <<<"$next_task")
-    task_guid=$(jq -r '.id' <<<$"$next_task")
+  if [[ -n "$task" && "$task" != "null" ]]; then
+    task_type=$(jq -r '.type' <<<"$task")
+    task_state=$(jq -r '.state' <<<"$task")
+    task_guid=$(jq -r '.id' <<<$"$task")
 
     if grep -qE "Manual ?Task" <<<"$task_type" && [[ "${task_state}" == "READY" ]]; then
-      next_task=$(curl --silent -X PUT "${BACKEND_BASE_URL}/v1.0/tasks/${process_instance_id}/${task_guid}" -H "Authorization: Bearer $access_token")
-      check_result_for_error "$next_task"
-      process_next_task "$next_task"
-    elif [[ "$(jq '.ok' <<<"$next_task")" == "null" ]]; then
+      new_task=$(curl --silent -X PUT "${BACKEND_BASE_URL}/v1.0/tasks/${process_instance_id}/${task_guid}" -H "Authorization: Bearer $access_token")
+      check_result_for_error "$new_task"
+      process_next_task "$new_task"
+    elif grep -qE "User ?Task" <<<"$task_type" && [[ "${task_state}" == "READY" ]]; then
       echo -e "\n\nThe next task is not a Manual Task and requires user input. It must be completed manually."
-      echo "$next_task"
+      echo "$task"
+      exit
     fi
+  fi
+}
+
+function check_on_proces_instance() {
+  local process_instance="$1"
+  status=$(jq -r '.status' <<<"$process_instance")
+
+  if [[ -n "$status" ]] && ! grep -qE '^(complete|error|suspendend)$' <<<"$status"; then
+    progress_result=$(curl --silent "${BACKEND_BASE_URL}/v1.0/tasks/progress/${process_instance_id}" -H "Authorization: Bearer $access_token")
+    task=$(jq '.task' <<<"$progress_result")
+    instructions=$(jq -r '.instructions' <<<"$progress_result")
+    new_process_instance=$(jq '.process_instance' <<<"$progress_result")
+
+    if [[ -n "$task" && "$task" != "null" ]]; then
+      process_next_task "$task"
+    elif [[ -n "$instructions" && "$instructions" != "null" && "$instructions" != '[]' ]]; then
+      echo "$instructions"
+    fi
+    sleep 1
+    check_on_proces_instance "$new_process_instance"
   fi
 }
 
@@ -60,7 +84,7 @@ curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_t
 result=$(curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}" -H "Authorization: Bearer $access_token")
 process_instance_id=$(jq -r '.id' <<<"$result")
 if ! grep -qE '^[0-9]+$' <<<"$process_instance_id"; then
-  >&2 echo "ERROR: Did not receive valid process instance id when instantiating process model. result was ${result}"
+  echo >&2 "ERROR: Did not receive valid process instance id when instantiating process model. result was ${result}"
   exit 1
 fi
 
@@ -70,6 +94,4 @@ if [[ "$(jq -r '.status' <<<"$result")" == "complete" ]]; then
   echo "Process instance completed"
   exit 0
 fi
-
-next_task=$(jq '.next_task' <<<"$result")
-process_next_task "$next_task"
+check_on_proces_instance "$result"
