@@ -59,6 +59,20 @@ export default function CustomForm({
     'numeric-range': NumericRangeField,
   };
 
+  let reactJsonSchemaFormTheme = reactJsonSchemaForm;
+  if ('ui:theme' in uiSchema) {
+    if (uiSchema['ui:theme'] === 'carbon') {
+      reactJsonSchemaFormTheme = 'carbon';
+    } else if (uiSchema['ui:theme'] === 'mui') {
+      reactJsonSchemaFormTheme = 'mui';
+    } else {
+      console.error(
+        `Unsupported theme: ${uiSchema['ui:theme']}. Defaulting to mui`
+      );
+      reactJsonSchemaFormTheme = 'mui';
+    }
+  }
+
   const rjsfTemplates: any = {};
   if (restrictedWidth) {
     rjsfTemplates.ObjectFieldTemplate = ObjectFieldRestrictedGridTemplate;
@@ -475,16 +489,16 @@ export default function CustomForm({
     templates: rjsfTemplates,
     omitExtraData: true,
   };
-  if (reactJsonSchemaForm === 'carbon') {
+  if (reactJsonSchemaFormTheme === 'carbon') {
     // eslint-disable-next-line react/jsx-props-no-spreading
     return <CarbonForm {...formProps}>{childrenToUse}</CarbonForm>;
   }
 
-  if (reactJsonSchemaForm === 'mui') {
+  if (reactJsonSchemaFormTheme === 'mui') {
     // eslint-disable-next-line react/jsx-props-no-spreading
     return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
   }
 
-  console.error(`Unsupported form type: ${reactJsonSchemaForm}`);
+  console.error(`Unsupported form type: ${reactJsonSchemaFormTheme}`);
   return null;
 }
