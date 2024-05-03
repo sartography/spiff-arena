@@ -1,5 +1,5 @@
-import { Stack, Typography } from '@mui/material';
-import { grey, purple } from '@mui/material/colors';
+import { Stack, Typography, useTheme } from '@mui/material';
+import { purple } from '@mui/material/colors';
 
 /**
  * Appears in the FilterCard area of the Dashboards view.
@@ -12,6 +12,7 @@ export default function FilterCard({
   count: string;
   title: string;
 }) {
+  const isDark = useTheme().palette.mode === 'dark';
   return (
     <Stack
       direction="row"
@@ -19,7 +20,8 @@ export default function FilterCard({
       padding={3}
       alignItems="center"
       sx={{
-        backgroundColor: grey[200],
+        color: 'text.primary',
+        backgroundColor: isDark ? 'primary.main' : 'grey.200',
         height: 72,
         borderRadius: 2,
         flexGrow: 1,

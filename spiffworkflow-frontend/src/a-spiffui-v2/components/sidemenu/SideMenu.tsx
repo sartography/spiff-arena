@@ -1,16 +1,16 @@
 import { Box, Stack } from '@mui/material';
 import PersonOutline from '@mui/icons-material/PersonOutline';
+import HomeLine from '@mui/icons-material/HomeOutlined';
+import Route from '@mui/icons-material/RouteOutlined';
+import Config from '@mui/icons-material/TuneOutlined';
+import CheckSquare from '@mui/icons-material/CheckBoxOutlined';
+import Mail from '@mui/icons-material/EmailOutlined';
+import DataBase from '@mui/icons-material/StorageOutlined';
+import Moon from '@mui/icons-material/DarkModeOutlined';
+import Settings from '@mui/icons-material/SettingsOutlined';
+import Logout from '@mui/icons-material/LogoutOutlined';
 import SpiffLogo from '../SpiffLogo';
 import MenuItem, { MenuItemData } from './MenuItem';
-import HomeLine from '../../assets/icons/home-line.svg';
-import Route from '../../assets/icons/route.svg';
-import Config from '../../assets/icons/configuration.svg';
-import CheckSquare from '../../assets/icons/check-square.svg';
-import Mail from '../../assets/icons/mail.svg';
-import DataBase from '../../assets/icons/database.svg';
-import Settings from '../../assets/icons/settings.svg';
-import Moon from '../../assets/icons/moon.svg';
-import Logout from '../../assets/icons/logout.svg';
 import UserService from '../../../services/UserService';
 
 /**

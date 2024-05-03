@@ -11,8 +11,10 @@ export default function Toolbar() {
   return (
     <Grid container>
       <Grid item xs={2}>
-        <Typography variant="h4">Dashboards</Typography>
-        <Typography variant="caption" noWrap>
+        <Typography variant="h4" color="text.primary">
+          Dashboards
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap>
           Last Updated: {showTime()}
         </Typography>
       </Grid>

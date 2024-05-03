@@ -1,9 +1,13 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Container, CssBaseline, Divider, Grid } from '@mui/material';
 import { grey } from '@mui/material/colors';
+import { useEffect } from 'react';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
-import { globalTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
+import {
+  globalThemeLight,
+  globalThemeDark,
+} from '../a-spiffui-v2/assets/theme/SpiffTheme';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -11,7 +15,14 @@ import { globalTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
  * To access, use the root domain (e.g. localhost:7001) and add"/newui"
  */
 export default function SpiffUIV2() {
-  const muiTheme = createTheme(globalTheme);
+  const muiTheme = createTheme(globalThemeLight);
+
+  useEffect(() => {
+    const element = document.querySelector('.cds--white');
+    if (element) {
+      element.classList.remove('cds--white');
+    }
+  }, []);
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -25,6 +36,7 @@ export default function SpiffUIV2() {
           left: 0,
           alignItems: 'center',
           height: '100%',
+          zIndex: 1000,
         }}
       >
         <Grid container sx={{ height: '100%' }}>

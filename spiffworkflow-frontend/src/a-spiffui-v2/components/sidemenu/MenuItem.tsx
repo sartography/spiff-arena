@@ -1,4 +1,4 @@
-import { Stack, Typography } from '@mui/material';
+import { Stack, Typography, useTheme } from '@mui/material';
 import { purple } from '@mui/material/colors';
 import { ReactNode } from 'react';
 
@@ -14,6 +14,7 @@ export default function MenuItem({
   data: MenuItemData;
   callback: (arg: MenuItemData) => void;
 }) {
+  const isDark = useTheme().palette.mode === 'dark';
   return (
     <Stack
       direction="row"
@@ -21,10 +22,16 @@ export default function MenuItem({
       gap={2}
       padding={1}
       onClick={() => callback(data)}
-      sx={{ ':hover': { backgroundColor: purple[50] }, cursor: 'default' }}
+      alignItems="center"
+      sx={{
+        ':hover': { backgroundColor: isDark ? 'primary.main' : purple[50] },
+        cursor: 'default',
+      }}
     >
-      {data.icon}
-      <Typography>{data.label}</Typography>
+      <Typography sx={{ color: 'text.primary', paddingTop: 1 }}>
+        {data.icon}
+      </Typography>
+      <Typography color="text.primary">{data.label}</Typography>
     </Stack>
   );
 }
