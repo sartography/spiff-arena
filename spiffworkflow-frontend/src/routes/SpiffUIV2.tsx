@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Box, Container, Divider, Grid } from '@mui/material';
+import { Box, Container, CssBaseline, Divider, Grid } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
@@ -8,13 +8,14 @@ import { globalTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 /**
  * This is the main entry point for the new SpiffUI V2.
  * It's a full screen app that will be rendered on top of the old SpiffUI.
- * To access: localhost:7001/newui
+ * To access, use the root domain (e.g. localhost:7001) and add"/newui"
  */
 export default function SpiffUIV2() {
   const muiTheme = createTheme(globalTheme);
 
   return (
     <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
       <Container
         maxWidth={false}
         sx={{
