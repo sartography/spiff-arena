@@ -2,6 +2,9 @@ import { Stack, Typography } from '@mui/material';
 import { purple } from '@mui/material/colors';
 import SpiffIcon from '../assets/icons/spiff-icon.svg';
 
+/**
+ * The Spiff "S" logo and approved text
+ */
 export default function SpiffLogo() {
   return (
     <Stack alignItems="center" height={80}>

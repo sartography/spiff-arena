@@ -3,6 +3,11 @@ import { useState } from 'react';
 import HttpService from '../../services/HttpService';
 import { ReportMetadata } from '../../interfaces';
 
+/**
+ * Grab processInstances using HttpService from the Spiff API.
+ * TODO: We'll need to allow appending the path to hit different endpoints.
+ * Right now we're only using "for-me"
+ */
 export default function useProcessInstances() {
   // TODO: ProcessInstance type didn't seem right
   // Find out and remove "any"
@@ -19,6 +24,10 @@ export default function useProcessInstances() {
 
   // TODO: ProcessInstance didn't seem to be the right type
   // Find out and remove "any"
+  /**
+   * Query function to get process instances from the backend
+   * @returns Query functions must return a value, even if it's just true
+   */
   const processInstancesResult = (result: any[]) => {
     setProcessInstances(result);
     setLoading(false);
@@ -34,10 +43,6 @@ export default function useProcessInstances() {
         report_metadata: reportMetadataToUse,
       },
     });
-
-    /** Query functions used by TanStack Query (React Query)
-     * must always return data, but we don't need to use it
-     */
 
     return true;
   };
