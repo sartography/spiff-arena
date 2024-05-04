@@ -41,7 +41,7 @@ export default function SideMenu({
       icon: <Moon />,
       path: '/',
       toggleData: {
-        toggled: true,
+        toggled: false,
         toggleIcon: <Lightbulb />,
         toggleText: 'Light Mode',
       },
@@ -55,7 +55,7 @@ export default function SideMenu({
   ];
 
   return (
-    <Stack padding={2} gap={2}>
+    <Stack padding={2} gap={2} sx={{ height: '100vh' }}>
       <Stack>
         <Box width="85%">
           <SpiffLogo />
@@ -70,11 +70,7 @@ export default function SideMenu({
        * This stack is absolute positioned to make it bottom-sticky.
        * Constrain the width to prevent it from taking up the whole screen.
        */}
-      <Stack
-        gap={2}
-        padding={1}
-        sx={{ position: 'absolute', width: 210, bottom: 0 }}
-      >
+      <Stack gap={2} direction="column" padding={1} sx={{ marginTop: 'auto' }}>
         {userMenuItemData.map((item) => (
           <MenuItem data={item} key={item.text} callback={callback} />
         ))}
