@@ -55,12 +55,19 @@ export default function SideMenu({
   ];
 
   return (
-    <Stack padding={2} gap={2} sx={{ height: '100vh' }}>
+    <Stack
+      gap={2}
+      sx={{
+        height: '100vh',
+        width: { xs: 0, sm: 45, md: 240 },
+        overflow: 'hidden',
+      }}
+    >
       <Stack>
         <Box width="85%">
           <SpiffLogo />
         </Box>
-        <Stack gap={2} padding={1}>
+        <Stack gap={2}>
           {navMenuItemData.map((item) => (
             <MenuItem data={item} key={item.text} callback={callback} />
           ))}

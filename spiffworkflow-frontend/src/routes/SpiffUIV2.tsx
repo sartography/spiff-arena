@@ -57,25 +57,25 @@ export default function SpiffUIV2() {
           <Grid item>
             <Box
               sx={{
-                display: { xs: 'none', md: 'block' },
                 height: '100%',
               }}
             >
               <SideMenu callback={handleMenuCallback} />
             </Box>
           </Grid>
-          <Grid item padding={2} sx={{ display: { xs: 'none', md: 'block' } }}>
+          <Grid item padding={2}>
             <Divider
               orientation="vertical"
               variant="middle"
               sx={{
+                display: { xs: 'none', sm: 'block' },
                 width: '1px',
                 height: '100%',
                 backgroundColor: grey[600],
               }}
             />
           </Grid>
-          <Grid item xs={12} md={8} lg={9} padding={2}>
+          <Grid item xs={11} sm={10} md={8} lg={9} padding={2}>
             <Dashboards />
           </Grid>
         </Grid>

@@ -10,7 +10,10 @@ export default function SpiffLogo() {
     <Stack alignItems="center" height={80}>
       <Stack direction="row" alignItems="center" padding={2}>
         <SpiffIcon />
-        <Typography color={purple[700]} sx={{ fontSize: 20 }}>
+        <Typography
+          color={purple[700]}
+          sx={{ fontSize: 20, display: { xs: 'none', md: 'block' } }}
+        >
           Spiffworkflow
         </Typography>
       </Stack>
