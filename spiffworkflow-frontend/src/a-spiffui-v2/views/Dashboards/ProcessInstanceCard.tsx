@@ -1,4 +1,4 @@
-import { Divider, Grid, Stack, Typography } from '@mui/material';
+import { Divider, Grid, Stack, Typography, useTheme } from '@mui/material';
 import { grey, purple } from '@mui/material/colors';
 
 /**
@@ -11,6 +11,7 @@ export default function ProcessInstanceCard({
 }: {
   instance: Record<string, any>;
 }) {
+  const isDark = useTheme().palette.mode === 'dark';
   const fontSize = 12;
   const fontWeight = 600;
 
@@ -23,6 +24,8 @@ export default function ProcessInstanceCard({
         padding: 2,
         borderRadius: 2,
         boxShadow: 3,
+
+        color: isDark ? 'white' : 'text.primary',
       }}
     >
       <Grid item>
@@ -30,7 +33,7 @@ export default function ProcessInstanceCard({
           direction="row"
           alignItems="center"
           sx={{
-            backgroundColor: grey[300],
+            backgroundColor: isDark ? 'primary.main' : 'grey.200',
             borderRadius: 2,
             padding: 0.75,
             marginBottom: 1,
