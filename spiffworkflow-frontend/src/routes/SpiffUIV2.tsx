@@ -29,8 +29,6 @@ export default function SpiffUIV2() {
   }, []);
 
   const handleMenuCallback = (data: MenuItemData) => {
-    console.log('Menu item clicked:', data);
-
     if (data.label === 'Dark Mode') {
       if (globalTheme.palette.mode === 'light') {
         setGlobalTheme(createTheme(globalThemeDark));
