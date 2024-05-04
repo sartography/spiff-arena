@@ -29,7 +29,7 @@ export default function SpiffUIV2() {
   }, []);
 
   const handleMenuCallback = (data: MenuItemData) => {
-    if (data.label === 'Dark Mode') {
+    if (data.text === 'Dark Mode') {
       if (globalTheme.palette.mode === 'light') {
         setGlobalTheme(createTheme(globalThemeDark));
       } else {

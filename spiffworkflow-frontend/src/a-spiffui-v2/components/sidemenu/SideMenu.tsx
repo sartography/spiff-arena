@@ -23,22 +23,32 @@ export default function SideMenu({
 }: {
   callback: (data: MenuItemData) => void;
 }) {
-  const navMenuItemData = [
-    { label: 'Dashboard', icon: <HomeLine />, path: '/' },
-    { label: 'Processes', icon: <Route />, path: '/' },
-    { label: 'Task List', icon: <CheckSquare />, path: '/' },
-    { label: 'Messages', icon: <Mail />, path: '/' },
-    { label: 'Data Stores', icon: <DataBase />, path: '/' },
-    { label: 'Configuration', icon: <Config />, path: '/' },
-    { label: 'Settings', icon: <Settings />, path: '/' },
+  /** Top set of app nav items */
+  const navMenuItemData: MenuItemData[] = [
+    { text: 'Dashboard', icon: <HomeLine />, path: '/' },
+    { text: 'Processes', icon: <Route />, path: '/' },
+    { text: 'Task List', icon: <CheckSquare />, path: '/' },
+    { text: 'Messages', icon: <Mail />, path: '/' },
+    { text: 'Data Stores', icon: <DataBase />, path: '/' },
+    { text: 'Configuration', icon: <Config />, path: '/' },
+    { text: 'Settings', icon: <Settings />, path: '/' },
   ];
 
-  /** Using UserService to grab and display userName */
-  const userMenuItemData = [
-    { label: 'Dark Mode', icon: <Moon />, path: '/' },
-    { label: 'Logout', icon: <Logout />, path: '/' },
+  /** Bottom set of user nav items, displaying name etc. */
+  const userMenuItemData: MenuItemData[] = [
     {
-      label: UserService.getPreferredUsername(),
+      text: 'Dark Mode',
+      icon: <Moon />,
+      path: '/',
+      toggleData: {
+        toggled: true,
+        toggleIcon: <Lightbulb />,
+        toggleText: 'Light Mode',
+      },
+    },
+    { text: 'Logout', icon: <Logout />, path: '/' },
+    {
+      text: UserService.getPreferredUsername(),
       icon: <PersonOutline />,
       path: '/',
     },
@@ -52,7 +62,7 @@ export default function SideMenu({
         </Box>
         <Stack gap={2} padding={1}>
           {navMenuItemData.map((item) => (
-            <MenuItem data={item} key={item.label} callback={callback} />
+            <MenuItem data={item} key={item.text} callback={callback} />
           ))}
         </Stack>
       </Stack>
@@ -66,7 +76,7 @@ export default function SideMenu({
         sx={{ position: 'absolute', width: 210, bottom: 0 }}
       >
         {userMenuItemData.map((item) => (
-          <MenuItem data={item} key={item.label} callback={callback} />
+          <MenuItem data={item} key={item.text} callback={callback} />
         ))}
       </Stack>
     </Stack>
