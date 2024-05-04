@@ -7,6 +7,7 @@ import CheckSquare from '@mui/icons-material/CheckBoxOutlined';
 import Mail from '@mui/icons-material/EmailOutlined';
 import DataBase from '@mui/icons-material/StorageOutlined';
 import Moon from '@mui/icons-material/DarkModeOutlined';
+import Lightbulb from '@mui/icons-material/LightbulbOutlined';
 import Settings from '@mui/icons-material/SettingsOutlined';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import SpiffLogo from '../SpiffLogo';
@@ -17,7 +18,11 @@ import UserService from '../../../services/UserService';
  * SideMenu component that satisfies design requirements.
  * Very basic click 'n handle sort of thing.
  */
-export default function SideMenu() {
+export default function SideMenu({
+  callback,
+}: {
+  callback: (data: MenuItemData) => void;
+}) {
   const navMenuItemData = [
     { label: 'Dashboard', icon: <HomeLine />, path: '/' },
     { label: 'Processes', icon: <Route />, path: '/' },
@@ -39,33 +44,29 @@ export default function SideMenu() {
     },
   ];
 
-  const handleMenuItemClick = (data: MenuItemData) => {
-    console.log(data);
-  };
-
   return (
-    <Stack padding={2} gap={2} height="100%">
-      <Stack height="100%">
+    <Stack padding={2} gap={2}>
+      <Stack>
         <Box width="85%">
           <SpiffLogo />
         </Box>
         <Stack gap={2} padding={1}>
           {navMenuItemData.map((item) => (
-            <MenuItem
-              data={item}
-              key={item.label}
-              callback={handleMenuItemClick}
-            />
+            <MenuItem data={item} key={item.label} callback={callback} />
           ))}
         </Stack>
       </Stack>
-      <Stack height={275} gap={2} padding={2}>
+      {/**
+       * This stack is absolute positioned to make it bottom-sticky.
+       * Constrain the width to prevent it from taking up the whole screen.
+       */}
+      <Stack
+        gap={2}
+        padding={1}
+        sx={{ position: 'absolute', width: 210, bottom: 0 }}
+      >
         {userMenuItemData.map((item) => (
-          <MenuItem
-            data={item}
-            key={item.label}
-            callback={handleMenuItemClick}
-          />
+          <MenuItem data={item} key={item.label} callback={callback} />
         ))}
       </Stack>
     </Stack>

@@ -21,6 +21,7 @@
     "@mui/material": "^5.15.15",
     "@mui/x-data-grid": "^7.3.1",
     "@preact/preset-vite": "^2.8.2",
+    "@preact/signals-react": "^2.0.1",
     "@prefresh/vite": "^2.4.5",
     "@react-icons/all-files": "^4.1.0",
     "@rjsf/core": "5.0.0-beta.20",

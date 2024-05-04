@@ -1,13 +1,14 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Container, CssBaseline, Divider, Grid } from '@mui/material';
 import { grey } from '@mui/material/colors';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import {
   globalThemeLight,
   globalThemeDark,
 } from '../a-spiffui-v2/assets/theme/SpiffTheme';
+import { MenuItemData } from '../a-spiffui-v2/components/sidemenu/MenuItem';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -15,17 +16,32 @@ import {
  * To access, use the root domain (e.g. localhost:7001) and add"/newui"
  */
 export default function SpiffUIV2() {
-  const muiTheme = createTheme(globalThemeLight);
-
+  const [globalTheme, setGlobalTheme] = useState(createTheme(globalThemeLight));
   useEffect(() => {
+    /**
+     * The housing app has an element with a white background
+     * and a very high z-index. This is a hack to remove it.
+     */
     const element = document.querySelector('.cds--white');
     if (element) {
       element.classList.remove('cds--white');
     }
   }, []);
 
+  const handleMenuCallback = (data: MenuItemData) => {
+    console.log('Menu item clicked:', data);
+
+    if (data.label === 'Dark Mode') {
+      if (globalTheme.palette.mode === 'light') {
+        setGlobalTheme(createTheme(globalThemeDark));
+      } else {
+        setGlobalTheme(createTheme(globalThemeLight));
+      }
+    }
+  };
+
   return (
-    <ThemeProvider theme={muiTheme}>
+    <ThemeProvider theme={globalTheme}>
       <CssBaseline />
       <Container
         maxWidth={false}
@@ -35,7 +51,7 @@ export default function SpiffUIV2() {
           top: 0,
           left: 0,
           alignItems: 'center',
-          height: '100%',
+          height: '100vh',
           zIndex: 1000,
         }}
       >
@@ -47,7 +63,7 @@ export default function SpiffUIV2() {
                 height: '100%',
               }}
             >
-              <SideMenu />
+              <SideMenu callback={handleMenuCallback} />
             </Box>
           </Grid>
           <Grid item padding={2} sx={{ display: { xs: 'none', md: 'block' } }}>
