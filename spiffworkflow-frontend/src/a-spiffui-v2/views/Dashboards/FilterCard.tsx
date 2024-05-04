@@ -25,7 +25,9 @@ export default function FilterCard({
         height: 72,
         borderRadius: 2,
         flexGrow: 1,
-        ':hover': { backgroundColor: purple[50] },
+        ':hover': {
+          backgroundColor: isDark ? 'secondary.main' : purple[50],
+        },
       }}
     >
       <Typography variant="h4">{count}</Typography>

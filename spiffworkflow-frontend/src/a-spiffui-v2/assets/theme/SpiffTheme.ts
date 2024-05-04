@@ -6,8 +6,8 @@ export const globalThemeLight: ThemeOptions = {
     common: { black: '#000', white: '#fff' },
     primary: {
       light: '#7986cb',
-      main: '#3f51b5',
-      dark: '#303f9f',
+      main: '#3F76B5',
+      dark: '#543FB5',
       contrastText: '#fff',
     },
     secondary: {
@@ -54,8 +54,8 @@ export const globalThemeDark: ThemeOptions = {
     common: { black: '#000', white: '#fff' },
     primary: {
       light: '#7986cb',
-      main: '#3f51b5',
-      dark: '#303f9f',
+      main: '#3F76B5',
+      dark: '#543FB5',
       contrastText: '#fff',
     },
   },
