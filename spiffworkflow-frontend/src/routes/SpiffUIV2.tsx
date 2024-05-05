@@ -4,10 +4,7 @@ import { grey } from '@mui/material/colors';
 import { useEffect, useState } from 'react';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
-import {
-  globalThemeLight,
-  globalThemeDark,
-} from '../a-spiffui-v2/assets/theme/SpiffTheme';
+import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/components/sidemenu/MenuItem';
 
 /**
@@ -16,7 +13,9 @@ import { MenuItemData } from '../a-spiffui-v2/components/sidemenu/MenuItem';
  * To access, use the root domain (e.g. localhost:7001) and add"/newui"
  */
 export default function SpiffUIV2() {
-  const [globalTheme, setGlobalTheme] = useState(createTheme(globalThemeLight));
+  const [globalTheme, setGlobalTheme] = useState(
+    createTheme(createSpiffTheme('light'))
+  );
   useEffect(() => {
     /**
      * The housing app has an element with a white background
@@ -31,9 +30,9 @@ export default function SpiffUIV2() {
   const handleMenuCallback = (data: MenuItemData) => {
     if (data.text === 'Dark Mode') {
       if (globalTheme.palette.mode === 'light') {
-        setGlobalTheme(createTheme(globalThemeDark));
+        setGlobalTheme(createTheme(createSpiffTheme('dark')));
       } else {
-        setGlobalTheme(createTheme(globalThemeLight));
+        setGlobalTheme(createTheme(createSpiffTheme('light')));
       }
     }
   };

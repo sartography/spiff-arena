@@ -18,17 +18,17 @@ export default function ProcessInstanceCard({
   return (
     <Grid
       container
+      gap={1}
       sx={{
-        width: 250,
+        flex: 1,
         border: `2px solid ${purple[200]} `,
         padding: 2,
         borderRadius: 2,
         boxShadow: 3,
-
         color: isDark ? 'white' : 'text.primary',
       }}
     >
-      <Grid item>
+      <Grid item xs={12}>
         <Stack
           direction="row"
           alignItems="center"
@@ -47,7 +47,34 @@ export default function ProcessInstanceCard({
             {instance.process_model_display_name}
           </Typography>
         </Stack>
-        <Divider />
+        <Stack>
+          <Typography fontWeight={fontWeight} fontSize={fontSize}>
+            Started by:
+          </Typography>
+          <Typography fontSize={fontSize} paddingLeft={1}>
+            {instance.process_initiator_username}
+          </Typography>
+        </Stack>
+      </Grid>
+      <Grid item>
+        <Stack>
+          <Typography fontWeight={fontWeight} fontSize={fontSize}>
+            Last milestone:
+          </Typography>
+          <Typography fontSize={fontSize} paddingLeft={1}>
+            {instance.last_milestone_bpmn_name}
+          </Typography>
+        </Stack>
+        <Stack>
+          <Typography fontWeight={fontWeight} fontSize={fontSize}>
+            Status:
+          </Typography>
+          <Typography fontSize={fontSize} paddingLeft={1}>
+            {instance.status}
+          </Typography>
+        </Stack>
+      </Grid>
+      <Grid item xs={6}>
         <Stack direction="row" gap={2} alignItems="center">
           <Typography fontWeight={fontWeight} fontSize={fontSize}>
             Id:
@@ -67,30 +94,6 @@ export default function ProcessInstanceCard({
             End:
           </Typography>
           <Typography fontSize={fontSize}>{instance.end_in_seconds}</Typography>
-        </Stack>
-        <Stack>
-          <Typography fontWeight={fontWeight} fontSize={fontSize}>
-            Started by:
-          </Typography>
-          <Typography fontSize={fontSize} paddingLeft={1}>
-            {instance.process_initiator_username}
-          </Typography>
-        </Stack>
-        <Stack>
-          <Typography fontWeight={fontWeight} fontSize={fontSize}>
-            Last milestone:
-          </Typography>
-          <Typography fontSize={fontSize} paddingLeft={1}>
-            {instance.last_milestone_bpmn_name}
-          </Typography>
-        </Stack>
-        <Stack>
-          <Typography fontWeight={fontWeight} fontSize={fontSize}>
-            Status:
-          </Typography>
-          <Typography fontSize={fontSize} paddingLeft={1}>
-            {instance.status}
-          </Typography>
         </Stack>
       </Grid>
     </Grid>

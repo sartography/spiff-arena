@@ -1,26 +1,13 @@
-import { ThemeOptions } from '@mui/material';
+import { PaletteMode, ThemeOptions } from '@mui/material';
+import { blue, green, orange, red } from '@mui/material/colors';
 
-export const globalThemeLight: ThemeOptions = {
+const baseTheme = {
   palette: {
-    mode: 'light',
-    common: { black: '#000', white: '#fff' },
     primary: {
-      light: '#7986cb',
-      main: '#3F76B5',
-      dark: '#543FB5',
-      contrastText: '#fff',
+      main: '#3f51b5',
     },
     secondary: {
-      light: '#ff4081',
       main: '#f50057',
-      dark: '#c51162',
-      contrastText: '#fff',
-    },
-    error: {
-      light: '#e57373',
-      main: '#f44336',
-      dark: '#d32f2f',
-      contrastText: '#fff',
     },
   },
   typography: {
@@ -32,7 +19,7 @@ export const globalThemeLight: ThemeOptions = {
     fontWeightRegular: 400,
     fontWeightMedium: 500,
     button: {
-      textTransform: 'none',
+      textTransform: undefined,
     },
   },
   components: {
@@ -48,38 +35,63 @@ export const globalThemeLight: ThemeOptions = {
   },
 };
 
-export const globalThemeDark: ThemeOptions = {
-  palette: {
-    mode: 'dark',
-    common: { black: '#000', white: '#fff' },
-    primary: {
-      light: '#7986cb',
-      main: '#3F76B5',
-      dark: '#543FB5',
+export const createSpiffTheme = (mode: PaletteMode = 'light'): ThemeOptions => {
+  const notificationsLight = {
+    success: {
+      main: green[100],
+      light: green[100],
+      dark: green[500],
+    },
+    warning: {
+      main: orange[100],
+      light: orange[100],
+      dark: orange[500],
+    },
+    error: {
+      main: red[100],
+      light: red[100],
+      dark: red[500],
+    },
+    info: {
+      main: blue[100],
+      light: blue[100],
+      dark: blue[500],
+    },
+  };
+
+  const notificationsDark = {
+    success: {
+      main: green[500],
+      light: green[300],
+      dark: green[700],
       contrastText: '#fff',
     },
-  },
-  typography: {
-    // Poppins is pulled in from the Google Fonts CDN in index.html
-    // TODO: Install fonts locally?
-    fontFamily: `"Poppins", "Roboto", "Arial", "Helvetica", sans-serif`,
-    fontSize: 14,
-    fontWeightLight: 300,
-    fontWeightRegular: 400,
-    fontWeightMedium: 500,
-    button: {
-      textTransform: 'none',
+    warning: {
+      main: orange[300],
+      light: orange[500],
+      dark: orange[700],
+      contrastText: '#fff',
     },
-  },
-  components: {
-    // We wanted rounded buttons everywhere
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          fontSize: '1rem',
-          borderRadius: 100,
-        },
-      },
+    error: {
+      main: red[300],
+      light: red[500],
+      dark: red[700],
+      contrastText: '#fff',
     },
-  },
+    info: {
+      main: blue[300],
+      light: blue[500],
+      dark: blue[700],
+      contrastText: '#fff',
+    },
+  };
+
+  return {
+    ...baseTheme,
+    palette: {
+      mode,
+      ...baseTheme.palette,
+      ...(mode === 'light' ? notificationsLight : notificationsDark),
+    },
+  };
 };

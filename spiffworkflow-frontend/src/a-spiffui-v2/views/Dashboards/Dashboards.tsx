@@ -22,8 +22,6 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { blue, brown, grey, red, yellow } from '@mui/material/colors';
-import { green } from '@carbon/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
@@ -31,7 +29,6 @@ import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
 import useProcessInstances from '../../hooks/useProcessInstances';
 import ProcessInstanceCard from './ProcessInstanceCard';
-
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -77,24 +74,21 @@ export default function Dashboards() {
     { label: 'Completed', value: 'completed' },
   ];
 
+  /** These values map to theme tokens, which enable the light/dark modes etc. */
   const chipBackground = (params: any) => {
     switch (params.value) {
       case 'Completed':
       case 'complete':
-        return { backgroundColor: blue[50], color: blue[900], width: '100%' };
+        return 'info';
       case 'Started':
-        return { backgroundColor: green[10], color: green[90], width: '100%' };
+        return 'success';
       case 'error':
-        return { backgroundColor: red[100], color: red[900], width: '100%' };
+        return 'error';
       case 'Wait a second':
       case 'user_input_required':
-        return {
-          backgroundColor: yellow[200],
-          color: brown[900],
-          width: '100%',
-        };
+        return 'warning';
       default:
-        return { backgroundColor: grey[100], color: grey[900], width: '100%' };
+        return 'default';
     }
   };
 
@@ -150,9 +144,12 @@ export default function Dashboards() {
             column.Header === 'Last milestone' || column.Header === 'Status'
               ? (params: Record<string, any>) => (
                   <Chip
-                    label={params.value}
+                    label={params.value || '...no info...'}
                     variant="filled"
-                    sx={chipBackground(params)}
+                    color={chipBackground(params)}
+                    sx={{
+                      width: '100%',
+                    }}
                   />
                 )
               : null,
