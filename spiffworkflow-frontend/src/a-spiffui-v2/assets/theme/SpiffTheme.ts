@@ -1,5 +1,80 @@
 import { PaletteMode, ThemeOptions } from '@mui/material';
-import { blue, green, orange, red } from '@mui/material/colors';
+import { blue, green, indigo, orange, purple, red } from '@mui/material/colors';
+
+const customNotifications = (mode: PaletteMode) => {
+  return mode === 'light'
+    ? {
+        success: {
+          main: green[100],
+          light: green[100],
+          dark: green[500],
+        },
+        warning: {
+          main: orange[100],
+          light: orange[100],
+          dark: orange[500],
+        },
+        error: {
+          main: red[100],
+          light: red[100],
+          dark: red[500],
+        },
+        info: {
+          main: blue[100],
+          light: blue[100],
+          dark: blue[500],
+        },
+      }
+    : {
+        success: {
+          main: green[500],
+          light: green[300],
+          dark: green[700],
+          contrastText: '#fff',
+        },
+        warning: {
+          main: orange[300],
+          light: orange[500],
+          dark: orange[700],
+          contrastText: '#fff',
+        },
+        error: {
+          main: red[300],
+          light: red[500],
+          dark: red[700],
+          contrastText: '#fff',
+        },
+        info: {
+          main: blue[300],
+          light: blue[500],
+          dark: blue[700],
+          contrastText: '#fff',
+        },
+      };
+};
+
+const customComponents = (mode: PaletteMode) => {
+  // We wanted rounded buttons everywhere
+  return {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontSize: '1rem',
+          borderRadius: 100,
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            color: mode === 'light' ? 'primary.main' : indigo[200],
+          },
+        },
+      },
+    },
+  };
+};
 
 const baseTheme = {
   palette: {
@@ -22,76 +97,18 @@ const baseTheme = {
       textTransform: undefined,
     },
   },
-  components: {
-    // We wanted rounded buttons everywhere
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          fontSize: '1rem',
-          borderRadius: 100,
-        },
-      },
-    },
-  },
 };
 
 export const createSpiffTheme = (mode: PaletteMode = 'light'): ThemeOptions => {
-  const notificationsLight = {
-    success: {
-      main: green[100],
-      light: green[100],
-      dark: green[500],
-    },
-    warning: {
-      main: orange[100],
-      light: orange[100],
-      dark: orange[500],
-    },
-    error: {
-      main: red[100],
-      light: red[100],
-      dark: red[500],
-    },
-    info: {
-      main: blue[100],
-      light: blue[100],
-      dark: blue[500],
-    },
-  };
-
-  const notificationsDark = {
-    success: {
-      main: green[500],
-      light: green[300],
-      dark: green[700],
-      contrastText: '#fff',
-    },
-    warning: {
-      main: orange[300],
-      light: orange[500],
-      dark: orange[700],
-      contrastText: '#fff',
-    },
-    error: {
-      main: red[300],
-      light: red[500],
-      dark: red[700],
-      contrastText: '#fff',
-    },
-    info: {
-      main: blue[300],
-      light: blue[500],
-      dark: blue[700],
-      contrastText: '#fff',
-    },
-  };
-
   return {
     ...baseTheme,
     palette: {
       mode,
       ...baseTheme.palette,
-      ...(mode === 'light' ? notificationsLight : notificationsDark),
+      ...customNotifications(mode),
+    },
+    components: {
+      ...customComponents(mode),
     },
   };
 };

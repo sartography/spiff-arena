@@ -1,5 +1,5 @@
-import { Stack, Typography, useTheme } from '@mui/material';
-import { purple } from '@mui/material/colors';
+import { Paper, Stack, Typography, useTheme } from '@mui/material';
+import { grey, purple } from '@mui/material/colors';
 
 /**
  * Appears in the FilterCard area of the Dashboards view.
@@ -14,24 +14,19 @@ export default function FilterCard({
 }) {
   const isDark = useTheme().palette.mode === 'dark';
   return (
-    <Stack
-      direction="row"
-      gap={2}
-      padding={3}
-      alignItems="center"
+    <Paper
       sx={{
-        color: 'text.primary',
-        backgroundColor: isDark ? 'primary.main' : 'grey.200',
-        height: 72,
-        borderRadius: 2,
+        border: `1px solid ${isDark ? grey[700] : grey[300]}`,
         flexGrow: 1,
         ':hover': {
-          backgroundColor: isDark ? 'secondary.main' : purple[50],
+          backgroundColor: isDark ? 'primary.dark' : purple[50],
         },
       }}
     >
-      <Typography variant="h4">{count}</Typography>
-      <Typography>{title}</Typography>
-    </Stack>
+      <Stack direction="row" gap={2} padding={3} alignItems="center">
+        <Typography variant="h4">{count}</Typography>
+        <Typography>{title}</Typography>
+      </Stack>
+    </Paper>
   );
 }
