@@ -5,6 +5,7 @@ import os
 import time
 from hashlib import sha256
 from typing import Any
+from unittest.mock import patch
 
 import flask
 import pytest
@@ -12,6 +13,8 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -663,6 +666,7 @@ class TestProcessApi(BaseTest):
             "/v1.0/processes/callers/Level2",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
         # We should get 1 back, Level1 calls Level2
         assert len(response.json) == 1
@@ -3321,6 +3325,55 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["process_data_value"] == "hey"
+
+    def test_process_data_show_with_sub_process(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/with-service-task-call-activity-sub-process",
+            process_model_source_directory="with-service-task-call-activity-sub-process",
+        )
+        process_instance_one = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance_one)
+        connector_response = {
+            "body": '{"ok": true}',
+            "mimetype": "application/json",
+            "http_status": 200,
+            "operator_identifier": "http/GetRequestV2",
+        }
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = json.dumps(connector_response)
+            processor.do_engine_steps(save=True)
+        self.complete_next_manual_task(processor, execution_mode="synchronous")
+        self.complete_next_manual_task(processor, execution_mode="synchronous", data={"firstName": "Chuck"})
+        assert process_instance_one.status == "complete"
+
+        process_identifier = "call_activity_sub_process"
+        bpmn_processes = (
+            BpmnProcessModel.query.join(
+                BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == BpmnProcessModel.bpmn_process_definition_id
+            )
+            .filter(BpmnProcessDefinitionModel.bpmn_identifier == process_identifier)
+            .all()
+        )
+        assert len(bpmn_processes) == 1
+        bpmn_process = bpmn_processes[0]
+
+        response = client.get(
+            f"/v1.0/process-data/default/{self.modify_process_identifier_for_path_param(process_model.id)}/sub_level_data_object_three/"
+            f"{process_instance_one.id}?process_identifier={process_identifier}&bpmn_process_guid={bpmn_process.guid}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["process_data_value"] == "d"
 
     def _setup_testing_instance(
         self,

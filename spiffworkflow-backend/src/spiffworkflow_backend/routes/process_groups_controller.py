@@ -10,6 +10,7 @@ from flask import make_response
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
@@ -18,8 +19,10 @@ from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
+from spiffworkflow_backend.services.user_service import UserService
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
@@ -107,13 +110,29 @@ def process_group_list(
     return make_response(jsonify(response_json), 200)
 
 
+# this action is excluded from authorization checks, so it is important that it call:
+# AuthorizationService.check_permission_for_request()
+# it also allows access to the process group if the user has access to read any of the process models contained in the group
 def process_group_show(
     modified_process_group_id: str,
 ) -> Any:
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    has_access_to_group_without_considering_subgroups_and_models = True
     try:
-        # do not return child models and groups here since this call does not check permissions of them
-        process_group = ProcessModelService.get_process_group(process_group_id, find_direct_nested_items=False)
+        AuthorizationService.check_permission_for_request()
+    except NotAuthorizedError:
+        has_access_to_group_without_considering_subgroups_and_models = False
+
+    try:
+        user = UserService.current_user()
+        if (
+            has_access_to_group_without_considering_subgroups_and_models
+            or AuthorizationService.is_user_allowed_to_view_process_group_with_id(user, process_group_id)
+        ):
+            # do not return child models and groups here since this call does not check permissions of them
+            process_group = ProcessModelService.get_process_group(process_group_id, find_direct_nested_items=False)
+        else:
+            raise ProcessEntityNotFoundError("viewing this process group is not authorized")
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(

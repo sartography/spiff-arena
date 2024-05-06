@@ -23,6 +23,11 @@ ignore:
         reason: No current resolution
         expires: 2024-05-16T14:21:30.321Z
         created: 2024-04-16T14:21:30.331Z
+  SNYK-PYTHON-FLASKCORS-6670412:
+    - '*':
+        reason: no fix available
+        expires: 2024-11-01T00:00:00.000Z
+        created: 2024-05-02T17:22:47.098Z
 
 patch: {}
 

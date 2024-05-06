@@ -37,6 +37,7 @@ class DataSetupService:
         reference_objects: dict[str, ReferenceCacheModel] = {}
         all_data_store_specifications: dict[tuple[str, str, str], Any] = {}
         all_message_models: dict[tuple[str, str], MessageModel] = {}
+        references = []
 
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
@@ -49,13 +50,13 @@ class DataSetupService:
                         try:
                             reference_cache = ReferenceCacheModel.from_spec_reference(ref)
                             ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-                            SpecFileService.update_caches_except_process(ref)
                             db.session.commit()
+                            references.append(ref)
                         except Exception as ex:
                             failing_process_models.append(
                                 (
                                     f"{ref.relative_location}/{ref.file_name}",
-                                    str(ex),
+                                    repr(ex),
                                 )
                             )
                 except Exception as ex2:
@@ -95,6 +96,18 @@ class DataSetupService:
         MessageDefinitionService.delete_all_message_models()
         MessageDefinitionService.save_all_message_models(all_message_models)
         db.session.commit()
+
+        for ref in references:
+            try:
+                SpecFileService.update_caches_except_process(ref)
+                db.session.commit()
+            except Exception as ex:
+                failing_process_models.append(
+                    (
+                        f"{ref.relative_location}/{ref.file_name}",
+                        repr(ex),
+                    )
+                )
 
         return failing_process_models
 

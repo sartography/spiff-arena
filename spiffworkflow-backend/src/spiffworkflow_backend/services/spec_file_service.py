@@ -137,11 +137,6 @@ class SpecFileService(FileSystemService):
             )
         return references
 
-    @staticmethod
-    def add_file(process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes) -> File:
-        # Same as update
-        return SpecFileService.update_file(process_model_info, file_name, binary_data)
-
     @classmethod
     def validate_bpmn_xml(cls, file_name: str, binary_data: bytes) -> None:
         file_type = FileSystemService.file_type(file_name)
@@ -155,8 +150,13 @@ class SpecFileService(FileSystemService):
 
     @classmethod
     def update_file(
-        cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes, user: UserModel | None = None
-    ) -> File:
+        cls,
+        process_model_info: ProcessModelInfo,
+        file_name: str,
+        binary_data: bytes,
+        user: UserModel | None = None,
+        update_process_cache_only: bool = False,
+    ) -> tuple[File, list[Reference]]:
         SpecFileService.assert_valid_file_name(file_name)
         cls.validate_bpmn_xml(file_name, binary_data)
 
@@ -188,7 +188,10 @@ class SpecFileService(FileSystemService):
                     )
 
             all_called_element_ids = all_called_element_ids | set(ref.called_element_ids)
-            SpecFileService.update_all_caches(ref)
+            if update_process_cache_only:
+                SpecFileService.update_process_cache(ref)
+            else:
+                SpecFileService.update_all_caches(ref)
 
         if user is not None:
             called_element_refs = (
@@ -216,7 +219,7 @@ class SpecFileService(FileSystemService):
         # make sure we save the file as the last thing we do to ensure validations have run
         full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
         SpecFileService.write_file_data_to_system(full_file_path, binary_data)
-        return SpecFileService.to_file_object(file_name, full_file_path)
+        return (SpecFileService.to_file_object(file_name, full_file_path), references)
 
     @staticmethod
     def last_modified(process_model: ProcessModelInfo, file_name: str) -> datetime:
@@ -262,20 +265,13 @@ class SpecFileService(FileSystemService):
             .all()
         )
 
-        process_ids = []
+        reference_cache_ids = []
 
         for record in records:
-            process_ids.append(record.identifier)
+            reference_cache_ids.append(record.id)
             db.session.delete(record)
 
-        ProcessCallerService.clear_cache_for_process_ids(process_ids)
-        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
-
-    @staticmethod
-    def clear_caches() -> None:
-        db.session.query(ReferenceCacheModel).delete()
-        ProcessCallerService.clear_cache()
-        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
+        ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
 
     @staticmethod
     def update_process_cache(ref: Reference) -> None:

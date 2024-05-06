@@ -2068,7 +2068,7 @@ paths:
       - name: process_identifier
         in: query
         required: false
-        description: The identifier of the process the data object is in.
+        description: "DEPRECATED - only the bpmn_process_guid is needed now: The identifier of the process the data object is in."
         schema:
           type: string
       - name: bpmn_process_guid
