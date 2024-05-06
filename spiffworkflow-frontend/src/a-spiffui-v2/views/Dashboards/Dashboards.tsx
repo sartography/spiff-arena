@@ -192,7 +192,7 @@ export default function Dashboards() {
             ))}
           </Stack>
           <Stack direction="row" gap={2} padding={2} sx={{ flexWrap: 'wrap' }}>
-            <FormControl sx={{ minWidth: 300 }}>
+            <FormControl>
               <InputLabel id="filter-select-label">Filter</InputLabel>
               <Select
                 labelId="filter-select-label"

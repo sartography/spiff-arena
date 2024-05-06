@@ -1,6 +1,10 @@
 /* site is mainly using white theme. */
 /* header is mainly using g100 */
 /* mockup wanted white, not grey, text */
+body {
+  /* This prevents the annoying MUI select box layout shift */
+  overflow-y: auto !important;
+}
 .cds--header,
 a.cds--header__menu-item {
   color: white;

@@ -9,12 +9,20 @@ import { ReportMetadata } from '../../interfaces';
  * Right now we're only using "for-me"
  */
 export default function useProcessInstances() {
+  /**
+   * At this point, it seems you change the type of the collection
+   * by specifiying this piece of info. (They seem to be the same collection).
+   * TODO: Find out what's what here
+   */
+  type ApiCollectionType = 'all' | 'for-me';
+  const [apiCollectionType, setApiCollectionType] =
+    useState<ApiCollectionType>('all');
   // TODO: ProcessInstance type didn't seem right
   // Find out and remove "any"
   const [processInstances, setProcessInstances] = useState<Record<string, any>>(
     {}
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const reportMetadataToUse: ReportMetadata = {
     columns: [],
@@ -35,8 +43,11 @@ export default function useProcessInstances() {
 
   const getProcessInstances = async () => {
     setLoading(true);
+    const path = `/process-instances${
+      apiCollectionType === 'all' ? '' : `/${apiCollectionType}`
+    }?per_page=100&page=1`;
     HttpService.makeCallToBackend({
-      path: '/process-instances/for-me?per_page=100&page=1',
+      path,
       httpMethod: 'POST',
       successCallback: processInstancesResult,
       postBody: {
@@ -54,6 +65,7 @@ export default function useProcessInstances() {
   });
 
   return {
+    setApiCollectionType,
     processInstances,
     loading,
   };
