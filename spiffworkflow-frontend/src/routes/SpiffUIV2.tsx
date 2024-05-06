@@ -1,5 +1,12 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Box, Container, CssBaseline, Divider, Grid } from '@mui/material';
+import {
+  Box,
+  Container,
+  CssBaseline,
+  Divider,
+  Grid,
+  Slide,
+} from '@mui/material';
 import { grey } from '@mui/material/colors';
 import { useEffect, useState } from 'react';
 import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
@@ -54,13 +61,15 @@ export default function SpiffUIV2() {
       >
         <Grid container sx={{ height: '100%' }}>
           <Grid item>
-            <Box
-              sx={{
-                height: '100%',
-              }}
-            >
-              <SideMenu callback={handleMenuCallback} />
-            </Box>
+            <Slide direction="right" in mountOnEnter unmountOnExit>
+              <Box
+                sx={{
+                  height: '100%',
+                }}
+              >
+                <SideMenu callback={handleMenuCallback} />
+              </Box>
+            </Slide>
           </Grid>
           <Grid item padding={2}>
             <Divider

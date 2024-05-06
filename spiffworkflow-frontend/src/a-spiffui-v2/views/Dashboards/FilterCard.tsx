@@ -17,6 +17,7 @@ export default function FilterCard({
     <Paper
       sx={{
         border: `1px solid ${isDark ? grey[700] : grey[300]}`,
+        borderRadius: 2,
         flexGrow: 1,
         ':hover': {
           backgroundColor: isDark ? 'primary.dark' : purple[50],
