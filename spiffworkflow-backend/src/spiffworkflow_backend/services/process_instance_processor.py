@@ -640,9 +640,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -695,18 +695,24 @@ class ProcessInstanceProcessor:
         task_list_by_hash = {t.guid: t for t in tasks}
         parent_task_guids = []
         for task in tasks:
+            parent_guid = task.parent_guid()
             if task.state not in states_to_exclude_from_rehydration:
                 json_data_hashes.add(task.json_data_hash)
 
                 # load parent task data to avoid certain issues that can arise from parallel branches
-                parent_guid = task.parent_guid()
                 if (
                     parent_guid in task_list_by_hash
                     and task_list_by_hash[parent_guid].state in states_to_exclude_from_rehydration
                 ):
                     json_data_hashes.add(task_list_by_hash[parent_guid].json_data_hash)
                     parent_task_guids.append(parent_guid)
-
+            # elif (
+            #     parent_guid in task_list_by_hash
+            #     and "instance_map" in task_list_by_hash[parent_guid].runtime_info
+            #     and task_list_by_hash[parent_guid] not in states_to_exclude_from_rehydration
+            # ):
+            #     json_data_hashes.add(task.json_data_hash)
+            #
         json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
         for json_data_record in json_data_records:
