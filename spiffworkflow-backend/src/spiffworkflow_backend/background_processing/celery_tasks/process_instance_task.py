@@ -1,7 +1,11 @@
+from typing import Any
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_future_task_if_appropriate,
+)
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
@@ -23,9 +27,15 @@ class SpiffCeleryWorkerError(Exception):
     pass
 
 
+def get_current_process_index() -> Any:
+    raise Exception("NOOO")
+    # return current_process().index
+    return 1
+
+
 @shared_task(ignore_result=False, time_limit=ten_minutes)
 def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
-    proc_index = current_process().index
+    proc_index = get_current_process_index()
     ProcessInstanceLockService.set_thread_local_locking_context("celery:worker", additional_processing_identifier=proc_index)
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
@@ -71,6 +81,8 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
             f" {str(exception)}"
         )
+        # NOTE: consider exponential backoff
+        queue_future_task_if_appropriate(process_instance, eta_in_seconds=10, task_guid=task_guid)
         return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
     except Exception as exception:
         db.session.rollback()  # in case the above left the database with a bad transaction
