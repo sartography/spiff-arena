@@ -3,6 +3,7 @@ import os
 import uuid
 from typing import Any
 from typing import TypedDict
+from uuid import UUID
 
 import flask.wrappers
 import sentry_sdk
@@ -29,11 +30,9 @@ from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedErro
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -136,35 +135,43 @@ def _process_data_fetcher(
     bpmn_process_guid: str | None = None,
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
+    if process_identifier and bpmn_process_guid is None:
+        raise ApiError(
+            error_code="missing_required_parameter",
+            message="process_identifier was given but bpmn_process_guid was not. Both must be provided if either is required.",
+            status_code=404,
+        )
+    if process_identifier is None and bpmn_process_guid:
+        raise ApiError(
+            error_code="missing_required_parameter",
+            message="bpmn_process_guid was given but process_identifier was not. Both must be provided if either is required.",
+            status_code=404,
+        )
+
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    if bpmn_process_guid is not None:
-        bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
-    else:
-        bpmn_process = process_instance.bpmn_process
-    if bpmn_process is None:
-        raise ApiError(
-            error_code="bpmn_process_not_found",
-            message=f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
-            status_code=404,
-        )
+    processor = ProcessInstanceProcessor(process_instance)
 
-    bpmn_process_data = JsonDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
-    if bpmn_process_data is None:
-        raise ApiError(
-            error_code="bpmn_process_data_not_found",
-            message=f"Cannot find a bpmn process data with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
-            status_code=404,
-        )
+    bpmn_process_instance = processor.bpmn_process_instance
+    bpmn_process_data = processor.get_data()
+    if process_identifier and bpmn_process_instance.spec.name != process_identifier:
+        bpmn_process_instance = processor.bpmn_process_instance.subprocesses.get(UUID(bpmn_process_guid))
+        if bpmn_process_instance is None:
+            raise ApiError(
+                error_code="bpmn_process_not_found",
+                message=f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
+                status_code=404,
+            )
+        bpmn_process_data = bpmn_process_instance.data
 
-    data_objects = bpmn_process_data["data_objects"]
+    data_objects = bpmn_process_instance.spec.data_objects
     data_object = data_objects.get(process_data_identifier)
 
     if data_object is None:
         raise ApiError(
             error_code="data_object_not_found",
             message=(
-                f"Cannot find a data object with identifier '{process_data_identifier}' for bpmn process"
-                f" '{bpmn_process.bpmn_process_definition.bpmn_identifier}' in process instance {process_instance.id}"
+                f"Cannot find a data object with identifier '{process_data_identifier}' for bpmn process '{process_identifier}'"
+                f" in process instance {process_instance.id}"
             ),
             status_code=404,
         )
