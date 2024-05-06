@@ -1018,3 +1018,38 @@ class TestProcessInstanceProcessor(BaseTest):
         assert human_task_one.task_guid != str(non_manual_spiff_task.id)
         with pytest.raises(TaskMismatchError):
             processor.complete_task(non_manual_spiff_task, human_task_one, user=process_instance.process_initiator)
+
+    def test_can_run_multiistance_tasks_with_human_task(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/multiinstance_manual_task",
+            process_model_source_directory="multiinstance_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+
+        processor.do_engine_steps(save=True)
+        assert process_instance.status == "complete"
