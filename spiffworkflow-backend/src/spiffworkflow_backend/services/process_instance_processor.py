@@ -640,9 +640,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[
-                bpmn_subprocess_definition.id
-            ] = bpmn_subprocess_definition.bpmn_identifier
+            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
+                bpmn_subprocess_definition.bpmn_identifier
+            )
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -698,6 +698,7 @@ class ProcessInstanceProcessor:
             parent_guid = task.parent_guid()
             if task.state not in states_to_exclude_from_rehydration:
                 json_data_hashes.add(task.json_data_hash)
+                task_guids_to_add.add(task.guid)
 
                 # load parent task data to avoid certain issues that can arise from parallel branches
                 if (
@@ -706,12 +707,12 @@ class ProcessInstanceProcessor:
                 ):
                     json_data_hashes.add(task_list_by_hash[parent_guid].json_data_hash)
                     task_guids_to_add.add(parent_guid)
-                    task_guids_to_add.add(task.guid)
             elif (
                 parent_guid in task_list_by_hash
-                and "instance_map" in task_list_by_hash[parent_guid].runtime_info
+                and "instance_map" in (task_list_by_hash[parent_guid].runtime_info or {})
                 and task_list_by_hash[parent_guid] not in states_to_exclude_from_rehydration
             ):
+                # make sure we add task data for multi-instance tasks as well
                 json_data_hashes.add(task.json_data_hash)
                 task_guids_to_add.add(task.guid)
 
