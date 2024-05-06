@@ -1019,7 +1019,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with pytest.raises(TaskMismatchError):
             processor.complete_task(non_manual_spiff_task, human_task_one, user=process_instance.process_initiator)
 
-    def test_can_run_multiistance_tasks_with_human_task(
+    def test_can_run_multiinstance_tasks_with_human_task(
         self,
         app: Flask,
         client: FlaskClient,
