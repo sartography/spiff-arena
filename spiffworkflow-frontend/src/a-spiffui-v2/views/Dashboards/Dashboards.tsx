@@ -29,6 +29,7 @@ import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
 import InfoWindow from './InfoWindow';
 import MyProcesses from './MyProcesses';
+import MyTasks from './MyTasks';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -182,7 +183,8 @@ export default function Dashboards() {
               </Stack>
             </Stack>
 
-            <MyProcesses filter={searchText} callback={handleRowSelect} />
+            {/* <MyProcesses filter={searchText} callback={handleRowSelect} /> */}
+            <MyTasks filter={searchText} callback={handleRowSelect} />
           </Stack>
         </Grid>
       </Grid>
