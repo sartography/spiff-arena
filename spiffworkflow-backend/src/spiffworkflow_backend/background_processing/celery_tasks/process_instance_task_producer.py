@@ -35,7 +35,9 @@ def should_queue_process_instance(process_instance: ProcessInstanceModel, execut
     return False
 
 
-def queue_future_task_if_appropriate(process_instance: ProcessInstanceModel, eta_in_seconds: float, task_guid: str) -> bool:
+def queue_future_task_if_appropriate(
+    process_instance: ProcessInstanceModel, eta_in_seconds: float, task_guid: str | None = None
+) -> bool:
     if queue_enabled_for_process_model(process_instance):
         buffer = 1
         countdown = eta_in_seconds - time.time() + buffer
