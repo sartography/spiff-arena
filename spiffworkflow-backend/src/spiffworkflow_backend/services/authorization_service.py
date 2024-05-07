@@ -31,6 +31,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.service_account import SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -175,14 +176,18 @@ class AuthorizationService:
                 permission_assignment.permission_target.uri, target_uri_normalized
             ):
                 matching_permission_assignments.append(permission_assignment)
-        if len(matching_permission_assignments) == 0:
+
+        return cls.has_permissions_and_all_permissions_permit(matching_permission_assignments)
+
+    @classmethod
+    def has_permissions_and_all_permissions_permit(cls, permission_assignments: list[PermissionAssignmentModel]) -> bool:
+        if len(permission_assignments) == 0:
             return False
 
-        all_permissions_permit = True
-        for permission_assignment in matching_permission_assignments:
+        for permission_assignment in permission_assignments:
             if permission_assignment.grant_type == "deny":
-                all_permissions_permit = False
-        return all_permissions_permit
+                return False
+        return True
 
     @classmethod
     def target_uri_matches_actual_uri(cls, target_uri: str, actual_uri: str) -> bool:
@@ -204,6 +209,36 @@ class AuthorizationService:
         for group in GroupModel.query.all():
             db.session.delete(group)
         db.session.commit()
+
+    # if you have access to PG:hey:%, you should be able to see PG hey, obviously.
+    # if you have access to PG:hey:yo:%, you should ALSO be able to see PG hey, because that allows you to navigate to hey:yo.
+    # if you have access to PG:hey:%, you should be able to see PG hey:yo, but that is handled by the normal permissions system,
+    # and we will never ask that question of this method.
+    @classmethod
+    def is_user_allowed_to_view_process_group_with_id(cls, user: UserModel, group_identifier: str) -> bool:
+        modified_group_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(group_identifier)
+        has_permission = cls.user_has_permission(
+            user=user,
+            permission="read",
+            target_uri=f"/process-groups/{modified_group_identifier}",
+        )
+        if has_permission:
+            return True
+        all_permission_assignments = cls.all_permission_assignments_for_user(user)
+        matching_permission_assignments = []
+        for permission_assignment in all_permission_assignments:
+            uri = permission_assignment.permission_target.uri
+            uri_as_pg_identifier = uri.removeprefix("/process-groups/").removesuffix(":%")
+            if permission_assignment.permission == "read" and (
+                permission_assignment.grant_type == "permit"
+                and (
+                    uri.startswith(f"/process-groups/{modified_group_identifier}")
+                    or uri.startswith(f"/process-models/{modified_group_identifier}")
+                )
+                or (permission_assignment.grant_type == "deny" and modified_group_identifier.startswith(uri_as_pg_identifier))
+            ):
+                matching_permission_assignments.append(permission_assignment)
+        return cls.has_permissions_and_all_permissions_permit(matching_permission_assignments)
 
     @classmethod
     def associate_user_with_group(cls, user: UserModel, group: GroupModel) -> None:

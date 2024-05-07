@@ -83,6 +83,9 @@ export default function NumericRangeField({
   };
 
   const parseNumberString = (numberString: string) => {
+    if (!numberString.match(matchNumberRegex)) {
+      return numberString;
+    }
     if (
       (numberString === '-' && numberString.length === 1) ||
       numberString.endsWith('.')

@@ -112,5 +112,6 @@ from spiffworkflow_backend.models.future_task import (
 from spiffworkflow_backend.models.feature_flag import (
     FeatureFlagModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel  # noqa: F401
 
 add_listeners()

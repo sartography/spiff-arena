@@ -23,14 +23,6 @@ class TestProcessModelsController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model = self.create_group_and_model_with_bpmn(
-            client=client,
-            user=with_super_admin_user,
-            process_group_id="caller",
-            process_model_id="caller",
-            bpmn_file_location="call_activity_same_directory",
-            bpmn_file_name="call_activity_test.bpmn",
-        )
         self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
@@ -38,6 +30,14 @@ class TestProcessModelsController(BaseTest):
             process_model_id="callee",
             bpmn_file_location="call_activity_same_directory",
             bpmn_file_name="callable_process.bpmn",
+        )
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="caller",
+            process_model_id="caller",
+            bpmn_file_location="call_activity_same_directory",
+            bpmn_file_name="call_activity_test.bpmn",
         )
 
         user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/caller:*")
