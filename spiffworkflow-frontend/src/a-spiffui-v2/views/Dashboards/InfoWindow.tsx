@@ -6,7 +6,7 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import { Close } from '@mui/icons-material';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import { useEffect } from 'react';
 
 export default function InfoWindow({ data }: { data: Record<string, any> }) {
@@ -27,18 +27,18 @@ export default function InfoWindow({ data }: { data: Record<string, any> }) {
         }}
       >
         <Stack>
-          {/* <Toolbar variant="regular">
+          <Toolbar variant="regular">
             <IconButton edge="start" color="inherit" aria-label="close">
-              <Close />
+              <CloseOutlinedIcon />
             </IconButton>
             <Typography variant="h1">
-              {data.row.process_model_display_name}
+              {data.process_model_display_name}
             </Typography>
           </Toolbar>
 
-          <Typography>{data.row.process_initiator_username}</Typography>
-          <Typography>{data.row.last_milestone_bpmn_name}</Typography>
-          <Typography>{data.row.last_milestone_bpmn_name}</Typography> */}
+          <Typography>{data.process_initiator_username}</Typography>
+          <Typography>{data.last_milestone_bpmn_name}</Typography>
+          <Typography>{data.last_milestone_bpmn_name}</Typography>
         </Stack>
       </Paper>
     </Box>
