@@ -8,7 +8,7 @@ import { ReportMetadata } from '../../interfaces';
  * TODO: We'll need to allow appending the path to hit different endpoints.
  * Right now we're only using "for-me"
  */
-export default function useProcessInstances() {
+export default function useProcessInstanceCollection() {
   /**
    * At this point, it seems you change the type of the collection
    * by specifiying this piece of info. (They seem to be the same collection).
@@ -19,9 +19,9 @@ export default function useProcessInstances() {
     useState<ApiCollectionType>('all');
   // TODO: ProcessInstance type didn't seem right
   // Find out and remove "any"
-  const [processInstances, setProcessInstances] = useState<Record<string, any>>(
-    {}
-  );
+  const [processInstanceCollection, setProcessInstanceCollection] = useState<
+    Record<string, any>
+  >({});
   const [loading, setLoading] = useState(false);
 
   const reportMetadataToUse: ReportMetadata = {
@@ -36,12 +36,13 @@ export default function useProcessInstances() {
    * Query function to get process instances from the backend
    * @returns Query functions must return a value, even if it's just true
    */
-  const processInstancesResult = (result: any[]) => {
-    setProcessInstances(result);
+  const processResult = (result: any[]) => {
+    console.log(result);
+    setProcessInstanceCollection(result);
     setLoading(false);
   };
 
-  const getProcessInstances = async () => {
+  const getProcessInstanceCollection = async () => {
     setLoading(true);
     const path = `/process-instances${
       apiCollectionType === 'all' ? '' : `/${apiCollectionType}`
@@ -49,7 +50,7 @@ export default function useProcessInstances() {
     HttpService.makeCallToBackend({
       path,
       httpMethod: 'POST',
-      successCallback: processInstancesResult,
+      successCallback: processResult,
       postBody: {
         report_metadata: reportMetadataToUse,
       },
@@ -60,13 +61,13 @@ export default function useProcessInstances() {
 
   /** TanStack (React Query) trigger to do it's SWR state/cache thing */
   useQuery({
-    queryKey: ['/process-instances/for-me', processInstances],
-    queryFn: () => getProcessInstances(),
+    queryKey: ['/process-instances/for-me', processInstanceCollection],
+    queryFn: () => getProcessInstanceCollection(),
   });
 
   return {
     setApiCollectionType,
-    processInstances,
+    processInstanceCollection,
     loading,
   };
 }

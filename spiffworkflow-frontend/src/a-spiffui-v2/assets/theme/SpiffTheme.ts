@@ -1,5 +1,5 @@
 import { PaletteMode, ThemeOptions } from '@mui/material';
-import { blue, green, indigo, orange, purple, red } from '@mui/material/colors';
+import { blue, green, indigo, orange, pink, red } from '@mui/material/colors';
 
 const customNotifications = (mode: PaletteMode) => {
   return mode === 'light'
@@ -79,10 +79,11 @@ const customComponents = (mode: PaletteMode) => {
 const baseTheme = {
   palette: {
     primary: {
-      main: '#3f51b5',
+      main: indigo[500],
+      light: indigo[100],
     },
     secondary: {
-      main: '#f50057',
+      main: pink.A100,
     },
   },
   typography: {
@@ -96,9 +97,6 @@ const baseTheme = {
     button: {
       textTransform: undefined,
     },
-  },
-  spiff: {
-    greyBorder: '1px solid #e0e0e0',
   },
 };
 

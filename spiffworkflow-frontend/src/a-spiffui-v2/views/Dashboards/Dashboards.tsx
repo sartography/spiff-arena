@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   FormControl,
   Grid,
   InputAdornment,
@@ -16,41 +15,29 @@ import {
   Tabs,
   TextField,
 } from '@mui/material';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import MonetizationOnOutlinedIcon from '@mui/icons-material/MonetizationOnOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
-import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
-import useProcessInstances from '../../hooks/useProcessInstances';
-import ProcessInstanceCard from './ProcessInstanceCard';
 import InfoWindow from './InfoWindow';
+import MyProcesses from './MyProcesses';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
 export default function Dashboards() {
   const [selectedTab, setSelectedTab] = useState('myProcesses');
   const [selectedFilter, setSelectedFilter] = useState('new');
+  const [searchText, setSearchText] = useState('');
+  const [panelData, setPanelData] = useState<Record<string, any>>({});
   const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
-  // TODO: Type of this doesn't seem to be ProcessInstance
-  // Find out and remove "any""
-  const [processInstanceColumns, setProcessInstanceColumns] = useState<
-    GridColDef[]
-  >([]);
-  const [processInstanceRows, setProcessInstanceRows] = useState<
-    GridRowsProp[]
-  >([]);
-  const [selectedGridRow, setSelectedGridRow] = useState<Record<string, any>>(
-    {}
-  );
-
-  const { processInstances } = useProcessInstances();
 
   const tabData = [
     {
@@ -59,9 +46,14 @@ export default function Dashboards() {
       icon: <Inventory2OutlinedIcon />,
     },
     {
+      label: 'My Tasks',
+      value: 'myTasks',
+      icon: <MonetizationOnOutlinedIcon />,
+    },
+    {
       label: 'Finance',
       value: 'finance',
-      icon: <MonetizationOnOutlinedIcon />,
+      icon: <AssignmentOutlinedIcon />,
     },
     { label: 'Support', value: 'support', icon: <GroupsIcon /> },
   ];
@@ -80,24 +72,6 @@ export default function Dashboards() {
     { label: 'Completed', value: 'completed' },
   ];
 
-  /** These values map to theme tokens, which enable the light/dark modes etc. */
-  const chipBackground = (params: any) => {
-    switch (params.value) {
-      case 'Completed':
-      case 'complete':
-        return 'info';
-      case 'Started':
-        return 'success';
-      case 'error':
-        return 'error';
-      case 'Wait a second':
-      case 'user_input_required':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
   type TabData = { label: string; value: string; icon: ReactNode };
   const handleTabChange = (tab: TabData) => {
     setSelectedTab(tab.value);
@@ -108,69 +82,13 @@ export default function Dashboards() {
   };
 
   const handleSearchChange = (search: string) => {
-    const filtered = search
-      ? processInstances.results.filter((instance: any) => {
-          const searchFields = [
-            'process_model_display_name',
-            'last_milestone_bpmn_name',
-            'process_initiator_username',
-            'status',
-          ];
-
-          return searchFields.some((field) =>
-            (instance[field] || '')
-              .toString()
-              .toLowerCase()
-              .includes(search.toLowerCase())
-          );
-        })
-      : processInstances.results;
-
-    setProcessInstanceRows(filtered);
+    setSearchText(search);
   };
 
-  const handleGridRowClick = (data: Record<string, any>) => {
-    setSelectedGridRow(data);
-    setInfoPanelIsOpen((curr) => !curr);
+  const handleRowSelect = (data: Record<string, any>) => {
+    setPanelData(data);
+    setInfoPanelIsOpen(true);
   };
-
-  useEffect(() => {
-    if ('report_metadata' in processInstances) {
-      const mappedColumns = processInstances.report_metadata?.columns.map(
-        (column: Record<string, any>) => ({
-          field: column.accessor,
-          headerName: column.Header,
-          flex: (() => {
-            switch (column.Header) {
-              case 'Id':
-                return 0.5;
-              case 'Start':
-              case 'End':
-                return 0.75;
-              default:
-                return 1;
-            }
-          })(),
-          renderCell:
-            column.Header === 'Last milestone' || column.Header === 'Status'
-              ? (params: Record<string, any>) => (
-                  <Chip
-                    label={params.value || '...no info...'}
-                    variant="filled"
-                    color={chipBackground(params)}
-                    sx={{
-                      width: '100%',
-                    }}
-                  />
-                )
-              : null,
-        })
-      );
-
-      setProcessInstanceColumns(mappedColumns);
-      setProcessInstanceRows([...processInstances.results]);
-    }
-  }, [processInstances]);
 
   return (
     <>
@@ -264,46 +182,14 @@ export default function Dashboards() {
               </Stack>
             </Stack>
 
-            <Box
-              sx={{
-                display: { xs: 'none', lg: 'block' },
-                position: 'relative',
-              }}
-            >
-              <DataGrid
-                sx={{
-                  '&, [class^=MuiDataGrid]': { border: 'none' },
-                }}
-                rows={processInstanceRows}
-                columns={processInstanceColumns}
-                onRowClick={handleGridRowClick}
-              />
-            </Box>
-            <Box
-              sx={{
-                display: { xs: 'block', lg: 'none' },
-              }}
-            >
-              <Stack
-                gap={2}
-                sx={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                }}
-              >
-                {processInstanceRows.map((instance: Record<string, any>) => (
-                  <ProcessInstanceCard instance={instance} />
-                ))}
-              </Stack>
-            </Box>
+            <MyProcesses filter={searchText} callback={handleRowSelect} />
           </Stack>
         </Grid>
       </Grid>
 
       {/** Absolutely positioned info window */}
-      {!Object.keys(selectedGridRow).length && (
-        <Slide in direction="left" mountOnEnter unmountOnExit>
+      {Object.keys(panelData).length && (
+        <Slide in={infoPanelOpen} direction="left" mountOnEnter unmountOnExit>
           <Stack
             sx={{
               display: { xs: 'none', md: 'block' },
@@ -317,7 +203,7 @@ export default function Dashboards() {
             }}
           >
             <Box sx={{ width: '100%', height: '70%' }}>
-              <InfoWindow data={selectedGridRow} />
+              <InfoWindow data={panelData} />
             </Box>
           </Stack>
         </Slide>
