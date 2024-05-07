@@ -10,9 +10,9 @@ import Moon from '@mui/icons-material/DarkModeOutlined';
 import Lightbulb from '@mui/icons-material/LightbulbOutlined';
 import Settings from '@mui/icons-material/SettingsOutlined';
 import Logout from '@mui/icons-material/LogoutOutlined';
-import SpiffLogo from '../SpiffLogo';
+import SpiffLogo from '../../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from './MenuItem';
-import UserService from '../../../services/UserService';
+import UserService from '../../../../services/UserService';
 
 /**
  * SideMenu component that satisfies design requirements.

@@ -9,10 +9,10 @@ import {
 } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import { useEffect, useState } from 'react';
-import SideMenu from '../a-spiffui-v2/components/sidemenu/SideMenu';
+import SideMenu from '../a-spiffui-v2/views/app/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
-import { MenuItemData } from '../a-spiffui-v2/components/sidemenu/MenuItem';
+import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
