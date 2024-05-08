@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import CustomForm from '../CustomForm';
-import { ProcessGroup } from '../../interfaces';
+import { ProcessGroup, Messages, RJSFFormObject } from '../../interfaces';
 import {
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
-import {
-  removeMessageFromProcessGroup,
-  getPropertiesForMessage,
-} from './MessageHelper';
+import { getPropertiesForMessage } from './MessageHelper';
 
 type OwnProps = {
   height: number;
@@ -37,47 +34,40 @@ export function MessageEditor({
   }, [modifiedProcessGroupIdentifier, setProcessGroup]);
 
   const messageOptions = ['add new'];
-  if (processGroup && processGroup.messages) {
-    messageOptions.concat(processGroup.messages.map((message) => message.id));
-  }
+  // if (processGroup && processGroup.messages) {
+  //   messageOptions.concat(processGroup.messages.map((message) => message.id));
+  // }
 
-  const saveModel = (result: any) => {
-    const { formData } = result;
+  const saveModel = (formObject: RJSFFormObject) => {
+    const { formData } = formObject;
 
     if (!processGroup) {
       return;
     }
 
-    // Create an updated process group without the message being edited in the form.
-    const updatedProcessGroup = removeMessageFromProcessGroup(
-      messageId,
-      processGroup
-    );
+    const newMessages: Messages = processGroup.messages || {};
 
-    // Now add that message back in.
-    if (!Array.isArray(updatedProcessGroup.messages)) {
-      updatedProcessGroup.messages = [];
-    }
-    updatedProcessGroup.messages.push({ id: formData.messageId });
-
-    if (!Array.isArray(updatedProcessGroup.correlation_properties)) {
-      updatedProcessGroup.correlation_properties = [];
+    if (!(messageId in newMessages)) {
+      newMessages[messageId] = { correlation_properties: {} };
     }
 
     (formData.correlation_properties || []).forEach((formProp: any) => {
-      let prop = updatedProcessGroup.correlation_properties?.find(
-        (p) => p.id === formProp.id
-      );
-
-      if (!prop) {
-        prop = { id: formProp.id, retrieval_expressions: [] };
-        updatedProcessGroup.correlation_properties?.push(prop);
+      if (!(formProp.id in newMessages[messageId].correlation_properties)) {
+        newMessages[messageId].correlation_properties[formProp.id] = {
+          retrieval_expressions: [],
+        };
       }
-      prop.retrieval_expressions.push({
-        message_ref: formData.messageId,
-        formal_expression: formProp.retrievalExpression,
-      });
+      if (
+        !newMessages[messageId].correlation_properties[
+          formProp.id
+        ].retrieval_expressions.includes(formProp.retrievalExpression)
+      ) {
+        newMessages[messageId].correlation_properties[
+          formProp.id
+        ].retrieval_expressions.push(formProp.retrievalExpression);
+      }
     });
+    processGroup.messages = newMessages;
 
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
 
@@ -89,7 +79,7 @@ export function MessageEditor({
       path,
       successCallback: handleProcessGroupUpdateResponse,
       httpMethod: 'PUT',
-      postBody: updatedProcessGroup,
+      postBody: processGroup,
     });
   };
 

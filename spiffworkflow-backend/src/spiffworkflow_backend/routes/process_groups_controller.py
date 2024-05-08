@@ -64,7 +64,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
 
 
 def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
-    body_include_list = ["display_name", "description", "messages", "correlation_keys", "correlation_properties"]
+    body_include_list = ["display_name", "description", "messages"]
     body_filtered = {include_item: body[include_item] for include_item in body_include_list if include_item in body}
 
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)

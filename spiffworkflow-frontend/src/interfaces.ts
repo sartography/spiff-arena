@@ -212,18 +212,20 @@ export interface ProcessInstance {
   process_model_uses_queued_execution?: boolean;
 }
 
-export interface Message {
-  id: string;
-}
-
-export interface RetrievalExpression {
-  message_ref: string;
-  formal_expression: string;
-}
-
 export interface CorrelationProperty {
-  id: string;
-  retrieval_expressions: RetrievalExpression[];
+  retrieval_expressions: string[];
+}
+
+export interface CorrelationProperties {
+  [key: string]: CorrelationProperty;
+}
+
+export interface MessageDefinition {
+  correlation_properties: CorrelationProperties;
+}
+
+export interface Messages {
+  [key: string]: MessageDefinition;
 }
 
 export interface CorrelationKey {
@@ -321,7 +323,7 @@ export interface ProcessGroup {
   process_models?: ProcessModel[];
   process_groups?: ProcessGroup[];
   parent_groups?: ProcessGroupLite[];
-  messages?: Message[];
+  messages?: Messages;
   correlation_keys?: CorrelationKey[];
   correlation_properties?: CorrelationProperty[];
 }
@@ -547,4 +549,8 @@ export interface PublicTask {
   task_guid: string;
   process_instance_id: number;
   confirmation_message_markdown: string;
+}
+
+export interface RJSFFormObject {
+  formData: any;
 }
