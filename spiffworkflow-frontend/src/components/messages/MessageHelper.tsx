@@ -13,7 +13,7 @@ const arrayCompare = (array1: string[], array2: string[]) => {
   );
 };
 
-const getPropertiesForMessage = (
+export const getPropertiesForMessage = (
   message: Message,
   processGroup: ProcessGroup
 ) => {

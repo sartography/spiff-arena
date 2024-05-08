@@ -403,50 +403,6 @@ export default function ProcessGroupForm({
     return buttons;
   };
 
-  const messageSection = () => {
-    let items: any[] = [];
-    if (
-      processGroup.correlation_keys &&
-      processGroup.correlation_keys.length > 0
-    ) {
-      // @ts-ignore
-      const keys = [undefined].concat(processGroup.correlation_keys);
-      items = keys.map((ck: CorrelationKey | undefined) => {
-        const id = ck?.id || 'uncorrelated';
-        return (
-          <>
-            <Stack orientation="horizontal" gap={1}>
-              <h3 className="with-icons">
-                <b>{id}</b> Messages
-              </h3>
-              {correlationButtons(ck)}
-            </Stack>
-            {messageDisplay(ck)}
-          </>
-        );
-      });
-    }
-    return (
-      <div className="processGroupMessages">
-        {messageEditModal()}
-        {correlationEditModal()}
-        <h2>Messages</h2>
-        {items}
-        <Button
-          kind="ghost"
-          data-qa="add-correlation-button"
-          renderIcon={Add}
-          iconDescription="Add Correlation"
-          onClick={() => {
-            setCorrelationKeyForModal({ id: '', correlation_properties: [] });
-          }}
-        >
-          Add Correlation Key
-        </Button>
-      </div>
-    );
-  };
-
   const formButtons = () => {
     return <Button type="submit">Submit</Button>;
   };
@@ -455,7 +411,6 @@ export default function ProcessGroupForm({
     <Form onSubmit={handleFormSubmission}>
       <Stack gap={5}>
         {formElements()}
-        {messageSection()}
         {formButtons()}
       </Stack>
     </Form>

@@ -6,7 +6,10 @@ import {
   setPageTitle,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
-import { removeMessageFromProcessGroup } from './MessageHelper';
+import {
+  removeMessageFromProcessGroup,
+  getPropertiesForMessage,
+} from './MessageHelper';
 
 type OwnProps = {
   height: number;
@@ -24,6 +27,7 @@ export function MessageEditor({
   useEffect(() => {
     const processResult = (result: ProcessGroup) => {
       setProcessGroup(result);
+      console.log('result', result);
       setPageTitle([result.display_name]);
     };
     HttpService.makeCallToBackend({
@@ -60,7 +64,7 @@ export function MessageEditor({
       updatedProcessGroup.correlation_properties = [];
     }
 
-    formData.correlation_properties.forEach((formProp: any) => {
+    (formData.correlation_properties || []).forEach((formProp: any) => {
       let prop = updatedProcessGroup.correlation_properties?.find(
         (p) => p.id === formProp.id
       );
@@ -131,7 +135,7 @@ export function MessageEditor({
         type: 'string',
         title: 'Json Schema',
         default: '{}',
-        description: 'The message body must conform to this schema if defined.',
+        description: 'The payload must conform to this schema if defined.',
       },
     },
   };
@@ -155,25 +159,35 @@ export function MessageEditor({
       },
     ],
   };
-  const formData = {
-    processGroupIdentifier: unModifyProcessIdentifierForPathParam(
-      modifiedProcessGroupIdentifier
-    ),
-    messageId,
-  };
 
-  // Make a form
-  return (
-    <CustomForm
-      id={messageId}
-      schema={schema}
-      uiSchema={uischema}
-      formData={formData}
-      onSubmit={saveModel}
-    >
-      <div>
-        <button type="submit">Save</button>
-      </div>
-    </CustomForm>
-  );
+  if (processGroup) {
+    const correlationProperties = getPropertiesForMessage(
+      { id: messageId },
+      processGroup
+    );
+    const formData = {
+      processGroupIdentifier: unModifyProcessIdentifierForPathParam(
+        modifiedProcessGroupIdentifier
+      ),
+      messageId,
+      correlation_properties: correlationProperties,
+    };
+    console.log('formData', formData);
+
+    // Make a form
+    return (
+      <CustomForm
+        id={messageId}
+        schema={schema}
+        uiSchema={uischema}
+        formData={formData}
+        onSubmit={saveModel}
+      >
+        <div>
+          <button type="submit">Save</button>
+        </div>
+      </CustomForm>
+    );
+  }
+  return null;
 }
