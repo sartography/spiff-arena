@@ -25,7 +25,6 @@ export function MessageEditor({
     const processResult = (result: ProcessGroup) => {
       setProcessGroup(result);
       setPageTitle([result.display_name]);
-      console.log('The Results is', result);
     };
     HttpService.makeCallToBackend({
       path: `/process-groups/${modifiedProcessGroupIdentifier}`,
@@ -40,7 +39,6 @@ export function MessageEditor({
 
   const saveModel = (result: any) => {
     const { formData } = result;
-    console.log('Submitted data', formData);
 
     if (!processGroup) {
       return;
@@ -140,7 +138,7 @@ export function MessageEditor({
   const uischema = {
     schema: {
       'ui:widget': 'textarea',
-      'ui:rows': '5',
+      'ui:rows': 5,
     },
     'ui:layout': [
       {
