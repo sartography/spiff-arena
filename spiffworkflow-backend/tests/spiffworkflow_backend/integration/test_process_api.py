@@ -3375,6 +3375,43 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["process_data_value"] == "d"
 
+    def test_process_data_show_with_sub_process_from_top_level(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/data-object-in-subprocess",
+            process_model_source_directory="data-object-in-subprocess",
+        )
+        process_instance_one = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance_one)
+        processor.do_engine_steps(save=True)
+        assert process_instance_one.status == "complete"
+
+        process_identifier = "subprocess2"
+        bpmn_processes = (
+            BpmnProcessModel.query.join(
+                BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == BpmnProcessModel.bpmn_process_definition_id
+            )
+            .filter(BpmnProcessDefinitionModel.bpmn_identifier == process_identifier)
+            .all()
+        )
+        assert len(bpmn_processes) == 1
+        bpmn_process = bpmn_processes[0]
+
+        response = client.get(
+            f"/v1.0/process-data/default/{self.modify_process_identifier_for_path_param(process_model.id)}/our_data_object/"
+            f"{process_instance_one.id}?process_identifier={process_identifier}&bpmn_process_guid={bpmn_process.guid}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["process_data_value"] == "HEY"
+
     def _setup_testing_instance(
         self,
         client: FlaskClient,

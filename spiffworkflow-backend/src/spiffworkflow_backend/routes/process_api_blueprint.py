@@ -30,6 +30,7 @@ from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -129,6 +130,44 @@ def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
     return ReferenceSchema(many=True).dump(references)
 
 
+def _get_bpmn_process_with_data_object(
+    process_data_identifier: str,
+    bpmn_processes_by_id: dict[int, BpmnProcessModel],
+    bpmn_process_definitions_by_id: dict[int, BpmnProcessDefinitionModel],
+    current_bp: BpmnProcessModel,
+) -> Any:
+    current_bpd = bpmn_process_definitions_by_id[current_bp.bpmn_process_definition_id]
+    if "data_objects" in current_bpd.properties_json and process_data_identifier in current_bpd.properties_json["data_objects"]:
+        return current_bp
+    elif current_bp.direct_parent_process_id in bpmn_processes_by_id:
+        return _get_bpmn_process_with_data_object(
+            process_data_identifier,
+            bpmn_processes_by_id,
+            bpmn_process_definitions_by_id,
+            bpmn_processes_by_id[current_bp.direct_parent_process_id],
+        )
+    else:
+        return current_bp
+
+
+def _get_data_object_from_bpmn_process(
+    process_data_identifier: str,
+    bpmn_process: BpmnProcessModel,
+    bpmn_process_guid: str | None,
+    process_instance: ProcessInstanceModel,
+) -> Any:
+    bpmn_process_data = JsonDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
+    if bpmn_process_data is None:
+        raise ApiError(
+            error_code="bpmn_process_data_not_found",
+            message=f"Cannot find a bpmn process data with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
+            status_code=404,
+        )
+
+    data_objects = bpmn_process_data.get("data_objects", {})
+    return data_objects.get(process_data_identifier)
+
+
 def _process_data_fetcher(
     process_instance_id: int,
     process_data_identifier: str,
@@ -148,18 +187,40 @@ def _process_data_fetcher(
             status_code=404,
         )
 
-    bpmn_process_data = JsonDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
-    if bpmn_process_data is None:
-        raise ApiError(
-            error_code="bpmn_process_data_not_found",
-            message=f"Cannot find a bpmn process data with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
-            status_code=404,
-        )
+    data_object_value = _get_data_object_from_bpmn_process(
+        process_data_identifier=process_data_identifier,
+        bpmn_process=bpmn_process,
+        bpmn_process_guid=bpmn_process_guid,
+        process_instance=process_instance,
+    )
 
-    data_objects = bpmn_process_data["data_objects"]
-    data_object = data_objects.get(process_data_identifier)
+    # if the data object value cannot be found with the given bpmn process then attempt to get it from the parent that defines it
+    if data_object_value is None:
+        all_bpmn_processes = None
+        if bpmn_process.top_level_process_id is not None:
+            all_bpmn_processes = BpmnProcessModel.query.filter(
+                or_(
+                    BpmnProcessModel.top_level_process_id == bpmn_process.top_level_process_id,
+                    BpmnProcessModel.id == bpmn_process.top_level_process_id,
+                )
+            ).all()
+            all_bpmn_def_ids = [bp.bpmn_process_definition_id for bp in all_bpmn_processes]
+            all_bpmn_process_definitions = BpmnProcessDefinitionModel.query.filter(
+                BpmnProcessDefinitionModel.id.in_(all_bpmn_def_ids)  # type: ignore
+            ).all()
+            bpmn_processes_by_id = {bp.id: bp for bp in all_bpmn_processes}
+            bpmn_process_definitions_by_id = {bpd.id: bpd for bpd in all_bpmn_process_definitions}
+            bp = _get_bpmn_process_with_data_object(
+                process_data_identifier, bpmn_processes_by_id, bpmn_process_definitions_by_id, bpmn_process
+            )
+            data_object_value = _get_data_object_from_bpmn_process(
+                process_data_identifier=process_data_identifier,
+                bpmn_process=bp,
+                bpmn_process_guid=bpmn_process_guid,
+                process_instance=process_instance,
+            )
 
-    if data_object is None:
+    if data_object_value is None:
         raise ApiError(
             error_code="data_object_not_found",
             message=(
@@ -169,21 +230,20 @@ def _process_data_fetcher(
             status_code=404,
         )
 
-    if hasattr(data_object, "category") and data_object.category is not None:
-        if data_object.category != category:
+    if hasattr(data_object_value, "category") and data_object_value.category is not None:
+        if data_object_value.category != category:
             raise ApiError(
                 error_code="data_object_category_mismatch",
-                message=f"The desired data object has category '{data_object.category}' instead of the expected '{category}'",
+                message=f"The desired data object has category '{data_object_value.category}' "
+                "instead of the expected '{category}'",
                 status_code=400,
             )
-
-    process_data_value = bpmn_process_data.get("data_objects", bpmn_process_data).get(process_data_identifier)
 
     return make_response(
         jsonify(
             {
                 "process_data_identifier": process_data_identifier,
-                "process_data_value": process_data_value,
+                "process_data_value": data_object_value,
             }
         ),
         200,
