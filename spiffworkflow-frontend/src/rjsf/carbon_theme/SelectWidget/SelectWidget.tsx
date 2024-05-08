@@ -1,6 +1,21 @@
 import { Select, SelectItem } from '@carbon/react';
-import { WidgetProps, processSelectValue } from '@rjsf/utils';
+import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes } from '../../helpers';
+
+function processSelectValue(schema: any, value: any, options: any) {
+  if (schema.type === 'array' && schema.items && options?.enumOptions) {
+    return value.map((value: any) => {
+      const option = options.enumOptions.find(
+        (option: any) => option.value === value
+      );
+      return option ? option.value : value;
+    });
+  }
+  if (schema.type === 'boolean') {
+    return value === 'true';
+  }
+  return value;
+}
 
 function SelectWidget({
   schema,
