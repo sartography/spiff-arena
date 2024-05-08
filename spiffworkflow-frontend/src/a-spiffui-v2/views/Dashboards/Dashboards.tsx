@@ -27,9 +27,11 @@ import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
-import InfoWindow from './InfoWindow';
 import MyProcesses from './MyProcesses';
 import MyTasks from './MyTasks';
+import InfoPanel from '../../components/InfoPanel';
+import TaskInfo from './infopanels/TaskInfo';
+import ProcessInfo from './infopanels/ProcessInfo';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -75,6 +77,7 @@ export default function Dashboards() {
 
   type TabData = { label: string; value: string; icon: ReactNode };
   const handleTabChange = (tab: TabData) => {
+    setInfoPanelIsOpen(false);
     setSelectedTab(tab.value);
   };
 
@@ -100,6 +103,13 @@ export default function Dashboards() {
       return <MyTasks filter={searchText} callback={handleRowSelect} />;
     }
     return <MyProcesses filter={searchText} callback={handleRowSelect} />;
+  };
+
+  const loadInfoPanel = () => {
+    if (selectedTab === 'myTasks') {
+      return <TaskInfo data={panelData} />;
+    }
+    return <ProcessInfo data={panelData} />;
   };
 
   return (
@@ -214,7 +224,12 @@ export default function Dashboards() {
             }}
           >
             <Box sx={{ width: '100%', height: '70%' }}>
-              <InfoWindow data={panelData} callback={handleInfoWindowClose} />
+              <InfoPanel
+                title={panelData.process_model_display_name || 'Task Info'}
+                callback={handleInfoWindowClose}
+              >
+                {loadInfoPanel()}
+              </InfoPanel>
             </Box>
           </Stack>
         </Slide>
