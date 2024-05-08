@@ -6,7 +6,7 @@ import {
   setPageTitle,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
-import { getPropertiesForMessage } from './MessageHelper';
+import { convertCorrelationPropertiesToRJSF } from './MessageHelper';
 
 type OwnProps = {
   height: number;
@@ -24,7 +24,6 @@ export function MessageEditor({
   useEffect(() => {
     const processResult = (result: ProcessGroup) => {
       setProcessGroup(result);
-      console.log('result', result);
       setPageTitle([result.display_name]);
     };
     HttpService.makeCallToBackend({
@@ -32,11 +31,6 @@ export function MessageEditor({
       successCallback: processResult,
     });
   }, [modifiedProcessGroupIdentifier, setProcessGroup]);
-
-  const messageOptions = ['add new'];
-  // if (processGroup && processGroup.messages) {
-  //   messageOptions.concat(processGroup.messages.map((message) => message.id));
-  // }
 
   const saveModel = (formObject: RJSFFormObject) => {
     const { formData } = formObject;
@@ -151,8 +145,8 @@ export function MessageEditor({
   };
 
   if (processGroup) {
-    const correlationProperties = getPropertiesForMessage(
-      { id: messageId },
+    const correlationProperties = convertCorrelationPropertiesToRJSF(
+      messageId,
       processGroup
     );
     const formData = {
@@ -162,7 +156,6 @@ export function MessageEditor({
       messageId,
       correlation_properties: correlationProperties,
     };
-    console.log('formData', formData);
 
     // Make a form
     return (

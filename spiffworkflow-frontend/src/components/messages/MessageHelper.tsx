@@ -14,20 +14,36 @@ const arrayCompare = (array1: string[], array2: string[]) => {
 };
 
 export const getPropertiesForMessage = (
-  message: Message,
+  messageId: string,
   processGroup: ProcessGroup
 ) => {
-  const properties: CorrelationProperty[] = [];
-  if (processGroup.correlation_properties) {
-    processGroup.correlation_properties.forEach((cp: CorrelationProperty) => {
-      cp.retrieval_expressions.forEach((re: RetrievalExpression) => {
-        if (re.message_ref === message.id) {
-          properties.push(cp);
-        }
+  const message = (processGroup.messages || {})[messageId];
+  if (message) {
+    return message.correlation_properties;
+  }
+  return null;
+};
+
+export const convertCorrelationPropertiesToRJSF = (
+  messageId: string,
+  processGroup: ProcessGroup
+) => {
+  const correlationProperties = getPropertiesForMessage(
+    messageId,
+    processGroup
+  );
+  const correlationPropertiesToUse = correlationProperties || {};
+  const returnArray: any = [];
+  Object.keys(correlationPropertiesToUse).forEach((propIdentifier: string) => {
+    const property = correlationPropertiesToUse[propIdentifier];
+    return property.retrieval_expressions.forEach((retExp: string) => {
+      returnArray.push({
+        id: propIdentifier,
+        retrievalExpression: retExp,
       });
     });
-  }
-  return properties;
+  });
+  return returnArray;
 };
 
 export const removeMessageFromProcessGroup = (
@@ -74,7 +90,10 @@ export const findMessagesForCorrelationKey = (
   const messages: Message[] = [];
   if (processGroup.messages) {
     processGroup.messages.forEach((msg: Message) => {
-      const correlationProperties = getPropertiesForMessage(msg, processGroup);
+      const correlationProperties = getPropertiesForMessage(
+        msg.id,
+        processGroup
+      );
       const propIds: string[] = correlationProperties.map(
         (cp: CorrelationProperty) => {
           return cp.id;
