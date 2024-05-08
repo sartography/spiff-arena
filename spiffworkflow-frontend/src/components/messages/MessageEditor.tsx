@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import CustomForm from '../CustomForm';
-import { ProcessGroup, Messages, RJSFFormObject } from '../../interfaces';
+import {
+  ProcessGroup,
+  RJSFFormObject,
+  MessageDefinition,
+} from '../../interfaces';
 import {
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
@@ -32,48 +36,63 @@ export function MessageEditor({
     });
   }, [modifiedProcessGroupIdentifier, setProcessGroup]);
 
-  const saveModel = (formObject: RJSFFormObject) => {
+  const updateProcessGroupWithMessages = (formObject: RJSFFormObject) => {
     const { formData } = formObject;
 
     if (!processGroup) {
       return;
     }
 
-    const newMessages: Messages = processGroup.messages || {};
-
-    if (!(messageId in newMessages)) {
-      newMessages[messageId] = { correlation_properties: {} };
+    const processGroupForUpdate = { ...processGroup };
+    if (!processGroupForUpdate.messages) {
+      processGroupForUpdate.messages = {};
     }
+    const currentMessagesForId: MessageDefinition =
+      processGroupForUpdate.messages[messageId];
+    const updatedMessagesForId = { ...currentMessagesForId };
 
     (formData.correlation_properties || []).forEach((formProp: any) => {
-      if (!(formProp.id in newMessages[messageId].correlation_properties)) {
-        newMessages[messageId].correlation_properties[formProp.id] = {
+      if (!(formProp.id in updatedMessagesForId.correlation_properties)) {
+        updatedMessagesForId.correlation_properties[formProp.id] = {
           retrieval_expressions: [],
         };
       }
       if (
-        !newMessages[messageId].correlation_properties[
+        !updatedMessagesForId.correlation_properties[
           formProp.id
         ].retrieval_expressions.includes(formProp.retrievalExpression)
       ) {
-        newMessages[messageId].correlation_properties[
+        updatedMessagesForId.correlation_properties[
           formProp.id
         ].retrieval_expressions.push(formProp.retrievalExpression);
       }
     });
-    processGroup.messages = newMessages;
+
+    Object.keys(currentMessagesForId.correlation_properties).forEach(
+      (propId: string) => {
+        const foundProp = (formData.correlation_properties || []).find(
+          (formProp: any) => {
+            return propId === formProp.id;
+          }
+        );
+        if (!foundProp) {
+          delete updatedMessagesForId.correlation_properties[propId];
+        }
+      }
+    );
+    processGroupForUpdate.messages[messageId] = updatedMessagesForId;
 
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
 
-    const handleProcessGroupUpdateResponse = (response: any) => {
-      console.log('Successful post.', response);
+    const handleProcessGroupUpdateResponse = (response: ProcessGroup) => {
+      setProcessGroup(response);
     };
 
     HttpService.makeCallToBackend({
       path,
       successCallback: handleProcessGroupUpdateResponse,
       httpMethod: 'PUT',
-      postBody: processGroup,
+      postBody: processGroupForUpdate,
     });
   };
 
@@ -164,7 +183,7 @@ export function MessageEditor({
         schema={schema}
         uiSchema={uischema}
         formData={formData}
-        onSubmit={saveModel}
+        onSubmit={updateProcessGroupWithMessages}
       >
         <div>
           <button type="submit">Save</button>

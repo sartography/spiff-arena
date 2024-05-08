@@ -24,6 +24,9 @@ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
 ]
 
 
+PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API = ["display_name", "description", "messages", "data_store_specifications"]
+
+
 @dataclass(order=True)
 class ProcessGroup:
     sort_index: str = field(init=False)
