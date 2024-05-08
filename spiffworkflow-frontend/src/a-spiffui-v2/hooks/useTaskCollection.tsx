@@ -16,7 +16,6 @@ export default function useTaskCollection() {
    * @returns Query functions must return a value, even if it's just true
    */
   const processResult = (result: any[]) => {
-    console.log(result);
     setTaskCollection(result);
     setLoading(false);
   };

@@ -1,7 +1,6 @@
 import { Box, Chip, Stack } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
-import ProcessInstanceCard from './ProcessInstanceCard';
 import useTaskCollection from '../../hooks/useTaskCollection';
 
 export default function MyTasks({
@@ -16,39 +15,30 @@ export default function MyTasks({
   const [taskRows, setTaskRows] = useState<GridRowsProp[]>([]);
 
   /** These values map to theme tokens, which enable the light/dark modes etc. */
-  const chipBackground = (params: any) => {
-    switch (params.value) {
-      case 'Completed':
-      case 'complete':
-        return 'info';
-      case 'Started':
-        return 'success';
-      case 'error':
-        return 'error';
-      case 'Wait a second':
-      case 'user_input_required':
-        return 'warning';
-      default:
-        return 'default';
-    }
+  const chipBackground = (row: any) => {
+    return `${row.task_status}`.toLowerCase() === 'ready'
+      ? 'success'
+      : 'default';
   };
 
   const handleGridRowClick = (data: Record<string, any>) => {
     callback(data.row);
   };
 
+  const columnData: Record<string, any> = [
+    { header: 'Title', field: 'task_title' },
+    { header: 'Type', field: 'task_type' },
+    { header: 'Status', field: 'task_status' },
+    { header: 'Process', field: 'process_model_display_name' },
+    { header: 'Initiator', field: 'process_initiator_username' },
+    { header: 'ProcessStatus', field: 'process_instance_status' },
+  ];
+
   useEffect(() => {
     const filtered = filter
       ? taskCollection.results.filter((instance: any) => {
-          const searchFields = [
-            'process_model_display_name',
-            'last_milestone_bpmn_name',
-            'process_initiator_username',
-            'status',
-          ];
-
-          return searchFields.some((field) =>
-            (instance[field] || '')
+          return columnData.some((data: Record<string, any>) =>
+            (instance[data.field] || '')
               .toString()
               .toLowerCase()
               .includes(filter.toLowerCase())
@@ -61,13 +51,26 @@ export default function MyTasks({
 
   useEffect(() => {
     if ('results' in taskCollection) {
-      const mappedColumns = taskCollection.results.map(
-        (task: Record<string, any>) => ({
-          field: 'process_model_display_name',
-          headerName: task.task_title,
+      const mappedColumns = columnData.map((column: Record<string, any>) => {
+        return {
+          field: column.field,
+          headerName: column.header,
           flex: 1,
-        })
-      );
+          renderCell:
+            column.header === 'Status'
+              ? (params: Record<string, any>) => (
+                  <Chip
+                    label={params.row.task_status || '...no info...'}
+                    variant="filled"
+                    color={chipBackground(params.row)}
+                    sx={{
+                      width: '100%',
+                    }}
+                  />
+                )
+              : null,
+        };
+      });
 
       setTaskColumns(mappedColumns);
       setTaskRows([...taskCollection.results]);
