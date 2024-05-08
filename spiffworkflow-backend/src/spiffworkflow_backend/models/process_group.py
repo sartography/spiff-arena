@@ -24,7 +24,14 @@ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
 ]
 
 
-PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API = ["display_name", "description", "messages", "data_store_specifications"]
+PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API = [
+    "display_name",
+    "description",
+    "messages",
+    "data_store_specifications",
+    "correlation_keys",
+    "correlation_properties",
+]
 
 
 @dataclass(order=True)
