@@ -37,7 +37,6 @@ export default function useProcessInstanceCollection() {
    * @returns Query functions must return a value, even if it's just true
    */
   const processResult = (result: any[]) => {
-    console.log(result);
     setProcessInstanceCollection(result);
     setLoading(false);
   };

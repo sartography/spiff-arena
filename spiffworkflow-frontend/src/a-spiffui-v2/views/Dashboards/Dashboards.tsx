@@ -91,6 +91,13 @@ export default function Dashboards() {
     setInfoPanelIsOpen(true);
   };
 
+  const displayGrid = () => {
+    if (selectedTab === 'myTasks') {
+      return <MyTasks filter={searchText} callback={handleRowSelect} />;
+    }
+    return <MyProcesses filter={searchText} callback={handleRowSelect} />;
+  };
+
   return (
     <>
       <Grid container spacing={2} width="100%">
@@ -182,9 +189,7 @@ export default function Dashboards() {
                 <Download />
               </Stack>
             </Stack>
-
-            {/* <MyProcesses filter={searchText} callback={handleRowSelect} /> */}
-            <MyTasks filter={searchText} callback={handleRowSelect} />
+            {displayGrid()}
           </Stack>
         </Grid>
       </Grid>
