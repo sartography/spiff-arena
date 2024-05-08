@@ -5,8 +5,9 @@ import {
   Stack,
   Toolbar,
   Typography,
+  useTheme,
 } from '@mui/material';
-import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { ReactNode } from 'react';
 
 export default function InfoPanel({
@@ -18,6 +19,7 @@ export default function InfoPanel({
   callback: () => void;
   children: ReactNode;
 }) {
+  const isDark = useTheme().palette.mode === 'dark';
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <Paper
@@ -26,7 +28,7 @@ export default function InfoPanel({
           width: '100%',
           height: '100%',
           border: '4px solid',
-          borderColor: 'primary.light',
+          borderColor: 'primary.main',
           borderRadius: 2,
           padding: 1,
         }}
@@ -38,18 +40,27 @@ export default function InfoPanel({
               top: 0,
               left: 0,
               zIndex: 9999,
-              backgroundColor: 'white',
               width: '100%',
             }}
           >
-            <Toolbar variant="regular">
+            <Toolbar
+              variant="regular"
+              sx={{
+                backgroundColor: isDark ? 'primary.dark' : 'primary.light',
+                borderRadius: 3,
+              }}
+            >
               <IconButton
                 edge="start"
                 color="inherit"
                 aria-label="close"
                 onClick={() => callback()}
+                sx={{
+                  marginRight: 2,
+                  backgroundColor: isDark ? 'primary.dark' : 'primary.light',
+                }}
               >
-                <CloseOutlinedIcon />
+                <CancelOutlinedIcon />
               </IconButton>
               <Typography variant="h6">{title}</Typography>
             </Toolbar>
