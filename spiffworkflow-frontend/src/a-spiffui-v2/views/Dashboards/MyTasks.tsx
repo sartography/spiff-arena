@@ -27,6 +27,7 @@ export default function MyTasks({
 
   const columnData: Record<string, any> = [
     { header: 'Title', field: 'task_title' },
+    { header: 'Process ID', field: 'process_instance_id' },
     { header: 'Type', field: 'task_type' },
     { header: 'Status', field: 'task_status' },
     { header: 'Process', field: 'process_model_display_name' },
@@ -55,7 +56,12 @@ export default function MyTasks({
         return {
           field: column.field,
           headerName: column.header,
-          flex: 1,
+          flex: (() => {
+            if (column.header === 'Type' || column.header === 'Process ID') {
+              return 0.5;
+            }
+            return 1;
+          })(),
           renderCell:
             column.header === 'Status'
               ? (params: Record<string, any>) => (

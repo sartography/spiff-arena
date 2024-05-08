@@ -18,6 +18,7 @@ import LoginHandler from '../components/LoginHandler';
 import { ExtensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
 import Extension from './Extension';
 import SpiffUIV2 from './SpiffUIV2';
+import TaskShow from './TaskShow';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;

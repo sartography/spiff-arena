@@ -91,6 +91,10 @@ export default function Dashboards() {
     setInfoPanelIsOpen(true);
   };
 
+  const handleInfoWindowClose = () => {
+    setInfoPanelIsOpen(false);
+  };
+
   const displayGrid = () => {
     if (selectedTab === 'myTasks') {
       return <MyTasks filter={searchText} callback={handleRowSelect} />;
@@ -210,7 +214,7 @@ export default function Dashboards() {
             }}
           >
             <Box sx={{ width: '100%', height: '70%' }}>
-              <InfoWindow data={panelData} />
+              <InfoWindow data={panelData} callback={handleInfoWindowClose} />
             </Box>
           </Stack>
         </Slide>
