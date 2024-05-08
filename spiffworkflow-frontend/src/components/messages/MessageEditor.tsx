@@ -11,6 +11,7 @@ import {
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
 import { convertCorrelationPropertiesToRJSF } from './MessageHelper';
+import { Notification } from '../Notification';
 
 type OwnProps = {
   height: number;
@@ -24,6 +25,8 @@ export function MessageEditor({
   messageId,
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
+  const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
+    useState<boolean>(false);
 
   useEffect(() => {
     const processResult = (result: ProcessGroup) => {
@@ -35,6 +38,11 @@ export function MessageEditor({
       successCallback: processResult,
     });
   }, [modifiedProcessGroupIdentifier, setProcessGroup]);
+
+  const handleProcessGroupUpdateResponse = (response: ProcessGroup) => {
+    setProcessGroup(response);
+    setDisplaySaveMessageMessage(true);
+  };
 
   const updateProcessGroupWithMessages = (formObject: RJSFFormObject) => {
     const { formData } = formObject;
@@ -83,10 +91,6 @@ export function MessageEditor({
     processGroupForUpdate.messages[messageId] = updatedMessagesForId;
 
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
-
-    const handleProcessGroupUpdateResponse = (response: ProcessGroup) => {
-      setProcessGroup(response);
-    };
 
     HttpService.makeCallToBackend({
       path,
@@ -178,17 +182,26 @@ export function MessageEditor({
 
     // Make a form
     return (
-      <CustomForm
-        id={messageId}
-        schema={schema}
-        uiSchema={uischema}
-        formData={formData}
-        onSubmit={updateProcessGroupWithMessages}
-      >
-        <div>
-          <button type="submit">Save</button>
-        </div>
-      </CustomForm>
+      <>
+        {displaySaveMessageMessage ? (
+          <Notification
+            title="Save successful"
+            hideCloseButton
+            timeout={4000}
+            onClose={() => setDisplaySaveMessageMessage(false)}
+          >
+            Message has been saved
+          </Notification>
+        ) : null}
+        <CustomForm
+          id={messageId}
+          schema={schema}
+          uiSchema={uischema}
+          formData={formData}
+          onSubmit={updateProcessGroupWithMessages}
+          submitButtonText="Save"
+        />
+      </>
     );
   }
   return null;
