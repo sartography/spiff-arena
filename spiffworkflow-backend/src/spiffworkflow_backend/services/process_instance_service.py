@@ -278,18 +278,14 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
-        additional_processing_identifier: str | None = None,
     ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
         processor = None
         task_runnability = TaskRunnability.unknown_if_ready_tasks
-        with ProcessInstanceQueueService.dequeued(
-            process_instance, additional_processing_identifier=additional_processing_identifier
-        ):
+        with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(
                 process_instance,
                 workflow_completed_handler=cls.schedule_next_process_model_cycle,
-                additional_processing_identifier=additional_processing_identifier,
             )
 
         # if status_value is user_input_required (we are processing instances with that status from background processor),

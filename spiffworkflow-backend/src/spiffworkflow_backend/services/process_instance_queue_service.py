@@ -40,10 +40,8 @@ class ProcessInstanceQueueService:
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
-    def _enqueue(cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None) -> None:
-        queue_entry_id = ProcessInstanceLockService.unlock(
-            process_instance.id, additional_processing_identifier=additional_processing_identifier
-        )
+    def _enqueue(cls, process_instance: ProcessInstanceModel) -> None:
+        queue_entry_id = ProcessInstanceLockService.unlock(process_instance.id)
         queue_entry = ProcessInstanceQueueModel.query.filter_by(id=queue_entry_id).first()
         if queue_entry is None:
             raise ExpectedLockNotFoundError(f"Could not find a lock for process instance: {process_instance.id}")
@@ -53,8 +51,8 @@ class ProcessInstanceQueueService:
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
-    def _dequeue(cls, process_instance: ProcessInstanceModel, additional_processing_identifier: str | None = None) -> None:
-        locked_by = ProcessInstanceLockService.locked_by(additional_processing_identifier=additional_processing_identifier)
+    def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:
+        locked_by = ProcessInstanceLockService.locked_by()
         current_time = round(time.time())
 
         db.session.query(ProcessInstanceQueueModel).filter(
@@ -89,22 +87,19 @@ class ProcessInstanceQueueService:
                 f"{locked_by} cannot lock process instance {process_instance.id}. {message}"
             )
 
-        ProcessInstanceLockService.lock(
-            process_instance.id, queue_entry, additional_processing_identifier=additional_processing_identifier
-        )
+        ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
     @classmethod
     def _dequeue_with_retries(
         cls,
         process_instance: ProcessInstanceModel,
-        additional_processing_identifier: str | None = None,
         max_attempts: int = 1,
     ) -> None:
         attempt = 1
         backoff_factor = 2
         while True:
             try:
-                return cls._dequeue(process_instance, additional_processing_identifier=additional_processing_identifier)
+                return cls._dequeue(process_instance)
             except ProcessInstanceIsAlreadyLockedError as exception:
                 if attempt >= max_attempts:
                     raise exception
@@ -116,20 +111,14 @@ class ProcessInstanceQueueService:
     def dequeued(
         cls,
         process_instance: ProcessInstanceModel,
-        additional_processing_identifier: str | None = None,
         max_attempts: int = 1,
     ) -> Generator[None, None, None]:
-        print(f"➡️ ➡️ ➡️  FROM DEQUEUE: additional_processing_identifier: {additional_processing_identifier}")
-        reentering_lock = ProcessInstanceLockService.has_lock(
-            process_instance.id, additional_processing_identifier=additional_processing_identifier
-        )
+        reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
 
         if not reentering_lock:
             # this can blow up with ProcessInstanceIsNotEnqueuedError or ProcessInstanceIsAlreadyLockedError
             # that's fine, let it bubble up. and in that case, there's no need to _enqueue / unlock
-            cls._dequeue_with_retries(
-                process_instance, additional_processing_identifier=additional_processing_identifier, max_attempts=max_attempts
-            )
+            cls._dequeue_with_retries(process_instance, max_attempts=max_attempts)
         try:
             yield
         except Exception as ex:
@@ -139,13 +128,11 @@ class ProcessInstanceQueueService:
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
                 )
-            ErrorHandlingService.handle_error(
-                process_instance, ex, additional_processing_identifier=additional_processing_identifier
-            )
+            ErrorHandlingService.handle_error(process_instance, ex)
             raise ex
         finally:
             if not reentering_lock:
-                cls._enqueue(process_instance, additional_processing_identifier=additional_processing_identifier)
+                cls._enqueue(process_instance)
 
     @classmethod
     def entries_with_status(

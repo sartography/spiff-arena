@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 from flask import g
@@ -39,7 +38,6 @@ class MessageService:
         cls,
         message_instance_send: MessageInstanceModel,
         execution_mode: str | None = None,
-        additional_processing_identifier: str | None = None,
     ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
@@ -47,7 +45,6 @@ class MessageService:
         :return: the message instance that received this message.
         """
         # Thread safe via db locking - don't try to progress the same send message over multiple instances
-        print(f"➡️ ➡️ ➡️  FROM CORRELATE: additional_processing_identifier: {additional_processing_identifier}")
         if message_instance_send.status != MessageStatuses.ready.value:
             return None
         message_instance_send.status = MessageStatuses.running.value
@@ -75,7 +72,7 @@ class MessageService:
                     if user is None:
                         user = UserService.find_or_create_system_user()
                     receiving_process_instance = MessageService.start_process_with_message(
-                        message_triggerable_process_model, user, additional_processing_identifier=additional_processing_identifier
+                        message_triggerable_process_model, user
                     )
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process_instance.id,
@@ -93,22 +90,12 @@ class MessageService:
                 return None
 
             try:
-                # currently only controllers and apscheduler call this
-                cls.raise_if_running_in_celery(
-                    "correlate_send_message", additional_processing_identifier=additional_processing_identifier
-                )
-                with ProcessInstanceQueueService.dequeued(
-                    receiving_process_instance, additional_processing_identifier=additional_processing_identifier
-                ):
+                with ProcessInstanceQueueService.dequeued(receiving_process_instance):
                     # Set the receiving message to running, so it is not altered elswhere ...
                     message_instance_receive.status = "running"
 
                     cls.process_message_receive(
-                        receiving_process_instance,
-                        message_instance_receive,
-                        message_instance_send,
-                        execution_mode=execution_mode,
-                        additional_processing_identifier=additional_processing_identifier,
+                        receiving_process_instance, message_instance_receive, message_instance_send, execution_mode=execution_mode
                     )
                     message_instance_receive.status = "completed"
                     message_instance_receive.counterpart_id = message_instance_send.id
@@ -152,23 +139,14 @@ class MessageService:
         cls,
         message_triggerable_process_model: MessageTriggerableProcessModel,
         user: UserModel,
-        additional_processing_identifier: str | None = None,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
-        print(f"➡️ ➡️ ➡️  FROM START: additional_processing_identifier: {additional_processing_identifier}")
-        cls.raise_if_running_in_celery(
-            "start_process_with_message", additional_processing_identifier=additional_processing_identifier
-        )
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
             user,
         )
-        with ProcessInstanceQueueService.dequeued(
-            receiving_process_instance, additional_processing_identifier=additional_processing_identifier
-        ):
-            processor_receive = ProcessInstanceProcessor(
-                receiving_process_instance, additional_processing_identifier=additional_processing_identifier
-            )
+        with ProcessInstanceQueueService.dequeued(receiving_process_instance):
+            processor_receive = ProcessInstanceProcessor(receiving_process_instance)
             cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
             processor_receive.save()
 
@@ -182,7 +160,6 @@ class MessageService:
         message_instance_receive: MessageInstanceModel,
         message_instance_send: MessageInstanceModel,
         execution_mode: str | None = None,
-        additional_processing_identifier: str | None = None,
     ) -> None:
         correlation_properties = []
         for cr in message_instance_receive.correlation_rules:
@@ -202,9 +179,7 @@ class MessageService:
             payload=message_instance_send.payload,
             correlations=message_instance_send.correlation_keys,
         )
-        processor_receive = ProcessInstanceProcessor(
-            receiving_process_instance, additional_processing_identifier=additional_processing_identifier
-        )
+        processor_receive = ProcessInstanceProcessor(receiving_process_instance)
         processor_receive.bpmn_process_instance.send_event(bpmn_event)
         execution_strategy_name = None
 
@@ -330,14 +305,3 @@ class MessageService:
                 )
             )
         return receiving_process_instance
-
-    @classmethod
-    def raise_if_running_in_celery(cls, method_name: str, additional_processing_identifier: str | None = None) -> None:
-        if (
-            os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true"
-            and additional_processing_identifier is None
-        ):
-            raise MessageServiceError(
-                f"Calling {method_name} in a celery worker. This is not supported! We may need to add"
-                " additional_processing_identifier to this code path."
-            )

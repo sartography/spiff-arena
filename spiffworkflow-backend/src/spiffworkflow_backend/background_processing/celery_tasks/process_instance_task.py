@@ -29,7 +29,7 @@ class SpiffCeleryWorkerError(Exception):
 @shared_task(ignore_result=False, time_limit=ten_minutes)
 def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
     proc_index = current_process().index
-    ProcessInstanceLockService.set_thread_local_locking_context("celery:worker", additional_processing_identifier=proc_index)
+    ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
     if task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
@@ -41,15 +41,13 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
         }
     try:
         task_guid_for_requeueing = task_guid
-        print(f"➡️ ➡️ ➡️  FROM CELERY TASK: additional_processing_identifier: {proc_index}")
-        with ProcessInstanceQueueService.dequeued(process_instance, additional_processing_identifier=proc_index):
+        with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceService.run_process_instance_with_processor(
-                process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index
+                process_instance, execution_strategy_name="run_current_ready_tasks"
             )
             _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
-                additional_processing_identifier=proc_index,
             )
             # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
             # there is an assumption that it was successfully processed by run_process_instance_with_processor above.
