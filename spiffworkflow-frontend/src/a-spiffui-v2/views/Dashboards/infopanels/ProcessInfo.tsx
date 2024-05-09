@@ -39,11 +39,7 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
         gap: 2,
       }}
     >
-      <Stack
-        direction="row"
-        gap={4}
-        sx={{ overflow: 'hidden', scrollBehavior: 'auto' }}
-      >
+      <Stack direction="row" gap={4}>
         <Stack gap={2}>
           <Box>
             <Typography variant="h6">Last Milestone</Typography>
@@ -75,9 +71,17 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
       </Stack>
       <Divider variant="fullWidth" sx={{ backgroundColor: 'grey' }} />
       <Typography variant="h6">Tasks</Typography>
-      <Stack gap={2}>
-        {!filteredTasks.length && (
-          <Typography>No Tasks for this Process</Typography>
+      <Stack
+        sx={{
+          gap: 2,
+          overflow: 'auto',
+          height: `calc(100% - 260px)`,
+        }}
+      >
+        {!completedTasks.length && (
+          <Typography color={isDark ? 'success.light' : 'success.dark'}>
+            No Completed Tasks
+          </Typography>
         )}
         {completedTasks.map((task: Record<string, any>) => (
           <Paper
@@ -116,6 +120,9 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
             </Stack>
           </Paper>
         ))}
+        {!filteredTasks.length && (
+          <Typography color="warning.dark">No Open Tasks</Typography>
+        )}
         {filteredTasks.map((task: Record<string, any>) => (
           <Paper
             key={task.id}

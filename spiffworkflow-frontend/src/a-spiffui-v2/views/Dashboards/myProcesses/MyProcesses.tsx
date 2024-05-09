@@ -85,6 +85,8 @@ export default function MyProcesses({
         sx={{
           display: { xs: 'none', lg: 'block' },
           position: 'relative',
+          overflowY: 'auto',
+          height: 'calc(100vh - 420px)',
         }}
       >
         <DataGrid
