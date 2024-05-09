@@ -143,7 +143,6 @@ export default function Dashboards() {
                 ))}
               </Tabs>
             </Box>
-
             <Stack
               direction="row"
               gap={2}
@@ -213,9 +212,8 @@ export default function Dashboards() {
           </Stack>
         </Grid>
       </Grid>
-
       {/** Absolutely positioned info window */}
-      {Object.keys(panelData).length && (
+      {Object.keys(panelData).length ? (
         <Slide in={infoPanelOpen} direction="left" mountOnEnter unmountOnExit>
           <Stack
             sx={{
@@ -239,7 +237,7 @@ export default function Dashboards() {
             </Box>
           </Stack>
         </Slide>
-      )}
+      ) : null}
     </>
   );
 }
