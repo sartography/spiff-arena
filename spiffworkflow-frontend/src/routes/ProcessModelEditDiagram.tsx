@@ -1388,9 +1388,6 @@ export default function ProcessModelEditDiagram() {
 
         {unsavedChangesMessage()}
         {saveFileMessage()}
-        <Button onClick={handleShowMessageEditor}>
-          Edit Message Temp Button
-        </Button>
         {appropriateEditor()}
         <div id="diagram-container" />
       </>
