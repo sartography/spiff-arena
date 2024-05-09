@@ -5,51 +5,32 @@
   "display_order": 40,
   "parent_groups": null,
 
-  "messages": [
-    { "id": "table_seated", "schema": {} },
-    { "id": "order_ready", "schema": {} },
-    { "id": "end_of_day_receipts", "schema": {} }
-  ],
-  "correlation_keys": [
-    {
-      "id": "order",
-      "correlation_properties": ["table_number", "franchise_id"]
-    },
-    {
-      "id": "franchise",
-      "correlation_properties": ["franchise_id"]
+
+    "messages": {
+	"table_seated": {
+	    "correlation_properties": {
+		"table_number": {
+		    "retrieval_expressions": ["table_number"]
+		},
+		"franchise_id": {
+		    "retrieval_expressions": ["franchise_id"]
+		}
+	    },
+	    "schema": {}
+	},
+	"order_ready": {
+	    "correlation_properties": {
+		"table_number": {
+		    "retrieval_expressions": ["table_number"]
+		},
+		"franchise_id": {
+		    "retrieval_expressions": ["franchise_id"]
+		}
+	    },
+	    "schema": {}
+	},
+	"end_of_day_receipts": {
+	    "schema": {}
+	}
     }
-  ],
-  "correlation_properties": [
-    {
-      "id": "table_number",
-      "retrieval_expressions": [
-        {
-          "message_ref": "table_seated",
-          "formal_expression": "table_number"
-        },
-        {
-          "message_ref": "order_ready",
-          "formal_expression": "table_number"
-        }
-      ]
-    },
-    {
-      "id": "franchise_id",
-      "retrieval_expressions": [
-        {
-          "message_ref": "table_seated",
-          "formal_expression": "franchise_id"
-        },
-        {
-          "message_ref": "order_ready",
-          "formal_expression": "franchise_id"
-        },
-        {
-          "message_ref": "franchise_report",
-          "formal_expression": "franchise['id']"
-        }
-      ]
-    }
-  ]
 }

@@ -119,32 +119,33 @@ class TestMessages(BaseTest):
             "display_name": "Bob",
             "display_order": 40,
             "parent_groups": None,
-            "messages": [
-                {"id": "table_seated", "location": "bob", "schema": {}},
-                {"id": "order_ready", "location": "bob", "schema": {}},
-                {"id": "end_of_day_receipts", "location": "bob", "schema": {}},
-            ],
-            "correlation_keys": [
-                {"id": "order", "correlation_properties": ["table_number", "franchise_id"]},
-                {"id": "franchise", "correlation_properties": ["franchise_id"]},
-            ],
-            "correlation_properties": [
-                {
-                    "id": "table_number",
-                    "retrieval_expressions": [
-                        {"message_ref": "table_seated", "formal_expression": "table_number"},
-                        {"message_ref": "order_ready", "formal_expression": "table_number"},
-                    ],
+            "messages": {
+                "table_seated": {
+                    "correlation_properties": {
+                        "table_number": {
+                            "retrieval_expressions": ["table_number"],
+                        },
+                        "franchise_id": {
+                            "retrieval_expressions": ["franchise_id"],
+                        },
+                    },
+                    "schema": {},
                 },
-                {
-                    "id": "franchise_id",
-                    "retrieval_expressions": [
-                        {"message_ref": "table_seated", "formal_expression": "franchise_id"},
-                        {"message_ref": "order_ready", "formal_expression": "franchise_id"},
-                        {"message_ref": "franchise_report", "formal_expression": "franchise['id']"},
-                    ],
+                "order_ready": {
+                    "correlation_properties": {
+                        "table_number": {
+                            "retrieval_expressions": ["table_number"],
+                        },
+                        "franchise_id": {
+                            "retrieval_expressions": ["franchise_id"],
+                        },
+                    },
+                    "schema": {},
                 },
-            ],
+                "end_of_day_receipts": {
+                    "schema": {},
+                },
+            },
         }
 
         response = client.put(
