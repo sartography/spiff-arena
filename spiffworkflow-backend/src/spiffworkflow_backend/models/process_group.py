@@ -45,7 +45,7 @@ class ProcessGroup:
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
     data_store_specifications: dict[str, Any] = field(default_factory=dict)
     parent_groups: list[ProcessGroupLite] | None = None
-    messages: list[dict[str, Any]] | None = None
+    messages: dict[str, Any] | None = None
     correlation_keys: list[dict[str, Any]] | None = None
     correlation_properties: list[dict[str, Any]] | None = None
 

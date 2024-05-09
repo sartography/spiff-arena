@@ -28,7 +28,7 @@ class MessageDefinitionService:
                 current_app.logger.debug(f"Malformed correlation property: '{identifier}' in file @ '{location}'")
                 continue
 
-            for expression in retrieval_expressions:
+            for retrieval_expression in retrieval_expressions:
                 models.append(
                     MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression)
                 )
@@ -39,7 +39,7 @@ class MessageDefinitionService:
     def collect_message_models(
         cls, process_group: ProcessGroup, location: str, all_message_models: dict[tuple[str, str], MessageModel]
     ) -> None:
-        messages = process_group.messages or {}
+        messages: dict[str, Any] = process_group.messages or {}
 
         for message_identifier, message_definition in messages.items():
             message_model = cls._message_model_from_message(message_identifier, message_definition, process_group)

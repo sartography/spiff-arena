@@ -193,6 +193,7 @@ class TestMessages(BaseTest):
         assert "messages" in response.json
 
         messages = response.json["messages"]
+        print(messages)
         expected_message_identifiers = {"table_seated", "order_ready", "end_of_day_receipts"}
         assert len(messages) == len(expected_message_identifiers)
 
