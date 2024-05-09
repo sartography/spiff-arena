@@ -47,11 +47,11 @@ class MessageDefinitionService:
                 continue
             all_message_models[(message_model.identifier, message_model.location)] = message_model
 
-        correlation_property_models = cls._correlation_property_models_from_message_definition(
-            message_definition.get("correlation_properties", {}), location
-        )
+            correlation_property_models = cls._correlation_property_models_from_message_definition(
+                message_definition.get("correlation_properties", {}), location
+            )
 
-        message_model.correlation_properties = correlation_property_models  # type: ignore
+            message_model.correlation_properties = correlation_property_models  # type: ignore
 
     @classmethod
     def delete_all_message_models(cls) -> None:
