@@ -28,7 +28,7 @@
 	    schema: {}
 	}
     }
-    
+
   "messagesXX": [
     { "id": "request_approval", "schema": {} },
     { "id": "approval_result", "schema": {} }

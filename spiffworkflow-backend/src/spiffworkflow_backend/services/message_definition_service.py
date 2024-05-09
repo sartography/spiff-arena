@@ -10,9 +10,10 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 
 class MessageDefinitionService:
     @classmethod
-    def _message_model_from_message(cls, identifier: str, message_definition: dict[str, Any], process_group: ProcessGroup) -> MessageModel | None:
+    def _message_model_from_message(
+        cls, identifier: str, message_definition: dict[str, Any], process_group: ProcessGroup
+    ) -> MessageModel | None:
         schema = message_definition.get("schema", "{}")
-        print(process_group.id)
 
         return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
 
@@ -30,9 +31,7 @@ class MessageDefinitionService:
                 continue
 
             for retrieval_expression in retrieval_expressions:
-                models.append(
-                    MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression)
-                )
+                models.append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
 
         return models
 
