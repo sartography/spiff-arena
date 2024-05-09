@@ -16,31 +16,20 @@ class MessageDefinitionService:
         return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
 
     @classmethod
-    def _correlation_property_models_from_group(
-        cls, correlation_property_group: list[dict[str, Any]], location: str
-    ) -> dict[str, list[MessageCorrelationPropertyModel]]:
-        models: dict[str, list[MessageCorrelationPropertyModel]] = {}
+    def _correlation_property_models_from_message_definition(
+        cls, correlation_property_group: dict[str, Any], location: str
+    ) -> list[MessageCorrelationPropertyModel]:
+        models: list[MessageCorrelationPropertyModel] = []
 
-        for item in correlation_property_group:
-            identifier = item.get("id")
-            retrieval_expressions = item.get("retrieval_expressions")
+        for identifier, definition in correlation_property_group.items():
+            retrieval_expressions = definition.get("retrieval_expressions")
 
-            if not identifier or not retrieval_expressions:
-                current_app.logger.debug(f"Malformed correlation property: '{item}' in file @ '{location}'")
+            if not retrieval_expressions:
+                current_app.logger.debug(f"Malformed correlation property: '{identifier}' in file @ '{location}'")
                 continue
 
             for expression in retrieval_expressions:
-                message_identifier = expression.get("message_ref")
-                retrieval_expression = expression.get("formal_expression")
-
-                if not message_identifier or not retrieval_expression:
-                    current_app.logger.debug(f"Malformed retrieval expression: '{expression}' in file @ '{location}'")
-                    continue
-
-                if message_identifier not in models:
-                    models[message_identifier] = []
-
-                models[message_identifier].append(
+                models.append(
                     MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression)
                 )
 
@@ -51,29 +40,18 @@ class MessageDefinitionService:
         cls, process_group: ProcessGroup, location: str, all_message_models: dict[tuple[str, str], MessageModel]
     ) -> None:
         messages = process_group.messages or {}
-        local_message_models = {}
 
         for message_identifier, message_definition in messages.items():
             message_model = cls._message_model_from_message(message_identifier, message_definition, process_group)
             if message_model is None:
                 continue
-            local_message_models[message_model.identifier] = message_model
             all_message_models[(message_model.identifier, message_model.location)] = message_model
 
-        correlation_property_models_by_message_identifier = cls._correlation_property_models_from_group(
-            process_group.correlation_properties or [], location
+        correlation_property_models = cls._correlation_property_models_from_message_definition(
+            message.get("correlation_properties", {}), location
         )
 
-        for message_identifier, correlation_property_models in correlation_property_models_by_message_identifier.items():
-            message_model = local_message_models.get(message_identifier)
-
-            if message_model is None:
-                current_app.logger.debug(
-                    f"Correlation property references message that is not defined: '{message_identifier}' in @ '{location}'"
-                )
-                continue
-
-            message_model.correlation_properties = correlation_property_models  # type: ignore
+        message_model.correlation_properties = correlation_property_models  # type: ignore
 
     @classmethod
     def delete_all_message_models(cls) -> None:
