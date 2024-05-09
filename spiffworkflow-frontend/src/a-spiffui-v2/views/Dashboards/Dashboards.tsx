@@ -27,8 +27,8 @@ import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
 import FilterCard from './FilterCard';
-import MyProcesses from './MyProcesses';
-import MyTasks from './MyTasks';
+import MyProcesses from './myProcesses/MyProcesses';
+import MyTasks from './myTasks/MyTasks';
 import InfoPanel from '../../components/InfoPanel';
 import TaskInfo from './infopanels/TaskInfo';
 import ProcessInfo from './infopanels/ProcessInfo';
@@ -77,6 +77,8 @@ export default function Dashboards() {
 
   type TabData = { label: string; value: string; icon: ReactNode };
   const handleTabChange = (tab: TabData) => {
+    // TODO: Might be better to leave this and apply it on grid changes
+    setSearchText('');
     setInfoPanelIsOpen(false);
     setSelectedTab(tab.value);
   };
@@ -184,6 +186,7 @@ export default function Dashboards() {
                   sx={{ width: { xs: 300, sm: '100%' } }}
                   variant="outlined"
                   placeholder="Search"
+                  value={searchText}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   InputProps={{
                     startAdornment: (
@@ -196,7 +199,6 @@ export default function Dashboards() {
               </Box>
 
               <Stack direction="row" gap={2} padding={2}>
-                <FilterAltOutlinedIcon />
                 <Columns />
                 <Share />
                 <Grid />

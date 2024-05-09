@@ -1,7 +1,7 @@
 import { Box, Chip, Stack } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
-import useTaskCollection from '../../hooks/useTaskCollection';
+import useTaskCollection from '../../../hooks/useTaskCollection';
 
 export default function MyTasks({
   filter,
@@ -36,16 +36,17 @@ export default function MyTasks({
   ];
 
   useEffect(() => {
-    const filtered = filter
-      ? taskCollection.results.filter((instance: any) => {
-          return columnData.some((data: Record<string, any>) =>
-            (instance[data.field] || '')
-              .toString()
-              .toLowerCase()
-              .includes(filter.toLowerCase())
-          );
-        })
-      : taskCollection.results || [];
+    const filtered =
+      filter && taskCollection.results
+        ? taskCollection.results.filter((instance: any) => {
+            return columnData.some((data: Record<string, any>) =>
+              (instance[data.field] || '')
+                .toString()
+                .toLowerCase()
+                .includes(filter.toLowerCase())
+            );
+          })
+        : taskCollection.results || [];
 
     setTaskRows(filtered);
   }, [filter]);

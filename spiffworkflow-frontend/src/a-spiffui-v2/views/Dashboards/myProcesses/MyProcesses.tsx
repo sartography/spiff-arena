@@ -1,9 +1,9 @@
-import { Box, Chip, Stack, Typography } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
-import ProcessInstanceCard from './ProcessInstanceCard';
-import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
-import { formatSecondsForDisplay } from '../../utils/Utils';
+import ProcessInstanceCard from '../ProcessInstanceCard';
+import useProcessInstanceCollection from '../../../hooks/useProcessInstanceCollection';
+import CellRenderer from './CellRenderer';
 
 export default function MyProcesses({
   filter,
@@ -22,46 +22,29 @@ export default function MyProcesses({
     GridRowsProp[]
   >([]);
 
-  /** These values map to theme tokens, which enable the light/dark modes etc. */
-  const chipBackground = (params: any) => {
-    switch (params.value) {
-      case 'Completed':
-      case 'complete':
-        return 'info';
-      case 'Started':
-        return 'success';
-      case 'error':
-        return 'error';
-      case 'Wait a second':
-      case 'user_input_required':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
   const handleGridRowClick = (data: Record<string, any>) => {
     callback(data.row);
   };
 
   useEffect(() => {
-    const filtered = filter
-      ? processInstanceCollection.results.filter((instance: any) => {
-          const searchFields = [
-            'process_model_display_name',
-            'last_milestone_bpmn_name',
-            'process_initiator_username',
-            'status',
-          ];
+    const filtered =
+      filter && processInstanceCollection.results
+        ? processInstanceCollection.results.filter((instance: any) => {
+            const searchFields = [
+              'process_model_display_name',
+              'last_milestone_bpmn_name',
+              'process_initiator_username',
+              'status',
+            ];
 
-          return searchFields.some((field) =>
-            (instance[field] || '')
-              .toString()
-              .toLowerCase()
-              .includes(filter.toLowerCase())
-          );
-        })
-      : processInstanceCollection.results || [];
+            return searchFields.some((field) =>
+              (instance[field] || '')
+                .toString()
+                .toLowerCase()
+                .includes(filter.toLowerCase())
+            );
+          })
+        : processInstanceCollection.results || [];
 
     setProcessInstanceRows(filtered);
   }, [filter]);
@@ -85,37 +68,9 @@ export default function MyProcesses({
                   return 1;
               }
             })(),
-            renderCell: (() => {
-              if (
-                column.Header === 'Last milestone' ||
-                column.Header === 'Status'
-              ) {
-                return (params: Record<string, any>) => (
-                  <Chip
-                    label={params.value || '...no info...'}
-                    variant="filled"
-                    color={chipBackground(params)}
-                    sx={{
-                      width: '100%',
-                    }}
-                  />
-                );
-              } else if (column.Header === 'Start' || column.Header === 'End') {
-                return (params: Record<string, any>) => (
-                  <Stack
-                    direction="row"
-                    sx={{
-                      height: '100%',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Typography>
-                      {formatSecondsForDisplay(params.value)}
-                    </Typography>
-                  </Stack>
-                );
-              }
-            })(),
+            renderCell: (params: Record<string, any>) => (
+              <CellRenderer header={column.Header} data={params} />
+            ),
           })
         );
 

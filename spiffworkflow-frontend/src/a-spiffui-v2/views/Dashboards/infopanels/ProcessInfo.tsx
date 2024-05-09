@@ -18,7 +18,6 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
   const isDark = useTheme().palette.mode === 'dark';
 
   useEffect(() => {
-    console.log(data);
     if ('results' in taskCollection) {
       setFilteredTasks(
         taskCollection.results.filter(
@@ -26,7 +25,6 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
         )
       );
     }
-    console.log(taskCollection);
   }, [taskCollection]);
 
   return (
