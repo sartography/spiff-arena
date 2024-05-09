@@ -1,3 +1,4 @@
+from billiard import current_process  # type: ignore
 import threading
 import time
 from typing import Any
@@ -18,11 +19,20 @@ class ProcessInstanceLockService:
     """TODO: comment."""
 
     @classmethod
+    def get_current_process_index(cls) -> Any:
+        process = current_process()
+        index = None
+        if hasattr(process, "index"):
+            index = current_process().index
+        print(f"➡️ ➡️ ➡️  index: {index}")
+        return index
+
+    @classmethod
     def set_thread_local_locking_context(cls, domain: str, additional_processing_identifier: str | None = None) -> None:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         if not hasattr(tld, "lock_service_context"):
             tld.lock_service_context = {}
-        tld.lock_service_context[additional_processing_identifier] = {
+        tld.lock_service_context[cls.get_current_process_index()] = {
             "domain": domain,
             "uuid": current_app.config["PROCESS_UUID"],
             "thread_id": threading.get_ident(),
@@ -34,12 +44,12 @@ class ProcessInstanceLockService:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         if not hasattr(tld, "lock_service_context"):
             cls.set_thread_local_locking_context("web", additional_processing_identifier=additional_processing_identifier)
-        return tld.lock_service_context[additional_processing_identifier]  # type: ignore
+        return tld.lock_service_context[cls.get_current_process_index()]  # type: ignore
 
     @classmethod
     def locked_by(cls, additional_processing_identifier: str | None = None) -> str:
         ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
-        return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}:{additional_processing_identifier}"
+        return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}:{cls.get_current_process_index()}"
 
     @classmethod
     def lock(

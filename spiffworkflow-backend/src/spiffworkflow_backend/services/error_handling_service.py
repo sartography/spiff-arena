@@ -12,8 +12,14 @@ class ErrorHandlingService:
     MESSAGE_NAME = "SystemErrorMessage"
 
     @classmethod
-    def handle_error(cls, process_instance: ProcessInstanceModel, error: Exception) -> None:
+    def handle_error(
+        cls,
+        process_instance: ProcessInstanceModel,
+        error: Exception,
+        additional_processing_identifier: str | None = None,
+    ) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
+        print(f"➡️ ➡️ ➡️  FROM HANDLE_ERROR: additional_processing_identifier: {additional_processing_identifier}")
         process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
         cls._update_process_instance_in_database(process_instance, process_model.fault_or_suspend_on_exception)
 
@@ -22,10 +28,13 @@ class ErrorHandlingService:
         # body.
         if len(process_model.exception_notification_addresses) > 0:
             try:
-                cls._handle_system_notification(error, process_model, process_instance)
+                cls._handle_system_notification(
+                    error, process_model, process_instance, additional_processing_identifier=additional_processing_identifier
+                )
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
                 current_app.logger.error(e)
+                raise e
 
     @classmethod
     def _update_process_instance_in_database(
@@ -54,6 +63,7 @@ class ErrorHandlingService:
         error: Exception,
         process_model: ProcessModelInfo,
         process_instance: ProcessInstanceModel,
+        additional_processing_identifier: str | None = None,
     ) -> None:
         """Send a BPMN Message - which may kick off a waiting process."""
 
@@ -76,6 +86,7 @@ class ErrorHandlingService:
         else:
             user_id = process_instance.process_initiator_id
 
+        print(f"➡️ ➡️ ➡️  FROM HANDLE_ERROR: additional_processing_identifier: {additional_processing_identifier}")
         message_instance = MessageInstanceModel(
             message_type="send",
             name=ErrorHandlingService.MESSAGE_NAME,
@@ -84,7 +95,7 @@ class ErrorHandlingService:
         )
         db.session.add(message_instance)
         db.session.commit()
-        MessageService.correlate_send_message(message_instance)
+        MessageService.correlate_send_message(message_instance, additional_processing_identifier=additional_processing_identifier)
 
     @staticmethod
     def _set_instance_status(process_instance: ProcessInstanceModel, status: str) -> None:

@@ -41,6 +41,7 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
         }
     try:
         task_guid_for_requeueing = task_guid
+        print(f"➡️ ➡️ ➡️  FROM CELERY TASK: additional_processing_identifier: {proc_index}")
         with ProcessInstanceQueueService.dequeued(process_instance, additional_processing_identifier=proc_index):
             ProcessInstanceService.run_process_instance_with_processor(
                 process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index

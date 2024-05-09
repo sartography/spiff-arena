@@ -119,6 +119,7 @@ class ProcessInstanceQueueService:
         additional_processing_identifier: str | None = None,
         max_attempts: int = 1,
     ) -> Generator[None, None, None]:
+        print(f"➡️ ➡️ ➡️  FROM DEQUEUE: additional_processing_identifier: {additional_processing_identifier}")
         reentering_lock = ProcessInstanceLockService.has_lock(
             process_instance.id, additional_processing_identifier=additional_processing_identifier
         )
@@ -138,7 +139,9 @@ class ProcessInstanceQueueService:
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
                 )
-            ErrorHandlingService.handle_error(process_instance, ex)
+            ErrorHandlingService.handle_error(
+                process_instance, ex, additional_processing_identifier=additional_processing_identifier
+            )
             raise ex
         finally:
             if not reentering_lock:
