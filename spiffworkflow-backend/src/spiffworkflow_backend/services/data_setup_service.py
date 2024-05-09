@@ -87,6 +87,7 @@ class DataSetupService:
                     current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
                     continue
 
+                print(process_group.id)
                 cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
                 MessageDefinitionService.collect_message_models(process_group, process_group.id, all_message_models)
 

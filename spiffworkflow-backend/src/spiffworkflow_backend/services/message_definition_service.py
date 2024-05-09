@@ -12,6 +12,7 @@ class MessageDefinitionService:
     @classmethod
     def _message_model_from_message(cls, identifier: str, message_definition: dict[str, Any], process_group: ProcessGroup) -> MessageModel | None:
         schema = message_definition.get("schema", "{}")
+        print(process_group.id)
 
         return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
 
