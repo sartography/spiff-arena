@@ -1,11 +1,6 @@
 import { Box } from '@mui/material';
-import { useEffect } from 'react';
 
 export default function TaskInfo({ data }: { data: Record<string, any> }) {
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
-
   return (
     <Box
       sx={{

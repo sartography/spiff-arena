@@ -10,7 +10,7 @@ export default function MyTasks({
   filter: string;
   callback: (data: Record<string, any>) => void;
 }) {
-  const { taskCollection } = useTaskCollection();
+  const { taskCollection } = useTaskCollection({ processInfo: {} });
   const [taskColumns, setTaskColumns] = useState<GridColDef[]>([]);
   const [taskRows, setTaskRows] = useState<GridRowsProp[]>([]);
 

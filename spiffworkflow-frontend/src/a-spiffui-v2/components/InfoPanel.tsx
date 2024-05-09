@@ -20,6 +20,11 @@ export default function InfoPanel({
   children: ReactNode;
 }) {
   const isDark = useTheme().palette.mode === 'dark';
+
+  const checkIsDark = () => {
+    return isDark ? 'primary.dark' : 'primary.light';
+  };
+
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <Paper
@@ -28,7 +33,7 @@ export default function InfoPanel({
           width: '100%',
           height: '100%',
           border: '4px solid',
-          borderColor: 'primary.main',
+          borderColor: isDark ? 'primary.main' : 'primary.light',
           borderRadius: 2,
           padding: 1,
         }}
@@ -46,7 +51,7 @@ export default function InfoPanel({
             <Toolbar
               variant="regular"
               sx={{
-                backgroundColor: isDark ? 'primary.dark' : 'primary.light',
+                backgroundColor: checkIsDark(),
                 borderRadius: 3,
               }}
             >
@@ -57,7 +62,7 @@ export default function InfoPanel({
                 onClick={() => callback()}
                 sx={{
                   marginRight: 2,
-                  backgroundColor: isDark ? 'primary.dark' : 'primary.light',
+                  backgroundColor: checkIsDark(),
                 }}
               >
                 <CancelOutlinedIcon />

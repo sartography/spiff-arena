@@ -225,7 +225,7 @@ export default function Dashboards() {
           >
             <Box sx={{ width: '100%', height: '70%' }}>
               <InfoPanel
-                title={panelData.process_model_display_name || 'Task Info'}
+                title={panelData.process_model_display_name || ''}
                 callback={handleInfoWindowClose}
               >
                 {loadInfoPanel()}
