@@ -1309,7 +1309,7 @@ export default function ProcessModelEditDiagram() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupos de Processo', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',

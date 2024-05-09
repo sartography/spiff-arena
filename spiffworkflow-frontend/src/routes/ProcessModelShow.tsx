@@ -735,7 +735,7 @@ export default function ProcessModelShow() {
         {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupos de Processo', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',
@@ -745,7 +745,7 @@ export default function ProcessModelShow() {
         {processModelPublishMessage()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
-            Process Model: {processModel.display_name}
+            Modelo de Processo: {processModel.display_name}
           </h1>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <Button

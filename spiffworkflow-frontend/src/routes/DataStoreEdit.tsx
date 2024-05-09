@@ -36,7 +36,7 @@ export default function DataStoreEdit() {
     });
   }, [dataStoreIdentifier, parentGroupId, dataStoreType]);
 
-  const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
+  const hotCrumbs: HotCrumbItem[] = [['Grupos de Processo', '/process-groups']];
   if (parentGroupId) {
     hotCrumbs.push({
       entityToExplode: parentGroupId,

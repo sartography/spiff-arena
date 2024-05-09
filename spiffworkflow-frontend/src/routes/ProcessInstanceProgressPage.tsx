@@ -18,14 +18,14 @@ export default function ProcessInstanceProgressPage({ variant }: OwnProps) {
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          ['Grupo de Processos', '/process-groups'],
           {
             entityToExplode: String(params.process_model_id),
             entityType: 'process-model-id',
             linkLastItem: true,
           },
           [
-            `Process Instance: ${params.process_instance_id}`,
+            `Instância de Processo: ${params.process_instance_id}`,
             `${processInstanceShowPageUrl}`,
           ],
         ]}

@@ -8,7 +8,7 @@ test('renders home link', () => {
   //     <ProcessBreadcrumb />
   //   </BrowserRouter>
   // );
-  // const homeElement = screen.getByText(/Process Groups/);
+  // const homeElement = screen.getByText(/Grupos de Processo/);
   // expect(homeElement).toBeInTheDocument();
 });
 
@@ -17,14 +17,14 @@ test('renders hotCrumbs', () => {
     <BrowserRouter>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
-          [`Process Group: hey`],
+          ['Grupos de Processo', '/process-groups'],
+          [`Grupo de Processo: hey`],
         ]}
       />
     </BrowserRouter>
   );
-  const homeElement = screen.getByText(/Process Groups/);
+  const homeElement = screen.getByText(/Grupos de Processo/);
   expect(homeElement).toBeInTheDocument();
-  const nextElement = screen.getByText(/Process Group: hey/);
+  const nextElement = screen.getByText(/Grupo de Processo: hey/);
   expect(nextElement).toBeInTheDocument();
 });

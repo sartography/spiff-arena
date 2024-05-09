@@ -251,7 +251,7 @@ export default function ReactFormEditor() {
       <main>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupos de Processo', '/process-groups'],
             {
               entityToExplode: params.process_model_id || '',
               entityType: 'process-model-id',

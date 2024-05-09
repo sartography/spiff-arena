@@ -19,7 +19,7 @@ export default function DataStoreNew() {
     setPageTitle(['New Data Store']);
   }, []);
 
-  const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
+  const hotCrumbs: HotCrumbItem[] = [['Grupos de Processo', '/process-groups']];
   if (parentGroupId) {
     hotCrumbs.push({
       entityToExplode: parentGroupId,

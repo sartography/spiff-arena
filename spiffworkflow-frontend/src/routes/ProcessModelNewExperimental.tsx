@@ -42,7 +42,7 @@ export default function ProcessModelNewExperimental() {
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          ['Grupos de Processo', '/process-groups'],
           {
             entityToExplode: params.process_group_id || '',
             entityType: 'process-group-id',

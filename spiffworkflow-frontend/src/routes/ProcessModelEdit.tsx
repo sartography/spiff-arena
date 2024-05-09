@@ -25,7 +25,7 @@ export default function ProcessModelEdit() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Grupos de Processo', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',

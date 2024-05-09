@@ -28,7 +28,7 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
     return (
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Grupos de Processo Groups', '/process-groups'],
+          ['Grupos de Processo', '/process-groups'],
           {
             entityToExplode: processModelFullIdentifier,
             entityType: 'process-model-id',

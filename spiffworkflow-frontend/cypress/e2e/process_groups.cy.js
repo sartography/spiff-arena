@@ -14,7 +14,7 @@ describe('process-groups', () => {
     const groupId = `test-group-1-${id}`;
     cy.createGroup(groupId, groupDisplayName);
 
-    cy.contains('Process Groups').click();
+    cy.contains('Grupos de Processo').click();
     cy.contains(groupDisplayName).click();
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(`Process Group: ${groupDisplayName}`);
