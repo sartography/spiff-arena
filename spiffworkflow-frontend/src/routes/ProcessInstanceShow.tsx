@@ -1796,9 +1796,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </TabList>
           <TabPanels>
             <TabPanel>
-              {selectedTabIndex === 0 ? (
-                <TabPanel>{diagramArea(processModelId)}</TabPanel>
-              ) : null}
+              {selectedTabIndex === 0 ? diagramArea(processModelId) : null}
             </TabPanel>
             <TabPanel>
               {selectedTabIndex === 1 ? (

@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-// @ts-ignore
-// @ts-ignore
 import { Table } from '@carbon/react';
 import { useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../PaginationForTable';
@@ -11,6 +9,7 @@ import {
 import HttpService from '../../services/HttpService';
 import { ReferenceCache } from '../../interfaces';
 
+// TODO: update to work with current message-models api
 type OwnProps = {
   processGroupId?: string;
 };
@@ -93,7 +92,7 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
         perPage={perPage}
         pagination={pagination}
         tableToDisplay={buildTable()}
-        paginationQueryParamPrefix="message-list"
+        paginationQueryParamPrefix="message-model-list"
       />
     );
   }

@@ -229,11 +229,6 @@ export interface Messages {
   [key: string]: MessageDefinition;
 }
 
-export interface CorrelationKey {
-  id: string;
-  correlation_properties: string[];
-}
-
 type ReferenceCacheType = 'decision' | 'process' | 'data_store' | 'message';
 
 export interface ReferenceCache {
@@ -246,17 +241,17 @@ export interface ReferenceCache {
 }
 
 export interface MessageInstance {
-  id: number;
-  process_model_identifier: string;
-  process_model_display_name: string;
-  process_instance_id: number;
-  name: string;
-  message_type: string;
-  failure_cause: string;
-  status: string;
-  created_at_in_seconds: number;
-  message_correlations?: CorrelationProperty;
   correlation_keys: any;
+  counterpart_id: int;
+  created_at_in_seconds: number;
+  failure_cause: string;
+  id: number;
+  message_type: string;
+  name: string;
+  process_instance_id: number;
+  process_model_display_name: string;
+  process_model_identifier: string;
+  status: string;
 }
 
 export interface ReportFilter {
@@ -325,8 +320,6 @@ export interface ProcessGroup {
   process_groups?: ProcessGroup[];
   parent_groups?: ProcessGroupLite[];
   messages?: Messages;
-  correlation_keys?: CorrelationKey[];
-  correlation_properties?: CorrelationProperty[];
 }
 
 export interface HotCrumbItemObject {

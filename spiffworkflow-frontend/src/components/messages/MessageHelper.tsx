@@ -1,5 +1,4 @@
 import {
-  CorrelationKey,
   CorrelationProperty,
   Message,
   ProcessGroup,
@@ -80,36 +79,4 @@ export const removeMessageFromProcessGroup = (
       );
   }
   return processGroup;
-};
-
-export const findMessagesForCorrelationKey = (
-  processGroup: ProcessGroup,
-  correlationKey?: CorrelationKey
-): Message[] => {
-  console.log('Find messages for CK', correlationKey);
-  const messages: Message[] = [];
-  if (processGroup.messages) {
-    processGroup.messages.forEach((msg: Message) => {
-      const correlationProperties = getPropertiesForMessage(
-        msg.id,
-        processGroup
-      );
-      const propIds: string[] = correlationProperties.map(
-        (cp: CorrelationProperty) => {
-          return cp.id;
-        }
-      );
-      propIds.sort();
-      if (correlationKey) {
-        if (
-          arrayCompare(propIds, correlationKey.correlation_properties.sort())
-        ) {
-          messages.push(msg);
-        }
-      } else if (propIds.length === 0) {
-        messages.push(msg);
-      }
-    });
-  }
-  return messages;
 };

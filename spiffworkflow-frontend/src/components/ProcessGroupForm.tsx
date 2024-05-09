@@ -1,33 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @ts-ignore
-import {
-  Button,
-  Form,
-  Stack,
-  TextInput,
-  TextArea,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeader,
-} from '@carbon/react';
-import { Edit, TrashCan, Add } from '@carbon/icons-react';
+import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
-import {
-  CorrelationKey,
-  CorrelationProperty,
-  Message,
-  ProcessGroup,
-  RetrievalExpression,
-} from '../interfaces';
-import ButtonWithConfirmation from './ButtonWithConfirmation';
-import MessageModal from './messages/MessageModal';
+import { ProcessGroup } from '../interfaces';
 
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
-import CorrelationModal from './messages/CorrelationModal';
-import { findMessagesForCorrelationKey } from './messages/MessageHelper';
 
 type OwnProps = {
   mode: string;
@@ -95,8 +73,6 @@ export default function ProcessGroupForm({
       display_name: processGroup.display_name,
       description: processGroup.description,
       messages: processGroup.messages,
-      correlation_keys: processGroup.correlation_keys,
-      correlation_properties: processGroup.correlation_properties,
     };
     if (mode === 'new') {
       if (parentGroupId) {
@@ -132,71 +108,6 @@ export default function ProcessGroupForm({
       Object.assign(updateDict, { id: slugifyString(newDisplayName) });
     }
     updateProcessGroup(updateDict);
-  };
-
-  const correlationPropertiesWithoutMessage = (
-    messageToDelete: Message,
-    correlationProperties: CorrelationProperty[] | null = null
-  ) => {
-    const newCorrelationProperties =
-      correlationProperties ||
-      JSON.parse(JSON.stringify(processGroup.correlation_properties || []));
-    newCorrelationProperties.forEach((cp: CorrelationProperty) => {
-      // eslint-disable-next-line no-param-reassign
-      cp.retrieval_expressions = cp.retrieval_expressions.filter(
-        (re: RetrievalExpression) => {
-          return re.message_ref !== messageToDelete.id;
-        }
-      );
-    });
-    return newCorrelationProperties;
-  };
-
-  const onDeleteMessage = (messageToDelete: Message) => {
-    // Remove message from process group
-    const newMessages = processGroup.messages?.filter((msg: Message) => {
-      return msg.id !== messageToDelete.id;
-    });
-    // Remove retrieval expressions from correlation properties related to message
-    const newCorrelationProperties =
-      correlationPropertiesWithoutMessage(messageToDelete);
-
-    updateProcessGroup({
-      messages: newMessages,
-      correlation_properties: newCorrelationProperties,
-    });
-  };
-
-  const onDeleteCorrelation = (ckToDelete: CorrelationKey) => {
-    // Remove correlation key from process group
-    const newkeys = processGroup.correlation_keys?.filter(
-      (ck: CorrelationKey) => {
-        return ck.id !== ckToDelete.id;
-      }
-    );
-
-    // remove all connected messages
-    const connectedMessages = findMessagesForCorrelationKey(
-      processGroup,
-      ckToDelete
-    );
-    const newMessages = processGroup.messages?.filter((msg: Message) => {
-      return !connectedMessages.includes(msg);
-    });
-    let newCorrelationProperties = JSON.parse(
-      JSON.stringify(processGroup.correlation_properties || [])
-    );
-    connectedMessages.forEach((msg: Message) => {
-      newCorrelationProperties = correlationPropertiesWithoutMessage(
-        msg,
-        newCorrelationProperties
-      );
-    });
-    updateProcessGroup({
-      messages: newMessages,
-      correlation_keys: newkeys,
-      correlation_properties: newCorrelationProperties,
-    });
   };
 
   const formElements = () => {
@@ -246,161 +157,6 @@ export default function ProcessGroupForm({
       />
     );
     return textInputs;
-  };
-
-  const [messageModelForModal, setMessageModelForModal] =
-    useState<Message | null>(null);
-  const [correlationKeyForMessageModal, setCorrelationKeyForMessageModal] =
-    useState<CorrelationKey | undefined>(undefined);
-
-  const messageEditModal = () => {
-    if (messageModelForModal) {
-      return (
-        <MessageModal
-          messageModel={messageModelForModal}
-          open={!!messageModelForModal}
-          correlationKey={correlationKeyForMessageModal}
-          processGroup={processGroup}
-          onClose={() => {
-            setMessageModelForModal(null);
-            setCorrelationKeyForMessageModal(undefined);
-          }}
-          onSave={(updatedProcessGroup) => {
-            setMessageModelForModal(null);
-            setCorrelationKeyForMessageModal(undefined);
-            setProcessGroup(updatedProcessGroup);
-          }}
-        />
-      );
-    }
-    return null;
-  };
-
-  const [correlationKeyForModal, setCorrelationKeyForModal] = useState<
-    CorrelationKey | undefined
-  >(undefined);
-
-  const correlationEditModal = () => {
-    if (correlationKeyForModal) {
-      return (
-        <CorrelationModal
-          open={!!correlationKeyForModal}
-          correlationKey={correlationKeyForModal}
-          processGroup={processGroup}
-          onClose={() => {
-            setCorrelationKeyForModal(undefined);
-          }}
-          onSave={(updatedProcessGroup) => {
-            setCorrelationKeyForModal(undefined);
-            setProcessGroup(updatedProcessGroup);
-          }}
-        />
-      );
-    }
-    return null;
-  };
-
-  const messageDisplay = (correlationKey?: CorrelationKey) => {
-    let body = <p>No messages defined.</p>;
-    let messages: Message[] = [];
-    messages = findMessagesForCorrelationKey(processGroup, correlationKey);
-    const items: any[] = messages.map((msg: Message) => {
-      return (
-        <TableRow>
-          <td>{msg.id}</td>
-          <td>
-            <Button
-              kind="ghost"
-              data-qa="edit-message-button"
-              renderIcon={Edit}
-              iconDescription="Edit Message"
-              hasIconOnly
-              onClick={() => {
-                setMessageModelForModal(msg);
-                setCorrelationKeyForMessageModal(correlationKey);
-              }}
-            >
-              Edit process group
-            </Button>
-            <ButtonWithConfirmation
-              kind="ghost"
-              data-qa="delete-message-button"
-              renderIcon={TrashCan}
-              iconDescription="Delete Message"
-              hasIconOnly
-              description={`Delete message: ${msg.id}`}
-              onConfirmation={() => {
-                onDeleteMessage(msg);
-              }}
-              confirmButtonLabel="Delete"
-            />
-          </td>
-        </TableRow>
-      );
-    });
-    if (items.length > 0) {
-      body = (
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeader style={{ minWidth: '300px' }}>Name</TableHeader>
-              <TableHeader>Actions</TableHeader>
-            </TableRow>
-            {items}
-          </TableHead>
-        </Table>
-      );
-    }
-    return <div className="processGroupMessages">{body}</div>;
-  };
-
-  const correlationButtons = (ck?: CorrelationKey) => {
-    const buttons = [];
-    const id = ck?.id || 'uncorrelated';
-    if (ck) {
-      buttons.push(
-        <Button
-          kind="ghost"
-          data-qa="edit-correlation-button"
-          renderIcon={Edit}
-          iconDescription="Edit Correlation"
-          hasIconOnly
-          onClick={() => {
-            setCorrelationKeyForModal(ck);
-          }}
-        />
-      );
-      buttons.push(
-        <ButtonWithConfirmation
-          kind="ghost"
-          data-qa="delete-correlation-button"
-          renderIcon={TrashCan}
-          iconDescription="Delete Correlation"
-          hasIconOnly
-          description={`Delete Correlation: ${id}`}
-          onConfirmation={() => {
-            onDeleteCorrelation(ck);
-          }}
-          confirmButtonLabel="Delete"
-        />
-      );
-    }
-    const dataQA = `add-message-button-${id}`;
-    buttons.push(
-      <Button
-        visible={!!ck}
-        kind="ghost"
-        data-qa={dataQA}
-        renderIcon={Add}
-        iconDescription="Add Message"
-        hasIconOnly
-        onClick={() => {
-          setMessageModelForModal({ id: '' });
-          setCorrelationKeyForMessageModal(ck);
-        }}
-      />
-    );
-    return buttons;
   };
 
   const formButtons = () => {

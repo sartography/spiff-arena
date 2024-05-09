@@ -122,6 +122,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <td>{instanceLink}</td>
           <td>{row.name}</td>
           <td>{row.message_type}</td>
+          <td>{row.counterpart_id}</td>
           <td>
             <Button
               kind="ghost"
@@ -151,6 +152,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             <th>Process instance</th>
             <th>Name</th>
             <th>Type</th>
+            <th>Corresponding Message Instance</th>
             <th>Details</th>
             <th>Status</th>
             <th>Created at</th>
