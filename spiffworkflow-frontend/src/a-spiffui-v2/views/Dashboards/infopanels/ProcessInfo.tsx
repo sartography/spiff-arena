@@ -11,9 +11,12 @@ import { grey } from '@mui/material/colors';
 import useTaskCollection from '../../../hooks/useTaskCollection';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 import GreenCircleCheck from '../../../assets/icons/green-circle-check.svg';
+import WarningEye from '../../../assets/icons/warning-eye.svg';
+import useCompletedTasks from '../../../hooks/useCompletedTasks';
 
 export default function ProcessInfo({ data }: { data: Record<string, any> }) {
   const { taskCollection } = useTaskCollection({ processInfo: data });
+  const { completedTasks } = useCompletedTasks({ processInfo: data });
   const [filteredTasks, setFilteredTasks] = useState<Record<string, any>[]>([]);
   const isDark = useTheme().palette.mode === 'dark';
 
@@ -36,7 +39,11 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
         gap: 2,
       }}
     >
-      <Stack direction="row" gap={4}>
+      <Stack
+        direction="row"
+        gap={4}
+        sx={{ overflow: 'hidden', scrollBehavior: 'auto' }}
+      >
         <Stack gap={2}>
           <Box>
             <Typography variant="h6">Last Milestone</Typography>
@@ -72,7 +79,7 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
         {!filteredTasks.length && (
           <Typography>No Tasks for this Process</Typography>
         )}
-        {filteredTasks.map((task: Record<string, any>) => (
+        {completedTasks.map((task: Record<string, any>) => (
           <Paper
             key={task.id}
             elevation={3}
@@ -94,6 +101,43 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
               }}
             >
               <GreenCircleCheck />
+              <Stack>
+                <Typography sx={{ fontWeight: 600 }}>Status</Typography>
+                <Typography>{task.task_status}</Typography>
+              </Stack>
+              <Stack>
+                <Typography sx={{ fontWeight: 600 }}>Name</Typography>
+                <Typography>{task.task_name}</Typography>
+              </Stack>
+              <Stack>
+                <Typography sx={{ fontWeight: 600 }}>Title</Typography>
+                <Typography>{task.task_title}</Typography>
+              </Stack>
+            </Stack>
+          </Paper>
+        ))}
+        {filteredTasks.map((task: Record<string, any>) => (
+          <Paper
+            key={task.id}
+            elevation={3}
+            sx={{
+              width: '100%',
+              height: 75,
+              borderRadius: 4,
+              backgroundColor: isDark ? 'primary.main' : grey[200],
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              sx={{
+                width: '100%',
+                height: '100%',
+                gap: 2,
+                padding: 1,
+              }}
+            >
+              <WarningEye />
               <Stack>
                 <Typography sx={{ fontWeight: 600 }}>Status</Typography>
                 <Typography>{task.task_status}</Typography>
