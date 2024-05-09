@@ -1,8 +1,9 @@
-import { Box, Chip, Stack } from '@mui/material';
+import { Box, Chip, Stack, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import ProcessInstanceCard from './ProcessInstanceCard';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
+import { formatSecondsForDisplay } from '../../utils/Utils';
 
 export default function MyProcesses({
   filter,
@@ -79,24 +80,42 @@ export default function MyProcesses({
                   return 0.5;
                 case 'Start':
                 case 'End':
-                  return 0.75;
+                  return 1;
                 default:
                   return 1;
               }
             })(),
-            renderCell:
-              column.Header === 'Last milestone' || column.Header === 'Status'
-                ? (params: Record<string, any>) => (
-                    <Chip
-                      label={params.value || '...no info...'}
-                      variant="filled"
-                      color={chipBackground(params)}
-                      sx={{
-                        width: '100%',
-                      }}
-                    />
-                  )
-                : null,
+            renderCell: (() => {
+              if (
+                column.Header === 'Last milestone' ||
+                column.Header === 'Status'
+              ) {
+                return (params: Record<string, any>) => (
+                  <Chip
+                    label={params.value || '...no info...'}
+                    variant="filled"
+                    color={chipBackground(params)}
+                    sx={{
+                      width: '100%',
+                    }}
+                  />
+                );
+              } else if (column.Header === 'Start' || column.Header === 'End') {
+                return (params: Record<string, any>) => (
+                  <Stack
+                    direction="row"
+                    sx={{
+                      height: '100%',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography>
+                      {formatSecondsForDisplay(params.value)}
+                    </Typography>
+                  </Stack>
+                );
+              }
+            })(),
           })
         );
 

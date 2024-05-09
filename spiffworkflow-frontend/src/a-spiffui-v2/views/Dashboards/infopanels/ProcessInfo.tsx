@@ -71,6 +71,9 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
       <Divider variant="fullWidth" sx={{ backgroundColor: 'grey' }} />
       <Typography variant="h6">Tasks</Typography>
       <Stack gap={2}>
+        {!filteredTasks.length && (
+          <Typography>No Tasks for this Process</Typography>
+        )}
         {filteredTasks.map((task: Record<string, any>) => (
           <Paper
             key={task.id}
