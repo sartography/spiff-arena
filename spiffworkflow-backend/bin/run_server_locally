@@ -24,7 +24,7 @@ else
   else
 
     if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
+      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false poetry run python bin/save_all_bpmn.py
     fi
 
     # this line blocks

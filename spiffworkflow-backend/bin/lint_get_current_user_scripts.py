@@ -34,7 +34,8 @@ def check_script_and_prescript_elements(tree, bpmn_file_path: str, root_path: st
     for task in script_tasks:
         script = task.find("bpmn:script", namespaces=nsmap)
         if script is not None and script.text is not None and "get_current_user()" in script.text:
-            print(f'Found get_current_user() in script task {task.get("id")} of file {bpmn_file_path}')
+            relative_path = os.path.relpath(bpmn_file_path, root_path)
+            print(f'Found get_current_user() in script task {task.get("id")} of file {relative_path}')
 
     # Check preScript elements for get_current_user() calls
     check_scripts_for_get_current_user(pre_scripts, bpmn_file_path, "preScript", root_path)
@@ -52,7 +53,7 @@ def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type
             if tag_without_namespace not in ["manualTask", "userTask"]:
                 print(
                     f"Found get_current_user() in {script_type} of {tag_without_namespace} "
-                    f'with id {parent.get("id")} in file {relative_path}'
+                    f"with id {parent.get('id')} in file {relative_path}"
                 )
 
 
@@ -62,8 +63,15 @@ def main() -> NoReturn:
         hot_dir = FileSystemService.root_path()
         # Search for BPMN files and check for get_current_user() calls in script tasks
         bpmn_files = glob.glob(os.path.expanduser(f"{hot_dir}/**/*.bpmn"), recursive=True)
+
         for bpmn_file in bpmn_files:
-            find_script_tasks_with_get_current_user(bpmn_file, hot_dir)
+            parent_directory = os.path.dirname(bpmn_file)
+            # check if parent directory contains a file named 'extension_uischema.json'
+            # in which case it's an extension, and it is not necessary to include in this analysis, since
+            # extensions typically run using nonpersistent process instances, and therefore have no
+            # running-in-background type issues.
+            if parent_directory and not os.path.exists(f"{parent_directory}/extension_uischema.json"):
+                find_script_tasks_with_get_current_user(bpmn_file, hot_dir)
 
 
 if __name__ == "__main__":

@@ -368,6 +368,8 @@ This can help you manage your workflows more efficiently and keep track of the p
 ### Milestones
 A milestone is a specific point in a process that signifies a significant event or state. It provides a high-level overview of the progress made in the process.
 
+![Milestones](images/Milestone_Screenshot.png)
+
 In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, start, or end) but give it a name, it becomes a milestone.
 Essentially, a milestone is an event that hasn't been set to something specific.
 
@@ -377,7 +379,7 @@ Essentially, a milestone is an event that hasn't been set to something specific.
 Events provide a detailed log of everything that happens in a process.
 They record every task and its execution time.
 
-![Events](images/Events.png)
+![Events](images/Events_Example.png)
 
 The events tab provides a detailed log of all the tasks and their execution times.
 It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.

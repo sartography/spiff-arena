@@ -466,7 +466,6 @@ export default function TaskShow() {
       component: (
         <InstructionsForEndUser
           task={taskWithTaskData}
-          allowCollapse
           className="with-bottom-margin"
         />
       ),

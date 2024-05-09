@@ -2,6 +2,7 @@ import glob
 import os
 
 from flask import current_app
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -63,6 +64,7 @@ class ExampleDataLoader:
 
         if len(files) == 0:
             raise Exception(f"Could not find any files with file_glob: {file_glob}")
+        all_references = []
         for file_path in files:
             if os.path.isdir(file_path):
                 continue  # Don't try to process sub directories
@@ -74,13 +76,19 @@ class ExampleDataLoader:
             try:
                 file = open(file_path, "rb")
                 data = file.read()
-                file_info = SpecFileService.add_file(process_model_info=spec, file_name=filename, binary_data=data)
+                _, new_references = SpecFileService.update_file(
+                    process_model_info=spec, file_name=filename, binary_data=data, update_process_cache_only=True
+                )
+                all_references += new_references
                 if is_primary:
-                    references = SpecFileService.get_references_for_file(file_info, spec)
-                    spec.primary_process_id = references[0].identifier
+                    # references = SpecFileService.get_references_for_file(file_info, spec)
+                    spec.primary_process_id = new_references[0].identifier
                     spec.primary_file_name = filename
                     ProcessModelService.save_process_model(spec)
             finally:
                 if file:
                     file.close()
+        for ref in all_references:
+            SpecFileService.update_caches_except_process(ref)
+        db.session.commit()
         return spec

@@ -3,7 +3,6 @@ import os
 import uuid
 from typing import Any
 from typing import TypedDict
-from uuid import UUID
 
 import flask.wrappers
 import sentry_sdk
@@ -30,9 +29,12 @@ from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedErro
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -46,11 +48,11 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
@@ -122,15 +124,48 @@ def process_list() -> Any:
     return ReferenceSchema(many=True).dump(permitted_references)
 
 
+# if we pass in bpmn_process_identifiers of [a], a is "called" and we want to find which processes are *callers* of a
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
-    callers = ProcessCallerService.callers(bpmn_process_identifiers)
-    references = (
-        ReferenceCacheModel.basic_query()
-        .filter_by(type="process")
-        .filter(ReferenceCacheModel.identifier.in_(callers))  # type: ignore
-        .all()
-    )
+    references = ReferenceCacheService.get_reference_cache_entries_calling_process(bpmn_process_identifiers)
     return ReferenceSchema(many=True).dump(references)
+
+
+def _get_bpmn_process_with_data_object(
+    process_data_identifier: str,
+    bpmn_processes_by_id: dict[int, BpmnProcessModel],
+    bpmn_process_definitions_by_id: dict[int, BpmnProcessDefinitionModel],
+    current_bp: BpmnProcessModel,
+) -> Any:
+    current_bpd = bpmn_process_definitions_by_id[current_bp.bpmn_process_definition_id]
+    if "data_objects" in current_bpd.properties_json and process_data_identifier in current_bpd.properties_json["data_objects"]:
+        return current_bp
+    elif current_bp.direct_parent_process_id in bpmn_processes_by_id:
+        return _get_bpmn_process_with_data_object(
+            process_data_identifier,
+            bpmn_processes_by_id,
+            bpmn_process_definitions_by_id,
+            bpmn_processes_by_id[current_bp.direct_parent_process_id],
+        )
+    else:
+        return current_bp
+
+
+def _get_data_object_from_bpmn_process(
+    process_data_identifier: str,
+    bpmn_process: BpmnProcessModel,
+    bpmn_process_guid: str | None,
+    process_instance: ProcessInstanceModel,
+) -> Any:
+    bpmn_process_data = JsonDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
+    if bpmn_process_data is None:
+        raise ApiError(
+            error_code="bpmn_process_data_not_found",
+            message=f"Cannot find a bpmn process data with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
+            status_code=404,
+        )
+
+    data_objects = bpmn_process_data.get("data_objects", {})
+    return data_objects.get(process_data_identifier)
 
 
 def _process_data_fetcher(
@@ -140,62 +175,75 @@ def _process_data_fetcher(
     bpmn_process_guid: str | None = None,
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    if process_identifier and bpmn_process_guid is None:
-        raise ApiError(
-            error_code="missing_required_parameter",
-            message="process_identifier was given but bpmn_process_guid was not. Both must be provided if either is required.",
-            status_code=404,
-        )
-    if process_identifier is None and bpmn_process_guid:
-        raise ApiError(
-            error_code="missing_required_parameter",
-            message="bpmn_process_guid was given but process_identifier was not. Both must be provided if either is required.",
-            status_code=404,
-        )
-
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
+    if bpmn_process_guid is not None:
+        bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
+    else:
+        bpmn_process = process_instance.bpmn_process
+    if bpmn_process is None:
+        raise ApiError(
+            error_code="bpmn_process_not_found",
+            message=f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
+            status_code=404,
+        )
 
-    bpmn_process_instance = processor.bpmn_process_instance
-    bpmn_process_data = processor.get_data()
-    if process_identifier and bpmn_process_instance.spec.name != process_identifier:
-        bpmn_process_instance = processor.bpmn_process_instance.subprocesses.get(UUID(bpmn_process_guid))
-        if bpmn_process_instance is None:
-            raise ApiError(
-                error_code="bpmn_process_not_found",
-                message=f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance {process_instance.id}",
-                status_code=404,
+    data_object_value = _get_data_object_from_bpmn_process(
+        process_data_identifier=process_data_identifier,
+        bpmn_process=bpmn_process,
+        bpmn_process_guid=bpmn_process_guid,
+        process_instance=process_instance,
+    )
+
+    # if the data object value cannot be found with the given bpmn process then attempt to get it from the parent that defines it
+    if data_object_value is None:
+        all_bpmn_processes = None
+        if bpmn_process.top_level_process_id is not None:
+            all_bpmn_processes = BpmnProcessModel.query.filter(
+                or_(
+                    BpmnProcessModel.top_level_process_id == bpmn_process.top_level_process_id,
+                    BpmnProcessModel.id == bpmn_process.top_level_process_id,
+                )
+            ).all()
+            all_bpmn_def_ids = [bp.bpmn_process_definition_id for bp in all_bpmn_processes]
+            all_bpmn_process_definitions = BpmnProcessDefinitionModel.query.filter(
+                BpmnProcessDefinitionModel.id.in_(all_bpmn_def_ids)  # type: ignore
+            ).all()
+            bpmn_processes_by_id = {bp.id: bp for bp in all_bpmn_processes}
+            bpmn_process_definitions_by_id = {bpd.id: bpd for bpd in all_bpmn_process_definitions}
+            bp = _get_bpmn_process_with_data_object(
+                process_data_identifier, bpmn_processes_by_id, bpmn_process_definitions_by_id, bpmn_process
             )
-        bpmn_process_data = bpmn_process_instance.data
+            data_object_value = _get_data_object_from_bpmn_process(
+                process_data_identifier=process_data_identifier,
+                bpmn_process=bp,
+                bpmn_process_guid=bpmn_process_guid,
+                process_instance=process_instance,
+            )
 
-    data_objects = bpmn_process_instance.spec.data_objects
-    data_object = data_objects.get(process_data_identifier)
-
-    if data_object is None:
+    if data_object_value is None:
         raise ApiError(
             error_code="data_object_not_found",
             message=(
-                f"Cannot find a data object with identifier '{process_data_identifier}' for bpmn process '{process_identifier}'"
-                f" in process instance {process_instance.id}"
+                f"Cannot find a data object with identifier '{process_data_identifier}' for bpmn process"
+                f" '{bpmn_process.bpmn_process_definition.bpmn_identifier}' in process instance {process_instance.id}"
             ),
             status_code=404,
         )
 
-    if hasattr(data_object, "category") and data_object.category is not None:
-        if data_object.category != category:
+    if hasattr(data_object_value, "category") and data_object_value.category is not None:
+        if data_object_value.category != category:
             raise ApiError(
                 error_code="data_object_category_mismatch",
-                message=f"The desired data object has category '{data_object.category}' instead of the expected '{category}'",
+                message=f"The desired data object has category '{data_object_value.category}' "
+                "instead of the expected '{category}'",
                 status_code=400,
             )
-
-    process_data_value = bpmn_process_data.get("data_objects", bpmn_process_data).get(process_data_identifier)
 
     return make_response(
         jsonify(
             {
                 "process_data_identifier": process_data_identifier,
-                "process_data_value": process_data_value,
+                "process_data_value": data_object_value,
             }
         ),
         200,

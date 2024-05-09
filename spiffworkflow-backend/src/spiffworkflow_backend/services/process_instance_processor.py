@@ -688,10 +688,34 @@ class ProcessInstanceProcessor:
         json_data_hashes = set()
         states_to_exclude_from_rehydration: list[str] = []
         if not include_task_data_for_completed_tasks:
-            states_to_exclude_from_rehydration = ["COMPLETED", "CANCELLED", "ERROR"]
+            # load CANCELLED task data for Gateways since they are marked as CANCELLED
+            # and we need the task data from their parents
+            states_to_exclude_from_rehydration = ["COMPLETED", "ERROR"]
+
+        task_list_by_hash = {t.guid: t for t in tasks}
+        task_guids_to_add = set()
         for task in tasks:
+            parent_guid = task.parent_guid()
             if task.state not in states_to_exclude_from_rehydration:
                 json_data_hashes.add(task.json_data_hash)
+                task_guids_to_add.add(task.guid)
+
+                # load parent task data to avoid certain issues that can arise from parallel branches
+                if (
+                    parent_guid in task_list_by_hash
+                    and task_list_by_hash[parent_guid].state in states_to_exclude_from_rehydration
+                ):
+                    json_data_hashes.add(task_list_by_hash[parent_guid].json_data_hash)
+                    task_guids_to_add.add(parent_guid)
+            elif (
+                parent_guid in task_list_by_hash
+                and "instance_map" in (task_list_by_hash[parent_guid].runtime_info or {})
+                and task_list_by_hash[parent_guid] not in states_to_exclude_from_rehydration
+            ):
+                # make sure we add task data for multi-instance tasks as well
+                json_data_hashes.add(task.json_data_hash)
+                task_guids_to_add.add(task.guid)
+
         json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
         for json_data_record in json_data_records:
@@ -703,7 +727,7 @@ class ProcessInstanceProcessor:
                 tasks_dict = spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid]["tasks"]
             tasks_dict[task.guid] = task.properties_json
             task_data = {}
-            if task.state not in states_to_exclude_from_rehydration:
+            if task.guid in task_guids_to_add:
                 task_data = json_data_mappings[task.json_data_hash]
             tasks_dict[task.guid]["data"] = task_data
 

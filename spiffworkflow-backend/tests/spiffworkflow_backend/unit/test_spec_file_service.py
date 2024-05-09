@@ -9,6 +9,7 @@ from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -33,10 +34,9 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         load_test_spec(
             process_model_id=self.process_model_id,
-            bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
@@ -50,10 +50,9 @@ class TestSpecFileService(BaseTest):
         bpmn_process_identifier = "Level1"
         load_test_spec(
             process_model_id="call_activity_duplicate",
-            bpmn_file_name=self.bpmn_file_name,
-            process_model_source_directory="call_activity_duplicate",
+            process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         with pytest.raises(ProcessModelFileInvalidError) as exception:
@@ -88,11 +87,10 @@ class TestSpecFileService(BaseTest):
 
         load_test_spec(
             process_model_id=self.process_model_id,
-            bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
 
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
@@ -134,6 +132,7 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         """When a BPMN processes identifier is changed in a file, the old id is removed from the cache."""
         old_identifier = "ye_old_identifier"
+        new_identifier = "Level1"
         process_id_lookup = ReferenceCacheModel.from_params(
             identifier=old_identifier,
             display_name="WHO CARES",
@@ -147,15 +146,22 @@ class TestSpecFileService(BaseTest):
 
         load_test_spec(
             process_model_id=self.process_model_id,
-            bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
 
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
-        assert len(bpmn_process_id_lookups) == 1
-        assert bpmn_process_id_lookups[0].identifier != old_identifier
-        assert bpmn_process_id_lookups[0].identifier == "Level1"
-        assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
+        old_reference_count = ReferenceCacheModel.basic_query().filter_by(identifier=old_identifier).count()
+        assert old_reference_count == 0
+        current_references = (
+            ReferenceCacheModel.basic_query()
+            .filter_by(
+                relative_location=self.process_model_id,
+                file_name=self.bpmn_file_name,
+            )
+            .all()
+        )
+        assert len(current_references) == 1
+        assert current_references[0].identifier == new_identifier
+        assert current_references[0].relative_path() == self.call_activity_nested_relative_file_path
 
     def test_load_reference_information(
         self,
@@ -223,10 +229,9 @@ class TestSpecFileService(BaseTest):
 
         load_test_spec(
             process_model_id=self.process_model_id,
-            bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
@@ -238,10 +243,9 @@ class TestSpecFileService(BaseTest):
         # make sure it doesn't add a new entry to the cache
         load_test_spec(
             process_model_id=self.process_model_id,
-            bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].relative_path() == self.call_activity_nested_relative_file_path
@@ -261,10 +265,9 @@ class TestSpecFileService(BaseTest):
 
         load_test_spec(
             process_model_id=self.process_model_id,
-            bpmn_file_name=self.bpmn_file_name,
             process_model_source_directory="call_activity_nested",
         )
-        bpmn_process_id_lookups = ReferenceCacheModel.basic_query().all()
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].generation_id == current_cache_generation.id

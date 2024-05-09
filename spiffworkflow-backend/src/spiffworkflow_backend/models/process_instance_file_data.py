@@ -46,8 +46,8 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
 
     def get_contents_on_file_system(self) -> bytes:
         filepath = self.get_full_filepath()
-        with open(filepath) as f:
-            return f.read().encode()
+        with open(filepath, "rb") as f:
+            return f.read()
 
     def get_full_filepath(self) -> str:
         dir_parts = self.__class__.get_hashed_directory_structure(self.digest)

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -16,7 +16,7 @@ user_file_with_one_email_per_line="${1:-}"
 
 keycloak_realm="${2:-spiffworkflow}"
 if [[ -z "${1:-}" ]]; then
-  >&2 echo "usage: $(basename "$0") [user_file_with_one_email_per_line]"
+  echo >&2 "usage: $(basename "$0") [user_file_with_one_email_per_line]"
   exit 1
 fi
 
@@ -36,20 +36,21 @@ SECURE=false
 KEYCLOAK_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
 
 if [[ $SECURE = 'y' ]]; then
-	INSECURE=
+  INSECURE=
 else
-	INSECURE=--insecure
+  INSECURE=--insecure
 fi
 
 # https://www.appsdeveloperblog.com/keycloak-rest-api-create-a-new-user/
-result=$(curl --fail -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
-  --header 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode "username=${ADMIN_USERNAME}" \
-  --data-urlencode "password=${ADMIN_PASSWORD}" \
-  --data-urlencode 'grant_type=password' \
-  --data-urlencode 'client_id=admin-cli'
+result=$(
+  curl --fail -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
+    --header 'Content-Type: application/x-www-form-urlencoded' \
+    --data-urlencode "username=${ADMIN_USERNAME}" \
+    --data-urlencode "password=${ADMIN_PASSWORD}" \
+    --data-urlencode 'grant_type=password' \
+    --data-urlencode 'client_id=admin-cli'
 )
-backend_token=$(jq -r '.access_token' <<< "$result")
+backend_token=$(jq -r '.access_token' <<<"$result")
 
 function add_user() {
   local user_email=$1
@@ -77,16 +78,16 @@ first_line_processed="false"
 custom_attribute_one=''
 
 while read -r input_line; do
-  if ! grep -qE '^#' <<<"$input_line" ; then
+  if ! grep -qE '^#' <<<"$input_line"; then
     if [[ "$first_line_processed" == "false" ]]; then
       email_header=$(awk -F ',' '{print $1}' <<<"$input_line")
       pass_header=$(awk -F ',' '{print $2}' <<<"$input_line")
       if [[ "$email_header" != "email" ]]; then
-        >&2 echo "ERROR: the first column in the first row must be email."
+        echo >&2 "ERROR: the first column in the first row must be email."
         exit 1
       fi
       if [[ "$pass_header" != "pass" ]]; then
-        >&2 echo "ERROR: the first column in the first row must be pass."
+        echo >&2 "ERROR: the first column in the first row must be pass."
         exit 1
       fi
       custom_attribute_one=$(awk -F ',' '{print $3}' <<<"$input_line")
@@ -97,7 +98,7 @@ while read -r input_line; do
       username=$(awk -F '@' '{print $1}' <<<"$user_email")
 
       if [[ "$username" == "$ADMIN_USERNAME" || "$user_email" == "$ADMIN_USERNAME" ]]; then
-        >&2 echo "ERROR: The user used as the admin user matches a user in the current import list. This should not happen. Comment out that user from the list or use a different admin user: ${ADMIN_USERNAME}"
+        echo >&2 "ERROR: The user used as the admin user matches a user in the current import list. This should not happen. Comment out that user from the list or use a different admin user: ${ADMIN_USERNAME}"
         exit 1
       fi
 
@@ -113,7 +114,7 @@ while read -r input_line; do
 
         user_id=$(jq -r '.[0] | .id' <<<"$user_info")
         if [[ -z "$user_id" ]]; then
-          >&2 echo "ERROR: Could not find user_id for user: ${user_email}"
+          echo >&2 "ERROR: Could not find user_id for user: ${user_email}"
           exit 1
         fi
         curl --fail --location --silent --request DELETE "${KEYCLOAK_BASE_URL}/admin/realms/${keycloak_realm}/users/${user_id}" \
@@ -123,7 +124,7 @@ while read -r input_line; do
         http_code=$(add_user "$user_email" "$username" "$password" "$user_attribute_one")
       fi
       if [[ "$http_code" != "201" ]]; then
-        >&2 echo "ERROR: Failed to create user: ${user_email} with http_code: ${http_code}"
+        echo >&2 "ERROR: Failed to create user: ${user_email} with http_code: ${http_code}"
         exit 1
       fi
     fi

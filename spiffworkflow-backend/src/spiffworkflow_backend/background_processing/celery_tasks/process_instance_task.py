@@ -3,6 +3,9 @@ from celery import shared_task
 from flask import current_app
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_future_task_if_appropriate,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.models.db import db
@@ -71,6 +74,8 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
             f" {str(exception)}"
         )
+        # NOTE: consider exponential backoff
+        queue_future_task_if_appropriate(process_instance, eta_in_seconds=10, task_guid=task_guid)
         return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
     except Exception as exception:
         db.session.rollback()  # in case the above left the database with a bad transaction

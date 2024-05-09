@@ -1,9 +1,10 @@
 {
-    "admin": false,
-    "description": "",
-    "display_name": "Expected To Fail",
-    "display_order": 0,
-    "parent_groups": null,
-    "process_groups": [],
-    "process_models": []
+  "admin": false,
+  "garbage": true,
+  "description": "",
+  "display_name": "Expected To Fail",
+  "display_order": 0,
+  "parent_groups": null,
+  "process_groups": [],
+  "process_models": []
 }

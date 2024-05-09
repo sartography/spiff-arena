@@ -486,8 +486,8 @@ def task_with_instruction(process_instance_id: int) -> Response:
     return make_response(jsonify({"task": task}), 200)
 
 
-def _render_instructions(spiff_task: SpiffTask) -> str:
-    return JinjaService.render_instructions_for_end_user(spiff_task)
+def _render_instructions(spiff_task: SpiffTask, task_data: dict | None = None) -> str:
+    return JinjaService.render_instructions_for_end_user(spiff_task, task_data=task_data)
 
 
 def _interstitial_stream(
@@ -588,9 +588,18 @@ def _interstitial_stream(
 
     spiff_task = processor.next_task()
     if spiff_task is not None and spiff_task.id not in reported_ids:
+        task_data = spiff_task.data
+        if task_data is None or task_data == {}:
+            json_data = (
+                JsonDataModel.query.join(TaskModel, TaskModel.json_data_hash == JsonDataModel.hash)
+                .filter(TaskModel.guid == str(spiff_task.id))
+                .first()
+            )
+            if json_data is not None:
+                task_data = json_data.data
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         try:
-            instructions = _render_instructions(spiff_task)
+            instructions = _render_instructions(spiff_task, task_data=task_data)
         except Exception as e:
             api_error = ApiError(
                 error_code="engine_steps_error",

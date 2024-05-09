@@ -56,6 +56,11 @@ class ProcessGroup:
     def id_for_file_path(self) -> str:
         return self.id.replace("/", os.sep)
 
+    @classmethod
+    def get_valid_properties(cls) -> list[str]:
+        dict_keys = cls.__dataclass_fields__.keys()
+        return list(dict_keys)
+
 
 class ProcessGroupSchema(Schema):
     class Meta:
