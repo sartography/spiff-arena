@@ -16,14 +16,19 @@ class ExpectedLockNotFoundError(Exception):
 
 
 class ProcessInstanceLockService:
-    """TODO: comment."""
-
+    # when we lock process instances, we need to make sure we do not use the same locking identifier
+    # as anything else, or else we will use their lock and be unintentionally stomping on the same
+    # process instance as them. this happened with celery workers. we generated a guid on startup
+    # in backend, but this same guid was used by all concurrent celery workers. to mitigate this,
+    # and make sure they weren't trying to use each others locks, we found out about billiard.current_process(),
+    # which can give us a unique index for each worker even if they are running in the same python process.
+    # if we are not in celery, get_current_process_index will return None, and that is also fine, since
+    # if we are not in celery, there is no concern about multiple things happening at once in a process (other than.
+    # theading, which is accounted for by the thread_id).
     @classmethod
     def get_current_process_index(cls) -> Any:
         process = current_process()
-        index = None
-        if hasattr(process, "index"):
-            index = current_process().index
+        index = getattr(process, "index", None)
         return index
 
     @classmethod
