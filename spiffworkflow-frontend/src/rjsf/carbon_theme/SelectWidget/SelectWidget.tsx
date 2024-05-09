@@ -2,17 +2,53 @@ import { Select, SelectItem } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 import { getCommonAttributes } from '../../helpers';
 
-function processSelectValue(schema: any, value: any, options: any) {
-  if (schema.type === 'array' && schema.items && options?.enumOptions) {
-    return value.map((value: any) => {
-      const option = options.enumOptions.find(
-        (option: any) => option.value === value
-      );
-      return option ? option.value : value;
-    });
+// this processSelectValue code is pulled from rjsf/utils version 5.0.0-beta.20
+// the function was removed.
+var nums = /*#__PURE__*/ new Set(['number', 'integer']);
+/** Returns the real value for a select widget due to a silly limitation in the DOM which causes option change event
+ * values to always be retrieved as strings. Uses the `schema` to help determine the value's true type. If the value is
+ * an empty string, then the `emptyValue` from the `options` is returned, falling back to undefined.
+ *
+ * @param schema - The schema to used to determine the value's true type
+ * @param [value] - The value to convert
+ * @param [options] - The UIOptionsType from which to potentially extract the emptyValue
+ * @returns - The `value` converted to the proper type
+ */
+function processSelectValue(schema, value, options) {
+  var schemaEnum = schema['enum'],
+    type = schema.type,
+    items = schema.items;
+  if (value === '') {
+    return options && options.emptyValue !== undefined
+      ? options.emptyValue
+      : undefined;
   }
-  if (schema.type === 'boolean') {
+  if (type === 'array' && items && nums.has(get(items, 'type'))) {
+    return value.map(asNumber);
+  }
+  if (type === 'boolean') {
     return value === 'true';
+  }
+  if (nums.has(type)) {
+    return asNumber(value);
+  }
+  // If type is undefined, but an enum is present, try and infer the type from
+  // the enum values
+  if (Array.isArray(schemaEnum)) {
+    if (
+      schemaEnum.every(function (x) {
+        return nums.has(guessType(x));
+      })
+    ) {
+      return asNumber(value);
+    }
+    if (
+      schemaEnum.every(function (x) {
+        return guessType(x) === 'boolean';
+      })
+    ) {
+      return value === 'true';
+    }
   }
   return value;
 }
