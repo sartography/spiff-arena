@@ -4,6 +4,7 @@ import {
   ProcessGroup,
   RJSFFormObject,
   MessageDefinition,
+  CorrelationProperties,
 } from '../../interfaces';
 import {
   unModifyProcessIdentifierForPathParam,
@@ -44,6 +45,45 @@ export function MessageEditor({
     setDisplaySaveMessageMessage(true);
   };
 
+  const updateCorrelationPropertiesOnProcessGroup = (
+    currentMessagesForId: MessageDefinition,
+    formData: any
+  ) => {
+    const correlationProperties: CorrelationProperties = {
+      ...currentMessagesForId.correlation_properties,
+    };
+    (formData.correlation_properties || []).forEach((formProp: any) => {
+      if (!(formProp.id in correlationProperties)) {
+        correlationProperties[formProp.id] = {
+          retrieval_expressions: [],
+        };
+      }
+      if (
+        !correlationProperties[formProp.id].retrieval_expressions.includes(
+          formProp.retrievalExpression
+        )
+      ) {
+        correlationProperties[formProp.id].retrieval_expressions.push(
+          formProp.retrievalExpression
+        );
+      }
+    });
+
+    Object.keys(currentMessagesForId.correlation_properties).forEach(
+      (propId: string) => {
+        const foundProp = (formData.correlation_properties || []).find(
+          (formProp: any) => {
+            return propId === formProp.id;
+          }
+        );
+        if (!foundProp) {
+          delete correlationProperties[propId];
+        }
+      }
+    );
+    return correlationProperties;
+  };
+
   const updateProcessGroupWithMessages = (formObject: RJSFFormObject) => {
     const { formData } = formObject;
 
@@ -56,42 +96,18 @@ export function MessageEditor({
       processGroupForUpdate.messages = {};
     }
     const currentMessagesForId: MessageDefinition =
-      processGroupForUpdate.messages[messageId];
+      (processGroupForUpdate.messages || {})[messageId];
     const updatedMessagesForId = { ...currentMessagesForId };
 
-    (formData.correlation_properties || []).forEach((formProp: any) => {
-      if (!(formProp.id in updatedMessagesForId.correlation_properties)) {
-        updatedMessagesForId.correlation_properties[formProp.id] = {
-          retrieval_expressions: [],
-        };
-      }
-      if (
-        !updatedMessagesForId.correlation_properties[
-          formProp.id
-        ].retrieval_expressions.includes(formProp.retrievalExpression)
-      ) {
-        updatedMessagesForId.correlation_properties[
-          formProp.id
-        ].retrieval_expressions.push(formProp.retrievalExpression);
-      }
-    });
-
-    Object.keys(currentMessagesForId.correlation_properties).forEach(
-      (propId: string) => {
-        const foundProp = (formData.correlation_properties || []).find(
-          (formProp: any) => {
-            return propId === formProp.id;
-          }
-        );
-        if (!foundProp) {
-          delete updatedMessagesForId.correlation_properties[propId];
-        }
-      }
+    const correlationProperties = updateCorrelationPropertiesOnProcessGroup(
+      currentMessagesForId,
+      formData
     );
+
+    updatedMessagesForId.correlation_properties = correlationProperties;
+    updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
     processGroupForUpdate.messages[messageId] = updatedMessagesForId;
-
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
-
     HttpService.makeCallToBackend({
       path,
       successCallback: handleProcessGroupUpdateResponse,
@@ -172,12 +188,14 @@ export function MessageEditor({
       messageId,
       processGroup
     );
+    const jsonSchema = (processGroup.messages || {})[messageId]?.schema;
     const formData = {
       processGroupIdentifier: unModifyProcessIdentifierForPathParam(
         modifiedProcessGroupIdentifier
       ),
       messageId,
       correlation_properties: correlationProperties,
+      schema: JSON.stringify(jsonSchema, null, 2),
     };
 
     // Make a form

@@ -222,6 +222,7 @@ export interface CorrelationProperties {
 
 export interface MessageDefinition {
   correlation_properties: CorrelationProperties;
+  schema: any;
 }
 
 export interface Messages {

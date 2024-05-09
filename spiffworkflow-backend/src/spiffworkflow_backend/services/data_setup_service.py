@@ -83,12 +83,11 @@ class DataSetupService:
             elif FileSystemService.is_process_group_json_file(file):
                 try:
                     process_group = ProcessModelService.find_or_create_process_group(os.path.dirname(file))
+                    cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
+                    MessageDefinitionService.collect_message_models(process_group, process_group.id, all_message_models)
                 except Exception:
                     current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
                     continue
-
-                cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
-                MessageDefinitionService.collect_message_models(process_group, process_group.id, all_message_models)
 
         current_app.logger.debug("DataSetupService.save_all_process_models() end")
         ReferenceCacheService.add_new_generation(reference_objects)
