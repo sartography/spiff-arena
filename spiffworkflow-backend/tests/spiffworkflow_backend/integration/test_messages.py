@@ -143,7 +143,7 @@ class TestMessages(BaseTest):
                     },
                     "schema": {},
                 },
-                "end_of_day_reciepts": {
+                "end_of_day_receipts": {
                     "schema": {},
                 },
             },
