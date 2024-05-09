@@ -442,14 +442,12 @@ class WorkflowExecutionService:
         execution_strategy: ExecutionStrategy,
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
-        additional_processing_identifier: str | None = None,
     ):
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
         self.process_instance_saver = process_instance_saver
-        self.additional_processing_identifier = additional_processing_identifier
 
     # names of methods that do spiff stuff:
     # processor.do_engine_steps calls:
@@ -458,11 +456,7 @@ class WorkflowExecutionService:
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
-            with safe_assertion(
-                ProcessInstanceLockService.has_lock(
-                    self.process_instance_model.id, additional_processing_identifier=self.additional_processing_identifier
-                )
-            ) as tripped:
+            with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
                     raise AssertionError(
                         "The current thread has not obtained a lock for this process"
