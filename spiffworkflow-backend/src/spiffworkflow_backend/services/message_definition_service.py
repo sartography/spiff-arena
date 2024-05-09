@@ -10,13 +10,8 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 
 class MessageDefinitionService:
     @classmethod
-    def _message_model_from_message(cls, message: dict[str, Any], process_group: ProcessGroup) -> MessageModel | None:
-        identifier = message.get("id")
-        schema = message.get("schema", "{}")
-
-        if identifier is None:
-            current_app.logger.debug(f"Malformed message: '{message}' in @ '{process_group.id}'")
-            return None
+    def _message_model_from_message(cls, identifier: str, message_definition: dict[str, Any], process_group: ProcessGroup) -> MessageModel | None:
+        schema = message_definition.get("schema", "{}")
 
         return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
 
@@ -55,11 +50,11 @@ class MessageDefinitionService:
     def collect_message_models(
         cls, process_group: ProcessGroup, location: str, all_message_models: dict[tuple[str, str], MessageModel]
     ) -> None:
-        messages = process_group.messages or []
+        messages = process_group.messages or {}
         local_message_models = {}
 
-        for message in messages:
-            message_model = cls._message_model_from_message(message, process_group)
+        for message_identifier, message_definition in messages.items():
+            message_model = cls._message_model_from_message(message_identifier, message_definition, process_group)
             if message_model is None:
                 continue
             local_message_models[message_model.identifier] = message_model

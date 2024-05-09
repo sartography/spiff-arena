@@ -119,16 +119,45 @@ class TestMessages(BaseTest):
             "display_name": "Bob",
             "display_order": 40,
             "parent_groups": None,
-            "messages": [
+
+            "messages": {
+                "table_seated": {
+                    "correlation_properties": {
+                        "table_number": {
+                            "retrieval_expressions": ["table_number"],
+                        },
+                        "franchise_id": {
+                            "retrieval_expressions": ["franchise_id"],
+                        },
+                    },
+                    "schema": {},
+                },
+                "order_ready": {
+                    "correlation_properties": {
+                        "table_number": {
+                            "retrieval_expressions": ["table_number"],
+                        },
+                        "franchise_id": {
+                            "retrieval_expressions": ["franchise_id"],
+                        },
+                    },
+                    "schema": {},
+                },
+                "end_of_day_reciepts": {
+                    "schema": {},
+                },
+            },
+            
+            "messagesXX": [
                 {"id": "table_seated", "location": "bob", "schema": {}},
                 {"id": "order_ready", "location": "bob", "schema": {}},
                 {"id": "end_of_day_receipts", "location": "bob", "schema": {}},
             ],
-            "correlation_keys": [
+            "correlation_keysXX": [
                 {"id": "order", "correlation_properties": ["table_number", "franchise_id"]},
                 {"id": "franchise", "correlation_properties": ["franchise_id"]},
             ],
-            "correlation_properties": [
+            "correlation_propertiesXX": [
                 {
                     "id": "table_number",
                     "retrieval_expressions": [
