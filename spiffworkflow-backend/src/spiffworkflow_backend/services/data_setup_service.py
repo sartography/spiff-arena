@@ -93,6 +93,7 @@ class DataSetupService:
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
         MessageDefinitionService.delete_all_message_models()
+        db.session.commit()
         MessageDefinitionService.save_all_message_models(all_message_models)
         db.session.commit()
 

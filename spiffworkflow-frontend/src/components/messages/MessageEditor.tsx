@@ -96,7 +96,7 @@ export function MessageEditor({
       processGroupForUpdate.messages = {};
     }
     const currentMessagesForId: MessageDefinition =
-      (processGroupForUpdate.messages || {})[messageId];
+      (processGroupForUpdate.messages || {})[messageId] || {};
     const updatedMessagesForId = { ...currentMessagesForId };
 
     const correlationProperties = updateCorrelationPropertiesOnProcessGroup(
