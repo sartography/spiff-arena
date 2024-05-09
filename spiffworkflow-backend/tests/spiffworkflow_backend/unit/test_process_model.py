@@ -4,6 +4,7 @@ import re
 
 from flask.app import Flask
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
@@ -39,16 +40,10 @@ class TestProcessModel(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            "test_group/call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
-        )
-
         bpmn_file_names = [
+            "call_activity_level_3",
             "call_activity_level_2b",
             "call_activity_level_2",
-            "call_activity_level_3",
         ]
         for bpmn_file_name in bpmn_file_names:
             load_test_spec(
@@ -56,6 +51,11 @@ class TestProcessModel(BaseTest):
                 process_model_source_directory="call_activity_nested",
                 bpmn_file_name=bpmn_file_name,
             )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
@@ -66,16 +66,10 @@ class TestProcessModel(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            "test_group/call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
-        )
-
         bpmn_file_names = [
+            "call_activity_level_3",
             "call_activity_level_2b",
             "call_activity_level_2",
-            "call_activity_level_3",
         ]
         for bpmn_file_name in bpmn_file_names:
             load_test_spec(
@@ -83,10 +77,16 @@ class TestProcessModel(BaseTest):
                 process_model_source_directory="call_activity_nested",
                 bpmn_file_name=bpmn_file_name,
             )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
         process_instance = self.create_process_instance_from_process_model(process_model)
 
         # delete all of the id lookup items to force to processor to find the correct
         # process model when running the process
+        db.session.query(ProcessCallerRelationshipModel).delete()
         db.session.query(ReferenceCacheModel).delete()
         db.session.commit()
         processor = ProcessInstanceProcessor(process_instance)

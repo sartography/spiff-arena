@@ -16,16 +16,10 @@ class TestTaskService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            "test_group/call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
-        )
-
         bpmn_file_names = [
+            "call_activity_level_3",
             "call_activity_level_2b",
             "call_activity_level_2",
-            "call_activity_level_3",
         ]
         for bpmn_file_name in bpmn_file_names:
             load_test_spec(
@@ -33,6 +27,11 @@ class TestTaskService(BaseTest):
                 process_model_source_directory="call_activity_nested",
                 bpmn_file_name=bpmn_file_name,
             )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
@@ -63,16 +62,10 @@ class TestTaskService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            "test_group/call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
-        )
-
         bpmn_file_names = [
+            "call_activity_level_3",
             "call_activity_level_2b",
             "call_activity_level_2",
-            "call_activity_level_3",
         ]
         for bpmn_file_name in bpmn_file_names:
             load_test_spec(
@@ -80,6 +73,11 @@ class TestTaskService(BaseTest):
                 process_model_source_directory="call_activity_nested",
                 bpmn_file_name=bpmn_file_name,
             )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
@@ -118,16 +116,10 @@ class TestTaskService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model = load_test_spec(
-            "test_group/call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
-        )
-
         bpmn_file_names = [
+            "call_activity_level_3",
             "call_activity_level_2b",
             "call_activity_level_2",
-            "call_activity_level_3",
         ]
         for bpmn_file_name in bpmn_file_names:
             load_test_spec(
@@ -135,6 +127,11 @@ class TestTaskService(BaseTest):
                 process_model_source_directory="call_activity_nested",
                 bpmn_file_name=bpmn_file_name,
             )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
