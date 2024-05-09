@@ -92,8 +92,12 @@ export default function Dashboards() {
   };
 
   const handleRowSelect = (data: Record<string, any>) => {
-    setPanelData(data);
-    setInfoPanelIsOpen(true);
+    if (data !== panelData) {
+      setPanelData(data);
+      setInfoPanelIsOpen(true);
+    } else {
+      setInfoPanelIsOpen(!infoPanelOpen);
+    }
   };
 
   const handleInfoWindowClose = () => {
