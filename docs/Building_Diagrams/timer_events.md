@@ -115,8 +115,7 @@ Just remember to have a mechanism in place to eventually break out of the loop a
 
 
 ```{admonition} Timer Delay
-💡 Please note that timer events, particularly those set for brief durations, might experience slight delays. These delays typically range from 20-30 seconds and may vary depending on the number of active instances. While we have already made significant improvements, we continue to minimize these delays as part of our ongoing commitment to system optimization.
-```
+💡 Note: Timer events, especially those set for short durations, may face delays of 20-30 seconds, varying with the number of active instances. Despite significant improvements, our ongoing efforts aim to further reduce these delays.
 
 
 
