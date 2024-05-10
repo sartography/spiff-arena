@@ -44,7 +44,7 @@ export default function InfoPanel({
               position: 'absolute',
               top: 0,
               left: 0,
-              zIndex: 9999,
+              zIndex: 1500, // MUI top level
               width: '100%',
             }}
           >

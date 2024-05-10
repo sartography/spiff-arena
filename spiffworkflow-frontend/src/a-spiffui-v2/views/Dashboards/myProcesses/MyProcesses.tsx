@@ -87,6 +87,7 @@ export default function MyProcesses({
           position: 'relative',
           overflowY: 'auto',
           height: 'calc(100vh - 420px)',
+          zIndex: 0,
         }}
       >
         <DataGrid
