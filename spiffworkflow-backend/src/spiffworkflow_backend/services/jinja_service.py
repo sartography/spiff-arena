@@ -108,6 +108,8 @@ class JinjaService:
         cls, spiff_tasks: list[SpiffTask], process_instance_id: int, tasks_that_have_been_seen: set[str]
     ) -> None:
         for spiff_task in spiff_tasks:
+            if spiff_task.task_spec.manual:
+                continue
             if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
                 "instructionsForEndUser", None
             ):
