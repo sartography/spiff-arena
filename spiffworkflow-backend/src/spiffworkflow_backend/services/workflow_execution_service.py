@@ -33,7 +33,6 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -344,21 +343,7 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         tasks = bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
-        for spiff_task in tasks:
-            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
-                "instructionsForEndUser", None
-            ):
-                task_guid = str(spiff_task.id)
-                if task_guid in self.tasks_that_have_been_seen:
-                    continue
-                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
-                if instruction != "":
-                    TaskInstructionsForEndUserModel.insert_or_update_record(
-                        task_guid=str(spiff_task.id),
-                        process_instance_id=process_instance_model.id,
-                        instruction=instruction,
-                    )
-                    self.tasks_that_have_been_seen.add(str(spiff_task.id))
+        JinjaService.add_instruction_for_end_user_if_appropriate(tasks, process_instance_model.id, self.tasks_that_have_been_seen)
 
     def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
         for spiff_task in tasks:
@@ -442,14 +427,12 @@ class WorkflowExecutionService:
         execution_strategy: ExecutionStrategy,
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
-        additional_processing_identifier: str | None = None,
     ):
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
         self.process_instance_saver = process_instance_saver
-        self.additional_processing_identifier = additional_processing_identifier
 
     # names of methods that do spiff stuff:
     # processor.do_engine_steps calls:
@@ -458,11 +441,7 @@ class WorkflowExecutionService:
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
-            with safe_assertion(
-                ProcessInstanceLockService.has_lock(
-                    self.process_instance_model.id, additional_processing_identifier=self.additional_processing_identifier
-                )
-            ) as tripped:
+            with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
                     raise AssertionError(
                         "The current thread has not obtained a lock for this process"

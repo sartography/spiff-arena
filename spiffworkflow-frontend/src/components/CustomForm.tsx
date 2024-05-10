@@ -74,7 +74,7 @@ export default function CustomForm({
   }
 
   const rjsfTemplates: any = {};
-  if (restrictedWidth) {
+  if (restrictedWidth && reactJsonSchemaFormTheme === 'carbon') {
     rjsfTemplates.ObjectFieldTemplate = ObjectFieldRestrictedGridTemplate;
   }
 
