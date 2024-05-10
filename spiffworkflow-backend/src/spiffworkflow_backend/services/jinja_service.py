@@ -8,6 +8,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -101,3 +102,23 @@ class JinjaService:
                 tb = tb.tb_next
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from error
+
+    @classmethod
+    def add_instruction_for_end_user_if_appropriate(
+        cls, spiff_tasks: list[SpiffTask], process_instance_id: int, tasks_that_have_been_seen: set[str]
+    ) -> None:
+        for spiff_task in spiff_tasks:
+            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
+                "instructionsForEndUser", None
+            ):
+                task_guid = str(spiff_task.id)
+                if task_guid in tasks_that_have_been_seen:
+                    continue
+                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
+                if instruction != "":
+                    TaskInstructionsForEndUserModel.insert_or_update_record(
+                        task_guid=str(spiff_task.id),
+                        process_instance_id=process_instance_id,
+                        instruction=instruction,
+                    )
+                    tasks_that_have_been_seen.add(str(spiff_task.id))

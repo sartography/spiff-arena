@@ -44,6 +44,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -478,16 +479,19 @@ class ProcessInstanceService:
         processor.complete_task(spiff_task, human_task, user=user)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
-        if not should_queue_process_instance(processor.process_instance_model, execution_mode):
-            if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
-                with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-                    execution_strategy_name = None
-                    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                        execution_strategy_name = "greedy"
+        if should_queue_process_instance(processor.process_instance_model, execution_mode):
+            processor.bpmn_process_instance.refresh_waiting_tasks()
+            tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
+            JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
+        elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                execution_strategy_name = None
+                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                    execution_strategy_name = "greedy"
 
-                    # maybe move this out once we have the interstitial page since this is
-                    # here just so we can get the next human task
-                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                # maybe move this out once we have the interstitial page since this is
+                # here just so we can get the next human task
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(

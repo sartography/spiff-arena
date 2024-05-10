@@ -33,7 +33,6 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -344,21 +343,7 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         tasks = bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
-        for spiff_task in tasks:
-            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
-                "instructionsForEndUser", None
-            ):
-                task_guid = str(spiff_task.id)
-                if task_guid in self.tasks_that_have_been_seen:
-                    continue
-                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
-                if instruction != "":
-                    TaskInstructionsForEndUserModel.insert_or_update_record(
-                        task_guid=str(spiff_task.id),
-                        process_instance_id=process_instance_model.id,
-                        instruction=instruction,
-                    )
-                    self.tasks_that_have_been_seen.add(str(spiff_task.id))
+        JinjaService.add_instruction_for_end_user_if_appropriate(tasks, process_instance_model.id, self.tasks_that_have_been_seen)
 
     def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
         for spiff_task in tasks:
