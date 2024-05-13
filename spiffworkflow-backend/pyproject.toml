@@ -244,3 +244,9 @@ line-length = 130
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.safety]
+# you can generate a config file for safety, but this doesn't work with safety check.
+# it complains about the config file being in too new a format.
+# you have to use safety scan, which requires a login.
+# so in the meantime, we're ignoring an unfixable issue in ./bin/run_ci_session itself
