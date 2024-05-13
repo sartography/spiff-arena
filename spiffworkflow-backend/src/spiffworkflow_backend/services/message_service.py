@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 from flask import g
@@ -91,8 +90,6 @@ class MessageService:
                 return None
 
             try:
-                # currently only controllers and apscheduler call this
-                cls.raise_if_running_in_celery("correlate_send_message")
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance):
                     # Set the receiving message to running, so it is not altered elswhere ...
                     message_instance_receive.status = "running"
@@ -144,7 +141,6 @@ class MessageService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
-        cls.raise_if_running_in_celery("start_process_with_message")
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
             user,
@@ -309,11 +305,3 @@ class MessageService:
                 )
             )
         return receiving_process_instance
-
-    @classmethod
-    def raise_if_running_in_celery(cls, method_name: str) -> None:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true":
-            raise MessageServiceError(
-                f"Calling {method_name} in a celery worker. This is not supported! We may need to add"
-                " additional_processing_identifier to this code path."
-            )

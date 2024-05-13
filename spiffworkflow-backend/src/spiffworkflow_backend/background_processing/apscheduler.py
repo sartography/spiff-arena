@@ -84,7 +84,6 @@ def _add_jobs_that_should_run_regardless_of_celery_config(app: flask.app.Flask, 
     ]
 
     # TODO: see if we can queue with celery instead on celery based configuration
-    # NOTE: pass in additional_processing_identifier if we move to celery
     scheduler.add_job(
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",

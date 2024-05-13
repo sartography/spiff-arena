@@ -419,14 +419,12 @@ class ProcessInstanceProcessor:
         script_engine: PythonScriptEngine | None = None,
         workflow_completed_handler: WorkflowCompletedHandler | None = None,
         process_id_to_run: str | None = None,
-        additional_processing_identifier: str | None = None,
         include_task_data_for_completed_tasks: bool = False,
         include_completed_subprocesses: bool = False,
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine
         self._workflow_completed_handler = workflow_completed_handler
-        self.additional_processing_identifier = additional_processing_identifier
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model,
             process_id_to_run=process_id_to_run,
@@ -693,19 +691,28 @@ class ProcessInstanceProcessor:
             states_to_exclude_from_rehydration = ["COMPLETED", "ERROR"]
 
         task_list_by_hash = {t.guid: t for t in tasks}
-        parent_task_guids = []
+        task_guids_to_add = set()
         for task in tasks:
+            parent_guid = task.parent_guid()
             if task.state not in states_to_exclude_from_rehydration:
                 json_data_hashes.add(task.json_data_hash)
+                task_guids_to_add.add(task.guid)
 
                 # load parent task data to avoid certain issues that can arise from parallel branches
-                parent_guid = task.parent_guid()
                 if (
                     parent_guid in task_list_by_hash
                     and task_list_by_hash[parent_guid].state in states_to_exclude_from_rehydration
                 ):
                     json_data_hashes.add(task_list_by_hash[parent_guid].json_data_hash)
-                    parent_task_guids.append(parent_guid)
+                    task_guids_to_add.add(parent_guid)
+            elif (
+                parent_guid in task_list_by_hash
+                and "instance_map" in (task_list_by_hash[parent_guid].runtime_info or {})
+                and task_list_by_hash[parent_guid] not in states_to_exclude_from_rehydration
+            ):
+                # make sure we add task data for multi-instance tasks as well
+                json_data_hashes.add(task.json_data_hash)
+                task_guids_to_add.add(task.guid)
 
         json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
@@ -718,7 +725,7 @@ class ProcessInstanceProcessor:
                 tasks_dict = spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid]["tasks"]
             tasks_dict[task.guid] = task.properties_json
             task_data = {}
-            if task.state not in states_to_exclude_from_rehydration or task.guid in parent_task_guids:
+            if task.guid in task_guids_to_add:
                 task_data = json_data_mappings[task.json_data_hash]
             tasks_dict[task.guid]["data"] = task_data
 
@@ -1410,9 +1417,7 @@ class ProcessInstanceProcessor:
         execution_strategy: ExecutionStrategy | None = None,
     ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
-            with ProcessInstanceQueueService.dequeued(
-                self.process_instance_model, additional_processing_identifier=self.additional_processing_identifier
-            ):
+            with ProcessInstanceQueueService.dequeued(self.process_instance_model):
                 # TODO: ideally we just lock in the execution service, but not sure
                 # about _add_bpmn_process_definitions and if that needs to happen in
                 # the same lock like it does on main
@@ -1459,7 +1464,6 @@ class ProcessInstanceProcessor:
             execution_strategy,
             self._script_engine.environment.finalize_result,
             self.save,
-            additional_processing_identifier=self.additional_processing_identifier,
         )
         task_runnability = execution_service.run_and_save(exit_at, save)
         self.check_all_tasks()

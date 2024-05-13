@@ -59,8 +59,22 @@ export default function CustomForm({
     'numeric-range': NumericRangeField,
   };
 
+  let reactJsonSchemaFormTheme = reactJsonSchemaForm;
+  if ('ui:theme' in uiSchema) {
+    if (uiSchema['ui:theme'] === 'carbon') {
+      reactJsonSchemaFormTheme = 'carbon';
+    } else if (uiSchema['ui:theme'] === 'mui') {
+      reactJsonSchemaFormTheme = 'mui';
+    } else {
+      console.error(
+        `Unsupported theme: ${uiSchema['ui:theme']}. Defaulting to mui`
+      );
+      reactJsonSchemaFormTheme = 'mui';
+    }
+  }
+
   const rjsfTemplates: any = {};
-  if (restrictedWidth) {
+  if (restrictedWidth && reactJsonSchemaFormTheme === 'carbon') {
     rjsfTemplates.ObjectFieldTemplate = ObjectFieldRestrictedGridTemplate;
   }
 
@@ -256,6 +270,7 @@ export default function CustomForm({
     errors: any,
     jsonSchema: any,
     _uiSchemaPassedIn?: any
+    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     if (
       jsonSchema.required &&
@@ -265,43 +280,51 @@ export default function CustomForm({
     ) {
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
-    if (
-      !formDataToCheck[propertyKey].min?.toString().match(matchNumberRegex) ||
-      !formDataToCheck[propertyKey].max?.toString().match(matchNumberRegex)
-    ) {
-      errors[propertyKey].addError('must have valid numbers');
+    if (formDataToCheck[propertyKey].min) {
+      if (
+        !formDataToCheck[propertyKey].min.toString().match(matchNumberRegex)
+      ) {
+        errors[propertyKey].addError('must have valid numbers');
+      }
+      if (
+        formDataToCheck[propertyKey].min <
+        jsonSchema.properties[propertyKey].minimum
+      ) {
+        errors[propertyKey].addError(
+          `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+        );
+      }
+      if (
+        formDataToCheck[propertyKey].min >
+        jsonSchema.properties[propertyKey].maximum
+      ) {
+        errors[propertyKey].addError(
+          `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+        );
+      }
     }
-    if (
-      formDataToCheck[propertyKey].min <
-      jsonSchema.properties[propertyKey].minimum
-    ) {
-      errors[propertyKey].addError(
-        `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
-      );
-    }
-    if (
-      formDataToCheck[propertyKey].min >
-      jsonSchema.properties[propertyKey].maximum
-    ) {
-      errors[propertyKey].addError(
-        `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
-      );
-    }
-    if (
-      formDataToCheck[propertyKey].max <
-      jsonSchema.properties[propertyKey].minimum
-    ) {
-      errors[propertyKey].addError(
-        `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
-      );
-    }
-    if (
-      formDataToCheck[propertyKey].max >
-      jsonSchema.properties[propertyKey].maximum
-    ) {
-      errors[propertyKey].addError(
-        `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
-      );
+    if (formDataToCheck[propertyKey].max) {
+      if (
+        !formDataToCheck[propertyKey].max.toString().match(matchNumberRegex)
+      ) {
+        errors[propertyKey].addError('must have valid numbers');
+      }
+      if (
+        formDataToCheck[propertyKey].max <
+        jsonSchema.properties[propertyKey].minimum
+      ) {
+        errors[propertyKey].addError(
+          `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+        );
+      }
+      if (
+        formDataToCheck[propertyKey].max >
+        jsonSchema.properties[propertyKey].maximum
+      ) {
+        errors[propertyKey].addError(
+          `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+        );
+      }
     }
     if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
       errors[propertyKey].addError(`must have min less than or equal to max`);
@@ -466,16 +489,16 @@ export default function CustomForm({
     templates: rjsfTemplates,
     omitExtraData: true,
   };
-  if (reactJsonSchemaForm === 'carbon') {
+  if (reactJsonSchemaFormTheme === 'carbon') {
     // eslint-disable-next-line react/jsx-props-no-spreading
     return <CarbonForm {...formProps}>{childrenToUse}</CarbonForm>;
   }
 
-  if (reactJsonSchemaForm === 'mui') {
+  if (reactJsonSchemaFormTheme === 'mui') {
     // eslint-disable-next-line react/jsx-props-no-spreading
     return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
   }
 
-  console.error(`Unsupported form type: ${reactJsonSchemaForm}`);
+  console.error(`Unsupported form type: ${reactJsonSchemaFormTheme}`);
   return null;
 }

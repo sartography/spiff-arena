@@ -10,10 +10,10 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 esbonio==0.16.4
-furo==2024.1.29
+furo==2024.4.27
 idna==3.7
 imagesize==1.4.1
-Jinja2==3.1.3
+Jinja2==3.1.4
 lazy-object-proxy==1.10.0
 livereload==2.6.3
 lsprotocol==2023.0.1
@@ -33,12 +33,12 @@ snowballstemmer==2.2.0
 soupsieve==2.5
 Sphinx==7.3.7
 sphinx-autoapi==3.0.0
-sphinx-autobuild==2024.2.4
+sphinx-autobuild==2024.4.16
 sphinx-basic-ng==1.0.0b2
 sphinx-click==5.1.0
 sphinx-rtd-theme==2.0.0
 sphinxcontrib-applehelp==1.0.8
-sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-devhelp==1.0.6
 sphinxcontrib-htmlhelp==2.0.1
 sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1

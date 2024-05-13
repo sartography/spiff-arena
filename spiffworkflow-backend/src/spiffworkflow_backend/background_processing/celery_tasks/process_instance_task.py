@@ -3,6 +3,9 @@ from celery import shared_task
 from flask import current_app
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_future_task_if_appropriate,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.models.db import db
@@ -26,7 +29,7 @@ class SpiffCeleryWorkerError(Exception):
 @shared_task(ignore_result=False, time_limit=ten_minutes)
 def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
     proc_index = current_process().index
-    ProcessInstanceLockService.set_thread_local_locking_context("celery:worker", additional_processing_identifier=proc_index)
+    ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
     if task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
@@ -38,14 +41,13 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
         }
     try:
         task_guid_for_requeueing = task_guid
-        with ProcessInstanceQueueService.dequeued(process_instance, additional_processing_identifier=proc_index):
+        with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceService.run_process_instance_with_processor(
-                process_instance, execution_strategy_name="run_current_ready_tasks", additional_processing_identifier=proc_index
+                process_instance, execution_strategy_name="run_current_ready_tasks"
             )
             _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
-                additional_processing_identifier=proc_index,
             )
             # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
             # there is an assumption that it was successfully processed by run_process_instance_with_processor above.
@@ -71,6 +73,8 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
             f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
             f" {str(exception)}"
         )
+        # NOTE: consider exponential backoff
+        queue_future_task_if_appropriate(process_instance, eta_in_seconds=10, task_guid=task_guid)
         return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
     except Exception as exception:
         db.session.rollback()  # in case the above left the database with a bad transaction

@@ -1,7 +1,9 @@
 from sqlalchemy import insert
+from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
@@ -32,16 +34,12 @@ class ReferenceCacheService:
 
     @classmethod
     def upsearch(cls, location: str, identifier: str, type: str) -> str | None:
-        # really want to be able to join to this table on max(id)
-        cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
-        if cache_generation is None:
-            return None
         locations = UpsearchService.upsearch_locations(location)
         references = (
-            ReferenceCacheModel.query.filter_by(
+            ReferenceCacheModel.basic_query()
+            .filter_by(
                 identifier=identifier,
                 type=type,
-                generation=cache_generation,
             )
             .filter(ReferenceCacheModel.relative_location.in_(locations))  # type: ignore
             .order_by(ReferenceCacheModel.relative_location.desc())  # type: ignore
@@ -53,3 +51,20 @@ class ReferenceCacheService:
             return reference.relative_location  # type: ignore
 
         return None
+
+    @classmethod
+    def get_reference_cache_entries_calling_process(cls, bpmn_process_identifiers: list[str]) -> list[ReferenceCacheModel]:
+        called_reference_alias = aliased(ReferenceCacheModel)
+        references: list[ReferenceCacheModel] = (
+            ReferenceCacheModel.basic_query()
+            .join(
+                ProcessCallerRelationshipModel,
+                ProcessCallerRelationshipModel.calling_reference_cache_process_id == ReferenceCacheModel.id,
+            )
+            .join(
+                called_reference_alias,
+                called_reference_alias.id == ProcessCallerRelationshipModel.called_reference_cache_process_id,
+            )
+            .filter(called_reference_alias.identifier.in_(bpmn_process_identifiers))
+        ).all()
+        return references
