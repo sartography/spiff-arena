@@ -30,6 +30,7 @@ export default function MyProcesses({
     const filtered =
       filter && processInstanceCollection.results
         ? processInstanceCollection.results.filter((instance: any) => {
+            console.log(processInstanceCollection.results);
             const searchFields = [
               'process_model_display_name',
               'last_milestone_bpmn_name',
