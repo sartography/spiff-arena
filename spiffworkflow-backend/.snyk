@@ -5,7 +5,7 @@ ignore:
   # in case snyk wants werkzeug v3, in the future:
   # we cannot upgrade werkzeug because it breaks connexion
   # and we can't upgrade connexion because it downgrades werkzeug.
-  # this means we cannot satisfy the snyk requiement to upgrade werkzeug to v3.
+  # this means we cannot satisfy the snyk requirement to upgrade werkzeug to v3.
   # we have a ticket to workaround it:
   #   https://github.com/sartography/spiff-arena/issues/592
   # SNYK-PYTHON-CRYPTOGRAPHY-6050294:
@@ -28,6 +28,11 @@ ignore:
         reason: no fix available
         expires: 2024-11-01T00:00:00.000Z
         created: 2024-05-02T17:22:47.098Z
+  SNYK-PYTHON-WERKZEUG-6808933:
+    - '*':
+        reason: unable to upgrade. see above comment.
+        expires: 2024-11-01T00:00:00.000Z
+        created: 2024-05-13T17:22:47.098Z
 
 patch: {}
 
