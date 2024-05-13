@@ -123,12 +123,17 @@ def token() -> Response | dict:
     host_url = _host_url_without_root_path()
     private_key = OpenIdConfigsForDevOnly.private_key
 
+    # this is just for testing. there is no need to expire tokens rapidly.
+    one_hour = 3600
+    one_day = one_hour * 24
+    two_days = one_day * 2
+
     id_token = jwt.encode(
         {
             "iss": f"{host_url}{url_for('openid.index')}",
             "aud": client_id,
             "iat": math.floor(time.time()),
-            "exp": round(time.time()) + 3600,
+            "exp": round(time.time()) + two_days,
             "sub": user_name,
             "email": user_details["email"],
             "preferred_username": user_details.get("preferred_username", user_name),
