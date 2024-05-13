@@ -1,6 +1,11 @@
 server {
-   listen {{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}};
+    listen {{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}};
     server_name localhost;
+
+    # The default is 4 8k, which isn't quite enough for all openid tokens
+    # docs: https://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+    # repro: curl -s "http://localhost:8001/?token=$(perl -e 'print "a"x8200')"
+    large_client_header_buffers 4 16k;
 
     location / {
         root /usr/share/nginx/html;
