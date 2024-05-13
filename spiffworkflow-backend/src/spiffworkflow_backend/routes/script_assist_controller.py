@@ -2,7 +2,7 @@ from flask import current_app
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from openai import OpenAI
+import requests
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 
@@ -40,22 +40,19 @@ def process_message(body: dict) -> Response:
 
     # Build query, set up OpenAI client, and get response
     query = no_nonsense_prepend + str(body["query"]) + no_nonsense_append
-    client = OpenAI(api_key=openai_api_key)
+    headers = {'Authorization': f'Bearer {openai_api_key}'}
+    payload = {
+        'model': 'gpt-3.5-turbo',
+        'messages': [{'role': 'user', 'content': query}],
+        'temperature': 1,
+        'max_tokens': 256,
+        'top_p': 1,
+        'frequency_penalty': 0,
+        'presence_penalty': 0
+    }
+    response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=payload)
+    response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
+    completion = response.json()['choices'][0]['message']['content']
 
-    # TODO: Might be good to move Model and maybe other parameters to config
-    completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": query,
-            }
-        ],
-        model="gpt-3.5-turbo",
-        temperature=1,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-    )
-
+    return make_response(jsonify({"result": completion}), 200)
     return make_response(jsonify({"result": completion.choices[0].message.content}), 200)
