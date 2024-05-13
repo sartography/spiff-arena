@@ -71,7 +71,7 @@ export function MessageEditor({
       }
     });
 
-    Object.keys(currentMessagesForId.correlation_properties).forEach(
+    Object.keys(currentMessagesForId.correlation_properties || []).forEach(
       (propId: string) => {
         const foundProp = (formData.correlation_properties || []).find(
           (formProp: any) => {
@@ -190,7 +190,7 @@ export function MessageEditor({
     ],
   };
 
-  if (processGroup && currentMessageId) {
+  if (processGroup) {
     const correlationProperties = convertCorrelationPropertiesToRJSF(
       currentMessageId,
       processGroup
