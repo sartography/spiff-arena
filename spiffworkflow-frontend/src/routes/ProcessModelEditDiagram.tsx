@@ -1072,6 +1072,10 @@ export default function ProcessModelEditDiagram() {
   };
 
   const messageEditor = () => {
+    // do not render this component until we actually want to display it
+    if (!showMessageEditor) {
+      return null;
+    }
     return (
       <Modal
         open={showMessageEditor}

@@ -28,10 +28,12 @@ export function MessageEditor({
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
     useState<boolean>(false);
+  const [currentMessageId, setCurrentMessageId] = useState<string>();
 
   useEffect(() => {
     const processResult = (result: ProcessGroup) => {
       setProcessGroup(result);
+      setCurrentMessageId(messageId);
       setPageTitle([result.display_name]);
     };
     HttpService.makeCallToBackend({
@@ -91,12 +93,16 @@ export function MessageEditor({
       return;
     }
 
+    // keep track of new and old message ids so we can handle renaming a message
+    const newMessageId = formData.messageId;
+    const oldMessageId = currentMessageId || newMessageId;
+
     const processGroupForUpdate = { ...processGroup };
     if (!processGroupForUpdate.messages) {
       processGroupForUpdate.messages = {};
     }
     const currentMessagesForId: MessageDefinition =
-      (processGroupForUpdate.messages || {})[messageId] || {};
+      (processGroupForUpdate.messages || {})[oldMessageId] || {};
     const updatedMessagesForId = { ...currentMessagesForId };
 
     const correlationProperties = updateCorrelationPropertiesOnProcessGroup(
@@ -106,7 +112,8 @@ export function MessageEditor({
 
     updatedMessagesForId.correlation_properties = correlationProperties;
     updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
-    processGroupForUpdate.messages[messageId] = updatedMessagesForId;
+    processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
+    setCurrentMessageId(newMessageId);
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
     HttpService.makeCallToBackend({
       path,
@@ -183,17 +190,17 @@ export function MessageEditor({
     ],
   };
 
-  if (processGroup) {
+  if (processGroup && currentMessageId) {
     const correlationProperties = convertCorrelationPropertiesToRJSF(
-      messageId,
+      currentMessageId,
       processGroup
     );
-    const jsonSchema = (processGroup.messages || {})[messageId]?.schema;
+    const jsonSchema = (processGroup.messages || {})[currentMessageId]?.schema;
     const formData = {
       processGroupIdentifier: unModifyProcessIdentifierForPathParam(
         modifiedProcessGroupIdentifier
       ),
-      messageId,
+      messageId: currentMessageId,
       correlation_properties: correlationProperties,
       schema: JSON.stringify(jsonSchema, null, 2),
     };
@@ -212,7 +219,7 @@ export function MessageEditor({
           </Notification>
         ) : null}
         <CustomForm
-          id={messageId}
+          id={currentMessageId}
           schema={schema}
           uiSchema={uischema}
           formData={formData}
