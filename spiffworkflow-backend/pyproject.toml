@@ -26,7 +26,7 @@ flask-mail = "*"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "enhancement/allow-worfklow-targets-from-external-events"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"

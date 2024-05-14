@@ -2988,7 +2988,7 @@ files = [
 
 [[package]]
 name = "SpiffWorkflow"
-version = "3.0.0rc2"
+version = "3.0.0"
 description = "A workflow framework and BPMN/DMN Processor"
 optional = false
 python-versions = ">=3.8"
@@ -3005,8 +3005,8 @@ doc = ["sphinx", "sphinx_rtd_theme"]
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "enhancement/allow-worfklow-targets-from-external-events"
-resolved_reference = "9d18aeafa55938c945ff9c88b898782500dc52cf"
+reference = "main"
+resolved_reference = "6d18cb8d282b3eaf0a6d10abadf534c663eb45a4"
 
 [[package]]
 name = "spiffworkflow-connector-command"
@@ -3532,4 +3532,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "82adab2693774eb21d894fbb7eceeb7a3a956cc31eea01d064ce574935d45d2e"
+content-hash = "e9b302855b0c6a7745e69132c1be886a5d1f76e8bbf4dc32efc4a4b4603e331f"
