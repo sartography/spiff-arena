@@ -1,24 +1,27 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Divider,
-  Paper,
   Stack,
   Typography,
-  useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { grey } from '@mui/material/colors';
+import { GridExpandMoreIcon } from '@mui/x-data-grid';
 import useTaskCollection from '../../../hooks/useTaskCollection';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
+import useCompletedTasks from '../../../hooks/useCompletedTasks';
+import useSpiffTheme from '../../../hooks/useSpiffTheme';
+import TaskItem from './TaskItem';
 import GreenCircleCheck from '../../../assets/icons/green-circle-check.svg';
 import WarningEye from '../../../assets/icons/warning-eye.svg';
-import useCompletedTasks from '../../../hooks/useCompletedTasks';
 
 export default function ProcessInfo({ data }: { data: Record<string, any> }) {
   const { taskCollection } = useTaskCollection({ processInfo: data });
   const { completedTasks } = useCompletedTasks({ processInfo: data });
   const [filteredTasks, setFilteredTasks] = useState<Record<string, any>[]>([]);
-  const isDark = useTheme().palette.mode === 'dark';
+  const { isDark } = useSpiffTheme();
 
   useEffect(() => {
     if ('results' in taskCollection) {
@@ -70,7 +73,6 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
         </Stack>
       </Stack>
       <Divider variant="fullWidth" sx={{ backgroundColor: 'grey' }} />
-      <Typography variant="h6">Tasks</Typography>
       <Stack
         sx={{
           gap: 2,
@@ -78,89 +80,101 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
           height: `calc(100% - 260px)`,
         }}
       >
-        {!completedTasks.length && (
-          <Typography color={isDark ? 'success.light' : 'success.dark'}>
-            No Completed Tasks
-          </Typography>
-        )}
-        {completedTasks.map((task: Record<string, any>) => (
-          <Paper
-            key={task.id}
-            elevation={3}
-            sx={{
-              width: '100%',
-              height: 75,
-              borderRadius: 4,
-              backgroundColor: isDark ? 'primary.main' : grey[200],
-            }}
+        <Accordion
+          sx={{
+            borderRadius: 2,
+            border: '2px solid',
+            borderColor: isDark ? 'success.dark' : 'success.light',
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<GridExpandMoreIcon />}
+            aria-controls="completed-tasks-content"
+            id="completed-tasks"
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              sx={{
-                width: '100%',
-                height: '100%',
-                gap: 2,
-                padding: 1,
-              }}
-            >
-              <GreenCircleCheck />
-              <Stack>
-                <Typography sx={{ fontWeight: 600 }}>Status</Typography>
-                <Typography>{task.task_status}</Typography>
-              </Stack>
-              <Stack>
-                <Typography sx={{ fontWeight: 600 }}>Name</Typography>
-                <Typography>{task.task_name}</Typography>
-              </Stack>
-              <Stack>
-                <Typography sx={{ fontWeight: 600 }}>Title</Typography>
-                <Typography>{task.task_title}</Typography>
-              </Stack>
+            <Typography variant="button">
+              {completedTasks.length
+                ? `(${completedTasks.length}) Completed Tasks`
+                : 'No Completed Tasks'}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack gap={2}>
+              {completedTasks.map((task: Record<string, any>) => (
+                <TaskItem task={task} icon={<GreenCircleCheck />} />
+              ))}
             </Stack>
-          </Paper>
-        ))}
-        {!filteredTasks.length && (
-          <Typography color="warning.dark">No Open Tasks</Typography>
-        )}
-        {filteredTasks.map((task: Record<string, any>) => (
-          <Paper
-            key={task.id}
-            elevation={3}
-            sx={{
-              width: '100%',
-              height: 75,
-              borderRadius: 4,
-              backgroundColor: isDark ? 'primary.main' : grey[200],
-            }}
+          </AccordionDetails>
+        </Accordion>
+        <Accordion
+          defaultExpanded
+          sx={{
+            borderRadius: 2,
+            border: '2px solid',
+            borderColor: `warning.${isDark ? 'dark' : 'light'}`,
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<GridExpandMoreIcon />}
+            aria-controls="panel1-content"
+            id="panel1-header"
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              sx={{
-                width: '100%',
-                height: '100%',
-                gap: 2,
-                padding: 1,
-              }}
-            >
-              <WarningEye />
-              <Stack>
-                <Typography sx={{ fontWeight: 600 }}>Status</Typography>
-                <Typography>{task.task_status}</Typography>
-              </Stack>
-              <Stack>
-                <Typography sx={{ fontWeight: 600 }}>Name</Typography>
-                <Typography>{task.task_name}</Typography>
-              </Stack>
-              <Stack>
-                <Typography sx={{ fontWeight: 600 }}>Title</Typography>
-                <Typography>{task.task_title}</Typography>
-              </Stack>
+            <Typography variant="button">
+              {filteredTasks.length
+                ? `(${filteredTasks.length}) Open Tasks`
+                : 'No Open Tasks'}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack gap={2}>
+              {filteredTasks.map((task: Record<string, any>) => (
+                <TaskItem task={task} icon={<WarningEye />} />
+              ))}
             </Stack>
-          </Paper>
-        ))}
+          </AccordionDetails>
+        </Accordion>
       </Stack>
     </Stack>
   );
 }
+
+// {!filteredTasks.length && (
+//   <Typography color="warning.dark">No Open Tasks</Typography>
+// )}
+// {filteredTasks.map((task: Record<string, any>) => (
+//   <Paper
+//     key={task.id}
+//     elevation={3}
+//     sx={{
+//       width: '100%',
+//       height: 75,
+//       borderRadius: 4,
+//       backgroundColor: isDark ? 'primary.main' : grey[200],
+//     }}
+//   >
+//     <Stack
+//       direction="row"
+//       alignItems="center"
+//       sx={{
+//         width: '100%',
+//         height: '100%',
+//         gap: 2,
+//         padding: 1,
+//       }}
+//     >
+//       <WarningEye />
+//       <Stack>
+//         <Typography sx={{ fontWeight: 600 }}>Status</Typography>
+//         <Typography>{task.task_status}</Typography>
+//       </Stack>
+//       <Stack>
+//         <Typography sx={{ fontWeight: 600 }}>Name</Typography>
+//         <Typography>{task.task_name}</Typography>
+//       </Stack>
+//       <Stack>
+//         <Typography sx={{ fontWeight: 600 }}>Title</Typography>
+//         <Typography>{task.task_title}</Typography>
+//       </Stack>
+//     </Stack>
+//   </Paper>
+// ))}
