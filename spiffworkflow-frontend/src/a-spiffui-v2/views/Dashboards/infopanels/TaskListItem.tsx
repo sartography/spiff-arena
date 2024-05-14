@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { grey } from '@mui/material/colors';
 import useSpiffTheme from '../../../hooks/useSpiffTheme';
 
-export default function TaskItem({
+export default function TaskListItem({
   task,
   icon,
   styleOverride,

@@ -13,7 +13,7 @@ import useTaskCollection from '../../../hooks/useTaskCollection';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 import useCompletedTasks from '../../../hooks/useCompletedTasks';
 import useSpiffTheme from '../../../hooks/useSpiffTheme';
-import TaskItem from './TaskItem';
+import TaskListItem from './TaskListItem';
 import GreenCircleCheck from '../../../assets/icons/green-circle-check.svg';
 import WarningEye from '../../../assets/icons/warning-eye.svg';
 
@@ -101,7 +101,7 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
           <AccordionDetails>
             <Stack gap={2}>
               {completedTasks.map((task: Record<string, any>) => (
-                <TaskItem task={task} icon={<GreenCircleCheck />} />
+                <TaskListItem task={task} icon={<GreenCircleCheck />} />
               ))}
             </Stack>
           </AccordionDetails>
@@ -128,7 +128,7 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
           <AccordionDetails>
             <Stack gap={2}>
               {filteredTasks.map((task: Record<string, any>) => (
-                <TaskItem task={task} icon={<WarningEye />} />
+                <TaskListItem task={task} icon={<WarningEye />} />
               ))}
             </Stack>
           </AccordionDetails>
@@ -137,44 +137,3 @@ export default function ProcessInfo({ data }: { data: Record<string, any> }) {
     </Stack>
   );
 }
-
-// {!filteredTasks.length && (
-//   <Typography color="warning.dark">No Open Tasks</Typography>
-// )}
-// {filteredTasks.map((task: Record<string, any>) => (
-//   <Paper
-//     key={task.id}
-//     elevation={3}
-//     sx={{
-//       width: '100%',
-//       height: 75,
-//       borderRadius: 4,
-//       backgroundColor: isDark ? 'primary.main' : grey[200],
-//     }}
-//   >
-//     <Stack
-//       direction="row"
-//       alignItems="center"
-//       sx={{
-//         width: '100%',
-//         height: '100%',
-//         gap: 2,
-//         padding: 1,
-//       }}
-//     >
-//       <WarningEye />
-//       <Stack>
-//         <Typography sx={{ fontWeight: 600 }}>Status</Typography>
-//         <Typography>{task.task_status}</Typography>
-//       </Stack>
-//       <Stack>
-//         <Typography sx={{ fontWeight: 600 }}>Name</Typography>
-//         <Typography>{task.task_name}</Typography>
-//       </Stack>
-//       <Stack>
-//         <Typography sx={{ fontWeight: 600 }}>Title</Typography>
-//         <Typography>{task.task_title}</Typography>
-//       </Stack>
-//     </Stack>
-//   </Paper>
-// ))}

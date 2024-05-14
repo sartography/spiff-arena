@@ -26,7 +26,9 @@ export default function InfoPanel({
   };
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
+    <Box
+      sx={{ width: '100%', height: '100%', resize: 'both', overflow: 'hidden' }}
+    >
       <Paper
         elevation={10}
         sx={{

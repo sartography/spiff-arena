@@ -24,12 +24,12 @@ export default function useTaskCollection({
     setLoading(false);
   };
 
+  const path = '/tasks';
   const getTaskCollection = async () => {
     setLoading(true);
     // TODO: Currently, the API endpoint for this is an SSE endpoint, so we can't use the HttpService.
     // We'll need to refactor this to use the SSE service, or change the API to return a RESTful response.
     // const path = processInfo?.id ? `/tasks/${processInfo.id}` : '/tasks';
-    const path = `/tasks`;
     HttpService.makeCallToBackend({
       path,
       httpMethod: 'GET',
@@ -41,7 +41,7 @@ export default function useTaskCollection({
 
   /** TanStack (React Query) trigger to do it's SWR state/cache thing */
   useQuery({
-    queryKey: ['/tasks', processInfo],
+    queryKey: [path, processInfo],
     queryFn: () => getTaskCollection(),
   });
 
