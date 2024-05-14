@@ -55,6 +55,7 @@ RUN pip install hdbcli
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.
 COPY pyproject.toml poetry.lock /app/
+
 RUN poetry install --without dev
 
 RUN git clone https://github.com/emersonlgregorio/connectordb.git

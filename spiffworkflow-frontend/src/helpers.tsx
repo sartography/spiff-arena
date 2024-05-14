@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 
 import { ElementForArray, ProcessInstance } from './interfaces';
 
-export const DEFAULT_PER_PAGE = 50;
+export const DEFAULT_PER_PAGE = 5;
 export const DEFAULT_PAGE = 1;
 
 export const doNothing = () => {
