@@ -32,7 +32,8 @@ export default function useProcessInstanceTimes() {
         displayName: pi.process_model_display_name,
         start: pi.start_in_seconds,
         end: pi.end_in_seconds || pi.start_in_seconds,
-        duration: pi.end_in_seconds - pi.start_in_seconds,
+        duration:
+          (pi.end_in_seconds || pi.start_in_seconds) - pi.start_in_seconds,
         status: pi.status,
       });
     });
@@ -47,6 +48,7 @@ export default function useProcessInstanceTimes() {
       );
 
       summary[key] = {
+        displayName: times[0].displayName,
         total: Math.ceil(times.length),
         completed: times.filter(
           (t: Record<string, any>) => t.status === 'complete'

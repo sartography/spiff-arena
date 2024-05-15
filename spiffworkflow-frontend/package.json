@@ -19,6 +19,7 @@
     "@monaco-editor/react": "^4.4.5",
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.15",
+    "@mui/x-charts": "^7.4.0",
     "@mui/x-data-grid": "^7.3.1",
     "@preact/signals-react": "^2.0.1",
     "@prefresh/vite": "^2.4.5",

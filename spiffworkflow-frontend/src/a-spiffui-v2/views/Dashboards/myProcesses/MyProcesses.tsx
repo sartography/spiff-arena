@@ -1,7 +1,7 @@
 import { Box, Stack } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
-import ProcessInstanceCard from '../ProcessInstanceCard';
+import ProcessInstanceCard from '../cards/ProcessInstanceCard';
 import CellRenderer from './CellRenderer';
 
 export default function MyProcesses({
