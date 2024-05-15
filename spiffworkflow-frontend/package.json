@@ -20,7 +20,6 @@
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.15",
     "@mui/x-data-grid": "^7.3.1",
-    "@preact/preset-vite": "^2.8.2",
     "@preact/signals-react": "^2.0.1",
     "@prefresh/vite": "^2.4.5",
     "@react-icons/all-files": "^4.1.0",
@@ -104,6 +103,7 @@
   },
   "devDependencies": {
     "@cypress/grep": "^3.1.0",
+    "@preact/preset-vite": "^2.8.2",
     "@tanstack/eslint-plugin-query": "^5.28.6",
     "@types/carbon__colors": "^10.31.3",
     "@types/cookie": "^0.6.0",
@@ -136,9 +136,5 @@
     "ts-migrate": "^0.1.30",
     "vite-plugin-svgr": "^4.2.0",
     "vitest": "^1.5.0"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.9.5",
-    "esbuild": "0.21.2"
   }
 }
