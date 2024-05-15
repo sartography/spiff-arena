@@ -86,7 +86,7 @@ export default function BaseInputTemplate<
       _onChange(fullObject);
     },
     // delay in ms
-    1000
+    100
   );
 
   let enableCounter = false;
