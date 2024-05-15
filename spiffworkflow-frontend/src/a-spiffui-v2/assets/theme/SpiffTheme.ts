@@ -5,17 +5,17 @@ const customNotifications = (mode: PaletteMode) => {
   return mode === 'light'
     ? {
         success: {
-          main: green[100],
+          main: green[300],
           light: green[100],
           dark: green[500],
         },
         warning: {
-          main: orange[100],
+          main: orange[300],
           light: orange[100],
           dark: orange[500],
         },
         error: {
-          main: red[100],
+          main: red[300],
           light: red[100],
           dark: red[500],
         },
@@ -33,20 +33,20 @@ const customNotifications = (mode: PaletteMode) => {
           contrastText: '#fff',
         },
         warning: {
-          main: orange[300],
-          light: orange[500],
+          main: orange[500],
+          light: orange[300],
           dark: orange[700],
           contrastText: '#fff',
         },
         error: {
-          main: red[300],
-          light: red[500],
+          main: red[500],
+          light: red[300],
           dark: red[700],
           contrastText: '#fff',
         },
         info: {
-          main: blue[300],
-          light: blue[500],
+          main: blue[500],
+          light: blue[300],
           dark: blue[700],
           contrastText: '#fff',
         },

@@ -1,4 +1,4 @@
-import { Chip, Stack, Typography } from '@mui/material';
+import { Chip, Stack, Typography, useTheme } from '@mui/material';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 
 export default function CellRenderer({
@@ -13,14 +13,14 @@ export default function CellRenderer({
     switch (params.value) {
       case 'Completed':
       case 'complete':
-        return 'info';
+        return `info.${useTheme().palette.mode}`;
       case 'Started':
-        return 'success';
+        return `success.${useTheme().palette.mode}`;
       case 'error':
-        return 'error';
+        return `error.${useTheme().palette.mode}`;
       case 'Wait a second':
       case 'user_input_required':
-        return 'warning';
+        return `warning.${useTheme().palette.mode}`;
       default:
         return 'default';
     }
@@ -31,9 +31,9 @@ export default function CellRenderer({
       <Chip
         label={data.value || '...no info...'}
         variant="filled"
-        color={chipBackground(data)}
         sx={{
           width: '100%',
+          backgroundColor: chipBackground(data),
         }}
       />
     );

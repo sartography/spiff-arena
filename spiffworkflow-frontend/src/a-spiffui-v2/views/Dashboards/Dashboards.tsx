@@ -15,7 +15,7 @@ import {
   Tabs,
   TextField,
 } from '@mui/material';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import MonetizationOnOutlinedIcon from '@mui/icons-material/MonetizationOnOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -26,12 +26,15 @@ import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
 import Toolbar from './Toolbar';
-import FilterCard from './FilterCard';
 import MyProcesses from './myProcesses/MyProcesses';
-import MyTasks from './myTasks/MyTasks';
 import InfoPanel from '../../components/InfoPanel';
 import TaskInfo from './infopanels/TaskInfo';
 import ProcessInfo from './infopanels/ProcessInfo';
+import MyTasks from './myTasks/MyTasks';
+import DashboardCharts from './DashboardCharts';
+import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
+import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
+import useTaskCollection from '../../hooks/useTaskCollection';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -41,6 +44,10 @@ export default function Dashboards() {
   const [searchText, setSearchText] = useState('');
   const [panelData, setPanelData] = useState<Record<string, any>>({});
   const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
+  const { processInstanceCollection } = useProcessInstanceCollection();
+  const { taskCollection } = useTaskCollection({ processInfo: {} });
+  const { processInstanceTimesReport, setProcessInstances } =
+    useProcessInstanceTimes();
 
   const tabData = [
     {
@@ -59,13 +66,6 @@ export default function Dashboards() {
       icon: <AssignmentOutlinedIcon />,
     },
     { label: 'Support', value: 'support', icon: <GroupsIcon /> },
-  ];
-
-  const filterCardData = [
-    { count: '1', title: 'New Recommended' },
-    { count: '12', title: 'Waiting for me' },
-    { count: '1', title: 'Rejected' },
-    { count: '36', title: 'Completed' },
   ];
 
   const filterSelectData = [
@@ -106,9 +106,21 @@ export default function Dashboards() {
 
   const displayGrid = () => {
     if (selectedTab === 'myTasks') {
-      return <MyTasks filter={searchText} callback={handleRowSelect} />;
+      return (
+        <MyTasks
+          filter={searchText}
+          callback={handleRowSelect}
+          tasks={taskCollection}
+        />
+      );
     }
-    return <MyProcesses filter={searchText} callback={handleRowSelect} />;
+    return (
+      <MyProcesses
+        filter={searchText}
+        callback={handleRowSelect}
+        pis={processInstanceCollection}
+      />
+    );
   };
 
   const loadInfoPanel = () => {
@@ -117,6 +129,12 @@ export default function Dashboards() {
     }
     return <ProcessInfo data={panelData} />;
   };
+
+  useEffect(() => {
+    if (Object.keys(processInstanceCollection).length) {
+      setProcessInstances(processInstanceCollection.results);
+    }
+  }, [processInstanceCollection]);
 
   return (
     <>
@@ -143,16 +161,7 @@ export default function Dashboards() {
                 ))}
               </Tabs>
             </Box>
-            <Stack
-              direction="row"
-              gap={2}
-              padding={2}
-              sx={{ flexWrap: 'wrap' }}
-            >
-              {filterCardData.map((filter) => (
-                <FilterCard count={filter.count} title={filter.title} />
-              ))}
-            </Stack>
+            <DashboardCharts times={processInstanceTimesReport} />
             <Stack
               direction="row"
               gap={2}

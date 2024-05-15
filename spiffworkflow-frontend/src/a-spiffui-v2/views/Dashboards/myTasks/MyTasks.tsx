@@ -1,4 +1,4 @@
-import { Box, Chip, Stack } from '@mui/material';
+import { Box, Chip, Stack, useTheme } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import useTaskCollection from '../../../hooks/useTaskCollection';
@@ -6,18 +6,19 @@ import useTaskCollection from '../../../hooks/useTaskCollection';
 export default function MyTasks({
   filter,
   callback,
+  tasks,
 }: {
   filter: string;
   callback: (data: Record<string, any>) => void;
+  tasks: Record<string, any>;
 }) {
-  const { taskCollection } = useTaskCollection({ processInfo: {} });
   const [taskColumns, setTaskColumns] = useState<GridColDef[]>([]);
   const [taskRows, setTaskRows] = useState<GridRowsProp[]>([]);
 
   /** These values map to theme tokens, which enable the light/dark modes etc. */
   const chipBackground = (row: any) => {
     return `${row.task_status}`.toLowerCase() === 'ready'
-      ? 'success'
+      ? `success.${useTheme().palette.mode}`
       : 'default';
   };
 
@@ -37,8 +38,8 @@ export default function MyTasks({
 
   useEffect(() => {
     const filtered =
-      filter && taskCollection.results
-        ? taskCollection.results.filter((instance: any) => {
+      filter && tasks.results
+        ? tasks.results.filter((instance: any) => {
             return columnData.some((data: Record<string, any>) =>
               (instance[data.field] || '')
                 .toString()
@@ -46,13 +47,13 @@ export default function MyTasks({
                 .includes(filter.toLowerCase())
             );
           })
-        : taskCollection.results || [];
+        : tasks.results || [];
 
     setTaskRows(filtered);
   }, [filter]);
 
   useEffect(() => {
-    if ('results' in taskCollection) {
+    if ('results' in tasks) {
       const mappedColumns = columnData.map((column: Record<string, any>) => {
         return {
           field: column.field,
@@ -69,9 +70,9 @@ export default function MyTasks({
                   <Chip
                     label={params.row.task_status || '...no info...'}
                     variant="filled"
-                    color={chipBackground(params.row)}
                     sx={{
                       width: '100%',
+                      backgroundColor: chipBackground(params.row),
                     }}
                   />
                 )
@@ -80,9 +81,9 @@ export default function MyTasks({
       });
 
       setTaskColumns(mappedColumns);
-      setTaskRows([...taskCollection.results]);
+      setTaskRows([...tasks.results]);
     }
-  }, [taskCollection]);
+  }, [tasks]);
 
   return (
     <>

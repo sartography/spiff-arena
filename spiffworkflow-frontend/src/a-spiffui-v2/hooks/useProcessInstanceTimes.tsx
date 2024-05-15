@@ -9,13 +9,13 @@ export default function useProcessInstanceTimes() {
   const [processInstances, setProcessInstances] = useState<
     Record<string, any>[]
   >([]);
-  const [processInstanceTimes, setProcessInstanceTimesReport] = useState<
+  const [processInstanceTimesReport, setProcessInstanceTimesReport] = useState<
     Record<string, any>
   >({});
 
   type ProcessInstanceTimeResults = {
     totalCount: number;
-    completedCount: number;
+    completeCount: number;
     errorCount: number;
     openCount: number;
     totalTime: number;
@@ -64,7 +64,7 @@ export default function useProcessInstanceTimes() {
     });
 
     const totalCount = processInstances.length;
-    const completedCount = Object.keys(summary).reduce(
+    const completeCount = Object.keys(summary).reduce(
       (acc, key) => acc + summary[key].completed,
       0
     );
@@ -83,7 +83,7 @@ export default function useProcessInstanceTimes() {
 
     const finalResults = {
       totalCount,
-      completedCount,
+      completeCount,
       errorCount,
       openCount,
       totalTime,
@@ -95,6 +95,6 @@ export default function useProcessInstanceTimes() {
 
   return {
     setProcessInstances,
-    processInstanceTimes,
+    processInstanceTimesReport,
   };
 }

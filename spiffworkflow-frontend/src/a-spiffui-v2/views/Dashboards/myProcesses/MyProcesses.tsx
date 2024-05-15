@@ -2,19 +2,17 @@ import { Box, Stack } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import ProcessInstanceCard from '../ProcessInstanceCard';
-import useProcessInstanceCollection from '../../../hooks/useProcessInstanceCollection';
 import CellRenderer from './CellRenderer';
-import useProcessInstanceTimes from '../../../hooks/useProcessInstanceTimes';
 
 export default function MyProcesses({
   filter,
   callback,
+  pis,
 }: {
   filter: string;
   callback: (data: Record<string, any>) => void;
+  pis: Record<string, any>;
 }) {
-  const { processInstanceCollection } = useProcessInstanceCollection();
-  const { setProcessInstances } = useProcessInstanceTimes();
   // TODO: Type of this doesn't seem to be ProcessInstance
   // Find out and remove "any""
   const [processInstanceColumns, setProcessInstanceColumns] = useState<
@@ -30,9 +28,9 @@ export default function MyProcesses({
 
   useEffect(() => {
     const filtered =
-      filter && processInstanceCollection.results
-        ? processInstanceCollection.results.filter((instance: any) => {
-            console.log(processInstanceCollection.results);
+      filter && pis.results
+        ? pis.results.filter((instance: any) => {
+            console.log(pis.results);
             const searchFields = [
               'process_model_display_name',
               'last_milestone_bpmn_name',
@@ -47,42 +45,40 @@ export default function MyProcesses({
                 .includes(filter.toLowerCase())
             );
           })
-        : processInstanceCollection.results || [];
+        : pis.results || [];
 
     setProcessInstanceRows(filtered);
   }, [filter]);
 
   useEffect(() => {
-    if ('report_metadata' in processInstanceCollection) {
-      const mappedColumns =
-        processInstanceCollection.report_metadata?.columns.map(
-          (column: Record<string, any>) => ({
-            field: column.accessor,
-            headerName: column.Header,
-            flex: (() => {
-              // Adjust the width of some columns to clean up UI
-              switch (column.Header) {
-                case 'Id':
-                  return 0.5;
-                case 'Start':
-                case 'End':
-                  return 1;
-                default:
-                  return 1;
-              }
-            })(),
-            renderCell: (params: Record<string, any>) => (
-              <CellRenderer header={column.Header} data={params} />
-            ),
-          })
-        );
+    if ('report_metadata' in pis) {
+      const mappedColumns = pis.report_metadata?.columns.map(
+        (column: Record<string, any>) => ({
+          field: column.accessor,
+          headerName: column.Header,
+          flex: (() => {
+            // Adjust the width of some columns to clean up UI
+            switch (column.Header) {
+              case 'Id':
+                return 0.5;
+              case 'Start':
+              case 'End':
+                return 1;
+              default:
+                return 1;
+            }
+          })(),
+          renderCell: (params: Record<string, any>) => (
+            <CellRenderer header={column.Header} data={params} />
+          ),
+        })
+      );
 
-      const rows = [...processInstanceCollection.results];
+      const rows = [...pis.results];
       setProcessInstanceColumns(mappedColumns);
       setProcessInstanceRows(rows);
-      setProcessInstances(rows);
     }
-  }, [processInstanceCollection]);
+  }, [pis]);
 
   return (
     <>
