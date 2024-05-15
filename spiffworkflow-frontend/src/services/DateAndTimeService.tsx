@@ -176,7 +176,7 @@ const attemptToConvertUnknownDateStringFormatToKnownFormat = (
       if (normalizedDateString.match(dateFormatRegex)) {
         const newDate = parse(
           normalizedDateString,
-          dateFormat.replaceAll(/MMM*/g, 'MM'),
+          numericalDateFormat,
           new Date()
         );
         newDateString = convertDateObjectToFormattedString(newDate) || '';

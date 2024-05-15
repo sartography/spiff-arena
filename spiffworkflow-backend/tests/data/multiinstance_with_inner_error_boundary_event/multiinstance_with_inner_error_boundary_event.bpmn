@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_test_event_rd4nfh2" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_17db3yp</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_17db3yp" sourceRef="StartEvent_1" targetRef="subprocess" />
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_1hqyjqn</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1hqyjqn" sourceRef="subprocess" targetRef="EndEvent_1" />
+    <bpmn:subProcess id="subprocess">
+      <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
+      <bpmn:outgoing>Flow_1hqyjqn</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics>
+        <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">4</bpmn:loopCardinality>
+        <bpmn:loopDataOutputRef>all_output</bpmn:loopDataOutputRef>
+        <bpmn:inputDataItem id="index" name="index" />
+        <bpmn:outputDataItem id="the_return" name="the_return" />
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_02960ar">
+        <bpmn:outgoing>Flow_1504tu0</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_1504tu0" sourceRef="Event_02960ar" targetRef="subprocess_script_task" />
+      <bpmn:endEvent id="Event_12lrn32">
+        <bpmn:incoming>Flow_03gqryg</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_03gqryg" sourceRef="subprocess_service_task" targetRef="Event_12lrn32" />
+      <bpmn:serviceTask id="subprocess_service_task">
+        <bpmn:extensionElements>
+          <spiffworkflow:serviceTaskOperator id="http/GetRequestV2" resultVariable="response">
+            <spiffworkflow:parameters>
+              <spiffworkflow:parameter id="url" type="str" value="url" />
+              <spiffworkflow:parameter id="headers" type="any" />
+              <spiffworkflow:parameter id="params" type="any" />
+              <spiffworkflow:parameter id="basic_auth_username" type="str" />
+              <spiffworkflow:parameter id="basic_auth_password" type="str" />
+              <spiffworkflow:parameter id="attempts" type="int" />
+            </spiffworkflow:parameters>
+          </spiffworkflow:serviceTaskOperator>
+          <spiffworkflow:postScript>the_return = response</spiffworkflow:postScript>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0n92gsy</bpmn:incoming>
+        <bpmn:outgoing>Flow_03gqryg</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="Flow_0n92gsy" sourceRef="subprocess_script_task" targetRef="subprocess_service_task" />
+      <bpmn:scriptTask id="subprocess_script_task">
+        <bpmn:incoming>Flow_1504tu0</bpmn:incoming>
+        <bpmn:outgoing>Flow_0n92gsy</bpmn:outgoing>
+        <bpmn:script>url = "http://localhost:7001/v1.0/status"
+
+if index == 2:
+   url = "DNE"</bpmn:script>
+      </bpmn:scriptTask>
+      <bpmn:scriptTask id="error_script_task">
+        <bpmn:incoming>Flow_0twhcxb</bpmn:incoming>
+        <bpmn:outgoing>Flow_14ahv06</bpmn:outgoing>
+        <bpmn:script>the_return = response</bpmn:script>
+      </bpmn:scriptTask>
+      <bpmn:endEvent id="Event_1ds1pvd">
+        <bpmn:incoming>Flow_14ahv06</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_14ahv06" sourceRef="error_script_task" targetRef="Event_1ds1pvd" />
+      <bpmn:boundaryEvent id="Event_1igkf06" attachedToRef="subprocess_service_task">
+        <bpmn:outgoing>Flow_0twhcxb</bpmn:outgoing>
+        <bpmn:errorEventDefinition id="ErrorEventDefinition_0c5pkb6" errorRef="MissingSchema" />
+      </bpmn:boundaryEvent>
+      <bpmn:sequenceFlow id="Flow_0twhcxb" sourceRef="Event_1igkf06" targetRef="error_script_task" />
+    </bpmn:subProcess>
+  </bpmn:process>
+  <bpmn:error id="MissingSchema" name="MissingSchema" errorCode="MissingSchema">
+    <bpmn:extensionElements>
+      <spiffworkflow:variableName>response</spiffworkflow:variableName>
+    </bpmn:extensionElements>
+  </bpmn:error>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_test_event_rd4nfh2">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14za570_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="432" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0bk0xxu_di" bpmnElement="subprocess">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_17db3yp_di" bpmnElement="Flow_17db3yp">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hqyjqn_di" bpmnElement="Flow_1hqyjqn">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="432" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1lveg77">
+    <bpmndi:BPMNPlane id="BPMNPlane_15wok2i" bpmnElement="subprocess">
+      <bpmndi:BPMNShape id="Event_02960ar_di" bpmnElement="Event_02960ar">
+        <dc:Bounds x="282" y="322" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_12lrn32_di" bpmnElement="Event_12lrn32">
+        <dc:Bounds x="702" y="322" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_09gyv8v_di" bpmnElement="subprocess_service_task">
+        <dc:Bounds x="480" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_13xl8eo_di" bpmnElement="subprocess_script_task">
+        <dc:Bounds x="340" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1aagehr_di" bpmnElement="error_script_task">
+        <dc:Bounds x="600" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ds1pvd_di" bpmnElement="Event_1ds1pvd">
+        <dc:Bounds x="752" y="442" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0m18viy_di" bpmnElement="Event_1igkf06">
+        <dc:Bounds x="522" y="362" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1504tu0_di" bpmnElement="Flow_1504tu0">
+        <di:waypoint x="318" y="340" />
+        <di:waypoint x="340" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03gqryg_di" bpmnElement="Flow_03gqryg">
+        <di:waypoint x="580" y="340" />
+        <di:waypoint x="702" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0n92gsy_di" bpmnElement="Flow_0n92gsy">
+        <di:waypoint x="440" y="340" />
+        <di:waypoint x="480" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14ahv06_di" bpmnElement="Flow_14ahv06">
+        <di:waypoint x="700" y="460" />
+        <di:waypoint x="752" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0twhcxb_di" bpmnElement="Flow_0twhcxb">
+        <di:waypoint x="540" y="398" />
+        <di:waypoint x="540" y="460" />
+        <di:waypoint x="600" y="460" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
