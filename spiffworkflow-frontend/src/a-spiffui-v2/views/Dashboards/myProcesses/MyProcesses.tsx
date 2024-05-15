@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ProcessInstanceCard from '../ProcessInstanceCard';
 import useProcessInstanceCollection from '../../../hooks/useProcessInstanceCollection';
 import CellRenderer from './CellRenderer';
+import useProcessInstanceTimes from '../../../hooks/useProcessInstanceTimes';
 
 export default function MyProcesses({
   filter,
@@ -13,6 +14,7 @@ export default function MyProcesses({
   callback: (data: Record<string, any>) => void;
 }) {
   const { processInstanceCollection } = useProcessInstanceCollection();
+  const { setProcessInstances } = useProcessInstanceTimes();
   // TODO: Type of this doesn't seem to be ProcessInstance
   // Find out and remove "any""
   const [processInstanceColumns, setProcessInstanceColumns] = useState<
@@ -75,8 +77,10 @@ export default function MyProcesses({
           })
         );
 
+      const rows = [...processInstanceCollection.results];
       setProcessInstanceColumns(mappedColumns);
-      setProcessInstanceRows([...processInstanceCollection.results]);
+      setProcessInstanceRows(rows);
+      setProcessInstances(rows);
     }
   }, [processInstanceCollection]);
 
@@ -92,6 +96,7 @@ export default function MyProcesses({
         }}
       >
         <DataGrid
+          autoHeight
           sx={{
             '&, [class^=MuiDataGrid]': { border: 'none' },
           }}

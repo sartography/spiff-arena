@@ -50,3 +50,29 @@ export default function useTaskCollection({
     loading,
   };
 }
+
+// Example taskCollection object:
+//   "id": "f3e909d4-451f-4374-a285-a0f3a4689d62",
+//   "form_file_name": "form3.json",
+//   "task_type": "UserTask",
+//   "ui_form_file_name": "form3_ui.json",
+//   "task_status": "READY",
+//   "updated_at_in_seconds": 1715349007,
+//   "process_model_display_name": "Process Model With Form",
+//   "process_instance_id": 17,
+//   "created_at_in_seconds": 1715183498,
+//   "bpmn_process_identifier": "test_form",
+//   "lane_assignment_id": null,
+//   "task_guid": "f3e909d4-451f-4374-a285-a0f3a4689d62",
+//   "completed": false,
+//   "task_id": "f3e909d4-451f-4374-a285-a0f3a4689d62",
+//   "completed_by_user_id": null,
+//   "task_name": "form3",
+//   "actual_owner_id": null,
+//   "task_title": "get_form_num_three",
+//   "process_model_identifier": "misc/category_number_one/process-model-with-form",
+//   "process_instance_status": "user_input_required",
+//   "process_initiator_username": "admin@spiffworkflow.org",
+//   "assigned_user_group_identifier": null,
+//   "potential_owner_usernames": "admin@spiffworkflow.org"
+// }
