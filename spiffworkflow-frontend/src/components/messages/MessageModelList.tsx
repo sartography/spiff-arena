@@ -25,13 +25,16 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
       setPagination(result.pagination);
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    let queryParamString = `per_page=${perPage}&page=${page}`;
+    const queryParamString = `per_page=${perPage}&page=${page}`;
+    let modifiedProcessIdentifierForPathParam = '';
     if (processGroupId) {
-      queryParamString += `&relative_location=${processGroupId}`;
+      modifiedProcessIdentifierForPathParam = `/${modifyProcessIdentifierForPathParam(
+        processGroupId
+      )}`;
     }
 
     HttpService.makeCallToBackend({
-      path: `/message-models?${queryParamString}`,
+      path: `/message-models${modifiedProcessIdentifierForPathParam}?${queryParamString}`,
       successCallback: setMessageInstanceListFromResult,
     });
   }, [processGroupId, searchParams]);

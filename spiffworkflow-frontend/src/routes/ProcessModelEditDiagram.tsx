@@ -452,7 +452,7 @@ export default function ProcessModelEditDiagram() {
   };
   const onMessagesRequested = (event: any) => {
     HttpService.makeCallToBackend({
-      path: `/message-models?relative_location=${modifiedProcessModelId}`,
+      path: `/message-models/${modifiedProcessModelId}`,
       successCallback: makeMessagesRequestedHandler(event),
     });
   };

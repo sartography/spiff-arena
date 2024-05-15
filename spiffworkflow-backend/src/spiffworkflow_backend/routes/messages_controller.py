@@ -16,6 +16,10 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
+def message_model_list_from_root() -> flask.wrappers.Response:
+    return message_model_list()
+
+
 def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
     # Returns all the messages and correlation properties that exist at the given
     # relative location or higher in the directory tree.
