@@ -30,6 +30,7 @@ on:
   push:
     branches:
       - main
+      - feature/message_improvements_2
 
 jobs:
   create_frontend_docker_image:
