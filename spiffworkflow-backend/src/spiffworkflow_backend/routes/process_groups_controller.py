@@ -20,6 +20,8 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.models.db import db
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
@@ -49,6 +51,11 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
 
     try:
         ProcessModelService.process_group_delete(process_group_id)
+        
+        # can't do this in the ProcessModelService due to circular imports
+        SpecFileService.clear_caches_for_process_group(process_group_id)
+        db.session.commit()
+
     except ProcessModelWithInstancesNotDeletableError as exception:
         raise ApiError(
             error_code="existing_instances",
