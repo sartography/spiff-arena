@@ -12,6 +12,7 @@ from flask.wrappers import Response
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
@@ -19,9 +20,8 @@ from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modifi
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
-from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.services.user_service import UserService
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
@@ -51,7 +51,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
 
     try:
         ProcessModelService.process_group_delete(process_group_id)
-        
+
         # can't do this in the ProcessModelService due to circular imports
         SpecFileService.clear_caches_for_process_group(process_group_id)
         db.session.commit()

@@ -278,7 +278,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def clear_caches_for_process_group(process_group_id: str) -> None:
         records = (
-            db.session.query(ReferenceCacheModel).filter(ReferenceCacheModel.relative_location.like(f"{process_group_id}%")).all()
+            db.session.query(ReferenceCacheModel)
+            .filter(ReferenceCacheModel.relative_location.like(f"{process_group_id}%"))  # type: ignore
+            .all()
         )
 
         reference_cache_ids = []
