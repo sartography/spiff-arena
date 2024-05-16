@@ -13,6 +13,7 @@ import Logout from '@mui/icons-material/LogoutOutlined';
 import SpiffLogo from '../../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from './MenuItem';
 import UserService from '../../../../services/UserService';
+import SpiffIcon from '../../../assets/icons/spiff-icon.svg';
 
 /**
  * SideMenu component that satisfies design requirements.
@@ -67,7 +68,13 @@ export default function SideMenu({
     >
       <Stack>
         <Box width="85%">
-          <SpiffLogo />
+          {collapsed ? (
+            <Box sx={{ paddingTop: 2 }}>
+              <SpiffIcon />
+            </Box>
+          ) : (
+            <SpiffLogo />
+          )}
         </Box>
         <Stack gap={2}>
           {navMenuItemData.map((item) => (

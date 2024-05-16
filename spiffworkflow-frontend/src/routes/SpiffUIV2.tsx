@@ -47,7 +47,6 @@ export default function SpiffUIV2() {
   };
 
   const handleCollapseToggle = (data: boolean) => {
-    console.log(data);
     setSideMenuCollapsed(data);
   };
 
