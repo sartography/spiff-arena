@@ -1,4 +1,4 @@
-import { Paper, Stack, useTheme } from '@mui/material';
+import { Paper, Stack, Typography, useTheme } from '@mui/material';
 import { BarChart, PieChart, SparkLineChart } from '@mui/x-charts';
 import { useEffect, useState } from 'react';
 
@@ -75,6 +75,11 @@ export default function DashboardCharts({
               data: [times.errorCount],
               color: palette.error.main,
             },
+            {
+              label: 'Total',
+              data: [times.totalCount],
+              color: palette.info.main,
+            },
           ]}
           slotProps={{ legend: { hidden: true } }}
           width={250}
@@ -83,7 +88,16 @@ export default function DashboardCharts({
         />
       </Paper>
 
-      <Paper elevation={3} sx={{ padding: 2, borderRadius: 4 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          padding: 2,
+          borderRadius: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
         <PieChart
           title="Time Distribution"
           series={[
@@ -105,9 +119,21 @@ export default function DashboardCharts({
             bottom: 20,
           }}
         />
+        <Typography variant="caption" align="center" width="100%">
+          PI Time Distribution
+        </Typography>
       </Paper>
 
-      <Paper elevation={3} sx={{ padding: 2, borderRadius: 4 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          padding: 2,
+          borderRadius: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
         <SparkLineChart
           data={Object.keys(durations).map(
             (d: string) => durations[d].duration
@@ -125,6 +151,9 @@ export default function DashboardCharts({
           showHighlight
           showTooltip
         />
+        <Typography variant="caption" align="center" width="100%">
+          PI Time Distribution
+        </Typography>
       </Paper>
 
       <Paper elevation={3} sx={{ padding: 2, borderRadius: 4 }}>
@@ -140,7 +169,7 @@ export default function DashboardCharts({
           xAxis={[
             {
               scaleType: 'band',
-              data: ['Duration Distribution'],
+              data: ['PI Time Distribution'],
             },
           ]}
           series={Object.keys(durations).map((d: string) => ({
