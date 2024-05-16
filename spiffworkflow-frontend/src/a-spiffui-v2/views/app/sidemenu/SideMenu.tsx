@@ -86,7 +86,11 @@ export default function SideMenu({
        * This stack is absolute positioned to make it bottom-sticky.
        * Constrain the width to prevent it from taking up the whole screen.
        */}
-      <Stack gap={2} direction="column" padding={1} sx={{ marginTop: 'auto' }}>
+      <Stack
+        gap={2}
+        direction="column"
+        sx={{ marginTop: 'auto', paddingLeft: 1, paddingBottom: 4 }}
+      >
         {userMenuItemData.map((item) => (
           <MenuItem data={item} key={item.text} callback={callback} />
         ))}
