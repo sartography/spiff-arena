@@ -20,8 +20,10 @@ import UserService from '../../../../services/UserService';
  */
 export default function SideMenu({
   callback,
+  collapsed,
 }: {
   callback: (data: MenuItemData) => void;
+  collapsed: boolean;
 }) {
   /** Top set of app nav items */
   const navMenuItemData: MenuItemData[] = [
@@ -59,7 +61,7 @@ export default function SideMenu({
       gap={2}
       sx={{
         height: '100vh',
-        width: { xs: 0, sm: 45, md: 240 },
+        width: collapsed ? 45 : { xs: 0, sm: 45, md: 240 },
         overflow: 'hidden',
       }}
     >

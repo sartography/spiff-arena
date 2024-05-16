@@ -13,6 +13,7 @@ import SideMenu from '../a-spiffui-v2/views/app/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
+import CollapseButton from '../a-spiffui-v2/views/app/sidemenu/CollapseButton';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -23,6 +24,7 @@ export default function SpiffUIV2() {
   const [globalTheme, setGlobalTheme] = useState(
     createTheme(createSpiffTheme('light'))
   );
+  const [sideMenuCollapsed, setSideMenuCollapsed] = useState(false);
   useEffect(() => {
     /**
      * The housing app has an element with a white background
@@ -42,6 +44,11 @@ export default function SpiffUIV2() {
         setGlobalTheme(createTheme(createSpiffTheme('light')));
       }
     }
+  };
+
+  const handleCollapseToggle = (data: boolean) => {
+    console.log(data);
+    setSideMenuCollapsed(data);
   };
 
   return (
@@ -65,9 +72,24 @@ export default function SpiffUIV2() {
               <Box
                 sx={{
                   height: '100%',
+                  position: 'relative',
                 }}
               >
-                <SideMenu callback={handleMenuCallback} />
+                <SideMenu
+                  callback={handleMenuCallback}
+                  collapsed={sideMenuCollapsed}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '28%',
+                    right: -40,
+                    zIndex: 1500,
+                    display: { xs: 'none', lg: 'block' },
+                  }}
+                >
+                  <CollapseButton callback={handleCollapseToggle} />
+                </Box>
               </Box>
             </Slide>
           </Grid>
@@ -83,7 +105,14 @@ export default function SpiffUIV2() {
               }}
             />
           </Grid>
-          <Grid item xs={11} sm={10} md={8} lg={9} padding={2}>
+          <Grid
+            item
+            xs={10}
+            sm={10}
+            md={sideMenuCollapsed ? 10 : 8}
+            lg={sideMenuCollapsed ? 11 : 9}
+            padding={2}
+          >
             <Dashboards />
           </Grid>
         </Grid>
