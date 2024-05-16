@@ -23,6 +23,16 @@ class TestProcessCallers(BaseTest):
         )
 
         response = client.get(
+            "/v1.0/processes",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert isinstance(response.json, list)
+        assert len(response.json) == 4
+
+        response = client.get(
             "/v1.0/processes/callers/Level2",
             headers=self.logged_in_headers(with_super_admin_user),
         )
@@ -53,6 +63,16 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
+
+        response = client.get(
+            "/v1.0/processes",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert isinstance(response.json, list)
+        assert len(response.json) == 0
 
         response = client.get(
             "/v1.0/processes/callers/Level2",

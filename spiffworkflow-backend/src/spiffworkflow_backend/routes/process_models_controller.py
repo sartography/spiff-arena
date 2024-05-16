@@ -115,6 +115,7 @@ def process_model_delete(
         process_model = _get_process_model(process_model_identifier)
         # can't do this in the ProcessModelService due to circular imports
         SpecFileService.clear_caches_for_process_model(process_model)
+        db.session.commit()
 
         ProcessModelService.process_model_delete(process_model_identifier)
     except ProcessModelWithInstancesNotDeletableError as exception:
