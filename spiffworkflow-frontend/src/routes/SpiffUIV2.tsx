@@ -5,6 +5,7 @@ import {
   CssBaseline,
   Divider,
   Grid,
+  Paper,
   Slide,
 } from '@mui/material';
 import { grey } from '@mui/material/colors';
@@ -63,6 +64,7 @@ export default function SpiffUIV2() {
           alignItems: 'center',
           height: '100vh',
           zIndex: 1000,
+          padding: '0px !important',
         }}
       >
         <Grid container sx={{ height: '100%' }}>
@@ -71,18 +73,24 @@ export default function SpiffUIV2() {
               <Box
                 sx={{
                   height: '100%',
+                  width: '100%',
                   position: 'relative',
                 }}
               >
-                <SideMenu
-                  callback={handleMenuCallback}
-                  collapsed={sideMenuCollapsed}
-                />
+                <Paper
+                  elevation={3}
+                  sx={{ padding: 2, margin: 0, width: '100%', height: '100%' }}
+                >
+                  <SideMenu
+                    callback={handleMenuCallback}
+                    collapsed={sideMenuCollapsed}
+                  />
+                </Paper>
                 <Box
                   sx={{
                     position: 'absolute',
                     top: '28%',
-                    right: -40,
+                    right: -25,
                     zIndex: 1500,
                     display: { xs: 'none', lg: 'block' },
                   }}
@@ -92,25 +100,13 @@ export default function SpiffUIV2() {
               </Box>
             </Slide>
           </Grid>
-          <Grid item padding={2}>
-            <Divider
-              orientation="vertical"
-              variant="middle"
-              sx={{
-                display: { xs: 'none', sm: 'block' },
-                width: '1px',
-                height: '100%',
-                backgroundColor: grey[600],
-              }}
-            />
-          </Grid>
           <Grid
             item
             xs={10}
             sm={10}
-            md={sideMenuCollapsed ? 10 : 8}
+            md={sideMenuCollapsed ? 11 : 8}
             lg={sideMenuCollapsed ? 11 : 9}
-            padding={2}
+            padding={6}
           >
             <Dashboards />
           </Grid>
