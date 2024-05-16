@@ -279,7 +279,7 @@ class SpecFileService(FileSystemService):
     def clear_caches_for_process_group(process_group_id: str) -> None:
         records = (
             db.session.query(ReferenceCacheModel)
-            .filter(ReferenceCacheModel.relative_location.like(f"{process_group_id}%"))  # type: ignore
+            .filter(ReferenceCacheModel.relative_location.like(f"{process_group_id}/%"))  # type: ignore
             .all()
         )
 
