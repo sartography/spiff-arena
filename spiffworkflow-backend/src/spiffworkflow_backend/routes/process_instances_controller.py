@@ -182,7 +182,7 @@ def process_instance_list(
         user=g.user,
     )
 
-    json_data_hash = CompressedDataModel.create_and_insert_json_data_from_dict(body["report_metadata"])
+    json_data_hash = CompressedDataModel.create_and_insert_compressed_data_from_dict(body["report_metadata"])
     db.session.commit()
 
     response_json["report_hash"] = json_data_hash
