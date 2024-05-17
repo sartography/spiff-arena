@@ -596,7 +596,7 @@ def _interstitial_stream(
                 .first()
             )
             if compressed_data is not None:
-                task_data = compressed_data.decompress_data()
+                task_data = compressed_data.data_dict()
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         try:
             instructions = _render_instructions(spiff_task, task_data=task_data)

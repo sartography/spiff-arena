@@ -717,7 +717,7 @@ class ProcessInstanceProcessor:
         json_data_records = CompressedDataModel.query.filter(CompressedDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
         for json_data_record in json_data_records:
-            json_data_mappings[json_data_record.hash] = json_data_record.decompress_data()
+            json_data_mappings[json_data_record.hash] = json_data_record.data_dict()
         for task in tasks:
             tasks_dict = spiff_bpmn_process_dict["tasks"]
             if bpmn_subprocess_id_to_guid_mappings:

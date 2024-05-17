@@ -19,7 +19,7 @@ class CompressedDataModelNotFoundError(Exception):
 
 class CompressedDataDict(TypedDict):
     hash: str
-    compressed_data: str
+    compressed_data: bytes
 
 
 # to find the users of this model run:
@@ -28,10 +28,15 @@ class CompressedDataModel(SpiffworkflowBaseDBModel):
     __tablename__ = "compressed_data"
 
     hash: str = db.Column(db.String(255), nullable=False, unique=True, primary_key=True)
-    compressed_data: str = db.Column(db.Binary, nullable=False)
+    compressed_data: bytes = db.Column(db.BLOB, nullable=False)
 
-    def decompress_data(self) -> bytes:
-        return gzip.decompress(self.compressed_data.encode())
+    def decompress_data(self) -> str:
+        return gzip.decompress(self.compressed_data).decode("utf-8")
+
+    def data_dict(self) -> dict:
+        data = self.decompress_data()
+        return_dict: dict = json.loads(data)
+        return return_dict
 
     @classmethod
     def find_object_by_hash(cls, hash: str) -> CompressedDataModel:
@@ -41,14 +46,14 @@ class CompressedDataModel(SpiffworkflowBaseDBModel):
         return compressed_data_model
 
     @classmethod
-    def find_data_by_hash(cls, hash: str) -> bytes:
+    def find_data_by_hash(cls, hash: str) -> str:
         compressed_data = cls.find_object_by_hash(hash).compressed_data
-        return gzip.decompress(compressed_data.encode())
+        return gzip.decompress(compressed_data).decode("utf-8")
 
     @classmethod
     def find_data_dict_by_hash(cls, hash: str) -> dict:
         data_string = cls.find_data_by_hash(hash)
-        return_dict: dict = json.loads(data_string.decode("utf-8"))
+        return_dict: dict = json.loads(data_string)
         return return_dict
 
     @classmethod
@@ -81,5 +86,8 @@ class CompressedDataModel(SpiffworkflowBaseDBModel):
         task_data_json = json.dumps(data, sort_keys=True)
         task_data_compressed = gzip.compress(task_data_json.encode("utf8"))
         task_data_hash: str = sha256(task_data_compressed).hexdigest()
-        compressed_data_dict: CompressedDataDict = {"hash": task_data_hash, "compressed_data": task_data_compressed.decode()}
+        compressed_data_dict: CompressedDataDict = {
+            "hash": task_data_hash,
+            "compressed_data": task_data_compressed,
+        }
         return compressed_data_dict
