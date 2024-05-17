@@ -67,6 +67,7 @@ from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 
 # noqa: F401
 from spiffworkflow_backend.models.db import db
@@ -76,7 +77,6 @@ from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -665,8 +665,8 @@ class ProcessInstanceProcessor:
         get_tasks: bool = False,
         include_task_data_for_completed_tasks: bool = False,
     ) -> dict:
-        json_data = JsonDataModel.query.filter_by(hash=bpmn_process.json_data_hash).first()
-        bpmn_process_dict = {"data": json_data.data, "tasks": {}}
+        json_data = CompressedDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
+        bpmn_process_dict = {"data": json_data, "tasks": {}}
         bpmn_process_dict.update(bpmn_process.properties_json)
         if get_tasks:
             tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
@@ -714,10 +714,10 @@ class ProcessInstanceProcessor:
                 json_data_hashes.add(task.json_data_hash)
                 task_guids_to_add.add(task.guid)
 
-        json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
+        json_data_records = CompressedDataModel.query.filter(CompressedDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
         json_data_mappings = {}
         for json_data_record in json_data_records:
-            json_data_mappings[json_data_record.hash] = json_data_record.data
+            json_data_mappings[json_data_record.hash] = json_data_record.decompress_data()
         for task in tasks:
             tasks_dict = spiff_bpmn_process_dict["tasks"]
             if bpmn_subprocess_id_to_guid_mappings:
@@ -1636,7 +1636,7 @@ class ProcessInstanceProcessor:
             run_started_at=run_started_at,
         )
         task_service.update_task_model(task_model, spiff_task)
-        JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
+        CompressedDataModel.insert_or_update_compressed_data_records(task_service.compressed_data_dicts)
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,

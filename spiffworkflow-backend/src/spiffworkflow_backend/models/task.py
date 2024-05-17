@@ -13,9 +13,9 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 if TYPE_CHECKING:
@@ -87,10 +87,10 @@ class TaskModel(SpiffworkflowBaseDBModel):
         return {**self.python_env_data(), **self.json_data()}
 
     def python_env_data(self) -> dict:
-        return JsonDataModel.find_data_dict_by_hash(self.python_env_data_hash)
+        return CompressedDataModel.find_data_dict_by_hash(self.python_env_data_hash)
 
     def json_data(self) -> dict:
-        return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+        return CompressedDataModel.find_data_dict_by_hash(self.json_data_hash)
 
     def parent_guid(self) -> str | None:
         if "parent" not in self.properties_json:

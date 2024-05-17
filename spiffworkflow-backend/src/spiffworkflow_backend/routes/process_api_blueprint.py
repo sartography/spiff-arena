@@ -31,10 +31,10 @@ from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskEr
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -156,7 +156,7 @@ def _get_data_object_from_bpmn_process(
     bpmn_process_guid: str | None,
     process_instance: ProcessInstanceModel,
 ) -> Any:
-    bpmn_process_data = JsonDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
+    bpmn_process_data = CompressedDataModel.find_data_dict_by_hash(bpmn_process.json_data_hash)
     if bpmn_process_data is None:
         raise ApiError(
             error_code="bpmn_process_data_not_found",

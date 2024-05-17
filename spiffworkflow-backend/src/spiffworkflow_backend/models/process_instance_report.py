@@ -5,6 +5,8 @@ import typing
 from dataclasses import dataclass
 from typing import Any
 
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
+
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
     from typing_extensions import TypedDict
@@ -17,7 +19,6 @@ from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
 
@@ -89,7 +90,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
     def get_report_metadata(self) -> ReportMetadata:
-        rdata_dict = JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+        rdata_dict = CompressedDataModel.find_data_dict_by_hash(self.json_data_hash)
         rdata = typing.cast(ReportMetadata, rdata_dict)
         return rdata
 
@@ -113,7 +114,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
             raise ProcessInstanceReportAlreadyExistsError(f"Process instance report with identifier already exists: {identifier}")
 
         report_metadata_dict = typing.cast(dict[str, Any], report_metadata)
-        json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata_dict)
+        json_data_hash = CompressedDataModel.create_and_insert_compressed_data_from_dict(report_metadata_dict)
 
         process_instance_report = cls(
             identifier=identifier,

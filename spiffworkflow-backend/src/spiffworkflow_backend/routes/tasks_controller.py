@@ -26,12 +26,12 @@ from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VER
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -258,11 +258,11 @@ def task_data_update(
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
-            json_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
+            compressed_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
                 task_model, new_task_data_dict, "json_data_hash"
             )
-            if json_data_dict is not None:
-                JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+            if compressed_data_dict is not None:
+                CompressedDataModel.insert_or_update_compressed_data_dict(compressed_data_dict)
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance,
                     ProcessInstanceEventType.task_data_edited.value,
@@ -590,13 +590,13 @@ def _interstitial_stream(
     if spiff_task is not None and spiff_task.id not in reported_ids:
         task_data = spiff_task.data
         if task_data is None or task_data == {}:
-            json_data = (
-                JsonDataModel.query.join(TaskModel, TaskModel.json_data_hash == JsonDataModel.hash)
+            compressed_data = (
+                CompressedDataModel.query.join(TaskModel, TaskModel.json_data_hash == CompressedDataModel.hash)
                 .filter(TaskModel.guid == str(spiff_task.id))
                 .first()
             )
-            if json_data is not None:
-                task_data = json_data.data
+            if compressed_data is not None:
+                task_data = compressed_data.decompress_data()
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         try:
             instructions = _render_instructions(spiff_task, task_data=task_data)
@@ -725,9 +725,9 @@ def task_save_draft(
         "saved_form_data_hash": None,
     }
 
-    json_data_dict = JsonDataModel.json_data_dict_from_dict(body)
-    JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
-    task_draft_data_dict["saved_form_data_hash"] = json_data_dict["hash"]
+    compressed_data_dict = CompressedDataModel.compressed_data_dict_from_dict(body)
+    CompressedDataModel.insert_or_update_compressed_data_dict(compressed_data_dict)
+    task_draft_data_dict["saved_form_data_hash"] = compressed_data_dict["hash"]
     try:
         TaskDraftDataModel.insert_or_update_task_draft_data_dict(task_draft_data_dict)
         db.session.commit()
@@ -740,11 +740,11 @@ def task_save_draft(
             if task_draft_data is not None:
                 # using this method here since it will check the db if the json_data_hash
                 # has changed and then we can update the task_data_draft record if it has
-                new_json_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
+                new_compressed_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
                     task_draft_data, body, "saved_form_data_hash"
                 )
-                if new_json_data_dict is not None:
-                    JsonDataModel.insert_or_update_json_data_dict(new_json_data_dict)
+                if new_compressed_data_dict is not None:
+                    CompressedDataModel.insert_or_update_compressed_data_dict(new_compressed_data_dict)
                     db.session.add(task_draft_data)
                     db.session.commit()
         else:

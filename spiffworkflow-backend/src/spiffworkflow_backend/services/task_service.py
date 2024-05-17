@@ -1,7 +1,5 @@
 import copy
-import json
 import time
-from hashlib import sha256
 from typing import TypedDict
 from uuid import UUID
 
@@ -17,12 +15,12 @@ from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.compressed_data import CompressedDataDict
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.json_data import JsonDataDict
-from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -125,7 +123,7 @@ class TaskService:
 
         self.bpmn_processes: dict[str, BpmnProcessModel] = {}
         self.task_models: dict[str, TaskModel] = {}
-        self.json_data_dicts: dict[str, JsonDataDict] = {}
+        self.compressed_data_dicts: dict[str, CompressedDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
 
         self.run_started_at: float | None = run_started_at
@@ -135,7 +133,7 @@ class TaskService:
         db.session.bulk_save_objects(self.task_models.values())
         if save_process_instance_events:
             db.session.bulk_save_objects(self.process_instance_events.values())
-        JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
+        CompressedDataModel.insert_or_update_compressed_data_records(self.compressed_data_dicts)
 
     def process_parents_and_children_and_save_to_database(
         self,
@@ -207,9 +205,11 @@ class TaskService:
         )
 
         self.update_task_model(task_model, spiff_task)
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
-        if bpmn_process_json_data is not None:
-            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+        bpmn_process_compressed_data = self.update_task_data_on_bpmn_process(
+            bpmn_process, bpmn_process_instance=spiff_task.workflow
+        )
+        if bpmn_process_compressed_data is not None:
+            self.compressed_data_dicts[bpmn_process_compressed_data["hash"]] = bpmn_process_compressed_data
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -259,9 +259,9 @@ class TaskService:
         new_properties_json["success"] = spiff_workflow.success
         bpmn_process.properties_json = new_properties_json
 
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
-        if bpmn_process_json_data is not None:
-            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+        bpmn_process_compressed_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
+        if bpmn_process_compressed_data is not None:
+            self.compressed_data_dicts[bpmn_process_compressed_data["hash"]] = bpmn_process_compressed_data
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
@@ -298,16 +298,16 @@ class TaskService:
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskState.get_name(new_properties_json["state"])
-        json_data_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
+        compressed_data_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"
         )
         python_env_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
             task_model, python_env_data_dict, "python_env_data_hash"
         )
-        if json_data_dict is not None:
-            self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
+        if compressed_data_dict is not None:
+            self.compressed_data_dicts[compressed_data_dict["hash"]] = compressed_data_dict
         if python_env_dict is not None:
-            self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
+            self.compressed_data_dicts[python_env_dict["hash"]] = python_env_dict
         task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
     def find_or_create_task_model_from_spiff_task(
@@ -426,11 +426,11 @@ class TaskService:
 
         bpmn_process.properties_json = bpmn_process_dict
 
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
+        bpmn_process_compressed_data = self.update_task_data_on_bpmn_process(
             bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict
         )
-        if bpmn_process_json_data is not None:
-            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+        if bpmn_process_compressed_data is not None:
+            self.compressed_data_dicts[bpmn_process_compressed_data["hash"]] = bpmn_process_compressed_data
 
         if top_level_process is None:
             self.process_instance.bpmn_process = bpmn_process
@@ -536,28 +536,26 @@ class TaskService:
         bpmn_process: BpmnProcessModel,
         bpmn_process_data_dict: dict | None = None,
         bpmn_process_instance: BpmnWorkflow | None = None,
-    ) -> JsonDataDict | None:
+    ) -> CompressedDataDict | None:
         data_dict_to_use = bpmn_process_data_dict
         if bpmn_process_instance is not None:
             data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
         if data_dict_to_use is None:
             data_dict_to_use = {}
-        bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
-        bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
-        json_data_dict: JsonDataDict | None = None
-        if bpmn_process.json_data_hash != bpmn_process_data_hash:
-            json_data_dict = {"hash": bpmn_process_data_hash, "data": data_dict_to_use}
-            bpmn_process.json_data_hash = bpmn_process_data_hash
-        return json_data_dict
+        compressed_data_dict = CompressedDataModel.compressed_data_dict_from_dict(data_dict_to_use)
+        if bpmn_process.json_data_hash != compressed_data_dict["hash"]:
+            bpmn_process.json_data_hash = compressed_data_dict["hash"]
+            return compressed_data_dict
+        return None
 
     @classmethod
     def update_json_data_on_db_model_and_return_dict_if_updated(
         cls, db_model: SpiffworkflowBaseDBModel, task_data_dict: dict, task_model_data_column: str
-    ) -> JsonDataDict | None:
-        json_data_dict = JsonDataModel.json_data_dict_from_dict(task_data_dict)
-        if getattr(db_model, task_model_data_column) != json_data_dict["hash"]:
-            setattr(db_model, task_model_data_column, json_data_dict["hash"])
-            return json_data_dict
+    ) -> CompressedDataDict | None:
+        compressed_data_dict = CompressedDataModel.compressed_data_dict_from_dict(task_data_dict)
+        if getattr(db_model, task_model_data_column) != compressed_data_dict["hash"]:
+            setattr(db_model, task_model_data_column, compressed_data_dict["hash"])
+            return compressed_data_dict
         return None
 
     @classmethod

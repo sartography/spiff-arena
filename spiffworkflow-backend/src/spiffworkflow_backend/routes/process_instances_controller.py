@@ -25,8 +25,8 @@ from spiffworkflow_backend.data_migrations.process_instance_migrator import Proc
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -182,7 +182,7 @@ def process_instance_list(
         user=g.user,
     )
 
-    json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(body["report_metadata"])
+    json_data_hash = CompressedDataModel.create_and_insert_json_data_from_dict(body["report_metadata"])
     db.session.commit()
 
     response_json["report_hash"] = json_data_hash
@@ -202,17 +202,12 @@ def process_instance_report_show(
         )
     response_result: Report | ProcessInstanceReportModel | None = None
     if report_hash is not None:
-        json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
-        if json_data is None:
-            raise ApiError(
-                error_code="report_metadata_not_found",
-                message=f"Could not find report metadata for {report_hash}.",
-            )
+        report_metadata: Any = CompressedDataModel.find_data_dict_by_hash(report_hash)
         response_result = {
             "id": 0,
             "identifier": "custom",
             "name": "custom",
-            "report_metadata": json_data.data,
+            "report_metadata": report_metadata,
         }
     else:
         response_result = ProcessInstanceReportService.report_with_identifier(g.user, report_id, report_identifier)

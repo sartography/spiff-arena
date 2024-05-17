@@ -11,9 +11,9 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
+from spiffworkflow_backend.models.compressed_data import CompressedDataModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
@@ -48,7 +48,7 @@ class TaskDraftDataModel(SpiffworkflowBaseDBModel):
 
     def get_saved_form_data(self) -> dict | None:
         if self.saved_form_data_hash is not None:
-            return JsonDataModel.find_data_dict_by_hash(self.saved_form_data_hash)
+            return CompressedDataModel.find_data_dict_by_hash(self.saved_form_data_hash)
         return None
 
     @classmethod
