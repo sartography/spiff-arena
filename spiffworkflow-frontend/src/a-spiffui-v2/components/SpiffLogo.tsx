@@ -1,17 +1,19 @@
-import { Stack, Typography } from '@mui/material';
+import { Stack, Typography, useTheme } from '@mui/material';
 import SpiffIcon from '../assets/icons/spiff-icon-cyan.svg';
 
 /**
  * The Spiff "S" logo and approved text
  */
 export default function SpiffLogo() {
+  const isDark = useTheme().palette.mode === 'dark';
+
   return (
     <Stack sx={{ alignItems: 'center' }}>
       <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
         <SpiffIcon />
         <Typography
           sx={{
-            color: 'primary.main',
+            color: isDark ? 'primary.light' : 'primary.main',
             fontSize: 22,
             display: { xs: 'none', md: 'block' },
           }}

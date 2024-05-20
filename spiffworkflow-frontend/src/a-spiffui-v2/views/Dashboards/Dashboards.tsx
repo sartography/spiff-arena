@@ -7,6 +7,7 @@ import {
   ListItemIcon,
   ListItemText,
   MenuItem,
+  Paper,
   Select,
   SelectChangeEvent,
   Slide,
@@ -14,6 +15,7 @@ import {
   Tab,
   Tabs,
   TextField,
+  useTheme,
 } from '@mui/material';
 import { ReactNode, useEffect, useState } from 'react';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
@@ -25,7 +27,6 @@ import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
-import Toolbar from './Toolbar';
 import MyProcesses from './myProcesses/MyProcesses';
 import InfoPanel from '../../components/InfoPanel';
 import TaskInfo from './infopanels/TaskInfo';
@@ -35,6 +36,7 @@ import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
 import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
 import useTaskCollection from '../../hooks/useTaskCollection';
+import { grey } from '@mui/material/colors';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -48,6 +50,8 @@ export default function Dashboards() {
   const { taskCollection } = useTaskCollection({ processInfo: {} });
   const { processInstanceTimesReport, setProcessInstances } =
     useProcessInstanceTimes();
+
+  const isDark = useTheme().palette.mode === 'dark';
 
   const tabData = [
     {
@@ -140,34 +144,18 @@ export default function Dashboards() {
     <>
       <Grid container spacing={2} width="100%">
         <Grid item sx={{ width: '100%' }}>
-          <Stack>
-            <Toolbar />
-            <Box
+          <Stack gap={3}>
+            <Paper
               sx={{
                 display: { xs: 'none', sm: 'block' },
                 borderBottom: 1,
                 borderColor: 'divider',
+                padding: 2,
               }}
             >
-              <Tabs value={selectedTab} variant="fullWidth">
-                {tabData.map((tab) => (
-                  <Tab
-                    label={tab.label}
-                    value={tab.value}
-                    onClick={() => handleTabChange(tab)}
-                    icon={tab.icon}
-                    iconPosition="start"
-                  />
-                ))}
-              </Tabs>
-            </Box>
-            <DashboardCharts times={processInstanceTimesReport} />
-            <Stack
-              direction="row"
-              gap={2}
-              padding={2}
-              sx={{ flexWrap: 'wrap' }}
-            >
+              <DashboardCharts times={processInstanceTimesReport} />
+            </Paper>
+            <Stack direction="row" gap={2} sx={{ flexWrap: 'wrap' }}>
               <FormControl>
                 <InputLabel id="filter-select-label">Filter</InputLabel>
                 <Select
@@ -176,6 +164,7 @@ export default function Dashboards() {
                   value={selectedFilter}
                   label="Filter"
                   onChange={handleFilterSelectChange}
+                  sx={{ backgroundColor: isDark ? grey[900] : 'white' }}
                 >
                   <MenuItem value="">
                     <ListItemIcon>
@@ -195,7 +184,13 @@ export default function Dashboards() {
               </FormControl>
               <Box sx={{ flexGrow: 1 }}>
                 <TextField
-                  sx={{ width: { xs: 300, sm: '100%' } }}
+                  sx={{
+                    width: {
+                      xs: 300,
+                      sm: '100%',
+                      backgroundColor: isDark ? grey[900] : 'white',
+                    },
+                  }}
                   variant="outlined"
                   placeholder="Search"
                   value={searchText}
@@ -217,7 +212,22 @@ export default function Dashboards() {
                 <Download />
               </Stack>
             </Stack>
-            {displayGrid()}
+            <Paper>
+              <Stack>
+                <Tabs value={selectedTab} variant="fullWidth">
+                  {tabData.map((tab) => (
+                    <Tab
+                      label={tab.label}
+                      value={tab.value}
+                      onClick={() => handleTabChange(tab)}
+                      icon={tab.icon}
+                      iconPosition="start"
+                    />
+                  ))}
+                </Tabs>
+                {displayGrid()}
+              </Stack>
+            </Paper>
           </Stack>
         </Grid>
       </Grid>

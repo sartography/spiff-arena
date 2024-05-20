@@ -1,11 +1,10 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Container, CssBaseline, Grid, Slide } from '@mui/material';
-import { blueGrey, grey } from '@mui/material/colors';
+import { grey } from '@mui/material/colors';
 import { useEffect, useState } from 'react';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
-import CollapseButton from '../a-spiffui-v2/views/app/sidemenu/CollapseButton';
 import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
 
 /**
@@ -17,7 +16,7 @@ export default function SpiffUIV2() {
   const [globalTheme, setGlobalTheme] = useState(
     createTheme(createSpiffTheme('light'))
   );
-  const [sideMenuCollapsed, setSideMenuCollapsed] = useState(false);
+  const isDark = globalTheme.palette.mode === 'dark';
   useEffect(() => {
     /**
      * The housing app has an element with a white background
@@ -39,10 +38,6 @@ export default function SpiffUIV2() {
     }
   };
 
-  const handleCollapseToggle = (data: boolean) => {
-    setSideMenuCollapsed(data);
-  };
-
   return (
     <ThemeProvider theme={globalTheme}>
       <CssBaseline />
@@ -59,7 +54,10 @@ export default function SpiffUIV2() {
           padding: '0px !important',
         }}
       >
-        <Grid container sx={{ height: '100%', backgroundColor: grey[50] }}>
+        <Grid
+          container
+          sx={{ height: '100%', backgroundColor: isDark ? 'black' : grey[200] }}
+        >
           <Grid item sx={{ width: '100%' }}>
             <Slide direction="down" in mountOnEnter unmountOnExit>
               <Box

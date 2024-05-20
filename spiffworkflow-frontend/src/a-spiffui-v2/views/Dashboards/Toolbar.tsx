@@ -1,6 +1,5 @@
 import { Typography, Button, Grid, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import NotificationBell from '../../assets/icons/notification-bell.svg';
 
 /** Appears at the top of the Dashboards view. */
 export default function Toolbar() {
@@ -29,14 +28,13 @@ export default function Toolbar() {
           gap={2}
         >
           <Button
-            title="Hello"
+            title="Start New Process"
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ width: 200, height: 40 }}
           >
             Start New Process
           </Button>
-          <NotificationBell />
         </Box>
       </Grid>
     </Grid>

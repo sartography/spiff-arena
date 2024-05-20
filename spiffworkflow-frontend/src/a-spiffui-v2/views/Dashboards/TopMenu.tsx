@@ -1,8 +1,8 @@
-import { Box, Paper, Stack, useTheme } from '@mui/material';
+import { Box, Button, Paper, Stack, useTheme } from '@mui/material';
 import PersonOutline from '@mui/icons-material/PersonOutline';
-import HomeLine from '@mui/icons-material/HomeOutlined';
 import Moon from '@mui/icons-material/DarkModeOutlined';
 import Lightbulb from '@mui/icons-material/LightbulbOutlined';
+import AddIcon from '@mui/icons-material/Add';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import { grey } from '@mui/material/colors';
 import SpiffLogo from '../../components/SpiffLogo';
@@ -14,11 +14,8 @@ export default function TopMenu({
 }: {
   callback: (data: MenuItemData) => void;
 }) {
-  const iconColor = useTheme().palette.mode === 'light' ? grey[600] : grey[50];
-
-  const navMenuItemData: MenuItemData[] = [
-    { text: 'Home', icon: <HomeLine sx={{ color: iconColor }} />, path: '/' },
-  ];
+  const iconColor =
+    useTheme().palette.mode === 'light' ? grey[600] : 'primary.light';
 
   const userMenuItemData: MenuItemData[] = [
     {
@@ -49,7 +46,7 @@ export default function TopMenu({
         paddingLeft: 3,
         paddingRight: 3,
         paddingTop: 2,
-        paddingBottom: 1,
+        paddingBottom: 2,
       }}
     >
       <Stack
@@ -61,20 +58,28 @@ export default function TopMenu({
       >
         <SpiffLogo />
         <Box sx={{ width: 32 }} />
-        {navMenuItemData.map((item) => (
-          <MenuItem data={item} key={item.text} callback={callback} />
-        ))}
-        <Box
+        <Box sx={{ width: '100%' }}>
+          <Button
+            title="Start New Process"
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{ width: 200, height: 40 }}
+          >
+            Start New Process
+          </Button>
+        </Box>
+        <Stack
+          direction="row"
           sx={{
+            gap: 2,
             width: '100%',
-            display: 'flex',
             justifyContent: 'right',
           }}
         >
           {userMenuItemData.map((item) => (
             <MenuItem data={item} key={item.text} callback={callback} />
           ))}
-        </Box>
+        </Stack>
       </Stack>
     </Paper>
   );

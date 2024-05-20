@@ -3,6 +3,7 @@ import {
   blue,
   cyan,
   green,
+  grey,
   indigo,
   orange,
   pink,
@@ -90,12 +91,9 @@ const baseTheme = {
   palette: {
     primary: {
       main: cyan[800],
-      light: cyan[600],
+      light: cyan[400],
       dark: cyan[900],
       contrastText: '#ffffff',
-    },
-    secondary: {
-      main: pink.A100,
     },
   },
   typography: {

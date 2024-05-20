@@ -1,5 +1,5 @@
-import { Stack, Typography, useTheme } from '@mui/material';
-import { blueGrey, grey, purple } from '@mui/material/colors';
+import { Button, useTheme } from '@mui/material';
+import { grey } from '@mui/material/colors';
 import { ReactNode, useEffect, useState } from 'react';
 
 /**
@@ -27,7 +27,6 @@ export default function MenuItem({
 }) {
   const [toggled, setToggled] = useState(false);
   const isDark = useTheme().palette.mode === 'dark';
-
   /**
    * Report back toggle state and icon/text if set.
    */
@@ -48,40 +47,23 @@ export default function MenuItem({
     if (data.toggleData?.toggled) {
       handleClick();
     }
-  }, []);
+  }, [data]);
 
   return (
-    <Stack
-      direction="row"
+    <Button
+      onClick={handleClick}
+      startIcon={data.icon}
       sx={{
-        borderRadius: 5,
-        gap: 1,
-        padding: 1,
+        borderColor: isDark ? 'primary' : grey[400],
+        borderWidth: 1,
+        borderStyle: toggled ? 'solid' : 'transparent',
+        color: isDark ? 'primary.light' : grey[700],
         ':hover': {
-          backgroundColor: isDark ? blueGrey[800] : blueGrey[50],
+          backgroundColor: isDark ? grey[800] : grey[200],
         },
-        cursor: 'default',
-        alignItems: 'center',
-        maxHeight: 40,
       }}
-      onClick={() => handleClick()}
     >
-      <Typography>
-        {data.toggleData && data.toggleData.toggleIcon && toggled
-          ? data.toggleData.toggleIcon
-          : data.icon}
-      </Typography>
-      <Typography
-        sx={{
-          color: isDark ? grey[50] : grey[800],
-          fontSize: 13,
-          paddingBottom: 0.5,
-        }}
-      >
-        {data.toggleData && data.toggleData.toggleText && toggled
-          ? data.toggleData.toggleText
-          : data.text}
-      </Typography>
-    </Stack>
+      {data.text}
+    </Button>
   );
 }
