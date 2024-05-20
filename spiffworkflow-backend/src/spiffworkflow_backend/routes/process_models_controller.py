@@ -41,6 +41,7 @@ from spiffworkflow_backend.services.process_model_test_generator_service import 
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 
 
 def process_model_create(
@@ -598,4 +599,6 @@ def _create_or_update_process_model_file(
     file.file_contents_hash = file_contents_hash
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
+    DataSetupService.save_all_process_models()
+    
     return make_response(jsonify(file), http_status_to_return)
