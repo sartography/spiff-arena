@@ -1,5 +1,13 @@
 import { PaletteMode, ThemeOptions } from '@mui/material';
-import { blue, green, indigo, orange, pink, red } from '@mui/material/colors';
+import {
+  blue,
+  cyan,
+  green,
+  indigo,
+  orange,
+  pink,
+  red,
+} from '@mui/material/colors';
 
 const customNotifications = (mode: PaletteMode) => {
   return mode === 'light'
@@ -60,7 +68,9 @@ const customComponents = (mode: PaletteMode) => {
       styleOverrides: {
         root: {
           fontSize: '1rem',
-          borderRadius: 100,
+          borderRadius: 8,
+          maxHeight: 40,
+          color: 'primary',
         },
       },
     },
@@ -68,7 +78,7 @@ const customComponents = (mode: PaletteMode) => {
       styleOverrides: {
         root: {
           '&.Mui-selected': {
-            color: mode === 'light' ? 'primary.main' : indigo[200],
+            color: mode === 'light' ? 'primary.main' : cyan[200],
           },
         },
       },
@@ -79,21 +89,16 @@ const customComponents = (mode: PaletteMode) => {
 const baseTheme = {
   palette: {
     primary: {
-      main: indigo[500],
-      light: indigo[100],
+      main: cyan[800],
+      light: cyan[600],
+      dark: cyan[900],
+      contrastText: '#ffffff',
     },
     secondary: {
       main: pink.A100,
     },
   },
   typography: {
-    // Poppins is pulled in from the Google Fonts CDN in index.html
-    // TODO: Install fonts locally?
-    fontFamily: `"Poppins", "Roboto", "Arial", "Helvetica", sans-serif`,
-    fontSize: 14,
-    fontWeightLight: 300,
-    fontWeightRegular: 400,
-    fontWeightMedium: 500,
     button: {
       textTransform: undefined,
     },

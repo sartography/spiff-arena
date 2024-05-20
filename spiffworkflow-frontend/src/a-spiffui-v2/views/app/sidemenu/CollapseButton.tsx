@@ -1,5 +1,8 @@
-import { Paper, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { useEffect, useState } from 'react';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { grey } from '@mui/material/colors';
 
 export default function CollapseButton({
   callback,
@@ -9,6 +12,8 @@ export default function CollapseButton({
   toggle?: boolean;
 }) {
   const [toggled, setToggled] = useState(false);
+
+  const isDark = useTheme().palette.mode === 'dark';
 
   useEffect(() => {
     // Dev can reset toggle if they need
@@ -27,18 +32,23 @@ export default function CollapseButton({
     <Paper
       elevation={1}
       sx={{
-        padding: 1,
-        borderRadius: '50%',
         width: 50,
-        height: 50,
+        height: 25,
         border: '1px solid',
-        borderColor: `primary.${useTheme().palette.mode}`,
+        borderColor: isDark ? grey[50] : grey[400],
+        paddingBottom: 2,
       }}
       onClick={() => handleClick()}
     >
-      <Typography variant="h5" textAlign="center" sx={{ userSelect: 'none' }}>
-        {toggled ? '>' : '<'}
-      </Typography>
+      <Box
+        sx={{
+          userSelect: 'none',
+          textAlign: 'center',
+          color: isDark ? grey[50] : grey[600],
+        }}
+      >
+        {toggled ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+      </Box>
     </Paper>
   );
 }

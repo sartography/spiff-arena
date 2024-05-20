@@ -1,5 +1,5 @@
 import { Stack, Typography, useTheme } from '@mui/material';
-import { purple } from '@mui/material/colors';
+import { blueGrey, grey, purple } from '@mui/material/colors';
 import { ReactNode, useEffect, useState } from 'react';
 
 /**
@@ -53,22 +53,31 @@ export default function MenuItem({
   return (
     <Stack
       direction="row"
-      borderRadius={5}
-      gap={2}
-      padding={1}
-      onClick={() => handleClick()}
-      alignItems="center"
       sx={{
-        ':hover': { backgroundColor: isDark ? 'primary.main' : purple[50] },
+        borderRadius: 5,
+        gap: 1,
+        padding: 1,
+        ':hover': {
+          backgroundColor: isDark ? blueGrey[800] : blueGrey[50],
+        },
         cursor: 'default',
+        alignItems: 'center',
+        maxHeight: 40,
       }}
+      onClick={() => handleClick()}
     >
-      <Typography sx={{ color: 'text.primary', paddingTop: 1 }}>
+      <Typography>
         {data.toggleData && data.toggleData.toggleIcon && toggled
           ? data.toggleData.toggleIcon
           : data.icon}
       </Typography>
-      <Typography color="text.primary">
+      <Typography
+        sx={{
+          color: isDark ? grey[50] : grey[800],
+          fontSize: 13,
+          paddingBottom: 0.5,
+        }}
+      >
         {data.toggleData && data.toggleData.toggleText && toggled
           ? data.toggleData.toggleText
           : data.text}

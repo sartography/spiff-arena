@@ -82,10 +82,6 @@ export default function SideMenu({
           ))}
         </Stack>
       </Stack>
-      {/**
-       * This stack is absolute positioned to make it bottom-sticky.
-       * Constrain the width to prevent it from taking up the whole screen.
-       */}
       <Stack
         gap={2}
         direction="column"

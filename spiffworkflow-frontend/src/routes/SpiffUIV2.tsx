@@ -1,20 +1,12 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import {
-  Box,
-  Container,
-  CssBaseline,
-  Divider,
-  Grid,
-  Paper,
-  Slide,
-} from '@mui/material';
-import { grey } from '@mui/material/colors';
+import { Box, Container, CssBaseline, Grid, Slide } from '@mui/material';
+import { blueGrey, grey } from '@mui/material/colors';
 import { useEffect, useState } from 'react';
-import SideMenu from '../a-spiffui-v2/views/app/sidemenu/SideMenu';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
 import CollapseButton from '../a-spiffui-v2/views/app/sidemenu/CollapseButton';
+import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -67,9 +59,9 @@ export default function SpiffUIV2() {
           padding: '0px !important',
         }}
       >
-        <Grid container sx={{ height: '100%' }}>
-          <Grid item>
-            <Slide direction="right" in mountOnEnter unmountOnExit>
+        <Grid container sx={{ height: '100%', backgroundColor: grey[50] }}>
+          <Grid item sx={{ width: '100%' }}>
+            <Slide direction="down" in mountOnEnter unmountOnExit>
               <Box
                 sx={{
                   height: '100%',
@@ -77,37 +69,17 @@ export default function SpiffUIV2() {
                   position: 'relative',
                 }}
               >
-                <Paper
-                  elevation={3}
-                  sx={{ padding: 2, margin: 0, width: '100%', height: '100%' }}
-                >
-                  <SideMenu
-                    callback={handleMenuCallback}
-                    collapsed={sideMenuCollapsed}
-                  />
-                </Paper>
                 <Box
                   sx={{
-                    position: 'absolute',
-                    top: '28%',
-                    right: -25,
-                    zIndex: 1500,
-                    display: { xs: 'none', lg: 'block' },
+                    width: '100%',
                   }}
                 >
-                  <CollapseButton callback={handleCollapseToggle} />
+                  <TopMenu callback={handleMenuCallback} />
                 </Box>
               </Box>
             </Slide>
           </Grid>
-          <Grid
-            item
-            xs={10}
-            sm={10}
-            md={sideMenuCollapsed ? 11 : 8}
-            lg={sideMenuCollapsed ? 11 : 9}
-            padding={6}
-          >
+          <Grid item xs={12} sx={{ padding: '3%' }}>
             <Dashboards />
           </Grid>
         </Grid>
