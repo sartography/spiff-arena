@@ -1,10 +1,12 @@
+import os
+
 from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-import os
+
 
 class TestProcessCallers(BaseTest):
     def test_references_after_process_model_create(
@@ -195,7 +197,7 @@ class TestProcessCallers(BaseTest):
 
         bpmn_file_name = "call_activity_level_2.bpmn"
         bpmn_file_location = "call_activity_level_2"
-        
+
         response = self.create_spec_file(
             client,
             process_model_id=process_model.id,
@@ -205,7 +207,7 @@ class TestProcessCallers(BaseTest):
             file_data=file_data,
             user=with_super_admin_user,
         )
-        
+
         assert response["process_model_id"] == process_model.id
         assert response["name"] == bpmn_file_name
         assert bytes(str(response["file_contents"]), "utf-8") == file_data

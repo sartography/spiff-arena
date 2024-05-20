@@ -28,6 +28,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -41,7 +42,6 @@ from spiffworkflow_backend.services.process_model_test_generator_service import 
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.data_setup_service import DataSetupService
 
 
 def process_model_create(
@@ -603,5 +603,5 @@ def _create_or_update_process_model_file(
 
     if is_new_file:
         DataSetupService.save_all_process_models()
-    
+
     return make_response(jsonify(file), http_status_to_return)
