@@ -1,9 +1,4 @@
-import {
-  DatePicker,
-  DatePickerInput,
-  TextInput,
-  FileUploader,
-} from '@carbon/react';
+import { DatePicker, DatePickerInput, TextInput } from '@carbon/react';
 import {
   getInputProps,
   FormContextType,
