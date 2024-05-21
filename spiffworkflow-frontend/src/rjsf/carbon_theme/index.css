@@ -44,6 +44,18 @@
   padding-top: 8px;
 }
 
+.rjsf .file-upload {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 14px;
+}
+/* position the remove button to align with the file description */
+.rjsf .file-info span div {
+  position: relative;
+  bottom: 6px;
+  left: 5px;
+}
+
 .rjsf .rjsf-field label {
   font-weight: bolder;
 }
