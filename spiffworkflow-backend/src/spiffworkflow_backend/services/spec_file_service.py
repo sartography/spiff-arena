@@ -307,11 +307,7 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_process_cache(ref: Reference) -> None:
-        process_id_lookup = (
-            ReferenceCacheModel.basic_query()
-            .filter_by(identifier=ref.identifier, type=ref.type)
-            .first()
-        )
+        process_id_lookup = ReferenceCacheModel.basic_query().filter_by(identifier=ref.identifier, type=ref.type).first()
         if process_id_lookup is None:
             process_id_lookup = ReferenceCacheModel.from_spec_reference(ref, use_current_cache_generation=True)
             db.session.add(process_id_lookup)
