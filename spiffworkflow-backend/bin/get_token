@@ -67,6 +67,8 @@ def get_auth_token_object() -> dict:
     return auth_token_object
 
 
+# ruff: noqa: T201
+
 for token_identifier, token in get_auth_token_object().items():
     # if the k is access_token, print just it to stdout
     print(f"{token_identifier}:", file=sys.stderr)
