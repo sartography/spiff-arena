@@ -309,7 +309,7 @@ class SpecFileService(FileSystemService):
     def update_process_cache(ref: Reference) -> None:
         process_id_lookup = (
             ReferenceCacheModel.basic_query()
-            .filter_by(identifier=ref.identifier, relative_location=ref.relative_location, type=ref.type)
+            .filter_by(identifier=ref.identifier, type=ref.type)
             .first()
         )
         if process_id_lookup is None:
