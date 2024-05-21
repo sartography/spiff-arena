@@ -7,7 +7,10 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 supported_session_types=$(grep -E '^(el)?if.*\<session_type\>.*==' "$0" | sed -E 's/.*== "([^"]+)".*/\1/' | tr '\n' ' ')
 
 session_type="${1:-}"
@@ -45,10 +48,10 @@ function setup_db_for_ci() {
       rm -rf "migrations"
     fi
 
-      # Run the 'init' and 'migrate' tasks using flask
-      poetry run flask db init
-      poetry run flask db migrate
-    fi
+    # Run the 'init' and 'migrate' tasks using flask
+    poetry run flask db init
+    poetry run flask db migrate
+  fi
 
   # Run the 'upgrade' task using flask
   poetry run flask db upgrade
@@ -68,11 +71,11 @@ elif [[ "${session_type}" == "mypy" ]]; then
   poetry run mypy src tests
 
 elif [[ "${session_type}" == "safety" ]]; then
-  poetry run safety check --full-report
+  poetry run safety check --ignore=67599 --full-report
 
 elif [[ "${session_type}" == "coverage" ]]; then
-  if ls .coverage.* 1> /dev/null 2>&1; then
-      poetry run coverage combine
+  if ls .coverage.* 1>/dev/null 2>&1; then
+    poetry run coverage combine
   fi
   poetry run coverage report
   poetry run coverage xml

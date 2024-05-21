@@ -32,7 +32,7 @@ if [[ "$process_model_dir" == "acceptance" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
 elif [[ "$process_model_dir" == "localopenid" ]]; then
-  backend_base_url="$SPIFFWORKFLOW_BACKEND_URL"
+  backend_base_url="${SPIFFWORKFLOW_BACKEND_URL:-}"
   if [[ -z "$backend_base_url" ]]; then
     backend_base_url="http://localhost:$port"
   fi
