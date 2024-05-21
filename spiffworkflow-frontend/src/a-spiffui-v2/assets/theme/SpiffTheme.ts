@@ -1,16 +1,7 @@
 import { PaletteMode, ThemeOptions } from '@mui/material';
-import {
-  blue,
-  cyan,
-  green,
-  grey,
-  indigo,
-  orange,
-  pink,
-  red,
-} from '@mui/material/colors';
+import { blue, cyan, green, grey, orange, red } from '@mui/material/colors';
 
-const customNotifications = (mode: PaletteMode) => {
+const customPalette = (mode: PaletteMode) => {
   return mode === 'light'
     ? {
         success: {
@@ -32,6 +23,14 @@ const customNotifications = (mode: PaletteMode) => {
           main: blue[100],
           light: blue[100],
           dark: blue[500],
+        },
+        background: {
+          paper: '#fff',
+          default: grey[200],
+          light: grey[100],
+          medium: grey[300],
+          dark: grey[500],
+          offblack: grey[900],
         },
       }
     : {
@@ -58,6 +57,10 @@ const customNotifications = (mode: PaletteMode) => {
           light: blue[300],
           dark: blue[700],
           contrastText: '#fff',
+        },
+        background: {
+          paper: '#121212',
+          default: '#121212',
         },
       };
 };
@@ -109,7 +112,7 @@ export const createSpiffTheme = (mode: PaletteMode = 'light'): ThemeOptions => {
     palette: {
       mode,
       ...baseTheme.palette,
-      ...customNotifications(mode),
+      ...customPalette(mode),
     },
     components: {
       ...customComponents(mode),

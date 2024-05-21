@@ -1,5 +1,6 @@
 import {
   Box,
+  Container,
   FormControl,
   Grid,
   InputAdornment,
@@ -24,6 +25,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import { grey } from '@mui/material/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
@@ -36,7 +38,6 @@ import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
 import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
 import useTaskCollection from '../../hooks/useTaskCollection';
-import { grey } from '@mui/material/colors';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -142,93 +143,111 @@ export default function Dashboards() {
 
   return (
     <>
-      <Grid container spacing={2} width="100%">
+      <Grid container spacing={2} sx={{ width: '100%' }}>
         <Grid item sx={{ width: '100%' }}>
-          <Stack gap={3}>
-            <Paper
-              sx={{
-                display: { xs: 'none', sm: 'block' },
-                borderBottom: 1,
-                borderColor: 'divider',
-                padding: 2,
-              }}
-            >
-              <DashboardCharts times={processInstanceTimesReport} />
-            </Paper>
-            <Stack direction="row" gap={2} sx={{ flexWrap: 'wrap' }}>
-              <FormControl>
-                <InputLabel id="filter-select-label">Filter</InputLabel>
-                <Select
-                  labelId="filter-select-label"
-                  id="filter-select"
-                  value={selectedFilter}
-                  label="Filter"
-                  onChange={handleFilterSelectChange}
-                  sx={{ backgroundColor: isDark ? grey[900] : 'white' }}
-                >
-                  <MenuItem value="">
-                    <ListItemIcon>
-                      <FilterAltOutlinedIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Filter..." />
-                  </MenuItem>
-                  {filterSelectData.map((filter) => (
-                    <MenuItem value={filter.value}>
-                      <Stack direction="row" gap={2}>
+          {/**
+           * We have to force padding in MuiContainer to 0px
+           * to meet design requirement
+           */}
+          <Container
+            sx={{
+              padding: '0px !important',
+              backgroundColor: 'background.medium',
+            }}
+          >
+            <Stack gap={3} sx={{ margin: 0, padding: 0 }}>
+              <Paper
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <DashboardCharts times={processInstanceTimesReport} />
+              </Paper>
+              <Stack
+                direction="row"
+                gap={2}
+                sx={{ flexWrap: 'wrap', paddingLeft: 2, paddingRight: 2 }}
+              >
+                <FormControl>
+                  <InputLabel id="filter-select-label">Filter</InputLabel>
+                  <Select
+                    labelId="filter-select-label"
+                    id="filter-select"
+                    value={selectedFilter}
+                    label="Filter"
+                    onChange={handleFilterSelectChange}
+                    sx={{
+                      backgroundColor: isDark
+                        ? 'background.offblack'
+                        : 'background.default',
+                    }}
+                  >
+                    <MenuItem value="">
+                      <ListItemIcon>
                         <FilterAltOutlinedIcon />
-                        {filter.label}
-                      </Stack>
+                      </ListItemIcon>
+                      <ListItemText primary="Filter..." />
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box sx={{ flexGrow: 1 }}>
-                <TextField
-                  sx={{
-                    width: {
-                      xs: 300,
-                      sm: '100%',
-                      backgroundColor: isDark ? grey[900] : 'white',
-                    },
-                  }}
-                  variant="outlined"
-                  placeholder="Search"
-                  value={searchText}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchOutlinedIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
+                    {filterSelectData.map((filter) => (
+                      <MenuItem value={filter.value}>
+                        <Stack direction="row" gap={2}>
+                          <FilterAltOutlinedIcon />
+                          {filter.label}
+                        </Stack>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Box sx={{ flexGrow: 1 }}>
+                  <TextField
+                    sx={{
+                      width: {
+                        xs: 300,
+                        sm: '100%',
+                        backgroundColor: isDark ? grey[900] : 'white',
+                      },
+                    }}
+                    variant="outlined"
+                    placeholder="Search"
+                    value={searchText}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchOutlinedIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
 
-              <Stack direction="row" gap={2} padding={2}>
-                <Columns />
-                <Share />
-                <Grid />
-                <Download />
+                <Stack direction="row" gap={2} padding={2}>
+                  <Columns />
+                  <Share />
+                  <Grid />
+                  <Download />
+                </Stack>
               </Stack>
+              <Paper>
+                <Stack>
+                  <Tabs value={selectedTab} variant="fullWidth">
+                    {tabData.map((tab) => (
+                      <Tab
+                        label={tab.label}
+                        value={tab.value}
+                        onClick={() => handleTabChange(tab)}
+                        icon={tab.icon}
+                        iconPosition="start"
+                      />
+                    ))}
+                  </Tabs>
+                  {displayGrid()}
+                </Stack>
+              </Paper>
             </Stack>
-            <Paper>
-              <Stack>
-                <Tabs value={selectedTab} variant="fullWidth">
-                  {tabData.map((tab) => (
-                    <Tab
-                      label={tab.label}
-                      value={tab.value}
-                      onClick={() => handleTabChange(tab)}
-                      icon={tab.icon}
-                      iconPosition="start"
-                    />
-                  ))}
-                </Tabs>
-                {displayGrid()}
-              </Stack>
-            </Paper>
-          </Stack>
+          </Container>
         </Grid>
       </Grid>
       {/** Absolutely positioned info window */}

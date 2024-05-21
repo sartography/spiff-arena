@@ -1,6 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Container, CssBaseline, Grid, Slide } from '@mui/material';
-import { grey } from '@mui/material/colors';
 import { useEffect, useState } from 'react';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
@@ -56,7 +55,10 @@ export default function SpiffUIV2() {
       >
         <Grid
           container
-          sx={{ height: '100%', backgroundColor: isDark ? 'black' : grey[200] }}
+          sx={{
+            height: '100%',
+            backgroundColor: isDark ? 'black' : 'background.light',
+          }}
         >
           <Grid item sx={{ width: '100%' }}>
             <Slide direction="down" in mountOnEnter unmountOnExit>
