@@ -7,7 +7,7 @@ import {
   modifyProcessIdentifierForPathParam,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
-import { ReferenceCache } from '../../interfaces';
+import { PaginationObject, ReferenceCache } from '../../interfaces';
 
 // TODO: update to work with current message-models api
 type OwnProps = {
@@ -15,8 +15,8 @@ type OwnProps = {
 };
 
 export default function MessageModelList({ processGroupId }: OwnProps) {
-  const [messageModels, setMessageModels] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [messageModels, setMessageModels] = useState<ReferenceCache[]>([]);
+  const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
