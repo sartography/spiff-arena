@@ -18,7 +18,7 @@ They aid in elucidating the data flow and dependencies within the process, thus 
 
 ## Data Object Types
 
-### Data Object
+### Data Input
 
 ![data_input](images/data_input.png)
 
