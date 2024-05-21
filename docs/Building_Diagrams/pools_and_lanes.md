@@ -153,10 +153,8 @@ Lets discuss the methods for assigning lane owners:
 #### Practical Application in a BPMN Model:
 In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process. For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
 
-
-
-- **Start of the Process**:
-  - The process begins, and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"
+- **Start of the Process**
+  - The process begins and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"
 
 ![Lane Owners](images/lane_owners.png)
 
@@ -167,6 +165,5 @@ In a typical BPMN workflow, lane assignments are crucial for managing who perfor
 
 
 ```{admonition} Note
-⚠ Specifying a user group in the `lane_owners` dictionary in script task does not require it to previously exist in the database.
+⚠ Specifying a user group in the `lane_owners` dictionary in script task does not require it to previously exist in the database. 
 ```
-

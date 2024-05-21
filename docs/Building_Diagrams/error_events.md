@@ -93,7 +93,7 @@ The process kicks off with an action that requires fetching specific employee de
 
 3. **Error Handling Setup**:
 
-![Error Event](images/error_event_examplen3.png)
+![Error Event](images/error_event_example3.png)
 
 Prior to the service task's execution, one potential error ID is defined as `Error_1`.
 
