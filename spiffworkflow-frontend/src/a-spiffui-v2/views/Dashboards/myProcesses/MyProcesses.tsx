@@ -1,8 +1,6 @@
-import { Box, Stack } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import ProcessInstanceCard from '../cards/ProcessInstanceCard';
-import CellRenderer from './CellRenderer';
 
 export default function MyProcesses({
   filter,
@@ -52,73 +50,30 @@ export default function MyProcesses({
 
   useEffect(() => {
     if ('report_metadata' in pis) {
-      const mappedColumns = pis.report_metadata?.columns.map(
-        (column: Record<string, any>) => ({
-          field: column.accessor,
-          headerName: column.Header,
-          flex: (() => {
-            // Adjust the width of some columns to clean up UI
-            switch (column.Header) {
-              case 'Id':
-                return 0.5;
-              case 'Start':
-              case 'End':
-                return 1;
-              default:
-                return 1;
-            }
-          })(),
+      const columns = [
+        {
+          field: 'process_instances',
+          headerName: 'Process Instances',
+          flex: 1,
           renderCell: (params: Record<string, any>) => (
-            <CellRenderer header={column.Header} data={params} />
+            <ProcessInstanceCard pi={params} />
           ),
-        })
-      );
-
+        },
+      ];
       const rows = [...pis.results];
-      setProcessInstanceColumns(mappedColumns);
+      setProcessInstanceColumns(columns);
       setProcessInstanceRows(rows);
     }
   }, [pis]);
 
   return (
-    <>
-      <Box
-        sx={{
-          display: { xs: 'none', lg: 'block' },
-          position: 'relative',
-          overflowY: 'auto',
-          height: 'calc(100vh - 420px)',
-          zIndex: 0,
-        }}
-      >
-        <DataGrid
-          autoHeight
-          sx={{
-            '&, [class^=MuiDataGrid]': { border: 'none' },
-          }}
-          rows={processInstanceRows}
-          columns={processInstanceColumns}
-          onRowClick={handleGridRowClick}
-        />
-      </Box>
-      <Box
-        sx={{
-          display: { xs: 'block', lg: 'none' },
-        }}
-      >
-        <Stack
-          gap={2}
-          sx={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
-        >
-          {processInstanceRows.map((instance: Record<string, any>) => (
-            <ProcessInstanceCard instance={instance} />
-          ))}
-        </Stack>
-      </Box>
-    </>
+    <DataGrid
+      autoHeight
+      columnHeaderHeight={0}
+      getRowHeight={() => 'auto'}
+      rows={processInstanceRows}
+      columns={processInstanceColumns}
+      onRowClick={handleGridRowClick}
+    />
   );
 }

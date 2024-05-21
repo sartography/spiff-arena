@@ -13,26 +13,17 @@ import {
   SelectChangeEvent,
   Slide,
   Stack,
-  Tab,
-  Tabs,
   TextField,
   useTheme,
 } from '@mui/material';
-import { ReactNode, useEffect, useState } from 'react';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import MonetizationOnOutlinedIcon from '@mui/icons-material/MonetizationOnOutlined';
-import GroupsIcon from '@mui/icons-material/Groups';
-import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import { useEffect, useState } from 'react';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
-import { grey } from '@mui/material/colors';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
 import MyProcesses from './myProcesses/MyProcesses';
 import InfoPanel from '../../components/InfoPanel';
-import TaskInfo from './infopanels/TaskInfo';
-import ProcessInfo from './infopanels/ProcessInfo';
 import MyTasks from './myTasks/MyTasks';
 import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
@@ -42,7 +33,6 @@ import useTaskCollection from '../../hooks/useTaskCollection';
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
 export default function Dashboards() {
-  const [selectedTab, setSelectedTab] = useState('myProcesses');
   const [selectedFilter, setSelectedFilter] = useState('new');
   const [searchText, setSearchText] = useState('');
   const [panelData, setPanelData] = useState<Record<string, any>>({});
@@ -54,39 +44,11 @@ export default function Dashboards() {
 
   const isDark = useTheme().palette.mode === 'dark';
 
-  const tabData = [
-    {
-      label: 'My Processes',
-      value: 'myProcesses',
-      icon: <Inventory2OutlinedIcon />,
-    },
-    {
-      label: 'My Tasks',
-      value: 'myTasks',
-      icon: <MonetizationOnOutlinedIcon />,
-    },
-    {
-      label: 'Finance',
-      value: 'finance',
-      icon: <AssignmentOutlinedIcon />,
-    },
-    { label: 'Support', value: 'support', icon: <GroupsIcon /> },
-  ];
-
   const filterSelectData = [
-    { label: 'New Recommended', value: 'new' },
-    { label: 'Waiting for me', value: 'waiting' },
-    { label: 'Rejected', value: 'rejected' },
-    { label: 'Completed', value: 'completed' },
+    { label: 'My Processes', value: 'myProcesses' },
+    { label: 'Finance', value: 'finance' },
+    { label: 'Support', value: 'support' },
   ];
-
-  type TabData = { label: string; value: string; icon: ReactNode };
-  const handleTabChange = (tab: TabData) => {
-    // TODO: Might be better to leave this and apply it on grid changes
-    setSearchText('');
-    setInfoPanelIsOpen(false);
-    setSelectedTab(tab.value);
-  };
 
   const handleFilterSelectChange = (event: SelectChangeEvent) => {
     setSelectedFilter(event.target.value);
@@ -109,30 +71,11 @@ export default function Dashboards() {
     setInfoPanelIsOpen(false);
   };
 
-  const displayGrid = () => {
-    if (selectedTab === 'myTasks') {
-      return (
-        <MyTasks
-          filter={searchText}
-          callback={handleRowSelect}
-          tasks={taskCollection}
-        />
-      );
-    }
-    return (
-      <MyProcesses
-        filter={searchText}
-        callback={handleRowSelect}
-        pis={processInstanceCollection}
-      />
-    );
-  };
-
   const loadInfoPanel = () => {
-    if (selectedTab === 'myTasks') {
-      return <TaskInfo data={panelData} />;
-    }
-    return <ProcessInfo data={panelData} />;
+    // if (selectedTab === 'myTasks') {
+    //   return <TaskInfo data={panelData} />;
+    // }
+    return <Box />; // <ProcessInfo data={panelData} />;
   };
 
   useEffect(() => {
@@ -152,23 +95,31 @@ export default function Dashboards() {
           <Container
             sx={{
               padding: '0px !important',
-              backgroundColor: 'background.medium',
+              backgroundColor: 'background.bluegreylight',
             }}
           >
-            <Stack gap={3} sx={{ margin: 0, padding: 0 }}>
-              <Paper
+            <Stack sx={{ margin: 0, padding: 0 }}>
+              <Box
                 sx={{
-                  display: { xs: 'none', sm: 'block' },
-                  borderBottom: 1,
+                  border: 1,
                   borderColor: 'divider',
+                  padding: 4,
                 }}
               >
                 <DashboardCharts times={processInstanceTimesReport} />
-              </Paper>
-              <Stack
-                direction="row"
-                gap={2}
-                sx={{ flexWrap: 'wrap', paddingLeft: 2, paddingRight: 2 }}
+              </Box>
+              <Paper
+                elevation={0}
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                  padding: 2,
+                  borderColor: 'divider',
+                  backgroundColor: isDark
+                    ? 'background.paper'
+                    : 'background.bluegreymedium',
+                }}
               >
                 <FormControl>
                   <InputLabel id="filter-select-label">Filter</InputLabel>
@@ -181,7 +132,7 @@ export default function Dashboards() {
                     sx={{
                       backgroundColor: isDark
                         ? 'background.offblack'
-                        : 'background.default',
+                        : 'background.medium',
                     }}
                   >
                     <MenuItem value="">
@@ -206,8 +157,10 @@ export default function Dashboards() {
                       width: {
                         xs: 300,
                         sm: '100%',
-                        backgroundColor: isDark ? grey[900] : 'white',
                       },
+                      backgroundColor: isDark
+                        ? 'background.offblack'
+                        : 'background.medium',
                     }}
                     variant="outlined"
                     placeholder="Search"
@@ -229,21 +182,19 @@ export default function Dashboards() {
                   <Grid />
                   <Download />
                 </Stack>
-              </Stack>
+              </Paper>
               <Paper>
-                <Stack>
-                  <Tabs value={selectedTab} variant="fullWidth">
-                    {tabData.map((tab) => (
-                      <Tab
-                        label={tab.label}
-                        value={tab.value}
-                        onClick={() => handleTabChange(tab)}
-                        icon={tab.icon}
-                        iconPosition="start"
-                      />
-                    ))}
-                  </Tabs>
-                  {displayGrid()}
+                <Stack direction="row" sx={{ flex: 1 }}>
+                  <MyProcesses
+                    filter={searchText}
+                    callback={handleRowSelect}
+                    pis={processInstanceCollection}
+                  />
+                  <MyTasks
+                    filter={searchText}
+                    callback={handleRowSelect}
+                    tasks={taskCollection}
+                  />
                 </Stack>
               </Paper>
             </Stack>
@@ -270,7 +221,7 @@ export default function Dashboards() {
                 title={panelData.process_model_display_name || ''}
                 callback={handleInfoWindowClose}
               >
-                {loadInfoPanel()}
+                {loadInfoPanel() || <Box />}
               </InfoPanel>
             </Box>
           </Stack>

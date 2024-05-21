@@ -1,5 +1,13 @@
 import { PaletteMode, ThemeOptions } from '@mui/material';
-import { blue, cyan, green, grey, orange, red } from '@mui/material/colors';
+import {
+  blue,
+  blueGrey,
+  cyan,
+  green,
+  grey,
+  orange,
+  red,
+} from '@mui/material/colors';
 
 const customPalette = (mode: PaletteMode) => {
   return mode === 'light'
@@ -25,12 +33,15 @@ const customPalette = (mode: PaletteMode) => {
           dark: blue[500],
         },
         background: {
-          paper: '#fff',
-          default: grey[200],
+          paper: grey[100],
+          default: blueGrey[50],
           light: grey[100],
-          medium: grey[300],
+          medium: blueGrey[50],
+          mediumdark: grey[400],
           dark: grey[500],
           offblack: grey[900],
+          bluegreylight: blueGrey[50],
+          bluegreymedium: blueGrey[100],
         },
       }
     : {

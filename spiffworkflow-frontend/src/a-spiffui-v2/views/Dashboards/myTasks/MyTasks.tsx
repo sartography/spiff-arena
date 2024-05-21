@@ -1,9 +1,8 @@
-import { Box, Chip, Stack, useTheme } from '@mui/material';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
-import useTaskCollection from '../../../hooks/useTaskCollection';
+import ProcessInstanceCard from '../cards/ProcessInstanceCard';
 
-export default function MyTasks({
+export default function MyProcesses({
   filter,
   callback,
   tasks,
@@ -12,36 +11,29 @@ export default function MyTasks({
   callback: (data: Record<string, any>) => void;
   tasks: Record<string, any>;
 }) {
-  const [taskColumns, setTaskColumns] = useState<GridColDef[]>([]);
-  const [taskRows, setTaskRows] = useState<GridRowsProp[]>([]);
-
-  /** These values map to theme tokens, which enable the light/dark modes etc. */
-  const chipBackground = (row: any) => {
-    return `${row.task_status}`.toLowerCase() === 'ready'
-      ? `success.${useTheme().palette.mode}`
-      : 'default';
-  };
+  // TODO: Type of this doesn't seem to be ProcessInstance
+  // Find out and remove "any""
+  const [columns, setColumns] = useState<GridColDef[]>([]);
+  const [rows, setRows] = useState<GridRowsProp[]>([]);
 
   const handleGridRowClick = (data: Record<string, any>) => {
     callback(data.row);
   };
 
-  const columnData: Record<string, any> = [
-    { header: 'Title', field: 'task_title' },
-    { header: 'Process ID', field: 'process_instance_id' },
-    { header: 'Type', field: 'task_type' },
-    { header: 'Status', field: 'task_status' },
-    { header: 'Process', field: 'process_model_display_name' },
-    { header: 'Initiator', field: 'process_initiator_username' },
-    { header: 'ProcessStatus', field: 'process_instance_status' },
-  ];
-
   useEffect(() => {
     const filtered =
       filter && tasks.results
         ? tasks.results.filter((instance: any) => {
-            return columnData.some((data: Record<string, any>) =>
-              (instance[data.field] || '')
+            console.log(tasks.results);
+            const searchFields = [
+              'process_model_display_name',
+              'last_milestone_bpmn_name',
+              'process_initiator_username',
+              'status',
+            ];
+
+            return searchFields.some((field) =>
+              (instance[field] || '')
                 .toString()
                 .toLowerCase()
                 .includes(filter.toLowerCase())
@@ -49,79 +41,32 @@ export default function MyTasks({
           })
         : tasks.results || [];
 
-    setTaskRows(filtered);
+    setRows(filtered);
   }, [filter]);
 
   useEffect(() => {
-    if ('results' in tasks) {
-      const mappedColumns = columnData.map((column: Record<string, any>) => {
-        return {
-          field: column.field,
-          headerName: column.header,
-          flex: (() => {
-            if (column.header === 'Type' || column.header === 'Process ID') {
-              return 0.5;
-            }
-            return 1;
-          })(),
-          renderCell:
-            column.header === 'Status'
-              ? (params: Record<string, any>) => (
-                  <Chip
-                    label={params.row.task_status || '...no info...'}
-                    variant="filled"
-                    sx={{
-                      width: '100%',
-                      backgroundColor: chipBackground(params.row),
-                    }}
-                  />
-                )
-              : null,
-        };
-      });
-
-      setTaskColumns(mappedColumns);
-      setTaskRows([...tasks.results]);
+    if ('report_metadata' in tasks) {
+      const dgColumns = [
+        {
+          field: 'tasks',
+          headerName: 'Tasks',
+          flex: 1,
+          renderCell: (params: Record<string, any>) => <TaskCard pi={params} />,
+        },
+      ];
+      setColumns(dgColumns);
+      setRows([...tasks.results]);
     }
   }, [tasks]);
 
   return (
-    <>
-      <Box
-        sx={{
-          display: { xs: 'none', lg: 'block' },
-          position: 'relative',
-          overflowY: 'auto',
-          height: 'calc(100vh - 420px)',
-        }}
-      >
-        <DataGrid
-          sx={{
-            '&, [class^=MuiDataGrid]': { border: 'none' },
-          }}
-          rows={taskRows}
-          columns={taskColumns}
-          onRowClick={handleGridRowClick}
-        />
-      </Box>
-      <Box
-        sx={{
-          display: { xs: 'block', lg: 'none' },
-        }}
-      >
-        <Stack
-          gap={2}
-          sx={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
-        >
-          {taskRows.map((instance: Record<string, any>) => (
-            <>Hello</> // <ProcessInstanceCard instance={instance} />
-          ))}
-        </Stack>
-      </Box>
-    </>
+    <DataGrid
+      autoHeight
+      columnHeaderHeight={0}
+      getRowHeight={() => 'auto'}
+      rows={rows}
+      columns={columns}
+      onRowClick={handleGridRowClick}
+    />
   );
 }

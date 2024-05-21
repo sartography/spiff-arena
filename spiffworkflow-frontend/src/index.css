@@ -1,6 +1,9 @@
 /* site is mainly using white theme. */
 /* header is mainly using g100 */
 /* mockup wanted white, not grey, text */
+@import "slick-carousel/slick/slick.css";
+@import 'slick-carousel/slick/slick-theme.css';
+
 body {
   /* This prevents the annoying MUI select box layout shift */
   overflow-y: auto !important;
@@ -1084,3 +1087,5 @@ div.onboarding {
   position: relative;
   left: 6px;
 }
+
+

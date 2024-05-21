@@ -1,6 +1,7 @@
-import { Paper, Stack, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { BarChart, PieChart, SparkLineChart } from '@mui/x-charts';
 import { useEffect, useState } from 'react';
+import Slider from 'react-slick';
 
 export default function DashboardCharts({
   times,
@@ -28,160 +29,147 @@ export default function DashboardCharts({
     setDurations(totalDurations);
   }, [times]);
 
+  const sxProps = {
+    borderRadius: 4,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    width: '100%',
+    height: 150,
+    border: '1px solid',
+    borderColor: 'divider',
+  };
+
   return (
-    <Stack
-      gap={4}
-      padding={2}
-      direction="row"
-      sx={{
-        horizontalAlign: 'center',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-      }}
+    <Slider
+      dots
+      speed={500}
+      infinite
+      slidesToShow={4}
+      center
+      flex={1}
+      responsive={[
+        {
+          breakpoint: 600,
+          settings: {
+            slidesToShow: 1,
+            slidesToScroll: 1,
+          },
+        },
+        {
+          breakpoint: 900,
+          settings: {
+            slidesToShow: 2,
+            slidesToScroll: 1,
+          },
+        },
+        {
+          breakpoint: 1200,
+          settings: {
+            slidesToShow: 3,
+            slidesToScroll: 1,
+          },
+        },
+        {
+          breakpoint: 1500,
+          settings: {
+            slidesToShow: 4,
+            slidesToScroll: 1,
+          },
+        },
+      ]}
     >
-      <Paper elevation={3} sx={{ padding: 2, borderRadius: 4 }}>
-        <BarChart
-          sx={{
-            borderRadius: 4,
-            margin: 'auto',
-          }}
-          borderRadius={4}
-          skipAnimation
-          margin={{
-            left: 10,
-            right: 0,
-            top: 20,
-            bottom: 20,
-          }}
-          xAxis={[
-            {
-              scaleType: 'band',
-              data: ['PI Status Counts'],
-            },
-          ]}
-          series={[
-            {
-              label: 'Open',
-              data: [times.openCount],
-              color: palette.warning.main,
-            },
-            {
-              label: 'Complete',
-              data: [times.completeCount],
-              color: palette.success.main,
-            },
-            {
-              label: 'Error',
-              data: [times.errorCount],
-              color: palette.error.main,
-            },
-            {
-              label: 'Total',
-              data: [times.totalCount],
-              color: palette.info.main,
-            },
-          ]}
-          slotProps={{ legend: { hidden: true } }}
-          width={250}
-          height={150}
-          leftAxis={null}
-        />
-      </Paper>
+      <Box sx={{ padding: 1 }}>
+        <Paper elevation={0} sx={{ ...sxProps }}>
+          <BarChart
+            borderRadius={4}
+            skipAnimation
+            xAxis={[
+              {
+                scaleType: 'band',
+                data: [''],
+              },
+            ]}
+            series={[
+              {
+                label: 'Open',
+                data: [times.openCount],
+                color: palette.warning.main,
+              },
+              {
+                label: 'Complete',
+                data: [times.completeCount],
+                color: palette.success.main,
+              },
+              {
+                label: 'Error',
+                data: [times.errorCount],
+                color: palette.error.main,
+              },
+              {
+                label: 'Total',
+                data: [times.totalCount],
+                color: palette.info.main,
+              },
+            ]}
+            slotProps={{ legend: { hidden: true } }}
+            leftAxis={null}
+          />
+        </Paper>
+      </Box>
 
-      <Paper
-        elevation={3}
-        sx={{
-          padding: 2,
-          borderRadius: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
-        <PieChart
-          title="Time Distribution"
-          series={[
-            {
-              data: Object.keys(durations).map((d: string, i: number) => ({
-                id: i,
-                label: durations[d].displayName,
-                value: durations[d].duration,
-              })),
-            },
-          ]}
-          slotProps={{ legend: { hidden: true } }}
-          width={250}
-          height={150}
-          margin={{
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: 20,
-          }}
-        />
-        <Typography variant="caption" align="center" width="100%">
-          PI Time Distribution
-        </Typography>
-      </Paper>
+      <Box sx={{ padding: 1 }}>
+        <Paper elevation={0} sx={{ ...sxProps }}>
+          <PieChart
+            title="Time Distribution"
+            series={[
+              {
+                data: Object.keys(durations).map((d: string, i: number) => ({
+                  id: i,
+                  label: durations[d].displayName,
+                  value: durations[d].duration,
+                })),
+              },
+            ]}
+            slotProps={{ legend: { hidden: true } }}
+          />
+        </Paper>
+      </Box>
 
-      <Paper
-        elevation={3}
-        sx={{
-          padding: 2,
-          borderRadius: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
-        <SparkLineChart
-          data={Object.keys(durations).map(
-            (d: string) => durations[d].duration
-          )}
-          margin={{
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: 20,
-          }}
-          height={150}
-          width={250}
-          curve="natural"
-          area
-          showHighlight
-          showTooltip
-        />
-        <Typography variant="caption" align="center" width="100%">
-          PI Time Distribution
-        </Typography>
-      </Paper>
+      <Box sx={{ padding: 1 }}>
+        <Paper elevation={0} sx={{ ...sxProps }}>
+          <SparkLineChart
+            data={Object.keys(durations).map(
+              (d: string) => durations[d].duration
+            )}
+            curve="natural"
+            area
+            showHighlight
+            showTooltip
+          />
+        </Paper>
+      </Box>
 
-      <Paper elevation={3} sx={{ padding: 2, borderRadius: 4 }}>
-        <BarChart
-          borderRadius={4}
-          skipAnimation
-          margin={{
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: 20,
-          }}
-          xAxis={[
-            {
-              scaleType: 'band',
-              data: ['PI Time Distribution'],
-            },
-          ]}
-          series={Object.keys(durations).map((d: string) => ({
-            label: durations[d].displayName,
-            data: [durations[d].duration],
-          }))}
-          slotProps={{ legend: { hidden: true } }}
-          width={250}
-          height={150}
-          leftAxis={null}
-        />
-      </Paper>
-    </Stack>
+      <Box sx={{ padding: 1 }}>
+        <Paper elevation={0} sx={{ ...sxProps }}>
+          <BarChart
+            borderRadius={4}
+            skipAnimation
+            xAxis={[
+              {
+                scaleType: 'band',
+                data: [''],
+              },
+            ]}
+            series={Object.keys(durations).map((d: string) => ({
+              label: durations[d].displayName,
+              data: [durations[d].duration],
+            }))}
+            slotProps={{ legend: { hidden: true } }}
+            leftAxis={null}
+          />
+        </Paper>
+      </Box>
+    </Slider>
   );
 }

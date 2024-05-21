@@ -1,5 +1,4 @@
-import { Box, Chip, Grid, Stack, Typography, useTheme } from '@mui/material';
-import { purple } from '@mui/material/colors';
+import { Box, Chip, Stack, Typography, useTheme } from '@mui/material';
 import { useEffect } from 'react';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 
@@ -8,11 +7,7 @@ import { formatSecondsForDisplay } from '../../../utils/Utils';
  * Was quickly made for demo.
  * TODO: Talk to designer about this.
  */
-export default function ProcessInstanceCard({
-  pi,
-}: {
-  pi: Record<string, any>;
-}) {
+export default function TaskCard({ task }: { task: Record<string, any> }) {
   const { mode } = useTheme().palette;
   /** These values map to theme tokens, which enable the light/dark modes etc. */
   const chipBackground = (status: string) => {
@@ -31,6 +26,10 @@ export default function ProcessInstanceCard({
         return 'default';
     }
   };
+
+  useEffect(() => {
+    console.log(task);
+  }, [task]);
   return (
     <Stack
       sx={{
@@ -40,30 +39,30 @@ export default function ProcessInstanceCard({
       }}
     >
       <Stack direction="row" spacing={2} sx={{ color: 'text.secondary' }}>
-        <Typography variant="caption">{`ID: ${pi.row.id}`}</Typography>
+        <Typography variant="caption">{`ID: ${task.row.id}`}</Typography>
         <Typography variant="caption">
-          {`Initiator: ${pi.row.process_initiator_username}`}
+          {`Initiator: ${task.row.process_initiator_username}`}
         </Typography>
       </Stack>
       <Stack direction="row" spacing={2} sx={{ color: 'text.secondary' }}>
         <Typography variant="caption">{`Start: ${formatSecondsForDisplay(
-          pi.row.start_in_seconds
+          task.row.start_in_seconds
         )}`}</Typography>
         <Typography variant="caption">
-          {`End: ${formatSecondsForDisplay(pi.row.end_in_seconds) || '...'}`}
+          {`End: ${formatSecondsForDisplay(task.row.end_in_seconds) || '...'}`}
         </Typography>
       </Stack>
       <Typography variant="button" sx={{ fontWeight: 600 }}>
-        {pi.row.process_model_display_name}
+        {task.row.process_model_display_name}
       </Typography>
       <Box sx={{ paddingTop: 0.5 }}>
         <Chip
-          label={pi.row.status || '...no info...'}
+          label={task.row.status || '...no info...'}
           variant="filled"
           size="small"
           minWidth={100}
           sx={{
-            backgroundColor: chipBackground(pi.row.status),
+            backgroundColor: chipBackground(task.row.status),
             borderRadius: 1,
           }}
         />
