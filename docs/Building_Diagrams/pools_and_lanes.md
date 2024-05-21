@@ -70,7 +70,7 @@ Remember that each pool requires Lane configuration, even if it contains just a 
 | --- | --- | --- |
 | ![participant_sales](images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
 | ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
-
+---
 ### Example: Using Lanes and Pools for Petty Cash Request Process
 This example demonstrates the application of Lanes and pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization. 
 
@@ -109,3 +109,64 @@ This message informs the requester of the approval status, including the approve
 
 
 This BPMN diagram effectively uses Lanes and pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
+
+---
+### Assigning Lane Owners
+
+### Assigning Lane Owners in BPMN Workflows
+
+Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization. 
+
+Lets discuss the methods for assigning lane owners:
+
+#### Methods to Assign Lane Owners:
+1. **Using Script Tasks**:
+   - Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic, ensuring that tasks are routed correctly based on current operational needs or specific conditions.
+   - **Example**:
+     ```python
+     # Script task to assign lane owners
+     lane_owners = {
+         "Reviewer": ["alex@sartography.com", "madhurya@sartography.com"]
+     }
+     ```
+   - This script explicitly sets who the lane owners are for the 'Reviewer' lane. The names provided in the dictionary map directly to the users responsible for this lane.
+
+2. **Assigning User Groups**:
+   - In cases where script tasks are not used for direct assignments, lane owners can be specified by utilizing predefined user groups within DB. 
+   - **How to Configure User Groups**:
+     - User groups can be assigned in the system configuration, often in a YAML file, which defines which users belong to specific groups. More information [in admins and permissions section](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#setting-up-admin-in-config-yaml)
+
+     - **Example YAML Configuration**:
+       ```yaml
+       groups:
+         admin:
+           users:
+             - sam@spiffworkflow.org
+             - trent@spiffworkflow.org
+         reviewers:
+           users:
+             - malala@spiffworkflow.org
+             - oskar@spiffworkflow.org
+       ```
+   - This configuration shows how different user roles, such as admins and reviewers, are populated with specific users.
+
+#### Practical Application in a BPMN Model:
+In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process. For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
+
+
+
+- **Start of the Process**:
+  - The process begins, and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"
+
+![Lane Owners](images/lane_owners.png)
+
+- **Task Execution**:
+  - As tasks are executed, the workflow engine checks the `lane_owners` dictionary to determine which users are responsible for tasks in specific lanes.
+  - If a lane owner is set using a script task, as shown in the example, tasks in that lane appear on the designated users' interfaces.
+  - If no explicit assignment is provided, the engine queries the group name to determine potential task owners from DB.
+
+
+```{admonition} Note
+⚠ Specifying a user group in the `lane_owners` dictionary in script task does not require it to previously exist in the database.
+```
+

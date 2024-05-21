@@ -93,16 +93,15 @@ The process kicks off with an action that requires fetching specific employee de
 
 3. **Error Handling Setup**:
 
-![Error Event](images/error_event_example3.png)
+![Error Event](images/error_event_examplen3.png)
 
-Prior to the service task's execution, one potential error ID (`error_0`) is defined to handle `error_0`, identified as an "Invalid Schema" error.
+Prior to the service task's execution, one potential error ID is defined as `Error_1`.
 
 4. **Error Boundary Event**:
 
 ![Error Event](images/error_event_example5.png)
 
-Attached to the service task, this event catches `error_0` ("Invalid Schema"), setting an alternative path for error handling.
-The error details are stored in a variable named `err0`.
+Attached to the service task, this event catches `Error_1`, setting an alternative path for error handling. The error details are stored in a variable named `err1`.
 
 5. **Manual Tasks for Error Handling and Success Path**:
 
