@@ -151,9 +151,9 @@ class TestProcessModelService(BaseTest):
         assert process_model.primary_process_id == primary_process_id
 
         process_model = load_test_spec(
-            "test_group/hello_world_2",
-            bpmn_file_name="hello_world.bpmn",
-            process_model_source_directory="hello_world",
+            "test_group/sample",
+            bpmn_file_name="sample.bpmn",
+            process_model_source_directory="sample",
         )
 
         # this model should not show up in results because it has no primary_file_name
