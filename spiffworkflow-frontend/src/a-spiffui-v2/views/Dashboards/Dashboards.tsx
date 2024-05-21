@@ -29,11 +29,12 @@ import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
 import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
 import useTaskCollection from '../../hooks/useTaskCollection';
+import { grey } from '@mui/material/colors';
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
 export default function Dashboards() {
-  const [selectedFilter, setSelectedFilter] = useState('new');
+  const [selectedFilter, setSelectedFilter] = useState('myProcesses');
   const [searchText, setSearchText] = useState('');
   const [panelData, setPanelData] = useState<Record<string, any>>({});
   const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
@@ -43,6 +44,7 @@ export default function Dashboards() {
     useProcessInstanceTimes();
 
   const isDark = useTheme().palette.mode === 'dark';
+  const bgPaper = 'background.paper';
 
   const filterSelectData = [
     { label: 'My Processes', value: 'myProcesses' },
@@ -95,7 +97,7 @@ export default function Dashboards() {
           <Container
             sx={{
               padding: '0px !important',
-              backgroundColor: 'background.bluegreylight',
+              backgroundColor: 'background.light',
             }}
           >
             <Stack sx={{ margin: 0, padding: 0 }}>
@@ -103,7 +105,6 @@ export default function Dashboards() {
                 sx={{
                   border: 1,
                   borderColor: 'divider',
-                  padding: 4,
                 }}
               >
                 <DashboardCharts times={processInstanceTimesReport} />
@@ -116,9 +117,10 @@ export default function Dashboards() {
                   flexWrap: 'wrap',
                   padding: 2,
                   borderColor: 'divider',
+                  borderRadius: 0,
                   backgroundColor: isDark
-                    ? 'background.paper'
-                    : 'background.bluegreymedium',
+                    ? bgPaper
+                    : 'rgba(176, 190, 197, 0.3)',
                 }}
               >
                 <FormControl>
@@ -130,9 +132,8 @@ export default function Dashboards() {
                     label="Filter"
                     onChange={handleFilterSelectChange}
                     sx={{
-                      backgroundColor: isDark
-                        ? 'background.offblack'
-                        : 'background.medium',
+                      minWidth: 200,
+                      backgroundColor: bgPaper,
                     }}
                   >
                     <MenuItem value="">
@@ -158,9 +159,7 @@ export default function Dashboards() {
                         xs: 300,
                         sm: '100%',
                       },
-                      backgroundColor: isDark
-                        ? 'background.offblack'
-                        : 'background.medium',
+                      backgroundColor: bgPaper,
                     }}
                     variant="outlined"
                     placeholder="Search"

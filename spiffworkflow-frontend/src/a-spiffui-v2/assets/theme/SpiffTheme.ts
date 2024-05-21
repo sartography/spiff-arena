@@ -34,9 +34,10 @@ const customPalette = (mode: PaletteMode) => {
         },
         background: {
           paper: grey[100],
-          default: blueGrey[50],
+          default: grey.A100,
           light: grey[100],
-          medium: blueGrey[50],
+          mediumlight: grey[200],
+          medium: grey[300],
           mediumdark: grey[400],
           dark: grey[500],
           offblack: grey[900],

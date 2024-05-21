@@ -57,7 +57,9 @@ export default function SpiffUIV2() {
           container
           sx={{
             height: '100%',
-            backgroundColor: isDark ? 'black' : 'background.medium',
+            backgroundColor: isDark
+              ? 'background.paper'
+              : 'background.mediumlight',
           }}
         >
           <Grid item sx={{ width: '100%' }}>
