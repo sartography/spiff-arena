@@ -180,6 +180,7 @@ export default function BaseInputTemplate<
           invalid={commonAttributes.invalid}
           invalidText={commonAttributes.errorMessageForField}
           autoFocus={autofocus}
+          onChange={onChangeOverride || _onChange}
           disabled={disabled || readonly}
           value={value || value === 0 ? value : ''}
           onBlur={_onBlur}
