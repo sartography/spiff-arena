@@ -276,6 +276,36 @@ class SpecFileService(FileSystemService):
         ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
 
     @staticmethod
+    def clear_caches_for_process_group(process_group_id: str) -> None:
+        records = (
+            db.session.query(ReferenceCacheModel)
+            .filter(ReferenceCacheModel.relative_location.like(f"{process_group_id}/%"))  # type: ignore
+            .all()
+        )
+
+        reference_cache_ids = []
+
+        for record in records:
+            reference_cache_ids.append(record.id)
+            db.session.delete(record)
+
+        ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
+
+    @staticmethod
+    def clear_caches_for_process_model(process_model_info: ProcessModelInfo) -> None:
+        records = (
+            db.session.query(ReferenceCacheModel).filter(ReferenceCacheModel.relative_location == process_model_info.id).all()
+        )
+
+        reference_cache_ids = []
+
+        for record in records:
+            reference_cache_ids.append(record.id)
+            db.session.delete(record)
+
+        ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
+
+    @staticmethod
     def update_process_cache(ref: Reference) -> None:
         process_id_lookup = (
             ReferenceCacheModel.basic_query()
