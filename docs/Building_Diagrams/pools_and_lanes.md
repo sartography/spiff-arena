@@ -115,6 +115,8 @@ This BPMN diagram effectively uses Lanes and pools to structure a petty cash req
 
 ### Assigning Lane Owners in BPMN Workflows
 
+Let's discuss the methods for assigning lane owners
+
 Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization. 
 
 Lets discuss the methods for assigning lane owners:
