@@ -158,7 +158,6 @@ export default function MyTasks({
                 sx={{
                   padding: 1,
                   height: 120,
-                  width: 280,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 1,

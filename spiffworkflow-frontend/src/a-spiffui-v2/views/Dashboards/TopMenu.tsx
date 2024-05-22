@@ -74,6 +74,7 @@ export default function TopMenu({
             gap: 2,
             width: '100%',
             justifyContent: 'right',
+            display: { xs: 'none', lg: 'flex' },
           }}
         >
           {userMenuItemData.map((item) => (
