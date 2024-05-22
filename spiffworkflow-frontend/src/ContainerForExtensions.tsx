@@ -43,14 +43,6 @@ export default function ContainerForExtensions() {
 
   const location = useLocation();
 
-  // NEWUI: This a hack to hide the navigation bar in the "old" UI
-  const [showToolbar, setShowToolbar] = useState(true);
-  useEffect(() => {
-    if (location.pathname === '/newui') {
-      setShowToolbar(false);
-    }
-  }, []);
-
   // never carry an error message across to a different path
   useEffect(() => {
     removeError();
@@ -151,9 +143,7 @@ export default function ContainerForExtensions() {
 
   return (
     <>
-      {showToolbar && (
-        <NavigationBar extensionUxElements={extensionUxElements} />
-      )}
+      <NavigationBar extensionUxElements={extensionUxElements} />
       <Content className={contentClassName}>
         <ScrollToTop />
         <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
