@@ -16,7 +16,9 @@ export default function TaskInfo({ data }: { data: Record<string, any> }) {
         width="100%"
         height="100%"
         title="The Task"
-        src={`http://localhost:7001/tasks/${data.process_instance_id}/${data.task_guid}`}
+        src={`${window.location.protocol || 'http'}//${
+          window.location.host || 'localhost:7001'
+        }/tasks/${data.process_instance_id}/${data.task_guid}`}
       />
     </Box>
   );
