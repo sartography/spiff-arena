@@ -253,6 +253,7 @@ export default function Dashboards() {
               top: 0,
               width: '40%',
               height: '100%',
+              minWidth: 700,
               padding: 1,
               alignContent: 'center',
             }}

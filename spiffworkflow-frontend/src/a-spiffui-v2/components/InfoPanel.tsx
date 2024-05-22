@@ -22,7 +22,7 @@ export default function InfoPanel({
   const isDark = useTheme().palette.mode === 'dark';
 
   const checkIsDark = () => {
-    return isDark ? 'primary.dark' : 'primary.light';
+    return isDark ? 'background.bluegreymedium' : 'background.bluegreydark';
   };
 
   return (
@@ -35,7 +35,7 @@ export default function InfoPanel({
           width: '100%',
           height: '100%',
           border: '4px solid',
-          borderColor: isDark ? 'primary.main' : 'primary.light',
+          borderColor: 'divider',
           borderRadius: 2,
           padding: 1,
         }}
@@ -54,7 +54,7 @@ export default function InfoPanel({
               variant="regular"
               sx={{
                 backgroundColor: checkIsDark(),
-                borderRadius: 3,
+                borderRadius: 2,
               }}
             >
               <IconButton
@@ -69,10 +69,12 @@ export default function InfoPanel({
               >
                 <CancelOutlinedIcon />
               </IconButton>
-              <Typography variant="h6">{title}</Typography>
+              <Typography variant="h6" sx={{ color: 'primary.contrastText' }}>
+                {title}
+              </Typography>
             </Toolbar>
           </Box>
-          <Box sx={{ position: 'relative', top: 60, height: '100%' }}>
+          <Box sx={{ position: 'relative', top: 55, height: '100%' }}>
             {children}
           </Box>
         </Stack>
