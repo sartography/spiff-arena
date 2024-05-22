@@ -1,4 +1,13 @@
-import { Box, Button, Paper, Stack, useTheme } from '@mui/material';
+import {
+  Box,
+  Button,
+  Paper,
+  SpeedDial,
+  SpeedDialAction,
+  SpeedDialIcon,
+  Stack,
+  useTheme,
+} from '@mui/material';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import Moon from '@mui/icons-material/DarkModeOutlined';
 import Lightbulb from '@mui/icons-material/LightbulbOutlined';
@@ -16,6 +25,11 @@ export default function TopMenu({
 }) {
   const iconColor =
     useTheme().palette.mode === 'light' ? grey[600] : 'primary.light';
+
+  const handleSpeedDialAction = (item: MenuItemData) => {
+    console.log('>>>>>', item);
+    callback(item);
+  };
 
   const userMenuItemData: MenuItemData[] = [
     {
@@ -56,8 +70,10 @@ export default function TopMenu({
           gap: 2,
         }}
       >
-        <SpiffLogo />
-        <Box sx={{ width: 32 }} />
+        <Box sx={{ paddingTop: 1 }}>
+          <SpiffLogo />
+        </Box>
+        <Box sx={{ width: { xs: 0, lg: 32 } }} />
         <Box sx={{ width: '100%' }}>
           <Button
             title="Start New Process"
@@ -81,6 +97,31 @@ export default function TopMenu({
             <MenuItem data={item} key={item.text} callback={callback} />
           ))}
         </Stack>
+        <Box
+          sx={{ display: { xs: 'block', lg: 'none' }, position: 'relative' }}
+        >
+          <SpeedDial
+            color="secondary"
+            sx={{
+              position: 'absolute',
+              right: -10,
+              top: -9,
+            }}
+            direction="down"
+            ariaLabel="SpeedDial basic example"
+            icon={<SpeedDialIcon />}
+          >
+            {userMenuItemData.map((item) => (
+              <SpeedDialAction
+                key={item.text}
+                icon={item.icon}
+                tooltipTitle={item.text}
+                onClick={() => handleSpeedDialAction(item)}
+                FabProps={{ color: 'warning' }}
+              />
+            ))}
+          </SpeedDial>
+        </Box>
       </Stack>
     </Paper>
   );
