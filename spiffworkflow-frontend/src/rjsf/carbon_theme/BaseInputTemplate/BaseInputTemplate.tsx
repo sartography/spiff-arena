@@ -89,7 +89,7 @@ export default function BaseInputTemplate<
 
   const addDebouncedOnChangeText = useDebouncedCallback(
     (fullObject: React.ChangeEvent<HTMLInputElement>) => {
-      onChangeOverride(fullObject) || _onChange(fullObject);
+      (onChangeOverride || _onChange)(fullObject);
     },
     // delay in ms
     100
