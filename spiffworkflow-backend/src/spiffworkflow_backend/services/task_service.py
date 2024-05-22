@@ -10,6 +10,7 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from sqlalchemy import and_
 from sqlalchemy import asc
 
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
@@ -565,6 +566,17 @@ class TaskService:
         direct_children = BpmnProcessModel.query.filter(
             BpmnProcessModel.direct_parent_process_id.in_(bpmn_process_ids)  # type: ignore
         ).all()
+        direct_children = (
+            BpmnProcessModel.query.join(TaskModel, TaskModel.guid == BpmnProcessModel.guid)
+            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+            .filter(
+                and_(
+                    TaskDefinitionModel.typename == "SubWorkflowTask",
+                    TaskModel.bpmn_process_id.in_(bpmn_process_ids),  # type: ignore
+                )
+            )
+            .all()
+        )
         if len(direct_children) > 0:
             return bpmn_processes + cls.bpmn_process_and_descendants(direct_children)
         return bpmn_processes
