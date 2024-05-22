@@ -74,177 +74,187 @@ export default function DashboardCharts({
   ];
 
   return (
-    <Slider
-      dots
-      speed={500}
-      infinite
-      slidesToShow={4}
-      responsive={[...breakPoints]}
+    <Box
+      sx={{
+        '& .slick-arrow': {
+          backgroundColor: 'background.bluegreymedium',
+          borderRadius: 50,
+        },
+      }}
     >
-      <Box sx={{ padding: 1 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            ...sxProps,
-          }}
-        >
-          <Stack sx={{ padding: 1 }}>
-            <Typography
-              variant="button"
-              sx={{ fontWeight: 600, lineHeight: 1 }}
-            >
-              ({times.totalCount}) Processes
-            </Typography>
-            <Typography variant="caption" sx={{ color: textSecondary }}>
-              Status Distribution
-            </Typography>
-          </Stack>
-          <BarChart
-            borderRadius={4}
-            skipAnimation
-            margin={{
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: 20,
-            }}
-            xAxis={[
-              {
-                scaleType: 'band',
-                data: [''],
-              },
-            ]}
-            series={[
-              {
-                label: 'Open',
-                data: [times.openCount],
-                color: palette.warning.main,
-              },
-              {
-                label: 'Complete',
-                data: [times.completeCount],
-                color: palette.success.main,
-              },
-              {
-                label: 'Error',
-                data: [times.errorCount],
-                color: palette.error.main,
-              },
-              {
-                label: 'Total',
-                data: [times.totalCount],
-                color: palette.info.main,
-              },
-            ]}
-            slotProps={{ legend: { hidden: true } }}
-            leftAxis={null}
-          />
-        </Paper>
-      </Box>
-
-      <Box sx={{ padding: 1 }}>
-        <Paper elevation={0} sx={{ ...sxProps }}>
-          <Stack sx={{ padding: 1 }}>
-            <Typography
-              variant="button"
-              sx={{ fontWeight: 600, lineHeight: 1 }}
-            >
-              Status Distribution
-            </Typography>
-            <Typography variant="caption" sx={{ color: textSecondary }}>
-              Milliseconds
-            </Typography>
-          </Stack>
-          <Box
+      <Slider
+        dots
+        speed={500}
+        infinite
+        slidesToShow={4}
+        responsive={[...breakPoints]}
+      >
+        <Box sx={{ padding: 1 }}>
+          <Paper
+            elevation={0}
             sx={{
-              width: '100%',
-              height: '100%',
-              padding: 1,
-              display: 'flex',
-              flex: 1,
-              justifyContent: 'center',
+              ...sxProps,
             }}
           >
-            <PieChart
-              title="Process Instances"
-              sx={{ marginLeft: '40%' }}
+            <Stack sx={{ padding: 1 }}>
+              <Typography
+                variant="button"
+                sx={{ fontWeight: 600, lineHeight: 1 }}
+              >
+                ({times.totalCount}) Processes
+              </Typography>
+              <Typography variant="caption" sx={{ color: textSecondary }}>
+                Status Distribution
+              </Typography>
+            </Stack>
+            <BarChart
+              borderRadius={4}
+              skipAnimation
+              margin={{
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              }}
+              xAxis={[
+                {
+                  scaleType: 'band',
+                  data: [''],
+                },
+              ]}
               series={[
                 {
-                  data: Object.keys(durations).map((d: string, i: number) => ({
-                    id: i,
-                    label: durations[d].displayName,
-                    value: durations[d].duration,
-                  })),
+                  label: 'Open',
+                  data: [times.openCount],
+                  color: palette.warning.main,
+                },
+                {
+                  label: 'Complete',
+                  data: [times.completeCount],
+                  color: palette.success.main,
+                },
+                {
+                  label: 'Error',
+                  data: [times.errorCount],
+                  color: palette.error.main,
+                },
+                {
+                  label: 'Total',
+                  data: [times.totalCount],
+                  color: palette.info.main,
                 },
               ]}
               slotProps={{ legend: { hidden: true } }}
+              leftAxis={null}
             />
-          </Box>
-        </Paper>
-      </Box>
+          </Paper>
+        </Box>
 
-      <Box sx={{ padding: 1 }}>
-        <Paper elevation={0} sx={{ ...sxProps }}>
-          <Stack sx={{ padding: 1 }}>
-            <Typography
-              variant="button"
-              sx={{ fontWeight: 600, lineHeight: 1 }}
+        <Box sx={{ padding: 1 }}>
+          <Paper elevation={0} sx={{ ...sxProps, overflow: 'hidden' }}>
+            <Stack
+              sx={{
+                padding: 1,
+                width: '100%',
+                height: '100%',
+              }}
             >
-              Time Distribution 1
-            </Typography>
-            <Typography variant="caption" sx={{ color: textSecondary }}>
-              Relative Peaks
-            </Typography>
-          </Stack>
-          <SparkLineChart
-            data={Object.keys(durations).map(
-              (d: string) => durations[d].duration
-            )}
-            curve="natural"
-            area
-            showHighlight
-            showTooltip
-          />
-        </Paper>
-      </Box>
+              <Typography
+                variant="button"
+                sx={{ fontWeight: 600, lineHeight: 1 }}
+              >
+                Status Distribution
+              </Typography>
+              <Typography variant="caption" sx={{ color: textSecondary }}>
+                Milliseconds
+              </Typography>
+              <PieChart
+                height={200}
+                title="Process Instances"
+                sx={{
+                  position: 'relative',
+                  left: { xs: '10%', md: '12%', lg: '11%', xl: '5%' },
+                }}
+                series={[
+                  {
+                    data: Object.keys(durations).map(
+                      (d: string, i: number) => ({
+                        id: i,
+                        label: durations[d].displayName,
+                        value: durations[d].duration,
+                      })
+                    ),
+                  },
+                ]}
+                slotProps={{ legend: { hidden: true } }}
+              />
+            </Stack>
+          </Paper>
+        </Box>
 
-      <Box sx={{ padding: 1 }}>
-        <Paper elevation={0} sx={{ ...sxProps }}>
-          <Stack sx={{ padding: 1 }}>
-            <Typography
-              variant="button"
-              sx={{ fontWeight: 600, lineHeight: 1 }}
-            >
-              Time Distribution 2
-            </Typography>
-            <Typography variant="caption" sx={{ color: textSecondary }}>
-              Absolute Peaks
-            </Typography>
-          </Stack>
-          <BarChart
-            borderRadius={4}
-            skipAnimation
-            margin={{
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: 20,
-            }}
-            xAxis={[
-              {
-                scaleType: 'band',
-                data: [''],
-              },
-            ]}
-            series={Object.keys(durations).map((d: string) => ({
-              label: durations[d].displayName,
-              data: [durations[d].duration],
-            }))}
-            slotProps={{ legend: { hidden: true } }}
-            leftAxis={null}
-          />
-        </Paper>
-      </Box>
-    </Slider>
+        <Box sx={{ padding: 1 }}>
+          <Paper elevation={0} sx={{ ...sxProps }}>
+            <Stack sx={{ padding: 1 }}>
+              <Typography
+                variant="button"
+                sx={{ fontWeight: 600, lineHeight: 1 }}
+              >
+                Time Distribution 1
+              </Typography>
+              <Typography variant="caption" sx={{ color: textSecondary }}>
+                Relative Peaks
+              </Typography>
+            </Stack>
+            <SparkLineChart
+              data={Object.keys(durations).map(
+                (d: string) => durations[d].duration
+              )}
+              curve="natural"
+              area
+              showHighlight
+              showTooltip
+            />
+          </Paper>
+        </Box>
+
+        <Box sx={{ padding: 1 }}>
+          <Paper elevation={0} sx={{ ...sxProps }}>
+            <Stack sx={{ padding: 1 }}>
+              <Typography
+                variant="button"
+                sx={{ fontWeight: 600, lineHeight: 1 }}
+              >
+                Time Distribution 2
+              </Typography>
+              <Typography variant="caption" sx={{ color: textSecondary }}>
+                Absolute Peaks
+              </Typography>
+            </Stack>
+            <BarChart
+              borderRadius={4}
+              skipAnimation
+              margin={{
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              }}
+              xAxis={[
+                {
+                  scaleType: 'band',
+                  data: [''],
+                },
+              ]}
+              series={Object.keys(durations).map((d: string) => ({
+                label: durations[d].displayName,
+                data: [durations[d].duration],
+              }))}
+              slotProps={{ legend: { hidden: true } }}
+              leftAxis={null}
+            />
+          </Paper>
+        </Box>
+      </Slider>
+    </Box>
   );
 }
