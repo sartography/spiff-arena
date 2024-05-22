@@ -1,4 +1,7 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Container,
   FormControl,
@@ -14,11 +17,13 @@ import {
   Slide,
   Stack,
   TextField,
+  Typography,
   useTheme,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { SyntheticEvent, useEffect, useState } from 'react';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Columns from '../../assets/icons/columns-2.svg';
 import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
@@ -28,8 +33,8 @@ import MyTasks from './myTasks/MyTasks';
 import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
 import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
-import useTaskCollection from '../../hooks/useTaskCollection';
-import { grey } from '@mui/material/colors';
+import TaskInfo from './infopanels/TaskInfo';
+
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
  */
@@ -37,9 +42,12 @@ export default function Dashboards() {
   const [selectedFilter, setSelectedFilter] = useState('myProcesses');
   const [searchText, setSearchText] = useState('');
   const [panelData, setPanelData] = useState<Record<string, any>>({});
+  const [dashboardAccordionOpen, setDashboardAccordionOpen] = useState(true);
+  const [selectedProcessInstance, setSelectedProcessInstance] = useState<
+    Record<string, any>
+  >({});
   const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
   const { processInstanceCollection } = useProcessInstanceCollection();
-  const { taskCollection } = useTaskCollection({ processInfo: {} });
   const { processInstanceTimesReport, setProcessInstances } =
     useProcessInstanceTimes();
 
@@ -60,7 +68,11 @@ export default function Dashboards() {
     setSearchText(search);
   };
 
-  const handleRowSelect = (data: Record<string, any>) => {
+  const handleProcessRowSelect = (data: Record<string, any>) => {
+    setSelectedProcessInstance(data);
+  };
+
+  const handleTaskRowSelect = (data: Record<string, any>) => {
     if (data !== panelData) {
       setPanelData(data);
       setInfoPanelIsOpen(true);
@@ -73,11 +85,8 @@ export default function Dashboards() {
     setInfoPanelIsOpen(false);
   };
 
-  const loadInfoPanel = () => {
-    // if (selectedTab === 'myTasks') {
-    //   return <TaskInfo data={panelData} />;
-    // }
-    return <Box />; // <ProcessInfo data={panelData} />;
+  const handleAccordionChange = (event: SyntheticEvent, expanded: boolean) => {
+    setDashboardAccordionOpen(expanded);
   };
 
   useEffect(() => {
@@ -107,7 +116,22 @@ export default function Dashboards() {
                   borderColor: 'divider',
                 }}
               >
-                <DashboardCharts times={processInstanceTimesReport} />
+                <Accordion
+                  defaultExpanded
+                  sx={{ boxShadow: 'none', padding: 2 }}
+                  onChange={handleAccordionChange}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1-content"
+                    id="panel1-header"
+                  >
+                    <Typography color="primary">Dashboard KPIs</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <DashboardCharts times={processInstanceTimesReport} />
+                  </AccordionDetails>
+                </Accordion>
               </Box>
               <Paper
                 elevation={0}
@@ -175,7 +199,7 @@ export default function Dashboards() {
                   />
                 </Box>
 
-                <Stack direction="row" gap={2} padding={2}>
+                <Stack direction="row" gap={2} sx={{ padding: 2 }}>
                   <Columns />
                   <Share />
                   <Grid />
@@ -183,16 +207,24 @@ export default function Dashboards() {
                 </Stack>
               </Paper>
               <Paper>
-                <Stack direction="row" sx={{ flex: 1 }}>
+                <Stack
+                  direction="row"
+                  sx={{
+                    flex: 1,
+                    height: dashboardAccordionOpen
+                      ? 'calc(100vh - 560px)'
+                      : 'calc(100vh - 300px)',
+                  }}
+                >
                   <MyProcesses
                     filter={searchText}
-                    callback={handleRowSelect}
+                    callback={handleProcessRowSelect}
                     pis={processInstanceCollection}
                   />
                   <MyTasks
                     filter={searchText}
-                    callback={handleRowSelect}
-                    tasks={taskCollection}
+                    callback={handleTaskRowSelect}
+                    pi={selectedProcessInstance}
                   />
                 </Stack>
               </Paper>
@@ -220,7 +252,7 @@ export default function Dashboards() {
                 title={panelData.process_model_display_name || ''}
                 callback={handleInfoWindowClose}
               >
-                {loadInfoPanel() || <Box />}
+                <TaskInfo data={panelData} />
               </InfoPanel>
             </Box>
           </Stack>

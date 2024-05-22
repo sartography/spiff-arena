@@ -51,6 +51,7 @@ export default function SpiffUIV2() {
           height: '100vh',
           zIndex: 1000,
           padding: '0px !important',
+          overflow: 'hidden',
         }}
       >
         <Grid

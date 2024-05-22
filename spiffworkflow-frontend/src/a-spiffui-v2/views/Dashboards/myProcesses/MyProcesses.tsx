@@ -1,5 +1,6 @@
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
+import { Box } from '@mui/material';
 import ProcessInstanceCard from '../cards/ProcessInstanceCard';
 
 export default function MyProcesses({
@@ -67,13 +68,32 @@ export default function MyProcesses({
   }, [pis]);
 
   return (
-    <DataGrid
-      autoHeight
-      columnHeaderHeight={0}
-      getRowHeight={() => 'auto'}
-      rows={processInstanceRows}
-      columns={processInstanceColumns}
-      onRowClick={handleGridRowClick}
-    />
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '0.5em',
+        },
+        '&::-webkit-scrollbar-track': {
+          boxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
+          webkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: 'background.bluegreymedium',
+        },
+      }}
+    >
+      <DataGrid
+        autoHeight
+        columnHeaderHeight={0}
+        getRowHeight={() => 'auto'}
+        rows={processInstanceRows}
+        columns={processInstanceColumns}
+        onRowClick={handleGridRowClick}
+        hideFooter
+      />
+    </Box>
   );
 }

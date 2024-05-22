@@ -73,6 +73,7 @@ const customPalette = (mode: PaletteMode) => {
         background: {
           paper: '#121212',
           default: '#121212',
+          bluegreymedium: blueGrey[600],
         },
       };
 };

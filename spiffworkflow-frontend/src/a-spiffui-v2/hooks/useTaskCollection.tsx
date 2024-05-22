@@ -29,6 +29,7 @@ export default function useTaskCollection({
     setLoading(true);
     // TODO: Currently, the API endpoint for this is an SSE endpoint, so we can't use the HttpService.
     // We'll need to refactor this to use the SSE service, or change the API to return a RESTful response.
+    // This means we're doing PI id filtering client-side, which is not ideal.
     // const path = processInfo?.id ? `/tasks/${processInfo.id}` : '/tasks';
     HttpService.makeCallToBackend({
       path,

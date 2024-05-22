@@ -112,6 +112,7 @@
     "@types/cookie": "^0.6.0",
     "@types/lodash.merge": "^4.6.7",
     "@types/node": "^20.12.7",
+    "@types/react-slick": "^0.23.13",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.62.0",
     "@vitest/coverage-v8": "^1.5.0",
