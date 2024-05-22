@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import HttpService from '../../services/HttpService';
-import { ReportMetadata } from '../../interfaces';
 
 /**
  * Grab processInstances using HttpService from the Spiff API.

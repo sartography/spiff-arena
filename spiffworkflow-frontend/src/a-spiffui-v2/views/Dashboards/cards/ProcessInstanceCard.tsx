@@ -1,6 +1,4 @@
-import { Box, Chip, Grid, Stack, Typography, useTheme } from '@mui/material';
-import { purple } from '@mui/material/colors';
-import { useEffect } from 'react';
+import { Box, Chip, Stack, Typography, useTheme } from '@mui/material';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 
 /**
