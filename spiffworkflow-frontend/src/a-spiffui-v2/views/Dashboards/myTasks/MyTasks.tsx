@@ -54,13 +54,11 @@ export default function MyTasks({
               'task_title',
               'task_type',
             ];
-            return (
-              searchFields.some((field) =>
-                (instance[field] || '')
-                  .toString()
-                  .toLowerCase()
-                  .includes(filter.toLowerCase())
-              ) && instance.process_instance_id === pi.id
+            return searchFields.some((field) =>
+              (instance[field] || '')
+                .toString()
+                .toLowerCase()
+                .includes(filter.toLowerCase())
             );
           })
         : [];
