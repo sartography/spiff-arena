@@ -51,13 +51,16 @@ export default function SpiffUIV2() {
           height: '100vh',
           zIndex: 1000,
           padding: '0px !important',
+          overflow: 'hidden',
         }}
       >
         <Grid
           container
           sx={{
             height: '100%',
-            backgroundColor: isDark ? 'black' : 'background.medium',
+            backgroundColor: isDark
+              ? 'background.paper'
+              : 'background.mediumlight',
           }}
         >
           <Grid item sx={{ width: '100%' }}>
@@ -79,7 +82,7 @@ export default function SpiffUIV2() {
               </Box>
             </Slide>
           </Grid>
-          <Grid item xs={12} sx={{ padding: '3%' }}>
+          <Grid item xs={12}>
             <Dashboards />
           </Grid>
         </Grid>

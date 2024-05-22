@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Stack, Typography, useTheme } from '@mui/material';
 import { BarChart, PieChart, SparkLineChart } from '@mui/x-charts';
 import { useEffect, useState } from 'react';
 import Slider from 'react-slick';
@@ -10,6 +10,8 @@ export default function DashboardCharts({
 }) {
   const [durations, setDurations] = useState<Record<string, any>>({});
   const { palette } = useTheme();
+
+  const textSecondary = 'text.secondary';
 
   useEffect(() => {
     if (Object.keys(times).length === 0) {
@@ -30,15 +32,46 @@ export default function DashboardCharts({
   }, [times]);
 
   const sxProps = {
-    borderRadius: 4,
+    borderRadius: 1,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     width: '100%',
-    height: 150,
+    height: 200,
     border: '1px solid',
     borderColor: 'divider',
   };
+
+  const breakPoints = [
+    {
+      breakpoint: 600,
+      settings: {
+        slidesToShow: 1,
+        slidesToScroll: 1,
+      },
+    },
+    {
+      breakpoint: 900,
+      settings: {
+        slidesToShow: 2,
+        slidesToScroll: 1,
+      },
+    },
+    {
+      breakpoint: 1200,
+      settings: {
+        slidesToShow: 3,
+        slidesToScroll: 1,
+      },
+    },
+    {
+      breakpoint: 1500,
+      settings: {
+        slidesToShow: 4,
+        slidesToScroll: 1,
+      },
+    },
+  ];
 
   return (
     <Slider
@@ -46,44 +79,35 @@ export default function DashboardCharts({
       speed={500}
       infinite
       slidesToShow={4}
-      center
-      flex={1}
-      responsive={[
-        {
-          breakpoint: 600,
-          settings: {
-            slidesToShow: 1,
-            slidesToScroll: 1,
-          },
-        },
-        {
-          breakpoint: 900,
-          settings: {
-            slidesToShow: 2,
-            slidesToScroll: 1,
-          },
-        },
-        {
-          breakpoint: 1200,
-          settings: {
-            slidesToShow: 3,
-            slidesToScroll: 1,
-          },
-        },
-        {
-          breakpoint: 1500,
-          settings: {
-            slidesToShow: 4,
-            slidesToScroll: 1,
-          },
-        },
-      ]}
+      responsive={[...breakPoints]}
     >
       <Box sx={{ padding: 1 }}>
-        <Paper elevation={0} sx={{ ...sxProps }}>
+        <Paper
+          elevation={0}
+          sx={{
+            ...sxProps,
+          }}
+        >
+          <Stack sx={{ padding: 1 }}>
+            <Typography
+              variant="button"
+              sx={{ fontWeight: 600, lineHeight: 1 }}
+            >
+              ({times.totalCount}) Processes
+            </Typography>
+            <Typography variant="caption" sx={{ color: textSecondary }}>
+              Status Distribution
+            </Typography>
+          </Stack>
           <BarChart
             borderRadius={4}
             skipAnimation
+            margin={{
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: 20,
+            }}
             xAxis={[
               {
                 scaleType: 'band',
@@ -120,24 +144,58 @@ export default function DashboardCharts({
 
       <Box sx={{ padding: 1 }}>
         <Paper elevation={0} sx={{ ...sxProps }}>
-          <PieChart
-            title="Time Distribution"
-            series={[
-              {
-                data: Object.keys(durations).map((d: string, i: number) => ({
-                  id: i,
-                  label: durations[d].displayName,
-                  value: durations[d].duration,
-                })),
-              },
-            ]}
-            slotProps={{ legend: { hidden: true } }}
-          />
+          <Stack sx={{ padding: 1 }}>
+            <Typography
+              variant="button"
+              sx={{ fontWeight: 600, lineHeight: 1 }}
+            >
+              Status Distribution
+            </Typography>
+            <Typography variant="caption" sx={{ color: textSecondary }}>
+              Milliseconds
+            </Typography>
+          </Stack>
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              padding: 1,
+              display: 'flex',
+              flex: 1,
+              justifyContent: 'center',
+            }}
+          >
+            <PieChart
+              title="Process Instances"
+              sx={{ marginLeft: '40%' }}
+              series={[
+                {
+                  data: Object.keys(durations).map((d: string, i: number) => ({
+                    id: i,
+                    label: durations[d].displayName,
+                    value: durations[d].duration,
+                  })),
+                },
+              ]}
+              slotProps={{ legend: { hidden: true } }}
+            />
+          </Box>
         </Paper>
       </Box>
 
       <Box sx={{ padding: 1 }}>
         <Paper elevation={0} sx={{ ...sxProps }}>
+          <Stack sx={{ padding: 1 }}>
+            <Typography
+              variant="button"
+              sx={{ fontWeight: 600, lineHeight: 1 }}
+            >
+              Time Distribution 1
+            </Typography>
+            <Typography variant="caption" sx={{ color: textSecondary }}>
+              Relative Peaks
+            </Typography>
+          </Stack>
           <SparkLineChart
             data={Object.keys(durations).map(
               (d: string) => durations[d].duration
@@ -152,9 +210,26 @@ export default function DashboardCharts({
 
       <Box sx={{ padding: 1 }}>
         <Paper elevation={0} sx={{ ...sxProps }}>
+          <Stack sx={{ padding: 1 }}>
+            <Typography
+              variant="button"
+              sx={{ fontWeight: 600, lineHeight: 1 }}
+            >
+              Time Distribution 2
+            </Typography>
+            <Typography variant="caption" sx={{ color: textSecondary }}>
+              Absolute Peaks
+            </Typography>
+          </Stack>
           <BarChart
             borderRadius={4}
             skipAnimation
+            margin={{
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: 20,
+            }}
             xAxis={[
               {
                 scaleType: 'band',

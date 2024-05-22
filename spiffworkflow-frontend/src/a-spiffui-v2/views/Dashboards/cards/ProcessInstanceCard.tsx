@@ -53,6 +53,9 @@ export default function ProcessInstanceCard({
           {`End: ${formatSecondsForDisplay(pi.row.end_in_seconds) || '...'}`}
         </Typography>
       </Stack>
+
+      <Typography variant="caption">{`Tasks: ${pi.row.taskCount}`}</Typography>
+
       <Typography variant="button" sx={{ fontWeight: 600 }}>
         {pi.row.process_model_display_name}
       </Typography>
@@ -61,7 +64,6 @@ export default function ProcessInstanceCard({
           label={pi.row.status || '...no info...'}
           variant="filled"
           size="small"
-          minWidth={100}
           sx={{
             backgroundColor: chipBackground(pi.row.status),
             borderRadius: 1,

@@ -27,9 +27,7 @@ export default function TaskCard({ task }: { task: Record<string, any> }) {
     }
   };
 
-  useEffect(() => {
-    console.log(task);
-  }, [task]);
+  useEffect(() => {}, [task]);
   return (
     <Stack
       sx={{
@@ -53,16 +51,15 @@ export default function TaskCard({ task }: { task: Record<string, any> }) {
         </Typography>
       </Stack>
       <Typography variant="button" sx={{ fontWeight: 600 }}>
-        {task.row.process_model_display_name}
+        {task.row.task_name}
       </Typography>
       <Box sx={{ paddingTop: 0.5 }}>
         <Chip
-          label={task.row.status || '...no info...'}
+          label={task.row.task_status || '...no info...'}
           variant="filled"
           size="small"
-          minWidth={100}
           sx={{
-            backgroundColor: chipBackground(task.row.status),
+            backgroundColor: chipBackground(task.row.task_status),
             borderRadius: 1,
           }}
         />
