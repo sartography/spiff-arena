@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import ProcessInstanceCard from '../cards/ProcessInstanceCard';
 import useTaskCollection from '../../../hooks/useTaskCollection';
+import CellRenderer from './CellRenderer';
 
 export default function MyProcesses({
   filter,
@@ -54,34 +55,52 @@ export default function MyProcesses({
           })
         : pis.results || [];
 
-    setProcessInstanceRows(filtered);
+    const sorted = filtered.sort(
+      (a: Record<string, any>, b: Record<string, any>) =>
+        b.taskCount - a.taskCount
+    );
+    setProcessInstanceRows(sorted);
   }, [filter]);
 
-  // Do a default sort by number of tasks
+  // We don't want to have to count tasks every time we filter
   const addTaskCounts = (rows: GridRowsProp[]) => {
-    const mappedRows = rows.map((row: Record<string, any>) => {
+    return rows.map((row: Record<string, any>) => {
       const taskCount: number = taskCollection?.results?.filter(
         (task: Record<string, any>) => task.process_instance_id === row.id
       ).length;
       return { ...row, taskCount };
     });
-
-    // Throw in a default sort by tasks
-    return mappedRows.sort((a, b) => b.taskCount - a.taskCount);
   };
 
   useEffect(() => {
     if (pis?.report_metadata && taskCollection?.results) {
+      const mappedColumns = pis.report_metadata?.columns.map(
+        (column: Record<string, any>) => ({
+          field: column.accessor,
+          headerName: column.Header,
+          colSpan: 0,
+          flex: 1,
+          renderCell: (params: Record<string, any>) => (
+            <CellRenderer header={column.Header} data={params} />
+          ),
+        })
+      );
+
+      /** Prepend the "Lead" field, which is technically a card.
+       * It satisfies the design requirement.
+       */
       const columns = [
         {
-          field: 'process_instances',
-          headerName: 'Process Instances',
-          flex: 1,
+          field: 'processes',
+          headerName: 'Processes',
+          flex: 2,
           renderCell: (params: Record<string, any>) => (
             <ProcessInstanceCard pi={params} />
           ),
         },
+        ...mappedColumns,
       ];
+
       setProcessInstanceColumns(columns);
       setProcessInstanceRows(addTaskCounts(pis.results));
     }
@@ -106,8 +125,15 @@ export default function MyProcesses({
       }}
     >
       <DataGrid
+        initialState={{
+          columns: {
+            columnVisibilityModel: {
+              status: false,
+              last_milestone_bpmn_name: false,
+            },
+          },
+        }}
         autoHeight
-        columnHeaderHeight={0}
         getRowHeight={() => 'auto'}
         rows={processInstanceRows as GridRowProps[]}
         columns={processInstanceColumns}

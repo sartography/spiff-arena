@@ -217,7 +217,7 @@ export default function Dashboards() {
                       : 'calc(100vh - 245px)',
                   }}
                 >
-                  <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+                  <Box sx={{ width: '100%' }}>
                     <MyProcesses
                       filter={searchText}
                       callback={handleProcessRowSelect}
@@ -226,8 +226,8 @@ export default function Dashboards() {
                   </Box>
                   <Box
                     sx={{
-                      width: '50%',
-                      display: { xs: 'none', md: 'block' },
+                      width: '0%',
+                      display: 'none',
                     }}
                   >
                     <MyTasks

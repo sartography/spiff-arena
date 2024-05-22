@@ -1,5 +1,4 @@
 import { Box, Chip, Stack, Typography, useTheme } from '@mui/material';
-import { formatSecondsForDisplay } from '../../../utils/Utils';
 
 /**
  * Appears when we need to display process instances in a responsive view.
@@ -14,6 +13,7 @@ export default function ProcessInstanceCard({
   const { mode } = useTheme().palette;
   /** These values map to theme tokens, which enable the light/dark modes etc. */
   const chipBackground = (status: string) => {
+    console.log(pi);
     switch (status) {
       case 'Completed':
       case 'complete':
@@ -31,12 +31,14 @@ export default function ProcessInstanceCard({
   };
   return (
     <Stack
+      gap={1}
       sx={{
         width: '100%',
-        padding: 2,
+        padding: 1,
         alignContent: 'center',
       }}
     >
+      {/* We may or may not want to keep this info in the card
       <Stack direction="row" spacing={2} sx={{ color: 'text.secondary' }}>
         <Typography variant="caption">{`ID: ${pi.row.id}`}</Typography>
         <Typography variant="caption">
@@ -50,14 +52,13 @@ export default function ProcessInstanceCard({
         <Typography variant="caption">
           {`End: ${formatSecondsForDisplay(pi.row.end_in_seconds) || '...'}`}
         </Typography>
-      </Stack>
-
-      <Typography variant="caption">{`Tasks: ${pi.row.taskCount}`}</Typography>
+      </Stack> */}
 
       <Typography variant="button" sx={{ fontWeight: 600 }}>
-        {pi.row.process_model_display_name}
+        ({pi.row.taskCount}) {pi.row.process_model_display_name}
       </Typography>
-      <Box sx={{ paddingTop: 0.5 }}>
+
+      <Stack direction="row" gap={2}>
         <Chip
           label={pi.row.status || '...no info...'}
           variant="filled"
@@ -67,7 +68,16 @@ export default function ProcessInstanceCard({
             borderRadius: 1,
           }}
         />
-      </Box>
+        <Chip
+          label={pi.row.last_milestone_bpmn_name || '...no info...'}
+          variant="filled"
+          size="small"
+          sx={{
+            borderRadius: 2,
+            backgroundColor: chipBackground(pi.row.last_milestone_bpmn_name),
+          }}
+        />
+      </Stack>
     </Stack>
   );
 }

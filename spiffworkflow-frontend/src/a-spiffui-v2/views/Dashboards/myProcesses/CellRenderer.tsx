@@ -28,14 +28,21 @@ export default function CellRenderer({
 
   if (header === 'Last milestone' || header === 'Status') {
     return (
-      <Chip
-        label={data.value || '...no info...'}
-        variant="filled"
+      <Stack
         sx={{
-          width: '100%',
-          backgroundColor: chipBackground(data),
+          justifyContent: 'center',
         }}
-      />
+      >
+        <Chip
+          label={data.value || '...no info...'}
+          variant="filled"
+          sx={{
+            width: '100%',
+            borderRadius: 2,
+            backgroundColor: chipBackground(data),
+          }}
+        />
+      </Stack>
     );
   }
   if (header === 'Start' || header === 'End') {
