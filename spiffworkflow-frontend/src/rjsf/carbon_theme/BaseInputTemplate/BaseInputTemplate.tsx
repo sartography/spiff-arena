@@ -87,6 +87,14 @@ export default function BaseInputTemplate<
     100
   );
 
+  const addDebouncedOnChangeText = useDebouncedCallback(
+    (fullObject: React.ChangeEvent<HTMLInputElement>) => {
+      (onChangeOverride || _onChange)(fullObject);
+    },
+    // delay in ms
+    100
+  );
+
   let enableCounter = false;
   let maxCount = undefined;
   if (options && options.counter) {
@@ -180,9 +188,9 @@ export default function BaseInputTemplate<
           invalid={commonAttributes.invalid}
           invalidText={commonAttributes.errorMessageForField}
           autoFocus={autofocus}
-          onChange={onChangeOverride || _onChange}
           disabled={disabled || readonly}
-          value={value || value === 0 ? value : ''}
+          defaultValue={value || value === 0 ? value : ''}
+          onChange={addDebouncedOnChangeText}
           onBlur={_onBlur}
           onFocus={_onFocus}
           enableCounter={enableCounter}

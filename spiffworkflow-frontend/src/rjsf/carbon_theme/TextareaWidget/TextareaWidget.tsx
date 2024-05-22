@@ -1,6 +1,7 @@
 import React, { FocusEvent, useCallback } from 'react';
 // @ts-ignore
 import { TextArea } from '@carbon/react';
+import { useDebouncedCallback } from 'use-debounce';
 import {
   FormContextType,
   RJSFSchema,
@@ -52,6 +53,17 @@ function TextareaWidget<
     [id, onFocus]
   );
 
+  // this helps with performance for the select widget with rsjf 5.1+.
+  // otherwise if the form has an enum with a corresponding oneOf, after choosing
+  // an option in the dropdown, the text area slows way down.
+  const addDebouncedOnChangeText = useDebouncedCallback(
+    (fullObject: React.ChangeEvent<HTMLTextAreaElement>) => {
+      handleChange(fullObject);
+    },
+    // delay in ms
+    100
+  );
+
   const commonAttributes = getCommonAttributes(
     label,
     schema,
@@ -78,7 +90,7 @@ function TextareaWidget<
       name={id}
       className="text-input"
       helperText={commonAttributes.helperText}
-      value={value || ''}
+      defaultValue={value || ''}
       labelText=""
       placeholder={placeholder}
       required={required}
@@ -88,7 +100,7 @@ function TextareaWidget<
       rows={options.rows}
       onBlur={handleBlur}
       onFocus={handleFocus}
-      onChange={handleChange}
+      onChange={addDebouncedOnChangeText}
       invalid={commonAttributes.invalid}
       invalidText={commonAttributes.errorMessageForField}
       enableCounter={enableCounter}
