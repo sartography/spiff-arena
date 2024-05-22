@@ -5,16 +5,13 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
   WidgetProps,
+  examplesId,
+  ariaDescribedByIds,
 } from '@rjsf/utils';
-import { parse } from 'date-fns';
 
 import { useCallback } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import {
-  DATE_FORMAT,
-  DATE_FORMAT_CARBON,
-  DATE_FORMAT_FOR_DISPLAY,
-} from '../../../config';
+import { DATE_FORMAT_CARBON, DATE_FORMAT_FOR_DISPLAY } from '../../../config';
 import DateAndTimeService from '../../../services/DateAndTimeService';
 import { getCommonAttributes } from '../../helpers';
 
@@ -39,6 +36,7 @@ export default function BaseInputTemplate<
     onBlur,
     onFocus,
     onChange,
+    onChangeOverride,
     required,
     options,
     schema,
@@ -154,6 +152,23 @@ export default function BaseInputTemplate<
         />
       </DatePicker>
     );
+  } else if (type === 'file') {
+    component = (
+      <input
+        id={id}
+        className="file-upload"
+        readOnly={readonly}
+        disabled={disabled}
+        autoFocus={autofocus}
+        value={value}
+        {...inputProps}
+        list={schema.examples ? examplesId<T>(id) : undefined}
+        onChange={onChangeOverride || _onChange}
+        onBlur={_onBlur}
+        onFocus={_onFocus}
+        aria-describedby={ariaDescribedByIds<T>(id, !!schema.examples)}
+      />
+    );
   } else {
     component = (
       <>
@@ -165,9 +180,9 @@ export default function BaseInputTemplate<
           invalid={commonAttributes.invalid}
           invalidText={commonAttributes.errorMessageForField}
           autoFocus={autofocus}
+          onChange={onChangeOverride || _onChange}
           disabled={disabled || readonly}
           value={value || value === 0 ? value : ''}
-          onChange={_onChange}
           onBlur={_onBlur}
           onFocus={_onFocus}
           enableCounter={enableCounter}
