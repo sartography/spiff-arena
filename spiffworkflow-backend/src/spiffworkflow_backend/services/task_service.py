@@ -23,6 +23,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataDict
 from spiffworkflow_backend.models.json_data import JsonDataModel
+from spiffworkflow_backend.models.keyed_json_data import KeyedJsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -554,7 +555,7 @@ class TaskService:
     def update_json_data_on_db_model_and_return_dict_if_updated(
         cls, db_model: SpiffworkflowBaseDBModel, task_data_dict: dict, task_model_data_column: str
     ) -> JsonDataDict | None:
-        json_data_dict = JsonDataModel.json_data_dict_from_dict(task_data_dict)
+        json_data_dict = KeyedJsonDataModel.json_data_dict_from_dict(task_data_dict)
         if getattr(db_model, task_model_data_column) != json_data_dict["hash"]:
             setattr(db_model, task_model_data_column, json_data_dict["hash"])
             return json_data_dict

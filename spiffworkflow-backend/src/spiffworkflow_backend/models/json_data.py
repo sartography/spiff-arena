@@ -77,6 +77,7 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     def insert_or_update_json_data_dict(cls, json_data_dict: JsonDataDict) -> None:
         cls.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
 
+    # NOTE: only used for process_instance_report
     @classmethod
     def create_and_insert_json_data_from_dict(cls, data: dict) -> str:
         json_data_dict = cls.json_data_dict_from_dict(data)
