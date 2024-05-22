@@ -29,7 +29,6 @@ export default function MyProcesses({
     const filtered =
       filter && pis.results
         ? pis.results.filter((instance: any) => {
-            console.log(pis.results);
             const searchFields = [
               'process_model_display_name',
               'last_milestone_bpmn_name',
