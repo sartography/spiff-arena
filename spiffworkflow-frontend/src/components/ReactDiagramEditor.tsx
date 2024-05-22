@@ -546,13 +546,13 @@ export default function ReactDiagramEditor({
 
     function dmnTextHandler(text: str) {
       const decisionId = `decision_${makeid(7)}`;
-      const newText = text.replace('{{DECISION_ID}}', decisionId);
+      const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
       setDiagramXMLString(newText);
     }
 
     function bpmnTextHandler(text: str) {
       const processId = `Process_${makeid(7)}`;
-      const newText = text.replace('{{PROCESS_ID}}', processId);
+      const newText = text.replaceAll('{{PROCESS_ID}}', processId);
       setDiagramXMLString(newText);
     }
 
