@@ -88,9 +88,11 @@ export default function MyTasks({
   const tabData = [
     {
       label: `Tasks (${
-        taskCollection.results?.filter(
-          (row: Record<string, any>) => row.process_instance_id === pi.id
-        ).length || ''
+        pi.id
+          ? taskCollection.results?.filter(
+              (row: Record<string, any>) => row.process_instance_id === pi.id
+            ).length
+          : '-'
       })`,
       value: 'tasks',
     },
@@ -113,7 +115,6 @@ export default function MyTasks({
   return (
     <Stack sx={{ width: '100%' }}>
       <Accordion
-        defaultExpanded
         sx={{
           boxShadow: 'none',
           backgroundColor: bgPaper,
@@ -126,7 +127,9 @@ export default function MyTasks({
           aria-controls="panel1-content"
           id="panel1-header"
         >
-          <Typography color="primary">Process Instance Detail</Typography>
+          <Typography color="primary">
+            Process Detail: {pi?.process_model_display_name || '--'}
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack
