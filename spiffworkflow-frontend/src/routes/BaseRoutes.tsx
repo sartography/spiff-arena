@@ -17,8 +17,6 @@ import RootRoute from './RootRoute';
 import LoginHandler from '../components/LoginHandler';
 import { ExtensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
 import Extension from './Extension';
-import SpiffUIV2 from './SpiffUIV2';
-import TaskShow from './TaskShow';
 
 type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
@@ -71,7 +69,6 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
           <Route path="about" element={<About />} />
           <Route path="admin/*" element={<AdminRedirect />} />
           <Route path="/*" element={<Page404 />} />
-          <Route path="newui/*" element={<SpiffUIV2 />} />
         </Routes>
       </div>
     );
