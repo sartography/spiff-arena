@@ -7,9 +7,9 @@ This powerful feature ensures adaptability to various business needs, from custo
 Here are some of the key aspects of using Extensions:
 
 - Extensions are implemented within the process model repository.
-- Once an extension is created, it can be made accessible via various UI elements which can be specified in its `extension-uischema.json` file.
+- Once an extension is created, it can be made accessible via various UI elements which can be specified in its `extension_uischema.json` file.
 - Access to an extension can be set up via permissions.
-- Configuration for an extension can be found and modified in its `extension-uischema.json` file.
+- Configuration for an extension can be found and modified in its `extension_uischema.json` file.
 
 ![Extensions](images/Extensions_dashboard.png)
 
@@ -18,8 +18,7 @@ Here are some of the key aspects of using Extensions:
 ### Environment Variable Activation
 
 To utilize extensions, an environment variable must be set.
-This variable activates the extensions feature in the SpiffWorkflow backend.
-Here is the environmental variable:
+This variable activates the extensions feature in the SpiffWorkflow backend:
 
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED=true
 
@@ -34,7 +33,7 @@ To create your own custom extension, follow these steps:
 
 ![Extension Process Group](images/Extension1.png)
 
-- Create a process model in this group. You can give it whatever name you want. Then create a file inside the process model called `extension-uischema.json`. This will control how the extension will work.
+- Create a process model in this group. You can give it whatever name you want. Then create a file inside the process model called `extension_uischema.json`. This will control how the extension will work.
 
 ![Extension](images/Extension_UI_schema.png)
 
