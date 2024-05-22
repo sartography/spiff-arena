@@ -54,6 +54,7 @@ export default function MenuItem({
       onClick={handleClick}
       startIcon={data.icon}
       sx={{
+        minWidth: 125,
         borderColor: isDark ? 'primary' : grey[400],
         borderWidth: 1,
         borderStyle: toggled ? 'solid' : 'transparent',
