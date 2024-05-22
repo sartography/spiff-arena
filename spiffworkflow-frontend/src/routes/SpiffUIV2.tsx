@@ -82,7 +82,7 @@ export default function SpiffUIV2() {
               </Box>
             </Slide>
           </Grid>
-          <Grid item xs={12} sx={{ padding: '3%' }}>
+          <Grid item xs={12}>
             <Dashboards />
           </Grid>
         </Grid>

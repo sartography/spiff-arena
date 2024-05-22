@@ -97,13 +97,14 @@ export default function Dashboards() {
 
   return (
     <>
-      <Grid container spacing={2} sx={{ width: '100%' }}>
+      <Grid container spacing={2}>
         <Grid item sx={{ width: '100%' }}>
           {/**
            * We have to force padding in MuiContainer to 0px
            * to meet design requirement
            */}
           <Container
+            maxWidth={false}
             sx={{
               padding: '0px !important',
               backgroundColor: 'background.light',
@@ -212,8 +213,8 @@ export default function Dashboards() {
                   sx={{
                     flex: 1,
                     height: dashboardAccordionOpen
-                      ? 'calc(100vh - 560px)'
-                      : 'calc(100vh - 300px)',
+                      ? 'calc(100vh - 500px)'
+                      : 'calc(100vh - 245px)',
                   }}
                 >
                   <MyProcesses
