@@ -86,7 +86,10 @@ def create_app() -> flask.app.Flask:
     # preflight options requests will be allowed if they meet the requirements of the url regex.
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
     # need to continually keep asking for the same path.
-    origins_re = [r"^https?:\/\/%s(.*)" % o.replace(".", r"\.") for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]]
+    origins_re = [
+        r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")  # noqa: UP031
+        for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]
+    ]
     CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
     connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)

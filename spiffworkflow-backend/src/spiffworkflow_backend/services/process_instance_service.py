@@ -350,8 +350,8 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
-                            % spiff_task.task_spec.name,
+                            message=f"Spiff Task {spiff_task.task_spec.name} lane user "
+                            "dict must have a key called 'value' with the user's uid in it.",
                             task=spiff_task,
                         )
                 elif isinstance(user, str):
