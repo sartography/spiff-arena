@@ -21,7 +21,7 @@ export default function SpiffLogo() {
         sx={{
           color: isDark ? 'primary.light' : 'primary.main',
           fontSize: 22,
-          display: { xs: 'none', lg: 'block' },
+          display: { xs: 'none', md: 'block' },
         }}
       >
         Spiffworkflow

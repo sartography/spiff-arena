@@ -217,16 +217,25 @@ export default function Dashboards() {
                       : 'calc(100vh - 245px)',
                   }}
                 >
-                  <MyProcesses
-                    filter={searchText}
-                    callback={handleProcessRowSelect}
-                    pis={processInstanceCollection}
-                  />
-                  <MyTasks
-                    filter={searchText}
-                    callback={handleTaskRowSelect}
-                    pi={selectedProcessInstance}
-                  />
+                  <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+                    <MyProcesses
+                      filter={searchText}
+                      callback={handleProcessRowSelect}
+                      pis={processInstanceCollection}
+                    />
+                  </Box>
+                  <Box
+                    sx={{
+                      width: '50%',
+                      display: { xs: 'none', md: 'block' },
+                    }}
+                  >
+                    <MyTasks
+                      filter={searchText}
+                      callback={handleTaskRowSelect}
+                      pi={selectedProcessInstance}
+                    />
+                  </Box>
                 </Stack>
               </Paper>
             </Stack>

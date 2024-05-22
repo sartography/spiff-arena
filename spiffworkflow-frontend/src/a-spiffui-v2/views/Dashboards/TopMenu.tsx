@@ -73,7 +73,7 @@ export default function TopMenu({
         <Box sx={{ paddingTop: 1 }}>
           <SpiffLogo />
         </Box>
-        <Box sx={{ width: { xs: 0, lg: 32 } }} />
+        <Box sx={{ width: { xs: 0, md: 32 } }} />
         <Box sx={{ width: '100%' }}>
           <Button
             title="Start New Process"
@@ -90,7 +90,7 @@ export default function TopMenu({
             gap: 2,
             width: '100%',
             justifyContent: 'right',
-            display: { xs: 'none', lg: 'flex' },
+            display: { xs: 'none', md: 'flex' },
           }}
         >
           {userMenuItemData.map((item) => (
@@ -98,7 +98,7 @@ export default function TopMenu({
           ))}
         </Stack>
         <Box
-          sx={{ display: { xs: 'block', lg: 'none' }, position: 'relative' }}
+          sx={{ display: { xs: 'block', md: 'none' }, position: 'relative' }}
         >
           <SpeedDial
             color="secondary"
