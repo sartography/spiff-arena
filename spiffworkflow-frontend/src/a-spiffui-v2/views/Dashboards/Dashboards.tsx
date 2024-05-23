@@ -34,6 +34,7 @@ import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
 import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
 import TaskInfo from './infopanels/TaskInfo';
+import ProcessInfo from './infopanels/ProcessInfo';
 
 /**
  * This "Dashboards" view is the home view for the new Spiff UI.
@@ -69,6 +70,14 @@ export default function Dashboards() {
   };
 
   const handleProcessRowSelect = (data: Record<string, any>) => {
+    if (data !== panelData) {
+      setPanelData(data);
+      setInfoPanelIsOpen(true);
+    } else {
+      setInfoPanelIsOpen(!infoPanelOpen);
+    }
+
+    // Still need this?
     setSelectedProcessInstance(data);
   };
 
@@ -251,7 +260,7 @@ export default function Dashboards() {
               position: 'fixed',
               right: 0,
               top: 0,
-              width: '40%',
+              width: '50%',
               height: '100%',
               minWidth: 700,
               padding: 1,
@@ -263,7 +272,11 @@ export default function Dashboards() {
                 title={panelData.process_model_display_name || ''}
                 callback={handleInfoWindowClose}
               >
-                <TaskInfo data={panelData} />
+                <ProcessInfo
+                  pi={panelData}
+                  callback={handleTaskRowSelect}
+                  filter={searchText}
+                />
               </InfoPanel>
             </Box>
           </Stack>

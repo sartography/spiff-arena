@@ -72,7 +72,7 @@ export default function ProcessInstanceCard({
           variant="filled"
           size="small"
           sx={{
-            borderRadius: 2,
+            borderRadius: 1,
             backgroundColor: chipBackground(pi.row.last_milestone_bpmn_name),
           }}
         />

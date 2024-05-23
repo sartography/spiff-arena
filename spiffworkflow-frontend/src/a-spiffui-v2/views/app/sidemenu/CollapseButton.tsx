@@ -1,7 +1,7 @@
-import { Box, Paper, useTheme } from '@mui/material';
+import { Paper, Stack, useTheme } from '@mui/material';
 import { useEffect, useState } from 'react';
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import { grey } from '@mui/material/colors';
 
 export default function CollapseButton({
@@ -32,23 +32,24 @@ export default function CollapseButton({
     <Paper
       elevation={1}
       sx={{
-        width: 50,
-        height: 25,
+        width: 25,
+        height: 50,
         border: '1px solid',
         borderColor: isDark ? grey[50] : grey[400],
-        paddingBottom: 2,
+        backgroundColor: 'background.paper',
       }}
       onClick={() => handleClick()}
     >
-      <Box
+      <Stack
         sx={{
-          userSelect: 'none',
           textAlign: 'center',
           color: isDark ? grey[50] : grey[600],
+          height: '100%',
+          justifyContent: 'center',
         }}
       >
-        {toggled ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
-      </Box>
+        {toggled ? <ArrowLeftIcon /> : <ArrowRightIcon />}
+      </Stack>
     </Paper>
   );
 }

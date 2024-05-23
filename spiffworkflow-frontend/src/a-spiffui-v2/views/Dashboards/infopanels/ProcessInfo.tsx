@@ -3,137 +3,229 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Divider,
+  Paper,
   Stack,
+  Tab,
+  Tabs,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { GridExpandMoreIcon } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useTaskCollection from '../../../hooks/useTaskCollection';
-import { formatSecondsForDisplay } from '../../../utils/Utils';
-import useCompletedTasks from '../../../hooks/useCompletedTasks';
-import useSpiffTheme from '../../../hooks/useSpiffTheme';
-import TaskListItem from './TaskListItem';
-import GreenCircleCheck from '../../../assets/icons/green-circle-check.svg';
-import WarningEye from '../../../assets/icons/warning-eye.svg';
+import TaskCard from '../cards/TaskCard';
 
-export default function ProcessInfo({ data }: { data: Record<string, any> }) {
-  const { taskCollection } = useTaskCollection({ processInfo: data });
-  const { completedTasks } = useCompletedTasks({ processInfo: data });
-  const [filteredTasks, setFilteredTasks] = useState<Record<string, any>[]>([]);
-  const { isDark } = useSpiffTheme();
+export default function ProcessInfo({
+  filter,
+  callback,
+  pi,
+}: {
+  filter: string;
+  callback: (data: Record<string, any>) => void;
+  pi: Record<string, any>;
+}) {
+  const [selectedTab, setSelectedTab] = useState('tasks');
+  const [taskColumns, setTaskColumns] = useState<GridColDef[]>([]);
+  const [taskRows, setTaskRows] = useState<GridRowsProp[]>([]);
+  const { taskCollection } = useTaskCollection({ processInfo: pi });
+
+  const isDark = useTheme().palette.mode === 'dark';
+
+  const handleGridRowClick = (data: Record<string, any>) => {
+    callback(data.row);
+  };
+
+  type TabData = { label: string; value: string };
+  const handleTabChange = (tab: TabData) => {
+    setSelectedTab(tab.value);
+  };
 
   useEffect(() => {
-    if ('results' in taskCollection) {
-      setFilteredTasks(
-        taskCollection.results.filter(
-          (task: Record<string, any>) => task.process_instance_id === data.id
-        )
+    const filtered =
+      filter && taskCollection.results
+        ? taskCollection?.results.filter((instance: any) => {
+            const searchFields = [
+              'process_model_display_name',
+              'process_initiator_username',
+              'process_instance_status',
+              'task_name',
+              'task_status',
+              'task_title',
+              'task_type',
+            ];
+            return searchFields.some((field) =>
+              (instance[field] || '')
+                .toString()
+                .toLowerCase()
+                .includes(filter.toLowerCase())
+            );
+          })
+        : [];
+    setTaskRows(filtered);
+  }, [filter]);
+
+  useEffect(() => {
+    const columns = [
+      {
+        field: 'process_instances',
+        headerName: 'Process Instances',
+        flex: 1,
+        renderCell: (params: Record<string, any>) => <TaskCard task={params} />,
+      },
+    ];
+    if (taskCollection?.results) {
+      const rows = [...taskCollection.results].filter(
+        (row) => row.process_instance_id === pi.id
       );
+      setTaskColumns(columns);
+      setTaskRows(rows);
     }
   }, [taskCollection]);
 
+  const tabData = [
+    {
+      label: `Tasks (${
+        pi.id
+          ? taskCollection.results?.filter(
+              (row: Record<string, any>) => row.process_instance_id === pi.id
+            ).length
+          : '-'
+      })`,
+      value: 'tasks',
+    },
+    {
+      label: 'Files',
+      value: 'files',
+    },
+    {
+      label: 'Metadata',
+      value: 'metadata',
+    },
+    { label: 'Messages', value: 'support' },
+  ];
+
+  // useEffect(() => console.log(pi), [pi]);
+
+  const bgPaper = isDark ? 'background.paper' : 'background.bluegreylight';
+  const secondaryText = 'text.secondary';
+
   return (
-    <Stack
-      sx={{
-        width: '100%',
-        height: '100%',
-        padding: 2,
-        gap: 2,
-      }}
-    >
-      <Stack direction="row" gap={4}>
-        <Stack gap={2}>
-          <Box>
-            <Typography variant="h6">Last Milestone</Typography>
-            <Typography variant="body1" sx={{ paddingLeft: 2 }}>
-              {data.last_milestone_bpmn_name}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="h6">Started</Typography>
-            <Typography variant="body1" sx={{ paddingLeft: 2 }}>
-              {formatSecondsForDisplay(data.start_in_seconds)}
-            </Typography>
-          </Box>
-        </Stack>
-        <Stack gap={2}>
-          <Box>
-            <Typography variant="h6">Status</Typography>
-            <Typography variant="body1" sx={{ paddingLeft: 2 }}>
-              {data.status}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="h6">Initiated By</Typography>
-            <Typography variant="body1" sx={{ paddingLeft: 2 }}>
-              {data.process_initiator_username}
-            </Typography>
-          </Box>
-        </Stack>
-      </Stack>
-      <Divider variant="fullWidth" sx={{ backgroundColor: 'grey' }} />
-      <Stack
+    <Stack sx={{ width: '100%' }}>
+      <Accordion
+        defaultExpanded
         sx={{
-          gap: 2,
-          overflow: 'auto',
-          height: `calc(100% - 260px)`,
+          boxShadow: 'none',
+          backgroundColor: bgPaper,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
-        <Accordion
-          sx={{
-            borderRadius: 2,
-            border: '2px solid',
-            borderColor: isDark ? 'success.dark' : 'success.light',
-          }}
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1-content"
+          id="panel1-header"
         >
-          <AccordionSummary
-            expandIcon={<GridExpandMoreIcon />}
-            aria-controls="completed-tasks-content"
-            id="completed-tasks"
+          <Typography color="primary">
+            Process Detail: {pi?.process_model_display_name || '--'}
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack
+            direction="row"
+            gap={2}
+            sx={{
+              backgroundColor: bgPaper,
+              paddingRight: 2,
+            }}
           >
-            <Typography variant="button">
-              {completedTasks.length
-                ? `(${completedTasks.length}) Completed Tasks`
-                : 'No Completed Tasks'}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack gap={2}>
-              {completedTasks.map((task: Record<string, any>) => (
-                <TaskListItem task={task} icon={<GreenCircleCheck />} />
-              ))}
+            <Stack
+              sx={{
+                height: 180,
+                padding: 2,
+                flex: 1,
+              }}
+            >
+              <Box sx={{ paddingBottom: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {pi?.process_model_display_name}
+                </Typography>
+                <Typography variant="subtitle1" sx={{ color: secondaryText }}>
+                  ID: {pi?.id}
+                </Typography>
+              </Box>
             </Stack>
-          </AccordionDetails>
-        </Accordion>
-        <Accordion
-          defaultExpanded
-          sx={{
-            borderRadius: 2,
-            border: '2px solid',
-            borderColor: `warning.${isDark ? 'dark' : 'light'}`,
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<GridExpandMoreIcon />}
-            aria-controls="panel1-content"
-            id="panel1-header"
-          >
-            <Typography variant="button">
-              {filteredTasks.length
-                ? `(${filteredTasks.length}) Open Tasks`
-                : 'No Open Tasks'}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack gap={2}>
-              {filteredTasks.map((task: Record<string, any>) => (
-                <TaskListItem task={task} icon={<WarningEye />} />
-              ))}
+            <Stack sx={{ width: '50%', justifyContent: 'center' }}>
+              <Paper
+                sx={{
+                  padding: 1,
+                  height: 120,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                }}
+              >
+                <Stack>
+                  <Typography
+                    variant="caption"
+                    color="primary"
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {pi?.process_initiator_username}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: secondaryText }}>
+                    ID: {pi?.id}
+                  </Typography>
+                </Stack>
+
+                <Typography variant="caption" sx={{ color: secondaryText }}>
+                  Status: {pi?.status}
+                </Typography>
+                <Typography variant="caption" sx={{ color: secondaryText }}>
+                  Last milestone: {pi?.last_milestone_bpmn_name}
+                </Typography>
+              </Paper>
             </Stack>
-          </AccordionDetails>
-        </Accordion>
-      </Stack>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+      <Tabs value={selectedTab} variant="fullWidth">
+        {tabData.map((tab) => (
+          <Tab
+            label={tab.label}
+            value={tab.value}
+            onClick={() => handleTabChange(tab)}
+            iconPosition="start"
+          />
+        ))}
+      </Tabs>
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          overflowY: 'scroll',
+          '&::-webkit-scrollbar': {
+            width: '0.5em',
+          },
+          '&::-webkit-scrollbar-track': {
+            boxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
+            webkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'background.bluegreymedium',
+          },
+        }}
+      >
+        <DataGrid
+          autoHeight
+          columnHeaderHeight={0}
+          getRowHeight={() => 'auto'}
+          rows={taskRows}
+          columns={taskColumns}
+          onRowClick={handleGridRowClick}
+          hideFooter
+        />
+      </Box>
     </Stack>
   );
 }
