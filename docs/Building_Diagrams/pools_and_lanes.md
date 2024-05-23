@@ -124,7 +124,7 @@ Lets discuss the methods for assigning lane owners:
      ```python
      # Script task to assign lane owners
      lane_owners = {
-         "Reviewer": ["user1@sartography.com", "user2@sartography.com"]
+         "Reviewer": ["user1@example.com", "user2@example.com"]
      }
      ```
    - This script explicitly sets who the lane owners are for the 'Reviewer' lane. The names provided in the dictionary map directly to the users responsible for this lane.
