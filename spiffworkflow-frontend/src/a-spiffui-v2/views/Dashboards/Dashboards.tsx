@@ -73,14 +73,15 @@ export default function Dashboards() {
   const handleProcessRowSelect = (data: Record<string, any>) => {
     setIsTaskData(false);
     if (data !== panelData) {
+      console.log(data);
       setPanelData(data);
       setInfoPanelIsOpen(true);
+      setSelectedProcessInstance(data);
     } else {
       setInfoPanelIsOpen(!infoPanelOpen);
     }
 
     // Still need this?
-    setSelectedProcessInstance(data);
   };
 
   const handleTaskRowSelect = (data: Record<string, any>) => {
@@ -161,7 +162,12 @@ export default function Dashboards() {
                 }}
               >
                 <FormControl>
-                  <InputLabel id="filter-select-label">Filter</InputLabel>
+                  <InputLabel
+                    id="filter-select-label"
+                    sx={{ display: { xs: 'none', md: 'block' } }}
+                  >
+                    Filter
+                  </InputLabel>
                   <Select
                     labelId="filter-select-label"
                     id="filter-select"
@@ -259,7 +265,7 @@ export default function Dashboards() {
         <Slide in={infoPanelOpen} direction="left" mountOnEnter unmountOnExit>
           <Stack
             sx={{
-              display: { xs: 'none', md: 'block' },
+              display: { xs: 'none', sm: 'block' },
               position: 'fixed',
               right: -20,
               top: 0,

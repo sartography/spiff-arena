@@ -74,14 +74,15 @@ export default function ProcessInfo({
         renderCell: (params: Record<string, any>) => <TaskCard task={params} />,
       },
     ];
-    if (taskCollection?.results) {
+    if (taskCollection?.results && pi?.id) {
+      console.log('HELLO HELLO');
       const rows = [...taskCollection.results].filter(
         (row) => row.process_instance_id === pi.id
       );
       setTaskColumns(columns);
       setTaskRows(rows);
     }
-  }, [taskCollection]);
+  }, [taskCollection, pi]);
 
   const tabData = [
     {
