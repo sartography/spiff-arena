@@ -48,6 +48,7 @@ export default function Dashboards() {
     Record<string, any>
   >({});
   const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
+  const [isTaskData, setIsTaskData] = useState(false);
   const { processInstanceCollection } = useProcessInstanceCollection();
   const { processInstanceTimesReport, setProcessInstances } =
     useProcessInstanceTimes();
@@ -70,6 +71,7 @@ export default function Dashboards() {
   };
 
   const handleProcessRowSelect = (data: Record<string, any>) => {
+    setIsTaskData(false);
     if (data !== panelData) {
       setPanelData(data);
       setInfoPanelIsOpen(true);
@@ -82,6 +84,7 @@ export default function Dashboards() {
   };
 
   const handleTaskRowSelect = (data: Record<string, any>) => {
+    setIsTaskData(true);
     if (data !== panelData) {
       setPanelData(data);
       setInfoPanelIsOpen(true);
@@ -258,7 +261,7 @@ export default function Dashboards() {
             sx={{
               display: { xs: 'none', md: 'block' },
               position: 'fixed',
-              right: 0,
+              right: -20,
               top: 0,
               width: '50%',
               height: '100%',
@@ -272,11 +275,15 @@ export default function Dashboards() {
                 title={panelData.process_model_display_name || ''}
                 callback={handleInfoWindowClose}
               >
-                <ProcessInfo
-                  pi={panelData}
-                  callback={handleTaskRowSelect}
-                  filter={searchText}
-                />
+                {isTaskData ? (
+                  <TaskInfo data={panelData} />
+                ) : (
+                  <ProcessInfo
+                    pi={panelData}
+                    callback={handleTaskRowSelect}
+                    filter={searchText}
+                  />
+                )}
               </InfoPanel>
             </Box>
           </Stack>

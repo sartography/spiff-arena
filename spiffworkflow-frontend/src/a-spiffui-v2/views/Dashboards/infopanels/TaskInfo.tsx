@@ -5,7 +5,7 @@ export default function TaskInfo({ data }: { data: Record<string, any> }) {
     <Box
       sx={{
         position: 'relative',
-        top: -50,
+        top: 0,
         left: 0,
         width: '100%',
         height: '100%',

@@ -18,7 +18,7 @@ export default function InfoPanel({
   return (
     <Box
       sx={{
-        width: '100%',
+        width: 'calc(100% - 20px)',
         height: '100%',
         resize: 'both',
         position: 'relative',
@@ -36,7 +36,7 @@ export default function InfoPanel({
         <CollapseButton callback={handleClose} />
       </Box>
       <Paper
-        elevation={1}
+        elevation={4}
         sx={{
           width: '100%',
           height: '100%',
@@ -54,6 +54,7 @@ export default function InfoPanel({
               left: 0,
               zIndex: 1500, // MUI top level
               width: '100%',
+              height: '100%',
             }}
           >
             {children}
