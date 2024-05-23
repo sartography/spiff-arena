@@ -25,7 +25,10 @@ export default function MyProcesses({
     GridColDef[]
   >([]);
   /** Did this to accommodate adding task counts to the type */
-  const [processInstanceRows, setProcessInstanceRows] = useState<
+  const [mappedRows, setMappedRows] = useState<
+    (GridRowsProp | Record<string, any>)[]
+  >([]);
+  const [filteredRows, setFilteredRows] = useState<
     (GridRowsProp | Record<string, any>)[]
   >([]);
 
@@ -36,30 +39,32 @@ export default function MyProcesses({
   };
 
   useEffect(() => {
-    const filtered =
-      filter && pis.results
-        ? pis.results.filter((instance: any) => {
-            const searchFields = [
-              'process_model_display_name',
-              'last_milestone_bpmn_name',
-              'process_initiator_username',
-              'status',
-            ];
+    const filtered = filter
+      ? mappedRows.filter((instance: any) => {
+          const searchFields = [
+            'process_model_display_name',
+            'last_milestone_bpmn_name',
+            'process_initiator_username',
+            'status',
+          ];
 
-            return searchFields.some((field) =>
-              (instance[field] || '')
-                .toString()
-                .toLowerCase()
-                .includes(filter.toLowerCase())
-            );
-          })
-        : pis.results || [];
+          return searchFields.some((field) =>
+            (instance[field] || '')
+              .toString()
+              .toLowerCase()
+              .includes(filter.toLowerCase())
+          );
+        })
+      : mappedRows || [];
 
-    const sorted = filtered.sort(
-      (a: Record<string, any>, b: Record<string, any>) =>
-        b.taskCount - a.taskCount
+    // If you don't want to sort by task count, you can remove this block
+    // Also note that spreading the filtered array is necessary to avoid mutating state
+    const sorted = [...filtered].sort(
+      (a: Record<string, any>, b: Record<string, any>) => {
+        return b.taskCount - a.taskCount;
+      }
     );
-    setProcessInstanceRows(sorted);
+    setFilteredRows(sorted);
   }, [filter]);
 
   // We don't want to have to count tasks every time we filter
@@ -102,7 +107,9 @@ export default function MyProcesses({
       ];
 
       setProcessInstanceColumns(columns);
-      setProcessInstanceRows(addTaskCounts(pis.results));
+      const rows = addTaskCounts(pis.results);
+      setMappedRows(rows);
+      setFilteredRows([...rows].sort((a, b) => b.taskCount - a.taskCount));
     }
   }, [pis]);
 
@@ -125,6 +132,11 @@ export default function MyProcesses({
       }}
     >
       <DataGrid
+        sx={{
+          '& .MuiDataGrid-cell:focus': {
+            outline: 'none',
+          },
+        }}
         initialState={{
           columns: {
             columnVisibilityModel: {
@@ -135,7 +147,7 @@ export default function MyProcesses({
         }}
         autoHeight
         getRowHeight={() => 'auto'}
-        rows={processInstanceRows as GridRowProps[]}
+        rows={filteredRows as GridRowProps[]}
         columns={processInstanceColumns}
         onRowClick={handleGridRowClick}
         hideFooter

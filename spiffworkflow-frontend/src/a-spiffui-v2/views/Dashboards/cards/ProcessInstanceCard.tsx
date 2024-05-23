@@ -1,4 +1,4 @@
-import { Box, Chip, Stack, Typography, useTheme } from '@mui/material';
+import { Chip, Stack, Typography, useTheme } from '@mui/material';
 
 /**
  * Appears when we need to display process instances in a responsive view.
@@ -13,7 +13,6 @@ export default function ProcessInstanceCard({
   const { mode } = useTheme().palette;
   /** These values map to theme tokens, which enable the light/dark modes etc. */
   const chipBackground = (status: string) => {
-    console.log(pi);
     switch (status) {
       case 'Completed':
       case 'complete':
