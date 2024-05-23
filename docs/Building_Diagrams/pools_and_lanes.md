@@ -113,8 +113,6 @@ This BPMN diagram effectively uses Lanes and pools to structure a petty cash req
 ---
 ### Assigning Lane Owners
 
-### Assigning Lane Owners in BPMN Workflows
-
 Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization. 
 
 Lets discuss the methods for assigning lane owners:
@@ -126,7 +124,7 @@ Lets discuss the methods for assigning lane owners:
      ```python
      # Script task to assign lane owners
      lane_owners = {
-         "Reviewer": ["alex@sartography.com", "madhurya@sartography.com"]
+         "Reviewer": ["user1@sartography.com", "user2@sartography.com"]
      }
      ```
    - This script explicitly sets who the lane owners are for the 'Reviewer' lane. The names provided in the dictionary map directly to the users responsible for this lane.
@@ -141,28 +139,26 @@ Lets discuss the methods for assigning lane owners:
        groups:
          admin:
            users:
-             - sam@spiffworkflow.org
-             - trent@spiffworkflow.org
+             - user1@spiffworkflow.org
+             - user2@spiffworkflow.org
          reviewers:
            users:
-             - malala@spiffworkflow.org
-             - oskar@spiffworkflow.org
+             - user3@spiffworkflow.org
+             - user4@spiffworkflow.org
        ```
    - This configuration shows how different user roles, such as admins and reviewers, are populated with specific users.
 
 #### Practical Application in a BPMN Model:
 In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process. For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
 
-- **Start of the Process**
+- **Process Start**
   - The process begins and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"
 
 ![Lane Owners](images/lane_owners.png)
 
 - **Task Execution**:
   - As tasks are executed, the workflow engine checks the `lane_owners` dictionary to determine which users are responsible for tasks in specific lanes.
-  - If a lane owner is set using a script task, as shown in the example, tasks in that lane appear on the designated users' interfaces.
-  - If no explicit assignment is provided, the engine queries the group name to determine potential task owners from DB.
-
+  - If a lane owner is not set using a script task and no explicit assignment is provided, the engine queries the group name to determine potential task owners from DB.
 
 ```{admonition} Note
 ⚠ Specifying a user group in the `lane_owners` dictionary in script task does not require it to previously exist in the database. 
