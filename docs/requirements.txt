@@ -19,7 +19,7 @@ livereload==2.6.3
 lsprotocol==2023.0.1
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
-mdit-py-plugins==0.4.0
+mdit-py-plugins==0.4.1
 mdurl==0.1.2
 myst-parser==3.0.1
 packaging==24.0

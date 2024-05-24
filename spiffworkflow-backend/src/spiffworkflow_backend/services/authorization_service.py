@@ -368,6 +368,8 @@ class AuthorizationService:
 
         if cls.request_is_excluded_from_permission_check():
             return None
+        if cls.request_is_excluded_from_public_user_permission_check(decoded_token):
+            return None
 
         cls.check_permission_for_request()
 
@@ -380,6 +382,24 @@ class AuthorizationService:
         api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
         if api_function_full_path and (api_function_full_path in authorization_exclusion_list):
             return True
+
+        return False
+
+    @classmethod
+    def request_is_excluded_from_public_user_permission_check(cls, decoded_token: dict | None) -> bool:
+        authorization_exclusion_for_public_user_list = [
+            "spiffworkflow_backend.routes.connector_proxy_controller.typeahead",
+        ]
+        api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
+        if (
+            api_function_full_path
+            and (api_function_full_path in authorization_exclusion_for_public_user_list)
+            and decoded_token
+            and "public" in decoded_token
+            and decoded_token["public"] is True
+        ):
+            return True
+
         return False
 
     @staticmethod
