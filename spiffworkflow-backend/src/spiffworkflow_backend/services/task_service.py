@@ -207,6 +207,7 @@ class TaskService:
         )
 
         self.update_task_model(task_model, spiff_task)
+        print(spiff_task.workflow.data)
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
@@ -539,7 +540,8 @@ class TaskService:
     ) -> JsonDataDict | None:
         data_dict_to_use = bpmn_process_data_dict
         if bpmn_process_instance is not None:
-            data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
+            # TODO: maybe not the 100% fix
+            data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.script_engine.environment.user_defined_state())
         if data_dict_to_use is None:
             data_dict_to_use = {}
         bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
