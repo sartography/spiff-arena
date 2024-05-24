@@ -138,7 +138,8 @@ class ExecutionStrategy:
             if num_steps == 0:
                 task_runnability = TaskRunnability.no_ready_tasks
                 break
-            elif num_steps == 1:
+            # TODO: parallel execution needs to be considered (token data?)
+            elif num_steps >= 1:
                 spiff_task = engine_steps[0]
                 self.delegate.will_complete_task(spiff_task)
                 spiff_task.run()

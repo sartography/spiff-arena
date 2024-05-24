@@ -290,7 +290,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(TaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
     pass
 
 
@@ -1669,7 +1669,9 @@ class ProcessInstanceProcessor:
             raise task_exception
 
     def get_data(self) -> dict[str, Any]:
-        return self.bpmn_process_instance.data  # type: ignore
+        # TODO: do this with deepcopy
+        data = {k: v for k, v in self.bpmn_process_instance.data.items() if k != "spiff__python_env_state"}  # type: ignore
+        return data
 
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.

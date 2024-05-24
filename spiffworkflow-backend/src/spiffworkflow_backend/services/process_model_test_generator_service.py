@@ -13,6 +13,9 @@ class ProcessModelTestGeneratorService:
         wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
         serializer = BpmnWorkflowSerializer(wf_spec_converter)
         process_instance_dict_copy = copy.deepcopy(process_instance_dict)
+        # TODO: don't be hacky
+        if "spiff__python_env_state" in process_instance_dict_copy:
+            del process_instance_dict_copy["spiff__python_env_state"]
         bpmn_process_instance = serializer.from_dict(process_instance_dict_copy)
 
         human_tasks = bpmn_process_instance.get_tasks(manual=True)
