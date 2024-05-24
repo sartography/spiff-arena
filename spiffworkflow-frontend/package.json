@@ -33,7 +33,7 @@
     "@uiw/react-md-editor": "^3.20.2",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.13",
-    "axios": "^0.27.2",
+    "axios": "^1.7.2",
     "bpmn-js": "^13.2.2",
     "bpmn-js-properties-panel": "^1.22.0",
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
