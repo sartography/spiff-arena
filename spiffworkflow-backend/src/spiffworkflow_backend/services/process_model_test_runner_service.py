@@ -444,11 +444,11 @@ class ProcessModelTestRunner:
                 "error_messages": ["Expected process instance to succeed but it did not."],
                 "output_data": bpmn_process_instance.data,
             }
-        elif test_case_contents["expected_output_json"] != bpmn_process_instance.data:
+        elif test_case_contents["expected_output_json"] != bpmn_process_instance.script_engine.environment.user_defined_state():
             error_message = {
                 "error_messages": ["Expected output did not match actual output."],
                 "expected_data": test_case_contents["expected_output_json"],
-                "output_data": bpmn_process_instance.data,
+                "output_data": bpmn_process_instance.data, 
             }
         self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
