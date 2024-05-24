@@ -67,13 +67,13 @@ export default function MyProcesses({
     setFilteredRows(sorted);
   }, [filter]);
 
-  // We don't want to have to count tasks every time we filter
+  // Put the task objects right on the process instance objects
   const addTaskCounts = (rows: GridRowsProp[]) => {
     return rows.map((row: Record<string, any>) => {
-      const taskCount: number = taskCollection?.results?.filter(
+      const tasks = taskCollection?.results?.filter(
         (task: Record<string, any>) => task.process_instance_id === row.id
-      ).length;
-      return { ...row, taskCount };
+      );
+      return { ...row, tasks };
     });
   };
 
@@ -109,7 +109,9 @@ export default function MyProcesses({
       setProcessInstanceColumns(columns);
       const rows = addTaskCounts(pis.results);
       setMappedRows(rows);
-      setFilteredRows([...rows].sort((a, b) => b.taskCount - a.taskCount));
+      setFilteredRows(
+        [...rows].sort((a, b) => b.tasks.length - a.tasks.length)
+      );
     }
   }, [pis]);
 

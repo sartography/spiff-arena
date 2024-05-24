@@ -19,8 +19,8 @@ export default function useTaskCollection({
    * Query function to get tasks from the backend
    * @returns Query functions must return a value, even if it's just true
    */
-  const processResult = (result: any[]) => {
-    setTaskCollection(result);
+  const processResult = (result: Record<string, any>[]) => {
+    setTaskCollection({ ...result });
     setLoading(false);
   };
 

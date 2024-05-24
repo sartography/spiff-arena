@@ -73,15 +73,12 @@ export default function Dashboards() {
   const handleProcessRowSelect = (data: Record<string, any>) => {
     setIsTaskData(false);
     if (data !== panelData) {
-      console.log(data);
       setPanelData(data);
       setInfoPanelIsOpen(true);
       setSelectedProcessInstance(data);
     } else {
       setInfoPanelIsOpen(!infoPanelOpen);
     }
-
-    // Still need this?
   };
 
   const handleTaskRowSelect = (data: Record<string, any>) => {
@@ -277,10 +274,7 @@ export default function Dashboards() {
             }}
           >
             <Box sx={{ width: '100%', height: '70%' }}>
-              <InfoPanel
-                title={panelData.process_model_display_name || ''}
-                callback={handleInfoWindowClose}
-              >
+              <InfoPanel callback={handleInfoWindowClose}>
                 {isTaskData ? (
                   <TaskInfo data={panelData} />
                 ) : (

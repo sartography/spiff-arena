@@ -28,7 +28,6 @@ export default function ProcessInfo({
   const [selectedTab, setSelectedTab] = useState('tasks');
   const [taskColumns, setTaskColumns] = useState<GridColDef[]>([]);
   const [taskRows, setTaskRows] = useState<GridRowsProp[]>([]);
-  const { taskCollection } = useTaskCollection({ processInfo: pi });
 
   const isDark = useTheme().palette.mode === 'dark';
 
@@ -41,54 +40,11 @@ export default function ProcessInfo({
     setSelectedTab(tab.value);
   };
 
-  useEffect(() => {
-    const filtered =
-      filter && taskCollection.results
-        ? taskCollection?.results.filter((instance: any) => {
-            const searchFields = [
-              'process_model_display_name',
-              'process_initiator_username',
-              'process_instance_status',
-              'task_name',
-              'task_status',
-              'task_title',
-              'task_type',
-            ];
-            return searchFields.some((field) =>
-              (instance[field] || '')
-                .toString()
-                .toLowerCase()
-                .includes(filter.toLowerCase())
-            );
-          })
-        : [];
-    setTaskRows(filtered);
-  }, [filter]);
-
-  useEffect(() => {
-    const columns = [
-      {
-        field: 'process_instances',
-        headerName: 'Process Instances',
-        flex: 1,
-        renderCell: (params: Record<string, any>) => <TaskCard task={params} />,
-      },
-    ];
-    if (taskCollection?.results && pi?.id) {
-      console.log('HELLO HELLO');
-      const rows = [...taskCollection.results].filter(
-        (row) => row.process_instance_id === pi.id
-      );
-      setTaskColumns(columns);
-      setTaskRows(rows);
-    }
-  }, [taskCollection, pi]);
-
   const tabData = [
     {
       label: `Tasks (${
         pi.id
-          ? taskCollection.results?.filter(
+          ? pi.tasks.filter(
               (row: Record<string, any>) => row.process_instance_id === pi.id
             ).length
           : '-'
@@ -106,7 +62,51 @@ export default function ProcessInfo({
     { label: 'Messages', value: 'support' },
   ];
 
-  // useEffect(() => console.log(pi), [pi]);
+  useEffect(() => {
+    if (!filter) {
+      return;
+    }
+
+    const filtered = pi.tasks?.results
+      ? pi.tasks?.results.filter((instance: any) => {
+          const searchFields = [
+            'process_model_display_name',
+            'process_initiator_username',
+            'process_instance_status',
+            'task_name',
+            'task_status',
+            'task_title',
+            'task_type',
+          ];
+          return searchFields.some((field) =>
+            (instance[field] || '')
+              .toString()
+              .toLowerCase()
+              .includes(filter.toLowerCase())
+          );
+        })
+      : [];
+    setTaskRows(filtered);
+  }, [filter]);
+
+  const columns = [
+    {
+      field: 'process_instances',
+      headerName: 'Process Instances',
+      flex: 1,
+      renderCell: (params: Record<string, any>) => <TaskCard task={params} />,
+    },
+  ];
+
+  useEffect(() => {
+    if (pi?.id) {
+      const rows = [...pi.tasks].filter(
+        (row) => row.process_instance_id === pi.id
+      );
+      setTaskColumns(columns);
+      setTaskRows(rows);
+    }
+  }, [pi]);
 
   const bgPaper = isDark ? 'background.paper' : 'background.bluegreylight';
   const secondaryText = 'text.secondary';

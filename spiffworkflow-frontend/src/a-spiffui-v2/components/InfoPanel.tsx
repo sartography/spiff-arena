@@ -3,11 +3,9 @@ import { ReactNode } from 'react';
 import CollapseButton from '../views/app/sidemenu/CollapseButton';
 
 export default function InfoPanel({
-  title,
   callback,
   children,
 }: {
-  title: string;
   callback: () => void;
   children: ReactNode;
 }) {
