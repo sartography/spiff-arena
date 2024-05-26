@@ -3,6 +3,7 @@ from os import environ
 from os import path
 from typing import Any
 
+from flask import current_app
 from spiffworkflow_backend.config.normalized_environment import normalized_environment
 
 # Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
@@ -22,12 +23,14 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
         if value_from_file and value_from_file.startswith("/run/secrets"):
             # rewrite variable name: remove _FILE
             variable_name = variable_name.removesuffix("_FILE")
-
-            if path.exists(value_from_file):
-                with open(value_from_file) as f:
-                    value_to_return = f.readline()
-            else:
-                value_to_return = None
+            try:
+                with open(value_from_file, 'r') as file:
+                    value_to_return = file.read().strip()  # Read entire content and strip any extra whitespace
+            except FileNotFoundError:
+                value_to_return = None  # Handle the case where the file does not exist
+            except Exception as e:
+                current_app.logger.error(f"Error reading from {value_from_file}: {str(e)}")
+                value_to_return = None  # Handle other potential errors
 
     if value_from_env is not None:
         if isinstance(default, bool):
