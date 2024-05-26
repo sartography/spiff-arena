@@ -1,5 +1,5 @@
 import re
-from os import environ
+from os import environ, path
 from typing import Any
 
 from spiffworkflow_backend.config.normalized_environment import normalized_environment
@@ -21,9 +21,12 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
         if value_from_file.startswith("/run/secrets"):
             # rewrite variable name: remove _FILE
             variable_name = variable_name.removesuffix("_FILE")
-            print(variable_name)
-            with open(value_from_file) as f:
-                value_to_return = f.readline()
+
+            if path.exists(value_from_file):
+                with open(value_from_file) as f:
+                    value_to_return = f.readline()
+            else:
+                value_to_return = None
 
     if value_from_env is not None:
         if isinstance(default, bool):
