@@ -18,7 +18,7 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
     # using docker secrets - put file contents to env value
     if variable_name.endswith("_FILE"):
         value_from_file = default if value_from_env is None else value_from_env
-        if value_from_file.startswith("/run/secrets"):
+        if value_from_file and value_from_file.startswith("/run/secrets"):
             # rewrite variable name: remove _FILE
             variable_name = variable_name.removesuffix("_FILE")
 
