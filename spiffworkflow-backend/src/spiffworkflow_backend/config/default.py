@@ -1,5 +1,6 @@
 import re
-from os import environ, path
+from os import environ
+from os import path
 from typing import Any
 
 from spiffworkflow_backend.config.normalized_environment import normalized_environment
