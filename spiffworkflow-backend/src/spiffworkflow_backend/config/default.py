@@ -15,6 +15,16 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
         value_from_env = None
 
     value_to_return: str | bool | int | None = value_from_env
+    # using docker secrets - put file contents to env value
+    if variable_name.endswith("_FILE"):
+        value_from_file = default if value_from_env is None else value_from_env
+        if value_from_file.startswith("/run/secrets"):
+            # rewrite variable name: remove _FILE
+            variable_name = variable_name.removesuffix("_FILE")
+            print(variable_name)
+            with open(value_from_file) as f:
+                value_to_return = f.readline()
+
     if value_from_env is not None:
         if isinstance(default, bool):
             if value_from_env.lower() == "true":
