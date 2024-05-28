@@ -20,17 +20,18 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
     # using docker secrets - put file contents to env value
     if variable_name.endswith("_FILE"):
         value_from_file = default if value_from_env is None else value_from_env
-        if value_from_file and value_from_file.startswith("/run/secrets"):
-            # rewrite variable name: remove _FILE
-            variable_name = variable_name.removesuffix("_FILE")
-            try:
-                with open(value_from_file) as file:
-                    value_to_return = file.read().strip()  # Read entire content and strip any extra whitespace
-            except FileNotFoundError:
-                value_to_return = None  # Handle the case where the file does not exist
-            except Exception as e:
-                current_app.logger.error(f"Error reading from {value_from_file}: {str(e)}")
-                value_to_return = None  # Handle other potential errors
+        if value_from_file:
+            if isinstance(value_from_file, str) and value_from_file.startswith("/run/secrets"):
+                # rewrite variable name: remove _FILE
+                variable_name = variable_name.removesuffix("_FILE")
+                try:
+                    with open(value_from_file) as file:
+                        value_to_return = file.read().strip()  # Read entire content and strip any extra whitespace
+                except FileNotFoundError:
+                    value_to_return = None  # Handle the case where the file does not exist
+                except Exception as e:
+                    current_app.logger.error(f"Error reading from {value_from_file}: {str(e)}")
+                    value_to_return = None  # Handle other potential errors
 
     if value_from_env is not None:
         if isinstance(default, bool):
