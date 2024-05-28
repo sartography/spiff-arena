@@ -3,6 +3,7 @@ from os import environ
 from typing import Any
 
 from flask import current_app
+
 from spiffworkflow_backend.config.normalized_environment import normalized_environment
 
 # Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
@@ -23,7 +24,7 @@ def config_from_env(variable_name: str, *, default: str | bool | int | None = No
             # rewrite variable name: remove _FILE
             variable_name = variable_name.removesuffix("_FILE")
             try:
-                with open(value_from_file, 'r') as file:
+                with open(value_from_file) as file:
                     value_to_return = file.read().strip()  # Read entire content and strip any extra whitespace
             except FileNotFoundError:
                 value_to_return = None  # Handle the case where the file does not exist

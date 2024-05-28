@@ -77,7 +77,7 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     file_name: str = db.Column(db.String(255), nullable=False)
 
     # relative to SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
-    relative_location: str = db.Column(db.String(255), index=True, nullable=False)
+    relative_location: int = db.Column(db.String(255), index=True, nullable=False)
 
     properties: dict | None = db.Column(db.JSON)
     # has_lanes = db.Column(db.Boolean())
