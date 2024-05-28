@@ -4,7 +4,8 @@ import sys
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from lxml import etree  # type: ignore
+from lxml import etree
+from spiffworkflow_backend.models import process_caller_relationship  # type: ignore
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
@@ -271,6 +272,37 @@ class TestSpecFileService(BaseTest):
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].generation_id == current_cache_generation.id
+
+    def test_can_correctly_clear_caches_for_a_file(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        load_test_spec(
+            process_model_id=self.process_model_id,
+            process_model_source_directory="call_activity_nested",
+        )
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
+        assert len(bpmn_process_id_lookups) == 1
+        reference = bpmn_process_id_lookups[0]
+        assert reference.identifier == "Level1"
+        assert reference.relative_path() == self.call_activity_nested_relative_file_path
+
+        # ensure we add and remove from this table
+        process_caller_relationships = process_caller_relationship.ProcessCallerRelationshipModel.query.all()
+        assert len(process_caller_relationships) == 4
+
+        process_model = ProcessModelService.get_process_model(reference.relative_location)
+        assert process_model is not None
+        SpecFileService.clear_caches_for_item(file_name=reference.file_name, process_model_info=process_model)
+        db.session.commit()
+
+        bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
+        assert len(bpmn_process_id_lookups) == 0
+
+        process_caller_relationships = process_caller_relationship.ProcessCallerRelationshipModel.query.all()
+        assert len(process_caller_relationships) == 2
 
     @pytest.mark.skipif(
         sys.platform == "win32",
