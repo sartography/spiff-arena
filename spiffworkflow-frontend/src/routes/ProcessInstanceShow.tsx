@@ -1883,5 +1883,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       </>
     );
   }
-  return <Loading />;
+
+  return (
+    <Loading
+      description="Active loading indicator"
+      withOverlay={false}
+      style={{ margin: '50px 0 50px 50px' }}
+    />
+  );
 }
