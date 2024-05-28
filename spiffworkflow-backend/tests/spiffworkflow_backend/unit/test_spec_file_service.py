@@ -4,10 +4,10 @@ import sys
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from lxml import etree
-from spiffworkflow_backend.models import process_caller_relationship  # type: ignore
+from lxml import etree  # type: ignore
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
@@ -290,7 +290,7 @@ class TestSpecFileService(BaseTest):
         assert reference.relative_path() == self.call_activity_nested_relative_file_path
 
         # ensure we add and remove from this table
-        process_caller_relationships = process_caller_relationship.ProcessCallerRelationshipModel.query.all()
+        process_caller_relationships = ProcessCallerRelationshipModel.query.all()
         assert len(process_caller_relationships) == 4
 
         process_model = ProcessModelService.get_process_model(reference.relative_location)
@@ -301,7 +301,7 @@ class TestSpecFileService(BaseTest):
         bpmn_process_id_lookups = ReferenceCacheService.get_reference_cache_entries_calling_process(["Level2"])
         assert len(bpmn_process_id_lookups) == 0
 
-        process_caller_relationships = process_caller_relationship.ProcessCallerRelationshipModel.query.all()
+        process_caller_relationships = ProcessCallerRelationshipModel.query.all()
         assert len(process_caller_relationships) == 2
 
     @pytest.mark.skipif(
