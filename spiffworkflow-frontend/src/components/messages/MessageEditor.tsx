@@ -111,7 +111,14 @@ export function MessageEditor({
     );
 
     updatedMessagesForId.correlation_properties = correlationProperties;
-    updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
+
+    try {
+    	updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
+    } catch (e) {
+      alert(`Invalid schema: ${e}`);
+      return;
+    }
+
     processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
     setCurrentMessageId(newMessageId);
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
