@@ -381,7 +381,7 @@ def _process_instance_task_list(
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
     elif process_instance.bpmn_process_id is None and process_instance.status == ProcessInstanceStatus.not_started.value:
-        # if the process instance hasn't started yet then return a blank return only.
+        # if the process instance hasn't started yet then return a blank array only.
         # this should help for issues like timer start events when viewing the corresponding instance.
         return make_response(jsonify([]), 200)
     else:
