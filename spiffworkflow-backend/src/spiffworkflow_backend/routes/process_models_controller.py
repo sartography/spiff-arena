@@ -202,7 +202,7 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     # if the user got here then they can read the process model
     available_actions = {"read": {"path": f"/process-models/{modified_process_model_identifier}", "method": "GET"}}
     if GitService.check_for_publish_configs(raise_on_missing=False):
-        available_actions = {"publish": {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}}
+        available_actions["publish"] = {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}
     process_model.actions = available_actions
 
     return make_response(jsonify(process_model), 200)
