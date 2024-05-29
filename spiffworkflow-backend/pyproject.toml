@@ -31,7 +31,7 @@ SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "ma
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = "^1.10"
 # sphinx-autoapi = "^2.0"
-#psycopg2 = "^2.9.3"
+psycopg2 = "^2.9.3"
 typing-extensions = "^4.10.0"
 openai = "^1.1.0"
 
@@ -78,7 +78,7 @@ marshmallow-sqlalchemy = "^1.0.0"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
 # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
-# mysqlclient = "^2.2.3"
+mysqlclient = "^2.2.3"
 flask-session = "^0.5.0"
 flask-oauthlib = "^0.9.6"
 celery = {extras = ["redis"], version = "^5.3.5"}
