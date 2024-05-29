@@ -195,7 +195,7 @@ export function MessageEditor({
       currentMessageId,
       processGroup
     );
-    const jsonSchema = (processGroup.messages || {})[currentMessageId]?.schema;
+    const jsonSchema = (processGroup.messages || {})[currentMessageId]?.schema || {};
     const formData = {
       processGroupIdentifier: unModifyProcessIdentifierForPathParam(
         modifiedProcessGroupIdentifier
