@@ -12,17 +12,6 @@ files = [
 ]
 
 [[package]]
-name = "classify-imports"
-version = "4.2.0"
-description = "Utilities for refactoring imports in python-like syntax."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "classify_imports-4.2.0-py2.py3-none-any.whl", hash = "sha256:dbbc264b70a470ed8c6c95976a11dfb8b7f63df44ed1af87328bbed2663f5161"},
-    {file = "classify_imports-4.2.0.tar.gz", hash = "sha256:7abfb7ea92149b29d046bd34573d247ba6e68cc28100c801eba4af17964fc40e"},
-]
-
-[[package]]
 name = "distlib"
 version = "0.3.6"
 description = "Distribution utilities"
@@ -183,20 +172,6 @@ files = [
 ]
 
 [[package]]
-name = "reorder-python-imports"
-version = "3.12.0"
-description = "Tool for reordering python imports"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "reorder_python_imports-3.12.0-py2.py3-none-any.whl", hash = "sha256:930c23a42192b365e20e191a4d304d93e645bd44c242d8bc64accc4a3b2b0f3d"},
-    {file = "reorder_python_imports-3.12.0.tar.gz", hash = "sha256:f93106a662b0c034ca81c91fd1c2f21a1e94ece47c9f192672e2a13c8ec1856c"},
-]
-
-[package.dependencies]
-classify-imports = ">=4.1"
-
-[[package]]
 name = "ruamel-yaml"
 version = "0.17.21"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
@@ -261,4 +236,4 @@ test = ["covdefaults (>=2.2.2)", "coverage (>=7.1)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "b0e8d56d7feb89bbdae9110a18d35b2d9829db143c257310bb637ceea5bf063d"
+content-hash = "49363acab498acfae9391c0fce85a2a9dc1b8b627eb44f7727ede624cdc18f00"
