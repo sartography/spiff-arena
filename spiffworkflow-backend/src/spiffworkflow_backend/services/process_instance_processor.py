@@ -1,6 +1,5 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
-import _strptime  # type: ignore
 import copy
 import decimal
 import json
@@ -20,6 +19,7 @@ from typing import NewType
 from typing import TypedDict
 from uuid import UUID
 
+import _strptime  # type: ignore
 import dateparser
 import pytz
 from flask import current_app
