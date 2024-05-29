@@ -3412,6 +3412,29 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["process_data_value"] == "HEY"
 
+    def test_returns_blank_array_if_process_instance_not_started(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task",
+            process_model_source_directory="manual_task",
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        process_instance_id = response.json["id"]
+
+        response = client.get(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json == []
+
     def _setup_testing_instance(
         self,
         client: FlaskClient,
