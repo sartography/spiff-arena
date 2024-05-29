@@ -109,3 +109,41 @@ This message informs the requester of the approval status, including the approve
 
 
 This BPMN diagram effectively uses Lanes and pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
+
+---
+
+## Managing Approval Processes for Designated Group Users
+
+One common requirement in workflow management is creating an approval process where any user can initiate a request, but only a designated group can grant approval. A specific challenge arises when the initiator is also a member of the approval group and should not approve their own request. 
+
+Lets consider a typical approval process where:
+- Any user can start a request.
+- A specific group ("approvers") can grant approval.
+- The initiator, if part of the approvers, should not approve their own request.
+
+### Solution
+Implement a script task within the workflow to dynamically adjust the assignment of approval tasks, ensuring the initiator cannot approve their own request.
+
+Insert a script task before the approval task to dynamically define and adjust the lane owners based on the current process context. 
+
+Use process data to identify group members eligible for approval tasks and exclude the initiator from this group.
+
+```python
+# Define the group identifier dynamically based on process data
+group_identifier = f"{branch_id}_{participant_id}"
+group_members = get_group_members(group_identifier)
+
+# Retrieve the process initiator's username
+initiator_username = initiator["username"]
+
+# Exclude the initiator from the approvers' list if they are part of it
+if initiator_username in group_members:
+    group_members.remove(initiator_username)
+
+# Assign the modified group list to the lane for task assignment
+lane_owners = {"Approval": group_members}
+```
+
+This solution:
+- Automatically adjusts the approvers list to exclude the initiator, maintaining the integrity of the approval process.
+- Uses dynamic data from the process instance to customize task assignments effectively.
