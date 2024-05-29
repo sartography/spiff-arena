@@ -27,7 +27,7 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
-from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
+from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema, ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
@@ -380,6 +380,10 @@ def _process_instance_task_list(
     bpmn_process = None
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
+    elif process_instance.bpmn_process_id is None and process_instance.status == ProcessInstanceStatus.not_started.value:
+        # if the process instance hasn't started yet then return a blank array only.
+        # this should help for issues like timer start events when viewing the corresponding instance.
+        return make_response(jsonify([]), 200)
     else:
         bpmn_process = process_instance.bpmn_process
 

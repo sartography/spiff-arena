@@ -1,5 +1,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
+import _strptime  # type: ignore
 import copy
 import decimal
 import json
@@ -19,7 +20,6 @@ from typing import NewType
 from typing import TypedDict
 from uuid import UUID
 
-import _strptime  # type: ignore
 import dateparser
 import pytz
 from flask import current_app
@@ -579,14 +579,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
-                task_definition.bpmn_identifier
-            ] = task_definition
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
+                task_definition
+            )
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
-                "bpmn_process_definition"
-            ] = bpmn_process_definition
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
+                bpmn_process_definition
+            )
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
