@@ -138,7 +138,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
+
   const modifiedProcessModelId = params.process_model_id;
+  const processModelId = unModifyProcessIdentifierForPathParam(
+    params.process_model_id ? params.process_model_id : ''
+  );
 
   const { targetUris } = useUriListForPermissions();
   const taskListPath =
@@ -1655,9 +1659,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const diagramArea = (processModelId: string) => {
+  const diagramArea = () => {
     if (!processInstance) {
       return null;
+    }
+    if (!tasks && !tasksCallHadError) {
+      return <Loading className="some-class" withOverlay={false} small />;
     }
 
     const detailsComponent = (
@@ -1762,75 +1769,72 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
-    const processModelId = unModifyProcessIdentifierForPathParam(
-      params.process_model_id ? params.process_model_id : ''
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  const getTabs = () => {
+    if (!processInstance) {
+      return null;
+    }
+
+    const canViewLogs = ability.can(
+      'GET',
+      targetUris.processInstanceLogListPath
     );
+    const canViewMsgs = ability.can('GET', targetUris.messageInstanceListPath);
 
-    // eslint-disable-next-line sonarjs/cognitive-complexity
-    const getTabs = () => {
-      const canViewLogs = ability.can(
-        'GET',
-        targetUris.processInstanceLogListPath
-      );
-      const canViewMsgs = ability.can(
-        'GET',
-        targetUris.messageInstanceListPath
-      );
-
-      const getMessageDisplay = () => {
-        if (canViewMsgs) {
-          return <MessageInstanceList processInstanceId={processInstance.id} />;
-        }
-        return null;
-      };
-
-      return (
-        <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
-          <TabList aria-label="List of tabs">
-            <Tab>Diagram</Tab>
-            <Tab disabled={!canViewLogs}>Milestones</Tab>
-            <Tab disabled={!canViewLogs}>Events</Tab>
-            <Tab disabled={!canViewMsgs}>Messages</Tab>
-            <Tab>Tasks</Tab>
-          </TabList>
-          <TabPanels>
-            <TabPanel>
-              {selectedTabIndex === 0 ? (
-                <TabPanel>{diagramArea(processModelId)}</TabPanel>
-              ) : null}
-            </TabPanel>
-            <TabPanel>
-              {selectedTabIndex === 1 ? (
-                <ProcessInstanceLogList
-                  variant={variant}
-                  isEventsView={false}
-                  processModelId={modifiedProcessModelId || ''}
-                  processInstanceId={processInstance.id}
-                />
-              ) : null}
-            </TabPanel>
-            <TabPanel>
-              {selectedTabIndex === 2 ? (
-                <ProcessInstanceLogList
-                  variant={variant}
-                  isEventsView
-                  processModelId={modifiedProcessModelId || ''}
-                  processInstanceId={processInstance.id}
-                />
-              ) : null}
-            </TabPanel>
-            <TabPanel>
-              {selectedTabIndex === 3 ? getMessageDisplay() : null}
-            </TabPanel>
-            <TabPanel>
-              {selectedTabIndex === 4 ? taskTabSubTabs() : null}
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
-      );
+    const getMessageDisplay = () => {
+      if (canViewMsgs) {
+        return <MessageInstanceList processInstanceId={processInstance.id} />;
+      }
+      return null;
     };
 
+    return (
+      <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
+        <TabList aria-label="List of tabs">
+          <Tab>Diagram</Tab>
+          <Tab disabled={!canViewLogs}>Milestones</Tab>
+          <Tab disabled={!canViewLogs}>Events</Tab>
+          <Tab disabled={!canViewMsgs}>Messages</Tab>
+          <Tab>Tasks</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel>
+            {selectedTabIndex === 0 ? (
+              <TabPanel>{diagramArea()}</TabPanel>
+            ) : null}
+          </TabPanel>
+          <TabPanel>
+            {selectedTabIndex === 1 ? (
+              <ProcessInstanceLogList
+                variant={variant}
+                isEventsView={false}
+                processModelId={modifiedProcessModelId || ''}
+                processInstanceId={processInstance.id}
+              />
+            ) : null}
+          </TabPanel>
+          <TabPanel>
+            {selectedTabIndex === 2 ? (
+              <ProcessInstanceLogList
+                variant={variant}
+                isEventsView
+                processModelId={modifiedProcessModelId || ''}
+                processInstanceId={processInstance.id}
+              />
+            ) : null}
+          </TabPanel>
+          <TabPanel>
+            {selectedTabIndex === 3 ? getMessageDisplay() : null}
+          </TabPanel>
+          <TabPanel>
+            {selectedTabIndex === 4 ? taskTabSubTabs() : null}
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    );
+  };
+
+  if (processInstance && permissionsLoaded) {
     return (
       <>
         <ProcessBreadcrumb
@@ -1879,5 +1883,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       </>
     );
   }
-  return null;
+
+  return (
+    <Loading
+      description="Active loading indicator"
+      withOverlay={false}
+      style={{ margin: '50px 0 50px 50px' }}
+    />
+  );
 }
