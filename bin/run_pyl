@@ -21,12 +21,6 @@ function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
 
-function run_autofixers() {
-  python_dirs="$(get_python_dirs) bin"
-  # shellcheck disable=2086
-  poetry run ruff check --fix $python_dirs || echo ''
-}
-
 function run_pre_commmit() {
   poetry run pre-commit run --verbose --all-files
 }
@@ -36,15 +30,6 @@ for react_project in "${react_projects[@]}"; do
   if [[ -n "$(git status --porcelain "$react_project")" ]]; then
     pushd "$react_project"
     npm run lint:fix
-    popd
-  fi
-done
-
-for python_project in "${python_projects[@]}"; do
-  # if pre, only do stuff when there are changes
-  if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
-    pushd "$python_project"
-    run_autofixers || run_autofixers
     popd
   fi
 done
