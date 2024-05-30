@@ -147,17 +147,15 @@ lane_owners = {"Approval": group_members}
 ```
 
 This solution automatically adjusts the approvers list to exclude the initiator, maintaining the integrity of the approval process.
-=======
-This BPMN diagram effectively uses Lanes and pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
 
 ---
-### Assigning Lane Owners
+## Assigning Lane Owners
 
 Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization. 
 
 Lets discuss the methods for assigning lane owners:
 
-#### Methods to Assign Lane Owners:
+### Methods to Assign Lane Owners:
 1. **Using Script Tasks**:
    - Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic, ensuring that tasks are routed correctly based on current operational needs or specific conditions.
    - **Example**:
@@ -188,7 +186,7 @@ Lets discuss the methods for assigning lane owners:
        ```
    - This configuration shows how different user roles, such as admins and reviewers, are populated with specific users.
 
-#### Practical Application in a BPMN Model:
+### Practical Application in a BPMN Model:
 In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process. For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
 
 - **Process Start**
