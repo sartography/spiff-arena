@@ -44,7 +44,7 @@
     "dmn-js-properties-panel": "^3.0.0",
     "dmn-js-shared": "^16.4.0",
     "jwt-decode": "^3.1.2",
-    "keycloak-js": "^18.0.1",
+    "keycloak-js": "^24.0.4",
     "lodash.merge": "^4.6.2",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",

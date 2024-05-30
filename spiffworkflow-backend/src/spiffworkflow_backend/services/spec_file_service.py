@@ -274,6 +274,10 @@ class SpecFileService(FileSystemService):
         reference_cache_ids = []
         for record in records:
             reference_cache_ids.append(record.id)
+
+        ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
+
+        for record in records:
             db.session.delete(record)
 
     @staticmethod
