@@ -5,7 +5,7 @@ import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
 import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
-import { Outlet, Route, Routes } from 'react-router';
+import { Outlet, Route, Routes, useLocation, useNavigate } from 'react-router';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
 
 /**
@@ -17,7 +17,16 @@ export default function SpiffUIV2() {
   const [globalTheme, setGlobalTheme] = useState(
     createTheme(createSpiffTheme('light'))
   );
+  const navigate = useNavigate();
   const isDark = globalTheme.palette.mode === 'dark';
+  const location = useLocation();
+
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [transitionStage, setTransistionStage] = useState('fadeIn');
+
+  const fadeIn = 'fadeIn';
+  const fadeOutImmediate = 'fadeOutImmediate';
+
   useEffect(() => {
     /**
      * The housing app has an element with a white background
@@ -29,13 +38,22 @@ export default function SpiffUIV2() {
     }
   }, []);
 
+  /** Respond to transition events */
+  useEffect(() => {
+    if (location !== displayLocation) setTransistionStage(fadeOutImmediate);
+  }, [location, displayLocation]);
+
   const handleMenuCallback = (data: MenuItemData) => {
-    if (data.text === 'Dark Mode') {
-      if (globalTheme.palette.mode === 'light') {
-        setGlobalTheme(createTheme(createSpiffTheme('dark')));
-      } else {
-        setGlobalTheme(createTheme(createSpiffTheme('light')));
-      }
+    if (data?.text === 'Dark Mode') {
+      setGlobalTheme(
+        createTheme(
+          createSpiffTheme(
+            globalTheme.palette.mode === 'light' ? 'dark' : 'light'
+          )
+        )
+      );
+    } else if (data?.path) {
+      navigate(data.path);
     }
   };
 
@@ -85,11 +103,22 @@ export default function SpiffUIV2() {
             </Slide>
           </Grid>
           <Grid item xs={12}>
-            <Routes>
-              <Route path="/" element={<Dashboards />} />
-              <Route path="/dashboards" element={<Dashboards />} />
-              <Route path="/startprocess" element={<StartProcess />} />
-            </Routes>
+            <Box
+              className={`${transitionStage}`}
+              sx={{ height: '100%', width: '100%' }}
+              onAnimationEnd={() => {
+                if (transitionStage === fadeOutImmediate) {
+                  setTransistionStage(fadeIn);
+                  setDisplayLocation(location);
+                }
+              }}
+            >
+              <Routes>
+                <Route path="/" element={<Dashboards />} />
+                <Route path="/dashboard" element={<Dashboards />} />
+                <Route path="/startprocess" element={<StartProcess />} />
+              </Routes>
+            </Box>
           </Grid>
         </Grid>
       </Container>

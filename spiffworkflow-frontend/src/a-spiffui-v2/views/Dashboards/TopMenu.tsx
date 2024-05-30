@@ -27,19 +27,14 @@ export default function TopMenu({
   const iconColor =
     useTheme().palette.mode === 'light' ? grey[600] : 'primary.light';
 
-  const handleSpeedDialAction = (item: MenuItemData) => {
-    console.log('>>>>>', item);
-    callback(item);
-  };
-
   const navMenuItemData: MenuItemData[] = [
     {
-      text: 'Dashboards',
-      path: '/',
+      text: 'Dashboard',
+      path: '/newui/dashboard',
     },
     {
       text: 'Start a Process',
-      path: '/startprocess',
+      path: '/newui/startprocess',
     },
   ];
 
@@ -62,8 +57,12 @@ export default function TopMenu({
     },
   ];
 
-  const handleTopMenuClick = (item: MenuItemData) => {
-    console.log(item);
+  const handleMenuItemClick = (item: MenuItemData) => {
+    callback(item);
+  };
+
+  const handleSpeedDialAction = (item: MenuItemData) => {
+    callback(item);
   };
 
   return (
@@ -93,7 +92,7 @@ export default function TopMenu({
         <Box sx={{ width: { xs: 0, md: 32 } }} />
         <Stack direction="row" gap={3} sx={{ width: '100%' }}>
           {navMenuItemData.map((item) => (
-            <MenuItem data={item} callback={() => handleTopMenuClick(item)} />
+            <MenuItem data={item} callback={() => handleMenuItemClick(item)} />
           ))}
         </Stack>
         <Stack
