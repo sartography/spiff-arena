@@ -63,7 +63,7 @@ Specifically, the process manages a list of composers, their names, and genres, 
      ]
 ```
 
-3. **Multi-Instance Task - Edit Composer**: This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
+3. **Multi-Instance Task - Edit Composer**: This task is configured as a multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
 
 ![Multi_instance_example](images/multiinstance_ex.png)
 
