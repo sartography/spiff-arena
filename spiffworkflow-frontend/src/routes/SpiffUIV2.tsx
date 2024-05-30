@@ -5,6 +5,7 @@ import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
 import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
+import { Outlet, Route, Routes } from 'react-router';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -83,7 +84,9 @@ export default function SpiffUIV2() {
             </Slide>
           </Grid>
           <Grid item xs={12}>
-            <Dashboards />
+            <Routes>
+              <Route path="/" element={<Dashboards />} />
+            </Routes>
           </Grid>
         </Grid>
       </Container>
