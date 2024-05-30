@@ -1,10 +1,10 @@
 from flask import current_app
 from flask import g
 
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -14,15 +14,23 @@ class ErrorHandlingService:
     @classmethod
     def handle_error(cls, process_instance: ProcessInstanceModel, error: Exception) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
-        process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
-        cls._update_process_instance_in_database(process_instance, process_model.fault_or_suspend_on_exception)
+        fault_or_suspend_on_exception = "fault"
+        exception_notification_addresses = []
+        try:
+            process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+            fault_or_suspend_on_exception = process_model.fault_or_suspend_on_exception
+            exception_notification_addresses = process_model.exception_notification_addresses
+        except ProcessEntityNotFoundError:
+            pass
+
+        cls._update_process_instance_in_database(process_instance, fault_or_suspend_on_exception)
 
         # Second, send a bpmn message out, but only if an exception notification address is provided
         # This will create a new Send Message with correlation keys on the recipients and the message
         # body.
-        if len(process_model.exception_notification_addresses) > 0:
+        if len(exception_notification_addresses) > 0:
             try:
-                cls._handle_system_notification(error, process_model, process_instance)
+                cls._handle_system_notification(error, process_instance, exception_notification_addresses)
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
                 current_app.logger.error(e)
@@ -52,8 +60,8 @@ class ErrorHandlingService:
     @staticmethod
     def _handle_system_notification(
         error: Exception,
-        process_model: ProcessModelInfo,
         process_instance: ProcessInstanceModel,
+        exception_notification_addresses: list,
     ) -> None:
         """Send a BPMN Message - which may kick off a waiting process."""
 
@@ -63,12 +71,12 @@ class ErrorHandlingService:
         from spiffworkflow_backend.services.message_service import MessageService
 
         message_text = (
-            f"There was an exception running process model {process_model.id} for instance"
+            f"There was an exception running process model {process_instance.process_model_identifier} for instance"
             f" {process_instance.id}.\nOriginal Error:\n{error.__repr__()}"
         )
         message_payload = {
             "message_text": message_text,
-            "recipients": process_model.exception_notification_addresses,
+            "recipients": exception_notification_addresses,
         }
         user_id = None
         if "user" in g:

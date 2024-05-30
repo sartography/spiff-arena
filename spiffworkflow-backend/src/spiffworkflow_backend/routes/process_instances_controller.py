@@ -633,9 +633,12 @@ def _get_process_instance(
         name_of_file_with_diagram = spec_reference.file_name
         process_instance.process_model_with_diagram_identifier = process_model_with_diagram.id
     else:
-        process_model_with_diagram = _get_process_model(process_model_identifier)
-        if process_model_with_diagram.primary_file_name:
-            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+        try:
+            process_model_with_diagram = _get_process_model(process_model_identifier)
+            if process_model_with_diagram.primary_file_name:
+                name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+        except Exception as ex:
+            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
 
     if process_model_with_diagram and name_of_file_with_diagram:
         bpmn_xml_file_contents = None
