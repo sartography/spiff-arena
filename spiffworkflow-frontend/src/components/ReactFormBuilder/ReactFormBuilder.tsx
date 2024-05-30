@@ -189,7 +189,7 @@ export default function ReactFormBuilder({
 
   // Auto save example data changes
   useEffect(() => {
-    if (baseFileName !== '') {
+    if (baseFileName !== '' && ready) {
       saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
     }
   }, [debouncedFormData, baseFileName, saveFile, ready]);

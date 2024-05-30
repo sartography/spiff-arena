@@ -13,6 +13,19 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
 fi
 
 port="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
+use_local_open_id="false"
+acceptance_test_mode="false"
+
+arg_1="${1:-}"
+
+if [[ "$arg_1" == "localopenid" ]]; then
+  use_local_open_id="true"
+  shift
+fi
+if [[ "$arg_1" == "acceptance" ]]; then
+  acceptance_test_mode="true"
+  shift
+fi
 
 process_model_dir="${1:-}"
 if [[ -d "$process_model_dir" ]]; then
@@ -28,10 +41,10 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 fi
 
-if [[ "$process_model_dir" == "acceptance" ]]; then
+if [[ "$acceptance_test_mode" == "true" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
-elif [[ "$process_model_dir" == "localopenid" ]]; then
+elif [[ "$use_local_open_id" == "true" ]]; then
   backend_base_url="${SPIFFWORKFLOW_BACKEND_URL:-}"
   if [[ -z "$backend_base_url" ]]; then
     backend_base_url="http://localhost:$port"

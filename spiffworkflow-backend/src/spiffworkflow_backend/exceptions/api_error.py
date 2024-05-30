@@ -58,7 +58,7 @@ class ApiError(Exception):
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
-        msg = "ApiError: % s. " % self.message
+        msg = "ApiError: % s. " % self.message  # noqa: UP031
         if self.task_name:
             msg += f"Error in task '{self.task_name}' ({self.task_id}). "
         if self.line_number:

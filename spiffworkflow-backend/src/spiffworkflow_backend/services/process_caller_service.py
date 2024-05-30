@@ -20,6 +20,7 @@ class ProcessCallerService:
 
     @staticmethod
     def clear_cache_for_process_ids(reference_cache_ids: list[int]) -> None:
+        # query-invoked autoflush happens here
         ProcessCallerRelationshipModel.query.filter(
             or_(
                 ProcessCallerRelationshipModel.called_reference_cache_process_id.in_(reference_cache_ids),

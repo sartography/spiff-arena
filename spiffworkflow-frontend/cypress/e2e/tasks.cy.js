@@ -2,6 +2,8 @@ const submitInputIntoFormField = (taskName, fieldKey, fieldValue) => {
   cy.contains(`Task: ${taskName}`, { timeout: 10000 });
   cy.get(fieldKey).clear();
   cy.get(fieldKey).type(fieldValue);
+  // wait a little bit after typing for the debounce to take effect
+  cy.wait(100);
   cy.contains('Submit').click();
 };
 
