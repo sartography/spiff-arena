@@ -1,4 +1,5 @@
 import { Chip, Stack, Typography, useTheme } from '@mui/material';
+import { useEffect } from 'react';
 
 /**
  * Appears when we need to display process instances in a responsive view.
@@ -28,6 +29,10 @@ export default function ProcessInstanceCard({
         return 'default';
     }
   };
+
+  useEffect(() => {
+    console.log(pi);
+  }, []);
   return (
     <Stack
       gap={1}
@@ -54,7 +59,7 @@ export default function ProcessInstanceCard({
       </Stack> */}
 
       <Typography variant="button" sx={{ fontWeight: 600 }}>
-        ({pi.row.taskCount}) {pi.row.process_model_display_name}
+        ({pi.row.tasks.length}) {pi.row.process_model_display_name}
       </Typography>
 
       <Stack direction="row" gap={2}>
