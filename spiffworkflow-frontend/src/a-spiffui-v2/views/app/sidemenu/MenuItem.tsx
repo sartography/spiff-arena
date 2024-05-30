@@ -1,5 +1,5 @@
 import { Button, useTheme } from '@mui/material';
-import { grey } from '@mui/material/colors';
+import { blueGrey, grey } from '@mui/material/colors';
 import { ReactNode, useEffect, useState } from 'react';
 
 /**
@@ -14,8 +14,8 @@ type ToggleData = {
 };
 export type MenuItemData = {
   text: string;
-  icon: ReactNode;
   path: string;
+  icon?: ReactNode;
   toggleData?: ToggleData;
 };
 export default function MenuItem({
@@ -27,6 +27,8 @@ export default function MenuItem({
 }) {
   const [toggled, setToggled] = useState(false);
   const isDark = useTheme().palette.mode === 'dark';
+  const palette: any = useTheme().palette;
+
   /**
    * Report back toggle state and icon/text if set.
    */
@@ -49,18 +51,19 @@ export default function MenuItem({
     }
   }, [data]);
 
+  /** When given to a pseudo or pre-post class (like :hover), looks like tokens don't work */
   return (
     <Button
       onClick={handleClick}
       startIcon={data.icon}
       sx={{
         minWidth: 125,
-        borderColor: isDark ? 'primary' : grey[400],
+        borderColor: isDark ? 'primary' : 'background.mediumdark',
         borderWidth: 1,
         borderStyle: toggled ? 'solid' : 'transparent',
-        color: isDark ? 'primary.light' : grey[700],
+        color: isDark ? 'primary.light' : 'background.darker',
         ':hover': {
-          backgroundColor: isDark ? grey[800] : grey[200],
+          backgroundColor: isDark ? grey[800] : blueGrey[100],
         },
       }}
     >

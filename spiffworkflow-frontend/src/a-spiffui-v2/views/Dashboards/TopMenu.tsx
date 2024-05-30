@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Link,
   Paper,
   SpeedDial,
   SpeedDialAction,
@@ -31,6 +32,17 @@ export default function TopMenu({
     callback(item);
   };
 
+  const navMenuItemData: MenuItemData[] = [
+    {
+      text: 'Dashboards',
+      path: '/',
+    },
+    {
+      text: 'Start a Process',
+      path: '/startprocess',
+    },
+  ];
+
   const userMenuItemData: MenuItemData[] = [
     {
       text: 'Dark Mode',
@@ -49,6 +61,11 @@ export default function TopMenu({
       path: '/',
     },
   ];
+
+  const handleTopMenuClick = (item: MenuItemData) => {
+    console.log(item);
+  };
+
   return (
     <Paper
       elevation={1}
@@ -74,16 +91,11 @@ export default function TopMenu({
           <SpiffLogo />
         </Box>
         <Box sx={{ width: { xs: 0, md: 32 } }} />
-        <Box sx={{ width: '100%' }}>
-          <Button
-            title="Start New Process"
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ width: 200, height: 40 }}
-          >
-            Start New Process
-          </Button>
-        </Box>
+        <Stack direction="row" gap={3} sx={{ width: '100%' }}>
+          {navMenuItemData.map((item) => (
+            <MenuItem data={item} callback={() => handleTopMenuClick(item)} />
+          ))}
+        </Stack>
         <Stack
           direction="row"
           sx={{
