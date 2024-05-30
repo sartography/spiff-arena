@@ -1864,7 +1864,7 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.tasks_controller.task_list_completed
-      summary: returns the list of tasks for that the current user has completed
+      summary: returns the list of human tasks that have been completed
       responses:
         "200":
           description: list of tasks
