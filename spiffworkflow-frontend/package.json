@@ -42,7 +42,7 @@
     "diagram-js": "^11.9.1",
     "dmn-js": "^16.0.0",
     "dmn-js-properties-panel": "^3.0.0",
-    "dmn-js-shared": "^16.0.0",
+    "dmn-js-shared": "^16.4.0",
     "jwt-decode": "^3.1.2",
     "keycloak-js": "^18.0.1",
     "lodash.merge": "^4.6.2",
