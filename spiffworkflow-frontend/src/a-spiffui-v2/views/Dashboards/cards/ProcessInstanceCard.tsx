@@ -30,9 +30,6 @@ export default function ProcessInstanceCard({
     }
   };
 
-  useEffect(() => {
-    console.log(pi);
-  }, []);
   return (
     <Stack
       gap={1}
