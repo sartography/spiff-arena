@@ -8,7 +8,7 @@ ARG GROUP_NAME
 WORKDIR /app
 
 RUN apt-get update \
- && apt-get install -y -q git-core curl \
+ && apt-get install -y -q git-core curl vim-tiny \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
