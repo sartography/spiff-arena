@@ -5,7 +5,7 @@ import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
 import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
-import { Outlet, Route, Routes, useLocation, useNavigate } from 'react-router';
+import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
 
 /**
@@ -38,12 +38,14 @@ export default function SpiffUIV2() {
     }
   }, []);
 
-  /** Respond to transition events */
+  /** Respond to transition events, this softens screen changes (UX) */
   useEffect(() => {
     if (location !== displayLocation) setTransistionStage(fadeOutImmediate);
   }, [location, displayLocation]);
 
+  /** One of the TopMenu MenuItems was clicked */
   const handleMenuCallback = (data: MenuItemData) => {
+    // Some TopMenu buttons are for navigation, some aren't
     if (data?.text === 'Dark Mode') {
       setGlobalTheme(
         createTheme(

@@ -1,7 +1,5 @@
 import {
   Box,
-  Button,
-  Link,
   Paper,
   SpeedDial,
   SpeedDialAction,
@@ -12,18 +10,21 @@ import {
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import Moon from '@mui/icons-material/DarkModeOutlined';
 import Lightbulb from '@mui/icons-material/LightbulbOutlined';
-import AddIcon from '@mui/icons-material/Add';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import { grey } from '@mui/material/colors';
 import SpiffLogo from '../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from '../app/sidemenu/MenuItem';
 import UserService from '../../../services/UserService';
+import { Subject } from 'rxjs';
 
 export default function TopMenu({
   callback,
 }: {
   callback: (data: MenuItemData) => void;
 }) {
+  /** Broadcasts to all MenuItems so they can update selected styles etc.  */
+  const menuItemStream = new Subject<MenuItemData>();
+
   const iconColor =
     useTheme().palette.mode === 'light' ? grey[600] : 'primary.light';
 
@@ -58,6 +59,7 @@ export default function TopMenu({
   ];
 
   const handleMenuItemClick = (item: MenuItemData) => {
+    menuItemStream.next(item);
     callback(item);
   };
 
@@ -92,7 +94,11 @@ export default function TopMenu({
         <Box sx={{ width: { xs: 0, md: 32 } }} />
         <Stack direction="row" gap={3} sx={{ width: '100%' }}>
           {navMenuItemData.map((item) => (
-            <MenuItem data={item} callback={() => handleMenuItemClick(item)} />
+            <MenuItem
+              data={item}
+              callback={() => handleMenuItemClick(item)}
+              stream={menuItemStream}
+            />
           ))}
         </Stack>
         <Stack
@@ -105,7 +111,12 @@ export default function TopMenu({
           }}
         >
           {userMenuItemData.map((item) => (
-            <MenuItem data={item} key={item.text} callback={callback} />
+            <MenuItem
+              data={item}
+              key={item.text}
+              callback={callback}
+              stream={menuItemStream}
+            />
           ))}
         </Stack>
         <Box

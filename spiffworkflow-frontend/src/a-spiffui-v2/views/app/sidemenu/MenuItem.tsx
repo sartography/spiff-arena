@@ -1,6 +1,7 @@
 import { Button, useTheme } from '@mui/material';
 import { blueGrey, grey } from '@mui/material/colors';
 import { ReactNode, useEffect, useState } from 'react';
+import { Subject, Subscription } from 'rxjs';
 
 /**
  * MenuItem component that satisfies design requirements.
@@ -21,9 +22,11 @@ export type MenuItemData = {
 export default function MenuItem({
   data,
   callback,
+  stream,
 }: {
   data: MenuItemData;
   callback: (arg: MenuItemData) => void;
+  stream: Subject<MenuItemData>;
 }) {
   const [toggled, setToggled] = useState(false);
   const isDark = useTheme().palette.mode === 'dark';
@@ -50,6 +53,13 @@ export default function MenuItem({
       handleClick();
     }
   }, [data]);
+
+  let subMenuItem: Subscription;
+  useEffect(() => {
+    if (!subMenuItem) {
+      subMenuItem = stream.subscribe((item) => console.log(item));
+    }
+  }, [stream]);
 
   /** When given to a pseudo or pre-post class (like :hover), looks like tokens don't work */
   return (
