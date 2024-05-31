@@ -116,6 +116,9 @@ fe-sh:
 fe-unimported:
 	$(IN_FRONTEND) npx unimported
 
+git-debranch:
+	$(IN_ARENA) poetry run git-debranch
+
 poetry-i:
 	$(IN_ARENA) poetry install --no-root
 
@@ -144,5 +147,6 @@ take-ownership:
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
+	git-debranch \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
