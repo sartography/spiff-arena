@@ -117,10 +117,6 @@ fe-unimported:
 	$(IN_FRONTEND) npx unimported
 
 git-debranch:
-	@if [ -z "$(MY_SSH_DIR)" ]; then \
-		echo "Env var MY_SSH_DIR is not set, use git-debranch-offline or set MY_SSH_DIR in your environment."; \
-		exit 1; \
-	fi
 	$(IN_ARENA) poetry run git-debranch
 
 git-debranch-offline:
