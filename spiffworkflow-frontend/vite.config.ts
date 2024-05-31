@@ -15,7 +15,7 @@ export default defineConfig({
     // Cannot read properties of undefined (reading 'disabled')
     // prefresh(),
     // we need preact for bpmn-js-spiffworkflow. see https://forum.bpmn.io/t/custom-prop-for-service-tasks-typeerror-cannot-add-property-object-is-not-extensible/8487
-    preact(),
+    preact({ devToolsEnabled: false }),
     viteTsconfigPaths(),
     svgr({
       // svgr options: https://react-svgr.com/docs/options/
