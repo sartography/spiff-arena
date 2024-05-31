@@ -1864,7 +1864,7 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.tasks_controller.task_list_completed
-      summary: returns the list of tasks for that the current user has completed
+      summary: returns the list of human tasks that have been completed
       responses:
         "200":
           description: list of tasks
@@ -3521,8 +3521,6 @@ components:
           type: string
         state:
           type: string
-        form:
-          $ref: "#/components/schemas/Form"
         documentation:
           type: string
         data:
@@ -3663,113 +3661,6 @@ components:
           type: string
         date:
           type: string
-    Form:
-      properties:
-        key:
-          type: string
-        fields:
-          type: array
-          items:
-            $ref: "#/components/schemas/Field"
-      example:
-        "key": "irb_review_form"
-        "fields":
-          - "id": "irb_review_type"
-            "type": "enum"
-            "label": "Select IRB Review Type"
-            "options":
-              - id: "emergency_use"
-                name: "Emergency Use"
-              - id: "humanitarian_device"
-                name: "Humanitarian Device"
-              - id: "non_human"
-                name: "Non-Human"
-              - id: "non_uva_agent"
-                name: "Non-UVA Agent"
-              - id: "exempt"
-                name: "Exempt"
-              - id: "non_engaged"
-                name: "Non-Engaged"
-              - id: "expedited"
-                name: "Expedited"
-              - id: "full_board"
-                name: "Full Board"
-            "default_value": "Full Board"
-            "validation":
-              - name: "required"
-                config: "true"
-            "properties":
-              - id: "description"
-                value: "Description text goes here"
-              - id: "help"
-                value: "# Heading 1\n\nMarkdown help text goes here"
-              - id: "required_expression"
-                value: "model.my_boolean_field_id && model.my_enum_field_value !== 'something'"
-              - id: "hide_expression"
-                value: "model.my_enum_field_value === 'something'"
-    Field:
-      properties:
-        id:
-          type: string
-          readOnly: true
-        type:
-          type: string
-          enum: ["string", "long", "boolean", "date", "enum"]
-          readOnly: true
-        label:
-          type: string
-          readOnly: true
-        options:
-          type: array
-          items:
-            $ref: "#/components/schemas/EnumFieldOption"
-          readOnly: true
-        default_value:
-          type: string
-          readOnly: true
-        validation:
-          type: array
-          items:
-            $ref: "#/components/schemas/FieldValidation"
-          readOnly: true
-        "properties":
-          type: array
-          items:
-            $ref: "#/components/schemas/FieldProperty"
-          readOnly: true
-    EnumFieldOption:
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-    FieldValidation:
-      properties:
-        name:
-          type: string
-        config:
-          type: string
-    FieldProperty:
-      properties:
-        id:
-          type: string
-        value:
-          type: string
-      example:
-        id: "required_expression"
-        value: "model.should_require"
-    Error:
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          format: string
-          example: "access_denied"
-        message:
-          type: string
-          example: "You do not have permission to view the requested study."
     Script:
       properties:
         name:
