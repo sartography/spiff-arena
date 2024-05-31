@@ -1,11 +1,11 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Container, CssBaseline, Grid, Slide } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
 import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
-import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
 
 /**
@@ -40,7 +40,9 @@ export default function SpiffUIV2() {
 
   /** Respond to transition events, this softens screen changes (UX) */
   useEffect(() => {
-    if (location !== displayLocation) setTransistionStage(fadeOutImmediate);
+    if (location !== displayLocation) {
+      setTransistionStage(fadeOutImmediate);
+    }
   }, [location, displayLocation]);
 
   /** One of the TopMenu MenuItems was clicked */
