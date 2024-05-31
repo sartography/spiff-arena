@@ -4,7 +4,7 @@ import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgr from 'vite-plugin-svgr';
 
 let host = process.env.HOST ?? 'localhost';
-let port = process.env.PORT ? parseInt(process.env.PORT) : 7001;
+let port = process.env.PORT ? parseInt(process.env.PORT, 10) : 7001;
 
 export default defineConfig({
   // depending on your application, base can also be "/"
