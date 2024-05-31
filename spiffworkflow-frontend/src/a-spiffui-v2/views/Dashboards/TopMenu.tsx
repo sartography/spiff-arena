@@ -12,10 +12,11 @@ import Moon from '@mui/icons-material/DarkModeOutlined';
 import Lightbulb from '@mui/icons-material/LightbulbOutlined';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import { grey } from '@mui/material/colors';
+import { Subject, Subscription } from 'rxjs';
 import SpiffLogo from '../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from '../app/sidemenu/MenuItem';
 import UserService from '../../../services/UserService';
-import { Subject } from 'rxjs';
+import { useEffect } from 'react';
 
 export default function TopMenu({
   callback,
@@ -59,6 +60,7 @@ export default function TopMenu({
   ];
 
   const handleMenuItemClick = (item: MenuItemData) => {
+    // Broadcast to all MenuItems so they can update selected styles etc.
     menuItemStream.next(item);
     callback(item);
   };

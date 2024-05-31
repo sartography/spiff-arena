@@ -30,10 +30,10 @@ export default function MenuItem({
 }) {
   const [toggled, setToggled] = useState(false);
   const isDark = useTheme().palette.mode === 'dark';
-  const palette: any = useTheme().palette;
 
   /**
    * Report back toggle state and icon/text if set.
+   * Don't set toggled here, that is handled by the stream callback.
    */
   const handleClick = () => {
     const payload = {
@@ -43,23 +43,29 @@ export default function MenuItem({
         toggled: !data.toggleData?.toggled,
       },
     };
-    setToggled((curr) => !curr);
     callback(payload);
   };
 
-  /** If the initial toggle state is set to true, process it.  */
-  useEffect(() => {
-    if (data.toggleData?.toggled) {
-      handleClick();
-    }
-  }, [data]);
-
+  /**
+   * When any button in the menu is clicked, all of them know which one.
+   * We can turn styles on and off, etc. to highlight selected.
+   */
   let subMenuItem: Subscription;
   useEffect(() => {
     if (!subMenuItem) {
-      subMenuItem = stream.subscribe((item) => console.log(item));
+      subMenuItem = stream.subscribe((item) =>
+        setToggled(item.text === data.text)
+      );
     }
   }, [stream]);
+
+  /**
+   * If the user navigates to this page without clicking buttons (e.g. types the url or bookmark)
+   * we need to be aware of that and set the toggled state accordingly.
+   */
+  useEffect(() => {
+    setToggled(window.location.href.indexOf(data.path) > -1);
+  }, [data.path]);
 
   /** When given to a pseudo or pre-post class (like :hover), looks like tokens don't work */
   return (
