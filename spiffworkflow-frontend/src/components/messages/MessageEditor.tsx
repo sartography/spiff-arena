@@ -113,7 +113,7 @@ export function MessageEditor({
     updatedMessagesForId.correlation_properties = correlationProperties;
 
     try {
-    	updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
+      updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
     } catch (e) {
       alert(`Invalid schema: ${e}`);
       return;
@@ -138,12 +138,18 @@ export function MessageEditor({
         type: 'string',
         title: 'Location',
         default: '/',
+        pattern: '^[\\/\\w-]+$',
+        validationErrorMessage:
+          'must contain only alphanumeric characters, "/", underscores, or hyphens',
         description:
           'Only process models within this path will have access to this message.',
       },
       messageId: {
         type: 'string',
         title: 'Message Name',
+        pattern: '^[\\w-]+$',
+        validationErrorMessage:
+          'must contain only alphanumeric characters, underscores, or hyphens',
         description:
           'The mesage name should contain no spaces or special characters',
       },
@@ -180,6 +186,7 @@ export function MessageEditor({
     schema: {
       'ui:widget': 'textarea',
       'ui:rows': 5,
+      'ui:options': { json: true },
     },
     'ui:layout': [
       {
@@ -202,7 +209,8 @@ export function MessageEditor({
       currentMessageId,
       processGroup
     );
-    const jsonSchema = (processGroup.messages || {})[currentMessageId]?.schema || {};
+    const jsonSchema =
+      (processGroup.messages || {})[currentMessageId]?.schema || {};
     const formData = {
       processGroupIdentifier: unModifyProcessIdentifierForPathParam(
         modifiedProcessGroupIdentifier

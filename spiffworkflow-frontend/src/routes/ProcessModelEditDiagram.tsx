@@ -1080,10 +1080,11 @@ export default function ProcessModelEditDiagram() {
       <Modal
         open={showMessageEditor}
         modalHeading="Create/Edit Message"
-        primaryButtonText="Close"
+        primaryButtonText="Close without saving"
         onRequestSubmit={handleMessageEditorClose}
         onRequestClose={handleMessageEditorClose}
         size="lg"
+        preventCloseOnClickOutside
       >
         <div data-color-mode="light">
           <MessageEditor
