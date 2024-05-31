@@ -117,7 +117,14 @@ fe-unimported:
 	$(IN_FRONTEND) npx unimported
 
 git-debranch:
+	@if [ -z "$(MY_SSH_DIR)" ]; then \
+		echo "Env var MY_SSH_DIR is not set, use git-debranch-offline or set MY_SSH_DIR in your environment."; \
+		exit 1; \
+	fi
 	$(IN_ARENA) poetry run git-debranch
+
+git-debranch-offline:
+	$(IN_ARENA) poetry run git-debranch --offline
 
 poetry-i:
 	$(IN_ARENA) poetry install --no-root
@@ -147,6 +154,6 @@ take-ownership:
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
-	git-debranch \
+	git-debranch git-debranch-offline \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
