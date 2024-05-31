@@ -12,11 +12,10 @@ import Moon from '@mui/icons-material/DarkModeOutlined';
 import Lightbulb from '@mui/icons-material/LightbulbOutlined';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import { grey } from '@mui/material/colors';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import SpiffLogo from '../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from '../app/sidemenu/MenuItem';
 import UserService from '../../../services/UserService';
-import { useEffect } from 'react';
 
 export default function TopMenu({
   callback,
@@ -44,18 +43,18 @@ export default function TopMenu({
     {
       text: 'Dark Mode',
       icon: <Moon sx={{ color: iconColor }} />,
-      path: '/',
+      path: '',
       toggleData: {
         toggled: false,
         toggleIcon: <Lightbulb />,
         toggleText: 'Light Mode',
       },
     },
-    { text: 'Logout', icon: <Logout sx={{ color: iconColor }} />, path: '/' },
+    { text: 'Logout', icon: <Logout sx={{ color: iconColor }} />, path: '' },
     {
       text: UserService.getPreferredUsername(),
       icon: <PersonOutline sx={{ color: iconColor }} />,
-      path: '/',
+      path: '',
     },
   ];
 

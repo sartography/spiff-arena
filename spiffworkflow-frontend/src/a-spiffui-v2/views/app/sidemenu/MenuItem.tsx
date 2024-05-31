@@ -62,9 +62,12 @@ export default function MenuItem({
   /**
    * If the user navigates to this page without clicking buttons (e.g. types the url or bookmark)
    * we need to be aware of that and set the toggled state accordingly.
+   * If no path is set in the data, this check won't run.
    */
   useEffect(() => {
-    setToggled(window.location.href.indexOf(data.path) > -1);
+    if (data.path) {
+      setToggled(window.location.href.indexOf(data.path) > -1);
+    }
   }, [data.path]);
 
   /** When given to a pseudo or pre-post class (like :hover), looks like tokens don't work */
@@ -75,7 +78,8 @@ export default function MenuItem({
       sx={{
         minWidth: 125,
         borderColor: isDark ? 'primary' : 'background.mediumdark',
-        borderWidth: 1,
+        borderBottomWidth: 1,
+        borderRadius: 1,
         borderStyle: toggled ? 'solid' : 'transparent',
         color: isDark ? 'primary.light' : 'background.darker',
         ':hover': {
