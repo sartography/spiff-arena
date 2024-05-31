@@ -380,6 +380,10 @@ def _process_instance_task_list(
     bpmn_process = None
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
+    elif process_instance.bpmn_process_id is None:
+        # if the process instance does not have a bpmn process then return a blank array.
+        # this should help for issues like timer start events when viewing the corresponding instance.
+        return make_response(jsonify([]), 200)
     else:
         bpmn_process = process_instance.bpmn_process
 
