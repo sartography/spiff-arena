@@ -8,11 +8,17 @@ import { TreeItem } from '@mui/x-tree-view/TreeItem';
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
 
-  useEffect(() => {
-    if (processGroups?.results?.length) {
-      console.log(processGroups);
-    }
-  }, [processGroups]);
+  const buildTree = (groups: Record<string, any>[]) => {
+    console.log(groups);
+    return groups.map((group: Record<string, any>) => (
+      <TreeItem key={group.id} itemId={group.id} label={group.display_name}>
+        {group?.process_models?.map((pm: Record<string, any>) => (
+          <TreeItem key={pm.id} itemId={pm.id} label={pm.display_name} />
+        ))}
+        {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
+      </TreeItem>
+    ));
+  };
 
   return (
     <Grid container sx={{ width: '100%', height: '100%' }}>
@@ -36,27 +42,7 @@ export default function StartProcess() {
               },
             }}
           >
-            <TreeItem itemId="grid" label="Data Grid">
-              <TreeItem itemId="grid-community" label="@mui/x-data-grid" />
-              <TreeItem itemId="grid-pro" label="@mui/x-data-grid-pro" />
-              <TreeItem
-                itemId="grid-premium"
-                label="@mui/x-data-grid-premium"
-              />
-            </TreeItem>
-            <TreeItem itemId="pickers" label="Date and Time Pickers">
-              <TreeItem
-                itemId="pickers-community"
-                label="@mui/x-date-pickers"
-              />
-              <TreeItem itemId="pickers-pro" label="@mui/x-date-pickers-pro" />
-            </TreeItem>
-            <TreeItem itemId="charts" label="Charts">
-              <TreeItem itemId="charts-community" label="@mui/x-charts" />
-            </TreeItem>
-            <TreeItem itemId="tree-view" label="Tree View">
-              <TreeItem itemId="tree-view-community" label="@mui/x-tree-view" />
-            </TreeItem>
+            {processGroups?.results?.length && buildTree(processGroups.results)}
           </SimpleTreeView>
         </Paper>
       </Grid>
