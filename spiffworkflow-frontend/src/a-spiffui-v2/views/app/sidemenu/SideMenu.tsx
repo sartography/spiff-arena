@@ -11,7 +11,7 @@ import Lightbulb from '@mui/icons-material/LightbulbOutlined';
 import Settings from '@mui/icons-material/SettingsOutlined';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import SpiffLogo from '../../../components/SpiffLogo';
-import MenuItem, { MenuItemData } from './MenuItem';
+import MenuItem, { MenuItemData } from '../topmenu/MenuItem';
 import UserService from '../../../../services/UserService';
 import SpiffIcon from '../../../assets/icons/spiff-icon.svg';
 

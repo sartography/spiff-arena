@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
-import { MenuItemData } from '../a-spiffui-v2/views/app/sidemenu/MenuItem';
-import TopMenu from '../a-spiffui-v2/views/Dashboards/TopMenu';
+import { MenuItemData } from '../a-spiffui-v2/views/app/topmenu/MenuItem';
+import TopMenu from '../a-spiffui-v2/views/app/topmenu/TopMenu';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
 
 /**
@@ -109,7 +109,10 @@ export default function SpiffUIV2() {
           <Grid item xs={12} sx={{ height: '100%' }}>
             <Box
               className={`${transitionStage}`}
-              sx={{ width: '100%', height: '100%' }}
+              sx={{
+                width: '100%',
+                height: '100%',
+              }}
               onAnimationEnd={() => {
                 if (transitionStage === fadeOutImmediate) {
                   setTransistionStage(fadeIn);

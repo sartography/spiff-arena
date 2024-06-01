@@ -121,16 +121,6 @@ export default function MyProcesses({
         width: '100%',
         height: '100%',
         overflowY: 'auto',
-        '&::-webkit-scrollbar': {
-          width: '0.5em',
-        },
-        '&::-webkit-scrollbar-track': {
-          boxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
-          webkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: 'background.bluegreymedium',
-        },
       }}
     >
       <DataGrid

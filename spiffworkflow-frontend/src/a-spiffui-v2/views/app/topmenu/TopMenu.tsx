@@ -13,9 +13,9 @@ import Lightbulb from '@mui/icons-material/LightbulbOutlined';
 import Logout from '@mui/icons-material/LogoutOutlined';
 import { grey } from '@mui/material/colors';
 import { Subject } from 'rxjs';
-import SpiffLogo from '../../components/SpiffLogo';
-import MenuItem, { MenuItemData } from '../app/sidemenu/MenuItem';
-import UserService from '../../../services/UserService';
+import SpiffLogo from '../../../components/SpiffLogo';
+import MenuItem, { MenuItemData } from './MenuItem';
+import UserService from '../../../../services/UserService';
 
 export default function TopMenu({
   callback,
