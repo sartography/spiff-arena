@@ -46,6 +46,11 @@ const customPalette = (mode: PaletteMode) => {
           bluegreymedium: blueGrey[100],
           bluegreydark: blueGrey[200],
         },
+        text: {
+          primary: grey[900],
+          secondary: grey[800],
+          disabled: grey[400],
+        },
       }
     : {
         success: {

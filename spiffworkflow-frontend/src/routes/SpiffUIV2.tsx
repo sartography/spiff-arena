@@ -106,10 +106,10 @@ export default function SpiffUIV2() {
               </Box>
             </Slide>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} sx={{ height: '100%' }}>
             <Box
               className={`${transitionStage}`}
-              sx={{ height: '100%', width: '100%' }}
+              sx={{ width: '100%', height: '100%' }}
               onAnimationEnd={() => {
                 if (transitionStage === fadeOutImmediate) {
                   setTransistionStage(fadeIn);

@@ -81,7 +81,7 @@ export default function MenuItem({
         borderBottomWidth: 1,
         borderRadius: 1,
         borderStyle: toggled ? 'solid' : 'transparent',
-        color: isDark ? 'primary.light' : 'background.darker',
+        color: isDark ? 'primary.light' : 'text.secondary',
         ':hover': {
           backgroundColor: isDark ? grey[800] : blueGrey[100],
         },

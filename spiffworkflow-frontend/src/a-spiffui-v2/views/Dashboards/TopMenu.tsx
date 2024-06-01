@@ -70,7 +70,7 @@ export default function TopMenu({
 
   return (
     <Paper
-      elevation={1}
+      elevation={0}
       sx={{
         width: '100%',
         display: 'flex',
@@ -80,6 +80,9 @@ export default function TopMenu({
         paddingRight: 3,
         paddingTop: 2,
         paddingBottom: 2,
+        borderBottom: 1,
+        borderBottomColor: 'divider',
+        borderBottomStyle: 'solid',
       }}
     >
       <Stack
