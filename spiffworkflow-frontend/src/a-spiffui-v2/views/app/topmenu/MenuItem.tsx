@@ -1,4 +1,4 @@
-import { Button, useTheme } from '@mui/material';
+import { Box, Button, Stack, useTheme } from '@mui/material';
 import { blueGrey, grey } from '@mui/material/colors';
 import { ReactNode, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ export type MenuItemData = {
   path: string;
   icon?: ReactNode;
   toggleData?: ToggleData;
+  align?: 'flex-start' | 'center' | 'flex-end';
 };
 export default function MenuItem({
   data,
@@ -26,7 +27,7 @@ export default function MenuItem({
 }: {
   data: MenuItemData;
   callback: (arg: MenuItemData) => void;
-  stream: Subject<MenuItemData>;
+  stream?: Subject<MenuItemData>;
 }) {
   const [toggled, setToggled] = useState(false);
   const isDark = useTheme().palette.mode === 'dark';
@@ -52,7 +53,7 @@ export default function MenuItem({
    */
   let subMenuItem: Subscription;
   useEffect(() => {
-    if (!subMenuItem) {
+    if (!subMenuItem && stream) {
       subMenuItem = stream.subscribe((item) =>
         setToggled(item.text === data.text)
       );
@@ -70,7 +71,6 @@ export default function MenuItem({
     }
   }, [data.path]);
 
-  /** When given to a pseudo or pre-post class (like :hover), looks like tokens don't work */
   return (
     <Button
       onClick={handleClick}
@@ -80,14 +80,19 @@ export default function MenuItem({
         borderColor: isDark ? 'primary' : 'background.mediumdark',
         borderBottomWidth: 1,
         borderRadius: 1,
+        fontSize: 12,
         borderStyle: toggled ? 'solid' : 'transparent',
+        justifyContent: data?.align || 'center',
         color: isDark ? 'primary.light' : 'text.secondary',
+        /** When given to a pseudo or pre-post class (like :hover), looks like tokens don't work */
         ':hover': {
-          backgroundColor: isDark ? grey[800] : blueGrey[100],
+          backgroundColor: isDark ? grey[800] : grey[300],
         },
       }}
     >
-      {data.text}
+      <Stack sx={{ height: '100%', justifyContent: 'center' }}>
+        {data.text}
+      </Stack>
     </Button>
   );
 }

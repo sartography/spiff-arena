@@ -7,6 +7,7 @@ import {
   grey,
   orange,
   red,
+  yellow,
 } from '@mui/material/colors';
 
 const customPalette = (mode: PaletteMode) => {
@@ -51,6 +52,9 @@ const customPalette = (mode: PaletteMode) => {
           secondary: grey[800],
           disabled: grey[400],
         },
+        spotColors: {
+          goldStar: yellow[700],
+        },
       }
     : {
         success: {
@@ -81,6 +85,9 @@ const customPalette = (mode: PaletteMode) => {
           paper: '#121212',
           default: '#121212',
           bluegreymedium: blueGrey[600],
+        },
+        spotColors: {
+          goldStar: yellow[700],
         },
       };
 };

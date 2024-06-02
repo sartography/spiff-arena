@@ -1,6 +1,9 @@
-import { Box, Paper, Stack, useTheme } from '@mui/material';
+import { Box, Divider, Paper, Stack, useTheme } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
+import StarRateIcon from '@mui/icons-material/StarRate';
+import HistoryIcon from '@mui/icons-material/History';
+import MenuItem from '../app/topmenu/MenuItem';
 
 export default function TreePanel({
   processGroups,
@@ -54,16 +57,48 @@ export default function TreePanel({
         overflowX: 'hidden',
       }}
     >
-      <SimpleTreeView
-        sx={{
-          '& .MuiTreeItem-label': {
-            fontSize: '12px !important',
-            color: 'text.secondary',
-          },
-        }}
-      >
-        {processGroups?.results?.length && buildTree(processGroups.results)}
-      </SimpleTreeView>
+      <Stack gap={2} sx={{ justifyContent: 'left' }}>
+        <Box>
+          <MenuItem
+            data={{
+              text: 'Favorites',
+              icon: (
+                <StarRateIcon
+                  sx={{ transform: 'scale(.8)', color: 'spotColors.goldStar' }}
+                />
+              ),
+              path: '',
+              align: 'flex-start',
+            }}
+            callback={() => {}}
+          />
+          <MenuItem
+            data={{
+              text: 'Recently Used',
+              icon: <HistoryIcon sx={{ transform: 'scale(.8)' }} />,
+              path: '',
+              align: 'flex-start',
+            }}
+            callback={() => {}}
+          />
+        </Box>
+        <Divider
+          sx={{
+            backgroundColor: isDark ? 'primary.main' : 'background.dark',
+          }}
+        />
+        {/** Have to force this for design requirement */}
+        <SimpleTreeView
+          sx={{
+            '& .MuiTreeItem-label': {
+              fontSize: '12px !important',
+              color: 'text.secondary',
+            },
+          }}
+        >
+          {processGroups?.results?.length && buildTree(processGroups.results)}
+        </SimpleTreeView>
+      </Stack>
     </Paper>
   );
 }
