@@ -40,6 +40,10 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             )}`,
             successCallback: setProcessEntity,
             onUnauthorized: () => {},
+            failureCallback: (error: any) =>
+              console.error(
+                `Failed to load process model for breadcrumb. Error was: ${error.message}`
+              ),
           });
         } else if (entityType === 'process-group-id') {
           HttpService.makeCallToBackend({
@@ -48,6 +52,10 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             )}`,
             successCallback: setProcessEntity,
             onUnauthorized: () => {},
+            failureCallback: (error: any) =>
+              console.error(
+                `Failed to load process group for breadcrumb. Error was: ${error.message}`
+              ),
           });
         } else {
           setProcessEntity(entityToExplode as any);

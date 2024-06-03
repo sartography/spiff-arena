@@ -18,7 +18,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 
 
-# SpecReferenceNotFoundError
 class ReferenceNotFoundError(Exception):
     pass
 
@@ -29,7 +28,6 @@ class ReferenceType(SpiffEnum):
     data_store = "data_store"
 
 
-# SpecReference
 @dataclass()
 class Reference:
     """File Reference Information.
@@ -43,7 +41,7 @@ class Reference:
     identifier: str  # The id of the process or decision.  "Process_1234"
     display_name: str  # The name of the process or decision. "Invoice Submission"
     relative_location: str
-    type: str  # can be 'process' or 'decision'
+    type: str
     file_name: str  # The name of the file where this process or decision is defined.
     messages: dict  # Any messages defined in the same file where this process is defined.
     correlations: dict  # Any correlations defined in the same file with this process.
@@ -80,9 +78,6 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     relative_location: str = db.Column(db.String(255), index=True, nullable=False)
 
     properties: dict | None = db.Column(db.JSON)
-    # has_lanes = db.Column(db.Boolean())
-    # is_executable = db.Column(db.Boolean())
-    # is_primary = db.Column(db.Boolean())
 
     generation = relationship(CacheGenerationModel)
 

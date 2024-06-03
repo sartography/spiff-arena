@@ -264,14 +264,15 @@ class ProcessInstanceService:
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
             except ProcessInstanceIsAlreadyLockedError:
+                # we will try again later
                 continue
-            except Exception as e:
+            except Exception as exception:
                 db.session.rollback()  # in case the above left the database with a bad transaction
-                error_message = (
+                new_exception = Exception(
                     f"Error running {status_value} task for process_instance {process_instance.id}"
-                    + f"({process_instance.process_model_identifier}). {str(e)}"
+                    + f"({process_instance.process_model_identifier}). {exception.__class__.__name__}: {str(exception)}"
                 )
-                current_app.logger.error(error_message)
+                current_app.logger.exception(new_exception, stack_info=True)
 
     @classmethod
     def run_process_instance_with_processor(
