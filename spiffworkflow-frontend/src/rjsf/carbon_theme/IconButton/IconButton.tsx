@@ -7,6 +7,9 @@ import {
   StrictRJSFSchema,
 } from '@rjsf/utils';
 
+import RemoveIcon from '@mui/icons-material/Remove';
+import { IconButton as MuiIconButton } from '@mui/material';
+
 import { Add, TrashCan, ArrowUp, ArrowDown } from '@carbon/icons-react';
 
 export default function IconButton<
@@ -33,6 +36,9 @@ export default function IconButton<
   }
   if (icon === 'arrow-down') {
     carbonIcon = ArrowDown;
+  }
+  if (icon === 'core-remove') {
+    carbonIcon = RemoveIcon;
   }
 
   return (
@@ -92,5 +98,22 @@ export function RemoveButton<
       iconType="danger"
       icon="remove"
     />
+  );
+}
+
+export function MuiRemoveButton<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: IconButtonProps<T, S, F>) {
+  return (
+    <MuiIconButton
+      title="Remove"
+      {...props}
+      color="warning"
+      aria-label="Remove"
+    >
+      <RemoveIcon />
+    </MuiIconButton>
   );
 }

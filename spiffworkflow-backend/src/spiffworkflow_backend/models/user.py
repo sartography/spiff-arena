@@ -69,6 +69,7 @@ class UserModel(SpiffworkflowBaseDBModel):
         if secret_key is None:
             raise KeyError("we need current_app.config to have a SECRET_KEY")
 
+        one_day_in_seconds = 86400
         # hours = float(app.config['TOKEN_AUTH_TTL_HOURS'])
         base_payload = {
             "email": self.email,
@@ -76,7 +77,7 @@ class UserModel(SpiffworkflowBaseDBModel):
             "sub": f"service:{self.service}::service_id:{self.service_id}",
             "iss": self.__class__.spiff_generated_jwt_issuer(),
             "iat": math.floor(time.time()),
-            "exp": round(time.time()) + 3600,
+            "exp": round(time.time()) + one_day_in_seconds,
             "aud": SPIFF_GENERATED_JWT_AUDIENCE,
         }
 

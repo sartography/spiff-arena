@@ -22,3 +22,4 @@ ruff = "^0.4.5"
 
 [tool.poetry.group.dev.dependencies]
 tomli = "^2.0.1"
+git-debranch = "^0.1.9"

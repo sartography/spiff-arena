@@ -1,6 +1,8 @@
-MY_USER := $(shell id -u)
-MY_GROUP := $(shell id -g)
-ME := $(MY_USER):$(MY_GROUP)
+USER_ID ?= $(shell id -u)
+USER_NAME ?= $(shell id -un)
+GROUP_ID ?= $(shell id -g)
+GROUP_NAME ?= $(shell id -gn)
+ME ?= $(USER_ID):$(GROUP_ID)
 
 SUDO ?= sudo
 
@@ -33,7 +35,12 @@ all: dev-env start-dev run-pyl
 	@true
 
 build-images:
-	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE) build \
+		--build-arg USER_ID=$(USER_ID) \
+		--build-arg USER_NAME=$(USER_NAME) \
+		--build-arg GROUP_ID=$(GROUP_ID) \
+		--build-arg GROUP_NAME=$(GROUP_NAME) \
+		$(JUST)
 
 dev-env: stop-dev build-images poetry-i be-poetry-i be-db-clean fe-npm-i
 	@true
@@ -109,6 +116,12 @@ fe-sh:
 fe-unimported:
 	$(IN_FRONTEND) npx unimported
 
+git-debranch:
+	$(IN_ARENA) poetry run git-debranch
+
+git-debranch-offline:
+	$(IN_ARENA) poetry run git-debranch --offline
+
 poetry-i:
 	$(IN_ARENA) poetry install --no-root
 
@@ -137,5 +150,6 @@ take-ownership:
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
+	git-debranch git-debranch-offline \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
 	take-ownership
