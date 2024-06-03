@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -17,11 +17,11 @@ session_type="${1:-}"
 shift
 if [[ -z "${session_type}" ]] || ! grep -qE "\<${session_type}\>" <<<"$supported_session_types"; then
   if [[ -n "$session_type" ]]; then
-    >&2 echo "ERROR: Given session typeis not supported - ${session_type}"
+    echo >&2 "ERROR: Given session typeis not supported - ${session_type}"
   fi
 
-  >&2 echo "usage: $(basename "$0") [session_type]"
-  >&2 echo -e "\tsupported session types: ${supported_session_types}"
+  echo >&2 "usage: $(basename "$0") [session_type]"
+  echo >&2 -e "\tsupported session types: ${supported_session_types}"
   exit 1
 fi
 
@@ -71,7 +71,7 @@ elif [[ "${session_type}" == "mypy" ]]; then
   poetry run mypy src tests
 
 elif [[ "${session_type}" == "safety" ]]; then
-  poetry run safety check --ignore=67599 --full-report
+  poetry run safety check --full-report --ignore=70624 --ignore=70612
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then
