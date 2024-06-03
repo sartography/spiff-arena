@@ -21,7 +21,7 @@
     "@rjsf/core": "^5.18.4",
     "@rjsf/mui": "^5.18.4",
     "@rjsf/utils": "^5.18.4",
-    "@rjsf/validator-ajv8": "^5.18.4",
+    "@rjsf/validator-ajv8": "github:sartography/rjsf-validator-ajv8-test#peformance-improvement-w-build",
     "@tanstack/react-query": "^5.40.0",
     "@tanstack/react-query-devtools": "^5.40.0",
     "@testing-library/jest-dom": "^6.4.2",
