@@ -19,7 +19,7 @@ def main() -> None:
                 file.write(f"{key} = {repr(value)}\n")
 
 
-if len(sys.argv) == 0:
+if len(sys.argv) < 2:
     raise Exception("A task data json file must be provided")
 
 if __name__ == "__main__":
