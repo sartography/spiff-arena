@@ -1,9 +1,12 @@
 import { Paper, Stack, Typography } from '@mui/material';
+import { Subject } from 'rxjs';
 
 export default function ProcessGroupCard({
   group,
+  stream,
 }: {
   group: Record<string, any>;
+  stream?: Subject<Record<string, any>>;
 }) {
   const captionColor = 'text.secondary';
 
@@ -17,6 +20,7 @@ export default function ProcessGroupCard({
         borderColor: 'borders.primary',
         minWidth: 320,
       }}
+      onClick={() => stream && stream.next(group)}
     >
       <Stack>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>

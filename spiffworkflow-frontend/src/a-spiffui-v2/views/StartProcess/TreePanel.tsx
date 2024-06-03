@@ -3,13 +3,19 @@ import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import HistoryIcon from '@mui/icons-material/History';
+import { Subject, Subscription } from 'rxjs';
 import MenuItem from '../app/topmenu/MenuItem';
+import { useEffect, useState } from 'react';
 
 export default function TreePanel({
   processGroups,
+  stream,
 }: {
   processGroups: Record<string, any>;
+  stream?: Subject<Record<string, any>>;
 }) {
+  const [selectedGroup, setSelectedGroup] = useState<Record<string, any>>();
+  const [expanded, setExpanded] = useState<string[]>([]);
   const isDark = useTheme().palette.mode === 'dark';
   const treeItemStyle = {
     borderRadius: 1,
@@ -25,6 +31,7 @@ export default function TreePanel({
       <TreeItem
         key={group.id}
         itemId={group.id}
+        onClick={() => stream && stream.next(group)}
         label={
           <Stack direction="row">
             <Box sx={{ width: '100%' }}>{group.display_name}</Box>
@@ -35,13 +42,36 @@ export default function TreePanel({
           </Stack>
         }
       >
-        {group?.process_models?.map((pm: Record<string, any>) => (
-          <TreeItem key={pm.id} itemId={pm.id} label={pm.display_name} />
+        {group?.process_models?.map((model: Record<string, any>) => (
+          <TreeItem
+            key={model.id}
+            itemId={model.id}
+            label={model.display_name}
+            onClick={() => stream && stream.next(model)}
+          />
         ))}
         {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
       </TreeItem>
     ));
   };
+
+  /** Need to think about an "ID CHAIN" to make this work */
+  const expandGroup = (group: Record<string, any>) => {
+    if (!expanded.includes(group.id)) {
+      setExpanded([group.id]);
+    } else {
+      setExpanded(expanded.filter((id) => id !== group.id));
+    }
+  };
+
+  let streamSub: Subscription;
+  useEffect(() => {
+    if (!streamSub && stream) {
+      streamSub = stream.subscribe(
+        (item) => item?.process_groups && expandGroup(item)
+      );
+    }
+  }, [stream]);
 
   return (
     <Paper
@@ -90,6 +120,7 @@ export default function TreePanel({
         />
         {/** Have to force this for design requirement */}
         <SimpleTreeView
+          expandedItems={expanded}
           sx={{
             '& .MuiTreeItem-label': {
               fontSize: '12px !important',

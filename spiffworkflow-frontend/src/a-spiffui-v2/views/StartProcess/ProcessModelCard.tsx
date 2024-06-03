@@ -1,9 +1,13 @@
 import { Button, Paper, Stack, Typography } from '@mui/material';
+import { useEffect } from 'react';
+import { Subject } from 'rxjs';
 
-export default function ProcessGroupCard({
-  group,
+export default function ProcessModelCard({
+  model,
+  stream,
 }: {
-  group: Record<string, any>;
+  model: Record<string, any>;
+  stream?: Subject<Record<string, any>>;
 }) {
   const captionColor = 'text.secondary';
 
@@ -17,17 +21,15 @@ export default function ProcessGroupCard({
         borderColor: 'borders.primary',
         minWidth: 320,
       }}
+      onClick={() => stream && stream.next(model)}
     >
       <Stack>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {group.display_name}
+          {model.display_name}
         </Typography>
 
         <Typography variant="caption" sx={{ color: captionColor }}>
-          Groups: {group.process_groups.length}
-        </Typography>
-        <Typography variant="caption" sx={{ color: captionColor }}>
-          Models: {group.process_models.length}
+          Models: {model.id}
         </Typography>
 
         <Stack direction="row">

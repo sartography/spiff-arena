@@ -1,16 +1,53 @@
-import { Box, Container, Divider, Stack, Typography } from '@mui/material';
-import { useEffect } from 'react';
+import { Box, Container, Stack, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Subject, Subscription } from 'rxjs';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel from './TreePanel';
 import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
+import ProcessModelCard from './ProcessModelCard';
 
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
+  const [groups, setGroups] = useState<Record<string, any>[]>([]);
+  const [models, setModels] = useState<Record<string, any>[]>([]);
+  const clickStream = new Subject<Record<string, any>>();
+  const gridProps = {
+    width: '100%',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, 400px)',
+    justifyContent: 'center',
+    gridGap: 20,
+  };
+  const dividerProps = {
+    border: '0.5px solid',
+    borderColor: 'borders.primary',
+  };
+
+  const handleClickStream = (group: Record<string, any>) => {
+    console.log(group);
+    if (group?.process_models) {
+      setModels(group.process_models);
+    }
+
+    if (group?.process_groups) {
+      setGroups(group.process_groups);
+    }
+  };
 
   useEffect(() => {
-    console.log(processGroups);
+    if (processGroups?.results) {
+      console.log(processGroups);
+      setGroups(processGroups.results);
+    }
   }, [processGroups]);
+
+  let cardStreamSub: Subscription;
+  useEffect(() => {
+    if (!cardStreamSub && clickStream) {
+      clickStream.subscribe(handleClickStream);
+    }
+  }, [clickStream]);
 
   return (
     <Container
@@ -29,7 +66,7 @@ export default function StartProcess() {
             paddingTop: 0.25,
           }}
         >
-          <TreePanel processGroups={processGroups} />
+          <TreePanel processGroups={processGroups} stream={clickStream} />
         </Box>
         <Stack
           sx={{
@@ -48,36 +85,22 @@ export default function StartProcess() {
             <SearchBar />
 
             <Stack gap={1} sx={{ width: '100%' }}>
-              <Typography variant="h6">Favorites</Typography>
-              <Box
-                sx={{
-                  border: '0.5px solid',
-                  borderColor: 'borders.primary',
-                }}
-              />
+              <Typography variant="h6">Process Models</Typography>
+              <Box sx={dividerProps} />
             </Stack>
+            <Box sx={gridProps}>
+              {models.map((model: Record<string, any>) => (
+                <ProcessModelCard model={model} stream={clickStream} />
+              ))}
+            </Box>
 
             <Stack gap={1} sx={{ width: '100%' }}>
               <Typography variant="h6">Process Groups</Typography>
-              <Box
-                sx={{
-                  border: '0.5px solid',
-                  borderColor: 'borders.primary',
-                }}
-              />
+              <Box sx={dividerProps} />
             </Stack>
-
-            <Box
-              sx={{
-                width: '100%',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, 400px)',
-                justifyContent: 'center',
-                gridGap: 20,
-              }}
-            >
-              {processGroups?.results?.map((group: Record<string, any>) => (
-                <ProcessGroupCard group={group} />
+            <Box sx={gridProps}>
+              {groups.map((group: Record<string, any>) => (
+                <ProcessGroupCard group={group} stream={clickStream} />
               ))}
             </Box>
           </Stack>
