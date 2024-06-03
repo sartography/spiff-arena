@@ -122,7 +122,8 @@ function FilesInfo<
   }
   const { translateString } = registry;
 
-  const { RemoveButton } = getTemplate<'ButtonTemplates', T, S, F>(
+  // MuiRemoveButton doesn't exist on the correct component type but we add that manually so we know it is there
+  const { MuiRemoveButton } = getTemplate<any, any, any>(
     'ButtonTemplates',
     registry,
     options
@@ -148,7 +149,7 @@ function FilesInfo<
                 registry={registry}
               />
             )}
-            <RemoveButton onClick={handleRemove} registry={registry} />
+            <MuiRemoveButton onClick={handleRemove} registry={registry} />
           </li>
         );
       })}
