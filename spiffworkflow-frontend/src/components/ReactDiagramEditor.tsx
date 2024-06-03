@@ -556,7 +556,10 @@ export default function ReactDiagramEditor({
       setDiagramXMLString(newText);
     }
 
-    function fetchDiagramFromURL(urlToUse: any, textHandler?: (text: str) => void) {
+    function fetchDiagramFromURL(
+      urlToUse: any,
+      textHandler?: (text: str) => void
+    ) {
       fetch(urlToUse)
         .then((response) => response.text())
         .then(textHandler ?? bpmnTextHandler)
@@ -598,7 +601,7 @@ export default function ReactDiagramEditor({
       let textHandler = null;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
-	textHandler = dmnTextHandler;
+        textHandler = dmnTextHandler;
       }
       fetchDiagramFromURL(`/${newDiagramFileName}`, textHandler);
       return undefined;
