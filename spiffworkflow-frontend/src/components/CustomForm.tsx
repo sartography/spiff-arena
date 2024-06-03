@@ -426,7 +426,7 @@ export default function CustomForm({
         if (
           currentUiSchema &&
           'ui:options' in currentUiSchema &&
-          currentUiSchema['ui:options']['json'] === true
+          currentUiSchema['ui:options']['validateJson'] === true
         ) {
           checkJsonField(
             formDataToCheck,

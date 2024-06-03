@@ -18,12 +18,14 @@ type OwnProps = {
   height: number;
   modifiedProcessGroupIdentifier: string;
   messageId: string;
+  messageEvent: any;
 };
 
 export function MessageEditor({
   height,
   modifiedProcessGroupIdentifier,
   messageId,
+  messageEvent,
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
@@ -42,9 +44,15 @@ export function MessageEditor({
     });
   }, [modifiedProcessGroupIdentifier, setProcessGroup]);
 
-  const handleProcessGroupUpdateResponse = (response: ProcessGroup) => {
+  const handleProcessGroupUpdateResponse = (
+    response: ProcessGroup,
+    updatedMessagesForId: MessageDefinition
+  ) => {
     setProcessGroup(response);
     setDisplaySaveMessageMessage(true);
+    messageEvent.eventBus.fire('spiff.message.update', {
+      value: 'message_response_one_hey_hey',
+    });
   };
 
   const updateCorrelationPropertiesOnProcessGroup = (
@@ -124,7 +132,8 @@ export function MessageEditor({
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
     HttpService.makeCallToBackend({
       path,
-      successCallback: handleProcessGroupUpdateResponse,
+      successCallback: (response: ProcessGroup) =>
+        handleProcessGroupUpdateResponse(response, updatedMessagesForId),
       httpMethod: 'PUT',
       postBody: processGroupForUpdate,
     });
@@ -186,7 +195,7 @@ export function MessageEditor({
     schema: {
       'ui:widget': 'textarea',
       'ui:rows': 5,
-      'ui:options': { json: true },
+      'ui:options': { validateJson: true },
     },
     'ui:layout': [
       {

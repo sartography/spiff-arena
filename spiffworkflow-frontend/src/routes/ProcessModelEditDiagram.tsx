@@ -92,7 +92,7 @@ export default function ProcessModelEditDiagram() {
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
 
-  const [messageEventBus, setMessageEventBus] = useState<any>(null);
+  const [messageEvent, setMessageEvent] = useState<any>(null);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -1058,17 +1058,14 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchMessageEditor = (
-    editMessageId: string,
-    eventBus: any,
-    _listenEvent: any
-  ) => {
-    setMessageEventBus(eventBus);
-    setMessageId(editMessageId);
+  const onLaunchMessageEditor = (event: any) => {
+    setMessageEvent(event);
+    setMessageId(event.value);
     handleShowMessageEditor();
   };
-  const handleMessageEditorClose = (messageId: string) => {
+  const handleMessageEditorClose = (messageId: string, arg1: any) => {
     setShowMessageEditor(false);
+    onMessagesRequested(messageEvent);
   };
 
   const messageEditor = () => {
@@ -1080,7 +1077,7 @@ export default function ProcessModelEditDiagram() {
       <Modal
         open={showMessageEditor}
         modalHeading="Create/Edit Message"
-        primaryButtonText="Close without saving"
+        primaryButtonText="Close (this does not save)"
         onRequestSubmit={handleMessageEditorClose}
         onRequestClose={handleMessageEditorClose}
         size="lg"
@@ -1093,6 +1090,7 @@ export default function ProcessModelEditDiagram() {
             )}
             height={500}
             messageId={messageId}
+            messageEvent={messageEvent}
           />
         </div>
       </Modal>
