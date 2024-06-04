@@ -15,6 +15,7 @@ export default function TreePanel({
   stream?: Subject<Record<string, any>>;
 }) {
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const isDark = useTheme().palette.mode === 'dark';
   const treeItemStyle = {
     borderRadius: 1,
@@ -25,6 +26,14 @@ export default function TreePanel({
     backgroundColor: isDark ? `background.paper` : `background.bluegreymedium`,
   };
 
+  /**
+   * There is a lot of style wrangling on the tree items.
+   * We've taken control of the expand/collapse of the tree,
+   * becase we want to expand/collapse and highlight nodes that correspond to an external clickStream.
+   * (For now, that comes from the parent, TreePanel, that owns the stream).
+   * The downside is, once you take control of anything having to do with how the tree works,
+   * You have to manage it all yourself.
+   */
   const buildTree = (groups: Record<string, any>[]) => {
     return groups.map((group: Record<string, any>) => (
       <TreeItem
@@ -32,7 +41,22 @@ export default function TreePanel({
         itemId={group.id}
         onClick={() => stream && stream.next(group)}
         label={
-          <Stack direction="row">
+          <Stack
+            direction="row"
+            sx={{
+              backgroundColor: (() => {
+                console.log(lastSelected, group);
+                const test =
+                  lastSelected.id === group.id
+                    ? 'background.bluegreymedium'
+                    : '';
+                console.log(test);
+                return test;
+              })(),
+              padding: 0.5,
+              borderRadius: 1,
+            }}
+          >
             <Box sx={{ width: '100%' }}>{group.display_name}</Box>
             <Box sx={treeItemStyle}>
               {(group?.process_models?.length || 0) +
@@ -45,7 +69,20 @@ export default function TreePanel({
           <TreeItem
             key={model.id}
             itemId={model.id}
-            label={model.display_name}
+            label={
+              <Box
+                sx={{
+                  backgroundColor:
+                    lastSelected.id === model.id
+                      ? 'background.bluegreymedium'
+                      : '',
+                  padding: 0.5,
+                  borderRadius: 1,
+                }}
+              >
+                {model.display_name}
+              </Box>
+            }
             onClick={() => stream && stream.next(model)}
           />
         ))}
@@ -55,25 +92,46 @@ export default function TreePanel({
   };
 
   const expandToItem = (item: Record<string, any>) => {
-    if (item) {
-      const newExpanded: string[] = [];
-      const split: string[] = item.id.split('/');
-      split.forEach((id, i) => {
-        newExpanded.push(i === 0 ? id : `${newExpanded[i - 1]}/${id}`);
-      });
-      // Expand logic is working, need to work on the collapse side of this.
-      setExpanded(newExpanded);
+    if (!item) {
+      return;
     }
+    const newExpanded: string[] = [];
+    const split: string[] = item.id.split('/');
+    split.forEach((id, i) => {
+      newExpanded.push(i === 0 ? id : `${newExpanded[i - 1]}/${id}`);
+    });
+
+    setExpanded(newExpanded);
   };
 
   let streamSub: Subscription;
   useEffect(() => {
     if (!streamSub && stream) {
       streamSub = stream.subscribe((item) => {
-        expandToItem(item);
+        setLastSelected({ ...item });
       });
     }
   }, [stream]);
+
+  /**
+   * This needs to happen independently of the subscription callback,
+   * which is async, setting it directly in that way will not propagate the state
+   * (This is why we have a separate useEffect)
+   */
+  useEffect(() => {
+    if (!lastSelected?.id) {
+      return;
+    }
+    // First, let's see if the item is already expanded.
+    // If it is, we want to collapse it and do nothing else.
+    if (expanded.find((n) => n === lastSelected.id)) {
+      const removePath = expanded.filter((id) => id !== lastSelected.id);
+      setExpanded(() => [...removePath]);
+      console.log(removePath, expanded);
+      return;
+    }
+    expandToItem(lastSelected);
+  }, [lastSelected, stream]);
 
   return (
     <Paper

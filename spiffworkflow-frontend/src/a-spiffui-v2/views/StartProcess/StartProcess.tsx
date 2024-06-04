@@ -1,6 +1,14 @@
-import { Box, Container, Stack, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Container,
+  Stack,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel from './TreePanel';
 import SearchBar from './SearchBar';
@@ -11,6 +19,9 @@ export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
   const [groups, setGroups] = useState<Record<string, any>[]>([]);
   const [models, setModels] = useState<Record<string, any>[]>([]);
+  // On load, there are always groups and never models, expand accordingly.
+  const [groupsExpanded, setGroupsExpanded] = useState(true);
+  const [modelsExpanded, setModelsExpanded] = useState(false);
   const clickStream = new Subject<Record<string, any>>();
   const gridProps = {
     width: '100%',
@@ -19,13 +30,13 @@ export default function StartProcess() {
     justifyContent: 'center',
     gridGap: 20,
   };
-  const dividerProps = {
-    border: '0.5px solid',
-    borderColor: 'borders.primary',
-  };
 
   const handleClickStream = (group: Record<string, any>) => {
     if (group?.process_models) {
+      // If a user clicks a group, and it has models, expand them for the user.
+      if (group.process_models.length) {
+        setModelsExpanded(true);
+      }
       setModels(group.process_models);
     }
 
@@ -36,8 +47,8 @@ export default function StartProcess() {
 
   useEffect(() => {
     if (processGroups?.results) {
-      console.log(processGroups);
       setGroups(processGroups.results);
+      setGroupsExpanded(!!processGroups.results.length);
     }
   }, [processGroups]);
 
@@ -86,33 +97,57 @@ export default function StartProcess() {
             </Box>
 
             <Stack
-              gap={4}
               sx={{
                 width: '100%',
-                height: 'calc(100vh - 185px)',
+                height: 'calc(100vh - 205px)',
                 overflowY: 'auto',
                 overflowX: 'hidden',
+                padding: 0,
               }}
             >
-              <Stack gap={1} sx={{ width: '100%', padding: 2 }}>
-                <Typography variant="h6">Process Models</Typography>
-                <Box sx={dividerProps} />
+              <Stack
+                gap={4}
+                sx={{
+                  padding: 2,
+                }}
+              >
+                <Accordion
+                  expanded={modelsExpanded}
+                  onChange={() => setModelsExpanded((prev) => !prev)}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="Process Models Accordion"
+                  >
+                    ({models.length}) Process Models
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={gridProps}>
+                      {models.map((model: Record<string, any>) => (
+                        <ProcessModelCard model={model} stream={clickStream} />
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+                <Accordion
+                  expanded={groupsExpanded}
+                  onChange={() => setGroupsExpanded((prev) => !prev)}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="Process Groups Accordion"
+                  >
+                    ({groups.length}) Process Groups
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={gridProps}>
+                      {groups.map((group: Record<string, any>) => (
+                        <ProcessGroupCard group={group} stream={clickStream} />
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
               </Stack>
-              <Box sx={gridProps}>
-                {models.map((model: Record<string, any>) => (
-                  <ProcessModelCard model={model} stream={clickStream} />
-                ))}
-              </Box>
-
-              <Stack gap={1} sx={{ width: '100%', padding: 2 }}>
-                <Typography variant="h6">Process Groups</Typography>
-                <Box sx={dividerProps} />
-              </Stack>
-              <Box sx={gridProps}>
-                {groups.map((group: Record<string, any>) => (
-                  <ProcessGroupCard group={group} stream={clickStream} />
-                ))}
-              </Box>
             </Stack>
           </Stack>
         </Stack>
