@@ -25,7 +25,6 @@ export default function StartProcess() {
   };
 
   const handleClickStream = (group: Record<string, any>) => {
-    console.log(group);
     if (group?.process_models) {
       setModels(group.process_models);
     }
@@ -74,12 +73,13 @@ export default function StartProcess() {
           }}
         >
           <Stack
-            gap={4}
+            gap={2}
             sx={{
               width: '100%',
               height: '100%',
               display: 'flex',
               alignItems: 'center',
+              padding: 2,
             }}
           >
             <SearchBar />

@@ -6,7 +6,6 @@ import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
 import MenuItem from '../app/topmenu/MenuItem';
 import { useEffect, useState } from 'react';
-import SpiffTreeItem from './SpiffTreeItem';
 
 export default function TreePanel({
   processGroups,
@@ -43,22 +42,36 @@ export default function TreePanel({
         }
       >
         {group?.process_models?.map((model: Record<string, any>) => (
-          <SpiffTreeItem group={group} model={model} stream={stream} />
+          <TreeItem
+            key={model.id}
+            itemId={model.id}
+            label={model.display_name}
+            onClick={() => stream && stream.next(model)}
+          />
         ))}
         {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
       </TreeItem>
     ));
   };
 
-  /** Need to think about an "ID CHAIN" to make this work */
-  const expandGroup = (group: Record<string, any>) => {};
+  const expandToItem = (item: Record<string, any>) => {
+    if (item) {
+      const newExpanded: string[] = [];
+      const split: string[] = item.id.split('/');
+      split.forEach((id, i) => {
+        newExpanded.push(i === 0 ? id : `${newExpanded[i - 1]}/${id}`);
+      });
+      // Expand logic is working, need to work on the collapse side of this.
+      setExpanded(newExpanded);
+    }
+  };
 
   let streamSub: Subscription;
   useEffect(() => {
     if (!streamSub && stream) {
-      streamSub = stream.subscribe(
-        (item) => item?.process_groups && expandGroup(item)
-      );
+      streamSub = stream.subscribe((item) => {
+        expandToItem(item);
+      });
     }
   }, [stream]);
 
@@ -109,6 +122,7 @@ export default function TreePanel({
         />
         {/** Have to force this for design requirement */}
         <SimpleTreeView
+          expandedItems={expanded}
           sx={{
             '& .MuiTreeItem-label': {
               fontSize: '12px !important',
