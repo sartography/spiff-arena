@@ -13,7 +13,7 @@ export default function useProcessInstanceNavigate() {
   const handleProcessInstanceNavigation = (
     result: any,
     processInstanceId: number,
-    suffix: string | undefined
+    suffix: string | undefined,
   ) => {
     const processInstanceResult: ProcessInstance = result.process_instance;
     let path = '/process-instances';
@@ -21,11 +21,13 @@ export default function useProcessInstanceNavigate() {
       path += '/for-me';
     }
     path += `/${modifyProcessIdentifierForPathParam(
-      processInstanceResult.process_model_identifier
+      processInstanceResult.process_model_identifier,
     )}/${processInstanceResult.id}`;
     if (suffix !== undefined) {
       path += suffix;
     }
+    const queryParams = window.location.search;
+    path += queryParams;
     navigate(path);
   };
 
