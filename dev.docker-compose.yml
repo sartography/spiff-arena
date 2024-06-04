@@ -10,3 +10,4 @@ services:
       XDG_CACHE_HOME: "/app/.cache"
     volumes:
       - ./:/app
+      - ${MY_SSH_DIR:-/tmp/__spiff_nossh}:${MY_SSH_DIR:-/tmp/__spiff_nossh}

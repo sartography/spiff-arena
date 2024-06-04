@@ -66,7 +66,7 @@
     "slick-carousel": "^1.8.1",
     "timepicker": "^1.13.18",
     "typescript": "^4.7.4",
-    "use-debounce": "^10.0.0",
+    "use-debounce": "^10.0.1",
     "vite": "^5.2.8",
     "vite-plugin-svgr": "^4.2.0",
     "vite-tsconfig-paths": "^4.3.2",

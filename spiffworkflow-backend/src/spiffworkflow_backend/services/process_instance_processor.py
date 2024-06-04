@@ -912,7 +912,24 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
+    def extract_metadata(self) -> None:
+        # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
+        # it would make sense to do that if the shell-out-to-git performance cost was not too high.
+        # we also discussed caching this information in new database tables. something like:
+        #   process_model_version
+        #     id
+        #     process_model_identifier
+        #     git_hash
+        #     display_name
+        #     notification_type
+        #   metadata_extraction
+        #     id
+        #     extraction_key
+        #     extraction_path
+        #   metadata_extraction_process_model_version
+        #     process_model_version_id
+        #     metadata_extraction_id
+        process_model_info = ProcessModelService.get_process_model(self.process_instance_model.process_model_identifier)
         metadata_extraction_paths = process_model_info.metadata_extraction_paths
         if metadata_extraction_paths is None:
             return
@@ -1090,12 +1107,7 @@ class ProcessInstanceProcessor:
         human_tasks = HumanTaskModel.query.filter_by(process_instance_id=self.process_instance_model.id, completed=False).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
-        process_model_display_name = ""
-        process_model_info = ProcessModelService.get_process_model(self.process_instance_model.process_model_identifier)
-        if process_model_info is not None:
-            process_model_display_name = process_model_info.display_name
-
-        self.extract_metadata(process_model_info)
+        self.extract_metadata()
 
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
@@ -1131,7 +1143,7 @@ class ProcessInstanceProcessor:
 
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
-                        process_model_display_name=process_model_display_name,
+                        process_model_display_name=self.process_instance_model.process_model_display_name,
                         bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
