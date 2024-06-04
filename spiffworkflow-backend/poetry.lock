@@ -228,17 +228,6 @@ files = [
 ]
 
 [[package]]
-name = "blinker"
-version = "1.7.0"
-description = "Fast, simple object-to-object and broadcast signaling"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "blinker-1.7.0-py3-none-any.whl", hash = "sha256:c3f865d4d54db7abc53758a01601cf343fe55b84c1de4e3fa910e420b438d5b9"},
-    {file = "blinker-1.7.0.tar.gz", hash = "sha256:e6820ff6fa4e4d1d8e2747c2283749c3f547e4fee112b98555cdcdae32996182"},
-]
-
-[[package]]
 name = "cachelib"
 version = "0.12.0"
 description = "A collection of cache libraries in the same API interface."
@@ -952,20 +941,6 @@ Werkzeug = ">=0.14"
 
 [package.extras]
 asymmetric-crypto = ["cryptography (>=3.3.1)"]
-
-[[package]]
-name = "flask-mail"
-version = "0.9.1"
-description = "Flask extension for sending email"
-optional = false
-python-versions = "*"
-files = [
-    {file = "Flask-Mail-0.9.1.tar.gz", hash = "sha256:22e5eb9a940bf407bcf30410ecc3708f3c56cc44b29c34e1726fe85006935f41"},
-]
-
-[package.dependencies]
-blinker = "*"
-Flask = "*"
 
 [[package]]
 name = "flask-marshmallow"
@@ -3474,4 +3449,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "a57ba478d94a0aab9d8d6457cdca73253c108c1340a7cf12add419bf868d579e"
+content-hash = "a61ce970b9044f555a387c2ed52622219b11a0d10bcb969eb68330f5cca653fe"
