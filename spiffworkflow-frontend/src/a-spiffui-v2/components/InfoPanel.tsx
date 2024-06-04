@@ -1,6 +1,6 @@
 import { Box, Paper, Stack } from '@mui/material';
 import { ReactNode } from 'react';
-import CollapseButton from '../views/app/sidemenu/CollapseButton';
+import CollapseButton from './CollapseButton';
 
 export default function InfoPanel({
   callback,
