@@ -24,7 +24,7 @@ export const TimeAgo = (function awesomeFunc() {
   self.inWords = function inWords(timeAgo) {
     const milliseconds = timeAgo * 1000;
     const seconds = Math.floor(
-      (new Date() - parseInt(milliseconds, 10)) / 1000
+      (new Date() - parseInt(milliseconds, 10)) / 1000,
     );
     const separator = this.locales.separator || ' ';
     let words = this.locales.prefix + separator;
