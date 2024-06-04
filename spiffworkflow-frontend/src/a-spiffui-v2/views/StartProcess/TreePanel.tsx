@@ -4,8 +4,8 @@ import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
-import MenuItem from '../app/topmenu/MenuItem';
 import { useEffect, useState } from 'react';
+import MenuItem from '../app/topmenu/MenuItem';
 
 export default function TreePanel({
   processGroups,
@@ -44,15 +44,8 @@ export default function TreePanel({
           <Stack
             direction="row"
             sx={{
-              backgroundColor: (() => {
-                console.log(lastSelected, group);
-                const test =
-                  lastSelected.id === group.id
-                    ? 'background.bluegreymedium'
-                    : '';
-                console.log(test);
-                return test;
-              })(),
+              backgroundColor:
+                lastSelected.id === group.id ? 'background.bluegreymedium' : '',
               padding: 0.5,
               borderRadius: 1,
             }}
@@ -100,8 +93,15 @@ export default function TreePanel({
     split.forEach((id, i) => {
       newExpanded.push(i === 0 ? id : `${newExpanded[i - 1]}/${id}`);
     });
+    // If this was a leaf node, we don't want to try to expand it.
+    // TODO: Get types together for this one day.
+    if (!('process_models' in item)) {
+      newExpanded.pop();
+    }
 
-    setExpanded(newExpanded);
+    // Less buggy to remove all duplicates instead of trying to prevent them.
+    const removeDupes = new Set([...expanded, ...newExpanded]);
+    setExpanded(Array.from(removeDupes));
   };
 
   let streamSub: Subscription;
@@ -127,11 +127,10 @@ export default function TreePanel({
     if (expanded.find((n) => n === lastSelected.id)) {
       const removePath = expanded.filter((id) => id !== lastSelected.id);
       setExpanded(() => [...removePath]);
-      console.log(removePath, expanded);
       return;
     }
     expandToItem(lastSelected);
-  }, [lastSelected, stream]);
+  }, [lastSelected]);
 
   return (
     <Paper

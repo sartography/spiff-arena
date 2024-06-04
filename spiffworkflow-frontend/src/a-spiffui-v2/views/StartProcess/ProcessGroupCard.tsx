@@ -23,8 +23,12 @@ export default function ProcessGroupCard({
       onClick={() => stream && stream.next(group)}
     >
       <Stack>
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+        <Typography variant="body1" sx={{ fontWeight: 700 }}>
           {group.display_name}
+        </Typography>
+
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          {group.description || '--'}
         </Typography>
 
         <Typography variant="caption" sx={{ color: captionColor }}>

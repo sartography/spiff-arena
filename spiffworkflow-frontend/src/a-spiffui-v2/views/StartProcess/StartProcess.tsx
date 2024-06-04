@@ -22,6 +22,7 @@ export default function StartProcess() {
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
+  const [crumbs, setCrumbs] = useState('');
   const clickStream = new Subject<Record<string, any>>();
   const gridProps = {
     width: '100%',
@@ -31,17 +32,45 @@ export default function StartProcess() {
     gridGap: 20,
   };
 
-  const handleClickStream = (group: Record<string, any>) => {
-    if (group?.process_models) {
-      // If a user clicks a group, and it has models, expand them for the user.
-      if (group.process_models.length) {
-        setModelsExpanded(true);
-      }
-      setModels(group.process_models);
+  const handleClickStream = (item: Record<string, any>) => {
+    setCrumbs(item.id);
+    let itemToUse: any = { ...item };
+    // Duck type to find out if this is a model ore a group.
+    // If  model, we want its parent group, which can be found in the id.
+    if (!('process_groups' in item)) {
+      // recursively find the parent group.
+      const findParent = (
+        searchGroups: Record<string, any>[],
+        id: string
+      ): Record<string, any> | undefined => {
+        return searchGroups.find((group) => {
+          if (group.id === id) {
+            itemToUse = group;
+            return group;
+          }
+          if (group.process_groups) {
+            return findParent(group.process_groups, id);
+          }
+
+          return false;
+        });
+      };
+      // Remove the last part of the id, which is not and expandable entity.
+      const parentId = item.id.split('/').slice(0, -1).join('/');
+      findParent(processGroups.results, parentId);
     }
 
-    if (group?.process_groups) {
-      setGroups(group.process_groups);
+    if (itemToUse?.process_models) {
+      // If a user clicks a group, and it has models, expand them for the user.
+      if (itemToUse.process_models.length) {
+        setModelsExpanded(true);
+      }
+      setModels(itemToUse.process_models);
+    }
+
+    // If there are groups in this group, set them into state for display
+    if (itemToUse?.process_groups) {
+      setGroups(itemToUse.process_groups);
     }
   };
 
@@ -92,7 +121,14 @@ export default function StartProcess() {
               alignItems: 'center',
             }}
           >
-            <Box sx={{ width: '100%', padding: 2 }}>
+            <Box
+              sx={{
+                width: '100%',
+                paddingTop: 2,
+                paddingLeft: 2,
+                paddingRight: 2,
+              }}
+            >
               <SearchBar />
             </Box>
 
@@ -111,24 +147,30 @@ export default function StartProcess() {
                   padding: 2,
                 }}
               >
-                <Accordion
-                  expanded={modelsExpanded}
-                  onChange={() => setModelsExpanded((prev) => !prev)}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="Process Models Accordion"
+                <Box>
+                  {crumbs && <Box>{crumbs}</Box>}
+                  <Accordion
+                    expanded={modelsExpanded}
+                    onChange={() => setModelsExpanded((prev) => !prev)}
                   >
-                    ({models.length}) Process Models
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={gridProps}>
-                      {models.map((model: Record<string, any>) => (
-                        <ProcessModelCard model={model} stream={clickStream} />
-                      ))}
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      aria-controls="Process Models Accordion"
+                    >
+                      ({models.length}) Process Models
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={gridProps}>
+                        {models.map((model: Record<string, any>) => (
+                          <ProcessModelCard
+                            model={model}
+                            stream={clickStream}
+                          />
+                        ))}
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                </Box>
                 <Accordion
                   expanded={groupsExpanded}
                   onChange={() => setGroupsExpanded((prev) => !prev)}

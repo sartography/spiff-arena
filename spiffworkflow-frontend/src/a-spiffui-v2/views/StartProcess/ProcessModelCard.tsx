@@ -26,6 +26,9 @@ export default function ProcessModelCard({
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {model.display_name}
         </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          {model.description || '--'}
+        </Typography>
 
         <Typography variant="caption" sx={{ color: captionColor }}>
           Models: {model.id}
