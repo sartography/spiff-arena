@@ -79,22 +79,22 @@ export default function StartProcess() {
               height: '100%',
               display: 'flex',
               alignItems: 'center',
-              padding: 2,
             }}
           >
-            <SearchBar />
+            <Box sx={{ width: '100%', padding: 2 }}>
+              <SearchBar />
+            </Box>
 
             <Stack
               gap={4}
               sx={{
-                padding: 2,
                 width: '100%',
                 height: 'calc(100vh - 185px)',
                 overflowY: 'auto',
                 overflowX: 'hidden',
               }}
             >
-              <Stack gap={1} sx={{ width: '100%' }}>
+              <Stack gap={1} sx={{ width: '100%', padding: 2 }}>
                 <Typography variant="h6">Process Models</Typography>
                 <Box sx={dividerProps} />
               </Stack>
@@ -104,7 +104,7 @@ export default function StartProcess() {
                 ))}
               </Box>
 
-              <Stack gap={1} sx={{ width: '100%' }}>
+              <Stack gap={1} sx={{ width: '100%', padding: 2 }}>
                 <Typography variant="h6">Process Groups</Typography>
                 <Box sx={dividerProps} />
               </Stack>
