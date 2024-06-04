@@ -70,7 +70,6 @@ export default function StartProcess() {
         </Box>
         <Stack
           sx={{
-            padding: 2,
             width: '100%',
           }}
         >
@@ -78,31 +77,43 @@ export default function StartProcess() {
             gap={4}
             sx={{
               width: '100%',
+              height: '100%',
               display: 'flex',
               alignItems: 'center',
             }}
           >
             <SearchBar />
 
-            <Stack gap={1} sx={{ width: '100%' }}>
-              <Typography variant="h6">Process Models</Typography>
-              <Box sx={dividerProps} />
-            </Stack>
-            <Box sx={gridProps}>
-              {models.map((model: Record<string, any>) => (
-                <ProcessModelCard model={model} stream={clickStream} />
-              ))}
-            </Box>
+            <Stack
+              gap={4}
+              sx={{
+                padding: 2,
+                width: '100%',
+                height: 'calc(100vh - 185px)',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+              }}
+            >
+              <Stack gap={1} sx={{ width: '100%' }}>
+                <Typography variant="h6">Process Models</Typography>
+                <Box sx={dividerProps} />
+              </Stack>
+              <Box sx={gridProps}>
+                {models.map((model: Record<string, any>) => (
+                  <ProcessModelCard model={model} stream={clickStream} />
+                ))}
+              </Box>
 
-            <Stack gap={1} sx={{ width: '100%' }}>
-              <Typography variant="h6">Process Groups</Typography>
-              <Box sx={dividerProps} />
+              <Stack gap={1} sx={{ width: '100%' }}>
+                <Typography variant="h6">Process Groups</Typography>
+                <Box sx={dividerProps} />
+              </Stack>
+              <Box sx={gridProps}>
+                {groups.map((group: Record<string, any>) => (
+                  <ProcessGroupCard group={group} stream={clickStream} />
+                ))}
+              </Box>
             </Stack>
-            <Box sx={gridProps}>
-              {groups.map((group: Record<string, any>) => (
-                <ProcessGroupCard group={group} stream={clickStream} />
-              ))}
-            </Box>
           </Stack>
         </Stack>
       </Stack>
