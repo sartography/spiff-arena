@@ -1,7 +1,10 @@
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import {
+  ariaDescribedByIds,
   dataURItoBlob,
+  examplesId,
   FormContextType,
+  getInputProps,
   getTemplate,
   Registry,
   RJSFSchema,
@@ -190,19 +193,24 @@ function FileWidget<
   F extends FormContextType = any
 >(props: WidgetProps<T, S, F>) {
   const {
+    autofocus,
     disabled,
     id,
     label,
     multiple,
+    onBlur,
     onChange,
+    onFocus,
     options,
     rawErrors,
     readonly,
     registry,
     required,
     schema,
+    type,
     uiSchema,
     value,
+    ...rest
   } = props;
   const BaseInputTemplate = getTemplate<'BaseInputTemplate', T, S, F>(
     'BaseInputTemplate',
@@ -230,6 +238,17 @@ function FileWidget<
     [multiple, value, onChange]
   );
 
+  const _onBlur = useCallback(
+    ({ target }: React.FocusEvent<HTMLInputElement>) =>
+      onBlur(id, target.value),
+    [onBlur, id]
+  );
+  const _onFocus = useCallback(
+    ({ target }: React.FocusEvent<HTMLInputElement>) =>
+      onFocus(id, target.value),
+    [onFocus, id]
+  );
+
   const commonAttributes = getCommonAttributes(
     label,
     schema,
@@ -252,6 +271,18 @@ function FileWidget<
     },
     [multiple, value, onChange]
   );
+
+  const inputProps = {
+    ...rest,
+    ...getInputProps<T, S, F>(schema, type, options),
+  };
+
+  let inputValue;
+  if (inputProps.type === 'number' || inputProps.type === 'integer') {
+    inputValue = value || value === 0 ? value : '';
+  } else {
+    inputValue = value == null ? '' : value;
+  }
 
   let wrapperProps = null;
   let errorSvg = null;
@@ -283,24 +314,33 @@ function FileWidget<
     <>
       <div className="cds--text-input__field-wrapper" {...wrapperProps}>
         {errorSvg}
-        <BaseInputTemplate
-          {...props}
-          disabled={disabled || readonly}
+        <input
+          {...inputProps}
+          className="file-upload"
+          readOnly={readonly}
+          disabled={disabled}
+          id={id}
+          name={id}
+          value={inputValue}
+          list={schema.examples ? examplesId<T>(id) : undefined}
+          onChange={handleChange}
+          aria-describedby={ariaDescribedByIds<T>(id, !!schema.examples)}
           type="file"
-          required={value ? false : required} // this turns off HTML required validation when a value exists
-          onChangeOverride={handleChange}
-          value=""
           accept={options.accept ? String(options.accept) : undefined}
+          autoFocus={autofocus}
+          onBlur={_onBlur}
+          onFocus={_onFocus}
         />
+
         <span role="alert" className="cds--text-input__counter-alert"></span>
-        <FilesInfo<T, S, F>
-          filesInfo={filesInfo}
-          onRemove={rmFile}
-          registry={registry}
-          preview={options.filePreview}
-          options={options}
-        />
       </div>
+      <FilesInfo<T, S, F>
+        filesInfo={filesInfo}
+        onRemove={rmFile}
+        registry={registry}
+        preview={options.filePreview}
+        options={options}
+      />
       <div id={`${id}-error-msg`} className="cds--form-requirement">
         {commonAttributes.errorMessageForField}
       </div>
