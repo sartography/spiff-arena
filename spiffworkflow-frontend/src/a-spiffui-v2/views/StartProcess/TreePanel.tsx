@@ -6,6 +6,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
 import MenuItem from '../app/topmenu/MenuItem';
 import { useEffect, useState } from 'react';
+import SpiffTreeItem from './SpiffTreeItem';
 
 export default function TreePanel({
   processGroups,
@@ -14,7 +15,6 @@ export default function TreePanel({
   processGroups: Record<string, any>;
   stream?: Subject<Record<string, any>>;
 }) {
-  const [selectedGroup, setSelectedGroup] = useState<Record<string, any>>();
   const [expanded, setExpanded] = useState<string[]>([]);
   const isDark = useTheme().palette.mode === 'dark';
   const treeItemStyle = {
@@ -43,12 +43,7 @@ export default function TreePanel({
         }
       >
         {group?.process_models?.map((model: Record<string, any>) => (
-          <TreeItem
-            key={model.id}
-            itemId={model.id}
-            label={model.display_name}
-            onClick={() => stream && stream.next(model)}
-          />
+          <SpiffTreeItem group={group} model={model} stream={stream} />
         ))}
         {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
       </TreeItem>
@@ -56,13 +51,7 @@ export default function TreePanel({
   };
 
   /** Need to think about an "ID CHAIN" to make this work */
-  const expandGroup = (group: Record<string, any>) => {
-    if (!expanded.includes(group.id)) {
-      setExpanded([group.id]);
-    } else {
-      setExpanded(expanded.filter((id) => id !== group.id));
-    }
-  };
+  const expandGroup = (group: Record<string, any>) => {};
 
   let streamSub: Subscription;
   useEffect(() => {
@@ -120,7 +109,6 @@ export default function TreePanel({
         />
         {/** Have to force this for design requirement */}
         <SimpleTreeView
-          expandedItems={expanded}
           sx={{
             '& .MuiTreeItem-label': {
               fontSize: '12px !important',

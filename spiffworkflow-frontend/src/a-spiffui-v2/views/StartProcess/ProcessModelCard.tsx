@@ -1,5 +1,4 @@
 import { Button, Paper, Stack, Typography } from '@mui/material';
-import { useEffect } from 'react';
 import { Subject } from 'rxjs';
 
 export default function ProcessModelCard({
