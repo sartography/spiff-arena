@@ -8,7 +8,7 @@ import flask.json
 import sqlalchemy
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
-from flask_mail import Mail  # type: ignore
+from flask_mail import Mail
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler_if_appropriate

@@ -1,5 +1,5 @@
 from flask import current_app
-from flask_mail import Message  # type: ignore
+from flask_mail import Message
 
 
 class EmailService:
@@ -9,11 +9,11 @@ class EmailService:
     def add_email(
         subject: str,
         sender: str,
-        recipients: list[str],
+        recipients: list[str | tuple[str, str]],
         content: str,
         content_html: str,
-        cc: str | None = None,
-        bcc: str | None = None,
+        cc: list[str | tuple[str, str]] | None = None,
+        bcc: list[str | tuple[str, str]] | None = None,
         reply_to: str | None = None,
         attachment_files: dict | None = None,
     ) -> None:
