@@ -26,7 +26,7 @@ const DEFAULT_OPTIONS = {
 
 const useKeyboardShortcut = (
   keyboardShortcuts: KeyboardShortcuts,
-  userOptions?: any
+  userOptions?: any,
 ) => {
   let options = DEFAULT_OPTIONS;
   if (userOptions) {
@@ -40,7 +40,7 @@ const useKeyboardShortcut = (
 
   const shortcutKeys = Object.keys(keyboardShortcuts);
   const lengthsOfShortcutKeys = shortcutKeys.map(
-    (shortcutKey: string) => shortcutKey.length
+    (shortcutKey: string) => shortcutKey.length,
   );
   const numberOfKeysToKeep = Math.max(...lengthsOfShortcutKeys);
 
@@ -103,7 +103,7 @@ const useKeyboardShortcut = (
       if (
         options.ignoreInputFields &&
         EXCLUDE_LIST_DOM_TARGETS.indexOf(
-          (keydownEvent.target as any).tagName
+          (keydownEvent.target as any).tagName,
         ) >= 0
       ) {
         return undefined;
@@ -112,7 +112,7 @@ const useKeyboardShortcut = (
       keySequence.current.push(loweredKey);
       const keySequenceString = keySequence.current.join(',');
       const shortcutKey = shortcutKeys.find((sk: string) =>
-        keySequenceString.endsWith(sk)
+        keySequenceString.endsWith(sk),
       );
 
       if (shortcutKey) {
@@ -133,7 +133,7 @@ const useKeyboardShortcut = (
       keyboardShortcuts,
       numberOfKeysToKeep,
       shortcutKeys,
-    ]
+    ],
   );
 
   useEffect(() => {

@@ -57,7 +57,7 @@ const dateStringToYMDFormat = (dateString: string) => {
 
 const convertDateAndTimeStringsToDate = (
   dateString: string,
-  timeString: string
+  timeString: string,
 ) => {
   if (dateString && timeString) {
     return new Date(`${dateStringToYMDFormat(dateString)}T${timeString}`);
@@ -67,7 +67,7 @@ const convertDateAndTimeStringsToDate = (
 
 const convertDateAndTimeStringsToSeconds = (
   dateString: string,
-  timeString: string
+  timeString: string,
 ) => {
   const dateObject = convertDateAndTimeStringsToDate(dateString, timeString);
   if (dateObject) {
@@ -152,7 +152,7 @@ const secondsToDuration = (secNum: number) => {
 
 const attemptToConvertUnknownDateStringFormatToKnownFormat = (
   dateString: string,
-  targetDateFormat?: string
+  targetDateFormat?: string,
 ) => {
   let dateFormat = targetDateFormat;
   if (!dateFormat) {
@@ -170,14 +170,14 @@ const attemptToConvertUnknownDateStringFormatToKnownFormat = (
         numericalDateFormat
           .replace('dd', '\\d{2}')
           .replace('MM', '\\d{2}')
-          .replace('yyyy', '\\d{4}')
+          .replace('yyyy', '\\d{4}'),
       );
       const normalizedDateString = dateString.replaceAll(/[.-/]+/g, '-');
       if (normalizedDateString.match(dateFormatRegex)) {
         const newDate = parse(
           normalizedDateString,
           numericalDateFormat,
-          new Date()
+          new Date(),
         );
         newDateString = convertDateObjectToFormattedString(newDate) || '';
       }
@@ -223,7 +223,7 @@ const formatDateTime = (value: any) => {
     const timeArgs = value.split('T');
     dateInSeconds = convertDateAndTimeStringsToSeconds(
       timeArgs[0],
-      timeArgs[1]
+      timeArgs[1],
     );
   }
   if (dateInSeconds) {

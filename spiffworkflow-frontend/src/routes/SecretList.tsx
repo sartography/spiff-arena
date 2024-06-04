@@ -23,7 +23,7 @@ export default function SecretList() {
     [targetUris.secretListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   useEffect(() => {

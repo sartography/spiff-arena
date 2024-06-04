@@ -33,7 +33,7 @@ export default function DataStoreListTiles({
     [targetUris.dataStoreListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   useEffect(() => {

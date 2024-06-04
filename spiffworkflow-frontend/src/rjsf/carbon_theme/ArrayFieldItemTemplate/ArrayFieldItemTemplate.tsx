@@ -13,7 +13,7 @@ import {
 export default function ArrayFieldItemTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: ArrayFieldTemplateItemType<T, S, F>) {
   const {
     children,

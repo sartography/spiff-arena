@@ -20,7 +20,7 @@ export default function ProcessGroupList() {
   const navigate = useNavigate();
 
   const [processModelAvailableItems, setProcessModelAvailableItems] = useState(
-    []
+    [],
   );
 
   const { targetUris } = useUriListForPermissions();
@@ -55,8 +55,8 @@ export default function ProcessGroupList() {
       const processModel = selection.selectedItem;
       navigate(
         `/process-models/${modifyProcessIdentifierForPathParam(
-          processModel.id
-        )}`
+          processModel.id,
+        )}`,
       );
     };
     return (
@@ -95,7 +95,7 @@ export default function ProcessGroupList() {
           headerElement={<h2 className="clear-left">Data Stores</h2>}
           userCanCreateDataStores={ability.can(
             'POST',
-            targetUris.dataStoreListPath
+            targetUris.dataStoreListPath,
           )}
         />
       </>

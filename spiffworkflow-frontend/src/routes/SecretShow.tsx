@@ -25,7 +25,7 @@ export default function SecretShow() {
     [targetUris.secretShowValuePath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   useEffect(() => {

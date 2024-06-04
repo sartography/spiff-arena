@@ -14,7 +14,7 @@ export default function AuthenticationList() {
     AuthenticationItem[] | null
   >(null);
   const [connectProxyBaseUrl, setConnectProxyBaseUrl] = useState<string | null>(
-    null
+    null,
   );
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 

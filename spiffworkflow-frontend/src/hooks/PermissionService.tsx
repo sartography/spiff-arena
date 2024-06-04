@@ -8,7 +8,7 @@ import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 export const usePermissionFetcher = (
-  permissionsToCheck: PermissionsToCheck
+  permissionsToCheck: PermissionsToCheck,
 ) => {
   const ability = useContext(AbilityContext);
   const [permissionsLoaded, setPermissionsLoaded] = useState<boolean>(false);

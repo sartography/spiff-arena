@@ -43,7 +43,7 @@ export default function Login() {
           onClick={() => UserService.doLogin(option, getOriginalUrl())}
         >
           {option.label}
-        </Button>
+        </Button>,
       );
     });
     return buttons;
