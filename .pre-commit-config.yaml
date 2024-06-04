@@ -25,7 +25,7 @@ repos:
         language: system
         types: [text]
         stages: [commit, push, manual]
-      - id: ruff
+      - id: ruff-check
         args: [check, --fix]
         files: ^spiffworkflow-backend/
         name: ruff
@@ -36,7 +36,7 @@ repos:
         # this is also specified in spiffworkflow-backend/pyproject.toml but we run pre-commit
         # with all-files which ignores that
         exclude: "/migrations/"
-      - id: ruff
+      - id: ruff-format
         args: [format]
         files: ^spiffworkflow-backend/
         name: ruff
