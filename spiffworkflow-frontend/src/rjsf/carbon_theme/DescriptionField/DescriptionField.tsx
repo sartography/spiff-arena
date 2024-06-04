@@ -13,7 +13,7 @@ import MDEditor from '@uiw/react-md-editor';
 export default function DescriptionField<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: DescriptionFieldProps<T, S, F>) {
   const { id, description } = props;
   if (!description) {

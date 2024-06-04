@@ -139,7 +139,7 @@ backendCallProps) => {
       } catch (error) {
         const httpStatusMesage = messageForHttpError(
           result.response.status,
-          result.response.statusText
+          result.response.statusText,
         );
         const baseMessage = `Received unexpected response from server. ${httpStatusMesage}.`;
         console.error(`${baseMessage} Body: ${result.text}`);

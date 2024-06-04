@@ -51,7 +51,7 @@ export default function ActiveUsers() {
       15,
       DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
       updateActiveUsers,
-      unregisterUser
+      unregisterUser,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.

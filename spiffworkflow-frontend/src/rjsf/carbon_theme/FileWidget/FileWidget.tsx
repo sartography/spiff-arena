@@ -64,7 +64,7 @@ function processFiles(files: FileList) {
 function FileInfoPreview<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >({
   fileInfo,
   registry,
@@ -106,7 +106,7 @@ function FileInfoPreview<
 function FilesInfo<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >({
   filesInfo,
   registry,
@@ -129,7 +129,7 @@ function FilesInfo<
   const { MuiRemoveButton } = getTemplate<any, any, any>(
     'ButtonTemplates',
     registry,
-    options
+    options,
   );
 
   return (
@@ -190,7 +190,7 @@ function extractFileInfo(dataURLs: string[]): FileInfoType[] {
 function FileWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: WidgetProps<T, S, F>) {
   const {
     autofocus,
@@ -215,7 +215,7 @@ function FileWidget<
   const BaseInputTemplate = getTemplate<'BaseInputTemplate', T, S, F>(
     'BaseInputTemplate',
     registry,
-    options
+    options,
   );
 
   const handleChange = useCallback(
@@ -235,30 +235,30 @@ function FileWidget<
         }
       });
     },
-    [multiple, value, onChange]
+    [multiple, value, onChange],
   );
 
   const _onBlur = useCallback(
     ({ target }: React.FocusEvent<HTMLInputElement>) =>
       onBlur(id, target.value),
-    [onBlur, id]
+    [onBlur, id],
   );
   const _onFocus = useCallback(
     ({ target }: React.FocusEvent<HTMLInputElement>) =>
       onFocus(id, target.value),
-    [onFocus, id]
+    [onFocus, id],
   );
 
   const commonAttributes = getCommonAttributes(
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   const filesInfo = useMemo(
     () => extractFileInfo(Array.isArray(value) ? value : [value]),
-    [value]
+    [value],
   );
   const rmFile = useCallback(
     (index: number) => {
@@ -269,7 +269,7 @@ function FileWidget<
         onChange(undefined);
       }
     },
-    [multiple, value, onChange]
+    [multiple, value, onChange],
   );
 
   const inputProps = {

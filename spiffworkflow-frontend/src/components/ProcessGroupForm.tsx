@@ -32,8 +32,8 @@ export default function ProcessGroupForm({
       updateProcessGroupCache(processGroup);
       navigate(
         `/process-groups/${modifyProcessIdentifierForPathParam(
-          newProcessGroupId
-        )}`
+          newProcessGroupId,
+        )}`,
       );
     }
   };
@@ -62,7 +62,7 @@ export default function ProcessGroupForm({
     let path = '/process-groups';
     if (mode === 'edit') {
       path = `/process-groups/${modifyProcessIdentifierForPathParam(
-        processGroup.id
+        processGroup.id,
       )}`;
     }
     let httpMethod = 'POST';
@@ -140,7 +140,7 @@ export default function ProcessGroupForm({
             }
             setIdHasBeenUpdatedByUser(true);
           }}
-        />
+        />,
       );
     }
 
@@ -153,7 +153,7 @@ export default function ProcessGroupForm({
         onChange={(event: any) =>
           updateProcessGroup({ description: event.target.value })
         }
-      />
+      />,
     );
 
     return textInputs;

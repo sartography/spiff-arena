@@ -3,7 +3,7 @@ export const getCommonAttributes = (
   label: string,
   schema: any,
   uiSchema: any,
-  rawErrors: any
+  rawErrors: any,
 ) => {
   let labelToUse = label;
   if (uiSchema && uiSchema['ui:title']) {

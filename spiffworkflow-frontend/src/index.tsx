@@ -46,7 +46,7 @@ const doRender = () => {
           <App />
         </ThemeProvider>
       </ThemeProvider>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 };
 

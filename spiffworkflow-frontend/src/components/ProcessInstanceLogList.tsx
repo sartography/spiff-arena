@@ -123,21 +123,21 @@ export default function ProcessInstanceLogList({
     ];
     const pickedSearchParams = selectKeysFromSearchParams(
       searchParams,
-      searchParamsToInclude
+      searchParamsToInclude,
     );
 
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
 
     const eventsQueryParam = isEventsView ? 'true' : 'false';
 
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
-        pickedSearchParams
+        pickedSearchParams,
       )}&page=${page}&per_page=${perPage}&events=${eventsQueryParam}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
@@ -178,7 +178,7 @@ export default function ProcessInstanceLogList({
       if (eventErrorDetails) {
         const errorForDisplay = errorForDisplayFromProcessInstanceErrorDetail(
           eventForModal,
-          eventErrorDetails
+          eventErrorDetails,
         );
         const errorChildren = childrenForErrorObject(errorForDisplay);
         // eslint-disable-next-line react/jsx-no-useless-fragment
@@ -200,7 +200,7 @@ export default function ProcessInstanceLogList({
   };
 
   const handleErrorDetailsReponse = (
-    results: ProcessInstanceEventErrorDetail
+    results: ProcessInstanceEventErrorDetail,
   ) => {
     setEventErrorDetails(results);
   };
@@ -280,14 +280,14 @@ export default function ProcessInstanceLogList({
           <td data-qa="paginated-entity-id">{logEntry.id}</td>
           {bpmnProcessCell}
           {taskNameCell}
-        </>
+        </>,
       );
     } else {
       tableRow.push(
         <>
           {taskNameCell}
           {bpmnProcessCell}
-        </>
+        </>,
       );
     }
     if (isEventsView) {
@@ -301,14 +301,14 @@ export default function ProcessInstanceLogList({
               <span className="system-user-log-entry">system</span>
             )}
           </td>
-        </>
+        </>,
       );
     }
 
     let timestampComponent = (
       <td>
         {DateAndTimeService.convertSecondsToFormattedDateTime(
-          logEntry.timestamp
+          logEntry.timestamp,
         )}
       </td>
     );
@@ -322,7 +322,7 @@ export default function ProcessInstanceLogList({
             title="View state when task was completed"
           >
             {DateAndTimeService.convertSecondsToFormattedDateTime(
-              logEntry.timestamp
+              logEntry.timestamp,
             )}
           </Link>
         </td>
@@ -337,7 +337,7 @@ export default function ProcessInstanceLogList({
     const rows = processInstanceLogs.map(
       (logEntry: ProcessInstanceLogEntry) => {
         return getTableRow(logEntry);
-      }
+      },
     );
 
     const tableHeaders = [];
@@ -347,14 +347,14 @@ export default function ProcessInstanceLogList({
           <th>Id</th>
           <th>Bpmn process</th>
           <th>{taskNameHeader}</th>
-        </>
+        </>,
       );
     } else {
       tableHeaders.push(
         <>
           <th>{taskNameHeader}</th>
           <th>Bpmn process</th>
-        </>
+        </>,
       );
     }
     if (isEventsView) {
@@ -364,7 +364,7 @@ export default function ProcessInstanceLogList({
           <th>Task type</th>
           <th>Event type</th>
           <th>User</th>
-        </>
+        </>,
       );
     }
     tableHeaders.push(<th>Timestamp</th>);
@@ -380,7 +380,7 @@ export default function ProcessInstanceLogList({
 
   const resetFilters = () => {
     ['bpmn_name', 'bpmn_identifier', 'task_type', 'event_type'].forEach(
-      (value: string) => searchParams.delete(value)
+      (value: string) => searchParams.delete(value),
     );
   };
 
@@ -429,7 +429,7 @@ export default function ProcessInstanceLogList({
           titleText={taskNameHeader}
           selectedItem={searchParams.get('bpmn_name')}
         />
-      </Column>
+      </Column>,
     );
 
     if (isEventsView) {
@@ -486,7 +486,7 @@ export default function ProcessInstanceLogList({
               selectedItem={searchParams.get('event_type')}
             />
           </Column>
-        </>
+        </>,
       );
     }
 
@@ -525,7 +525,7 @@ export default function ProcessInstanceLogList({
     searchParams,
     undefined,
     undefined,
-    paginationQueryParamPrefix
+    paginationQueryParamPrefix,
   );
   if (clearAll) {
     return <p>Page cleared 👍</p>;

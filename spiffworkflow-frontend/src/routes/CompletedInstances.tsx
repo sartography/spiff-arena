@@ -25,7 +25,7 @@ export default function CompletedInstances() {
         text: `Instances with tasks completed by **${userGroup}**`,
       };
       const identifierForTable = `completed-by-group-${slugifyString(
-        userGroup
+        userGroup,
       )}`;
       return (
         <ProcessInstanceListTable
