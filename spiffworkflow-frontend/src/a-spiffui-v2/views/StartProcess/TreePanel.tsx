@@ -4,16 +4,23 @@ import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import MenuItem from '../app/topmenu/MenuItem';
 
-export default function TreePanel({
-  processGroups,
-  stream,
-}: {
-  processGroups: Record<string, any>;
-  stream?: Subject<Record<string, any>>;
-}) {
+export type TreeRef = {
+  clearExpanded: () => void;
+};
+
+export default forwardRef(function TreePanel(
+  {
+    processGroups,
+    stream,
+  }: {
+    processGroups: Record<string, any>;
+    stream?: Subject<Record<string, any>>;
+  },
+  ref: any // can literally be anything that wants to clear the tree
+) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const isDark = useTheme().palette.mode === 'dark';
@@ -25,6 +32,11 @@ export default function TreePanel({
     fontWeight: 600,
     backgroundColor: isDark ? `background.paper` : `background.bluegreymedium`,
   };
+
+  /** We allow imperatively clearing the expanded items of the tree via a forwardRef */
+  useImperativeHandle(ref, () => ({
+    clearExpanded: () => setExpanded([]),
+  }));
 
   /**
    * There is a lot of style wrangling on the tree items.
@@ -129,6 +141,7 @@ export default function TreePanel({
       setExpanded(() => [...removePath]);
       return;
     }
+    // Otherwise, go through the rigamarole of expanding it.
     expandToItem(lastSelected);
   }, [lastSelected]);
 
@@ -192,4 +205,4 @@ export default function TreePanel({
       </Stack>
     </Paper>
   );
-}
+});

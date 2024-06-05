@@ -24,7 +24,6 @@ export default function CollapseButton({
     // You can run into async state update issues if you
     // try to use the state value directly in the callback.
     const t = !toggled;
-    console.log(t);
     setToggled(t);
     callback(t);
   };

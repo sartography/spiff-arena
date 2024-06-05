@@ -23,7 +23,6 @@ export default function useProcessInstance() {
    * @returns Query functions must return a value, even if it's just true
    */
   const processResult = (result: any[]) => {
-    console.log(result);
     setProcessInstance(result);
     setLoading(false);
   };

@@ -6,11 +6,11 @@ import {
   Container,
   Stack,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useProcessGroups from '../../hooks/useProcessGroups';
-import TreePanel from './TreePanel';
+import TreePanel, { TreeRef } from './TreePanel';
 import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
@@ -19,10 +19,12 @@ export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
   const [groups, setGroups] = useState<Record<string, any>[]>([]);
   const [models, setModels] = useState<Record<string, any>[]>([]);
+  const [flatItems, setFlatItems] = useState<Record<string, any>[]>([]);
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
   const [crumbs, setCrumbs] = useState('');
+  const treeRef = useRef<TreeRef>(null);
   const clickStream = new Subject<Record<string, any>>();
   const gridProps = {
     width: '100%',
@@ -74,10 +76,64 @@ export default function StartProcess() {
     }
   };
 
+  /**
+   * For now, we're just pasting together some info fields that make sense.
+   * This is simple and works and is easily expanded,
+   * but eventually might need to be more robust.
+   */
+  const handleSearch = (search: string) => {
+    const foundGroups = flatItems.filter((item) => {
+      return (
+        item.id.toLowerCase().includes(search.toLowerCase()) &&
+        item?.process_groups
+      );
+    });
+    const foundModels = flatItems.filter((item) => {
+      return (
+        (item.id + item.display_name + item.description)
+          .toLowerCase()
+          .includes(search.toLowerCase()) && !item?.process_groups
+      );
+    });
+
+    setGroups(foundGroups);
+    setGroupsExpanded(!!foundGroups.length);
+    setModels(foundModels);
+    setModelsExpanded(!!foundModels.length);
+    // The tree isn't connected to these results, so imperatively wipe the expanded nodes.
+    treeRef.current?.clearExpanded();
+  };
+
   useEffect(() => {
     if (processGroups?.results) {
       setGroups(processGroups.results);
       setGroupsExpanded(!!processGroups.results.length);
+      // Recursively flatten the entire hierarchy of process groups and models
+      // TODO: It would be VERY WISE to do this on init.
+      const flattenAllItems = (
+        items: Record<string, any>[],
+        flat: Record<string, any>[]
+      ) => {
+        items.forEach((item) => {
+          flat.push(item);
+          // Duck type to see if it's a group, and if so, recurse.
+          if (item.process_groups) {
+            flattenAllItems(
+              [...item.process_groups, ...item.process_models],
+              flat
+            );
+          }
+        });
+
+        return flat;
+      };
+
+      /**
+       * Do this now and put it in state.
+       * You do not want to do this on every change to the search filter.
+       * The flattened map makes searching globally simple.
+       */
+      setFlatItems(flattenAllItems(processGroups.results, []));
     }
   }, [processGroups]);
 
@@ -105,7 +161,11 @@ export default function StartProcess() {
             paddingTop: 0.25,
           }}
         >
-          <TreePanel processGroups={processGroups} stream={clickStream} />
+          <TreePanel
+            ref={treeRef}
+            processGroups={processGroups}
+            stream={clickStream}
+          />
         </Box>
         <Stack
           sx={{
@@ -129,7 +189,7 @@ export default function StartProcess() {
                 paddingRight: 2,
               }}
             >
-              <SearchBar />
+              <SearchBar callback={handleSearch} stream={clickStream} />
             </Box>
 
             <Stack

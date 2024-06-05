@@ -11,7 +11,6 @@ export default function useTask() {
   const [loading, setLoading] = useState(false);
 
   const processResult = (result: any[]) => {
-    console.log(result);
     setTask(result);
     setLoading(false);
   };

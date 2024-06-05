@@ -29,7 +29,6 @@ import Share from '../../assets/icons/share-arrow.svg';
 import Download from '../../assets/icons/download.svg';
 import MyProcesses from './myProcesses/MyProcesses';
 import InfoPanel from '../../components/InfoPanel';
-import MyTasks from './myTasks/MyTasks';
 import DashboardCharts from './DashboardCharts';
 import useProcessInstanceCollection from '../../hooks/useProcessInstanceCollection';
 import useProcessInstanceTimes from '../../hooks/useProcessInstanceTimes';
@@ -237,18 +236,6 @@ export default function Dashboards() {
                       filter={searchText}
                       callback={handleProcessRowSelect}
                       pis={processInstanceCollection}
-                    />
-                  </Box>
-                  <Box
-                    sx={{
-                      width: '0%',
-                      display: 'none',
-                    }}
-                  >
-                    <MyTasks
-                      filter={searchText}
-                      callback={handleTaskRowSelect}
-                      pi={selectedProcessInstance}
                     />
                   </Box>
                 </Stack>

@@ -106,7 +106,7 @@ const customComponents = (mode: PaletteMode) => {
     MuiButton: {
       styleOverrides: {
         root: {
-          fontSize: '1rem',
+          fontSize: '14px',
           borderRadius: 8,
           maxHeight: 40,
           color: 'primary',
@@ -128,9 +128,9 @@ const customComponents = (mode: PaletteMode) => {
 const baseTheme = {
   palette: {
     primary: {
-      main: cyan[800],
+      main: cyan[600],
       light: cyan[400],
-      dark: cyan[900],
+      dark: cyan[800],
       contrastText: '#ffffff',
     },
   },

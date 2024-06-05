@@ -31,10 +31,10 @@ export default function ProcessModelCard({
         </Typography>
 
         <Typography variant="caption" sx={{ color: captionColor }}>
-          Models: {model.id}
+          ID: {model.id}
         </Typography>
 
-        <Stack direction="row">
+        <Stack direction="row" sx={{ paddingTop: 2 }}>
           <Button variant="contained" color="primary" size="small">
             Start This Process
           </Button>
