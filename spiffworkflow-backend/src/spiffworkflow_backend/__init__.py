@@ -8,7 +8,6 @@ import flask.json
 import sqlalchemy
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
-from flask_mail import Mail  # type: ignore
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler_if_appropriate
@@ -93,9 +92,6 @@ def create_app() -> flask.app.Flask:
     CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
     connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
-
-    mail = Mail(app)
-    app.config["MAIL_APP"] = mail
 
     app.json = MyJSONEncoder(app)
 

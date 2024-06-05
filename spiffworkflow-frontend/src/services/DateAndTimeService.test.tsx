@@ -12,13 +12,13 @@ test('it can properly format a duration', () => {
   expect(DateAndTimeService.formatDurationForDisplay('65')).toEqual('1m 5s');
   expect(DateAndTimeService.formatDurationForDisplay(65)).toEqual('1m 5s');
   expect(DateAndTimeService.formatDurationForDisplay(86500)).toEqual(
-    '1d 1m 40s'
+    '1d 1m 40s',
   );
   expect(DateAndTimeService.formatDurationForDisplay(2629746)).toEqual(
-    '30d 10h 29m 6s'
+    '30d 10h 29m 6s',
   );
   expect(DateAndTimeService.formatDurationForDisplay(31536765)).toEqual(
-    '365d 12m 45s'
+    '365d 12m 45s',
   );
 });
 
@@ -28,75 +28,75 @@ test('it can get the correct date format from string', () => {
 
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      expectedDateString
-    )
+      expectedDateString,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      '03-04-2024'
-    )
+      '03-04-2024',
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      'March 4, 2024'
-    )
+      'March 4, 2024',
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      'mar-4-2024'
-    )
+      'mar-4-2024',
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      '03/04/2024'
-    )
+      '03/04/2024',
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      '03.04.2024'
-    )
+      '03.04.2024',
+    ),
   ).toEqual(expectedDateString);
 
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       '04-03-2024',
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       'March 4, 2024',
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       '4-mar-2024',
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       '4 March 2024',
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       '04/03/2024',
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       '04.03.2024',
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       expectedDateString,
-      newDateFormat
-    )
+      newDateFormat,
+    ),
   ).toEqual(expectedDateString);
 });

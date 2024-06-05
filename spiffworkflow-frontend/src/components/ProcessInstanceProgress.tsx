@@ -39,7 +39,7 @@ export default function ProcessInstanceProgress({
         myTask && myTask.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)
       );
     },
-    []
+    [],
   );
 
   // Useful to stop refreshing if an api call gets an error
@@ -91,7 +91,7 @@ export default function ProcessInstanceProgress({
       // 15,
       1,
       DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-      checkProgress
+      checkProgress,
     );
     return clearRefreshRef.current;
   }, [
@@ -121,7 +121,7 @@ export default function ProcessInstanceProgress({
   };
 
   const userMessage = (
-    taskInstructionForEndUser: TaskInstructionForEndUser
+    taskInstructionForEndUser: TaskInstructionForEndUser,
   ) => {
     return (
       <InstructionsForEndUser

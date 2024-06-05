@@ -64,11 +64,11 @@ export default function TaskShow() {
     (myTask: BasicTask) => {
       navigate(
         `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-          myTask.process_model_identifier
-        )}/${myTask.process_instance_id}/interstitial`
+          myTask.process_model_identifier,
+        )}/${myTask.process_instance_id}/interstitial`,
       );
     },
-    [navigate]
+    [navigate],
   );
 
   const processBasicTaskResult = useCallback(
@@ -79,8 +79,8 @@ export default function TaskShow() {
         if (result.process_model_uses_queued_execution) {
           navigate(
             `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-              result.process_model_identifier
-            )}/${result.process_instance_id}/progress`
+              result.process_model_identifier,
+            )}/${result.process_instance_id}/progress`,
           );
         } else {
           navigateToInterstitial(result);
@@ -97,14 +97,14 @@ export default function TaskShow() {
         [
           `Process Instance Id: ${result.process_instance_id}`,
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-            result.process_model_identifier
+            result.process_model_identifier,
           )}/${result.process_instance_id}`,
         ],
         [`Task: ${result.name_for_display || result.id}`],
       ];
       setHotCrumbs(hotCrumbList);
     },
-    [navigateToInterstitial, navigate]
+    [navigateToInterstitial, navigate],
   );
 
   useEffect(() => {
@@ -162,7 +162,7 @@ export default function TaskShow() {
 
   const sendAutosaveEvent = (eventDetails?: any) => {
     const elementToDispath: any = document.getElementById(
-      'hidden-form-for-autosave'
+      'hidden-form-for-autosave',
     );
     if (elementToDispath) {
       elementToDispath.dispatchEvent(
@@ -170,7 +170,7 @@ export default function TaskShow() {
           cancelable: true,
           bubbles: true,
           detail: eventDetails,
-        })
+        }),
       );
     }
   };
@@ -182,7 +182,7 @@ export default function TaskShow() {
       }
     },
     // delay in ms
-    500
+    500,
   );
 
   const processSubmitResult = (result: any) => {
@@ -195,8 +195,8 @@ export default function TaskShow() {
       } else if (result.process_model_uses_queued_execution) {
         navigate(
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-            result.process_model_identifier
-          )}/${result.process_instance_id}/progress`
+            result.process_model_identifier,
+          )}/${result.process_instance_id}/progress`,
         );
       } else {
         navigateToInterstitial(result);
@@ -215,7 +215,7 @@ export default function TaskShow() {
     }
     autoSaveTaskData(
       recursivelyChangeNullAndUndefined(dataToSubmit, null),
-      successCallback
+      successCallback,
     );
   };
 

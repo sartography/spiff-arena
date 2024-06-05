@@ -47,7 +47,7 @@ export const underscorizeString = (inputString: string) => {
 export const getKeyByValue = (
   object: any,
   value: string,
-  onAttribute?: string
+  onAttribute?: string,
 ) => {
   return Object.keys(object).find((key) => {
     if (onAttribute) {
@@ -104,7 +104,7 @@ export const getPageInfoFromSearchParams = (
   searchParams: any,
   defaultPerPage: string | number = DEFAULT_PER_PAGE,
   defaultPage: string | number = DEFAULT_PAGE,
-  paginationQueryParamPrefix: string | null = null
+  paginationQueryParamPrefix: string | null = null,
 ) => {
   const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
     ? `${paginationQueryParamPrefix}_`
@@ -112,12 +112,12 @@ export const getPageInfoFromSearchParams = (
   const page = parseInt(
     searchParams.get(`${paginationQueryParamPrefixToUse}page`) ||
       defaultPage.toString(),
-    10
+    10,
   );
   const perPage = parseInt(
     searchParams.get(`${paginationQueryParamPrefixToUse}per_page`) ||
       defaultPerPage.toString(),
-    10
+    10,
   );
 
   return { page, perPage };
@@ -135,12 +135,12 @@ export const makeid = (length: number) => {
 };
 
 export const getProcessModelFullIdentifierFromSearchParams = (
-  searchParams: any
+  searchParams: any,
 ) => {
   let processModelFullIdentifier = null;
   if (searchParams.get('process_model_identifier')) {
     processModelFullIdentifier = `${searchParams.get(
-      'process_model_identifier'
+      'process_model_identifier',
     )}`;
   }
   return processModelFullIdentifier;
@@ -182,7 +182,7 @@ export const refreshAtInterval = (
   interval: number,
   timeout: number,
   periodicFunction: Function,
-  cleanupFunction?: Function
+  cleanupFunction?: Function,
 ) => {
   const intervalRef = setInterval(() => periodicFunction(), interval * 1000);
   const timeoutRef = setTimeout(() => {
@@ -262,7 +262,7 @@ export const decodeBase64 = (data: string) => {
 
 export const getLastMilestoneFromProcessInstance = (
   processInstance: ProcessInstance,
-  value: any
+  value: any,
 ) => {
   let valueToUse = value;
   if (!valueToUse) {
@@ -281,7 +281,7 @@ export const getLastMilestoneFromProcessInstance = (
   if (truncatedValue.length > milestoneLengthLimit) {
     truncatedValue = `${truncatedValue.substring(
       0,
-      milestoneLengthLimit - 3
+      milestoneLengthLimit - 3,
     )}...`;
   }
   return [valueToUse, truncatedValue];
@@ -293,7 +293,7 @@ export const parseTaskShowUrl = (url: string) => {
   // expected url pattern:
   // /tasks/[process_instance_id]/[task_guid]
   return path.match(
-    /^\/tasks\/(\d+)\/([0-9a-z]{8}-([0-9a-z]{4}-){3}[0-9a-z]{12})$/
+    /^\/tasks\/(\d+)\/([0-9a-z]{8}-([0-9a-z]{4}-){3}[0-9a-z]{12})$/,
   );
 };
 

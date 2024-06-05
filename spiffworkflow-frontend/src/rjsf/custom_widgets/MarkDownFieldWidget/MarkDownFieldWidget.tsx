@@ -45,7 +45,7 @@ export default function MarkDownFieldWidget({
         onChange(newValue);
       }
     },
-    [onChange, disabled, readonly]
+    [onChange, disabled, readonly],
   );
 
   let helperText = null;

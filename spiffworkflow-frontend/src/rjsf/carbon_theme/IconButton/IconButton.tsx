@@ -15,7 +15,7 @@ import { Add, TrashCan, ArrowUp, ArrowDown } from '@carbon/icons-react';
 export default function IconButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: IconButtonProps<T, S, F>) {
   const {
     iconType = 'default',
@@ -58,7 +58,7 @@ export default function IconButton<
 export function MoveDownButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: IconButtonProps<T, S, F>) {
   return (
     <IconButton
@@ -73,7 +73,7 @@ export function MoveDownButton<
 export function MoveUpButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: IconButtonProps<T, S, F>) {
   return (
     <IconButton
@@ -88,7 +88,7 @@ export function MoveUpButton<
 export function RemoveButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: IconButtonProps<T, S, F>) {
   return (
     <IconButton
@@ -104,7 +104,7 @@ export function RemoveButton<
 export function MuiRemoveButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: IconButtonProps<T, S, F>) {
   return (
     <MuiIconButton

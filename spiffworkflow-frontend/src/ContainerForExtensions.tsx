@@ -36,7 +36,7 @@ export default function ContainerForExtensions() {
     [targetUris.extensionListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   const { removeError } = useAPIError();
@@ -57,12 +57,12 @@ export default function ContainerForExtensions() {
       const eni: UiSchemaUxElement[] = processModels
         .map((processModel: ProcessModel) => {
           const extensionUiSchemaFile = processModel.files.find(
-            (file: ProcessFile) => file.name === 'extension_uischema.json'
+            (file: ProcessFile) => file.name === 'extension_uischema.json',
           );
           if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
             try {
               const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-                extensionUiSchemaFile.file_contents
+                extensionUiSchemaFile.file_contents,
               );
               if (
                 extensionUiSchema &&
@@ -73,7 +73,7 @@ export default function ContainerForExtensions() {
               }
             } catch (jsonParseError: any) {
               console.error(
-                `Unable to get navigation items for ${processModel.id}`
+                `Unable to get navigation items for ${processModel.id}`,
               );
             }
           }

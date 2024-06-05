@@ -24,7 +24,7 @@ import { getCommonAttributes } from '../../helpers';
 export default function BaseInputTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,
@@ -62,29 +62,29 @@ export default function BaseInputTemplate<
     ({ target }: React.ChangeEvent<HTMLInputElement>) => {
       onChange(target.value === '' ? options.emptyValue : target.value);
     },
-    [onChange, options]
+    [onChange, options],
   );
   const _onBlur = useCallback(
     ({ target }: React.FocusEvent<HTMLInputElement>) =>
       onBlur(id, target.value),
-    [onBlur, id]
+    [onBlur, id],
   );
   const _onFocus = useCallback(
     ({ target }: React.FocusEvent<HTMLInputElement>) =>
       onFocus(id, target.value),
-    [onFocus, id]
+    [onFocus, id],
   );
 
   const addDebouncedOnChangeDate = useDebouncedCallback(
     (fullObject: React.ChangeEvent<HTMLInputElement>) => {
       fullObject.target.value =
         DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-          fullObject.target.value
+          fullObject.target.value,
         );
       _onChange(fullObject);
     },
     // delay in ms
-    100
+    100,
   );
 
   const addDebouncedOnChangeText = useDebouncedCallback(
@@ -92,7 +92,7 @@ export default function BaseInputTemplate<
       (onChangeOverride || _onChange)(fullObject);
     },
     // delay in ms
-    100
+    100,
   );
 
   let enableCounter = false;
@@ -103,7 +103,7 @@ export default function BaseInputTemplate<
       maxCount = schema.maxLength;
     } else {
       throw new Error(
-        `Counter was requested but no maxLength given on the ${label}`
+        `Counter was requested but no maxLength given on the ${label}`,
       );
     }
   }
@@ -112,7 +112,7 @@ export default function BaseInputTemplate<
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   let component = null;
@@ -202,7 +202,7 @@ export default function BaseInputTemplate<
           <datalist key={`datalist_${id}`} id={`examples_${id}`}>
             {[
               ...new Set(
-                schema.examples.concat(schema.default ? [schema.default] : [])
+                schema.examples.concat(schema.default ? [schema.default] : []),
               ),
             ].map((example: any) => (
               <option key={example} value={example} />

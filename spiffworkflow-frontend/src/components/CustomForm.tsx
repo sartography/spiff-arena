@@ -67,7 +67,7 @@ export default function CustomForm({
       reactJsonSchemaFormTheme = 'mui';
     } else {
       console.error(
-        `Unsupported theme: ${uiSchema['ui:theme']}. Defaulting to mui`
+        `Unsupported theme: ${uiSchema['ui:theme']}. Defaulting to mui`,
       );
       reactJsonSchemaFormTheme = 'mui';
     }
@@ -93,7 +93,7 @@ export default function CustomForm({
     dateCheck: string,
     formattedDateString: string,
     errors: any,
-    jsonSchema: any
+    jsonSchema: any,
   ) => {
     // field format:
     //    field:[field_name_to_use]
@@ -105,7 +105,7 @@ export default function CustomForm({
     const [_, fieldIdentifierToCompareWith, startOrEnd] = dateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formDataToCheck)) {
       errors[propertyKey].addError(
-        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`,
       );
       return;
     }
@@ -113,7 +113,7 @@ export default function CustomForm({
     const rawDateToCompareWith = formDataToCheck[fieldIdentifierToCompareWith];
     if (!rawDateToCompareWith) {
       errors[propertyKey].addError(
-        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`,
       );
       return;
     }
@@ -147,7 +147,7 @@ export default function CustomForm({
     if (checkType === 'minimum') {
       if (dateStringToCompareWith > formattedDateString) {
         errors[propertyKey].addError(
-          `must be equal to or greater than '${fieldToCompareWithTitle}'`
+          `must be equal to or greater than '${fieldToCompareWithTitle}'`,
         );
       }
       // best NOT to merge this with nested if statement in case we add more or move code around
@@ -155,7 +155,7 @@ export default function CustomForm({
     } else if (checkType === 'maximum') {
       if (dateStringToCompareWith < formattedDateString) {
         errors[propertyKey].addError(
-          `must be equal to or less than '${fieldToCompareWithTitle}'`
+          `must be equal to or less than '${fieldToCompareWithTitle}'`,
         );
       }
     }
@@ -168,7 +168,7 @@ export default function CustomForm({
     propertyKey: string,
     formattedDateString: string,
     errors: any,
-    jsonSchema: any
+    jsonSchema: any,
   ) => {
     dateChecks.forEach((mdc: string) => {
       if (mdc === 'today') {
@@ -192,7 +192,7 @@ export default function CustomForm({
           mdc,
           formattedDateString,
           errors,
-          jsonSchema
+          jsonSchema,
         );
       }
     });
@@ -204,7 +204,7 @@ export default function CustomForm({
     propertyKey: string,
     propertyMetadata: any,
     errors: any,
-    jsonSchema: any
+    jsonSchema: any,
   ) => {
     // can be either "today" or another field
     let dateString = formDataToCheck[propertyKey];
@@ -227,7 +227,7 @@ export default function CustomForm({
         propertyKey,
         formattedDateString,
         errors,
-        jsonSchema
+        jsonSchema,
       );
     }
   };
@@ -241,7 +241,7 @@ export default function CustomForm({
     propertyKey: string,
     errors: any,
     jsonSchema: any,
-    uiSchemaPassedIn?: any
+    uiSchemaPassedIn?: any,
   ) => {
     // this validation only applies to checkboxes,
     // other forms of booleans are validated differently
@@ -259,7 +259,7 @@ export default function CustomForm({
     ) {
       // keep this error the same as the default message
       errors[propertyKey].addError(
-        `must have required property '${propertyKey}'`
+        `must have required property '${propertyKey}'`,
       );
     }
   };
@@ -269,7 +269,7 @@ export default function CustomForm({
     propertyKey: string,
     errors: any,
     jsonSchema: any,
-    _uiSchemaPassedIn?: any
+    _uiSchemaPassedIn?: any,
     // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     if (
@@ -280,7 +280,7 @@ export default function CustomForm({
     ) {
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
-    if (formDataToCheck[propertyKey].min) {
+    if (formDataToCheck[propertyKey].min !== undefined) {
       if (
         !formDataToCheck[propertyKey].min.toString().match(matchNumberRegex)
       ) {
@@ -291,7 +291,7 @@ export default function CustomForm({
         jsonSchema.properties[propertyKey].minimum
       ) {
         errors[propertyKey].addError(
-          `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+          `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`,
         );
       }
       if (
@@ -299,11 +299,11 @@ export default function CustomForm({
         jsonSchema.properties[propertyKey].maximum
       ) {
         errors[propertyKey].addError(
-          `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+          `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`,
         );
       }
     }
-    if (formDataToCheck[propertyKey].max) {
+    if (formDataToCheck[propertyKey].max !== undefined) {
       if (
         !formDataToCheck[propertyKey].max.toString().match(matchNumberRegex)
       ) {
@@ -314,7 +314,7 @@ export default function CustomForm({
         jsonSchema.properties[propertyKey].minimum
       ) {
         errors[propertyKey].addError(
-          `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`
+          `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`,
         );
       }
       if (
@@ -322,7 +322,7 @@ export default function CustomForm({
         jsonSchema.properties[propertyKey].maximum
       ) {
         errors[propertyKey].addError(
-          `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`
+          `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`,
         );
       }
     }
@@ -336,7 +336,7 @@ export default function CustomForm({
     propertyKey: string,
     errors: any,
     jsonSchema: any,
-    _uiSchemaPassedIn?: any
+    _uiSchemaPassedIn?: any,
   ) => {
     if (
       jsonSchema.required &&
@@ -345,7 +345,7 @@ export default function CustomForm({
         formDataToCheck[propertyKey] === '')
     ) {
       errors[propertyKey].addError(
-        `must have required property '${propertyKey}'`
+        `must have required property '${propertyKey}'`,
       );
     }
   };
@@ -354,7 +354,7 @@ export default function CustomForm({
     jsonSchema: any,
     formDataToCheck: any,
     errors: any,
-    uiSchemaPassedIn?: any
+    uiSchemaPassedIn?: any,
     // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     // if the jsonSchema has an items attribute then assume the element itself
@@ -384,7 +384,7 @@ export default function CustomForm({
             propertyKey,
             propertyMetadata,
             errors,
-            jsonSchemaToUse
+            jsonSchemaToUse,
           );
         }
         if ('maximumDate' in propertyMetadata) {
@@ -394,7 +394,7 @@ export default function CustomForm({
             propertyKey,
             propertyMetadata,
             errors,
-            jsonSchemaToUse
+            jsonSchemaToUse,
           );
         }
 
@@ -404,7 +404,7 @@ export default function CustomForm({
             propertyKey,
             errors,
             jsonSchemaToUse,
-            currentUiSchema
+            currentUiSchema,
           );
         }
 
@@ -418,7 +418,7 @@ export default function CustomForm({
             propertyKey,
             errors,
             jsonSchemaToUse,
-            currentUiSchema
+            currentUiSchema,
           );
         }
 
@@ -432,7 +432,7 @@ export default function CustomForm({
             propertyKey,
             errors,
             jsonSchemaToUse,
-            currentUiSchema
+            currentUiSchema,
           );
         }
 
@@ -451,7 +451,7 @@ export default function CustomForm({
               propertyMetadata,
               item,
               errorsToSend,
-              currentUiSchema
+              currentUiSchema,
             );
           });
         }

@@ -57,10 +57,10 @@ type customProps = {
 export default function ObjectFieldTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(
   props: ObjectFieldTemplateProps<T, S, F>,
-  { defaultSm = 4, defaultMd = 8, defaultLg = 16 }: customProps
+  { defaultSm = 4, defaultMd = 8, defaultLg = 16 }: customProps,
 ) {
   const {
     description,
@@ -80,7 +80,7 @@ export default function ObjectFieldTemplate<
   const TitleFieldTemplate = getTemplate<'TitleFieldTemplate', T, S, F>(
     'TitleFieldTemplate',
     registry,
-    options
+    options,
   );
   const DescriptionFieldTemplate = getTemplate<
     'DescriptionFieldTemplate',
@@ -131,7 +131,7 @@ export default function ObjectFieldTemplate<
     });
   } else {
     innerElements = properties.map(
-      (prop: ObjectFieldTemplatePropertyType) => prop.content
+      (prop: ObjectFieldTemplatePropertyType) => prop.content,
     );
   }
 

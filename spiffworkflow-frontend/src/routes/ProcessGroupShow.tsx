@@ -33,10 +33,10 @@ export default function ProcessGroupShow() {
     [targetUris.processModelCreatePath]: ['POST'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
   const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
-    `${params.process_group_id}`
+    `${params.process_group_id}`,
   );
   const { processGroup } = useProcessGroupFetcher(unModifiedProcessGroupId);
 
@@ -59,7 +59,7 @@ export default function ProcessGroupShow() {
     if (processGroup) {
       HttpService.makeCallToBackend({
         path: `/process-groups/${modifyProcessIdentifierForPathParam(
-          processGroup.id
+          processGroup.id,
         )}`,
         successCallback: navigateToProcessGroups,
         httpMethod: 'DELETE',
@@ -69,7 +69,7 @@ export default function ProcessGroupShow() {
 
   if (processGroup && processGroupForBreadcrumb && permissionsLoaded) {
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
-      processGroup.id
+      processGroup.id,
     );
     const dasherizedProcessGroupId = modifiedProcessGroupId.replace(/:/g, '-');
     const showNoItemsDisplayText =
@@ -153,7 +153,7 @@ export default function ProcessGroupShow() {
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',
-              targetUris.processModelCreatePath
+              targetUris.processModelCreatePath,
             )}
           />
           <br />
@@ -164,7 +164,7 @@ export default function ProcessGroupShow() {
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateProcessModels={ability.can(
               'POST',
-              targetUris.processGroupListPath
+              targetUris.processGroupListPath,
             )}
           />
           <br />
@@ -175,7 +175,7 @@ export default function ProcessGroupShow() {
             showNoItemsDisplayText={showNoItemsDisplayText}
             userCanCreateDataStores={ability.can(
               'POST',
-              targetUris.dataStoreListPath
+              targetUris.dataStoreListPath,
             )}
           />
         </ul>

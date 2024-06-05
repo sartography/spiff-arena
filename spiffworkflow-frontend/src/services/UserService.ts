@@ -29,12 +29,12 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
     queryParamString = `${queryParams}`;
   }
   return encodeURIComponent(
-    `${window.location.origin}${window.location.pathname}${queryParamString}`
+    `${window.location.origin}${window.location.pathname}${queryParamString}`,
   );
 };
 
 const checkPathForTaskShowParams = (
-  redirectUrl: string = window.location.pathname
+  redirectUrl: string = window.location.pathname,
 ) => {
   const pathSegments = parseTaskShowUrl(redirectUrl);
   if (pathSegments) {
@@ -69,19 +69,19 @@ const isPublicUser = () => {
 
 const doLogin = (
   authenticationOption?: AuthenticationOption,
-  redirectUrl?: string | null
+  redirectUrl?: string | null,
 ) => {
   const taskShowParams = checkPathForTaskShowParams(redirectUrl || undefined);
   const loginParams = [`redirect_url=${redirectUrl || getCurrentLocation()}`];
   if (taskShowParams) {
     loginParams.push(
-      `process_instance_id=${taskShowParams.process_instance_id}`
+      `process_instance_id=${taskShowParams.process_instance_id}`,
     );
     loginParams.push(`task_guid=${taskShowParams.task_guid}`);
   }
   if (authenticationOption) {
     loginParams.push(
-      `authentication_identifier=${authenticationOption.identifier}`
+      `authentication_identifier=${authenticationOption.identifier}`,
     );
   }
   const url = `${BACKEND_BASE_URL}/login?${loginParams.join('&')}`;

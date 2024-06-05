@@ -36,25 +36,25 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
         if (entityType === 'process-model-id') {
           HttpService.makeCallToBackend({
             path: `/process-models/${modifyProcessIdentifierForPathParam(
-              entityToExplode as string
+              entityToExplode as string,
             )}`,
             successCallback: setProcessEntity,
             onUnauthorized: () => {},
             failureCallback: (error: any) =>
               console.error(
-                `Failed to load process model for breadcrumb. Error was: ${error.message}`
+                `Failed to load process model for breadcrumb. Error was: ${error.message}`,
               ),
           });
         } else if (entityType === 'process-group-id') {
           HttpService.makeCallToBackend({
             path: `/process-groups/${modifyProcessIdentifierForPathParam(
-              entityToExplode as string
+              entityToExplode as string,
             )}`,
             successCallback: setProcessEntity,
             onUnauthorized: () => {},
             failureCallback: (error: any) =>
               console.error(
-                `Failed to load process group for breadcrumb. Error was: ${error.message}`
+                `Failed to load process group for breadcrumb. Error was: ${error.message}`,
               ),
           });
         } else {
@@ -93,14 +93,14 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             const breadcrumbs = processEntity.parent_groups.map(
               (parentGroup: ProcessGroupLite) => {
                 const fullUrl = `/process-groups/${modifyProcessIdentifierForPathParam(
-                  parentGroup.id
+                  parentGroup.id,
                 )}`;
                 return (
                   <Link key={parentGroup.id} to={fullUrl}>
                     {parentGroup.display_name}
                   </Link>
                 );
-              }
+              },
             );
 
             if (crumb.linkLastItem) {
@@ -111,18 +111,18 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
                 dataQaTag = 'process-model-breadcrumb-link';
               }
               const fullUrl = `${apiBase}/${modifyProcessIdentifierForPathParam(
-                processEntity.id
+                processEntity.id,
               )}`;
               breadcrumbs.push(
                 <Link key={processEntity.id} to={fullUrl} data-qa={dataQaTag}>
                   {processEntity.display_name}
-                </Link>
+                </Link>,
               );
             } else {
               breadcrumbs.push(
                 <Typography key={processEntity.id} color="text.primary">
                   {processEntity.display_name}
-                </Typography>
+                </Typography>,
               );
             }
             return breadcrumbs;
@@ -146,7 +146,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             }
           }
           return null;
-        }
+        },
       );
       return (
         <Breadcrumbs className="spiff-breadcrumb">

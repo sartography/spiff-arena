@@ -92,14 +92,14 @@ export default function Extension({
       return optionString;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
   const processLoadResult = useCallback(
     (result: ExtensionApiResponse, pageDefinition: UiSchemaPageDefinition) => {
       if (pageDefinition.navigate_to_on_load) {
         const optionString = interpolateNavigationString(
           pageDefinition.navigate_to_on_load,
-          result.task_data
+          result.task_data,
         );
         if (optionString !== null) {
           window.location.href = optionString;
@@ -107,7 +107,7 @@ export default function Extension({
       }
       if (result.rendered_results_markdown) {
         const newMarkdown = FormattingService.checkForSpiffFormats(
-          result.rendered_results_markdown
+          result.rendered_results_markdown,
         );
         setMarkdownToRenderOnLoad(newMarkdown);
       }
@@ -120,7 +120,7 @@ export default function Extension({
         setuiSchemaPageComponents(
           result.task_data[
             pageDefinition.on_load.ui_schema_page_components_variable
-          ]
+          ],
         );
 
         // we were getting any AJV8Validator error when we had this data in the task data
@@ -136,7 +136,7 @@ export default function Extension({
       setFormData(taskDataCopy);
       setReadyForComponentsToDisplay(true);
     },
-    [interpolateNavigationString]
+    [interpolateNavigationString],
   );
 
   const setConfigsIfDesiredSchemaFile = useCallback(
@@ -147,7 +147,7 @@ export default function Extension({
         (extensionUiSchemaFile as ProcessFile).file_contents
       ) {
         const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-          (extensionUiSchemaFile as any).file_contents
+          (extensionUiSchemaFile as any).file_contents,
         );
 
         let pageIdentifierToUse = pageIdentifier;
@@ -175,7 +175,7 @@ export default function Extension({
                     postBody.extension_input[searchParam] =
                       searchParams.get(searchParam);
                   }
-                }
+                },
               );
             }
             postBody.ui_schema_action = pageDefinition.on_load;
@@ -199,7 +199,7 @@ export default function Extension({
       filesByName,
       processLoadResult,
       pageIdentifier,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -223,7 +223,7 @@ export default function Extension({
 
   const processSubmitResult = (
     pageComponent: UiSchemaPageComponent,
-    result: ExtensionApiResponse
+    result: ExtensionApiResponse,
   ) => {
     let taskData = result.task_data;
     if (pageComponent.on_form_submit?.set_extension_data_from_full_api_result) {
@@ -232,7 +232,7 @@ export default function Extension({
     if (pageComponent && pageComponent.navigate_to_on_form_submit) {
       const optionString = interpolateNavigationString(
         pageComponent.navigate_to_on_form_submit,
-        taskData
+        taskData,
       );
       if (optionString !== null) {
         window.location.href = optionString;
@@ -241,7 +241,7 @@ export default function Extension({
       setProcessedTaskData(taskData);
       if (result.rendered_results_markdown) {
         const newMarkdown = FormattingService.checkForSpiffFormats(
-          result.rendered_results_markdown
+          result.rendered_results_markdown,
         );
         setMarkdownToRenderOnSubmit(newMarkdown);
       }
@@ -252,7 +252,7 @@ export default function Extension({
   const handleFormSubmit = (
     pageComponent: UiSchemaPageComponent,
     formObject: any,
-    event: any
+    event: any,
     // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     event.preventDefault();
@@ -273,7 +273,7 @@ export default function Extension({
       if (pageComponent.navigate_to_on_form_submit) {
         optionString = interpolateNavigationString(
           pageComponent.navigate_to_on_form_submit,
-          dataToSubmit
+          dataToSubmit,
         );
         if (optionString !== null) {
           window.location.href = optionString;
@@ -327,7 +327,7 @@ export default function Extension({
           const pmFileForArg = processModel.files.find(
             (pmFile: ProcessFile) => {
               return pmFile.name === fileName;
-            }
+            },
           );
           if (pmFileForArg) {
             let newArgValue = pmFileForArg.file_contents;
@@ -370,7 +370,7 @@ export default function Extension({
           linkTarget={mdEditorLinkTarget}
           source={markdownContentsToRender.join('\n')}
           wrapperClassName="with-bottom-margin"
-        />
+        />,
       );
     }
 
@@ -382,12 +382,12 @@ export default function Extension({
           componentsToDisplay.push(
             createElement(
               supportedComponents[componentName],
-              argumentsForComponent
-            )
+              argumentsForComponent,
+            ),
           );
         } else {
           console.error(
-            `Extension tried to use component with name '${component.name}' but that is not allowed.`
+            `Extension tried to use component with name '${component.name}' but that is not allowed.`,
           );
         }
       });
@@ -401,7 +401,7 @@ export default function Extension({
             linkTarget="_blank"
             source={markdownToRenderOnSubmit}
             wrapperClassName="with-top-margin"
-          />
+          />,
         );
       } else {
         componentsToDisplay.push(
@@ -419,7 +419,7 @@ export default function Extension({
                 minimap: { enabled: true },
               }}
             />
-          </>
+          </>,
         );
       }
     }
