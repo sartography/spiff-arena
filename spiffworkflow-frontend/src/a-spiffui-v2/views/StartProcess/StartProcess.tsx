@@ -236,7 +236,7 @@ export default function StartProcess() {
             <Stack
               sx={{
                 width: '100%',
-                height: 'calc(100vh - 205px)',
+                height: 'calc(100vh - 180px)',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 padding: 0,
