@@ -64,7 +64,7 @@ export default function ArrayFieldTemplate<
     <fieldset className={className} id={idSchema.$id}>
       <ArrayFieldTitleTemplate
         idSchema={idSchema}
-        title={commonAttributes.label || title}
+        title={uiOptions.title || title}
         required={required}
         schema={schema}
         uiSchema={uiSchema}
