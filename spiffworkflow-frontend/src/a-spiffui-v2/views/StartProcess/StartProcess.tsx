@@ -105,7 +105,7 @@ export default function StartProcess() {
    */
   const handleSearch = (search: string) => {
     // Indicate to user this is a search result.
-    setCrumbs(`Searching for: ${search}`);
+    setCrumbs(`Searching for: ${search || '(all)'}`);
     // Search the flattened items for the search term.
     const foundGroups = flatItems.filter((item) => {
       return (
@@ -157,7 +157,7 @@ export default function StartProcess() {
        * You do not want to do this on every change to the search filter.
        * The flattened map makes searching globally simple.
        */
-      const flattened = flattenAllItems(processGroups.results, []);
+      const flattened = flattenAllItems(processGroups?.results || [], []);
       setFlatItems(flattened);
 
       // If there are favorites, that's all we want to display, return.
