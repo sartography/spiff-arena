@@ -33,8 +33,11 @@ class JinjaHelpers:
     @classmethod
     def sanitize_for_md(cls, value: str) -> str:
         """Sanitizes given value for markdown."""
-        sanitized_value = re.sub(r"([|])", r"\\\1", value)
-        return sanitized_value
+        # modified from https://github.com/python-telegram-bot/python-telegram-bot/blob/1fdaaac8094c9d76c34c8c8e8c9add16080e75e7/telegram/utils/helpers.py#L149
+        escape_chars = r"_*[]()~`>#+-=|{}!"
+        escaped_value = re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", value)
+        escaped_value = escaped_value.replace("\n", "").replace("\r", "")
+        return escaped_value
 
 
 class JinjaService:
