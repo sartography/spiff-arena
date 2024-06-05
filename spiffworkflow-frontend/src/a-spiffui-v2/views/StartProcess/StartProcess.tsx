@@ -10,10 +10,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useProcessGroups from '../../hooks/useProcessGroups';
-import TreePanel, { TreeRef } from './TreePanel';
+import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
 import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
+import { getStorageValue } from '../../services/LocalStorageService';
+import { set } from 'date-fns';
 
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
@@ -78,12 +80,33 @@ export default function StartProcess() {
     }
   };
 
+  /** Tree calls back here so we can imperatively rework groups etc. */
+  const handleFavorites = ({ text }: { text: string }) => {
+    if (text === SHOW_FAVORITES) {
+      const storage = JSON.parse(getStorageValue('spifffavorites'));
+      const favs = flatItems.filter((item) => storage.includes(item.id));
+      // If there's no favorites, the user is just left looking at nothing.
+      // Load the top level groups instead.
+      // Expand accordions accordingly (haha).
+      setGroups(favs.length ? [] : processGroups.results);
+      setModels(favs);
+      setModelsExpanded(!!favs.length);
+      setGroupsExpanded(!favs.length);
+      setCrumbs('favorites');
+    }
+
+    return false;
+  };
+
   /**
    * For now, we're just pasting together some info fields that make sense.
    * This is simple and works and is easily expanded,
    * but eventually might need to be more robust.
    */
   const handleSearch = (search: string) => {
+    // Indicate to user this is a search result.
+    setCrumbs(`Searching for: ${search}`);
+    // Search the flattened items for the search term.
     const foundGroups = flatItems.filter((item) => {
       return (
         item.id.toLowerCase().includes(search.toLowerCase()) &&
@@ -107,9 +130,8 @@ export default function StartProcess() {
   };
 
   useEffect(() => {
+    // If no favorites, proceed with the normal process groups.
     if (processGroups?.results) {
-      setGroups(processGroups.results);
-      setGroupsExpanded(!!processGroups.results.length);
       // Recursively flatten the entire hierarchy of process groups and models
       // TODO: It would be VERY WISE to do this on init.
       const flattenAllItems = (
@@ -135,7 +157,21 @@ export default function StartProcess() {
        * You do not want to do this on every change to the search filter.
        * The flattened map makes searching globally simple.
        */
-      setFlatItems(flattenAllItems(processGroups.results, []));
+      const flattened = flattenAllItems(processGroups.results, []);
+      setFlatItems(flattened);
+
+      // If there are favorites, that's all we want to display, return.
+      const favorites = JSON.parse(getStorageValue('spifffavorites'));
+      if (favorites.length) {
+        setModels(flattened.filter((item) => favorites.includes(item.id)));
+        setGroups([]);
+        setModelsExpanded(true);
+        setGroupsExpanded(false);
+        setCrumbs('favorites');
+        return;
+      }
+      setGroups(processGroups.results);
+      setGroupsExpanded(!!processGroups.results.length);
     }
   }, [processGroups]);
 
@@ -167,6 +203,7 @@ export default function StartProcess() {
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
+            callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />
         </Box>
         <Stack

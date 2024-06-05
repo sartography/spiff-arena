@@ -15,7 +15,7 @@ export default function SearchBar({
 
   const handleSearchChange = (search: string) => {
     setSearchText(search);
-    callback(searchText);
+    callback(search);
   };
 
   const handleClickStream = () => {

@@ -24,6 +24,7 @@ export default function TopMenu({
 }) {
   /** Broadcasts to all MenuItems so they can update selected styles etc.  */
   const menuItemStream = new Subject<MenuItemData>();
+  const menuItemWidth = 175;
 
   const iconColor =
     useTheme().palette.mode === 'light' ? grey[600] : 'primary.light';
@@ -98,11 +99,13 @@ export default function TopMenu({
         <Box sx={{ width: { xs: 0, md: 32 } }} />
         <Stack direction="row" gap={3} sx={{ width: '100%' }}>
           {navMenuItemData.map((item) => (
-            <MenuItem
-              data={item}
-              callback={() => handleMenuItemClick(item)}
-              stream={menuItemStream}
-            />
+            <Box sx={{ width: menuItemWidth }}>
+              <MenuItem
+                data={item}
+                callback={() => handleMenuItemClick(item)}
+                stream={menuItemStream}
+              />
+            </Box>
           ))}
         </Stack>
         <Stack
@@ -115,12 +118,14 @@ export default function TopMenu({
           }}
         >
           {userMenuItemData.map((item) => (
-            <MenuItem
-              data={item}
-              key={item.text}
-              callback={callback}
-              stream={menuItemStream}
-            />
+            <Box sx={{ width: menuItemWidth }}>
+              <MenuItem
+                data={item}
+                key={item.text}
+                callback={callback}
+                stream={menuItemStream}
+              />
+            </Box>
           ))}
         </Stack>
         <Box

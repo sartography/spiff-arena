@@ -1,5 +1,5 @@
-import { Box, Button, Stack, useTheme } from '@mui/material';
-import { blueGrey, grey } from '@mui/material/colors';
+import { Button, Stack, useTheme } from '@mui/material';
+import { grey } from '@mui/material/colors';
 import { ReactNode, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 
@@ -77,6 +77,7 @@ export default function MenuItem({
       startIcon={data.icon}
       sx={{
         minWidth: 125,
+        width: '100%',
         borderColor: isDark ? 'primary' : 'background.mediumdark',
         borderBottomWidth: 1,
         borderRadius: 1,

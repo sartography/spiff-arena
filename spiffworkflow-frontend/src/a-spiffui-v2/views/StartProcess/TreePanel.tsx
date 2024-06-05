@@ -7,6 +7,8 @@ import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import MenuItem from '../app/topmenu/MenuItem';
 
+export const SHOW_FAVORITES = 'SHOW_FAVORITES';
+
 export type TreeRef = {
   clearExpanded: () => void;
 };
@@ -14,9 +16,11 @@ export type TreeRef = {
 export default forwardRef(function TreePanel(
   {
     processGroups,
+    callback,
     stream,
   }: {
     processGroups: Record<string, any>;
+    callback?: (data: Record<string, any>) => void;
     stream?: Subject<Record<string, any>>;
   },
   ref: any // can literally be anything that wants to clear the tree
@@ -24,6 +28,7 @@ export default forwardRef(function TreePanel(
   const [expanded, setExpanded] = useState<string[]>([]);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const isDark = useTheme().palette.mode === 'dark';
+
   const treeItemStyle = {
     borderRadius: 1,
     minWidth: 20,
@@ -175,7 +180,7 @@ export default forwardRef(function TreePanel(
               path: '',
               align: 'flex-start',
             }}
-            callback={() => {}}
+            callback={() => callback && callback({ text: SHOW_FAVORITES })}
           />
           <MenuItem
             data={{
