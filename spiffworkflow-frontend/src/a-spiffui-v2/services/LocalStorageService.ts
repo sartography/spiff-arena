@@ -1,5 +1,5 @@
 const getStorageValue = (key: string) => {
-  return localStorage.getItem(key) || '';
+  return localStorage.getItem(key) || '[]';
 };
 
 const setStorageValue = (key: string, value: string) => {
