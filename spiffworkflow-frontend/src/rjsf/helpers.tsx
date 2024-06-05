@@ -37,7 +37,7 @@ export const getCommonAttributes = (
       errorMessageForField = (schema as any).validationErrorMessage;
       errorMessageForFieldWithoutLabel = errorMessageForField;
     } else {
-      errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+      errorMessageForField = `"${labelToUse.replace(/\*$/, '')}" ${rawErrors[0]}`;
     }
   }
 
