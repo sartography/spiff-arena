@@ -5,6 +5,7 @@ import {
   cyan,
   green,
   grey,
+  lightBlue,
   orange,
   red,
   yellow,
@@ -58,6 +59,7 @@ const customPalette = (mode: PaletteMode) => {
         },
         spotColors: {
           goldStar: yellow[700],
+          selectedBackground: lightBlue[100],
         },
       }
     : {
@@ -96,6 +98,7 @@ const customPalette = (mode: PaletteMode) => {
         },
         spotColors: {
           goldStar: yellow[700],
+          selectedBackground: blueGrey[500],
         },
       };
 };

@@ -23,6 +23,7 @@ export default function StartProcess() {
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
+  const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const [crumbs, setCrumbs] = useState('');
   const treeRef = useRef<TreeRef>(null);
   const clickStream = new Subject<Record<string, any>>();
@@ -36,6 +37,7 @@ export default function StartProcess() {
 
   const handleClickStream = (item: Record<string, any>) => {
     setCrumbs(item.id);
+    setLastSelected(item);
     let itemToUse: any = { ...item };
     // Duck type to find out if this is a model ore a group.
     // If  model, we want its parent group, which can be found in the id.
@@ -181,16 +183,18 @@ export default function StartProcess() {
               alignItems: 'center',
             }}
           >
-            <Box
+            <Stack
+              direction="row"
               sx={{
                 width: '100%',
                 paddingTop: 2,
                 paddingLeft: 2,
                 paddingRight: 2,
+                justifyContent: 'center',
               }}
             >
               <SearchBar callback={handleSearch} stream={clickStream} />
-            </Box>
+            </Stack>
 
             <Stack
               sx={{
@@ -225,6 +229,7 @@ export default function StartProcess() {
                           <ProcessModelCard
                             model={model}
                             stream={clickStream}
+                            lastSelected={lastSelected}
                           />
                         ))}
                       </Box>

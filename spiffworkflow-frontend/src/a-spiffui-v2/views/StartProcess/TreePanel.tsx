@@ -57,7 +57,9 @@ export default forwardRef(function TreePanel(
             direction="row"
             sx={{
               backgroundColor:
-                lastSelected.id === group.id ? 'background.bluegreymedium' : '',
+                lastSelected.id === group.id
+                  ? 'spotColors.selectedBackground'
+                  : '',
               padding: 0.5,
               borderRadius: 1,
             }}
@@ -79,7 +81,7 @@ export default forwardRef(function TreePanel(
                 sx={{
                   backgroundColor:
                     lastSelected.id === model.id
-                      ? 'background.bluegreymedium'
+                      ? 'spotColors.selectedBackground'
                       : '',
                   padding: 0.5,
                   borderRadius: 1,
