@@ -8,6 +8,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
+import { getCommonAttributes } from '../../helpers';
 
 /** The `ArrayFieldTemplate` component is the template used to render all items in an array.
  *
@@ -31,6 +32,7 @@ export default function ArrayFieldTemplate<
     required,
     schema,
     title,
+    rawErrors,
   } = props;
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
   const ArrayFieldDescriptionTemplate = getTemplate<
@@ -50,15 +52,19 @@ export default function ArrayFieldTemplate<
     S,
     F
   >('ArrayFieldTitleTemplate', registry, uiOptions);
+
+  const commonAttributes = getCommonAttributes('', schema, uiSchema, rawErrors);
+
   // Button templates are not overridden in the uiSchema
   const {
     ButtonTemplates: { AddButton },
   } = registry.templates;
+
   return (
     <fieldset className={className} id={idSchema.$id}>
       <ArrayFieldTitleTemplate
         idSchema={idSchema}
-        title={uiOptions.title || title}
+        title={commonAttributes.label || title}
         required={required}
         schema={schema}
         uiSchema={uiSchema}
@@ -71,6 +77,14 @@ export default function ArrayFieldTemplate<
         uiSchema={uiSchema}
         registry={registry}
       />
+      {commonAttributes.errorMessageForField && (
+        <>
+          <div className="error-message">
+            {commonAttributes.errorMessageForField}
+          </div>
+          <br />
+        </>
+      )}
       <div className="row array-item-list">
         {items &&
           items.map(
