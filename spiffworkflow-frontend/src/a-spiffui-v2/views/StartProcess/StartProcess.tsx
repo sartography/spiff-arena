@@ -15,7 +15,6 @@ import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
 import { getStorageValue } from '../../services/LocalStorageService';
-import { set } from 'date-fns';
 
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
