@@ -9,6 +9,7 @@ import {
 import {
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
+  mergeCorrelationProperties,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
 import { convertCorrelationPropertiesToRJSF } from './MessageHelper';
@@ -19,6 +20,7 @@ type OwnProps = {
   modifiedProcessGroupIdentifier: string;
   messageId: string;
   messageEvent: any;
+  messageProperties: any;
 };
 
 export function MessageEditor({
@@ -26,6 +28,7 @@ export function MessageEditor({
   modifiedProcessGroupIdentifier,
   messageId,
   messageEvent,
+  messageProperties
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [curentFormData, setCurrentFormData] = useState<any>(null);
@@ -35,10 +38,12 @@ export function MessageEditor({
 
   useEffect(() => {
     const setInitialFormData = (newProcessGroup: ProcessGroup) => {
-      const correlationProperties = convertCorrelationPropertiesToRJSF(
+      let correlationProperties = convertCorrelationPropertiesToRJSF(
         messageId,
         newProcessGroup,
       );
+      correlationProperties = mergeCorrelationProperties(messageProperties, correlationProperties);
+
       const jsonSchema =
         (newProcessGroup.messages || {})[messageId]?.schema || {};
       const newFormData = {
@@ -47,6 +52,7 @@ export function MessageEditor({
         ),
         messageId: messageId,
         correlation_properties: correlationProperties,
+        // correlation_properties: [],
         schema: JSON.stringify(jsonSchema, null, 2),
       };
       setCurrentFormData(newFormData);
