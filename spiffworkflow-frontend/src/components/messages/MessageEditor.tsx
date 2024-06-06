@@ -70,8 +70,6 @@ export function MessageEditor({
   ) => {
     setProcessGroup(response);
     setDisplaySaveMessageMessage(true);
-    console.log('updatedMessagesForId', updatedMessagesForId);
-    console.log('messageIdentifier', messageIdentifier);
     messageEvent.eventBus.fire('spiff.add_message.returned', {
       name: messageIdentifier,
       correlation_properties: updatedMessagesForId.correlation_properties,
@@ -151,7 +149,6 @@ export function MessageEditor({
     }
 
     processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
-    console.log('newMessageId', newMessageId);
     setCurrentMessageId(newMessageId);
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
     HttpService.makeCallToBackend({
