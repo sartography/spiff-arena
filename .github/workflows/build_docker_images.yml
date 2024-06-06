@@ -59,7 +59,7 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Get short commit sha
         id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -115,7 +115,7 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Get short commit sha
         id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -172,7 +172,7 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Get short commit sha
         id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.5.1
