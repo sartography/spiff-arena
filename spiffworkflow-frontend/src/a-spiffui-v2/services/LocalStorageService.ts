@@ -1,3 +1,5 @@
+const SPIFF_FAVORITES = 'spifffavorites';
+
 const getStorageValue = (key: string) => {
   return localStorage.getItem(key) || '[]';
 };
@@ -10,4 +12,9 @@ const removeStorageValue = (key: string) => {
   localStorage.removeItem(key);
 };
 
-export { getStorageValue, setStorageValue, removeStorageValue };
+export {
+  SPIFF_FAVORITES,
+  getStorageValue,
+  setStorageValue,
+  removeStorageValue,
+};

@@ -6,7 +6,6 @@ import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import MenuItem from '../app/topmenu/MenuItem';
-import CollapseButton from '../../components/CollapseButton';
 
 export const SHOW_FAVORITES = 'SHOW_FAVORITES';
 
@@ -32,7 +31,7 @@ export default forwardRef(function TreePanel(
 
   const treeItemStyle = {
     borderRadius: 1,
-    minWidth: 20,
+    width: 50,
     maxHeight: 18,
     textAlign: 'center',
     fontWeight: 600,
@@ -41,7 +40,10 @@ export default forwardRef(function TreePanel(
 
   /** We allow imperatively clearing the expanded items of the tree via a forwardRef */
   useImperativeHandle(ref, () => ({
-    clearExpanded: () => setExpanded([]),
+    clearExpanded: () => {
+      setExpanded([]);
+      setLastSelected({});
+    },
   }));
 
   /**
@@ -72,8 +74,8 @@ export default forwardRef(function TreePanel(
           >
             <Box sx={{ width: '100%' }}>{group.display_name}</Box>
             <Box sx={treeItemStyle}>
-              {(group?.process_models?.length || 0) +
-                (group?.process_groups?.length || 0)}
+              {`${group?.process_models?.length || 0} / 
+                ${group?.process_groups?.length || 0}`}
             </Box>
           </Stack>
         }
@@ -108,6 +110,13 @@ export default forwardRef(function TreePanel(
     if (!item) {
       return;
     }
+    /**
+     * A given item will look like group/another_group/another_group/model
+     * The parent path of each item is the path to the item, minus the last id.
+     * So from a single id we can build the path hieararchy to this item.
+     * TODO: This is a candidate for a service, as the logic is repeated
+     * in the BreadCrumbs component.
+     */
     const newExpanded: string[] = [];
     const split: string[] = item.id.split('/');
     split.forEach((id, i) => {
@@ -149,6 +158,8 @@ export default forwardRef(function TreePanel(
       setExpanded(() => [...removePath]);
       return;
     }
+
+    console.log(lastSelected);
     // Otherwise, go through the rigamarole of expanding it.
     expandToItem(lastSelected);
   }, [lastSelected]);

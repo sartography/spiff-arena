@@ -60,6 +60,7 @@ const customPalette = (mode: PaletteMode) => {
         spotColors: {
           goldStar: yellow[700],
           selectedBackground: lightBlue[100],
+          linkHover: lightBlue[700],
         },
       }
     : {

@@ -6,17 +6,24 @@ import {
   Container,
   Slide,
   Stack,
+  Typography,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import StarRateIcon from '@mui/icons-material/StarRate';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
 import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
-import { getStorageValue } from '../../services/LocalStorageService';
+import {
+  SPIFF_FAVORITES,
+  getStorageValue,
+} from '../../services/LocalStorageService';
 import CollapseButton from '../../components/CollapseButton';
+import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
+import MenuItem from '../app/topmenu/MenuItem';
 
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
@@ -27,10 +34,12 @@ export default function StartProcess() {
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
-  const [crumbs, setCrumbs] = useState('');
+  const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [treeCollapsed, setTreeCollapsed] = useState(false);
   const treeRef = useRef<TreeRef>(null);
+  // Pass to anything that wants to broadcast to all subscribers
   const clickStream = new Subject<Record<string, any>>();
+  const favoriteCrumb: Crumb = { id: 'favorites', displayName: 'Favorites' };
   const gridProps = {
     width: '100%',
     display: 'grid',
@@ -39,8 +48,27 @@ export default function StartProcess() {
     gridGap: 20,
   };
 
+  const processCrumbs = (item: Record<string, any>): Crumb[] => {
+    /**
+     * Create the paths for the crumbs.
+     * This logic is repeated from TreePanel.
+     * TODO: Consider a service, or hook, or something.
+     */
+    const pathIds: string[] = [];
+    const split: string[] = item.id.split('/');
+    split.forEach((id, i) => {
+      pathIds.push(i === 0 ? id : `${pathIds[i - 1]}/${id}`);
+    });
+
+    // Look up the display names in the flattened items and return.
+    return pathIds.map((id) => {
+      const found = flatItems.find((flatItem) => flatItem.id === id);
+      return { id, displayName: found?.display_name || id };
+    });
+  };
+
   const handleClickStream = (item: Record<string, any>) => {
-    setCrumbs(item.id);
+    setCrumbs(processCrumbs(item));
     setLastSelected(item);
     let itemToUse: any = { ...item };
     // Duck type to find out if this is a model ore a group.
@@ -94,7 +122,7 @@ export default function StartProcess() {
       setModels(favs);
       setModelsExpanded(!!favs.length);
       setGroupsExpanded(!favs.length);
-      setCrumbs('favorites');
+      setCrumbs([favoriteCrumb]);
     }
 
     return false;
@@ -107,7 +135,9 @@ export default function StartProcess() {
    */
   const handleSearch = (search: string) => {
     // Indicate to user this is a search result.
-    setCrumbs(`Searching for: ${search || '(all)'}`);
+    setCrumbs([
+      { id: search, displayName: `Searching for: ${search || '(all)'}` },
+    ]);
     // Search the flattened items for the search term.
     const foundGroups = flatItems.filter((item) => {
       return (
@@ -131,29 +161,47 @@ export default function StartProcess() {
     treeRef.current?.clearExpanded();
   };
 
+  /**
+   * When a crumb is clicked, we need to find the item in the flatItems list
+   * and feed it to the clickstream.
+   */
+  const handleCrumbClick = (crumb: Crumb) => {
+    // If this is s top-level crumb, just reset the view.
+    if (crumb.id === SPIFF_ID) {
+      setGroups(processGroups.results);
+      setModels([]);
+      setModelsExpanded(false);
+      setGroupsExpanded(true);
+      setCrumbs([]);
+      treeRef.current?.clearExpanded();
+      return;
+    }
+    // Otherwise, find the item in the flatItems list and feed it to the clickstream.
+    const found = flatItems.find((item) => item.id === crumb.id);
+    if (found) {
+      clickStream.next(found);
+    }
+  };
+
+  /** Recursively flatten the entire hierarchy of process groups and models */
+  const flattenAllItems = (
+    items: Record<string, any>[],
+    flat: Record<string, any>[]
+  ) => {
+    items.forEach((item) => {
+      flat.push(item);
+      // Duck type to see if it's a group, and if so, recurse.
+      if (item.process_groups) {
+        flattenAllItems([...item.process_groups, ...item.process_models], flat);
+      }
+    });
+
+    return flat;
+  };
+
   useEffect(() => {
     // If no favorites, proceed with the normal process groups.
     if (processGroups?.results) {
-      // Recursively flatten the entire hierarchy of process groups and models
-      // TODO: It would be VERY WISE to do this on init.
-      const flattenAllItems = (
-        items: Record<string, any>[],
-        flat: Record<string, any>[]
-      ) => {
-        items.forEach((item) => {
-          flat.push(item);
-          // Duck type to see if it's a group, and if so, recurse.
-          if (item.process_groups) {
-            flattenAllItems(
-              [...item.process_groups, ...item.process_models],
-              flat
-            );
-          }
-        });
-
-        return flat;
-      };
-
       /**
        * Do this now and put it in state.
        * You do not want to do this on every change to the search filter.
@@ -163,17 +211,18 @@ export default function StartProcess() {
       setFlatItems(flattened);
 
       // If there are favorites, that's all we want to display, return.
-      const favorites = JSON.parse(getStorageValue('spifffavorites'));
+      const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
       if (favorites.length) {
         setModels(flattened.filter((item) => favorites.includes(item.id)));
         setGroups([]);
         setModelsExpanded(true);
         setGroupsExpanded(false);
-        setCrumbs('favorites');
+        setCrumbs([favoriteCrumb]);
         return;
       }
       setGroups(processGroups.results);
       setGroupsExpanded(!!processGroups.results.length);
+      setCrumbs([]);
     }
   }, [processGroups]);
 
@@ -244,92 +293,107 @@ export default function StartProcess() {
           </Box>
         </Box>
         <Stack
+          gap={2}
           sx={{
             width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
           <Stack
-            gap={2}
+            direction="row"
             sx={{
               width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
+              paddingTop: 2,
+              paddingLeft: 2,
+              paddingRight: 2,
+              justifyContent: 'center',
             }}
           >
-            <Stack
-              direction="row"
-              sx={{
-                width: '100%',
-                paddingTop: 2,
-                paddingLeft: 2,
-                paddingRight: 2,
-                justifyContent: 'center',
-              }}
-            >
-              <SearchBar callback={handleSearch} stream={clickStream} />
-            </Stack>
+            <SearchBar callback={handleSearch} stream={clickStream} />
+          </Stack>
 
-            <Stack
-              sx={{
-                width: '100%',
-                height: 'calc(100vh - 180px)',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                padding: 0,
-              }}
-            >
-              <Stack
-                gap={4}
-                sx={{
-                  padding: 2,
-                }}
-              >
-                <Box>
-                  {crumbs && <Box>{crumbs}</Box>}
-                  <Accordion
-                    expanded={modelsExpanded}
-                    onChange={() => setModelsExpanded((prev) => !prev)}
-                  >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon />}
-                      aria-controls="Process Models Accordion"
-                    >
-                      ({models.length}) Process Models
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={gridProps}>
-                        {models.map((model: Record<string, any>) => (
-                          <ProcessModelCard
-                            model={model}
-                            stream={clickStream}
-                            lastSelected={lastSelected}
-                          />
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                </Box>
-                <Accordion
-                  expanded={groupsExpanded}
-                  onChange={() => setGroupsExpanded((prev) => !prev)}
+          <Stack
+            sx={{
+              width: '100%',
+              height: 'calc(100vh - 180px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              paddingLeft: 2,
+              paddingRight: 2,
+            }}
+          >
+            <Stack direction="row" gap={1} sx={{ paddingBottom: 0.5 }}>
+              {treeCollapsed && (
+                <Stack
+                  direction="row"
+                  gap={1}
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'borders.primary',
+                    borderRadius: 1,
+                    alignItems: 'center',
+                    paddingRight: 2,
+                    position: 'relative',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleFavorites({ text: SHOW_FAVORITES })}
                 >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="Process Groups Accordion"
-                  >
-                    ({groups.length}) Process Groups
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={gridProps}>
-                      {groups.map((group: Record<string, any>) => (
-                        <ProcessGroupCard group={group} stream={clickStream} />
-                      ))}
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
-              </Stack>
+                  <StarRateIcon
+                    sx={{
+                      transform: 'scale(.8)',
+                      color: 'spotColors.goldStar',
+                      position: 'relative',
+                      top: -1,
+                    }}
+                  />
+                  <Typography variant="caption">Favorites</Typography>
+                </Stack>
+              )}
+              <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} />
             </Stack>
+            <Accordion
+              expanded={modelsExpanded}
+              onChange={() => setModelsExpanded((prev) => !prev)}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="Process Models Accordion"
+              >
+                ({models.length}) Process Models
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={gridProps}>
+                  {models.map((model: Record<string, any>) => (
+                    <ProcessModelCard
+                      model={model}
+                      stream={clickStream}
+                      lastSelected={lastSelected}
+                    />
+                  ))}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+            <Accordion
+              expanded={groupsExpanded}
+              onChange={() => setGroupsExpanded((prev) => !prev)}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="Process Groups Accordion"
+              >
+                ({groups.length}) Process Groups
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={gridProps}>
+                  {groups.map((group: Record<string, any>) => (
+                    <ProcessGroupCard group={group} stream={clickStream} />
+                  ))}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
           </Stack>
         </Stack>
       </Stack>
