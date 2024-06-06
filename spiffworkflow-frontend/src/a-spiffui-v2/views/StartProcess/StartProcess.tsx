@@ -4,6 +4,7 @@ import {
   AccordionSummary,
   Box,
   Container,
+  Slide,
   Stack,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
 import { getStorageValue } from '../../services/LocalStorageService';
+import CollapseButton from '../../components/CollapseButton';
 
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
@@ -26,6 +28,7 @@ export default function StartProcess() {
   const [modelsExpanded, setModelsExpanded] = useState(false);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const [crumbs, setCrumbs] = useState('');
+  const [treeCollapsed, setTreeCollapsed] = useState(false);
   const treeRef = useRef<TreeRef>(null);
   const clickStream = new Subject<Record<string, any>>();
   const gridProps = {
@@ -189,21 +192,56 @@ export default function StartProcess() {
         overflow: 'hidden',
       }}
     >
+      {/* This may be a little more convulted than it needs to be for a tree collapser,
+       * but it's a start. Possibly refactor into another component or something. */}
       <Stack direction="row">
         <Box
           sx={{
-            minWidth: 250,
-            maxWidth: 450,
-            width: '20%',
+            width: treeCollapsed ? 20 : 350,
             paddingTop: 0.25,
+            position: 'relative',
           }}
         >
-          <TreePanel
-            ref={treeRef}
-            processGroups={processGroups}
-            stream={clickStream}
-            callback={() => handleFavorites({ text: SHOW_FAVORITES })}
-          />
+          <Slide
+            in={!treeCollapsed}
+            direction="right"
+            mountOnEnter
+            unmountOnExit
+          >
+            <Box>
+              {!treeCollapsed && (
+                <TreePanel
+                  ref={treeRef}
+                  processGroups={processGroups}
+                  stream={clickStream}
+                  callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+                />
+              )}
+            </Box>
+          </Slide>
+          {treeCollapsed && (
+            <Box
+              sx={{
+                width: '20px',
+                height: '100%',
+                backgroundColor: 'background.paper',
+                borderRight: '1px solid',
+                borderColor: 'borders.primary',
+              }}
+            />
+          )}
+          <Box
+            sx={{
+              position: 'absolute',
+              right: -10,
+              top: 'calc(100vh - 65%)',
+            }}
+          >
+            <CollapseButton
+              startDirection="left"
+              callback={() => setTreeCollapsed((prev) => !prev)}
+            />
+          </Box>
         </Box>
         <Stack
           sx={{

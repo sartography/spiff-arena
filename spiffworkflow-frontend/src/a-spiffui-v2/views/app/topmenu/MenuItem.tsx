@@ -80,7 +80,7 @@ export default function MenuItem({
         width: '100%',
         borderColor: isDark ? 'primary' : 'background.mediumdark',
         borderBottomWidth: 1,
-        borderRadius: 1,
+        borderRadius: toggled ? 0 : 1,
         fontSize: 12,
         borderStyle: toggled ? 'solid' : 'transparent',
         justifyContent: data?.align || 'center',

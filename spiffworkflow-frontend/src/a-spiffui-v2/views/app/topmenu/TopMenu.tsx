@@ -24,7 +24,7 @@ export default function TopMenu({
 }) {
   /** Broadcasts to all MenuItems so they can update selected styles etc.  */
   const menuItemStream = new Subject<MenuItemData>();
-  const menuItemWidth = 175;
+  const menuItemWidth = 150;
 
   const iconColor =
     useTheme().palette.mode === 'light' ? grey[600] : 'primary.light';

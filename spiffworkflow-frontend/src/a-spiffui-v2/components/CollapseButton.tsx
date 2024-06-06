@@ -5,9 +5,11 @@ import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import { grey } from '@mui/material/colors';
 
 export default function CollapseButton({
+  startDirection,
   callback,
   toggle = false,
 }: {
+  startDirection: 'left' | 'right';
   callback: (data: boolean) => void;
   toggle?: boolean;
 }) {
@@ -34,7 +36,7 @@ export default function CollapseButton({
         width: 25,
         height: 50,
         border: '1px solid',
-        borderColor: isDark ? grey[50] : grey[400],
+        borderColor: 'borders.primary',
         backgroundColor: 'background.paper',
       }}
       onClick={() => handleClick()}
@@ -47,7 +49,10 @@ export default function CollapseButton({
           justifyContent: 'center',
         }}
       >
-        {toggled ? <ArrowLeftIcon /> : <ArrowRightIcon />}
+        {startDirection === 'right' &&
+          (toggled ? <ArrowLeftIcon /> : <ArrowRightIcon />)}
+        {startDirection === 'left' &&
+          (toggled ? <ArrowRightIcon /> : <ArrowLeftIcon />)}
       </Stack>
     </Paper>
   );

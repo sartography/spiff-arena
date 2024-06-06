@@ -6,6 +6,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import MenuItem from '../app/topmenu/MenuItem';
+import CollapseButton from '../../components/CollapseButton';
 
 export const SHOW_FAVORITES = 'SHOW_FAVORITES';
 

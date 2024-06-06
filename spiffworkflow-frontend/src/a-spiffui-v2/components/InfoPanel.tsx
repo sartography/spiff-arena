@@ -31,7 +31,7 @@ export default function InfoPanel({
           zIndex: 2000, // MUI top level
         }}
       >
-        <CollapseButton callback={handleClose} />
+        <CollapseButton startDirection="right" callback={handleClose} />
       </Box>
       <Paper
         elevation={4}
