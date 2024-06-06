@@ -18,7 +18,7 @@ export default function PublicForm() {
   const [taskData, setTaskData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
-    null
+    null,
   );
   const [publicTask, setPublicTask] = useState<PublicTask | null>(null);
   const [currentPageError, setCurrentPageError] =
@@ -41,7 +41,7 @@ export default function PublicForm() {
           setCurrentPageError(error);
         } else {
           setCurrentPageError(
-            errorForDisplayFromString('Error retrieving content.')
+            errorForDisplayFromString('Error retrieving content.'),
           );
         }
         console.error(error);

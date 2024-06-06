@@ -32,7 +32,7 @@ export default function ProcessInstanceReportSearch({
     const selectedReportIdAsNumber = Number(selectedReportId);
 
     function setProcessInstanceReportsFromResult(
-      result: ProcessInstanceReport[]
+      result: ProcessInstanceReport[],
     ) {
       setProcessInstanceReports(result);
       if (selectedReportId && handleSetSelectedReportCallback) {
@@ -51,7 +51,7 @@ export default function ProcessInstanceReportSearch({
   }, [handleSetSelectedReportCallback, selectedReportId]);
 
   const reportSelectionString = (
-    processInstanceReport: ProcessInstanceReport
+    processInstanceReport: ProcessInstanceReport,
   ) => {
     return `${processInstanceReport.identifier} (Id: ${processInstanceReport.id})`;
   };

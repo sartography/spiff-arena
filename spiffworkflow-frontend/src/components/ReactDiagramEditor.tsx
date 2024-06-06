@@ -169,7 +169,7 @@ export default function ReactDiagramEditor({
         }
       }
     },
-    [diagramModelerState, diagramType]
+    [diagramModelerState, diagramType],
   );
 
   /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
@@ -183,11 +183,11 @@ export default function ReactDiagramEditor({
       const refs = event.references.filter(
         (r: any) =>
           r.property === 'bpmn:loopDataInputRef' ||
-          r.property === 'bpmn:loopDataOutputRef'
+          r.property === 'bpmn:loopDataOutputRef',
       );
       // eslint-disable-next-line no-underscore-dangle
       const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
-        'bpmn:ItemAwareElement'
+        'bpmn:ItemAwareElement',
       );
       refs.forEach((ref: any) => {
         const props = {
@@ -291,7 +291,7 @@ export default function ReactDiagramEditor({
       element: any,
       script: string,
       scriptType: string,
-      eventBus: any
+      eventBus: any,
     ) {
       if (onLaunchScriptEditor) {
         setPerformingXmlUpdates(true);
@@ -303,7 +303,7 @@ export default function ReactDiagramEditor({
     function handleLaunchMarkdownEditor(
       element: any,
       value: string,
-      eventBus: any
+      eventBus: any,
     ) {
       if (onLaunchMarkdownEditor) {
         setPerformingXmlUpdates(true);
@@ -315,7 +315,7 @@ export default function ReactDiagramEditor({
       if (onElementClick) {
         const canvas = diagramModeler.get('canvas');
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement()
+          canvas.getRootElement(),
         );
         onElementClick(event.element, bpmnProcessIdentifiers);
       }
@@ -477,13 +477,13 @@ export default function ReactDiagramEditor({
       canvas: any,
       task: Task,
       bpmnIoClassName: string,
-      bpmnProcessIdentifiers: string[]
+      bpmnProcessIdentifiers: string[],
     ) {
       if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
         try {
           if (
             bpmnProcessIdentifiers.includes(
-              task.bpmn_process_definition_identifier
+              task.bpmn_process_definition_identifier,
             )
           ) {
             canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
@@ -522,7 +522,7 @@ export default function ReactDiagramEditor({
       //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
       if (tasks) {
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement()
+          canvas.getRootElement(),
         );
         tasks.forEach((task: Task) => {
           let className = '';
@@ -540,7 +540,7 @@ export default function ReactDiagramEditor({
               canvas,
               task,
               className,
-              bpmnProcessIdentifiers
+              bpmnProcessIdentifiers,
             );
           }
         });
@@ -549,7 +549,7 @@ export default function ReactDiagramEditor({
 
     function displayDiagram(
       diagramModelerToUse: any,
-      diagramXMLToDisplay: any
+      diagramXMLToDisplay: any,
     ) {
       if (alreadyImportedXmlRef.current) {
         return;
@@ -576,7 +576,7 @@ export default function ReactDiagramEditor({
 
     function fetchDiagramFromURL(
       urlToUse: any,
-      textHandler?: (text: str) => void
+      textHandler?: (text: str) => void,
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
@@ -701,7 +701,7 @@ export default function ReactDiagramEditor({
               <Link
                 size="lg"
                 href={`/process-models/${modifyProcessIdentifierForPathParam(
-                  ref.relative_location
+                  ref.relative_location,
                 )}`}
               >
                 {`${ref.display_name}`}
@@ -780,7 +780,7 @@ export default function ReactDiagramEditor({
               <Button
                 onClick={() => {
                   navigate(
-                    `/process-models/${processModelId}/form/${fileName}`
+                    `/process-models/${processModelId}/form/${fileName}`,
                   );
                 }}
               >

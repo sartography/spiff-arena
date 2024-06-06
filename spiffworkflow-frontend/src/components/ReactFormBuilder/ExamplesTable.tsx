@@ -77,7 +77,7 @@ examples.push(
     schema: typeaheadSchema,
     ui: typeaheadUiSchema,
     data: {},
-  }
+  },
 );
 
 type OwnProps = {

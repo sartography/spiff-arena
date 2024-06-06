@@ -38,7 +38,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       searchParams,
       undefined,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
     let queryParamString = `per_page=${perPage}&page=${page}`;
     if (processInstanceId) {
@@ -108,7 +108,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <Link
             data-qa="process-instance-show-link"
             to={`/process-instances/${modifyProcessIdentifierForPathParam(
-              row.process_model_identifier
+              row.process_model_identifier,
             )}/${row.process_instance_id}`}
           >
             {row.process_instance_id}
@@ -137,7 +137,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <td>{row.status}</td>
           <td>
             {DateAndTimeService.convertSecondsToFormattedDateTime(
-              row.created_at_in_seconds
+              row.created_at_in_seconds,
             )}
           </td>
         </tr>
@@ -168,7 +168,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       searchParams,
       undefined,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
     let breadcrumbElement = null;
     if (searchParams.get('process_instance_id')) {
@@ -184,7 +184,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             [
               `Process Instance: ${searchParams.get('process_instance_id')}`,
               `/process-instances/${searchParams.get(
-                'process_model_id'
+                'process_model_id',
               )}/${searchParams.get('process_instance_id')}`,
             ],
             ['Messages'],

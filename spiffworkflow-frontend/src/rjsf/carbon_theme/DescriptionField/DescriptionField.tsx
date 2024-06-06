@@ -13,7 +13,7 @@ import MDEditor from '@uiw/react-md-editor';
 export default function DescriptionField<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: DescriptionFieldProps<T, S, F>) {
   const { id, description } = props;
   if (!description) {
@@ -22,8 +22,8 @@ export default function DescriptionField<
   if (typeof description === 'string') {
     return (
       //  const descriptionMarkdown =
-//  <span data-color-mode="light">
-//  </span>
+      //  <span data-color-mode="light">
+      //  </span>
 
       <p id={id} className="field-description" data-color-mode="light">
         <MDEditor.Markdown linkTarget="_blank" source={description} />

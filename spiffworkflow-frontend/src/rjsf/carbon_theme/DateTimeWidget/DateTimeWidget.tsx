@@ -6,7 +6,7 @@ function DateTimeWidget(props: WidgetProps) {
   const BaseInputTemplate = getTemplate<'BaseInputTemplate'>(
     'BaseInputTemplate',
     registry,
-    options
+    options,
   );
   const value = utcToLocal(props.value);
   const onChange = (value: any) => {

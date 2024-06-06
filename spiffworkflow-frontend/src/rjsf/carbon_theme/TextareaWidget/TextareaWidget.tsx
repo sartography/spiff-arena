@@ -17,7 +17,7 @@ import { getCommonAttributes } from '../../helpers';
 function TextareaWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >({
   id,
   options = {},
@@ -38,19 +38,19 @@ function TextareaWidget<
   const handleChange = useCallback(
     ({ target: { value } }: React.ChangeEvent<HTMLTextAreaElement>) =>
       onChange(value === '' ? options.emptyValue : value),
-    [onChange, options.emptyValue]
+    [onChange, options.emptyValue],
   );
 
   const handleBlur = useCallback(
     ({ target: { value } }: FocusEvent<HTMLTextAreaElement>) =>
       onBlur(id, value),
-    [onBlur, id]
+    [onBlur, id],
   );
 
   const handleFocus = useCallback(
     ({ target: { value } }: FocusEvent<HTMLTextAreaElement>) =>
       onFocus(id, value),
-    [id, onFocus]
+    [id, onFocus],
   );
 
   // this helps with performance for the select widget with rsjf 5.1+.
@@ -61,14 +61,14 @@ function TextareaWidget<
       handleChange(fullObject);
     },
     // delay in ms
-    100
+    100,
   );
 
   const commonAttributes = getCommonAttributes(
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   let enableCounter = false;
@@ -79,7 +79,7 @@ function TextareaWidget<
       maxCount = schema.maxLength;
     } else {
       throw new Error(
-        `Counter was requested but no maxLength given on the ${label}`
+        `Counter was requested but no maxLength given on the ${label}`,
       );
     }
   }

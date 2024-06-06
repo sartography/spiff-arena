@@ -105,7 +105,7 @@ export default function ProcessModelEditDiagram() {
 
   const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
   const [scriptAssistError, setScriptAssistError] = useState<string | null>(
-    null
+    null,
   );
   const { scriptAssistEnabled } = useScriptAssistEnabled();
   const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
@@ -145,14 +145,14 @@ export default function ProcessModelEditDiagram() {
 
   const { addError, removeError } = useAPIError();
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
-    null
+    null,
   );
   const [newFileName, setNewFileName] = useState('');
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    (params as any).process_model_id
+    (params as any).process_model_id,
   );
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
@@ -228,10 +228,10 @@ export default function ProcessModelEditDiagram() {
     }
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${searchParams.get(
-        'file_type'
+        'file_type',
       )}`;
       navigate(
-        `/editor/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`
+        `/editor/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`,
       );
     }
   };
@@ -373,7 +373,7 @@ export default function ProcessModelEditDiagram() {
     const ruleList = styleSheet.cssRules;
     for (let ii = ruleList.length - 1; ii >= 0; ii -= 1) {
       const regexp = new RegExp(
-        `^.${failingScriptLineClassNamePrefix}_.*::after `
+        `^.${failingScriptLineClassNamePrefix}_.*::after `,
       );
       if (ruleList[ii].cssText.match(regexp)) {
         styleSheet.deleteRule(ii);
@@ -495,7 +495,7 @@ export default function ProcessModelEditDiagram() {
 
   const setScriptUnitTestElementWithIndex = (
     scriptIndex: number,
-    element: any = scriptElement
+    element: any = scriptElement,
   ) => {
     const unitTestsModdleElements = getScriptUnitTestElements(element);
     if (unitTestsModdleElements.length > 0) {
@@ -509,7 +509,7 @@ export default function ProcessModelEditDiagram() {
     script: string,
     scriptTypeString: string,
     eventBus: any,
-    modeling: any
+    modeling: any,
   ) => {
     // TODO: modeling is only needed for script unit tests.
     // we should update this to act like updating scripts
@@ -612,14 +612,14 @@ export default function ProcessModelEditDiagram() {
         monacoRef.current
       ) {
         const currentClassName = `${failingScriptLineClassNamePrefix}_${makeid(
-          7
+          7,
         )}`;
 
         // document.documentElement.style.setProperty causes the content property to go away
         // so add the rule dynamically instead of changing a property variable
         document.styleSheets[0].addRule(
           `.${currentClassName}::after`,
-          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`
+          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`,
         );
 
         const lineLength =
@@ -633,11 +633,11 @@ export default function ProcessModelEditDiagram() {
               // Range(lineStart, column, lineEnd, column)
               range: new (monacoRef.current as any).Range(
                 result.line_number,
-                lineLength
+                lineLength,
               ),
               options: { afterContentClassName: currentClassName },
             },
-          ]
+          ],
         );
       }
     }
@@ -650,7 +650,7 @@ export default function ProcessModelEditDiagram() {
       try {
         inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
         expectedJson = JSON.parse(
-          currentScriptUnitTest.expectedOutputJson.value
+          currentScriptUnitTest.expectedOutputJson.value,
         );
       } catch (e) {
         setScriptUnitTestResult({
@@ -684,7 +684,7 @@ export default function ProcessModelEditDiagram() {
         errorObject = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
       } else {
         errorObject = `Error encountered running the script. ${JSON.stringify(
-          scriptUnitTestResult.error
+          scriptUnitTestResult.error,
         )}`;
       }
       let errorStringElement = <span>{errorObject}</span>;
@@ -703,13 +703,13 @@ export default function ProcessModelEditDiagram() {
           outputJson = JSON.stringify(
             JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
             null,
-            '  '
+            '  ',
           );
         }
         const contextJson = JSON.stringify(
           scriptUnitTestResult.context,
           null,
-          '  '
+          '  ',
         );
         errorContextElement = (
           <DiffEditor
@@ -784,12 +784,12 @@ export default function ProcessModelEditDiagram() {
         inputJson = JSON.stringify(
           JSON.parse(currentScriptUnitTest.inputJson.value),
           null,
-          '  '
+          '  ',
         );
         outputJson = JSON.stringify(
           JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
           null,
-          '  '
+          '  ',
         );
       } catch (e) {
         // Attemping to format the json failed -- it's invalid.
@@ -1023,7 +1023,7 @@ export default function ProcessModelEditDiagram() {
   const onLaunchMarkdownEditor = (
     _element: any,
     markdown: string,
-    eventBus: any
+    eventBus: any,
   ) => {
     setMarkdownText(markdown || '');
     setMarkdownEventBus(eventBus);
@@ -1100,7 +1100,7 @@ export default function ProcessModelEditDiagram() {
   const onSearchProcessModels = (
     _processId: string,
     eventBus: any,
-    element: any
+    element: any,
   ) => {
     setProcessSearchEventBus(eventBus);
     setProcessSearchElement(element);
@@ -1139,7 +1139,7 @@ export default function ProcessModelEditDiagram() {
 
   const findFileNameForReferenceId = (
     id: string,
-    type: string
+    type: string,
   ): ProcessFile | null => {
     // Given a reference id (like a process_id, or decision_id) finds the file
     // that contains that reference and returns it.
@@ -1159,22 +1159,22 @@ export default function ProcessModelEditDiagram() {
 
   const onLaunchBpmnEditor = (processId: string) => {
     const openProcessModelFileInNewTab = (
-      processReference: ProcessReference
+      processReference: ProcessReference,
     ) => {
       const path = generatePath(
         '/editor/process-models/:process_model_path/files/:file_name',
         {
           process_model_path: modifyProcessIdentifierForPathParam(
-            processReference.relative_location
+            processReference.relative_location,
           ),
           file_name: processReference.file_name,
-        }
+        },
       );
       window.open(path);
     };
 
     const openFileNameForProcessId = (
-      processesReferences: ProcessReference[]
+      processesReferences: ProcessReference[],
     ) => {
       const processRef = processesReferences.find((p) => {
         return p.identifier === processId;
@@ -1204,7 +1204,7 @@ export default function ProcessModelEditDiagram() {
   const onLaunchJsonSchemaEditor = (
     element: any,
     fileName: string,
-    eventBus: any
+    eventBus: any,
   ) => {
     setFileEventBus(eventBus);
     setJsonScehmaFileName(fileName);
@@ -1249,7 +1249,7 @@ export default function ProcessModelEditDiagram() {
         {
           process_model_id: params.process_model_id || null,
           file_name: file.name,
-        }
+        },
       );
       window.open(path);
     } else {
@@ -1257,7 +1257,7 @@ export default function ProcessModelEditDiagram() {
         '/editor/process-models/:process_model_id/files?file_type=dmn',
         {
           process_model_id: params.process_model_id || null,
-        }
+        },
       );
     }
     window.open(path);

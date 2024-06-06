@@ -28,7 +28,7 @@ export default function MyTasks() {
     const getTasks = () => {
       const { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
-        PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+        PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
       );
       const setTasksFromResult = (result: any) => {
         setTasks(result.results);
@@ -44,7 +44,7 @@ export default function MyTasks() {
     refreshAtInterval(
       DateAndTimeService.REFRESH_INTERVAL_SECONDS,
       DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-      getTasks
+      getTasks,
     );
   }, [searchParams]);
 
@@ -125,7 +125,7 @@ export default function MyTasks() {
         files: [],
       };
       const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-        row.processModelIdentifier
+        row.processModelIdentifier,
       );
       return (
         <tr key={`${row.processGroupIdentifier}/${row.processModelIdentifier}`}>
@@ -166,7 +166,7 @@ export default function MyTasks() {
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
     );
     return (
       <>
