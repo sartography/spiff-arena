@@ -1,4 +1,4 @@
-name: Docker Image For Main Builds
+name: Build Docker Images
 # we want to be able to sort by tag name to find the newest and trace back to source control
 # on every commit to main:
 #   frontend:main-20230223164322-b8becd1-45
@@ -31,6 +31,7 @@ on:
     branches:
       - main
       - feature/message_improvements_2
+    tags: [v*]
 
 jobs:
   create_frontend_docker_image:
@@ -59,7 +60,7 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Get short commit sha
         id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -69,8 +70,10 @@ jobs:
             org.opencontainers.image.description=Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
             org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
-            type=ref,event=branch,suffix=-latest
+            type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
+            type=ref,event=tag,enable=true,format={{version}}
+            type=ref,event=tag,enable=true,format=latest
 
       - name: Write app version info
         working-directory: spiffworkflow-frontend
@@ -113,7 +116,7 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Get short commit sha
         id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -123,8 +126,10 @@ jobs:
             org.opencontainers.image.description=Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
             org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
-            type=ref,event=branch,suffix=-latest
+            type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
+            type=ref,event=tag,enable=true,format={{version}}
+            type=ref,event=tag,enable=true,format=latest
 
       - name: Write app version info
         working-directory: spiffworkflow-backend
@@ -168,7 +173,7 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Get short commit sha
         id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -178,8 +183,10 @@ jobs:
             org.opencontainers.image.description=spiffworkflow-connector-proxy-demo
             org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
-            type=ref,event=branch,suffix=-latest
+            type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
+            type=ref,event=tag,enable=true,format={{version}}
+            type=ref,event=tag,enable=true,format=latest
 
       - name: Build and push the connector proxy
         uses: docker/build-push-action@v5.3.0
@@ -192,3 +199,41 @@ jobs:
           platforms: linux/amd64,linux/arm64
       - name: Adding markdown
         run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
+
+  quickstart-guide-test:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      [
+        create_frontend_docker_image,
+        create_backend_docker_image,
+        create_demo_proxy_docker_image,
+      ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Apps
+        run: ./bin/run_arena_with_docker_compose
+      - name: wait_for_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/wait_for_backend_to_be_up 5 8000
+      - name: wait_for_frontend
+        working-directory: ./spiffworkflow-frontend
+        run: ./bin/wait_for_frontend_to_be_up 5 8001
+      - name: wait_for_connector
+        working-directory: ./connector-proxy-demo
+        run: ./bin/wait_for_connector_to_be_up 5 8004
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./spiffworkflow-frontend
+          browser: chromium
+          # just run one test to make sure we didn't completely break it
+          spec: cypress/e2e/process_groups.cy.js
+        env:
+          # pass GitHub token to allow accurately detecting a build vs a re-run build
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
+          SPIFFWORKFLOW_FRONTEND_PORT: 8001
