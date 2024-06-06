@@ -1,4 +1,4 @@
-name: Docker Image For Main Builds
+name: Build Docker Images
 # we want to be able to sort by tag name to find the newest and trace back to source control
 # on every commit to main:
 #   frontend:main-20230223164322-b8becd1-45
