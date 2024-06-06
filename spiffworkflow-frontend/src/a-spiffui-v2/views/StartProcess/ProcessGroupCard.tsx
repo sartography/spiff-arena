@@ -19,6 +19,9 @@ export default function ProcessGroupCard({
         border: '1px solid',
         borderColor: 'borders.primary',
         minWidth: 320,
+        ':hover': {
+          backgroundColor: 'background.bluegreylight',
+        },
       }}
       onClick={() => stream && stream.next(group)}
     >
@@ -27,7 +30,10 @@ export default function ProcessGroupCard({
           {group.display_name}
         </Typography>
 
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 700, color: 'text.secondary' }}
+        >
           {group.description || '--'}
         </Typography>
 

@@ -17,6 +17,9 @@ const defaultStyle = {
   borderColor: 'borders.primary',
   minWidth: 320,
   position: 'relative',
+  ':hover': {
+    backgroundColor: 'background.bluegreylight',
+  },
 };
 
 export default function ProcessModelCard({
@@ -31,7 +34,6 @@ export default function ProcessModelCard({
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
   const [isFavorite, setIsFavorite] = useState(false);
-  const captionColor = 'text.secondary';
 
   const stopEventBubble = (e: PointerEvent) => {
     e.stopPropagation();
@@ -130,16 +132,15 @@ export default function ProcessModelCard({
           <StarBorderOutlinedIcon />
         )}
       </Box>
-      <Stack sx={{ height: '100%' }}>
+      <Stack gap={1} sx={{ height: '100%' }}>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {model.display_name}
         </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 700, color: 'text.secondary' }}
+        >
           {model.description || '--'}
-        </Typography>
-
-        <Typography variant="caption" sx={{ color: captionColor }}>
-          ID: {model.id}
         </Typography>
 
         <Stack
