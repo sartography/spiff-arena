@@ -6,6 +6,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import MenuItem from '../app/topmenu/MenuItem';
+import { SPIFF_FAVORITES } from '../../services/LocalStorageService';
 
 export const SHOW_FAVORITES = 'SHOW_FAVORITES';
 
@@ -27,6 +28,7 @@ export default forwardRef(function TreePanel(
 ) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
+  const [favoriteCount, setFavoriteCount] = useState(0);
   const isDark = useTheme().palette.mode === 'dark';
 
   const treeItemStyle = {
@@ -122,8 +124,10 @@ export default forwardRef(function TreePanel(
     split.forEach((id, i) => {
       newExpanded.push(i === 0 ? id : `${newExpanded[i - 1]}/${id}`);
     });
-    // If this was a leaf node, we don't want to try to expand it.
-    // TODO: Get types together for this one day.
+    /**
+     * If this was a leaf node, we don't want to try to expand it.
+     * TODO: Get types together for this one day.
+     */
     if (!('process_models' in item)) {
       newExpanded.pop();
     }
@@ -140,6 +144,13 @@ export default forwardRef(function TreePanel(
         setLastSelected({ ...item });
       });
     }
+
+    /**
+     * Any stream update could be adding a new favorite, so recalculate the count.
+     * TODO: Some form of this is a candidate for a hook.
+     */
+    const favorites = JSON.parse(localStorage.getItem(SPIFF_FAVORITES) || '[]');
+    setFavoriteCount(favorites.length);
   }, [stream]);
 
   /**
@@ -151,8 +162,10 @@ export default forwardRef(function TreePanel(
     if (!lastSelected?.id) {
       return;
     }
-    // First, let's see if the item is already expanded.
-    // If it is, we want to collapse it and do nothing else.
+    /**
+     * First, let's see if the item is already expanded.
+     * If it is, we want to collapse it and do nothing else.
+     */
     if (expanded.find((n) => n === lastSelected.id)) {
       const removePath = expanded.filter((id) => id !== lastSelected.id);
       setExpanded(() => [...removePath]);
@@ -181,19 +194,27 @@ export default forwardRef(function TreePanel(
     >
       <Stack gap={2} sx={{ justifyContent: 'left' }}>
         <Box>
-          <MenuItem
-            data={{
-              text: 'Favorites',
-              icon: (
-                <StarRateIcon
-                  sx={{ transform: 'scale(.8)', color: 'spotColors.goldStar' }}
-                />
-              ),
-              path: '',
-              align: 'flex-start',
-            }}
-            callback={() => callback && callback({ text: SHOW_FAVORITES })}
-          />
+          <Stack direction="row" sx={{ alignItems: 'center', paddingRight: 2 }}>
+            <MenuItem
+              data={{
+                text: `Favorites`,
+                icon: (
+                  <StarRateIcon
+                    sx={{
+                      transform: 'scale(.8)',
+                      color: 'spotColors.goldStar',
+                    }}
+                  />
+                ),
+                path: '',
+                align: 'flex-start',
+              }}
+              callback={() => callback && callback({ text: SHOW_FAVORITES })}
+            />
+            <Box sx={{ ...treeItemStyle, fontSize: 10, width: 30 }}>
+              {favoriteCount}
+            </Box>
+          </Stack>
           <MenuItem
             data={{
               text: 'Recently Used',
