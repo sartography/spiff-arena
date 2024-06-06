@@ -46,18 +46,22 @@ export function MessageEditor({
 
   const handleProcessGroupUpdateResponse = (
     response: ProcessGroup,
-    updatedMessagesForId: MessageDefinition
+    messageIdentifier: string,
+    updatedMessagesForId: MessageDefinition,
   ) => {
     setProcessGroup(response);
     setDisplaySaveMessageMessage(true);
-    messageEvent.eventBus.fire('spiff.message.update', {
-      value: 'message_response_one_hey_hey',
+    console.log('updatedMessagesForId', updatedMessagesForId);
+    console.log('messageIdentifier', messageIdentifier);
+    messageEvent.eventBus.fire('spiff.add_message.returned', {
+      name: messageIdentifier,
+      correlation_properties: updatedMessagesForId.correlation_properties,
     });
   };
 
   const updateCorrelationPropertiesOnProcessGroup = (
     currentMessagesForId: MessageDefinition,
-    formData: any
+    formData: any,
   ) => {
     const correlationProperties: CorrelationProperties = {
       ...currentMessagesForId.correlation_properties,
@@ -70,11 +74,11 @@ export function MessageEditor({
       }
       if (
         !correlationProperties[formProp.id].retrieval_expressions.includes(
-          formProp.retrievalExpression
+          formProp.retrievalExpression,
         )
       ) {
         correlationProperties[formProp.id].retrieval_expressions.push(
-          formProp.retrievalExpression
+          formProp.retrievalExpression,
         );
       }
     });
@@ -84,12 +88,12 @@ export function MessageEditor({
         const foundProp = (formData.correlation_properties || []).find(
           (formProp: any) => {
             return propId === formProp.id;
-          }
+          },
         );
         if (!foundProp) {
           delete correlationProperties[propId];
         }
-      }
+      },
     );
     return correlationProperties;
   };
@@ -115,7 +119,7 @@ export function MessageEditor({
 
     const correlationProperties = updateCorrelationPropertiesOnProcessGroup(
       currentMessagesForId,
-      formData
+      formData,
     );
 
     updatedMessagesForId.correlation_properties = correlationProperties;
@@ -128,12 +132,17 @@ export function MessageEditor({
     }
 
     processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
+    console.log('newMessageId', newMessageId);
     setCurrentMessageId(newMessageId);
     const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
     HttpService.makeCallToBackend({
       path,
       successCallback: (response: ProcessGroup) =>
-        handleProcessGroupUpdateResponse(response, updatedMessagesForId),
+        handleProcessGroupUpdateResponse(
+          response,
+          newMessageId,
+          updatedMessagesForId,
+        ),
       httpMethod: 'PUT',
       postBody: processGroupForUpdate,
     });
@@ -216,13 +225,13 @@ export function MessageEditor({
   if (processGroup) {
     const correlationProperties = convertCorrelationPropertiesToRJSF(
       currentMessageId,
-      processGroup
+      processGroup,
     );
     const jsonSchema =
       (processGroup.messages || {})[currentMessageId]?.schema || {};
     const formData = {
       processGroupIdentifier: unModifyProcessIdentifierForPathParam(
-        modifiedProcessGroupIdentifier
+        modifiedProcessGroupIdentifier,
       ),
       messageId: currentMessageId,
       correlation_properties: correlationProperties,
