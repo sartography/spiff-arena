@@ -20,8 +20,9 @@ class Version5(DataMigrationBase):
                 TaskModel.query.filter_by(process_instance_id=process_instance.id, state="WAITING")
                 .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
                 .filter(
-                    TaskDefinitionModel.typename
-                    in ["SequentialMultiInstanceTask", "ParallelMultiInstanceTask", "StandardLoopTask"]
+                    TaskDefinitionModel.typename.in_(  # type: ignore
+                        ["SequentialMultiInstanceTask", "ParallelMultiInstanceTask", "StandardLoopTask"]
+                    )
                 )
                 .all()
             )

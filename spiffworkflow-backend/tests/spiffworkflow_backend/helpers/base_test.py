@@ -559,6 +559,7 @@ class BaseTest:
         data: dict | None = None,
     ) -> None:
         user_task = processor.get_ready_user_tasks()[0]
+        print(f"➡️ ➡️ ➡️  user_task: {user_task}")
         human_task = HumanTaskModel.query.filter_by(task_guid=str(user_task.id)).first()
         ProcessInstanceService.complete_form_task(
             processor=processor,

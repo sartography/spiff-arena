@@ -1,0 +1,355 @@
+{
+  "data": {},
+  "correlations": {},
+  "last_task": "f67c1c06-454c-40d1-b26c-74172139e729",
+  "success": true,
+  "tasks": {
+    "1d7372b6-c4f0-4e00-ada9-2c47380d8489": {
+      "id": "1d7372b6-c4f0-4e00-ada9-2c47380d8489",
+      "parent": "3490076c-5a0b-4792-be37-5ca944eb8ae9",
+      "children": [],
+      "last_state_change": 1717785780.4789772,
+      "state": 16,
+      "task_spec": "manual_task [child]",
+      "triggered": true,
+      "internal_data": {
+        "key_or_index": 1
+      },
+      "data": {
+        "z": [],
+        "the_input": ["a", "b", "c"],
+        "the_input_var": "b"
+      },
+      "typename": "Task"
+    },
+    "3490076c-5a0b-4792-be37-5ca944eb8ae9": {
+      "id": "3490076c-5a0b-4792-be37-5ca944eb8ae9",
+      "parent": "7268fc55-7783-49de-b7a9-ee473ff5f49f",
+      "children": [
+        "a98802ad-4197-46c7-a21a-e4e8764c209a",
+        "d73ca5a4-6d3d-4fdd-88f9-a1be3ab568c4",
+        "1d7372b6-c4f0-4e00-ada9-2c47380d8489",
+        "f67c1c06-454c-40d1-b26c-74172139e729"
+      ],
+      "last_state_change": 1717785780.4788644,
+      "state": 8,
+      "task_spec": "manual_task",
+      "triggered": false,
+      "internal_data": {
+        "merged": ["f67c1c06-454c-40d1-b26c-74172139e729"],
+        "started": true
+      },
+      "data": {
+        "z": ["c"],
+        "the_input": ["a", "b", "c"]
+      },
+      "typename": "Task"
+    },
+    "7268fc55-7783-49de-b7a9-ee473ff5f49f": {
+      "id": "7268fc55-7783-49de-b7a9-ee473ff5f49f",
+      "parent": "98b34430-cd3b-40c4-89d3-3cf5218faef4",
+      "children": ["3490076c-5a0b-4792-be37-5ca944eb8ae9"],
+      "last_state_change": 1717785780.4787302,
+      "state": 64,
+      "task_spec": "Activity_0wg6zvw",
+      "triggered": false,
+      "internal_data": {},
+      "data": {
+        "the_input": ["a", "b", "c"]
+      },
+      "typename": "Task"
+    },
+    "98b34430-cd3b-40c4-89d3-3cf5218faef4": {
+      "id": "98b34430-cd3b-40c4-89d3-3cf5218faef4",
+      "parent": "a2aba954-d531-4f46-bad3-8b28b46be4c9",
+      "children": ["7268fc55-7783-49de-b7a9-ee473ff5f49f"],
+      "last_state_change": 1717785780.4604492,
+      "state": 64,
+      "task_spec": "StartEvent_1",
+      "triggered": false,
+      "internal_data": {
+        "event_fired": true
+      },
+      "data": {},
+      "typename": "Task"
+    },
+    "a2aba954-d531-4f46-bad3-8b28b46be4c9": {
+      "id": "a2aba954-d531-4f46-bad3-8b28b46be4c9",
+      "parent": null,
+      "children": ["98b34430-cd3b-40c4-89d3-3cf5218faef4"],
+      "last_state_change": 1717785780.4322698,
+      "state": 64,
+      "task_spec": "Start",
+      "triggered": false,
+      "internal_data": {},
+      "data": {},
+      "typename": "Task"
+    },
+    "a8efe64f-ef02-4aa3-9a53-00ae3e2fc9bb": {
+      "id": "a8efe64f-ef02-4aa3-9a53-00ae3e2fc9bb",
+      "parent": "b32bb0c0-e72a-4b8e-b858-63b263a8e5a5",
+      "children": [],
+      "last_state_change": 1717785780.3915155,
+      "state": 4,
+      "task_spec": "End",
+      "triggered": false,
+      "internal_data": {},
+      "data": {},
+      "typename": "Task"
+    },
+    "a98802ad-4197-46c7-a21a-e4e8764c209a": {
+      "id": "a98802ad-4197-46c7-a21a-e4e8764c209a",
+      "parent": "3490076c-5a0b-4792-be37-5ca944eb8ae9",
+      "children": ["b32bb0c0-e72a-4b8e-b858-63b263a8e5a5"],
+      "last_state_change": 1717785780.391497,
+      "state": 4,
+      "task_spec": "EndEvent_1",
+      "triggered": false,
+      "internal_data": {},
+      "data": {},
+      "typename": "Task"
+    },
+    "b32bb0c0-e72a-4b8e-b858-63b263a8e5a5": {
+      "id": "b32bb0c0-e72a-4b8e-b858-63b263a8e5a5",
+      "parent": "a98802ad-4197-46c7-a21a-e4e8764c209a",
+      "children": ["a8efe64f-ef02-4aa3-9a53-00ae3e2fc9bb"],
+      "last_state_change": 1717785780.391503,
+      "state": 4,
+      "task_spec": "Process_multiinstance_manual_task_eayacuw.EndJoin",
+      "triggered": false,
+      "internal_data": {},
+      "data": {},
+      "typename": "Task"
+    },
+    "d73ca5a4-6d3d-4fdd-88f9-a1be3ab568c4": {
+      "id": "d73ca5a4-6d3d-4fdd-88f9-a1be3ab568c4",
+      "parent": "3490076c-5a0b-4792-be37-5ca944eb8ae9",
+      "children": [],
+      "last_state_change": 1717785780.4789374,
+      "state": 16,
+      "task_spec": "manual_task [child]",
+      "triggered": true,
+      "internal_data": {
+        "key_or_index": 0
+      },
+      "data": {
+        "z": [],
+        "the_input": ["a", "b", "c"],
+        "the_input_var": "a"
+      },
+      "typename": "Task"
+    },
+    "f67c1c06-454c-40d1-b26c-74172139e729": {
+      "id": "f67c1c06-454c-40d1-b26c-74172139e729",
+      "parent": "3490076c-5a0b-4792-be37-5ca944eb8ae9",
+      "children": [],
+      "last_state_change": 1717785782.4456985,
+      "state": 64,
+      "task_spec": "manual_task [child]",
+      "triggered": true,
+      "internal_data": {
+        "key_or_index": 2
+      },
+      "data": {
+        "z": [],
+        "the_input": ["a", "b", "c"],
+        "the_input_var": "c",
+        "the_output_var": "c"
+      },
+      "typename": "Task"
+    }
+  },
+  "root": "a2aba954-d531-4f46-bad3-8b28b46be4c9",
+  "spec": {
+    "name": "Process_multiinstance_manual_task_eayacuw",
+    "description": "Process_multiinstance_manual_task_eayacuw",
+    "file": "testmulti.bpmn",
+    "task_specs": {
+      "Activity_0wg6zvw": {
+        "name": "Activity_0wg6zvw",
+        "description": "Script Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["StartEvent_1"],
+        "outputs": ["manual_task"],
+        "bpmn_id": "Activity_0wg6zvw",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "prescript": null,
+        "postscript": null,
+        "script": "the_input = ['a', 'b', 'c']",
+        "typename": "ScriptTask",
+        "extensions": {}
+      },
+      "End": {
+        "name": "End",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["Process_multiinstance_manual_task_eayacuw.EndJoin"],
+        "outputs": [],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "SimpleBpmnTask"
+      },
+      "EndEvent_1": {
+        "name": "EndEvent_1",
+        "description": "Default End Event",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["manual_task"],
+        "outputs": ["Process_multiinstance_manual_task_eayacuw.EndJoin"],
+        "bpmn_id": "EndEvent_1",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "event_definition": {
+          "description": "Default",
+          "name": null,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "EndEvent",
+        "extensions": {}
+      },
+      "manual_task": {
+        "name": "manual_task",
+        "description": "Parallel MultiInstance",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["Activity_0wg6zvw"],
+        "outputs": ["EndEvent_1"],
+        "bpmn_id": "manual_task",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "task_spec": "manual_task [child]",
+        "cardinality": null,
+        "data_input": {
+          "bpmn_id": "the_input",
+          "bpmn_name": null,
+          "typename": "TaskDataReference"
+        },
+        "data_output": {
+          "bpmn_id": "z",
+          "bpmn_name": null,
+          "typename": "TaskDataReference"
+        },
+        "input_item": {
+          "bpmn_id": "the_input_var",
+          "bpmn_name": "the_input_var",
+          "typename": "TaskDataReference"
+        },
+        "output_item": {
+          "bpmn_id": "the_output_var",
+          "bpmn_name": "the_output_var",
+          "typename": "TaskDataReference"
+        },
+        "condition": null,
+        "prescript": null,
+        "postscript": null,
+        "typename": "ParallelMultiInstanceTask"
+      },
+      "manual_task [child]": {
+        "name": "manual_task [child]",
+        "description": "Manual Task",
+        "manual": true,
+        "lookahead": 2,
+        "inputs": ["manual_task"],
+        "outputs": [],
+        "bpmn_id": "manual_task",
+        "bpmn_name": "Manual Task",
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "prescript": null,
+        "postscript": "the_output_var = the_input_var",
+        "typename": "ManualTask",
+        "extensions": {
+          "preScript": null,
+          "postScript": "the_output_var = the_input_var",
+          "instructionsForEndUser": "{{ the_input_var }}"
+        }
+      },
+      "Process_multiinstance_manual_task_eayacuw.EndJoin": {
+        "name": "Process_multiinstance_manual_task_eayacuw.EndJoin",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["EndEvent_1"],
+        "outputs": ["End"],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "_EndJoin"
+      },
+      "Start": {
+        "name": "Start",
+        "description": "BPMN Task",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": ["StartEvent_1"],
+        "bpmn_id": null,
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "typename": "BpmnStartTask"
+      },
+      "StartEvent_1": {
+        "name": "StartEvent_1",
+        "description": "Default Start Event",
+        "manual": false,
+        "lookahead": 2,
+        "inputs": ["Start"],
+        "outputs": ["Activity_0wg6zvw"],
+        "bpmn_id": "StartEvent_1",
+        "bpmn_name": null,
+        "lane": null,
+        "documentation": null,
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "io_specification": null,
+        "event_definition": {
+          "description": "Default",
+          "name": null,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "StartEvent",
+        "extensions": {}
+      }
+    },
+    "io_specification": null,
+    "data_objects": {},
+    "correlation_keys": {},
+    "typename": "BpmnProcessSpec"
+  },
+  "subprocess_specs": {},
+  "subprocesses": {},
+  "bpmn_events": [],
+  "typename": "BpmnWorkflow"
+}
+
