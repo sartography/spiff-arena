@@ -1,11 +1,12 @@
+import copy
+
 from flask import current_app
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.services.task_service import TaskService
 
 
 class Version5(DataMigrationBase):
@@ -29,12 +30,9 @@ class Version5(DataMigrationBase):
 
             for task in tasks:
                 task.state = "STARTED"
+                new_properties_json = copy.copy(task.properties_json)
+                new_properties_json["state"] = TaskState.STARTED
+                task.properties_json = new_properties_json
                 db.session.add(task)
         except Exception as ex:
             current_app.logger.warning(f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}")
-
-    @classmethod
-    def update_spiff_task_parents(cls, spiff_task: SpiffTask, task_service: TaskService) -> None:
-        task_service.update_task_model_with_spiff_task(spiff_task)
-        if spiff_task.parent is not None:
-            cls.update_spiff_task_parents(spiff_task.parent, task_service)

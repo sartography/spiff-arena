@@ -11,7 +11,8 @@ from spiffworkflow_backend.data_migrations.version_4 import Version4
 from spiffworkflow_backend.data_migrations.version_5 import Version5
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel, ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -176,12 +177,11 @@ class TestProcessInstanceMigrator(BaseTest):
         assert len(tasks) == 1
         assert tasks[0].state == "STARTED"
 
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
-        print("SAVEING")
+        # save the processor so it creates the human tasks
         processor.save()
-        print("RUNNING NEZXT TAKS")
         self.complete_next_manual_task(processor, execution_mode="synchronous")
-        print("RUNNING NEZXT TAKS 1")
         self.complete_next_manual_task(processor, execution_mode="synchronous")
         assert process_instance.status == ProcessInstanceStatus.complete.value
 

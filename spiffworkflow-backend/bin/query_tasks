@@ -18,11 +18,6 @@ mysql -uroot "$db_name" -e '
   where process_instance_id=(select max(id) from process_instance)
   order by td.bpmn_identifier;
 
-  select t.guid as task_guid, t.state as task_state, td.bpmn_identifier as task_id, td.typename, t.properties_json from task t
-  join task_definition td on td.id = t.task_definition_id
-  where process_instance_id=2
-  order by td.bpmn_identifier;
-
   # select bp.guid as bp_guid, bpd.bpmn_identifier as bp_identifier, bp.properties_json from bpmn_process bp
   # join bpmn_process_definition bpd on bpd.id = bp.bpmn_process_definition_id
   # join bpmn_process bpb on bpb.id = bp.direct_parent_process_id
