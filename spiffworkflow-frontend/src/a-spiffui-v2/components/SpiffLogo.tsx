@@ -5,8 +5,6 @@ import SpiffIcon from '../assets/icons/spiff-icon-cyan.svg';
  * The Spiff "S" logo and approved text
  */
 export default function SpiffLogo() {
-  const isDark = useTheme().palette.mode === 'dark';
-
   return (
     <Stack
       direction="row"
@@ -19,7 +17,7 @@ export default function SpiffLogo() {
       <SpiffIcon />
       <Typography
         sx={{
-          color: isDark ? 'primary.light' : 'primary.main',
+          color: 'primary.main',
           fontSize: 22,
           display: { xs: 'none', md: 'block' },
         }}

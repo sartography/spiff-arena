@@ -3,6 +3,10 @@ import { BarChart, PieChart, SparkLineChart } from '@mui/x-charts';
 import { useEffect, useState } from 'react';
 import Slider from 'react-slick';
 
+/**
+ * Hold the Carousel and charts that appear on the Dashboards page.
+ * Uses the Slick accordion: https://react-slick.neostack.com/docs/api
+ */
 export default function DashboardCharts({
   times,
 }: {

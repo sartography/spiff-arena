@@ -17,6 +17,10 @@ import SpiffLogo from '../../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from './MenuItem';
 import UserService from '../../../../services/UserService';
 
+/**
+ * MenuBar running along top of app.
+ * TODO: Check responsivness, and speedial may be replaced by hamburger
+ */
 export default function TopMenu({
   callback,
 }: {

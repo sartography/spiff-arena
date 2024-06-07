@@ -1,8 +1,11 @@
-import { Paper, Stack, Typography } from '@mui/material';
+import { Paper, Stack, Typography, useTheme } from '@mui/material';
 import { ReactNode } from 'react';
 import { grey } from '@mui/material/colors';
-import useSpiffTheme from '../../../hooks/useSpiffTheme';
 
+/**
+ * Appears in the TaskInfo fed to the InfoPanel.
+ * Was quickly made for demo, likely will be redesigned, don't put a lot of effort here.
+ */
 export default function TaskListItem({
   task,
   icon,
@@ -12,7 +15,7 @@ export default function TaskListItem({
   icon: ReactNode;
   styleOverride?: Record<string, any>;
 }) {
-  const { isDark } = useSpiffTheme();
+  const isDark = useTheme().palette.mode === 'dark';
   return (
     <Paper
       key={task.id}

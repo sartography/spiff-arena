@@ -1,6 +1,13 @@
 import { Paper, Stack, Typography } from '@mui/material';
 import { Subject } from 'rxjs';
 
+/**
+ * Displays the Process Group info.
+ * Note that Groups and Models may seem similar, but
+ * some of the event handling and stream info is different.
+ * Eventually might refactor to a common component, but at this time
+ * it's useful to keep them separate.
+ */
 export default function ProcessGroupCard({
   group,
   stream,

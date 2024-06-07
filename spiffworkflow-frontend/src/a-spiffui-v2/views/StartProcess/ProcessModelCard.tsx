@@ -22,6 +22,13 @@ const defaultStyle = {
   },
 };
 
+/**
+ * Displays the Process Model info.
+ * Note that Models and Groups may seem similar, but
+ * some of the event handling and stream info is different.
+ * Eventually might refactor to a common component, but at this time
+ * it's useful to keep them separate.
+ */
 export default function ProcessModelCard({
   model,
   stream,

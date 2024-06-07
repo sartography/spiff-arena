@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 /**
  * Take a list of procssInstances, and return some time computations,
  * like median to close, etc.
- * Will likely be used in charts, cards, and such.
+ * Useful data and ideal for comping out charts and such.
  */
 export default function useProcessInstanceTimes() {
   const [processInstances, setProcessInstances] = useState<

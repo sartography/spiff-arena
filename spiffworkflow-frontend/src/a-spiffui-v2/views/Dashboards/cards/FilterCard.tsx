@@ -3,7 +3,8 @@ import { grey, purple } from '@mui/material/colors';
 
 /**
  * Appears in the FilterCard area of the Dashboards view.
- * Doesn't do much other than satisfy
+ * Doesn't do much else, probably will not be used elsewhere,
+ * and will likely be redesigned, don't put in much effort here.
  */
 export default function FilterCard({
   count,

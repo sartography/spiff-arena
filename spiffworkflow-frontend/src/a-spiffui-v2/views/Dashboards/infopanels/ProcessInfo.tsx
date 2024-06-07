@@ -13,9 +13,13 @@ import {
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import useTaskCollection from '../../../hooks/useTaskCollection';
 import TaskCard from '../cards/TaskCard';
 
+/**
+ * Fed to the InfoPanel to display process info (name etc.) and a list of related Tasks.
+ * We have a bit more of an idea how this will work in practice (tasks and milestones both in the list,
+ * sorted in chronological order, etc.), but it's still a bit of a placeholder.
+ */
 export default function ProcessInfo({
   filter,
   callback,

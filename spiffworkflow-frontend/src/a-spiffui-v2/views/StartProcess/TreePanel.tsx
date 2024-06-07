@@ -14,6 +14,12 @@ export type TreeRef = {
   clearExpanded: () => void;
 };
 
+/**
+ * Display and control a MUI tree in the UI.
+ * This is a bit of a beast, as it has to manage its own state,
+ * and all of the expand/collapse is explict because it has to track
+ * with the card navigation in the parent view (via streams etc.).
+ */
 export default forwardRef(function TreePanel(
   {
     processGroups,
@@ -52,7 +58,7 @@ export default forwardRef(function TreePanel(
    * There is a lot of style wrangling on the tree items.
    * We've taken control of the expand/collapse of the tree,
    * becase we want to expand/collapse and highlight nodes that correspond to an external clickStream.
-   * (For now, that comes from the parent, TreePanel, that owns the stream).
+   * (For now, that comes from the parent, StartProcess.tsx, that owns the stream).
    * The downside is, once you take control of anything having to do with how the tree works,
    * You have to manage it all yourself.
    */
@@ -116,8 +122,6 @@ export default forwardRef(function TreePanel(
      * A given item will look like group/another_group/another_group/model
      * The parent path of each item is the path to the item, minus the last id.
      * So from a single id we can build the path hieararchy to this item.
-     * TODO: This is a candidate for a service, as the logic is repeated
-     * in the BreadCrumbs component.
      */
     const newExpanded: string[] = [];
     const split: string[] = item.id.split('/');

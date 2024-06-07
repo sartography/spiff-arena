@@ -2,6 +2,11 @@ import { Box, Paper, Stack } from '@mui/material';
 import { ReactNode } from 'react';
 import CollapseButton from './CollapseButton';
 
+/**
+ * The "Flyout" that appears when a user clicks a row in the Dashboard.
+ * You load it up with content components and let it do its thing.
+ * Can be used in other views the same way, see Dashboard.tsx for an example.
+ */
 export default function InfoPanel({
   callback,
   children,

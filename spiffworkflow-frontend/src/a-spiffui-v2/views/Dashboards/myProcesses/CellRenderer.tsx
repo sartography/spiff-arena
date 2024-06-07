@@ -1,6 +1,7 @@
 import { Chip, Stack, Typography, useTheme } from '@mui/material';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 
+/** Used by the Processes datagrid in Dashboards to render things like chips on cells, etc. */
 export default function CellRenderer({
   header,
   data,

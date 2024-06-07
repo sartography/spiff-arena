@@ -23,8 +23,11 @@ import {
 } from '../../services/LocalStorageService';
 import CollapseButton from '../../components/CollapseButton';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
-import MenuItem from '../app/topmenu/MenuItem';
 
+/**
+ * Top level layout and control container for this view, 
+ * feeds various streams, data and callbacks to children.
+ */
 export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
   const [groups, setGroups] = useState<Record<string, any>[]>([]);

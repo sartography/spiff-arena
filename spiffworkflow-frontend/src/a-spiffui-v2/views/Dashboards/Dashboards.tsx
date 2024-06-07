@@ -43,9 +43,6 @@ export default function Dashboards() {
   const [searchText, setSearchText] = useState('');
   const [panelData, setPanelData] = useState<Record<string, any>>({});
   const [dashboardAccordionOpen, setDashboardAccordionOpen] = useState(true);
-  const [selectedProcessInstance, setSelectedProcessInstance] = useState<
-    Record<string, any>
-  >({});
   const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
   const [isTaskData, setIsTaskData] = useState(false);
   const { processInstanceCollection } = useProcessInstanceCollection();
@@ -74,7 +71,6 @@ export default function Dashboards() {
     if (data !== panelData) {
       setPanelData(data);
       setInfoPanelIsOpen(true);
-      setSelectedProcessInstance(data);
     } else {
       setInfoPanelIsOpen(!infoPanelOpen);
     }

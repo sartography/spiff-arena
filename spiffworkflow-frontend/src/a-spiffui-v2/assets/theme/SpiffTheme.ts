@@ -11,6 +11,10 @@ import {
   yellow,
 } from '@mui/material/colors';
 
+/**
+ * Global palette tokens.
+ * Remember, all light mode properties have to be reflected in the dark mode object
+ */
 const customPalette = (mode: PaletteMode) => {
   return mode === 'light'
     ? {
@@ -52,6 +56,7 @@ const customPalette = (mode: PaletteMode) => {
           primary: grey[900],
           secondary: grey[800],
           disabled: grey[400],
+          subheading: grey[600],
         },
         borders: {
           primary: grey[400],
@@ -93,6 +98,12 @@ const customPalette = (mode: PaletteMode) => {
           default: '#121212',
           bluegreymedium: blueGrey[600],
         },
+        text: {
+          primary: grey[100],
+          secondary: grey[200],
+          disabled: grey[600],
+          subheading: grey[400],
+        },
         borders: {
           primary: grey[800],
           seconday: cyan[800],
@@ -104,6 +115,7 @@ const customPalette = (mode: PaletteMode) => {
       };
 };
 
+/** Global component-specific overrides */
 const customComponents = (mode: PaletteMode) => {
   // We wanted rounded buttons everywhere
   return {
@@ -129,6 +141,7 @@ const customComponents = (mode: PaletteMode) => {
   };
 };
 
+/** Base, used by all core MUI components */
 const baseTheme = {
   palette: {
     primary: {
@@ -145,6 +158,7 @@ const baseTheme = {
   },
 };
 
+/** Compose custom palette, components and base them into MUI ThemeOptions object. */
 export const createSpiffTheme = (mode: PaletteMode = 'light'): ThemeOptions => {
   return {
     ...baseTheme,

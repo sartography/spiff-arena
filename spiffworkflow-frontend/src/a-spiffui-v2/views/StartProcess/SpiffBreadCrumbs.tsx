@@ -1,8 +1,10 @@
 import { Box, Stack, Typography } from '@mui/material';
 
 /**
+ * Used to display a breadcrumb UI to facilitate card navigation.
  * Breadcrumbs are derived from the id of the currently selected group or model.
  * We also need to mask each crumb with the item's display name.
+ * Updates whenever the clickstream receives a new group or model object.
  */
 
 const crumbStyle = {

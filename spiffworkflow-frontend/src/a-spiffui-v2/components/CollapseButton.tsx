@@ -1,9 +1,9 @@
-import { Paper, Stack, useTheme } from '@mui/material';
+import { Paper, Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
-import { grey } from '@mui/material/colors';
 
+/** A button-ish widget that can be used as a collapse button for any container */
 export default function CollapseButton({
   startDirection,
   callback,
@@ -15,16 +15,13 @@ export default function CollapseButton({
 }) {
   const [toggled, setToggled] = useState(false);
 
-  const isDark = useTheme().palette.mode === 'dark';
-
   useEffect(() => {
     // Dev can reset toggle if they need
     setToggled(toggle);
   }, [toggle]);
 
   const handleClick = () => {
-    // You can run into async state update issues if you
-    // try to use the state value directly in the callback.
+    // Don't set set and then immediately try to retrieve the value
     const t = !toggled;
     setToggled(t);
     callback(t);
@@ -44,7 +41,7 @@ export default function CollapseButton({
       <Stack
         sx={{
           textAlign: 'center',
-          color: isDark ? grey[50] : grey[600],
+          color: 'text.subheading',
           height: '100%',
           justifyContent: 'center',
         }}

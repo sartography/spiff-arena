@@ -1,5 +1,9 @@
 import { Box } from '@mui/material';
 
+/**
+ * Appears when we need to display the Process Info in the InfoPanel.
+ * Was quickly made for demo, likely will be redesigned, don't put a lot of effort here.
+ */
 export default function TaskInfo({ data }: { data: Record<string, any> }) {
   return (
     <Box

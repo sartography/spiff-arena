@@ -1,10 +1,8 @@
 import { Chip, Stack, Typography, useTheme } from '@mui/material';
-import { useEffect } from 'react';
 
 /**
  * Appears when we need to display process instances in a responsive view.
- * Was quickly made for demo.
- * TODO: Talk to designer about this.
+ * Was quickly made for demo, likely will be redesigned, don't put a lot of effort here.
  */
 export default function ProcessInstanceCard({
   pi,
@@ -39,22 +37,6 @@ export default function ProcessInstanceCard({
         alignContent: 'center',
       }}
     >
-      {/* We may or may not want to keep this info in the card
-      <Stack direction="row" spacing={2} sx={{ color: 'text.secondary' }}>
-        <Typography variant="caption">{`ID: ${pi.row.id}`}</Typography>
-        <Typography variant="caption">
-          {`Initiator: ${pi.row.process_initiator_username}`}
-        </Typography>
-      </Stack>
-      <Stack direction="row" spacing={2} sx={{ color: 'text.secondary' }}>
-        <Typography variant="caption">{`Start: ${formatSecondsForDisplay(
-          pi.row.start_in_seconds
-        )}`}</Typography>
-        <Typography variant="caption">
-          {`End: ${formatSecondsForDisplay(pi.row.end_in_seconds) || '...'}`}
-        </Typography>
-      </Stack> */}
-
       <Typography variant="button" sx={{ fontWeight: 600 }}>
         ({pi.row.tasks.length}) {pi.row.process_model_display_name}
       </Typography>
@@ -82,23 +64,3 @@ export default function ProcessInstanceCard({
     </Stack>
   );
 }
-
-// "row": {
-//       "id": 3,
-//       "actions": null,
-//       "bpmn_version_control_identifier": "557595e9",
-//       "bpmn_version_control_type": "git",
-//       "bpmn_xml_file_contents_retrieval_error": null,
-//       "bpmn_xml_file_contents": null,
-//       "created_at_in_seconds": 1714613156,
-//       "end_in_seconds": null,
-//       "last_milestone_bpmn_name": null,
-//       "process_initiator_id": 1,
-//       "process_initiator_username": "admin@spiffworkflow.org",
-//       "process_model_display_name": "Call Activity",
-//       "process_model_identifier": "misc/category_number_one/call-activity",
-//       "start_in_seconds": 1714613156,
-//       "status": "error",
-//       "task_updated_at_in_seconds": null,
-//       "updated_at_in_seconds": 1714613157
-//   },

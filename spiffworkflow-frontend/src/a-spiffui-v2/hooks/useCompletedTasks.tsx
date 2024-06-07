@@ -18,10 +18,6 @@ export default function useCompletedTasks({
 
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Query function to get tasks from the backend
-   * @returns Query functions must return a value, even if it's just true
-   */
   const processResult = (result: Record<string, any>) => {
     setCompletedTasks(result.results);
     setLoading(false);
@@ -40,6 +36,7 @@ export default function useCompletedTasks({
       successCallback: processResult,
     });
 
+    // return required for TanStack
     return true;
   };
 

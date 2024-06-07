@@ -4,8 +4,7 @@ import { formatSecondsForDisplay } from '../../../utils/Utils';
 
 /**
  * Appears when we need to display process instances in a responsive view.
- * Was quickly made for demo.
- * TODO: Talk to designer about this.
+ * Was quickly made for demo. Don't put a lot of effort into this.
  */
 export default function TaskCard({ task }: { task: Record<string, any> }) {
   const { mode } = useTheme().palette;

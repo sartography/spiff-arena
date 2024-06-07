@@ -19,8 +19,8 @@ import {
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation, Link, LinkProps } from 'react-router-dom';
-// @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
-import logo from '../logo.svg';
+import { Box } from '@mui/material';
+import Logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
@@ -67,6 +67,16 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const processGroupPath = '/process-groups';
 
   const versionInfo = appVersionInfo();
+
+  const logoStyle = {
+    marginTop: '1rem',
+    marginBottom: '1rem',
+    color: 'pink',
+    svg: {
+      height: 37,
+      width: 152,
+    },
+  };
 
   useEffect(() => {
     let newActiveKey = 'unknown';
@@ -148,7 +158,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                   className="button-link"
                   onClick={handleLogout}
                 >
-                  <Logout />
+                  <Box sx={logoStyle}>
+                    <Logout />
+                  </Box>
                   &nbsp;&nbsp;Sign out
                 </Button>
               </>
@@ -232,7 +244,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           to={navItemPage}
           isActive={isActivePage(navItemPage)}
           data-qa={`extension-${slugifyString(
-            uxElement.label || uxElement.page,
+            uxElement.label || uxElement.page
           )}`}
         >
           {uxElement.label || uxElement.page}
@@ -328,7 +340,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         render={() => (
           <Header aria-label="IBM Platform Name" className="cds--g100">
             <HeaderName as={Link} to="/" prefix="" data-qa="spiffworkflow-logo">
-              <img src={logo} className="app-logo" alt="logo" />
+              <Box sx={logoStyle}>
+                <Logo style={{ ...logoStyle }} />
+              </Box>
             </HeaderName>
           </Header>
         )}
@@ -366,7 +380,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                 prefix=""
                 data-qa="spiffworkflow-logo"
               >
-                <img src={logo} className="app-logo" alt="logo" />
+                <Box sx={logoStyle}>
+                  <Logo />
+                </Box>
               </HeaderName>
               <HeaderNavigation
                 data-qa="main-nav-header"

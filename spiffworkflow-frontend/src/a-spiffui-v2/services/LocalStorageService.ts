@@ -1,6 +1,13 @@
+/**
+ * Straightforward encapsulation of typical LocalStorage functions.
+ * TODO: This should probably be async, have error handling, etc.,
+ * but for now all we need is the basic accessors.
+ */
+
 const SPIFF_FAVORITES = 'spifffavorites';
 
 const getStorageValue = (key: string) => {
+  // Some concession to error handling here.
   return localStorage.getItem(key) || '[]';
 };
 

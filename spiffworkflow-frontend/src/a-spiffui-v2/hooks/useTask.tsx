@@ -25,10 +25,10 @@ export default function useTask() {
       });
     }
 
+    // return required for Tanstack query
     return true;
   };
 
-  /** TanStack (React Query) trigger to do it's SWR state/cache thing */
   useQuery({
     queryKey: [path, taskGuid],
     queryFn: () => getProcessInstance(),

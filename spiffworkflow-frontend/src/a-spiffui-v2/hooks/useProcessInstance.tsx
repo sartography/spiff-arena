@@ -16,12 +16,6 @@ export default function useProcessInstance() {
   const [processInstanceId, setProcessInstanceId] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // TODO: ProcessInstance didn't seem to be the right type
-  // Find out and remove "any"
-  /**
-   * Query function to get process instances from the backend
-   * @returns Query functions must return a value, even if it's just true
-   */
   const processResult = (result: any[]) => {
     setProcessInstance(result);
     setLoading(false);
@@ -37,10 +31,10 @@ export default function useProcessInstance() {
       });
     }
 
+    // return required for Tanstack query
     return true;
   };
 
-  /** TanStack (React Query) trigger to do it's SWR state/cache thing */
   useQuery({
     queryKey: ['/tasks?process_instance_id=11', processInstanceId],
     queryFn: () => getProcessInstance(),

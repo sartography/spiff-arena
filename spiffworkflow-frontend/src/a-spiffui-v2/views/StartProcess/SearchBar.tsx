@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { Subject, Subscription } from 'rxjs';
 
+/**
+ * Basic container for the search features in this view.
+ */
 export default function SearchBar({
   callback,
   stream,
@@ -19,8 +22,11 @@ export default function SearchBar({
   };
 
   const handleClickStream = () => {
-    // If a card or tree node is clicked, that takes over the display.
-    // Wipe the search value.
+    /**
+     * Bespoke behavior:
+     * If a card or tree node is clicked, that takes over the display.
+     * Wipe the search value.
+     */
     setSearchText('');
   };
 

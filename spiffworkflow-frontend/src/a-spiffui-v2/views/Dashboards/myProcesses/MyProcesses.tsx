@@ -10,6 +10,7 @@ import ProcessInstanceCard from '../cards/ProcessInstanceCard';
 import useTaskCollection from '../../../hooks/useTaskCollection';
 import CellRenderer from './CellRenderer';
 
+/** Show the user a list of Processes, with the ability to filter them. */
 export default function MyProcesses({
   filter,
   callback,
@@ -19,8 +20,6 @@ export default function MyProcesses({
   callback: (data: Record<string, any>) => void;
   pis: Record<string, any>;
 }) {
-  // TODO: Type of this doesn't seem to be ProcessInstance
-  // Find out and remove "any""
   const [processInstanceColumns, setProcessInstanceColumns] = useState<
     GridColDef[]
   >([]);
@@ -41,6 +40,7 @@ export default function MyProcesses({
   useEffect(() => {
     const filtered = filter
       ? mappedRows.filter((instance: any) => {
+          /** Not really sure what to search at this time, so use these fields to display something */
           const searchFields = [
             'process_model_display_name',
             'last_milestone_bpmn_name',
@@ -57,8 +57,10 @@ export default function MyProcesses({
         })
       : mappedRows || [];
 
-    // If you don't want to sort by task count, you can remove this block
-    // Also note that spreading the filtered array is necessary to avoid mutating state
+    /**
+     * If you don't want to sort by task count, you can remove this block
+     * Also note that spreading the filtered array is necessary to avoid mutating state.
+     */
     const sorted = [...filtered].sort(
       (a: Record<string, any>, b: Record<string, any>) => {
         return b.taskCount - a.taskCount;
@@ -91,7 +93,8 @@ export default function MyProcesses({
         })
       );
 
-      /** Prepend the "Lead" field, which is technically a card.
+      /**
+       * Prepend the "Lead" field, which is technically a card.
        * It satisfies the design requirement.
        */
       const columns = [

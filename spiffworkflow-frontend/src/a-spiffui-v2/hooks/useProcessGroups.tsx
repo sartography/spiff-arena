@@ -29,6 +29,7 @@ export default function useProcessGroups({
       successCallback: processResult,
     });
 
+    // return required for Tanstack query
     return true;
   };
 

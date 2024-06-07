@@ -17,8 +17,6 @@ export default function useProcessInstanceCollection() {
   type ApiCollectionType = 'all' | 'for-me';
   const [apiCollectionType, setApiCollectionType] =
     useState<ApiCollectionType>('all');
-  // TODO: ProcessInstance type didn't seem right
-  // Find out and remove "any"
   const [processInstanceCollection, setProcessInstanceCollection] = useState<
     Record<string, any>
   >({});
@@ -30,12 +28,6 @@ export default function useProcessInstanceCollection() {
     order_by: [],
   };
 
-  // TODO: ProcessInstance didn't seem to be the right type
-  // Find out and remove "any"
-  /**
-   * Query function to get process instances from the backend
-   * @returns Query functions must return a value, even if it's just true
-   */
   const processResult = (result: any[]) => {
     setProcessInstanceCollection(result);
     setLoading(false);
@@ -55,6 +47,7 @@ export default function useProcessInstanceCollection() {
       },
     });
 
+    // return required for Tanstack query
     return true;
   };
 
