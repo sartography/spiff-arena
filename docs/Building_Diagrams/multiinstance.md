@@ -99,6 +99,10 @@ This templating syntax iterates over the `composers` array, displaying each comp
 This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks.
 By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
 
+```{admonition} Note
+If a data object is to be used within a multi-instance subprocess, ensure that it is created within the subprocess itself. This practice prevents scope and reference issues that can lead to data inconsistencies and errors during the execution of multiple instances. This ensures that each instance of the subprocess has its own unique and correct reference to the data object.
+```
+
 ### Loops
 
 Standard loops in Business Process Model and Notation (BPMN) are a fundamental mechanism to model repetitive tasks within a workflow. These loops allow for the execution of a specific task or sequence of tasks repeatedly until a predefined condition is met, mirroring traditional loop constructs found in programming languages. 
