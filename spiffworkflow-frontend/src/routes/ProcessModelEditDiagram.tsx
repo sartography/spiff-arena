@@ -83,7 +83,7 @@ export default function ProcessModelEditDiagram() {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [showMessageEditor, setShowMessageEditor] = useState(false);
   const [messageId, setMessageId] = useState<string>('');
-  const [messageProperties, setMessageProperties] = useState<any>([]);
+  const [correlationProperties, setCorrelationProperties] = useState<any>([]);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
@@ -1062,7 +1062,7 @@ export default function ProcessModelEditDiagram() {
   const onLaunchMessageEditor = (event: any) => {
     setMessageEvent(event);
     setMessageId(event.value.messageId);
-    setMessageProperties(event.value.correlation_properties);
+    setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
   };
   const handleMessageEditorClose = (messageId: string, arg1: any) => {
@@ -1088,11 +1088,11 @@ export default function ProcessModelEditDiagram() {
         <div data-color-mode="light">
           <MessageEditor
             modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
-              modifiedProcessModelId
+              modifiedProcessModelId,
             )}
             height={500}
             messageId={messageId}
-            messageProperties={messageProperties}
+            correlationProperties={correlationProperties}
             messageEvent={messageEvent}
           />
         </div>

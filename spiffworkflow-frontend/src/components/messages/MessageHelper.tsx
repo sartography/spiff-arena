@@ -9,7 +9,7 @@ const arrayCompare = (array1: string[], array2: string[]) => {
 
 export const getPropertiesForMessage = (
   messageId: string,
-  processGroup: ProcessGroup
+  processGroup: ProcessGroup,
 ) => {
   const message = (processGroup.messages || {})[messageId];
   if (message) {
@@ -20,11 +20,11 @@ export const getPropertiesForMessage = (
 
 export const convertCorrelationPropertiesToRJSF = (
   messageId: string,
-  processGroup: ProcessGroup
+  processGroup: ProcessGroup,
 ) => {
   const correlationProperties = getPropertiesForMessage(
     messageId,
-    processGroup
+    processGroup,
   );
   const correlationPropertiesToUse = correlationProperties || {};
   const returnArray: any = [];
@@ -38,4 +38,25 @@ export const convertCorrelationPropertiesToRJSF = (
     });
   });
   return returnArray;
+};
+
+export const mergeCorrelationProperties = (
+  xmlProperties: any,
+  apiProperties: any,
+) => {
+  const mergedProperties = xmlProperties ? [...xmlProperties] : [];
+
+  apiProperties.forEach((apiProperty: any) => {
+    const existingProperty = mergedProperties.find(
+      (prop) => prop.id === apiProperty.id,
+    );
+
+    if (existingProperty) {
+      existingProperty.retrievalExpression = apiProperty.retrievalExpression;
+    } else {
+      mergedProperties.push(apiProperty);
+    }
+  });
+
+  return mergedProperties;
 };

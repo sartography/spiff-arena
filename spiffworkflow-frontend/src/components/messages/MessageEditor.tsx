@@ -9,40 +9,43 @@ import {
 import {
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
-  mergeCorrelationProperties,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
-import { convertCorrelationPropertiesToRJSF } from './MessageHelper';
+import {
+  convertCorrelationPropertiesToRJSF,
+  mergeCorrelationProperties,
+} from './MessageHelper';
 import { Notification } from '../Notification';
 
 type OwnProps = {
-  height: number;
   modifiedProcessGroupIdentifier: string;
   messageId: string;
   messageEvent: any;
-  messageProperties: any;
+  correlationProperties: any;
 };
 
 export function MessageEditor({
-  height,
   modifiedProcessGroupIdentifier,
   messageId,
   messageEvent,
-  messageProperties
+  correlationProperties,
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
-  const [curentFormData, setCurrentFormData] = useState<any>(null);
+  const [currentFormData, setCurrentFormData] = useState<any>(null);
   const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
     useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     const setInitialFormData = (newProcessGroup: ProcessGroup) => {
-      let correlationProperties = convertCorrelationPropertiesToRJSF(
+      let newCorrelationProperties = convertCorrelationPropertiesToRJSF(
         messageId,
         newProcessGroup,
       );
-      correlationProperties = mergeCorrelationProperties(messageProperties, correlationProperties);
+      newCorrelationProperties = mergeCorrelationProperties(
+        correlationProperties,
+        newCorrelationProperties,
+      );
 
       const jsonSchema =
         (newProcessGroup.messages || {})[messageId]?.schema || {};
@@ -51,8 +54,7 @@ export function MessageEditor({
           modifiedProcessGroupIdentifier,
         ),
         messageId: messageId,
-        correlation_properties: correlationProperties,
-        // correlation_properties: [],
+        correlation_properties: newCorrelationProperties,
         schema: JSON.stringify(jsonSchema, null, 2),
       };
       setCurrentFormData(newFormData);
@@ -86,21 +88,21 @@ export function MessageEditor({
     currentMessagesForId: MessageDefinition,
     formData: any,
   ) => {
-    const correlationProperties: CorrelationProperties = {
+    const newCorrelationProperties: CorrelationProperties = {
       ...currentMessagesForId.correlation_properties,
     };
     (formData.correlation_properties || []).forEach((formProp: any) => {
-      if (!(formProp.id in correlationProperties)) {
-        correlationProperties[formProp.id] = {
+      if (!(formProp.id in newCorrelationProperties)) {
+        newCorrelationProperties[formProp.id] = {
           retrieval_expressions: [],
         };
       }
       if (
-        !correlationProperties[formProp.id].retrieval_expressions.includes(
+        !newCorrelationProperties[formProp.id].retrieval_expressions.includes(
           formProp.retrievalExpression,
         )
       ) {
-        correlationProperties[formProp.id].retrieval_expressions.push(
+        newCorrelationProperties[formProp.id].retrieval_expressions.push(
           formProp.retrievalExpression,
         );
       }
@@ -114,11 +116,11 @@ export function MessageEditor({
           },
         );
         if (!foundProp) {
-          delete correlationProperties[propId];
+          delete newCorrelationProperties[propId];
         }
       },
     );
-    return correlationProperties;
+    return newCorrelationProperties;
   };
 
   const updateProcessGroupWithMessages = (formObject: RJSFFormObject) => {
@@ -140,12 +142,12 @@ export function MessageEditor({
       (processGroupForUpdate.messages || {})[oldMessageId] || {};
     const updatedMessagesForId = { ...currentMessagesForId };
 
-    const correlationProperties = updateCorrelationPropertiesOnProcessGroup(
+    const newCorrelationProperties = updateCorrelationPropertiesOnProcessGroup(
       currentMessagesForId,
       formData,
     );
 
-    updatedMessagesForId.correlation_properties = correlationProperties;
+    updatedMessagesForId.correlation_properties = newCorrelationProperties;
 
     try {
       updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
@@ -187,7 +189,7 @@ export function MessageEditor({
       messageId: {
         type: 'string',
         title: 'Message Name',
-        pattern: '^[\\w-]+$',
+        pattern: '^[\\w -]+$',
         validationErrorMessage:
           'must contain only alphanumeric characters, underscores, or hyphens',
         description:
@@ -248,7 +250,7 @@ export function MessageEditor({
     setCurrentFormData(formObject.formData);
   };
 
-  if (processGroup && currentMessageId && curentFormData) {
+  if (processGroup && currentMessageId && currentFormData) {
     return (
       <>
         {displaySaveMessageMessage ? (
@@ -265,7 +267,7 @@ export function MessageEditor({
           id={currentMessageId}
           schema={schema}
           uiSchema={uischema}
-          formData={curentFormData}
+          formData={currentFormData}
           onSubmit={updateProcessGroupWithMessages}
           submitButtonText="Save"
           onChange={updateFormData}

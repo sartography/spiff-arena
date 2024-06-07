@@ -315,19 +315,3 @@ export const renderElementsForArray = (elements: ElementForArray[]) => {
   ));
 };
 
-
-export const mergeCorrelationProperties = (xmlProperties: any, apiProperties: any) => {
-  const mergedProperties = (xmlProperties) ? [...xmlProperties] : [];
-
-  apiProperties.forEach((apiProperty: any) => {
-    const existingProperty = mergedProperties.find(prop => prop.id === apiProperty.id);
-
-    if (existingProperty) {
-      existingProperty.retrievalExpression = apiProperty.retrievalExpression;
-    } else {
-      mergedProperties.push(apiProperty);
-    }
-  });
-
-  return mergedProperties;
-}
