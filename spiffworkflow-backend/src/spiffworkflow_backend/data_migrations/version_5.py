@@ -1,7 +1,7 @@
-from spiffworkflow_backend.models.db import db
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
