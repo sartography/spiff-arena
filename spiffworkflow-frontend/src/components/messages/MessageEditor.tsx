@@ -250,7 +250,7 @@ export function MessageEditor({
     setCurrentFormData(formObject.formData);
   };
 
-  if (processGroup && currentMessageId && currentFormData) {
+  if (processGroup && currentFormData) {
     return (
       <>
         {displaySaveMessageMessage ? (
@@ -264,7 +264,7 @@ export function MessageEditor({
           </Notification>
         ) : null}
         <CustomForm
-          id={currentMessageId}
+          id={currentMessageId || ''}
           schema={schema}
           uiSchema={uischema}
           formData={currentFormData}
