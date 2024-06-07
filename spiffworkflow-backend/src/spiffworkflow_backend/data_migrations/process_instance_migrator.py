@@ -6,6 +6,7 @@ from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrat
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.data_migrations.version_3 import Version3
 from spiffworkflow_backend.data_migrations.version_4 import Version4
+from spiffworkflow_backend.data_migrations.version_5 import Version5
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
@@ -55,8 +56,11 @@ class ProcessInstanceMigrator:
         elif process_instance.spiff_serializer_version < Version3.version():
             cls.run_version(Version3, process_instance)
             cls.run_version(Version4, process_instance)
-        else:
+        elif process_instance.spiff_serializer_version < Version4.version():
             cls.run_version(Version4, process_instance)
+            cls.run_version(Version5, process_instance)
+        else:
+            cls.run_version(Version5, process_instance)
 
     @classmethod
     @benchmark_log_func
