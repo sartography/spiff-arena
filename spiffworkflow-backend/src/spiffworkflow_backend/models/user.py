@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import secrets
 import string
 import time
 from dataclasses import dataclass
@@ -14,7 +15,6 @@ from sqlalchemy.orm import relationship
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
-import secrets
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
