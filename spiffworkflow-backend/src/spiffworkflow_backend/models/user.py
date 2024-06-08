@@ -14,6 +14,7 @@ from sqlalchemy.orm import relationship
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
+import secrets
 
 SPIFF_NO_AUTH_USER = "spiff_no_auth_guest_user"
 SPIFF_GUEST_USER = "spiff_guest_user"
@@ -133,7 +134,7 @@ class UserModel(SpiffworkflowBaseDBModel):
         ]
         fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
         # this is not for cryptographic purposes
-        adjective = random.choice(adjectives)  # noqa: S311
-        animal = random.choice(animals)  # noqa: S311
+        adjective = secrets.choice(adjectives)  # noqa: S311
+        animal = secrets.choice(animals)  # noqa: S311
         username = f"{prefix}{adjective}{animal}{fuzz}"
         return username
