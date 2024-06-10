@@ -71,13 +71,15 @@
     }
   },
   "scripts": {
-    "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
     "build": "vite build",
-    "serve": "vite preview",
-    "test": "vitest run --coverage",
+    "eslint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx",
+    "eslint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "format": "prettier --write src/**/*.[tj]s{,x}",
-    "lint": "./node_modules/.bin/eslint src",
-    "lint:fix": "./node_modules/.bin/eslint --fix src"
+    "lint": "npm run eslint && npm run typecheck",
+    "serve": "vite preview",
+    "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
+    "test": "vitest run --coverage",
+    "typecheck": "./node_modules/.bin/tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
@@ -113,7 +115,6 @@
     "cypress-slow-down": "^1.3.1",
     "cypress-vite": "^1.5.0",
     "eslint": "^8.56.0",
-    "eslint_d": "^12.2.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-cypress": "^2.15.1",
@@ -124,8 +125,10 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-sonarjs": "^1.0.3",
     "eslint-plugin-unused-imports": "^3.2.0",
+    "eslint_d": "^12.2.0",
     "inherits-browser": "^0.0.1",
     "jsdom": "^24.0.0",
+    "nice-select2": "^2.1.0",
     "prettier": "^3.3.0",
     "safe-regex": "^2.1.1",
     "tiny-svg": "^2.2.3",

@@ -69,6 +69,8 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
+        if self.bpmn_id not in my_task.data:
+            return
         model: JSONDataStoreModel | None = None
         location = self.data_store_location_for_task(JSONDataStoreModel, my_task, self.bpmn_id)
 
@@ -127,6 +129,8 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
+        if self.bpmn_id not in my_task.data:
+            return
         location = self._data_store_location_for_task(my_task, self.bpmn_id)
         if location is None:
             raise DataStoreWriteError(f"Unable to write to data store '{self.bpmn_id}' using location '{location}'.")

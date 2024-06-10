@@ -43,6 +43,8 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
 
     def set(self, my_task: SpiffTask) -> None:
         """set."""
+        if self.bpmn_id not in my_task.data:
+            return
         typeahead_data_by_category = my_task.data[self.bpmn_id]
         for category, items in typeahead_data_by_category.items():
             db.session.query(TypeaheadModel).filter_by(category=category).delete()

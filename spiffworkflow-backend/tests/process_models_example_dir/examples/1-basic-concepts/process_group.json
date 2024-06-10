@@ -1,0 +1,5 @@
+{
+  "description": "These process models are the basic building blocks of our system.  Understand these individually, then put them together anyway you can imagine.",
+  "display_name": "1. Basics",
+  "messages": {"basic_message": { "schema": {} } }
+}

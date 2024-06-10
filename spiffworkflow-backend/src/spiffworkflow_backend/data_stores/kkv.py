@@ -114,6 +114,8 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         my_task.data[self.bpmn_id] = getter
 
     def set(self, my_task: SpiffTask) -> None:
+        if self.bpmn_id not in my_task.data:
+            return
         location = self.data_store_location_for_task(KKVDataStoreModel, my_task, self.bpmn_id)
         store_model: KKVDataStoreModel | None = None
 
