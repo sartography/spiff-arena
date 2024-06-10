@@ -1788,7 +1788,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         return <MessageInstanceList processInstanceId={processInstance.id} />;
       }
       return null;
-
     };
 
     return (
@@ -1801,9 +1800,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <Tab>Tasks</Tab>
         </TabList>
         <TabPanels>
-          <TabPanel>
-            {selectedTabIndex === 0 ? diagramArea(processModelId) : null}
-          </TabPanel>
+          <TabPanel>{selectedTabIndex === 0 ? diagramArea() : null}</TabPanel>
           <TabPanel>
             {selectedTabIndex === 1 ? (
               <ProcessInstanceLogList

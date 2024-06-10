@@ -242,7 +242,7 @@ export interface ReferenceCache {
 
 export interface MessageInstance {
   correlation_keys: any;
-  counterpart_id: int;
+  counterpart_id: number;
   created_at_in_seconds: number;
   failure_cause: string;
   id: number;

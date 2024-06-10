@@ -1,5 +1,3 @@
-"""Process Model."""
-
 from flask.app import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.models.message_model import MessageModel

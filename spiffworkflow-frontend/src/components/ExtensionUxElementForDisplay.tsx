@@ -1,3 +1,4 @@
+import { ReactElement } from 'react';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 
 type OwnProps = {
@@ -30,10 +31,12 @@ export function ExtensionUxElementMap({
   return mainElement();
 }
 
-export default function ExtensionUxElementForDisplay(args: OwnProps) {
+export default function ExtensionUxElementForDisplay(
+  args: OwnProps,
+): ReactElement | null {
   const result = ExtensionUxElementMap(args);
   if (result === null) {
     return null;
   }
-  return result;
+  return <>{result}</>;
 }

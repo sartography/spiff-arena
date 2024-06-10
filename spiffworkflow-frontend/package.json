@@ -75,8 +75,10 @@
     "serve": "vite preview",
     "test": "vitest run --coverage",
     "format": "prettier --write src/**/*.[tj]s{,x}",
-    "lint": "./node_modules/.bin/eslint src",
-    "lint:fix": "./node_modules/.bin/eslint --fix src"
+    "eslint": "./node_modules/.bin/eslint src",
+    "lint": "npm run eslint && npm run typecheck",
+    "lint:fix": "./node_modules/.bin/eslint --fix src",
+    "typecheck": "./node_modules/.bin/tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
