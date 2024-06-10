@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import secrets
 import string
 import time
 from dataclasses import dataclass
@@ -133,7 +134,7 @@ class UserModel(SpiffworkflowBaseDBModel):
         ]
         fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
         # this is not for cryptographic purposes
-        adjective = random.choice(adjectives)  # noqa: S311
-        animal = random.choice(animals)  # noqa: S311
+        adjective = secrets.choice(adjectives)  # noqa: S311
+        animal = secrets.choice(animals)  # noqa: S311
         username = f"{prefix}{adjective}{animal}{fuzz}"
         return username
