@@ -562,13 +562,13 @@ export default function ReactDiagramEditor({
       alreadyImportedXmlRef.current = true;
     }
 
-    function dmnTextHandler(text: str) {
+    function dmnTextHandler(text: string) {
       const decisionId = `decision_${makeid(7)}`;
       const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
       setDiagramXMLString(newText);
     }
 
-    function bpmnTextHandler(text: str) {
+    function bpmnTextHandler(text: string) {
       const processId = `Process_${makeid(7)}`;
       const newText = text.replaceAll('{{PROCESS_ID}}', processId);
       setDiagramXMLString(newText);
@@ -576,7 +576,7 @@ export default function ReactDiagramEditor({
 
     function fetchDiagramFromURL(
       urlToUse: any,
-      textHandler?: (text: str) => void,
+      textHandler?: (text: string) => void,
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
@@ -616,7 +616,7 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler = null;
+      let textHandler = undefined;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;

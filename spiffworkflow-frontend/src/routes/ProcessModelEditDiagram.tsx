@@ -1065,7 +1065,7 @@ export default function ProcessModelEditDiagram() {
     setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
   };
-  const handleMessageEditorClose = (messageId: string, arg1: any) => {
+  const handleMessageEditorClose = () => {
     setShowMessageEditor(false);
     onMessagesRequested(messageEvent);
   };
@@ -1090,7 +1090,6 @@ export default function ProcessModelEditDiagram() {
             modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
               modifiedProcessModelId,
             )}
-            height={500}
             messageId={messageId}
             correlationProperties={correlationProperties}
             messageEvent={messageEvent}
@@ -1205,7 +1204,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchJsonSchemaEditor = (
-    element: any,
+    _element: any,
     fileName: string,
     eventBus: any,
   ) => {
