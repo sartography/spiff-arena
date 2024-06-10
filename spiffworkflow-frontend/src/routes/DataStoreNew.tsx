@@ -12,7 +12,7 @@ export default function DataStoreNew() {
     id: '',
     name: '',
     type: '',
-    schema: '',
+    schema: '{}',
     description: '',
   });
   useEffect(() => {

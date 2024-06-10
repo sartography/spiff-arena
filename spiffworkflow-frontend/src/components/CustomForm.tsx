@@ -264,6 +264,22 @@ export default function CustomForm({
     }
   };
 
+  const checkJsonField = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    _jsonSchema: any,
+    _uiSchemaPassedIn?: any
+  ) => {
+    if (propertyKey in formDataToCheck) {
+      try {
+        JSON.parse(formDataToCheck[propertyKey]);
+      } catch (e) {
+        errors[propertyKey].addError(`has invalid JSON: ${e}`);
+      }
+    }
+  };
+
   const checkNumericRange = (
     formDataToCheck: any,
     propertyKey: string,
@@ -405,6 +421,19 @@ export default function CustomForm({
             errors,
             jsonSchemaToUse,
             currentUiSchema,
+          );
+        }
+        if (
+          currentUiSchema &&
+          'ui:options' in currentUiSchema &&
+          currentUiSchema['ui:options']['validateJson'] === true
+        ) {
+          checkJsonField(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse,
+            currentUiSchema
           );
         }
 

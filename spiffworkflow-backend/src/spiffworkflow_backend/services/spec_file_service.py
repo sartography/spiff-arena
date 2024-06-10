@@ -9,7 +9,6 @@ from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
-from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -255,7 +254,6 @@ class SpecFileService(FileSystemService):
     def update_caches_except_process(ref: Reference) -> None:
         SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
-        SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
     def clear_caches_for_item(
@@ -336,28 +334,3 @@ class SpecFileService(FileSystemService):
                 current_triggerable_processes.remove(message_triggerable_process_model)
         for trigger_pm in current_triggerable_processes:
             db.session.delete(trigger_pm)
-
-    @staticmethod
-    def update_correlation_cache(ref: Reference) -> None:
-        for name in ref.correlations.keys():
-            correlation_property_retrieval_expressions = ref.correlations[name]["retrieval_expressions"]
-
-            for cpre in correlation_property_retrieval_expressions:
-                message_name = ref.messages.get(cpre["messageRef"], None)
-                retrieval_expression = cpre["expression"]
-                process_model_id = ref.relative_location
-
-                existing = CorrelationPropertyCache.query.filter_by(
-                    name=name,
-                    message_name=message_name,
-                    process_model_id=process_model_id,
-                    retrieval_expression=retrieval_expression,
-                ).first()
-                if existing is None:
-                    new_cache = CorrelationPropertyCache(
-                        name=name,
-                        message_name=message_name,
-                        process_model_id=process_model_id,
-                        retrieval_expression=retrieval_expression,
-                    )
-                    db.session.add(new_cache)

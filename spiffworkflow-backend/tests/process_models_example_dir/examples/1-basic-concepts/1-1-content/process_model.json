@@ -1,0 +1,9 @@
+{
+    "description": "This process demonstrates how you can display content to the user.",
+    "display_name": "Displaying Content",
+    "exception_notification_addresses": [],
+    "fault_or_suspend_on_exception": "fault",
+    "metadata_extraction_paths": null,
+    "primary_file_name": "show-content.bpmn",
+    "primary_process_id": "Process_puxk39c"
+}

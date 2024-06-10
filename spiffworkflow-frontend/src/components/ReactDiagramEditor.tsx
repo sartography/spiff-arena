@@ -70,60 +70,64 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 type OwnProps = {
   processModelId: string;
   diagramType: string;
-  tasks?: Task[] | null;
-  saveDiagram?: (..._args: any[]) => any;
-  onDeleteFile?: (..._args: any[]) => any;
-  isPrimaryFile?: boolean;
-  onSetPrimaryFile?: (..._args: any[]) => any;
-  diagramXML?: string | null;
-  fileName?: string;
-  onLaunchScriptEditor?: (..._args: any[]) => any;
-  onLaunchMarkdownEditor?: (..._args: any[]) => any;
-  onLaunchBpmnEditor?: (..._args: any[]) => any;
-  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
-  onLaunchDmnEditor?: (..._args: any[]) => any;
-  onElementClick?: (..._args: any[]) => any;
-  onServiceTasksRequested?: (..._args: any[]) => any;
-  onDataStoresRequested?: (..._args: any[]) => any;
-  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
-  onDmnFilesRequested?: (..._args: any[]) => any;
-  onSearchProcessModels?: (..._args: any[]) => any;
-  onElementsChanged?: (..._args: any[]) => any;
-  url?: string;
-  callers?: ProcessReference[];
   activeUserElement?: React.ReactElement;
+  callers?: ProcessReference[];
+  diagramXML?: string | null;
   disableSaveButton?: boolean;
+  fileName?: string;
+  isPrimaryFile?: boolean;
+  onDataStoresRequested?: (..._args: any[]) => any;
+  onDeleteFile?: (..._args: any[]) => any;
+  onDmnFilesRequested?: (..._args: any[]) => any;
+  onElementClick?: (..._args: any[]) => any;
+  onElementsChanged?: (..._args: any[]) => any;
+  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
+  onLaunchBpmnEditor?: (..._args: any[]) => any;
+  onLaunchDmnEditor?: (..._args: any[]) => any;
+  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
+  onLaunchMarkdownEditor?: (..._args: any[]) => any;
+  onLaunchScriptEditor?: (..._args: any[]) => any;
+  onLaunchMessageEditor?: (..._args: any[]) => any;
+  onMessagesRequested?: (..._args: any[]) => any;
+  onSearchProcessModels?: (..._args: any[]) => any;
+  onServiceTasksRequested?: (..._args: any[]) => any;
+  onSetPrimaryFile?: (..._args: any[]) => any;
+  saveDiagram?: (..._args: any[]) => any;
+  tasks?: Task[] | null;
+  url?: string;
 };
 
 const FitViewport = 'fit-viewport';
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
-  processModelId,
-  diagramType,
-  tasks,
-  saveDiagram,
-  onDeleteFile,
-  isPrimaryFile,
-  onSetPrimaryFile,
-  diagramXML,
-  fileName,
-  onLaunchScriptEditor,
-  onLaunchMarkdownEditor,
-  onLaunchBpmnEditor,
-  onLaunchJsonSchemaEditor,
-  onLaunchDmnEditor,
-  onElementClick,
-  onServiceTasksRequested,
-  onDataStoresRequested,
-  onJsonSchemaFilesRequested,
-  onDmnFilesRequested,
-  onSearchProcessModels,
-  onElementsChanged,
-  url,
-  callers,
   activeUserElement,
+  callers,
+  diagramType,
+  diagramXML,
   disableSaveButton,
+  fileName,
+  isPrimaryFile,
+  onDataStoresRequested,
+  onDeleteFile,
+  onDmnFilesRequested,
+  onElementClick,
+  onElementsChanged,
+  onJsonSchemaFilesRequested,
+  onLaunchBpmnEditor,
+  onLaunchDmnEditor,
+  onLaunchJsonSchemaEditor,
+  onLaunchMarkdownEditor,
+  onLaunchScriptEditor,
+  onLaunchMessageEditor,
+  onMessagesRequested,
+  onSearchProcessModels,
+  onServiceTasksRequested,
+  onSetPrimaryFile,
+  processModelId,
+  saveDiagram,
+  tasks,
+  url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -409,6 +413,12 @@ export default function ReactDiagramEditor({
       }
     });
 
+    diagramModeler.on('spiff.messages.requested', (event: any) => {
+      if (onMessagesRequested) {
+        onMessagesRequested(event);
+      }
+    });
+
     diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
@@ -418,21 +428,29 @@ export default function ReactDiagramEditor({
         onSearchProcessModels(event.value, event.eventBus, event.element);
       }
     });
+
+    diagramModeler.on('spiff.message.edit', (event: any) => {
+      if (onLaunchMessageEditor) {
+        onLaunchMessageEditor(event);
+      }
+    });
   }, [
     diagramModelerState,
     diagramType,
-    onLaunchScriptEditor,
-    onLaunchMarkdownEditor,
+    onDataStoresRequested,
+    onDmnFilesRequested,
+    onElementClick,
+    onElementsChanged,
+    onJsonSchemaFilesRequested,
     onLaunchBpmnEditor,
     onLaunchDmnEditor,
     onLaunchJsonSchemaEditor,
-    onElementClick,
-    onServiceTasksRequested,
-    onDataStoresRequested,
-    onJsonSchemaFilesRequested,
-    onDmnFilesRequested,
+    onLaunchMarkdownEditor,
+    onLaunchScriptEditor,
+    onLaunchMessageEditor,
+    onMessagesRequested,
     onSearchProcessModels,
-    onElementsChanged,
+    onServiceTasksRequested,
   ]);
 
   useEffect(() => {
@@ -549,13 +567,13 @@ export default function ReactDiagramEditor({
       alreadyImportedXmlRef.current = true;
     }
 
-    function dmnTextHandler(text: str) {
+    function dmnTextHandler(text: string) {
       const decisionId = `decision_${makeid(7)}`;
       const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
       setDiagramXMLString(newText);
     }
 
-    function bpmnTextHandler(text: str) {
+    function bpmnTextHandler(text: string) {
       const processId = `Process_${makeid(7)}`;
       const newText = text.replaceAll('{{PROCESS_ID}}', processId);
       setDiagramXMLString(newText);
@@ -563,7 +581,7 @@ export default function ReactDiagramEditor({
 
     function fetchDiagramFromURL(
       urlToUse: any,
-      textHandler?: (text: str) => void,
+      textHandler?: (text: string) => void,
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
@@ -603,7 +621,7 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler = null;
+      let textHandler = undefined;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;

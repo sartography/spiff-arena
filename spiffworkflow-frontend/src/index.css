@@ -276,6 +276,10 @@ h1.with-icons {
   margin-top: 5px;
 }
 
+h3.with-icons {
+  margin-top: 12px;
+}
+
 .with-icons {
   margin-top: 10px;
 }
@@ -1004,9 +1008,18 @@ div.onboarding {
   text-align: right; /* Aligns text to the right within the container */
 }
 
+div.retrievalExpressionsForm {
+  border: 1px solid #999;
+  border-radius: 15px;
+  background: #ddd;
+  padding: 20px;
+  margin: 20px;
+}
+
 .task-info-modal-accordion .cds--accordion__content {
   padding-right: 1rem;
 }
+
 .task-instance-modal-row-item {
   height: 48px;
   line-height: 48px;
