@@ -38,5 +38,6 @@ export default function ExtensionUxElementForDisplay(
   if (result === null) {
     return null;
   }
+  // eslint-disable-next-line react/jsx-no-useless-fragment
   return <>{result}</>;
 }

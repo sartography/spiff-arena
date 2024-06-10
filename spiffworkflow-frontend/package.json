@@ -71,14 +71,14 @@
     }
   },
   "scripts": {
-    "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
     "build": "vite build",
-    "serve": "vite preview",
-    "test": "vitest run --coverage",
+    "eslint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx",
+    "eslint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "format": "prettier --write src/**/*.[tj]s{,x}",
-    "eslint": "./node_modules/.bin/eslint src",
     "lint": "npm run eslint && npm run typecheck",
-    "lint:fix": "./node_modules/.bin/eslint --fix src",
+    "serve": "vite preview",
+    "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
+    "test": "vitest run --coverage",
     "typecheck": "./node_modules/.bin/tsc --noEmit"
   },
   "eslintConfig": {

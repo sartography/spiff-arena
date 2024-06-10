@@ -29,7 +29,7 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
     let modifiedProcessIdentifierForPathParam = '';
     if (processGroupId) {
       modifiedProcessIdentifierForPathParam = `/${modifyProcessIdentifierForPathParam(
-        processGroupId
+        processGroupId,
       )}`;
     }
 
@@ -64,7 +64,7 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
           <td>
             <a
               href={`/process-groups/${modifyProcessIdentifierForPathParam(
-                row.relative_location
+                row.relative_location,
               )}`}
             >
               {row.relative_location}

@@ -314,4 +314,3 @@ export const renderElementsForArray = (elements: ElementForArray[]) => {
     <div key={element.key}>{element.component}</div>
   ));
 };
-
