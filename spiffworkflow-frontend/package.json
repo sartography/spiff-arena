@@ -73,9 +73,9 @@
   "scripts": {
     "build": "vite build",
     "eslint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx",
-    "eslint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "format": "prettier --write src/**/*.[tj]s{,x}",
     "lint": "npm run eslint && npm run typecheck",
+    "lint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "serve": "vite preview",
     "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
     "test": "vitest run --coverage",
