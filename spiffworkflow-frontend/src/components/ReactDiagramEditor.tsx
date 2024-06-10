@@ -6,6 +6,7 @@ import {
   BpmnPropertiesProviderModule,
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
 } from 'bpmn-js-properties-panel';
+import CliModule  from 'bpmn-js-cli';
 
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 import DmnModeler from 'dmn-js/lib/Modeler';
@@ -243,7 +244,11 @@ export default function ReactDiagramEditor({
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
           ZoomScrollModule,
+          CliModule,
         ],
+        cli: {
+          bindTo: 'cli'
+        },
         moddleExtensions: {
           spiffworkflow: spiffModdleExtension,
         },

@@ -35,6 +35,7 @@
     "autoprefixer": "^10.4.13",
     "axios": "^1.7.2",
     "bpmn-js": "^13.2.2",
+    "bpmn-js-cli": "^2.4.0",
     "bpmn-js-properties-panel": "^1.22.0",
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^0.6.0",
