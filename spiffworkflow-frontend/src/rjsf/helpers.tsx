@@ -3,7 +3,7 @@ export const getCommonAttributes = (
   label: string,
   schema: any,
   uiSchema: any,
-  rawErrors: any
+  rawErrors: any,
 ) => {
   let labelToUse = label;
   if (uiSchema && uiSchema['ui:title']) {
@@ -37,7 +37,7 @@ export const getCommonAttributes = (
       errorMessageForField = (schema as any).validationErrorMessage;
       errorMessageForFieldWithoutLabel = errorMessageForField;
     } else {
-      errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+      errorMessageForField = `"${labelToUse.replace(/\*$/, '')}" ${rawErrors[0]}`;
     }
   }
 

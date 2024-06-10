@@ -12,7 +12,7 @@ export default function About() {
 
   useEffect(() => {
     const handleVersionInfoResponse = (
-      response: ObjectWithStringKeysAndValues
+      response: ObjectWithStringKeysAndValues,
     ) => {
       setBackendVersionInfo(response);
     };
@@ -25,7 +25,7 @@ export default function About() {
 
   const versionInfoFromDict = (
     title: string,
-    versionInfoDict: ObjectWithStringKeysAndValues | null
+    versionInfoDict: ObjectWithStringKeysAndValues | null,
   ) => {
     if (versionInfoDict !== null && Object.keys(versionInfoDict).length) {
       const tableRows = Object.keys(versionInfoDict)

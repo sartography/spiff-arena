@@ -12,3 +12,4 @@ process_models/
 .cache
 .mypy_cache
 .aider*
+/spiffworkflow_docker_compose

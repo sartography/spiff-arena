@@ -32,7 +32,7 @@ export default function APIErrorProvider({ children }) {
         removeError();
       },
     }),
-    [error]
+    [error],
   );
 
   return (

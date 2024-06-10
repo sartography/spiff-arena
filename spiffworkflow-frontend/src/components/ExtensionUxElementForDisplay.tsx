@@ -19,12 +19,12 @@ export function ExtensionUxElementMap({
     const elementsForDisplayLocation = extensionUxElements.filter(
       (uxElement: UiSchemaUxElement) => {
         return uxElement.display_location === displayLocation;
-      }
+      },
     );
     return elementsForDisplayLocation.map(
       (uxElement: UiSchemaUxElement, index: number) => {
         return elementCallback(uxElement, index);
-      }
+      },
     );
   };
   return mainElement();

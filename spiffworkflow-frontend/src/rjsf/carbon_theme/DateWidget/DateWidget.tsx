@@ -7,7 +7,7 @@ function DateWidget(props: WidgetProps) {
   const BaseInputTemplate = getTemplate<'BaseInputTemplate'>(
     'BaseInputTemplate',
     registry,
-    options
+    options,
   );
   const handleChange = useCallback(
     (value: any) => {
@@ -15,7 +15,7 @@ function DateWidget(props: WidgetProps) {
       const newValue = DateAndTimeService.dateStringToYMDFormat(value);
       onChange(newValue || undefined);
     },
-    [onChange]
+    [onChange],
   );
 
   return <BaseInputTemplate type="date" {...props} onChange={handleChange} />;

@@ -11,7 +11,7 @@ import { getCommonAttributes } from '../../helpers';
 function SelectWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >({
   schema,
   id,
@@ -49,7 +49,7 @@ function SelectWidget<
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   // ok. so in safari, the select widget showed the first option, whereas in chrome it forced you to select an option.

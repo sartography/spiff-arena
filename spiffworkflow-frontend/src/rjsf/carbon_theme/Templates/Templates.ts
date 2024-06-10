@@ -4,7 +4,12 @@ import ArrayFieldTemplate from '../ArrayFieldTemplate';
 import BaseInputTemplate from '../BaseInputTemplate';
 import DescriptionField from '../DescriptionField';
 import ErrorList from '../ErrorList';
-import { MoveDownButton, MoveUpButton, RemoveButton } from '../IconButton';
+import {
+  MuiRemoveButton,
+  MoveDownButton,
+  MoveUpButton,
+  RemoveButton,
+} from '../IconButton';
 import FieldErrorTemplate from '../FieldErrorTemplate';
 import FieldHelpTemplate from '../FieldHelpTemplate';
 import FieldTemplate from '../FieldTemplate';
@@ -19,6 +24,7 @@ export default {
   BaseInputTemplate,
   ButtonTemplates: {
     AddButton,
+    MuiRemoveButton,
     MoveDownButton,
     MoveUpButton,
     RemoveButton,

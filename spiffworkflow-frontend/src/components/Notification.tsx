@@ -33,7 +33,7 @@ export function Notification({
   'data-qa': dataQa,
 }: OwnProps) {
   const [showMessage, setShowMessage] = useState<boolean>(
-    !allowTogglingFullMessage
+    !allowTogglingFullMessage,
   );
   let iconComponent = <Checkmark className="notification-icon" />;
   if (type === 'error') {

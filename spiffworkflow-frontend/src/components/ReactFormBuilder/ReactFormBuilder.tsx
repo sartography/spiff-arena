@@ -129,7 +129,7 @@ export default function ReactFormBuilder({
         postBody: submission,
       });
     },
-    [processModelId, fileName]
+    [processModelId, fileName],
   );
 
   const hasValidName = (identifierToCheck: string) => {
@@ -189,7 +189,7 @@ export default function ReactFormBuilder({
 
   // Auto save example data changes
   useEffect(() => {
-    if (baseFileName !== '') {
+    if (baseFileName !== '' && ready) {
       saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
     }
   }, [debouncedFormData, baseFileName, saveFile, ready]);
@@ -327,7 +327,7 @@ export default function ReactFormBuilder({
   function fetchSchema() {
     HttpService.makeCallToBackend({
       path: `/process-models/${processModelId}/files/${baseName(
-        fileName
+        fileName,
       )}${SCHEMA_EXTENSION}`,
       successCallback: (response: any) => {
         setJsonSchemaFromResponseJson(response);
@@ -342,7 +342,7 @@ export default function ReactFormBuilder({
   function fetchUI() {
     HttpService.makeCallToBackend({
       path: `/process-models/${processModelId}/files/${baseName(
-        fileName
+        fileName,
       )}${UI_EXTENSION}`,
       successCallback: setJsonUiFromResponseJson,
       failureCallback: () => {
@@ -354,7 +354,7 @@ export default function ReactFormBuilder({
   function fetchExampleData() {
     HttpService.makeCallToBackend({
       path: `/process-models/${processModelId}/files/${baseName(
-        fileName
+        fileName,
       )}${DATA_EXTENSION}`,
       successCallback: setDataFromResponseJson,
       failureCallback: () => {

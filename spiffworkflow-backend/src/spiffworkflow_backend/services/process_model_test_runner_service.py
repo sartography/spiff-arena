@@ -1,3 +1,4 @@
+import _strptime  # type: ignore
 import decimal
 import glob
 import json
@@ -12,7 +13,6 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Any
 
-import _strptime  # type: ignore
 import dateparser
 import pytz
 from lxml import etree  # type: ignore

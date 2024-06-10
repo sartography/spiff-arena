@@ -50,7 +50,7 @@ export default function NumericRangeField({
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   const description = schema?.description || uiSchema?.['ui:description'];
@@ -59,7 +59,7 @@ export default function NumericRangeField({
   const DescriptionFieldTemplate = getTemplate(
     'DescriptionFieldTemplate',
     registry,
-    uiOptions
+    uiOptions,
   );
 
   const formatNumberString = (numberString: string): string => {

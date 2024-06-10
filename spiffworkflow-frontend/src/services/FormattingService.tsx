@@ -12,13 +12,13 @@ const checkForSpiffFormats = (markdown: string) => {
   const replacer = (
     match: string,
     spiffFormat: string,
-    originalValue: string
+    originalValue: string,
   ) => {
     if (spiffFormat in spiffFormatFunctions) {
       return spiffFormatFunctions[spiffFormat](originalValue);
     }
     console.warn(
-      `attempted: ${match}, but ${spiffFormat} is not a valid conversion function`
+      `attempted: ${match}, but ${spiffFormat} is not a valid conversion function`,
     );
 
     return match;

@@ -15,7 +15,7 @@ export default function useProcessGroupFetcher(processGroupIdentifier: string) {
 
   const getProcessGroupCache = useCallback(() => {
     return JSON.parse(
-      localStorage.getItem(LOCAL_STORAGE_PROCESS_GROUP_CACHE_KEY) || '{}'
+      localStorage.getItem(LOCAL_STORAGE_PROCESS_GROUP_CACHE_KEY) || '{}',
     );
   }, []);
 
@@ -33,7 +33,7 @@ export default function useProcessGroupFetcher(processGroupIdentifier: string) {
       });
       localStorage.setItem(
         'storedProcessGroups',
-        JSON.stringify(storedProcessGroups)
+        JSON.stringify(storedProcessGroups),
       );
     };
 
@@ -77,7 +77,7 @@ export default function useProcessGroupFetcher(processGroupIdentifier: string) {
     };
     localStorage.setItem(
       LOCAL_STORAGE_PROCESS_GROUP_CACHE_KEY,
-      JSON.stringify(storedProcessGroups)
+      JSON.stringify(storedProcessGroups),
     );
   };
 
