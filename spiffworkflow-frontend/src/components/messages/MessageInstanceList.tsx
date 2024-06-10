@@ -199,6 +199,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         <PaginationForTable
           page={page}
           perPage={perPage}
+          perPageOptions={[10, 50, 100, 500, 1000]}
           pagination={pagination}
           tableToDisplay={buildTable()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}
