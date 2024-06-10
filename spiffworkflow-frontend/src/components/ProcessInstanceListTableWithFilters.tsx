@@ -1002,6 +1002,7 @@ export default function ProcessInstanceListTableWithFilters({
         <ComboBox
           onChange={updateReportColumn}
           id="report-column-selection"
+          key="report-column-selection"
           data-qa="report-column-selection"
           data-modal-primary-focus
           items={availableReportColumns}
@@ -1021,6 +1022,7 @@ export default function ProcessInstanceListTableWithFilters({
     formElements.push([
       <TextInput
         id="report-column-display-name"
+        key="report-column-display-name"
         name="report-column-display-name"
         labelText="Display Name"
         disabled={!reportColumnToOperateOn}
@@ -1042,6 +1044,7 @@ export default function ProcessInstanceListTableWithFilters({
           titleText="Display type"
           label="Display type"
           id="report-column-display-type"
+          key="report-column-display-type"
           items={[''].concat(Object.values(filterDisplayTypes))}
           selectedItem={
             reportColumnToOperateOn.display_type
@@ -1492,19 +1495,18 @@ export default function ProcessInstanceListTableWithFilters({
 
   const reportSearchComponent = () => {
     if (showReports) {
-      const columns = [
-        <Column sm={4} md={8} lg={16}>
-          <ProcessInstanceReportSearch
-            onChange={processInstanceReportDidChange}
-            selectedItem={processInstanceReportSelection}
-            selectedReportId={searchParams.get('report_id')}
-            handleSetSelectedReportCallback={setProcessInstanceReportSelection}
-          />
-        </Column>,
-      ];
       return (
         <Grid className="with-tiny-bottom-margin" fullWidth>
-          {columns}
+          <Column sm={4} md={8} lg={16}>
+            <ProcessInstanceReportSearch
+              onChange={processInstanceReportDidChange}
+              selectedItem={processInstanceReportSelection}
+              selectedReportId={searchParams.get('report_id')}
+              handleSetSelectedReportCallback={
+                setProcessInstanceReportSelection
+              }
+            />
+          </Column>
         </Grid>
       );
     }

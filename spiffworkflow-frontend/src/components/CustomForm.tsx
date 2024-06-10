@@ -269,7 +269,7 @@ export default function CustomForm({
     propertyKey: string,
     errors: any,
     _jsonSchema: any,
-    _uiSchemaPassedIn?: any
+    _uiSchemaPassedIn?: any,
   ) => {
     if (propertyKey in formDataToCheck) {
       try {
@@ -426,14 +426,14 @@ export default function CustomForm({
         if (
           currentUiSchema &&
           'ui:options' in currentUiSchema &&
-          currentUiSchema['ui:options']['validateJson'] === true
+          currentUiSchema['ui:options'].validateJson === true
         ) {
           checkJsonField(
             formDataToCheck,
             propertyKey,
             errors,
             jsonSchemaToUse,
-            currentUiSchema
+            currentUiSchema,
           );
         }
 

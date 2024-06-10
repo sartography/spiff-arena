@@ -6,7 +6,8 @@ import {
   BpmnPropertiesProviderModule,
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
 } from 'bpmn-js-properties-panel';
-import CliModule  from 'bpmn-js-cli';
+// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
+import CliModule from 'bpmn-js-cli';
 
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 import DmnModeler from 'dmn-js/lib/Modeler';
@@ -251,7 +252,7 @@ export default function ReactDiagramEditor({
           CliModule,
         ],
         cli: {
-          bindTo: 'cli'
+          bindTo: 'cli',
         },
         moddleExtensions: {
           spiffworkflow: spiffModdleExtension,
@@ -621,7 +622,7 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler = undefined;
+      let textHandler;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;
@@ -702,7 +703,7 @@ export default function ReactDiagramEditor({
       >
         <UnorderedList>
           {callers.map((ref: ProcessReference) => (
-            <li>
+            <li key={`list-${ref.relative_location}`}>
               <Link
                 size="lg"
                 href={`/process-models/${modifyProcessIdentifierForPathParam(

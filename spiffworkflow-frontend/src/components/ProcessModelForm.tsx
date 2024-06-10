@@ -259,6 +259,7 @@ export default function ProcessModelForm({
     const textInputs = [
       <TextInput
         id="process-model-display-name"
+        key="process-model-display-name"
         name="display_name"
         invalidText="Display Name is required."
         invalid={displayNameInvalid}
@@ -274,6 +275,7 @@ export default function ProcessModelForm({
       textInputs.push(
         <TextInput
           id="process-model-identifier"
+          key="process-model-identifier"
           name="id"
           invalidText="Identifier is required and must be all lowercase characters and hyphens."
           invalid={identifierInvalid}
@@ -294,6 +296,7 @@ export default function ProcessModelForm({
     textInputs.push(
       <TextArea
         id="process-model-description"
+        key="process-model-description"
         name="description"
         labelText="Description"
         value={processModel.description}
@@ -306,6 +309,7 @@ export default function ProcessModelForm({
     textInputs.push(
       <Select
         id="notification-type"
+        key="notification-type"
         defaultValue={processModel.fault_or_suspend_on_exception}
         labelText="Notification Type"
         onChange={(event: any) => {

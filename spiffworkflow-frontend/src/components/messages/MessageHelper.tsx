@@ -1,12 +1,5 @@
 import { ProcessGroup } from '../../interfaces';
 
-const arrayCompare = (array1: string[], array2: string[]) => {
-  return (
-    array1.length === array2.length &&
-    array1.every((value, index) => value === array2[index])
-  );
-};
-
 export const getPropertiesForMessage = (
   messageId: string,
   processGroup: ProcessGroup,

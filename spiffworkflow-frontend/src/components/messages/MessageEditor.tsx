@@ -53,7 +53,7 @@ export function MessageEditor({
         processGroupIdentifier: unModifyProcessIdentifierForPathParam(
           modifiedProcessGroupIdentifier,
         ),
-        messageId: messageId,
+        messageId,
         correlation_properties: newCorrelationProperties,
         schema: JSON.stringify(jsonSchema, null, 2),
       };
@@ -69,7 +69,7 @@ export function MessageEditor({
       path: `/process-groups/${modifiedProcessGroupIdentifier}`,
       successCallback: processResult,
     });
-  }, [modifiedProcessGroupIdentifier]);
+  }, [modifiedProcessGroupIdentifier, correlationProperties, messageId]);
 
   const handleProcessGroupUpdateResponse = (
     response: ProcessGroup,
@@ -152,6 +152,8 @@ export function MessageEditor({
     try {
       updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
     } catch (e) {
+      // TODO: display error in a tag like we normally do
+      // eslint-disable-next-line no-alert
       alert(`Invalid schema: ${e}`);
       return;
     }
