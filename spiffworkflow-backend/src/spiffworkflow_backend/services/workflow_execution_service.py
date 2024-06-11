@@ -5,17 +5,18 @@ import time
 from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
+from threading import Lock
 from typing import Any
 from uuid import UUID
 
 import flask.app
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
@@ -41,6 +42,8 @@ from spiffworkflow_backend.services.process_instance_lock_service import Process
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
+
+mutex = Lock()
 
 
 class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
@@ -92,9 +95,6 @@ class EngineStepDelegate:
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
-from threading import Lock
-
-mutex = Lock()
 
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
@@ -125,7 +125,7 @@ class ExecutionStrategy:
                 tld.process_model_identifier = process_model_identifier
 
             g.user = user
-            
+
             should_lock = any(isinstance(child.task_spec, SubWorkflowTaskMixin) for child in spiff_task.children)
 
             if should_lock:
