@@ -43,8 +43,6 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
-mutex = Lock()
-
 
 class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
     @classmethod
@@ -99,6 +97,8 @@ class EngineStepDelegate:
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
+    _mutex = Lock()
+
     def __init__(self, delegate: EngineStepDelegate, options: dict | None = None):
         self.delegate = delegate
         self.options = options
@@ -129,7 +129,7 @@ class ExecutionStrategy:
             should_lock = any(isinstance(child.task_spec, SubWorkflowTaskMixin) for child in spiff_task.children)
 
             if should_lock:
-                with mutex:
+                with self._mutex:
                     spiff_task.run()
             else:
                 spiff_task.run()
