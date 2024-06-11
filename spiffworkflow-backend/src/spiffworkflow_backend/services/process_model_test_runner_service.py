@@ -431,6 +431,8 @@ class ProcessModelTestRunner:
             bpmn_process_instance.refresh_waiting_tasks()
             next_task = self._get_next_task(bpmn_process_instance)
 
+        bpmn_process_instance.script_engine.environment.finalize_result(bpmn_process_instance)
+            
         error_message = None
         if bpmn_process_instance.is_completed() is False:
             error_message = {
@@ -450,6 +452,17 @@ class ProcessModelTestRunner:
                 "expected_data": test_case_contents["expected_output_json"],
                 "output_data": bpmn_process_instance.data, 
             }
+            a = test_case_contents["expected_output_json"]
+            b = bpmn_process_instance.data
+
+            if "backend_status_response" in a: del a["backend_status_response"]
+            if "backend_status_response" in b: del b["backend_status_response"]
+            
+            print(a)
+            print("-----")
+            print("//////////////")
+            print(b)
+            
         self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
     def _execute_task(
@@ -477,6 +490,7 @@ class ProcessModelTestRunner:
             task_data_for_submit = test_case_task_properties["data"][test_case_index]
             self.task_data_index[test_case_task_key] += 1
         self.process_model_test_runner_delegate.execute_task(spiff_task, task_data_for_submit)
+        spiff_task.workflow.script_engine.environment.revise_state_with_task_data(spiff_task)
 
     def _is_multi_instance_task(self, spiff_task: SpiffTask) -> bool:
         return spiff_task.task_spec.__class__.__name__ in [

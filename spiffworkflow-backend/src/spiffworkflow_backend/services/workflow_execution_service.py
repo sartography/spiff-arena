@@ -264,6 +264,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
 
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
+        assert False
         if self._should_update_task_model():
             # NOTE: used with process-all-tasks and process-children-of-last-task
             task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
