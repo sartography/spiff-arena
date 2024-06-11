@@ -32,7 +32,7 @@ six==1.16.0
 snowballstemmer==2.2.0
 soupsieve==2.5
 Sphinx==7.3.7
-sphinx-autoapi==3.0.0
+sphinx-autoapi==3.1.1
 sphinx-autobuild==2024.4.16
 sphinx-basic-ng==1.0.0b2
 sphinx-click==6.0.0
