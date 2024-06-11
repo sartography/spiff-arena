@@ -11,6 +11,7 @@ from uuid import UUID
 import flask.app
 from flask import current_app
 from flask import g
+from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
@@ -91,6 +92,9 @@ class EngineStepDelegate:
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
+from threading import Lock
+
+mutex = Lock()
 
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
@@ -121,7 +125,15 @@ class ExecutionStrategy:
                 tld.process_model_identifier = process_model_identifier
 
             g.user = user
-            spiff_task.run()
+            
+            should_lock = any(isinstance(child.task_spec, SubWorkflowTaskMixin) for child in spiff_task.children)
+
+            if should_lock:
+                with mutex:
+                    spiff_task.run()
+            else:
+                spiff_task.run()
+
             return spiff_task
 
     def spiff_run(
