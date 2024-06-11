@@ -92,20 +92,8 @@ export function MessageEditor({
       ...currentMessagesForId.correlation_properties,
     };
     (formData.correlation_properties || []).forEach((formProp: any) => {
-      if (!(formProp.id in newCorrelationProperties)) {
-        newCorrelationProperties[formProp.id] = {
-          retrieval_expressions: [],
-        };
-      }
-      if (
-        !newCorrelationProperties[formProp.id].retrieval_expressions.includes(
-          formProp.retrievalExpression,
-        )
-      ) {
-        newCorrelationProperties[formProp.id].retrieval_expressions.push(
-          formProp.retrievalExpression,
-        );
-      }
+      newCorrelationProperties[formProp.id].retrieval_expression =
+        formProp.retrievalExpression;
     });
 
     Object.keys(currentMessagesForId.correlation_properties || []).forEach(

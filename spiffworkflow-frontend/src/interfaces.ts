@@ -213,7 +213,7 @@ export interface ProcessInstance {
 }
 
 export interface CorrelationProperty {
-  retrieval_expressions: string[];
+  retrieval_expression: string;
 }
 
 export interface CorrelationProperties {
