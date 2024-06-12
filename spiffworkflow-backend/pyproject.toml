@@ -28,7 +28,7 @@ flask-restful = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
-sentry-sdk = {extras = ['flask'], version = "^1.10"}
+sentry-sdk = {extras = ['flask'], version = "^2.5"}
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.10.0"
@@ -57,7 +57,7 @@ Flask-SQLAlchemy = "^3"
 # 22.0.0 breaks passing in SCRIPT_NAME as a header which breaks status environments
 # https://github.com/benoitc/gunicorn/issues/3200
 # https://github.com/benoitc/gunicorn/issues/2650
-gunicorn = "21.2.0"
+gunicorn = "22.0.0"
 
 # https://github.com/dropbox/sqlalchemy-stubs/pull/251
 # someday get off github

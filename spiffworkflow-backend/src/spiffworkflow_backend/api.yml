@@ -2580,6 +2580,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
+  /message-models:
+    get:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.messages_controller.message_model_list_from_root
+      summary: Get a list of message models
+      responses:
+        "200":
+          description: A list of message models
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /message-models/{relative_location}:
+    parameters:
+      - name: relative_location
+        in: path
+        required: true
+        description: The location of the message model relative to the root of the project, defaults to /
+        schema:
+          type: string
+    get:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.messages_controller.message_model_list
+      summary: Get a list of message models
+      responses:
+        "200":
+          description: A list of message models
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
   /messages:
     parameters:
       - name: process_instance_id

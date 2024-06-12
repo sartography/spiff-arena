@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @ts-ignore
 import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
+
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 type OwnProps = {
@@ -72,6 +72,7 @@ export default function ProcessGroupForm({
     const postBody = {
       display_name: processGroup.display_name,
       description: processGroup.description,
+      messages: processGroup.messages,
     };
     if (mode === 'new') {
       if (parentGroupId) {
@@ -155,7 +156,6 @@ export default function ProcessGroupForm({
         }
       />,
     );
-
     return textInputs;
   };
 
