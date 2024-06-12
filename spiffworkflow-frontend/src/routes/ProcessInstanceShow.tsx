@@ -76,7 +76,7 @@ import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
-import MessageInstanceList from '../components/MessageInstanceList';
+import MessageInstanceList from '../components/messages/MessageInstanceList';
 import {
   childrenForErrorObject,
   errorForDisplayFromString,
@@ -1800,11 +1800,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <Tab>Tasks</Tab>
         </TabList>
         <TabPanels>
-          <TabPanel>
-            {selectedTabIndex === 0 ? (
-              <TabPanel>{diagramArea()}</TabPanel>
-            ) : null}
-          </TabPanel>
+          <TabPanel>{selectedTabIndex === 0 ? diagramArea() : null}</TabPanel>
           <TabPanel>
             {selectedTabIndex === 1 ? (
               <ProcessInstanceLogList

@@ -18,6 +18,19 @@ PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "display_name",
     "description",
     "data_store_specifications",
+    "messages",
+    "correlation_keys",
+    "correlation_properties",
+]
+
+
+PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API = [
+    "display_name",
+    "description",
+    "messages",
+    "data_store_specifications",
+    "correlation_keys",
+    "correlation_properties",
 ]
 
 
@@ -32,6 +45,9 @@ class ProcessGroup:
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
     data_store_specifications: dict[str, Any] = field(default_factory=dict)
     parent_groups: list[ProcessGroupLite] | None = None
+    messages: dict[str, Any] | None = None
+    correlation_keys: list[dict[str, Any]] | None = None
+    correlation_properties: list[dict[str, Any]] | None = None
 
     # TODO: delete these once they no no longer mentioned in current
     # process_group.json files
@@ -62,6 +78,23 @@ class ProcessGroup:
         return list(dict_keys)
 
 
+class MessageSchema(Schema):
+    class Meta:
+        fields = ["id", "schema"]
+
+
+class RetrievalExpressionSchema(Schema):
+    class Meta:
+        fields = ["message_ref", "formal_expression"]
+
+
+class CorrelationPropertySchema(Schema):
+    class Meta:
+        fields = ["id", "retrieval_expression"]
+
+    retrieval_expression = marshmallow.fields.Nested(RetrievalExpressionSchema, required=False)
+
+
 class ProcessGroupSchema(Schema):
     class Meta:
         model = ProcessGroup
@@ -71,10 +104,16 @@ class ProcessGroupSchema(Schema):
             "process_models",
             "description",
             "process_groups",
+            "messages",
+            "correlation_properties",
         ]
 
     process_models = marshmallow.fields.List(marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False))
     process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
+    messages = marshmallow.fields.List(marshmallow.fields.Nested(MessageSchema, dump_only=True, required=False))
+    correlation_properties = marshmallow.fields.List(
+        marshmallow.fields.Nested(CorrelationPropertySchema, dump_only=True, required=False)
+    )
 
     @post_load
     def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:

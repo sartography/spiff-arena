@@ -670,7 +670,8 @@ def _process_instance_run(
 
     processor = None
     try:
-        ProcessInstanceTmpService.add_event_to_process_instance(process_instance, "process_instance_force_run")
+        if force_run is True:
+            ProcessInstanceTmpService.add_event_to_process_instance(process_instance, "process_instance_force_run")
         if not queue_process_instance_if_appropriate(
             process_instance, execution_mode=execution_mode
         ) and not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):

@@ -1,7 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
 import json
-import random
+import secrets
 import string
 
 import flask.wrappers
@@ -77,7 +77,7 @@ def script_unit_test_create(modified_process_model_identifier: str, body: dict[s
     else:
         unit_test_elements = unit_test_elements_array[0]
 
-    fuzz = "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))  # noqa: S311
+    fuzz = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(7))  # noqa: S311
     unit_test_id = f"unit_test_{fuzz}"
 
     input_json_element = spiff_element_maker("inputJson", json.dumps(input_json))

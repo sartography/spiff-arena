@@ -6,10 +6,43 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
+
+
+def message_model_list_from_root() -> flask.wrappers.Response:
+    return message_model_list()
+
+
+def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
+    # Returns all the messages and correlation properties that exist at the given
+    # relative location or higher in the directory tree.
+
+    loc = relative_location.replace(":", "/") if relative_location else ""
+    locations = UpsearchService.upsearch_locations(loc)
+    messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
+
+    def correlation_property_response(correlation_property: MessageCorrelationPropertyModel) -> dict[str, str]:
+        return {
+            "identifier": correlation_property.identifier,
+            "retrieval_expression": correlation_property.retrieval_expression,
+        }
+
+    def message_response(message: MessageModel) -> dict[str, Any]:
+        return {
+            "identifier": message.identifier,
+            "location": message.location,
+            "schema": message.schema,
+            "correlation_properties": [correlation_property_response(cp) for cp in message.correlation_properties],
+        }
+
+    return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
 
 
 def message_instance_list(
