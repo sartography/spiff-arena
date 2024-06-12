@@ -5,6 +5,7 @@ import time
 from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
+from threading import Lock
 from typing import Any
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
@@ -95,6 +97,8 @@ class EngineStepDelegate:
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
+    _mutex = Lock()
+
     def __init__(self, delegate: EngineStepDelegate, options: dict | None = None):
         self.delegate = delegate
         self.options = options
@@ -121,7 +125,15 @@ class ExecutionStrategy:
                 tld.process_model_identifier = process_model_identifier
 
             g.user = user
-            spiff_task.run()
+
+            should_lock = any(isinstance(child.task_spec, SubWorkflowTaskMixin) for child in spiff_task.children)
+
+            if should_lock:
+                with self._mutex:
+                    spiff_task.run()
+            else:
+                spiff_task.run()
+
             return spiff_task
 
     def spiff_run(
