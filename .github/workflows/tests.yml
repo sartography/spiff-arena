@@ -301,7 +301,7 @@ jobs:
         uses: codecov/codecov-action@v4.4.1
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v2.2.0
+        uses: sonarsource/sonarcloud-github-action@v2.3.0
         # thought about just skipping dependabot
         # if: ${{ github.actor != 'dependabot[bot]' }}
         # but figured all pull requests seems better, since none of them will have access to sonarcloud.
@@ -364,7 +364,7 @@ jobs:
         # if: ${{ github.event_name != 'pull_request' }}
         # so just skip everything but main
         if: github.ref_name == 'main'
-        uses: sonarsource/sonarcloud-github-action@v2.2.0
+        uses: sonarsource/sonarcloud-github-action@v2.3.0
         with:
           projectBaseDir: spiffworkflow-frontend
         env:
