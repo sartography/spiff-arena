@@ -601,7 +601,7 @@ def _create_or_update_process_model_file(
     file.file_contents_hash = file_contents_hash
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
-    if is_new_file:
+    if is_new_file and file.name.endswith(".bpmn"):
         DataSetupService.save_all_process_models()
 
     return make_response(jsonify(file), http_status_to_return)

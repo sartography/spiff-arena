@@ -90,17 +90,14 @@ def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
-    log_level = getattr(primary_logger, upper_log_level_string)
-    spiff_log_level = getattr(primary_logger, upper_log_level_string)
-
+    log_level = logging.getLevelName(upper_log_level_string)
     log_formatter = get_log_formatter(app)
-
     app.logger.debug("Printing log to create app logger")
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
         spiff_logger_filehandler = primary_logger.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
-        spiff_logger_filehandler.setLevel(spiff_log_level)
+        spiff_logger_filehandler.setLevel(log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 
     # these loggers have been deemed too verbose to be useful
@@ -135,7 +132,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
     for name in primary_logger.root.manager.loggerDict:
         # use a regex so spiffworkflow_backend isn't filtered out
         if not re.match(r"^spiff\b", name):
-            sub_logger = primary_logger.getLogger(name)
+            sub_logger = logging.getLogger(name)
             sub_logger.setLevel(log_level)
             if spiff_logger_filehandler:
                 sub_logger.handlers = []
@@ -161,7 +158,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
                         if exclude_logger_name_from_debug:
                             sub_logger.setLevel("INFO")
 
-                    sub_logger.addHandler(primary_logger.StreamHandler(sys.stdout))
+                    sub_logger.addHandler(logging.StreamHandler(sys.stdout))
 
                 for the_handler in sub_logger.handlers:
                     the_handler.setFormatter(log_formatter)
