@@ -273,7 +273,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self.state = bpmn_process_instance.data.get(key, {})
 
     def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        .bpmn_process_instance.data.update(self.user_defined_state())
+        bpmn_process_instance.data.update(self.user_defined_state())
 
     def revise_state_with_task_data(self, task: SpiffTask) -> None:
         state_keys = set(self.state.keys())
@@ -1679,10 +1679,6 @@ class ProcessInstanceProcessor:
             raise task_exception
 
     def get_data(self) -> dict[str, Any]:
-
-        # TODO: 
-        # return self.bpmn_process_instance.script_engine.environment.user_defined_state()
-        
         # TODO: do this with deepcopy
         data = {k: v for k, v in self.bpmn_process_instance.data.items() if k != "spiff__python_env_state"}  # type: ignore
         return data
