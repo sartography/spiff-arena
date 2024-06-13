@@ -1,11 +1,11 @@
-export default function BackendIsDown() {
+export default function ServidorForaDoAr() {
   return (
     <div>
-      <h1>Server error</h1>
+      <h1>Erro no Servidor</h1>
       <p>
-        We are sorry, but our service is temporarily unavailable due to
-        technical difficulties. Please bear with us while we work to resolve the
-        issue. If the problem persists, please contact the site administrator.
+        Pedimos desculpas, mas nosso serviço está temporariamente indisponível devido a dificuldades técnicas.
+        Por favor, aguarde enquanto trabalhamos para resolver o problema. Se o problema persistir, entre em contato
+        com o administrador do site.
       </p>
     </div>
   );
