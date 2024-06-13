@@ -28,7 +28,6 @@ else
     fi
 
     # this line blocks
-    set -x
     exec poetry run flask run -p "$PORT" --host=0.0.0.0
   fi
 fi
