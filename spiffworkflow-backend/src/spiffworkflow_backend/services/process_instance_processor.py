@@ -299,7 +299,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(TaskDataBasedScriptEngineEnvironment):
     pass
 
 
