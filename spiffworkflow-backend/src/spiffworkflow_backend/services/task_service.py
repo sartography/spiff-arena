@@ -207,7 +207,6 @@ class TaskService:
         )
 
         self.update_task_model(task_model, spiff_task)
-        print(spiff_task.workflow.data)
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
