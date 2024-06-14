@@ -53,3 +53,28 @@ export const mergeCorrelationProperties = (
 
   return mergedProperties;
 };
+
+export const isCorrelationPropertiesInSync = (processGroup: ProcessGroup, messageId: string, messageProperties: any[]) => {
+
+  const message = (processGroup.messages) ? processGroup.messages[messageId] : undefined;
+
+  if (!message) {
+    return false;
+  }
+
+  for (const property of messageProperties) {
+    const correlationProperty = message.correlation_properties[property.id];
+
+    if (!correlationProperty) {
+      return false;
+    }
+
+    const localRetrievalExpression = (Array.isArray(property.retrievalExpression)) ? property.retrievalExpression[0] : property.retrievalExpression;
+
+    if (!correlationProperty.retrieval_expressions.includes(localRetrievalExpression)) {
+      return false;
+    }
+  }
+
+  return true;
+};

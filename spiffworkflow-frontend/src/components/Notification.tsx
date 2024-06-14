@@ -8,6 +8,7 @@ import {
 // @ts-ignore
 import { Button } from '@carbon/react';
 import { ObjectWithStringKeysAndValues } from '../interfaces';
+import { WarningAlt } from '@carbon/icons-react';
 
 type OwnProps = {
   title: string;
@@ -38,6 +39,8 @@ export function Notification({
   let iconComponent = <Checkmark className="notification-icon" />;
   if (type === 'error') {
     iconComponent = <Error className="notification-icon" />;
+  } else if (type === 'warning') {
+    iconComponent = <WarningAlt className="notification-icon" />;
   }
 
   if (timeout && onClose) {

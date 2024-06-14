@@ -12,6 +12,7 @@ import {
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
 import {
+  isCorrelationPropertiesInSync,
   convertCorrelationPropertiesToRJSF,
   mergeCorrelationProperties,
 } from './MessageHelper';
@@ -35,6 +36,7 @@ export function MessageEditor({
   const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
     useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [isSynced, setSynced] = useState<boolean>(true);
 
   useEffect(() => {
     const setInitialFormData = (newProcessGroup: ProcessGroup) => {
@@ -60,6 +62,7 @@ export function MessageEditor({
       setCurrentFormData(newFormData);
     };
     const processResult = (result: ProcessGroup) => {
+      console.log('----isCorrelationPropertiesInSync------> ', isCorrelationPropertiesInSync(result, messageId, correlationProperties));
       setProcessGroup(result);
       setCurrentMessageId(messageId);
       setPageTitle([result.display_name]);
@@ -69,7 +72,6 @@ export function MessageEditor({
       path: `/process-groups/${modifiedProcessGroupIdentifier}`,
       successCallback: processResult,
     });
-
   }, [modifiedProcessGroupIdentifier, correlationProperties, messageId]);
 
   // Setup event listeners on message.save
@@ -282,6 +284,17 @@ export function MessageEditor({
             onClose={() => setDisplaySaveMessageMessage(false)}
           >
             Message has been saved
+          </Notification>
+        ) : null}
+        {isSynced ? (
+          <Notification
+            title="Please Save the current message configuration"
+            type='warning'
+            hideCloseButton
+            timeout={4000}
+            onClose={() => setDisplaySaveMessageMessage(false)}
+          >
+            There is a difference between the local message properties and the process group data. Updating the message properties is recommended to ensure data consistency
           </Notification>
         ) : null}
         <CustomForm
