@@ -213,21 +213,28 @@ export default function ReactFormBuilder({
     const formExampleData = parseObjectAsJson(debouncedFormData, 'Data  View');
     if (!foundError) {
       setErrorMessage(null);
-      if (isSingleFileSchema && baseFileName !== '' && ready) {
-        const fileContents = JSON.stringify(
-          {
-            json_schema: jsonSchema,
-            form_ui_schema: formUiSchema,
-            form_example_data: formExampleData,
-          },
-          null,
-          2,
-        );
-        saveFile(
-          new File([fileContents], baseFileName + SINGLE_FILE_SCHEMA_EXTENSION),
-          false,
-          () => prepareForm(jsonSchema, formUiSchema, formExampleData),
-        );
+      if (!isSingleFileSchema) {
+        prepareForm(jsonSchema, formUiSchema, formExampleData);
+      } else {
+        if (isSingleFileSchema && baseFileName !== '' && ready) {
+          const fileContents = JSON.stringify(
+            {
+              json_schema: jsonSchema,
+              form_ui_schema: formUiSchema,
+              form_example_data: formExampleData,
+            },
+            null,
+            2,
+          );
+          saveFile(
+            new File(
+              [fileContents],
+              baseFileName + SINGLE_FILE_SCHEMA_EXTENSION,
+            ),
+            false,
+            () => prepareForm(jsonSchema, formUiSchema, formExampleData),
+          );
+        }
       }
     }
   }, [
