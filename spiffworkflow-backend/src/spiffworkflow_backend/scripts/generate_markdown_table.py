@@ -50,8 +50,13 @@ class GenerateMarkdownTable(Script):
         :param data: List of dictionaries containing the data.
         :return: A string containing the markdown table.
         """
-        columns: list = args[0]
-        data: list = args[1]
+        columns: list = kwargs.get('columns', args[0] if len(args) > 0 else None)
+        data: list = kwargs.get('data', args[1] if len(args) > 1 else None)
+
+        if columns is None:
+            raise ValueError("Missing required argument: 'columns'")
+        if data is None:
+            raise ValueError("Missing required argument: 'data'")
 
         table_headers = self.normalize_table_headers_to_dicts(columns)
 
