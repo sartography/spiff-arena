@@ -31,7 +31,7 @@ class GenerateMarkdownTable(Script):
                 property_name = column["property"]
                 value = str(item.get(property_name, ""))
                 if "formatter" in column and column["formatter"] == "convert_seconds_to_date_time_for_display":
-                        value = f"SPIFF_FORMAT:::convert_seconds_to_date_time_for_display({value})"
+                    value = f"SPIFF_FORMAT:::convert_seconds_to_date_time_for_display({value})"
                 row.append(value)
             table += "| " + " | ".join(row) + " |\n"
         return table
@@ -50,8 +50,8 @@ class GenerateMarkdownTable(Script):
         :param data: List of dictionaries containing the data.
         :return: A string containing the markdown table.
         """
-        columns: list = kwargs.get('columns', args[0] if len(args) > 0 else None)
-        data: list = kwargs.get('data', args[1] if len(args) > 1 else None)
+        columns: list = kwargs.get("columns", args[0] if len(args) > 0 else None)
+        data: list = kwargs.get("data", args[1] if len(args) > 1 else None)
 
         if columns is None:
             raise ValueError("Missing required argument: 'columns'")
