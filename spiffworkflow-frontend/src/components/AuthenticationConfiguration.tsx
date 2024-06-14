@@ -10,7 +10,7 @@ export default function AuthenticationConfiguration() {
     HttpService.makeCallToBackend({
       path: '/authentication/configuration',
       successCallback: (newAuthConfig: string) => {
-        setAuthConfig(JSON.stringify(newAuthConfig, null, 4));
+        setAuthConfig(JSON.stringify(newAuthConfig, null, 2));
       },
     });
   }, []);

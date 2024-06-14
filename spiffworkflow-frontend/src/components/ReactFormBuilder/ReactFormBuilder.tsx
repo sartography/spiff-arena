@@ -60,6 +60,7 @@ export default function ReactFormBuilder({
   const SCHEMA_EXTENSION = '-schema.json';
   const UI_EXTENSION = '-uischema.json';
   const DATA_EXTENSION = '-exampledata.json';
+  const SINGLE_FILE_SCHEMA_EXTENSION = '-jsonschema.json';
 
   const [fetchFailed, setFetchFailed] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);
@@ -80,11 +81,11 @@ export default function ReactFormBuilder({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
 
-  /**
+  /*ma
    * This section gives us direct pointers to the monoco editors so that
    * we can update their values.  Using state variables directly on the monoco editor
    * causes the cursor to jump to the bottom if two letters are pressed simultaneously.
@@ -101,6 +102,8 @@ export default function ReactFormBuilder({
   function handleDataEditorDidMount(editor: any) {
     dataEditorRef.current = editor;
   }
+
+  const isSingleFileSchema = fileName.endsWith(SINGLE_FILE_SCHEMA_EXTENSION);
 
   const saveFile = useCallback(
     (file: File, create: boolean = false, callback: Function | null = null) => {
@@ -132,6 +135,110 @@ export default function ReactFormBuilder({
     [processModelId, fileName],
   );
 
+  // Auto save schema changes
+  useEffect(() => {
+    if (!isSingleFileSchema && baseFileName !== '' && ready) {
+      saveFile(new File([debouncedStrSchema], baseFileName + SCHEMA_EXTENSION));
+    }
+  }, [debouncedStrSchema, baseFileName, saveFile, ready]);
+
+  // Auto save ui changes
+  useEffect(() => {
+    if (!isSingleFileSchema && baseFileName !== '' && ready) {
+      saveFile(new File([debouncedStrUI], baseFileName + UI_EXTENSION));
+    }
+  }, [debouncedStrUI, baseFileName, saveFile, ready]);
+
+  // Auto save example data changes
+  useEffect(() => {
+    if (!isSingleFileSchema && baseFileName !== '' && ready) {
+      saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
+    }
+  }, [debouncedFormData, baseFileName, saveFile, ready]);
+
+  useEffect(() => {
+    const prepareForm = (
+      jsonSchema: any,
+      formUiSchema: any,
+      formExampleData: any,
+    ) => {
+      /**
+       * we need to run the schema and ui through a backend call before rendering the form,
+       * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
+       */
+
+      const url: string = '/tasks/prepare-form';
+      HttpService.makeCallToBackend({
+        path: url,
+        successCallback: (response: any) => {
+          setPostJsonSchema(response.form_schema);
+          setPostJsonUI(response.form_ui);
+          setErrorMessage(null);
+        },
+        failureCallback: (error: any) => {
+          setErrorMessage(error.message);
+        },
+        httpMethod: 'POST',
+        postBody: {
+          form_schema: jsonSchema,
+          form_ui: formUiSchema,
+          task_data: formExampleData,
+        },
+      });
+    };
+
+    if (
+      debouncedFormData === '' ||
+      debouncedStrSchema === '' ||
+      debouncedStrUI === ''
+    ) {
+      return;
+    }
+
+    let foundError = false;
+    const parseObjectAsJson = (
+      jsonString: string,
+      additionalMessage: string,
+    ) => {
+      try {
+        return JSON.parse(jsonString);
+      } catch (exception) {
+        setErrorMessage(`${additionalMessage}: ${exception}`);
+        foundError = true;
+      }
+    };
+
+    const jsonSchema = parseObjectAsJson(debouncedStrSchema, 'Json Schema');
+    const formUiSchema = parseObjectAsJson(debouncedStrUI, 'UI Settings');
+    const formExampleData = parseObjectAsJson(debouncedFormData, 'Data  View');
+    if (!foundError) {
+      setErrorMessage(null);
+      if (isSingleFileSchema && baseFileName !== '' && ready) {
+        const fileContents = JSON.stringify(
+          {
+            json_schema: jsonSchema,
+            form_ui_schema: formUiSchema,
+            form_example_data: formExampleData,
+          },
+          null,
+          2,
+        );
+        saveFile(
+          new File([fileContents], baseFileName + SINGLE_FILE_SCHEMA_EXTENSION),
+          false,
+          () => prepareForm(jsonSchema, formUiSchema, formExampleData),
+        );
+      }
+    }
+  }, [
+    baseFileName,
+    debouncedFormData,
+    debouncedStrSchema,
+    debouncedStrUI,
+    ready,
+    saveFile,
+  ]);
+
   const hasValidName = (identifierToCheck: string) => {
     return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
   };
@@ -146,14 +253,14 @@ export default function ReactFormBuilder({
       setFilenameBaseInvalid(true);
       return;
     }
-    saveFile(new File(['{}'], base + SCHEMA_EXTENSION), true, () => {
-      saveFile(new File(['{}'], base + UI_EXTENSION), true, () => {
-        saveFile(new File(['{}'], base + DATA_EXTENSION), true, () => {
-          setBaseFileName(base);
-          onFileNameSet(base + SCHEMA_EXTENSION);
-        });
-      });
-    });
+    saveFile(
+      new File(['{}'], base + SINGLE_FILE_SCHEMA_EXTENSION),
+      true,
+      () => {
+        setBaseFileName(base);
+        onFileNameSet(base + SINGLE_FILE_SCHEMA_EXTENSION);
+      },
+    );
   };
 
   const isReady = () => {
@@ -172,84 +279,6 @@ export default function ReactFormBuilder({
     }
     return false;
   };
-
-  // Auto save schema changes
-  useEffect(() => {
-    if (baseFileName !== '' && ready) {
-      saveFile(new File([debouncedStrSchema], baseFileName + SCHEMA_EXTENSION));
-    }
-  }, [debouncedStrSchema, baseFileName, saveFile, ready]);
-
-  // Auto save ui changes
-  useEffect(() => {
-    if (baseFileName !== '' && ready) {
-      saveFile(new File([debouncedStrUI], baseFileName + UI_EXTENSION));
-    }
-  }, [debouncedStrUI, baseFileName, saveFile, ready]);
-
-  // Auto save example data changes
-  useEffect(() => {
-    if (baseFileName !== '' && ready) {
-      saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
-    }
-  }, [debouncedFormData, baseFileName, saveFile, ready]);
-
-  useEffect(() => {
-    /**
-     * we need to run the schema and ui through a backend call before rendering the form,
-     * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
-     */
-    const url: string = '/tasks/prepare-form';
-    let schema = {};
-    let ui = {};
-    let data = {};
-
-    if (
-      debouncedFormData === '' ||
-      debouncedStrSchema === '' ||
-      debouncedStrUI === ''
-    ) {
-      return;
-    }
-
-    try {
-      schema = JSON.parse(debouncedStrSchema);
-    } catch (e) {
-      setErrorMessage('Please check the Json Schema for errors.');
-      return;
-    }
-    try {
-      ui = JSON.parse(debouncedStrUI);
-    } catch (e) {
-      setErrorMessage('Please check the UI Settings for errors.');
-      return;
-    }
-    try {
-      data = JSON.parse(debouncedFormData);
-    } catch (e) {
-      setErrorMessage('Please check the Data View for errors.');
-      return;
-    }
-    setErrorMessage('');
-
-    HttpService.makeCallToBackend({
-      path: url,
-      successCallback: (response: any) => {
-        setPostJsonSchema(response.form_schema);
-        setPostJsonUI(response.form_ui);
-        setErrorMessage('');
-      },
-      failureCallback: (error: any) => {
-        setErrorMessage(error.message);
-      }, // fixme: handle errors
-      httpMethod: 'POST',
-      postBody: {
-        form_schema: schema,
-        form_ui: ui,
-        task_data: data,
-      },
-    });
-  }, [debouncedStrSchema, debouncedStrUI, debouncedFormData]);
 
   const handleTabChange = (evt: any) => {
     setSelectedIndex(evt.selectedIndex);
@@ -321,7 +350,10 @@ export default function ReactFormBuilder({
   }
 
   function baseName(myFileName: string): string {
-    return myFileName.replace(SCHEMA_EXTENSION, '').replace(UI_EXTENSION, '');
+    return myFileName
+      .replace(SCHEMA_EXTENSION, '')
+      .replace(UI_EXTENSION, '')
+      .replace(SINGLE_FILE_SCHEMA_EXTENSION, '');
   }
 
   function fetchSchema() {
@@ -363,6 +395,32 @@ export default function ReactFormBuilder({
     });
   }
 
+  function fetchSingleFileSchema() {
+    if (isSingleFileSchema) {
+      HttpService.makeCallToBackend({
+        path: `/process-models/${processModelId}/files/${baseName(
+          fileName,
+        )}${SINGLE_FILE_SCHEMA_EXTENSION}`,
+        successCallback: (response: any) => {
+          const parsedContents = JSON.parse(response.file_contents);
+          setStrSchema(JSON.stringify(parsedContents.json_schema) || '{}');
+          setStrUI(JSON.stringify(parsedContents.form_ui_schema) || '{}');
+          setStrFormData(
+            JSON.stringify(parsedContents.form_example_data) || '{}',
+          );
+          setBaseFileName(baseName(fileName));
+        },
+        failureCallback: () => {
+          setFetchFailed(true);
+        },
+      });
+    } else {
+      fetchSchema();
+      fetchUI();
+      fetchExampleData();
+    }
+  }
+
   function insertFields(schema: any, ui: any, data: any) {
     setFormData(merge(formData, data));
     updateStrData(JSON.stringify(formData, null, 2));
@@ -376,9 +434,7 @@ export default function ReactFormBuilder({
 
   if (!isReady()) {
     if (fileName !== '' && !fetchFailed) {
-      fetchExampleData();
-      fetchUI();
-      fetchSchema();
+      fetchSingleFileSchema();
       return (
         <div style={{ height: 200 }}>
           <Loading />
