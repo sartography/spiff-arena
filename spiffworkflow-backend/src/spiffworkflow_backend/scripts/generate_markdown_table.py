@@ -1,6 +1,7 @@
 from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
+from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -32,6 +33,8 @@ class GenerateMarkdownTable(Script):
                 value = str(item.get(property_name, ""))
                 if "formatter" in column and column["formatter"] == "convert_seconds_to_date_time_for_display":
                     value = f"SPIFF_FORMAT:::convert_seconds_to_date_time_for_display({value})"
+                else:
+                    value = JinjaHelpers.sanitize_for_md(value)
                 row.append(value)
             table += "| " + " | ".join(row) + " |\n"
         return table

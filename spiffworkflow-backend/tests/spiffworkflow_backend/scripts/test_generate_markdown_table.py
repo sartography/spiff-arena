@@ -41,6 +41,31 @@ class TestGenerateMarkdownTable(BaseTest):
         ]
         self.run_generate_markdown_table_test(columns)
 
+    def test_generate_markdown_table_script_handles_vertical_bars_in_data(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        columns = [
+            {"property": "name", "label": "Name"},
+            {"property": "description", "label": "Description"},
+        ]
+        data = [
+            {"name": "Alice", "description": "Alice's description | with a vertical bar"},
+            {"name": "Bob", "description": "Bob's description | with another vertical bar"},
+        ]
+        script_attributes_context = self.setup_script_attributes_context()
+        result = GenerateMarkdownTable().run(
+            script_attributes_context,
+            columns=columns,
+            data=data,
+        )
+        expected_result = (
+            "| Name | Description |\n"
+            "| ---- | ---- |\n"
+            "| Alice | Alice's description \\| with a vertical bar |\n"
+            "| Bob | Bob's description \\| with another vertical bar |\n"
+        )
+        assert result == expected_result
+
     def test_generate_markdown_table_script_supports_string_columns_for_ease_of_use(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
