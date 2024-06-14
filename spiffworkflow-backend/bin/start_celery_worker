@@ -13,4 +13,9 @@ export SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
 # so we can raise if calling unsafe code in celery
 export SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER=true
 
-poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
+"${script_dir}/wait_for_db_schema_migrations"
+exec poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info

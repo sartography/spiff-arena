@@ -12,7 +12,7 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
   exit 1
 fi
 
-port="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
+PORT="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
 use_local_open_id="false"
 acceptance_test_mode="false"
 
@@ -47,7 +47,7 @@ if [[ "$acceptance_test_mode" == "true" ]]; then
 elif [[ "$use_local_open_id" == "true" ]]; then
   backend_base_url="${SPIFFWORKFLOW_BACKEND_URL:-}"
   if [[ -z "$backend_base_url" ]]; then
-    backend_base_url="http://localhost:$port"
+    backend_base_url="http://localhost:$PORT"
   fi
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="default"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="internal openid"
@@ -65,7 +65,7 @@ elif [[ "$use_local_open_id" == "true" ]]; then
 #
 #   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__identifier="openid"
 #   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__label="I am a vendor"
-#   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__uri="http://localhost:$port/openid"
+#   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__uri="http://localhost:$PORT/openid"
 #   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_id="spiffworkflow-backend"
 #   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__1__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 
