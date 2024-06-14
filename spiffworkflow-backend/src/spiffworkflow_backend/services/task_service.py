@@ -104,8 +104,6 @@ class TaskModelError(Exception):
 
 
 class TaskService:
-    PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
-
     def __init__(
         self,
         process_instance: ProcessInstanceModel,

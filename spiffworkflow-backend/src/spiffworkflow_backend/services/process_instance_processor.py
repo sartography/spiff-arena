@@ -562,9 +562,6 @@ class ProcessInstanceProcessor:
         script_engine_to_use.environment.restore_state(bpmn_process_instance)
         bpmn_process_instance.script_engine = script_engine_to_use
 
-    def preserve_script_engine_state(self) -> None:
-        self._script_engine.environment.preserve_state(self.bpmn_process_instance)
-
     @classmethod
     def _update_bpmn_definition_mappings(
         cls,
@@ -1523,6 +1520,7 @@ class ProcessInstanceProcessor:
             self.bpmn_process_instance.script_engine.environment.preserve_state(self.bpmn_process_instance)
         else:
             # TODO: move this to a function on the script engine environments
+            # can clear_state del the key?
             key = NonTaskDataBasedScriptEngineEnvironment.PYTHON_ENVIRONMENT_STATE_KEY
             if key in self.bpmn_process_instance.data:
                 del self.bpmn_process_instance.data[key]
