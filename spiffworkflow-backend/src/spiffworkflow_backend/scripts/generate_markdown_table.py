@@ -13,7 +13,7 @@ class GenerateMarkdownTable(Script):
     def get_description(self) -> str:
         return """Given column info and data, returns a string suitable for use in markdown to show a table."""
 
-    def generate_table_headers(self, columns: list) -> list[dict]:
+    def normalize_table_headers_to_dicts(self, columns: list) -> list[dict]:
         table_headers = []
         for column in columns:
             if not isinstance(column, dict):
@@ -23,18 +23,14 @@ class GenerateMarkdownTable(Script):
             table_headers.append(column_dict)
         return table_headers
 
-    def generate_table_rows(self, columns: list, data: list, table_formatters: dict[str, str]) -> str:
+    def generate_table_rows(self, table_headers: list[dict], data: list) -> str:
         table = ""
         for item in data:
             row = []
-            for column in columns:
-                if isinstance(column, dict):
-                    property_name = column["property"]
-                else:
-                    property_name = column
+            for column in table_headers:
+                property_name = column["property"]
                 value = str(item.get(property_name, ""))
-                if property_name in table_formatters:
-                    if table_formatters[property_name] == "convert_seconds_to_date_time_for_display":
+                if "formatter" in column and column["formatter"] == "convert_seconds_to_date_time_for_display":
                         value = f"SPIFF_FORMAT:::convert_seconds_to_date_time_for_display({value})"
                 row.append(value)
             table += "| " + " | ".join(row) + " |\n"
@@ -57,11 +53,10 @@ class GenerateMarkdownTable(Script):
         columns: list = args[0]
         data: list = args[1]
 
-        table_headers = self.generate_table_headers(columns)
-        table_formatters = {header["property"]: header.get("formatter", "") for header in table_headers}
+        table_headers = self.normalize_table_headers_to_dicts(columns)
 
         header_labels = [header["label"] for header in table_headers]
         table = "| " + " | ".join(header_labels) + " |\n"
         table += "| " + " | ".join(["----"] * len(header_labels)) + " |\n"
-        table += self.generate_table_rows(columns, data, table_formatters)
+        table += self.generate_table_rows(table_headers, data)
         return table
