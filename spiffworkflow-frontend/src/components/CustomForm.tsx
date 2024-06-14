@@ -31,6 +31,7 @@ type OwnProps = {
   restrictedWidth?: boolean;
   submitButtonText?: string;
   reactJsonSchemaForm?: string;
+  hideSubmitButton?: boolean;
 };
 
 export default function CustomForm({
@@ -46,6 +47,7 @@ export default function CustomForm({
   restrictedWidth = false,
   submitButtonText,
   reactJsonSchemaForm = 'carbon',
+  hideSubmitButton =  false
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -496,7 +498,7 @@ export default function CustomForm({
   let childrenToUse = children;
   if (submitButtonText) {
     childrenToUse = (
-      <Button type="submit" id="submit-button" disabled={disabled}>
+      <Button type="submit" id="submit-button" disabled={disabled} style={{ display: (hideSubmitButton) ? 'none': 'unset' }}>
         {submitButtonText}
       </Button>
     );
@@ -516,7 +518,7 @@ export default function CustomForm({
     noValidate,
     fields: rjsfFields,
     templates: rjsfTemplates,
-    omitExtraData: true,
+    omitExtraData: true
   };
   if (reactJsonSchemaFormTheme === 'carbon') {
     // eslint-disable-next-line react/jsx-props-no-spreading

@@ -1070,6 +1070,11 @@ export default function ProcessModelEditDiagram() {
     onMessagesRequested(messageEvent);
   };
 
+  const handleMessageEditorSave = (event: any) => {
+    // setShowMessageEditor(false);
+    messageEvent.eventBus.fire('spiff.message.save');
+  };
+
   const messageEditor = () => {
     // do not render this component until we actually want to display it
     if (!showMessageEditor) {
@@ -1078,12 +1083,15 @@ export default function ProcessModelEditDiagram() {
     return (
       <Modal
         open={showMessageEditor}
-        modalHeading="Create/Edit Message"
-        primaryButtonText="Close (this does not save)"
-        onRequestSubmit={handleMessageEditorClose}
+        modalHeading="Message Editor"
+        modalLabel="Create or edit a message and manage its correlation properties"
+        primaryButtonText="Save"
+        secondaryButtonText="Close (this does not save)"
+        onRequestSubmit={handleMessageEditorSave}
         onRequestClose={handleMessageEditorClose}
         size="lg"
         preventCloseOnClickOutside
+        primaryButtonKind="primary"
       >
         <div data-color-mode="light">
           <MessageEditor

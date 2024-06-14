@@ -69,7 +69,25 @@ export function MessageEditor({
       path: `/process-groups/${modifiedProcessGroupIdentifier}`,
       successCallback: processResult,
     });
+
   }, [modifiedProcessGroupIdentifier, correlationProperties, messageId]);
+
+  // Setup event listeners on message.save
+  useEffect(() => {
+    const handleSaveEvent = (event: any) => {
+      updateProcessGroupWithMessages({
+        formData: currentFormData
+      });
+    };
+
+    messageEvent.eventBus.on('spiff.message.save', handleSaveEvent);
+
+    // Cleanup event listener on unmount
+    return () => {
+      messageEvent.eventBus.off('spiff.message.save', handleSaveEvent);
+    };
+  }, [currentFormData, messageEvent.eventBus]);
+
 
   const handleProcessGroupUpdateResponse = (
     response: ProcessGroup,
@@ -226,6 +244,7 @@ export function MessageEditor({
       },
     },
   };
+
   const uischema = {
     schema: {
       'ui:widget': 'textarea',
@@ -271,11 +290,13 @@ export function MessageEditor({
           uiSchema={uischema}
           formData={currentFormData}
           onSubmit={updateProcessGroupWithMessages}
-          submitButtonText="Save"
+          hideSubmitButton={true}
           onChange={updateFormData}
+          submitButtonText='Save'
         />
       </>
     );
   }
+
   return null;
 }

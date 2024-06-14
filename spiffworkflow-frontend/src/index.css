@@ -211,6 +211,32 @@ h3 {
   background-color: #474747;
 }
 
+/* position the close button at the top-right corner of the modal header */
+.cds--modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cds--modal-close__icon {
+  fill: #161616;
+}
+
+.cds--modal-footer .cds--btn--secondary {
+  color: #161616;
+  border-color: #e0e0e0;
+  background-color: #e0e0e0;
+}
+.cds--modal-footer .cds--btn--secondary:hover {
+  border-color: #c6c6c6;
+  background-color: #c6c6c6;
+  color: #161616;
+}
+
 .cds--header__global .cds--btn--primary.button-link {
   color: #f4f4f4;
   background-color: #393939;
