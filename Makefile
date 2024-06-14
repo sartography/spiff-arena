@@ -88,7 +88,7 @@ be-sqlite:
 	$(IN_BACKEND) sqlite3 $(BACKEND_SQLITE_FILE)
 
 be-tests: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest -vv tests/spiffworkflow_backend/$(JUST)
+	$(IN_BACKEND) poetry run pytest tests/spiffworkflow_backend/$(JUST)
 
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) poetry run pytest -n auto -x --random-order -vv tests/spiffworkflow_backend/$(JUST)

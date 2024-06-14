@@ -1520,7 +1520,13 @@ class ProcessInstanceProcessor:
     def serialize(self, preserve_script_engine_state: bool = True) -> dict:
         self.check_task_data_size()
         if preserve_script_engine_state:
-            self.preserve_script_engine_state()
+            self.bpmn_process_instance.script_engine.environment.preserve_state(self.bpmn_process_instance)
+        else:
+            # TODO: move this to a function on the script engine environments
+            key = NonTaskDataBasedScriptEngineEnvironment.PYTHON_ENVIRONMENT_STATE_KEY
+            if key in self.bpmn_process_instance.data:
+                del self.bpmn_process_instance.data[key]
+            
         return self._serializer.to_dict(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
