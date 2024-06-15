@@ -1,8 +1,8 @@
 from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
-from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.scripts.script import Script
+from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 
 
 class GenerateMarkdownTable(Script):
@@ -15,7 +15,10 @@ class GenerateMarkdownTable(Script):
         return """Given column info and data, returns a string suitable for use in markdown to show a table."""
 
     def normalize_table_headers_to_dicts(self, columns: list) -> list[dict]:
-        return [{"property": col, "label": col.replace("_", " ").capitalize()} if not isinstance(col, dict) else col for col in columns]
+        return [
+            {"property": col, "label": col.replace("_", " ").capitalize()} if not isinstance(col, dict) else col
+            for col in columns
+        ]
 
     def generate_table_rows(self, table_headers: list[dict], data: list) -> str:
         table = ""
@@ -50,9 +53,13 @@ class GenerateMarkdownTable(Script):
         data: list = kwargs.get("data", args[1] if len(args) > 1 else None)
 
         if columns is None:
-            raise ValueError("Missing required argument: 'columns'. Ensure that 'columns' is passed either as a positional or keyword argument.")
+            raise ValueError(
+                "Missing required argument: 'columns'. Ensure that 'columns' is passed as a positional or keyword argument."
+            )
         if data is None:
-            raise ValueError("Missing required argument: 'data'. Ensure that 'data' is passed either as a positional or keyword argument.")
+            raise ValueError(
+                "Missing required argument: 'data'. Ensure that 'data' is passed as a positional or keyword argument."
+            )
         table_headers = self.normalize_table_headers_to_dicts(columns)
 
         header_labels = [header["label"] for header in table_headers]
