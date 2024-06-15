@@ -50,10 +50,9 @@ class GenerateMarkdownTable(Script):
         data: list = kwargs.get("data", args[1] if len(args) > 1 else None)
 
         if columns is None:
-            raise ValueError("Missing required argument: 'columns'")
+            raise ValueError("Missing required argument: 'columns'. Ensure that 'columns' is passed either as a positional or keyword argument.")
         if data is None:
-            raise ValueError("Missing required argument: 'data'")
-
+            raise ValueError("Missing required argument: 'data'. Ensure that 'data' is passed either as a positional or keyword argument.")
         table_headers = self.normalize_table_headers_to_dicts(columns)
 
         header_labels = [header["label"] for header in table_headers]
