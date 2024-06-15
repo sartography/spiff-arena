@@ -15,14 +15,7 @@ class GenerateMarkdownTable(Script):
         return """Given column info and data, returns a string suitable for use in markdown to show a table."""
 
     def normalize_table_headers_to_dicts(self, columns: list) -> list[dict]:
-        table_headers = []
-        for column in columns:
-            if not isinstance(column, dict):
-                column_dict = {"property": column, "label": column.replace("_", " ").capitalize()}
-            else:
-                column_dict = column
-            table_headers.append(column_dict)
-        return table_headers
+        return [{"property": col, "label": col.replace("_", " ").capitalize()} if not isinstance(col, dict) else col for col in columns]
 
     def generate_table_rows(self, table_headers: list[dict], data: list) -> str:
         table = ""
