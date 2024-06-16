@@ -2,13 +2,13 @@ import json
 from typing import Any
 
 import flask.wrappers
-import requests
 from flask import current_app
 from flask.wrappers import Response
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
+from security import safe_requests
 
 
 def connector_proxy_typeahead_url() -> Any:
@@ -47,7 +47,7 @@ def _local_typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.R
 def _remote_typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.Response:
     url = f"{connector_proxy_typeahead_url()}/v1/typeahead/{category}?prefix={prefix}&limit={limit}"
 
-    proxy_response = requests.get(url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+    proxy_response = safe_requests.get(url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
     status = proxy_response.status_code
     response = proxy_response.text
 

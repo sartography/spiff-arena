@@ -19,6 +19,7 @@ from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_AUDIENCE
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import SPIFF_OPEN_ID_KEY_ID
+from security import safe_requests
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -128,7 +129,7 @@ class AuthenticationService:
             cls.JSON_WEB_KEYSET_CACHE[authentication_identifier] = {}
         if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
             try:
-                response = requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+                response = safe_requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 AuthenticationService.ENDPOINT_CACHE[authentication_identifier] = response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
@@ -141,7 +142,7 @@ class AuthenticationService:
     def get_jwks_config_from_uri(cls, jwks_uri: str) -> dict:
         if jwks_uri not in AuthenticationService.JSON_WEB_KEYSET_CACHE:
             try:
-                jwt_ks_response = requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+                jwt_ks_response = safe_requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri] = jwt_ks_response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given jwks url: {jwks_uri}") from ce

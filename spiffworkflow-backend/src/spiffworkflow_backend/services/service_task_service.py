@@ -21,6 +21,7 @@ from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
+from security import safe_requests
 
 
 class ConnectorProxyError(Exception):
@@ -255,7 +256,7 @@ class ServiceTaskService:
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+            response = safe_requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []
@@ -270,7 +271,7 @@ class ServiceTaskService:
     def authentication_list() -> Any:
         """Returns a list of available authentications."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+            response = safe_requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []
