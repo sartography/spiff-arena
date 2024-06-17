@@ -154,7 +154,7 @@ export default function PublicForm() {
           <Grid fullWidth condensed className="megacondensed">
             <Column sm={4} md={5} lg={8}>
               <CustomForm
-                id="form-to-submit"
+                id={`form-to-submit-${publicTask.task_guid}`}
                 disabled={formButtonsDisabled}
                 formData={taskData}
                 onChange={(obj: any) => {
