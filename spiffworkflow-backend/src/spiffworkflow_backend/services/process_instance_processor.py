@@ -186,7 +186,7 @@ class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # t
 
     def revise_state_with_task_data(self, task: SpiffTask) -> None:
         pass
-    
+
 
 class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
@@ -304,8 +304,9 @@ class CustomScriptEngineEnvironment:
     def create(environment_globals: dict[str, Any]) -> BaseCustomScriptEngineEnvironment:
         if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_NON_TASK_DATA_BASED_SCRIPT_ENGINE_ENVIRONMENT") == "true":
             return NonTaskDataBasedScriptEngineEnvironment(environment_globals)
-        
+
         return TaskDataBasedScriptEngineEnvironment(environment_globals)
+
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
