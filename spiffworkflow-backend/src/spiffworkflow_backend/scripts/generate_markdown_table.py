@@ -29,7 +29,7 @@ class GenerateMarkdownTable(Script):
                 value = str(item.get(property_name, ""))
                 if "formatter" in column and column["formatter"] == "convert_seconds_to_date_time_for_display":
                     value = f"SPIFF_FORMAT:::convert_seconds_to_date_time_for_display({value})"
-                else:
+                elif "sanitize" not in column or column["sanitize"] is True:
                     value = JinjaHelpers.sanitize_for_md(value)
                 row.append(value)
             table += "| " + " | ".join(row) + " |\n"
@@ -45,7 +45,7 @@ class GenerateMarkdownTable(Script):
         Generates a markdown table from columns and data.
 
         :param columns: List of column definitions. Each column can be a string or a dictionary
-                        with keys 'property', 'label', and 'formatter'.
+                        with keys 'property', 'label', 'sanitize', and 'formatter'.
         :param data: List of dictionaries containing the data.
         :return: A string containing the markdown table.
         """

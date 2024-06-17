@@ -75,3 +75,28 @@ class TestGenerateMarkdownTable(BaseTest):
             {"property": "created_at", "label": "Created At", "formatter": "convert_seconds_to_date_time_for_display"},
         ]
         self.run_generate_markdown_table_test(columns)
+
+    def test_generate_markdown_table_script_skips_sanitization_if_desired(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        columns = [
+            {"property": "name", "label": "Name"},
+            {"property": "description", "label": "Description", "sanitize": False},
+        ]
+        data = [
+            {"name": "Alice", "description": "Alice's `description | with a vertical` bar"},
+            {"name": "Bob", "description": "Bob's `description | with another vertical` bar"},
+        ]
+        script_attributes_context = self.setup_script_attributes_context()
+        result = GenerateMarkdownTable().run(
+            script_attributes_context,
+            columns=columns,
+            data=data,
+        )
+        expected_result = (
+            "| Name | Description |\n"
+            "| ---- | ---- |\n"
+            "| Alice | Alice's `description | with a vertical` bar |\n"
+            "| Bob | Bob's `description | with another vertical` bar |\n"
+        )
+        assert result == expected_result
