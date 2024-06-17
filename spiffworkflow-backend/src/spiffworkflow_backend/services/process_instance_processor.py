@@ -190,6 +190,9 @@ class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
     def clear_state(self) -> None:
         pass
 
+    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
+        return {}
+
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
@@ -262,6 +265,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
 
     def clear_state(self) -> None:
         self.state = {}
+
+    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        return data.pop(key, {})  # type: ignore
 
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
@@ -563,9 +570,6 @@ class ProcessInstanceProcessor:
         script_engine_to_use = script_engine or ProcessInstanceProcessor._default_script_engine
         script_engine_to_use.environment.restore_state(bpmn_process_instance)
         bpmn_process_instance.script_engine = script_engine_to_use
-
-    def preserve_script_engine_state(self) -> None:
-        self._script_engine.environment.preserve_state(self.bpmn_process_instance)
 
     @classmethod
     def _update_bpmn_definition_mappings(
@@ -1519,10 +1523,18 @@ class ProcessInstanceProcessor:
                 )
             )
 
-    def serialize(self) -> dict:
+    def serialize(self, serialize_script_engine_state: bool = True) -> dict:
         self.check_task_data_size()
-        self.preserve_script_engine_state()
-        return self._serializer.to_dict(self.bpmn_process_instance)  # type: ignore
+
+        if serialize_script_engine_state:
+            self._script_engine.environment.preserve_state(self.bpmn_process_instance)
+
+        result = self._serializer.to_dict(self.bpmn_process_instance)
+
+        if not serialize_script_engine_state and "data" in result:
+            self._script_engine.environment.pop_state(result["data"])
+
+        return result  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
         return self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)  # type: ignore
