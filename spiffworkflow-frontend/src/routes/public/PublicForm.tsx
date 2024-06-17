@@ -155,6 +155,7 @@ export default function PublicForm() {
             <Column sm={4} md={5} lg={8}>
               <CustomForm
                 id={`form-to-submit-${publicTask.task_guid}`}
+                key={`form-to-submit-${publicTask.task_guid}`}
                 disabled={formButtonsDisabled}
                 formData={taskData}
                 onChange={(obj: any) => {
