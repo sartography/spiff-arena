@@ -62,6 +62,7 @@ test('it can properly format a duration', () => {
 test('it can get the correct date format from string', () => {
   const expectedDateString = '2024-03-04';
   const newDateFormat = 'dd-MMM-yyyy';
+  const marchDate = 'March 4, 2024';
 
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
@@ -75,7 +76,7 @@ test('it can get the correct date format from string', () => {
   ).toEqual(expectedDateString);
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-      'March 4, 2024',
+      marchDate,
     ),
   ).toEqual(expectedDateString);
   expect(
@@ -97,6 +98,12 @@ test('it can get the correct date format from string', () => {
   expect(
     DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
       '04-03-2024',
+      newDateFormat,
+    ),
+  ).toEqual(expectedDateString);
+  expect(
+    DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
+      marchDate,
       newDateFormat,
     ),
   ).toEqual(expectedDateString);
