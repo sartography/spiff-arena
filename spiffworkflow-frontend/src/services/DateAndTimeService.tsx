@@ -14,6 +14,18 @@ const FOUR_HOURS_IN_SECONDS = SECONDS_IN_HOUR * 4;
 const REFRESH_INTERVAL_SECONDS = 5;
 const REFRESH_TIMEOUT_SECONDS = FOUR_HOURS_IN_SECONDS;
 
+const stringLooksLikeADate = (dateString: string): boolean => {
+  // We had been useing date-fns parse to really check if a date is valid however it attempts to parse dates like 14-06-2 because it thinks it is 14-06-0002.
+  // This results in a validate date but has a negative time with getTime which is a valid number however we do not want dates like this at all.
+  // Checking for negative numbers seem wrong so use a regex to see if it looks anything like a date.
+  return (
+    (dateString.match(/^\d{4}[-/.]\d{2}[-/.]\d{2}$/) ||
+      dateString.match(/^(\d{1,2}|\w+)[-/.](\d{1,2}|\w+)[-/.]\d{4}$/) ||
+      dateString.match(/^\w+ +\d+, +\d{4}$/) ||
+      dateString.match(/^\d+ +\w+ +\d{4}$/)) !== null
+  );
+};
+
 const convertDateToSeconds = (date: any, onChangeFunction: any = null) => {
   let dateInSeconds = date;
   if (date !== null) {
@@ -44,7 +56,11 @@ const dateStringToYMDFormat = (dateString: string) => {
   if (dateString === undefined || dateString === null) {
     return dateString;
   }
-  if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+
+  if (
+    dateString.match(/^\d{4}-\d{2}-\d{2}$/) ||
+    !stringLooksLikeADate(dateString)
+  ) {
     return dateString;
   }
   const newDate = parse(dateString, DATE_FORMAT, new Date());
@@ -160,7 +176,7 @@ const attemptToConvertUnknownDateStringFormatToKnownFormat = (
   }
   let newDateString = dateString;
   // if the date starts with 4 digits then assume in y-m-d format and avoid all of this
-  if (dateString.length >= 10 && !dateString.match(/^\d{4}/)) {
+  if (stringLooksLikeADate(dateString) && !dateString.match(/^\d{4}/)) {
     // if the date format should contain month names or abbreviations but does not have letters
     // then attempt to parse in the same format but with digit months instead of letters
 
@@ -252,6 +268,7 @@ const DateAndTimeService = {
   formatDateTime,
   formatDurationForDisplay,
   secondsToDuration,
+  stringLooksLikeADate,
   ymdDateStringToConfiguredFormat,
 };
 
