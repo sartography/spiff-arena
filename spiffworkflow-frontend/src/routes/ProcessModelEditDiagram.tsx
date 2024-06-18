@@ -46,6 +46,7 @@ import {
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
+  CorrelationProperties,
   ProcessFile,
   ProcessModel,
   ProcessReference,
@@ -84,7 +85,8 @@ export default function ProcessModelEditDiagram() {
   const [showMessageEditor, setShowMessageEditor] = useState(false);
   const [messageId, setMessageId] = useState<string>('');
   const [elementId, setElementId] = useState<string>('');
-  const [correlationProperties, setCorrelationProperties] = useState<any>([]);
+  const [correlationProperties, setCorrelationProperties] =
+    useState<CorrelationProperties>([]);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
@@ -1064,6 +1066,7 @@ export default function ProcessModelEditDiagram() {
     setMessageEvent(event);
     setMessageId(event.value.messageId);
     setElementId(event.value.elementId);
+    console.log('event.value', event.value);
     setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
   };

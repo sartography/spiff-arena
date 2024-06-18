@@ -186,7 +186,6 @@ export function MessageEditor({
         messageId,
         correlationProperties,
       );
-      console.log('newIsSynced', newIsSynced);
       setSynced(newIsSynced);
       setProcessGroup(result);
       setCurrentMessageId(messageId);

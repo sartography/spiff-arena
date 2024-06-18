@@ -72,7 +72,12 @@ export const isCorrelationPropertiesInSync = (
     return false;
   }
 
+  const localPropertyIds = messageProperties.map((property) => property.id);
+  const processGroupPropertyIds = Object.keys(message.correlation_properties);
+
   // Check if all local properties exist in the process group data
+  // TODO: fix the lint
+  // eslint-disable-next-line
   for (const property of messageProperties) {
     const correlationProperty = message.correlation_properties[property.id];
 
@@ -100,8 +105,8 @@ export const isCorrelationPropertiesInSync = (
   }
 
   // Checking if all process group properties exist in the local xml
-  const localPropertyIds = messageProperties.map((property) => property.id);
-  const processGroupPropertyIds = Object.keys(message.correlation_properties);
+  // TODO: fix the lint
+  // eslint-disable-next-line
   for (const propertyId of processGroupPropertyIds) {
     if (!localPropertyIds.includes(propertyId)) {
       return false;
