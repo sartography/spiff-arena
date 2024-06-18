@@ -244,3 +244,5 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", defau
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)
 
 config_from_env("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE", default="openid profile email")
+
+config_from_env("SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS", default=False)
