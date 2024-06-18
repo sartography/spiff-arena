@@ -15,6 +15,7 @@ dev/backend.md
 dev/frontend.md
 dev/connector_proxy.md
 dev/how_to_build_a_connector.md
+dev/extensions.md
 dev/process.md
 ```
 
@@ -38,7 +39,6 @@ Building_Diagrams/sub-processes_and_call_activities.md
 Building_Diagrams/data.md
 Building_Diagrams/multiinstance.md
 Building_Diagrams/dmn.md
-Building_Diagrams/Extensions.md
 Building_Diagrams/pools_and_lanes.md
 Building_Diagrams/Builtin_examples.md
 ```
