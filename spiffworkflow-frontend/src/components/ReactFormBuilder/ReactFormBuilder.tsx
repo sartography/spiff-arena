@@ -520,6 +520,7 @@ export default function ReactFormBuilder({
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
           <CustomForm
             id="custom_form"
+            key="custom_form"
             formData={formData}
             onChange={(e: any) => updateData(e.formData)}
             schema={postJsonSchema}

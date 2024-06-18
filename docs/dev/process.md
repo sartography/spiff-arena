@@ -38,9 +38,11 @@ Two independent security reviews have been performed on the codebase and mitigat
 
 ## Contributing
 
-It would be great to have you contributing to the project.
+This is the last page in the Technical Documentation section, where we keep content mainly intended for developers.
+And that seems like as good a place as to mention that it would be great to have you contributing to the project!
 There is a [Contributing doc](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst) that you can follow.
 You can find other like-minded people in our [Discord](https://discord.gg/F6Kb7HNK7B).
+Thank you!
 
 ```mermaid
 graph LR

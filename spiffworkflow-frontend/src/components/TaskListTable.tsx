@@ -187,6 +187,7 @@ export default function TaskListTable({
           </div>
           <CustomForm
             id={formSubmissionTask.guid}
+            key={formSubmissionTask.guid}
             formData={formSubmissionTask.data}
             schema={jsonSchema}
             uiSchema={formUiSchema}

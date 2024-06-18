@@ -14,7 +14,6 @@ function log_info() {
 # example command:
 # SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite SPIFFWORKFLOW_BACKEND_ENV=local_docker SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=true FLASK_DEBUG=0 FLASK_SESSION_SECRET_KEY=HEY SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${HOME}/projects/github/sartography/sample-process-models/" ./bin/boot_server_in_docker
 
-# run migrations
 export FLASK_APP=/app/src/spiffworkflow_backend
 
 if [[ -z "${FLASK_DEBUG:-}" ]]; then
@@ -109,10 +108,15 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER
 fi
 
-# DELETE after this runs on all necessary environments
-# TODO: make a system somewhat like schema migrations (storing versions in a db table) to handle data migrations
-log_info "Running data migrations"
-poetry run python ./bin/data_migrations/run_all.py
+# # VersionOneThree and the process_instance_file_data db => filesystem migration have run on all necessary environments,
+# so commenting out run_all.py.
+# one day we might have another blocking-style data migration that we want to complete before the app boots.
+# in that case, probably update run_all.py to not run VersionOneThree and filesystem migration, but instead the new function.
+# we also might want to build a db-backed system to let other non-api containers know when this long-running migration is
+# happening (somewhat like schema migrations (storing versions in a db table) to handle data migrations),
+# so it could poll some table and not start its work until the database is fully migrated.
+# log_info "Running data migrations"
+# poetry run python ./bin/data_migrations/run_all.py
 
 ##### DO THIS right before starting the server
 if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
