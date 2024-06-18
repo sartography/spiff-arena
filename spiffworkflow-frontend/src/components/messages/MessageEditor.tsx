@@ -305,9 +305,10 @@ export function MessageEditor({
             timeout={4000}
             onClose={() => setDisplaySaveMessageMessage(false)}
           >
-            There is a difference between the local message properties and the
-            process group data. Updating the message properties is recommended
-            to ensure data consistency
+            There is a difference between the message properties in this process
+            model and the shared message data stored with the process group.
+            Updating the message properties by saving is recommended to ensure
+            data consistency
           </Notification>
         ) : null}
         <CustomForm

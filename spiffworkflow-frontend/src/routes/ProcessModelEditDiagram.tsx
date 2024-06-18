@@ -1066,7 +1066,6 @@ export default function ProcessModelEditDiagram() {
     setMessageEvent(event);
     setMessageId(event.value.messageId);
     setElementId(event.value.elementId);
-    console.log('event.value', event.value);
     setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
   };
