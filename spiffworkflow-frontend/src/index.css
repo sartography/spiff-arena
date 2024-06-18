@@ -891,7 +891,7 @@ hr {
   margin-left: 1rem;
 }
 
-#hidden-form-for-autosave {
+.hidden-form-for-autosave {
   display: none;
 }
 

@@ -313,6 +313,7 @@ export function MessageEditor({
         ) : null}
         <CustomForm
           id={currentMessageId || ''}
+          key={currentMessageId || ''}
           schema={schema}
           uiSchema={uischema}
           formData={currentFormData}

@@ -19,10 +19,12 @@ enum DateCheckType {
 
 type OwnProps = {
   id: string;
+  key: string;
   formData: any;
   schema: any;
   uiSchema: any;
 
+  className?: string;
   disabled?: boolean;
   onChange?: any;
   onSubmit?: any;
@@ -36,7 +38,9 @@ type OwnProps = {
 
 export default function CustomForm({
   id,
+  key,
   formData,
+  className,
   schema,
   uiSchema,
   disabled = false,
@@ -511,6 +515,8 @@ export default function CustomForm({
 
   const formProps = {
     id,
+    key,
+    className,
     disabled,
     formData,
     onChange,
