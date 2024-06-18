@@ -14,6 +14,7 @@ dev/setup.md
 dev/backend.md
 dev/frontend.md
 dev/connector_proxy.md
+dev/how_to_build_a_connector.md
 dev/process.md
 ```
 
