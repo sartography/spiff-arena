@@ -86,7 +86,7 @@ export default function ProcessModelEditDiagram() {
   const [messageId, setMessageId] = useState<string>('');
   const [elementId, setElementId] = useState<string>('');
   const [correlationProperties, setCorrelationProperties] =
-    useState<CorrelationProperties>([]);
+    useState<CorrelationProperties | null>(null);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);

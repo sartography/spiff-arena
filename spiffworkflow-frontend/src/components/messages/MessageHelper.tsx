@@ -87,17 +87,7 @@ export const isCorrelationPropertiesInSync = (
       ? property.retrievalExpression[0]
       : property.retrievalExpression;
 
-    if (Array.isArray(correlationProperty.retrieval_expressions)) {
-      if (
-        !correlationProperty.retrieval_expressions.includes(
-          localRetrievalExpression,
-        )
-      ) {
-        return false;
-      }
-    } else if (
-      correlationProperty.retrieval_expressions !== localRetrievalExpression
-    ) {
+    if (correlationProperty.retrieval_expression !== localRetrievalExpression) {
       return false;
     }
   }

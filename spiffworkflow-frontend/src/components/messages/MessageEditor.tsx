@@ -48,17 +48,8 @@ export function MessageEditor({
       (formData.correlation_properties || []).forEach((formProp: any) => {
         if (!(formProp.id in newCorrelationProperties)) {
           newCorrelationProperties[formProp.id] = {
-            retrieval_expressions: [],
+            retrieval_expression: formProp.retrievalExpression,
           };
-        }
-        if (
-          !newCorrelationProperties[formProp.id].retrieval_expressions.includes(
-            formProp.retrievalExpression,
-          )
-        ) {
-          newCorrelationProperties[formProp.id].retrieval_expressions.push(
-            formProp.retrievalExpression,
-          );
         }
       });
 
