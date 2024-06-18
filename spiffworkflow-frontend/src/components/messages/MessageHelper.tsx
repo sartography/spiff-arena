@@ -52,7 +52,7 @@ export const mergeCorrelationProperties = (
   return mergedProperties;
 };
 
-export const isCorrelationPropertiesInSync = (
+export const areCorrelationPropertiesInSync = (
   processGroup: ProcessGroup,
   messageId: string,
   messageProperties: any[],

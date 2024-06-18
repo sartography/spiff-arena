@@ -12,7 +12,7 @@ import {
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
 import {
-  isCorrelationPropertiesInSync,
+  areCorrelationPropertiesInSync,
   convertCorrelationPropertiesToRJSF,
   mergeCorrelationProperties,
 } from './MessageHelper';
@@ -172,7 +172,7 @@ export function MessageEditor({
       setCurrentFormData(newFormData);
     };
     const processResult = (result: ProcessGroup) => {
-      const newIsSynced = isCorrelationPropertiesInSync(
+      const newIsSynced = areCorrelationPropertiesInSync(
         result,
         messageId,
         correlationProperties,
