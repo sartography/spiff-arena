@@ -284,7 +284,7 @@ class AuthorizationService:
         return (function_full_path, module)
 
     @classmethod
-    def authentication_exclusion_list(cls) -> bool:
+    def authentication_exclusion_list(cls) -> list:
         authentication_exclusion_list = [
             "spiffworkflow_backend.routes.authentication_controller.authentication_options",
             "spiffworkflow_backend.routes.authentication_controller.login",
