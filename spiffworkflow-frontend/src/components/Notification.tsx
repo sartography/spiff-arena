@@ -4,11 +4,11 @@ import {
   Checkmark,
   Error,
   // @ts-ignore
+  WarningAlt,
 } from '@carbon/icons-react';
 // @ts-ignore
 import { Button } from '@carbon/react';
 import { ObjectWithStringKeysAndValues } from '../interfaces';
-import { WarningAlt } from '@carbon/icons-react';
 
 type OwnProps = {
   title: string;

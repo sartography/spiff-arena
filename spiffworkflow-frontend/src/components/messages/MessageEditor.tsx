@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import CustomForm from '../CustomForm';
 import {
   ProcessGroup,
@@ -20,7 +20,7 @@ import { Notification } from '../Notification';
 
 type OwnProps = {
   modifiedProcessGroupIdentifier: string;
-  elementId: string
+  elementId: string;
   messageId: string;
   messageEvent: any;
   correlationProperties: any;
@@ -31,7 +31,7 @@ export function MessageEditor({
   messageId,
   messageEvent,
   correlationProperties,
-  elementId
+  elementId,
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [currentFormData, setCurrentFormData] = useState<any>(null);
@@ -39,6 +39,124 @@ export function MessageEditor({
     useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const [isSynced, setSynced] = useState<boolean>(true);
+
+  const updateCorrelationPropertiesOnProcessGroup = useCallback(
+    (currentMessagesForId: MessageDefinition, formData: any) => {
+      const newCorrelationProperties: CorrelationProperties = {
+        ...currentMessagesForId.correlation_properties,
+      };
+      (formData.correlation_properties || []).forEach((formProp: any) => {
+        if (!(formProp.id in newCorrelationProperties)) {
+          newCorrelationProperties[formProp.id] = {
+            retrieval_expressions: [],
+          };
+        }
+        if (
+          !newCorrelationProperties[formProp.id].retrieval_expressions.includes(
+            formProp.retrievalExpression,
+          )
+        ) {
+          newCorrelationProperties[formProp.id].retrieval_expressions.push(
+            formProp.retrievalExpression,
+          );
+        }
+      });
+
+      Object.keys(currentMessagesForId.correlation_properties || []).forEach(
+        (propId: string) => {
+          const foundProp = (formData.correlation_properties || []).find(
+            (formProp: any) => {
+              return propId === formProp.id;
+            },
+          );
+          if (!foundProp) {
+            delete newCorrelationProperties[propId];
+          }
+        },
+      );
+      return newCorrelationProperties;
+    },
+    [],
+  );
+
+  const handleProcessGroupUpdateResponse = useCallback(
+    (
+      response: ProcessGroup,
+      messageIdentifier: string,
+      updatedMessagesForId: MessageDefinition,
+    ) => {
+      setProcessGroup(response);
+      setDisplaySaveMessageMessage(true);
+      messageEvent.eventBus.fire('spiff.add_message.returned', {
+        name: messageIdentifier,
+        correlation_properties: updatedMessagesForId.correlation_properties,
+        elementId,
+      });
+      setSynced(true);
+    },
+    [elementId, messageEvent.eventBus],
+  );
+
+  const updateProcessGroupWithMessages = useCallback(
+    (formObject: RJSFFormObject) => {
+      const { formData } = formObject;
+
+      if (!processGroup) {
+        return;
+      }
+
+      // keep track of new and old message ids so we can handle renaming a message
+      const newMessageId = formData.messageId;
+      const oldMessageId = currentMessageId || newMessageId;
+
+      const processGroupForUpdate = { ...processGroup };
+      if (!processGroupForUpdate.messages) {
+        processGroupForUpdate.messages = {};
+      }
+      const currentMessagesForId: MessageDefinition =
+        (processGroupForUpdate.messages || {})[oldMessageId] || {};
+      const updatedMessagesForId = { ...currentMessagesForId };
+
+      const newCorrelationProperties =
+        updateCorrelationPropertiesOnProcessGroup(
+          currentMessagesForId,
+          formData,
+        );
+
+      updatedMessagesForId.correlation_properties = newCorrelationProperties;
+
+      try {
+        updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
+      } catch (e) {
+        // TODO: display error in a tag like we normally do
+        // eslint-disable-next-line no-alert
+        alert(`Invalid schema: ${e}`);
+        return;
+      }
+
+      processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
+      setCurrentMessageId(newMessageId);
+      const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
+      HttpService.makeCallToBackend({
+        path,
+        successCallback: (response: ProcessGroup) =>
+          handleProcessGroupUpdateResponse(
+            response,
+            newMessageId,
+            updatedMessagesForId,
+          ),
+        httpMethod: 'PUT',
+        postBody: processGroupForUpdate,
+      });
+    },
+    [
+      currentMessageId,
+      handleProcessGroupUpdateResponse,
+      modifiedProcessGroupIdentifier,
+      processGroup,
+      updateCorrelationPropertiesOnProcessGroup,
+    ],
+  );
 
   useEffect(() => {
     const setInitialFormData = (newProcessGroup: ProcessGroup) => {
@@ -63,8 +181,13 @@ export function MessageEditor({
       setCurrentFormData(newFormData);
     };
     const processResult = (result: ProcessGroup) => {
-      const isSynced = isCorrelationPropertiesInSync(result, messageId, correlationProperties);
-      setSynced(isSynced);
+      const newIsSynced = isCorrelationPropertiesInSync(
+        result,
+        messageId,
+        correlationProperties,
+      );
+      console.log('newIsSynced', newIsSynced);
+      setSynced(newIsSynced);
       setProcessGroup(result);
       setCurrentMessageId(messageId);
       setPageTitle([result.display_name]);
@@ -78,9 +201,9 @@ export function MessageEditor({
 
   // Setup event listeners on message.save
   useEffect(() => {
-    const handleSaveEvent = (event: any) => {
+    const handleSaveEvent = (_event: any) => {
       updateProcessGroupWithMessages({
-        formData: currentFormData
+        formData: currentFormData,
       });
     };
 
@@ -90,113 +213,7 @@ export function MessageEditor({
     return () => {
       messageEvent.eventBus.off('spiff.message.save', handleSaveEvent);
     };
-  }, [currentFormData, messageEvent.eventBus]);
-
-
-  const handleProcessGroupUpdateResponse = (
-    response: ProcessGroup,
-    messageIdentifier: string,
-    updatedMessagesForId: MessageDefinition,
-  ) => {
-    setProcessGroup(response);
-    setDisplaySaveMessageMessage(true);
-    messageEvent.eventBus.fire('spiff.add_message.returned', {
-      name: messageIdentifier,
-      correlation_properties: updatedMessagesForId.correlation_properties,
-      elementId
-    });
-    setSynced(true);
-  };
-
-  const updateCorrelationPropertiesOnProcessGroup = (
-    currentMessagesForId: MessageDefinition,
-    formData: any,
-  ) => {
-    const newCorrelationProperties: CorrelationProperties = {
-      ...currentMessagesForId.correlation_properties,
-    };
-    (formData.correlation_properties || []).forEach((formProp: any) => {
-      if (!(formProp.id in newCorrelationProperties)) {
-        newCorrelationProperties[formProp.id] = {
-          retrieval_expressions: [],
-        };
-      }
-      if (
-        !newCorrelationProperties[formProp.id].retrieval_expressions.includes(
-          formProp.retrievalExpression,
-        )
-      ) {
-        newCorrelationProperties[formProp.id].retrieval_expressions.push(
-          formProp.retrievalExpression,
-        );
-      }
-    });
-
-    Object.keys(currentMessagesForId.correlation_properties || []).forEach(
-      (propId: string) => {
-        const foundProp = (formData.correlation_properties || []).find(
-          (formProp: any) => {
-            return propId === formProp.id;
-          },
-        );
-        if (!foundProp) {
-          delete newCorrelationProperties[propId];
-        }
-      },
-    );
-    return newCorrelationProperties;
-  };
-
-  const updateProcessGroupWithMessages = (formObject: RJSFFormObject) => {
-    const { formData } = formObject;
-
-    if (!processGroup) {
-      return;
-    }
-
-    // keep track of new and old message ids so we can handle renaming a message
-    const newMessageId = formData.messageId;
-    const oldMessageId = currentMessageId || newMessageId;
-
-    const processGroupForUpdate = { ...processGroup };
-    if (!processGroupForUpdate.messages) {
-      processGroupForUpdate.messages = {};
-    }
-    const currentMessagesForId: MessageDefinition =
-      (processGroupForUpdate.messages || {})[oldMessageId] || {};
-    const updatedMessagesForId = { ...currentMessagesForId };
-
-    const newCorrelationProperties = updateCorrelationPropertiesOnProcessGroup(
-      currentMessagesForId,
-      formData,
-    );
-
-    updatedMessagesForId.correlation_properties = newCorrelationProperties;
-
-    try {
-      updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
-    } catch (e) {
-      // TODO: display error in a tag like we normally do
-      // eslint-disable-next-line no-alert
-      alert(`Invalid schema: ${e}`);
-      return;
-    }
-
-    processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
-    setCurrentMessageId(newMessageId);
-    const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
-    HttpService.makeCallToBackend({
-      path,
-      successCallback: (response: ProcessGroup) =>
-        handleProcessGroupUpdateResponse(
-          response,
-          newMessageId,
-          updatedMessagesForId,
-        ),
-      httpMethod: 'PUT',
-      postBody: processGroupForUpdate,
-    });
-  };
+  }, [currentFormData, messageEvent.eventBus, updateProcessGroupWithMessages]);
 
   const schema = {
     type: 'object',
@@ -293,12 +310,14 @@ export function MessageEditor({
         {!isSynced && !displaySaveMessageMessage ? (
           <Notification
             title="Please Save the current message configuration"
-            type='warning'
+            type="warning"
             hideCloseButton
             timeout={4000}
             onClose={() => setDisplaySaveMessageMessage(false)}
           >
-            There is a difference between the local message properties and the process group data. Updating the message properties is recommended to ensure data consistency
+            There is a difference between the local message properties and the
+            process group data. Updating the message properties is recommended
+            to ensure data consistency
           </Notification>
         ) : null}
         <CustomForm
@@ -307,9 +326,9 @@ export function MessageEditor({
           uiSchema={uischema}
           formData={currentFormData}
           onSubmit={updateProcessGroupWithMessages}
-          hideSubmitButton={true}
+          hideSubmitButton
           onChange={updateFormData}
-          submitButtonText='Save'
+          submitButtonText="Save"
         />
       </>
     );
