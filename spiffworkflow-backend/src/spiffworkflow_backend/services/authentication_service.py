@@ -260,7 +260,7 @@ class AuthenticationService:
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
-            + "scope=openid profile email&"
+            + f"scope={current_app.config['SPIFFWORKFLOW_BACKEND_OPENID_SCOPE']}&"
             + f"redirect_uri={redirect_url_to_use}"
         )
         return login_redirect_url
