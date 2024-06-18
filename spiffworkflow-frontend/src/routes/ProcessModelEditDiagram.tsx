@@ -46,6 +46,7 @@ import {
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
+  CorrelationProperties,
   ProcessFile,
   ProcessModel,
   ProcessReference,
@@ -83,7 +84,9 @@ export default function ProcessModelEditDiagram() {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [showMessageEditor, setShowMessageEditor] = useState(false);
   const [messageId, setMessageId] = useState<string>('');
-  const [correlationProperties, setCorrelationProperties] = useState<any>([]);
+  const [elementId, setElementId] = useState<string>('');
+  const [correlationProperties, setCorrelationProperties] =
+    useState<CorrelationProperties | null>(null);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
@@ -1062,12 +1065,18 @@ export default function ProcessModelEditDiagram() {
   const onLaunchMessageEditor = (event: any) => {
     setMessageEvent(event);
     setMessageId(event.value.messageId);
+    setElementId(event.value.elementId);
     setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
   };
   const handleMessageEditorClose = () => {
     setShowMessageEditor(false);
     onMessagesRequested(messageEvent);
+  };
+
+  const handleMessageEditorSave = (_event: any) => {
+    // setShowMessageEditor(false);
+    messageEvent.eventBus.fire('spiff.message.save');
   };
 
   const messageEditor = () => {
@@ -1078,12 +1087,15 @@ export default function ProcessModelEditDiagram() {
     return (
       <Modal
         open={showMessageEditor}
-        modalHeading="Create/Edit Message"
-        primaryButtonText="Close (this does not save)"
-        onRequestSubmit={handleMessageEditorClose}
+        modalHeading="Message Editor"
+        modalLabel="Create or edit a message and manage its correlation properties"
+        primaryButtonText="Save"
+        secondaryButtonText="Close (this does not save)"
+        onRequestSubmit={handleMessageEditorSave}
         onRequestClose={handleMessageEditorClose}
         size="lg"
         preventCloseOnClickOutside
+        primaryButtonKind="primary"
       >
         <div data-color-mode="light">
           <MessageEditor
@@ -1093,6 +1105,7 @@ export default function ProcessModelEditDiagram() {
             messageId={messageId}
             correlationProperties={correlationProperties}
             messageEvent={messageEvent}
+            elementId={elementId}
           />
         </div>
       </Modal>

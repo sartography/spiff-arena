@@ -25,6 +25,7 @@ a.cds--header__menu-item {
   background-color: #161616;
   cursor: default;
 }
+
 .cds--header__action.unclickable-text:focus {
   border: none;
   box-shadow: none;
@@ -81,6 +82,7 @@ h3 {
   background-blend-mode: multiply;
   border: 1px solid #393939;
 }
+
 .cds--btn.button-white-background:hover {
   background: lightgrey;
 }
@@ -88,12 +90,15 @@ h3 {
 .spiff-breadcrumb .MuiBreadcrumbs-li a:hover {
   color: #525252;
 }
+
 .spiff-breadcrumb .MuiBreadcrumbs-li a:visited {
   color: #525252;
 }
+
 .spiff-breadcrumb .MuiBreadcrumbs-li a:visited:hover {
   color: #525252;
 }
+
 .spiff-breadcrumb .MuiBreadcrumbs-li a {
   color: #525252;
 }
@@ -101,12 +106,15 @@ h3 {
 .cds--btn--ghost {
   color: black;
 }
+
 .cds--btn--ghost:visited {
   color: black;
 }
+
 .cds--btn--ghost:hover {
   color: black;
 }
+
 .cds--btn--ghost:visited:hover {
   color: black;
 }
@@ -116,15 +124,18 @@ h3 {
   color: #0062fe;
   padding-left: 0;
 }
+
 .cds--btn--ghost.button-link:visited {
   color: #0062fe;
   padding-left: 0;
 }
+
 .cds--btn--ghost.button-link:hover {
   color: #0062fe;
   background-color: white;
   padding-left: 0;
 }
+
 .cds--btn--ghost.button-link:visited:hover {
   color: #0062fe;
   background-color: white;
@@ -136,10 +147,12 @@ h3 {
   color: black;
   border-color: black;
 }
+
 .cds--btn--tertiary:visited {
   color: black;
   border-color: black;
 }
+
 /* make the colors a little lighter black on hover
  * so they match our normal scheme better
  */
@@ -148,11 +161,13 @@ h3 {
   border-color: #161616;
   background-color: #f4f4f4;
 }
+
 .cds--btn--tertiary:hover {
   color: #161616;
   border-color: #161616;
   background-color: #f4f4f4;
 }
+
 .cds--btn--tertiary:visited:hover {
   color: #161616;
   border-color: #161616;
@@ -164,21 +179,25 @@ h3 {
   border-color: #efefef;
   background-color: #efefef;
 }
+
 .cds--btn--secondary:visited {
   color: #161616;
   border-color: #efefef;
   background-color: #efefef;
 }
+
 .cds--btn--secondary:focus {
   color: #161616;
   border-color: #efefef;
   background-color: #efefef;
 }
+
 .cds--btn--secondary:hover {
   color: #161616;
   border-color: #dddddd;
   background-color: #dddddd;
 }
+
 .cds--btn--secondary:visited:hover {
   color: #161616;
   border-color: #dddddd;
@@ -190,25 +209,56 @@ h3 {
   border-color: #393939;
   background-color: #393939;
 }
+
 .cds--modal-footer .cds--btn--secondary:visited {
   color: #ffffff;
   border-color: #393939;
   background-color: #393939;
 }
+
 .cds--modal-footer .cds--btn--secondary:focus {
   color: #ffffff;
   border-color: #393939;
   background-color: #393939;
 }
+
 .cds--modal-footer .cds--btn--secondary:hover {
   color: #ffffff;
   border-color: #474747;
   background-color: #474747;
 }
+
 .cds--modal-footer .cds--btn--secondary:visited:hover {
   color: #ffffff;
   border-color: #474747;
   background-color: #474747;
+}
+
+/* position the close button at the top-right corner of the modal header */
+.cds--modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cds--modal-close__icon {
+  fill: #161616;
+}
+
+.cds--modal-footer .cds--btn--secondary {
+  color: #161616;
+  border-color: #e0e0e0;
+  background-color: #e0e0e0;
+}
+
+.cds--modal-footer .cds--btn--secondary:hover {
+  border-color: #c6c6c6;
+  background-color: #c6c6c6;
+  color: #161616;
 }
 
 .cds--header__global .cds--btn--primary.button-link {
@@ -220,12 +270,15 @@ h3 {
 .cds--header__global .cds--btn--primary {
   background-color: #161616;
 }
+
 .cds--btn--primary {
   background-color: #393939;
 }
+
 .cds--btn--primary:hover {
   background-color: #474747;
 }
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -242,20 +295,22 @@ code {
   margin-bottom: 2rem;
 }
 
-.active-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+.active-task-highlight:not(.djs-connection) .djs-visual> :nth-child(1) {
   fill: yellow !important;
   opacity: 0.6;
 }
 
-.completed-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+.completed-task-highlight:not(.djs-connection) .djs-visual> :nth-child(1) {
   fill: grey !important;
   opacity: 0.4;
 }
-.cancelled-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+
+.cancelled-task-highlight:not(.djs-connection) .djs-visual> :nth-child(1) {
   fill: blue !important;
   opacity: 0.2;
 }
-.errored-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+
+.errored-task-highlight:not(.djs-connection) .djs-visual> :nth-child(1) {
   fill: red !important;
   opacity: 0.2;
 }
@@ -340,6 +395,7 @@ dl dd {
   margin-top: 8px;
   margin-right: 12px;
 }
+
 #user-profile-toggletip .cds--popover-content::before {
   content: none;
 }
@@ -363,9 +419,7 @@ dl dd {
   content: none;
 }
 
-#user-profile-toggletip
-  .cds--popover--tab-tip.cds--popover--open
-  .cds--popover--tab-tip__button {
+#user-profile-toggletip .cds--popover--tab-tip.cds--popover--open .cds--popover--tab-tip__button {
   background-color: #161616;
 }
 
@@ -423,16 +477,19 @@ dl dd {
   font-size: 12pt;
   border-collapse: collapse;
 }
+
 .markdown table thead th,
 .markdown table tfoot th {
   color: #777;
   background: rgba(0, 0, 0, 0.1);
 }
+
 .markdown table th,
 .markdown table td {
   padding: 0.5rem;
   border: 1px solid lightgrey;
 }
+
 /* Zebra Table Style */
 .markdown tbody tr:nth-of-type(odd) {
   background: rgba(0, 0, 0, 0.05);
@@ -444,7 +501,7 @@ dl dd {
 
 /* Json Web Form CSS Fix - Bootstrap now requries that each li have a "list-inline-item." Also have a PR
 in on this with the react-jsonschema-form repo. This is just a patch fix to allow date inputs to layout a little more cleanly */
-.list-inline > li {
+.list-inline>li {
   display: inline-block;
   padding-right: 5px;
   padding-left: 5px;
@@ -589,9 +646,11 @@ th.table-header-right-align .cds--table-header-label {
 .cds--btn--ghost:not([disabled]).red-icon svg {
   fill: red;
 }
+
 .cds--btn--ghost:not([disabled]).green-icon svg {
   fill: #198038;
 }
+
 .cds--btn--ghost:not([disabled]) svg.red-icon {
   fill: red;
 }
@@ -613,13 +672,14 @@ svg.notification-icon {
   width: 100%;
   height: 2rem;
 }
-.filter-tag > span {
+
+.filter-tag>span {
   display: flex;
   flex-direction: row;
   width: 100%;
 }
 
-.filter-tag > span > span {
+.filter-tag>span>span {
   margin-right: 0.5px;
 }
 
@@ -668,6 +728,7 @@ svg.notification-icon {
 .modal-within-table-cell .cds--modal-container {
   text-align: left;
 }
+
 .modal-within-table-cell .cds--modal-container button {
   padding-left: 15px;
 }
@@ -844,8 +905,9 @@ div.json-schema {
 }
 
 fieldset legend.header {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
+
 fieldset fieldset fieldset legend.header {
   margin-bottom: 16px;
 }
@@ -876,6 +938,7 @@ blockquote,
 hr {
   max-width: 640px;
 }
+
 li.cds--accordion__item {
   max-width: 100%;
 }
@@ -893,14 +956,11 @@ div.markdown-collapsed {
   max-height: 200px;
   overflow: hidden;
 
-  --mask: linear-gradient(
-      to bottom,
+  --mask: linear-gradient(to bottom,
       rgba(0, 0, 0, 1) 0,
       rgba(0, 0, 0, 1) 40%,
       rgba(0, 0, 0, 0) 95%,
-      rgba(0, 0, 0, 0) 0
-    )
-    100% 50% / 100% 100% repeat-x;
+      rgba(0, 0, 0, 0) 0) 100% 50% / 100% 100% repeat-x;
 
   font: 2em/1.6em Arial;
   -webkit-mask: var(--mask);
@@ -920,6 +980,7 @@ div.markdown-collapsed {
 .cds--accordion {
   --cds-layout-density-padding-inline-local: 0px;
 }
+
 .megacondensed-button .cds--btn {
   --cds-layout-density-padding-inline-local: 0px;
 }
@@ -945,6 +1006,7 @@ div.onboarding {
 .completed-task-modal .cds--modal-container {
   background-color: #ffffff;
 }
+
 .completed-task-modal .cds--text-input:disabled,
 .completed-task-modal .cds--text-area:disabled,
 .completed-task-modal .cds--date-picker__input:disabled,
@@ -953,6 +1015,7 @@ div.onboarding {
   --cds-text-disabled: rgba(22, 22, 22, 0.5);
   background-color: var(--cds-field);
 }
+
 .completed-task-modal .cds--form__helper-text--disabled {
   --cds-text-disabled: rgba(22, 22, 22, 0.5);
 }
@@ -963,6 +1026,7 @@ div.onboarding {
   overflow: hidden;
   white-space: nowrap;
 }
+
 .process-model-file-table-filename {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -997,15 +1061,20 @@ div.onboarding {
 }
 
 .shortcut-description {
-  width: 50%; /* Adjust width as needed */
-  float: left; /* Floats the description to the left */
+  width: 50%;
+  /* Adjust width as needed */
+  float: left;
+  /* Floats the description to the left */
   margin-top: 10px;
 }
 
 .shortcut-key-group {
-  width: 50%; /* Adjust width as needed */
-  float: right; /* Floats the keys to the right */
-  text-align: right; /* Aligns text to the right within the container */
+  width: 50%;
+  /* Adjust width as needed */
+  float: right;
+  /* Floats the keys to the right */
+  text-align: right;
+  /* Aligns text to the right within the container */
 }
 
 div.retrievalExpressionsForm {
