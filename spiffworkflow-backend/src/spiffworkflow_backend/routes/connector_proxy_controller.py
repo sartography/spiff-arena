@@ -4,11 +4,11 @@ from typing import Any
 import flask.wrappers
 from flask import current_app
 from flask.wrappers import Response
+from security import safe_requests  # type: ignore
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
-from security import safe_requests
 
 
 def connector_proxy_typeahead_url() -> Any:

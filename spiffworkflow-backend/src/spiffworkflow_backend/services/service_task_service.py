@@ -7,6 +7,7 @@ import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
+from security import safe_requests  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
@@ -21,7 +22,6 @@ from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
-from security import safe_requests
 
 
 class ConnectorProxyError(Exception):

@@ -84,6 +84,7 @@ celery = {extras = ["redis"], version = "^5.3.5"}
 celery-stubs = "^0.1.3"
 jsonschema = "^4.20.0"
 chardet = "^5.2.0"
+security = "^1.2.1"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"

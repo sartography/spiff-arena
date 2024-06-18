@@ -13,13 +13,13 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509 import load_der_x509_certificate
 from flask import url_for
+from security import safe_requests  # type: ignore
 
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_AUDIENCE
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_KEY_ID
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import SPIFF_OPEN_ID_KEY_ID
-from security import safe_requests
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
