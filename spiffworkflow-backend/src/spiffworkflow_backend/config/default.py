@@ -242,3 +242,5 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", defau
 
 # only for DEBUGGING - turn off threaded task execution.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)
+
+config_from_env("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE", default="openid profile email")
