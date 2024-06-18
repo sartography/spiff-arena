@@ -56,25 +56,49 @@ export const mergeCorrelationProperties = (
 
 export const isCorrelationPropertiesInSync = (processGroup: ProcessGroup, messageId: string, messageProperties: any[]) => {
 
-  const message = (processGroup.messages) ? processGroup.messages[messageId] : undefined;
+  if(!messageId){
+    // About Message Creation
+    return true;
+  }
 
+  const message = (processGroup.messages) ? processGroup.messages[messageId] : undefined;
+  
   if (!message) {
     return false;
   }
-
+  
+  const localPropertyIds = messageProperties.map(property => property.id);
+  const processGroupPropertyIds = Object.keys(message.correlation_properties);
+  
+  // Check if all local properties exist in the process group data
   for (const property of messageProperties) {
     const correlationProperty = message.correlation_properties[property.id];
-
+    
     if (!correlationProperty) {
       return false;
     }
-
-    const localRetrievalExpression = (Array.isArray(property.retrievalExpression)) ? property.retrievalExpression[0] : property.retrievalExpression;
-
-    if (!correlationProperty.retrieval_expressions.includes(localRetrievalExpression)) {
+    
+    const localRetrievalExpression = (Array.isArray(property.retrievalExpression))
+      ? property.retrievalExpression[0]
+      : property.retrievalExpression;
+      
+    if (Array.isArray(correlationProperty.retrieval_expressions)) {
+      if (!correlationProperty.retrieval_expressions.includes(localRetrievalExpression)) {
+        return false;
+      }
+    } else {
+      if (correlationProperty.retrieval_expressions !== localRetrievalExpression) {
+        return false;
+      }
+    }
+  }
+  
+  // Checking if all process group properties exist in the local xml
+  for (const propertyId of processGroupPropertyIds) {
+    if (!localPropertyIds.includes(propertyId)) {
       return false;
     }
   }
-
+  
   return true;
 };

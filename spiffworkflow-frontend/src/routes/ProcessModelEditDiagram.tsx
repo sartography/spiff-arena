@@ -83,6 +83,7 @@ export default function ProcessModelEditDiagram() {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [showMessageEditor, setShowMessageEditor] = useState(false);
   const [messageId, setMessageId] = useState<string>('');
+  const [elementId, setElementId] = useState<string>('');
   const [correlationProperties, setCorrelationProperties] = useState<any>([]);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
@@ -1062,6 +1063,7 @@ export default function ProcessModelEditDiagram() {
   const onLaunchMessageEditor = (event: any) => {
     setMessageEvent(event);
     setMessageId(event.value.messageId);
+    setElementId(event.value.elementId);
     setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
   };
@@ -1101,6 +1103,7 @@ export default function ProcessModelEditDiagram() {
             messageId={messageId}
             correlationProperties={correlationProperties}
             messageEvent={messageEvent}
+            elementId={elementId}
           />
         </div>
       </Modal>

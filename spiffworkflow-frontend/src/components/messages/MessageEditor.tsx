@@ -20,6 +20,7 @@ import { Notification } from '../Notification';
 
 type OwnProps = {
   modifiedProcessGroupIdentifier: string;
+  elementId: string
   messageId: string;
   messageEvent: any;
   correlationProperties: any;
@@ -30,6 +31,7 @@ export function MessageEditor({
   messageId,
   messageEvent,
   correlationProperties,
+  elementId
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [currentFormData, setCurrentFormData] = useState<any>(null);
@@ -48,7 +50,6 @@ export function MessageEditor({
         correlationProperties,
         newCorrelationProperties,
       );
-
       const jsonSchema =
         (newProcessGroup.messages || {})[messageId]?.schema || {};
       const newFormData = {
@@ -62,7 +63,8 @@ export function MessageEditor({
       setCurrentFormData(newFormData);
     };
     const processResult = (result: ProcessGroup) => {
-      console.log('----isCorrelationPropertiesInSync------> ', isCorrelationPropertiesInSync(result, messageId, correlationProperties));
+      const isSynced = isCorrelationPropertiesInSync(result, messageId, correlationProperties);
+      setSynced(isSynced);
       setProcessGroup(result);
       setCurrentMessageId(messageId);
       setPageTitle([result.display_name]);
@@ -101,7 +103,9 @@ export function MessageEditor({
     messageEvent.eventBus.fire('spiff.add_message.returned', {
       name: messageIdentifier,
       correlation_properties: updatedMessagesForId.correlation_properties,
+      elementId
     });
+    setSynced(true);
   };
 
   const updateCorrelationPropertiesOnProcessGroup = (
@@ -286,7 +290,7 @@ export function MessageEditor({
             Message has been saved
           </Notification>
         ) : null}
-        {isSynced ? (
+        {!isSynced && !displaySaveMessageMessage ? (
           <Notification
             title="Please Save the current message configuration"
             type='warning'
