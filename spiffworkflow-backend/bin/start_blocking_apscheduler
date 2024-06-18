@@ -7,14 +7,9 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-script="$1"
-shift
 script_dir="$(
   cd -- "$(dirname "$0")" >/dev/null 2>&1
   pwd -P
 )"
-. "${script_dir}/local_development_environment_setup"
-
-export SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
-
-exec poet run python "$script" "$@"
+"${script_dir}/wait_for_db_schema_migrations"
+exec poetry run ./bin/start_blocking_appscheduler.py
