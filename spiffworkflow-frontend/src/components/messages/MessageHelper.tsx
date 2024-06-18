@@ -23,11 +23,9 @@ export const convertCorrelationPropertiesToRJSF = (
   const returnArray: any = [];
   Object.keys(correlationPropertiesToUse).forEach((propIdentifier: string) => {
     const property = correlationPropertiesToUse[propIdentifier];
-    return property.retrieval_expressions.forEach((retExp: string) => {
-      returnArray.push({
-        id: propIdentifier,
-        retrievalExpression: retExp,
-      });
+    returnArray.push({
+      id: propIdentifier,
+      retrievalExpression: property.retrieval_expression,
     });
   });
   return returnArray;
