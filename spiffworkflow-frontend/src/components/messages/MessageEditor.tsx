@@ -46,13 +46,16 @@ export function MessageEditor({
         ...currentMessagesForId.correlation_properties,
       };
       (formData.correlation_properties || []).forEach((formProp: any) => {
-        if (!(formProp.id in newCorrelationProperties)) {
-          newCorrelationProperties[formProp.id] = {
-            retrieval_expression: formProp.retrievalExpression,
-          };
-        }
+        newCorrelationProperties[formProp.id] = {
+          retrieval_expression: formProp.retrievalExpression,
+        };
+        // ❔❔❔ Should we keep this condition
+        // if (!(formProp.id in newCorrelationProperties)) {
+        //   newCorrelationProperties[formProp.id] = {
+        //     retrieval_expression: formProp.retrievalExpression,
+        //   };
+        // }
       });
-
       Object.keys(currentMessagesForId.correlation_properties || []).forEach(
         (propId: string) => {
           const foundProp = (formData.correlation_properties || []).find(
@@ -78,6 +81,12 @@ export function MessageEditor({
     ) => {
       setProcessGroup(response);
       setDisplaySaveMessageMessage(true);
+      // console.log('Firing here', {
+      //   name: messageIdentifier,
+      //   correlation_properties: updatedMessagesForId.correlation_properties,
+      //   elementId,
+      //   updatedMessagesForId
+      // });
       messageEvent.eventBus.fire('spiff.add_message.returned', {
         name: messageIdentifier,
         correlation_properties: updatedMessagesForId.correlation_properties,
@@ -90,8 +99,9 @@ export function MessageEditor({
 
   const updateProcessGroupWithMessages = useCallback(
     (formObject: RJSFFormObject) => {
-      const { formData } = formObject;
 
+      const { formData } = formObject;
+      
       if (!processGroup) {
         return;
       }
