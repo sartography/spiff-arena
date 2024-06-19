@@ -57,7 +57,7 @@ Flask-SQLAlchemy = "^3"
 # 22.0.0 breaks passing in SCRIPT_NAME as a header which breaks status environments
 # https://github.com/benoitc/gunicorn/issues/3200
 # https://github.com/benoitc/gunicorn/issues/2650
-gunicorn = "22.0.0"
+gunicorn = "21.2.0"
 
 # https://github.com/dropbox/sqlalchemy-stubs/pull/251
 # someday get off github
