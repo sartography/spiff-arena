@@ -23,6 +23,10 @@ while [[ "$(curl -s -o /dev/null -w '%{http_code}' "${backend_base_url}/v1.0/sta
 done
 
 echo "attempting to hit backend with SCRIPT_NAME as well, just to make sure that works, since gunicorn broke this in 22.0.0"
-curl -H "SCRIPT_NAME: /api" "${backend_base_url}/api/v1.0/status"
+status_code_for_script_name_check="$(curl -s -o /dev/null -w '%{http_code}' -H "SCRIPT_NAME: /api" "${backend_base_url}/api/v1.0/status")"
+if [[ "$status_code_for_script_name_check" != "200" ]]; then
+  >&2 echo "ERROR: Server came up, but the additional check for hitting it at /api with a SCRIPT_NAME header failed. This probably means that celery was upgraded past 22.0.0 and they still haven't fixed the bug linked in pyproject.toml. status code was: ${status_code_for_script_name_check}"
+  exit 1
+fi
 
 echo "backend up"
