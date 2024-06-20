@@ -5,10 +5,8 @@ import os
 from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
-from spiffworkflow_backend.constants import (
-    SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM,
-    SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION,
-)
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.data_migrations.version_4 import Version4
