@@ -44,11 +44,16 @@ def process_message(body: dict) -> Response:
     headers = {"Authorization": f"Bearer {openai_api_key}"}
 
     payload = {
+        # other reasonable options include gpt-4o (more expensive, better)
         "model": "gpt-3.5-turbo",
         "messages": [{"role": "user", "content": query}],
-        "temperature": 1,
+        # temerature controls the randomness of predictions. A lower temperature (e.g., 0.5) can help produce more deterministic
+        # outputs, which is useful for generating precise code.
+        "temperature": 0.5,
         "max_tokens": 256,
-        "top_p": 1,
+        # top_p determines the diversity of the model's outputs. A lower value (e.g., 0.5) focuses the model on producing more
+        # likely tokens, which can be beneficial for generating coherent code snippets.
+        "top_p": 0.5,
         "frequency_penalty": 0,
         "presence_penalty": 0,
     }
