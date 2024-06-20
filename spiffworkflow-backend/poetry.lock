@@ -2681,13 +2681,13 @@ files = [
 
 [[package]]
 name = "safety"
-version = "3.2.1"
+version = "3.2.3"
 description = "Checks installed dependencies for known vulnerabilities and licenses."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "safety-3.2.1-py3-none-any.whl", hash = "sha256:9f53646717ba052e1bf631bd54fb3da0fafa58e85d578b20a8b9affdcf81889e"},
-    {file = "safety-3.2.1.tar.gz", hash = "sha256:770aed6ff46536e5363a409e8cca411d8636d07dc33be53a8ac69bf750ab8df3"},
+    {file = "safety-3.2.3-py3-none-any.whl", hash = "sha256:cda1e91749f610337a18b7f21f78267c127e44ebbbbcbbd419c83284279a5024"},
+    {file = "safety-3.2.3.tar.gz", hash = "sha256:414154934f1727daf8a6473493944fecb380540c3f00875dc1ae377382f7d83f"},
 ]
 
 [package.dependencies]
@@ -3499,4 +3499,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "6ed7e7d2fb0b1775baf99cd6599c4f516b6cf9005c0e014a7c4afe8936e4697e"
+content-hash = "ac1db35c6855a98c67f2fcf1d692d2b9284ef41b33eabc426ca1969417c20e16"
