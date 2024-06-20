@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 
 from spiffworkflow_backend import create_app

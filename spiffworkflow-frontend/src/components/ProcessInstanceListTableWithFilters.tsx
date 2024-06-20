@@ -117,12 +117,12 @@ export default function ProcessInstanceListTableWithFilters({
     [targetUris.userSearch]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
   const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
 
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>(
-    null
+    null,
   );
 
   const [startFromDate, setStartFromDate] = useState<string>('');
@@ -159,7 +159,7 @@ export default function ProcessInstanceListTableWithFilters({
     variant === 'all' ? '/process-instances/all' : '/process-instances/for-me';
 
   const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
-    []
+    [],
   );
   const [processStatusSelection, setProcessStatusSelection] = useState<
     string[]
@@ -199,7 +199,7 @@ export default function ProcessInstanceListTableWithFilters({
     useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
-    null
+    null,
   );
   const [userGroups, setUserGroups] = useState<string[]>([]);
   const systemReportOptions: string[] = useMemo(() => {
@@ -263,7 +263,7 @@ export default function ProcessInstanceListTableWithFilters({
 
   const setReportMetadataFromReport = useCallback(
     (
-      processInstanceReport: ProcessInstanceReport | null = null
+      processInstanceReport: ProcessInstanceReport | null = null,
       // eslint-disable-next-line sonarjs/cognitive-complexity
     ) => {
       let reportMetadataBodyToUse: ReportMetadata = {
@@ -289,7 +289,7 @@ export default function ProcessInstanceListTableWithFilters({
       if (
         showActionsColumn &&
         !reportMetadataBodyToUse.filter_by.some(
-          (rf: ReportFilter) => rf.field_name === 'with_oldest_open_task'
+          (rf: ReportFilter) => rf.field_name === 'with_oldest_open_task',
         )
       ) {
         const withOldestReportFilter = {
@@ -311,7 +311,7 @@ export default function ProcessInstanceListTableWithFilters({
         (reportFilter: ReportFilter) => {
           if (reportFilter.field_name === 'process_status') {
             setProcessStatusSelection(
-              (reportFilter.field_value || '').split(',')
+              (reportFilter.field_value || '').split(','),
             );
           } else if (reportFilter.field_name === 'process_initiator_username') {
             setProcessInitiatorSelection(reportFilter.field_value || '');
@@ -330,7 +330,7 @@ export default function ProcessInstanceListTableWithFilters({
                   if (processModel.id === reportFilter.field_value) {
                     setProcessModelSelection(processModel);
                   }
-                }
+                },
               );
             }
           } else if (dateParametersToAlwaysFilterBy[reportFilter.field_name]) {
@@ -341,17 +341,17 @@ export default function ProcessInstanceListTableWithFilters({
             if (reportFilter.field_value) {
               const dateString =
                 DateAndTimeService.convertSecondsToFormattedDateString(
-                  reportFilter.field_value as any
+                  reportFilter.field_value as any,
                 );
               dateFunctionToCall(dateString);
               const timeString =
                 DateAndTimeService.convertSecondsToFormattedTimeHoursMinutes(
-                  reportFilter.field_value as any
+                  reportFilter.field_value as any,
                 );
               timeFunctionToCall(timeString);
             }
           }
-        }
+        },
       );
 
       if (reportMetadataBodyToUse.filter_by.length > 1) {
@@ -373,7 +373,7 @@ export default function ProcessInstanceListTableWithFilters({
       filtersEnabled,
       showActionsColumn,
       systemReportOptions,
-    ]
+    ],
   );
 
   // this is in its own callback to limit scrope of states we need to watch since
@@ -428,7 +428,7 @@ export default function ProcessInstanceListTableWithFilters({
       const processStatusAllOptionsArray = PROCESS_STATUSES.map(
         (processStatusOption: any) => {
           return processStatusOption;
-        }
+        },
       );
       setProcessStatusAllOptions(processStatusAllOptionsArray);
       getReportMetadataWithReportHash();
@@ -458,10 +458,10 @@ export default function ProcessInstanceListTableWithFilters({
 
   const removeFieldFromReportMetadata = (
     reportMetadataToUse: ReportMetadata,
-    fieldName: string
+    fieldName: string,
   ) => {
     const filtersToKeep = reportMetadataToUse.filter_by.filter(
-      (rf: ReportFilter) => rf.field_name !== fieldName
+      (rf: ReportFilter) => rf.field_name !== fieldName,
     );
     // eslint-disable-next-line no-param-reassign
     reportMetadataToUse.filter_by = filtersToKeep;
@@ -469,13 +469,13 @@ export default function ProcessInstanceListTableWithFilters({
 
   const getFilterByFromReportMetadata = (
     reportColumnAccessor: string,
-    reportMetadataToUse: ReportMetadata | null = reportMetadata
+    reportMetadataToUse: ReportMetadata | null = reportMetadata,
   ) => {
     if (reportMetadataToUse) {
       return reportMetadataToUse.filter_by.find(
         (reportFilter: ReportFilter) => {
           return reportColumnAccessor === reportFilter.field_name;
-        }
+        },
       );
     }
     return null;
@@ -484,12 +484,12 @@ export default function ProcessInstanceListTableWithFilters({
   const insertOrUpdateFieldInReportMetadata = (
     reportMetadataToUse: ReportMetadata,
     fieldName: string,
-    fieldValue: any
+    fieldValue: any,
   ) => {
     if (fieldValue) {
       let existingReportFilter = getFilterByFromReportMetadata(
         fieldName,
-        reportMetadataToUse
+        reportMetadataToUse,
       );
       if (existingReportFilter) {
         existingReportFilter.field_value = fieldValue;
@@ -510,14 +510,14 @@ export default function ProcessInstanceListTableWithFilters({
 
   const handleProcessInstanceInitiatorSearchResult = (
     result: any,
-    inputText: string
+    inputText: string,
   ) => {
     if (
       reportMetadata &&
       lastRequestedInitatorSearchTerm.current === result.username_prefix
     ) {
       setProcessInstanceInitiatorOptions(
-        result.users.map((user: User) => user.username)
+        result.users.map((user: User) => user.username),
       );
       result.users.forEach((user: User) => {
         if (user.username === inputText) {
@@ -526,7 +526,7 @@ export default function ProcessInstanceListTableWithFilters({
           insertOrUpdateFieldInReportMetadata(
             reportMetadata,
             'process_initiator_username',
-            user.username
+            user.username,
           );
           setProcessInitiatorSelection(user.username);
         }
@@ -550,7 +550,7 @@ export default function ProcessInstanceListTableWithFilters({
       searchForProcessInitiator(value);
     },
     // delay in ms
-    250
+    250,
   );
 
   const processInstanceReportSaveTag = () => {
@@ -600,21 +600,21 @@ export default function ProcessInstanceListTableWithFilters({
     const startFromSeconds =
       DateAndTimeService.convertDateAndTimeStringsToSeconds(
         startFromDate,
-        startFromTime || '00:00:00'
+        startFromTime || '00:00:00',
       );
     const startToSeconds =
       DateAndTimeService.convertDateAndTimeStringsToSeconds(
         startToDate,
-        startToTime || '00:00:00'
+        startToTime || '00:00:00',
       );
     const endFromSeconds =
       DateAndTimeService.convertDateAndTimeStringsToSeconds(
         endFromDate,
-        endFromTime || '00:00:00'
+        endFromTime || '00:00:00',
       );
     const endToSeconds = DateAndTimeService.convertDateAndTimeStringsToSeconds(
       endToDate,
-      endToTime || '00:00:00'
+      endToTime || '00:00:00',
     );
 
     let message = '';
@@ -652,7 +652,7 @@ export default function ProcessInstanceListTableWithFilters({
     onChangeDateFunction: any,
     onChangeTimeFunction: any,
     timeInvalid: boolean,
-    setTimeInvalid: any
+    setTimeInvalid: any,
   ) => {
     if (!reportMetadata) {
       return null;
@@ -677,19 +677,19 @@ export default function ProcessInstanceListTableWithFilters({
               if (!initialDate && !initialTime) {
                 onChangeTimeFunction(
                   DateAndTimeService.convertDateObjectToFormattedHoursMinutes(
-                    new Date()
-                  )
+                    new Date(),
+                  ),
                 );
               }
               const newValue =
                 DateAndTimeService.convertDateAndTimeStringsToSeconds(
                   dateChangeEvent.srcElement.value,
-                  initialTime || '00:00:00'
+                  initialTime || '00:00:00',
                 );
               insertOrUpdateFieldInReportMetadata(
                 reportMetadata,
                 propNameUnderscored,
-                newValue
+                newValue,
               );
               onChangeDateFunction(dateChangeEvent.srcElement.value);
               validateStartAndEndSeconds();
@@ -712,12 +712,12 @@ export default function ProcessInstanceListTableWithFilters({
             const newValue =
               DateAndTimeService.convertDateAndTimeStringsToSeconds(
                 initialDate,
-                event.srcElement.value
+                event.srcElement.value,
               );
             insertOrUpdateFieldInReportMetadata(
               reportMetadata,
               propNameUnderscored,
-              newValue
+              newValue,
             );
             onChangeTimeFunction(event.srcElement.value);
             validateStartAndEndSeconds();
@@ -746,7 +746,7 @@ export default function ProcessInstanceListTableWithFilters({
           insertOrUpdateFieldInReportMetadata(
             reportMetadata,
             'process_status',
-            selection.selectedItems.join(',')
+            selection.selectedItems.join(','),
           );
           setProcessStatusSelection(selection.selectedItems);
         }}
@@ -785,7 +785,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const onSaveReportSuccess = (
-    processInstanceReport: ProcessInstanceReport
+    processInstanceReport: ProcessInstanceReport,
   ) => {
     setProcessInstanceReportSelection(processInstanceReport);
     searchParams.set('report_id', processInstanceReport.id.toString());
@@ -821,11 +821,11 @@ export default function ProcessInstanceListTableWithFilters({
     if (reportMetadata) {
       const reportMetadataCopy = { ...reportMetadata };
       const newColumns = reportColumns().filter(
-        (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
+        (rc: ReportColumn) => rc.accessor !== reportColumn.accessor,
       );
       Object.assign(reportMetadataCopy, { columns: newColumns });
       const newFilters = reportMetadataCopy.filter_by.filter(
-        (rf: ReportFilter) => rf.field_name !== reportColumn.accessor
+        (rf: ReportFilter) => rf.field_name !== reportColumn.accessor,
       );
       Object.assign(reportMetadataCopy, {
         columns: newColumns,
@@ -842,7 +842,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const getFilterOperatorFromReportColumn = (
-    reportColumnForEditing: ReportColumnForEditing
+    reportColumnForEditing: ReportColumnForEditing,
   ) => {
     if (reportColumnForEditing.filter_operator) {
       // eslint-disable-next-line prefer-destructuring
@@ -854,7 +854,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const getNewFiltersFromReportForEditing = (
-    reportColumnForEditing: ReportColumnForEditing
+    reportColumnForEditing: ReportColumnForEditing,
   ) => {
     if (!reportMetadata) {
       return null;
@@ -868,10 +868,10 @@ export default function ProcessInstanceListTableWithFilters({
         operator: reportColumnForEditing.filter_operator || 'equals',
       };
       const existingReportFilter = getFilterByFromReportMetadata(
-        reportColumnForEditing.accessor
+        reportColumnForEditing.accessor,
       );
       const filterOperator = getFilterOperatorFromReportColumn(
-        reportColumnForEditing
+        reportColumnForEditing,
       );
       if (existingReportFilter) {
         const existingReportFilterIndex =
@@ -921,11 +921,11 @@ export default function ProcessInstanceListTableWithFilters({
   const reportColumnToReportColumnForEditing = (reportColumn: ReportColumn) => {
     const reportColumnForEditing: ReportColumnForEditing = Object.assign(
       reportColumn,
-      { filter_field_value: '', filter_operator: '' }
+      { filter_field_value: '', filter_operator: '' },
     );
     if (reportColumn.filterable) {
       const reportFilter = getFilterByFromReportMetadata(
-        reportColumnForEditing.accessor
+        reportColumnForEditing.accessor,
       );
       if (reportFilter) {
         reportColumnForEditing.filter_field_value =
@@ -941,7 +941,7 @@ export default function ProcessInstanceListTableWithFilters({
     let reportColumnForEditing = null;
     if (event.selectedItem) {
       reportColumnForEditing = reportColumnToReportColumnForEditing(
-        event.selectedItem
+        event.selectedItem,
       );
     }
     setReportColumnToOperateOn(reportColumnForEditing);
@@ -1002,6 +1002,7 @@ export default function ProcessInstanceListTableWithFilters({
         <ComboBox
           onChange={updateReportColumn}
           id="report-column-selection"
+          key="report-column-selection"
           data-qa="report-column-selection"
           data-modal-primary-focus
           items={availableReportColumns}
@@ -1015,12 +1016,13 @@ export default function ProcessInstanceListTableWithFilters({
           placeholder="Choose a column to show"
           titleText="Column"
           selectedItem={reportColumnToOperateOn}
-        />
+        />,
       );
     }
     formElements.push([
       <TextInput
         id="report-column-display-name"
+        key="report-column-display-name"
         name="report-column-display-name"
         labelText="Display Name"
         disabled={!reportColumnToOperateOn}
@@ -1042,6 +1044,7 @@ export default function ProcessInstanceListTableWithFilters({
           titleText="Display type"
           label="Display type"
           id="report-column-display-type"
+          key="report-column-display-type"
           items={[''].concat(Object.values(filterDisplayTypes))}
           selectedItem={
             reportColumnToOperateOn.display_type
@@ -1051,7 +1054,7 @@ export default function ProcessInstanceListTableWithFilters({
           onChange={(value: any) => {
             setFilterDisplayType(value.selectedItem);
           }}
-        />
+        />,
       );
 
       // if we pass undefined into selectedItem followed by an actual value then the component changes from uncontrolled
@@ -1060,7 +1063,7 @@ export default function ProcessInstanceListTableWithFilters({
       const operator = getKeyByValue(
         filterOperatorMappings,
         reportColumnToOperateOn.filter_operator,
-        'id'
+        'id',
       );
       formElements.push(
         <Dropdown
@@ -1072,11 +1075,11 @@ export default function ProcessInstanceListTableWithFilters({
           onChange={(value: any) => {
             setReportColumnConditionOperator(value.selectedItem);
           }}
-        />
+        />,
       );
 
       const filterOperator = getFilterOperatorFromReportColumn(
-        reportColumnToOperateOn
+        reportColumnToOperateOn,
       );
       if (filterOperator && filterOperator.requires_value) {
         formElements.push(
@@ -1090,12 +1093,12 @@ export default function ProcessInstanceListTableWithFilters({
                 : ''
             }
             onChange={setReportColumnConditionValue}
-          />
+          />,
         );
       }
     }
     formElements.push(
-      <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
+      <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />,
     );
     const modalHeading =
       reportColumnFormMode === 'new'
@@ -1163,7 +1166,7 @@ export default function ProcessInstanceListTableWithFilters({
                 onClick={() => removeColumn(reportColumnForEditing)}
               />
             </Tag>
-          </Column>
+          </Column>,
         );
       });
       return (
@@ -1214,7 +1217,7 @@ export default function ProcessInstanceListTableWithFilters({
                   insertOrUpdateFieldInReportMetadata(
                     reportMetadata,
                     systemReportOption,
-                    value.selectedItem === systemReportOption
+                    value.selectedItem === systemReportOption,
                   );
                   setSystemReport(value.selectedItem);
                 });
@@ -1233,7 +1236,7 @@ export default function ProcessInstanceListTableWithFilters({
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
                   'user_group_identifier',
-                  value.selectedItem
+                  value.selectedItem,
                 );
                 setSelectedUserGroup(value.selectedItem);
               }}
@@ -1252,7 +1255,7 @@ export default function ProcessInstanceListTableWithFilters({
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
                   'with_oldest_open_task',
-                  value.target.checked
+                  value.target.checked,
                 );
                 setWithOldestOpenTask(value.target.checked);
               }}
@@ -1268,7 +1271,7 @@ export default function ProcessInstanceListTableWithFilters({
                   insertOrUpdateFieldInReportMetadata(
                     reportMetadata,
                     'with_relation_to_me',
-                    value.target.checked
+                    value.target.checked,
                   );
                   setwithRelationToMe(value.target.checked);
                 }}
@@ -1335,7 +1338,7 @@ export default function ProcessInstanceListTableWithFilters({
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
                   'process_model_identifier',
-                  pmSelectionId
+                  pmSelectionId,
                 );
                 setProcessModelSelection(selection.selectedItem);
               }}
@@ -1360,7 +1363,7 @@ export default function ProcessInstanceListTableWithFilters({
                         insertOrUpdateFieldInReportMetadata(
                           reportMetadata,
                           'process_initiator_username',
-                          event.selectedItem
+                          event.selectedItem,
                         );
                         setProcessInitiatorSelection(event.selectedItem);
                       }}
@@ -1382,7 +1385,7 @@ export default function ProcessInstanceListTableWithFilters({
                       insertOrUpdateFieldInReportMetadata(
                         reportMetadata,
                         'process_initiator_username',
-                        event.target.value
+                        event.target.value,
                       );
                       setProcessInitiatorSelection(event.target.value);
                     }}
@@ -1407,7 +1410,7 @@ export default function ProcessInstanceListTableWithFilters({
                 setStartFromTime(val);
               },
               startFromTimeInvalid,
-              setStartFromTimeInvalid
+              setStartFromTimeInvalid,
             )}
           </Column>
           <Column md={4}>
@@ -1423,7 +1426,7 @@ export default function ProcessInstanceListTableWithFilters({
                 setStartToTime(val);
               },
               startToTimeInvalid,
-              setStartToTimeInvalid
+              setStartToTimeInvalid,
             )}
           </Column>
           <Column md={4}>
@@ -1439,7 +1442,7 @@ export default function ProcessInstanceListTableWithFilters({
                 setEndFromTime(val);
               },
               endFromTimeInvalid,
-              setEndFromTimeInvalid
+              setEndFromTimeInvalid,
             )}
           </Column>
           <Column md={4}>
@@ -1455,7 +1458,7 @@ export default function ProcessInstanceListTableWithFilters({
                 setEndToTime(val);
               },
               endToTimeInvalid,
-              setEndToTimeInvalid
+              setEndToTimeInvalid,
             )}
           </Column>
         </Grid>
@@ -1492,19 +1495,18 @@ export default function ProcessInstanceListTableWithFilters({
 
   const reportSearchComponent = () => {
     if (showReports) {
-      const columns = [
-        <Column sm={4} md={8} lg={16}>
-          <ProcessInstanceReportSearch
-            onChange={processInstanceReportDidChange}
-            selectedItem={processInstanceReportSelection}
-            selectedReportId={searchParams.get('report_id')}
-            handleSetSelectedReportCallback={setProcessInstanceReportSelection}
-          />
-        </Column>,
-      ];
       return (
         <Grid className="with-tiny-bottom-margin" fullWidth>
-          {columns}
+          <Column sm={4} md={8} lg={16}>
+            <ProcessInstanceReportSearch
+              onChange={processInstanceReportDidChange}
+              selectedItem={processInstanceReportSelection}
+              selectedReportId={searchParams.get('report_id')}
+              handleSetSelectedReportCallback={
+                setProcessInstanceReportSelection
+              }
+            />
+          </Column>
         </Grid>
       );
     }
@@ -1520,7 +1522,7 @@ export default function ProcessInstanceListTableWithFilters({
           searchParams,
           undefined,
           undefined,
-          paginationQueryParamPrefix
+          paginationQueryParamPrefix,
         );
         if (page !== 1) {
           searchParams.set('page', '1');
@@ -1542,7 +1544,7 @@ export default function ProcessInstanceListTableWithFilters({
       searchParams,
       setSearchParams,
       paginationQueryParamPrefix,
-    ]
+    ],
   );
 
   const filterComponent = () => {

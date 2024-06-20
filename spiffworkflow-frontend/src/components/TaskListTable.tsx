@@ -72,7 +72,7 @@ export default function TaskListTable({
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [formSubmissionTask, setFormSubmissionTask] = useState<Task | null>(
-    null
+    null,
   );
 
   const preferredUsername = UserService.getPreferredUsername();
@@ -84,7 +84,7 @@ export default function TaskListTable({
         searchParams,
         defaultPerPage,
         undefined,
-        paginationQueryParamPrefix
+        paginationQueryParamPrefix,
       );
       const setTasksFromResult = (result: any) => {
         setTasks(result.results);
@@ -104,7 +104,7 @@ export default function TaskListTable({
       return refreshAtInterval(
         DateAndTimeService.REFRESH_INTERVAL_SECONDS,
         DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-        getTasks
+        getTasks,
       );
     }
     return undefined;
@@ -118,7 +118,7 @@ export default function TaskListTable({
   ]);
 
   const getWaitingForTableCellComponent = (
-    processInstanceTask: ProcessInstanceTask
+    processInstanceTask: ProcessInstanceTask,
   ) => {
     let fullUsernameString = '';
     let shortUsernameString = '';
@@ -187,6 +187,7 @@ export default function TaskListTable({
           </div>
           <CustomForm
             id={formSubmissionTask.guid}
+            key={formSubmissionTask.guid}
             formData={formSubmissionTask.data}
             schema={jsonSchema}
             uiSchema={formUiSchema}
@@ -202,7 +203,7 @@ export default function TaskListTable({
   };
 
   const getFormSubmissionDataForTask = (
-    processInstanceTask: ProcessInstanceTask
+    processInstanceTask: ProcessInstanceTask,
   ) => {
     HttpService.makeCallToBackend({
       path: `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}?with_form_data=true`,
@@ -213,7 +214,7 @@ export default function TaskListTable({
 
   const processIdRowElement = (processInstanceTask: ProcessInstanceTask) => {
     const modifiedProcessModelIdentifier = modifyProcessIdentifierForPathParam(
-      processInstanceTask.process_model_identifier
+      processInstanceTask.process_model_identifier,
     );
     return (
       <td>
@@ -230,7 +231,7 @@ export default function TaskListTable({
 
   const dealWithProcessCells = (
     rowElements: ReactElement[],
-    processInstanceTask: ProcessInstanceTask
+    processInstanceTask: ProcessInstanceTask,
   ) => {
     if (showProcessId) {
       rowElements.push(processIdRowElement(processInstanceTask));
@@ -238,7 +239,7 @@ export default function TaskListTable({
     if (showProcessModelIdentifier) {
       const modifiedProcessModelIdentifier =
         modifyProcessIdentifierForPathParam(
-          processInstanceTask.process_model_identifier
+          processInstanceTask.process_model_identifier,
         );
       rowElements.push(
         <td>
@@ -249,7 +250,7 @@ export default function TaskListTable({
           >
             {processInstanceTask.process_model_display_name}
           </Link>
-        </td>
+        </td>,
       );
     }
   };
@@ -281,7 +282,7 @@ export default function TaskListTable({
           size="sm"
         >
           Go
-        </Button>
+        </Button>,
       );
     }
     if (showViewFormDataButton) {
@@ -291,7 +292,7 @@ export default function TaskListTable({
           onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
         >
           View task
-        </Button>
+        </Button>,
       );
     }
     return actions;
@@ -309,16 +310,16 @@ export default function TaskListTable({
         {processInstanceTask.task_title
           ? processInstanceTask.task_title
           : processInstanceTask.task_name}
-      </td>
+      </td>,
     );
     if (showStartedBy) {
       rowElements.push(
-        <td>{processInstanceTask.process_initiator_username}</td>
+        <td>{processInstanceTask.process_initiator_username}</td>,
       );
     }
     if (showWaitingOn) {
       rowElements.push(
-        <td>{getWaitingForTableCellComponent(processInstanceTask)}</td>
+        <td>{getWaitingForTableCellComponent(processInstanceTask)}</td>,
       );
     }
     if (showCompletedBy) {
@@ -328,16 +329,16 @@ export default function TaskListTable({
       rowElements.push(
         <td>
           {DateAndTimeService.convertSecondsToFormattedDateTime(
-            processInstanceTask.created_at_in_seconds
+            processInstanceTask.created_at_in_seconds,
           ) || '-'}
-        </td>
+        </td>,
       );
     }
     if (showLastUpdated) {
       rowElements.push(
         <TableCellWithTimeAgoInWords
           timeInSeconds={processInstanceTask.updated_at_in_seconds}
-        />
+        />,
       );
     }
     if (showActionsColumn) {
@@ -410,7 +411,7 @@ export default function TaskListTable({
       searchParams,
       defaultPerPage,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
     let tableElement = (
       <div className={paginationClassName}>{buildTable()}</div>

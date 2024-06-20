@@ -1,6 +1,7 @@
 import React, { FocusEvent, useCallback } from 'react';
 // @ts-ignore
 import { TextArea } from '@carbon/react';
+import { useDebouncedCallback } from 'use-debounce';
 import {
   FormContextType,
   RJSFSchema,
@@ -16,7 +17,7 @@ import { getCommonAttributes } from '../../helpers';
 function TextareaWidget<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >({
   id,
   options = {},
@@ -37,26 +38,37 @@ function TextareaWidget<
   const handleChange = useCallback(
     ({ target: { value } }: React.ChangeEvent<HTMLTextAreaElement>) =>
       onChange(value === '' ? options.emptyValue : value),
-    [onChange, options.emptyValue]
+    [onChange, options.emptyValue],
   );
 
   const handleBlur = useCallback(
     ({ target: { value } }: FocusEvent<HTMLTextAreaElement>) =>
       onBlur(id, value),
-    [onBlur, id]
+    [onBlur, id],
   );
 
   const handleFocus = useCallback(
     ({ target: { value } }: FocusEvent<HTMLTextAreaElement>) =>
       onFocus(id, value),
-    [id, onFocus]
+    [id, onFocus],
+  );
+
+  // this helps with performance for the select widget with rsjf 5.1+.
+  // otherwise if the form has an enum with a corresponding oneOf, after choosing
+  // an option in the dropdown, the text area slows way down.
+  const addDebouncedOnChangeText = useDebouncedCallback(
+    (fullObject: React.ChangeEvent<HTMLTextAreaElement>) => {
+      handleChange(fullObject);
+    },
+    // delay in ms
+    100,
   );
 
   const commonAttributes = getCommonAttributes(
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   let enableCounter = false;
@@ -67,7 +79,7 @@ function TextareaWidget<
       maxCount = schema.maxLength;
     } else {
       throw new Error(
-        `Counter was requested but no maxLength given on the ${label}`
+        `Counter was requested but no maxLength given on the ${label}`,
       );
     }
   }
@@ -78,7 +90,7 @@ function TextareaWidget<
       name={id}
       className="text-input"
       helperText={commonAttributes.helperText}
-      value={value || ''}
+      defaultValue={value || ''}
       labelText=""
       placeholder={placeholder}
       required={required}
@@ -88,7 +100,7 @@ function TextareaWidget<
       rows={options.rows}
       onBlur={handleBlur}
       onFocus={handleFocus}
-      onChange={handleChange}
+      onChange={addDebouncedOnChangeText}
       invalid={commonAttributes.invalid}
       invalidText={commonAttributes.errorMessageForField}
       enableCounter={enableCounter}

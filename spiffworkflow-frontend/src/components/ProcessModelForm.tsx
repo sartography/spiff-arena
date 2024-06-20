@@ -65,13 +65,13 @@ export default function ProcessModelForm({
       return;
     }
     let path = `/process-models/${modifyProcessIdentifierForPathParam(
-      processGroupId || ''
+      processGroupId || '',
     )}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
       path = `/process-models/${modifyProcessIdentifierForPathParam(
-        processModel.id
+        processModel.id,
       )}`;
     }
     const postBody = {
@@ -106,7 +106,7 @@ export default function ProcessModelForm({
 
   const metadataExtractionPathForm = (
     index: number,
-    metadataExtractionPath: MetadataExtractionPath
+    metadataExtractionPath: MetadataExtractionPath,
   ) => {
     return (
       <Grid>
@@ -165,7 +165,7 @@ export default function ProcessModelForm({
       return processModel.metadata_extraction_paths.map(
         (metadataExtractionPath: MetadataExtractionPath, index: number) => {
           return metadataExtractionPathForm(index, metadataExtractionPath);
-        }
+        },
       );
     }
     return null;
@@ -180,7 +180,7 @@ export default function ProcessModelForm({
 
   const notificationAddressForm = (
     index: number,
-    notificationAddress: string
+    notificationAddress: string,
   ) => {
     return (
       <Grid>
@@ -226,7 +226,7 @@ export default function ProcessModelForm({
       return processModel.exception_notification_addresses.map(
         (notificationAddress: string, index: number) => {
           return notificationAddressForm(index, notificationAddress);
-        }
+        },
       );
     }
     return null;
@@ -259,6 +259,7 @@ export default function ProcessModelForm({
     const textInputs = [
       <TextInput
         id="process-model-display-name"
+        key="process-model-display-name"
         name="display_name"
         invalidText="Display Name is required."
         invalid={displayNameInvalid}
@@ -274,6 +275,7 @@ export default function ProcessModelForm({
       textInputs.push(
         <TextInput
           id="process-model-identifier"
+          key="process-model-identifier"
           name="id"
           invalidText="Identifier is required and must be all lowercase characters and hyphens."
           invalid={identifierInvalid}
@@ -287,25 +289,27 @@ export default function ProcessModelForm({
             }
             setIdHasBeenUpdatedByUser(true);
           }}
-        />
+        />,
       );
     }
 
     textInputs.push(
       <TextArea
         id="process-model-description"
+        key="process-model-description"
         name="description"
         labelText="Description"
         value={processModel.description}
         onChange={(event: any) =>
           updateProcessModel({ description: event.target.value })
         }
-      />
+      />,
     );
 
     textInputs.push(
       <Select
         id="notification-type"
+        key="notification-type"
         defaultValue={processModel.fault_or_suspend_on_exception}
         labelText="Notification Type"
         onChange={(event: any) => {
@@ -314,7 +318,7 @@ export default function ProcessModelForm({
       >
         <SelectItem value="fault" text="Fault" />
         <SelectItem value="suspend" text="Suspend" />
-      </Select>
+      </Select>,
     );
     textInputs.push(<h2>Notification Addresses</h2>);
     textInputs.push(
@@ -324,7 +328,7 @@ export default function ProcessModelForm({
             You can provide one or more addresses to notify if this model fails.
           </p>
         </Column>
-      </Grid>
+      </Grid>,
     );
     textInputs.push(<>{notificationAddressFormArea()}</>);
     textInputs.push(
@@ -342,7 +346,7 @@ export default function ProcessModelForm({
             Add Notification Address
           </Button>
         </Column>
-      </Grid>
+      </Grid>,
     );
 
     textInputs.push(<h2>Metadata Extractions</h2>);
@@ -355,7 +359,7 @@ export default function ProcessModelForm({
             perspectives.
           </p>
         </Column>
-      </Grid>
+      </Grid>,
     );
     textInputs.push(<>{metadataExtractionPathFormArea()}</>);
     textInputs.push(
@@ -373,7 +377,7 @@ export default function ProcessModelForm({
             Add Metadata Extraction Path
           </Button>
         </Column>
-      </Grid>
+      </Grid>,
     );
 
     return textInputs;

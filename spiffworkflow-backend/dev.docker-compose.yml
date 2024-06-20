@@ -13,5 +13,8 @@ services:
       SPIFFWORKFLOW_BACKEND_ENV: "${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
       XDG_CACHE_HOME: "/app/.cache"
+    env_file:
+      - path: .env
+        required: false
     volumes:
       - ./spiffworkflow-backend:/app

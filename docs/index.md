@@ -8,6 +8,19 @@ Getting_Started/quick_start.md
 
 ```{toctree}
 :maxdepth: 1
+:caption: Technical Docs
+dev/index.md
+dev/setup.md
+dev/backend.md
+dev/frontend.md
+dev/connector_proxy.md
+dev/how_to_build_a_connector.md
+dev/extensions.md
+dev/process.md
+```
+
+```{toctree}
+:maxdepth: 1
 :caption: Building Diagrams
 Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
@@ -26,7 +39,6 @@ Building_Diagrams/sub-processes_and_call_activities.md
 Building_Diagrams/data.md
 Building_Diagrams/multiinstance.md
 Building_Diagrams/dmn.md
-Building_Diagrams/Extensions.md
 Building_Diagrams/pools_and_lanes.md
 Building_Diagrams/Builtin_examples.md
 ```
@@ -42,6 +54,7 @@ Debugging_Diagrams/Private_data.md
 ```{toctree}
 :maxdepth: 1
 :caption: DevOps - Installation & Integration
+DevOps_installation_integration/deployment.md
 DevOps_installation_integration/admin_and_permissions.md
 DevOps_installation_integration/permission_url.md
 DevOps_installation_integration/configure_connector_proxy.md

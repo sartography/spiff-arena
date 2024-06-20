@@ -1,3 +1,4 @@
+import { ReactElement } from 'react';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 
 type OwnProps = {
@@ -19,21 +20,24 @@ export function ExtensionUxElementMap({
     const elementsForDisplayLocation = extensionUxElements.filter(
       (uxElement: UiSchemaUxElement) => {
         return uxElement.display_location === displayLocation;
-      }
+      },
     );
     return elementsForDisplayLocation.map(
       (uxElement: UiSchemaUxElement, index: number) => {
         return elementCallback(uxElement, index);
-      }
+      },
     );
   };
   return mainElement();
 }
 
-export default function ExtensionUxElementForDisplay(args: OwnProps) {
+export default function ExtensionUxElementForDisplay(
+  args: OwnProps,
+): ReactElement | null {
   const result = ExtensionUxElementMap(args);
   if (result === null) {
     return null;
   }
-  return result;
+  // eslint-disable-next-line react/jsx-no-useless-fragment
+  return <>{result}</>;
 }

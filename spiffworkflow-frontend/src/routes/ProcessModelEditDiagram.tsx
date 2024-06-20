@@ -39,12 +39,14 @@ import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
+  getGroupFromModifiedModelId,
   makeid,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
+  CorrelationProperties,
   ProcessFile,
   ProcessModel,
   ProcessReference,
@@ -56,6 +58,7 @@ import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import SpiffTooltip from '../components/SpiffTooltip';
+import { MessageEditor } from '../components/messages/MessageEditor';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -79,6 +82,11 @@ export default function ProcessModelEditDiagram() {
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [showMessageEditor, setShowMessageEditor] = useState(false);
+  const [messageId, setMessageId] = useState<string>('');
+  const [elementId, setElementId] = useState<string>('');
+  const [correlationProperties, setCorrelationProperties] =
+    useState<CorrelationProperties | null>(null);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
@@ -88,7 +96,11 @@ export default function ProcessModelEditDiagram() {
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
 
+  const [messageEvent, setMessageEvent] = useState<any>(null);
+
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
+
+  const handleShowMessageEditor = () => setShowMessageEditor(true);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -97,7 +109,7 @@ export default function ProcessModelEditDiagram() {
 
   const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
   const [scriptAssistError, setScriptAssistError] = useState<string | null>(
-    null
+    null,
   );
   const { scriptAssistEnabled } = useScriptAssistEnabled();
   const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
@@ -137,14 +149,14 @@ export default function ProcessModelEditDiagram() {
 
   const { addError, removeError } = useAPIError();
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
-    null
+    null,
   );
   const [newFileName, setNewFileName] = useState('');
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    (params as any).process_model_id
+    (params as any).process_model_id,
   );
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
@@ -220,10 +232,10 @@ export default function ProcessModelEditDiagram() {
     }
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${searchParams.get(
-        'file_type'
+        'file_type',
       )}`;
       navigate(
-        `/editor/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`
+        `/editor/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`,
       );
     }
   };
@@ -365,7 +377,7 @@ export default function ProcessModelEditDiagram() {
     const ruleList = styleSheet.cssRules;
     for (let ii = ruleList.length - 1; ii >= 0; ii -= 1) {
       const regexp = new RegExp(
-        `^.${failingScriptLineClassNamePrefix}_.*::after `
+        `^.${failingScriptLineClassNamePrefix}_.*::after `,
       );
       if (ruleList[ii].cssText.match(regexp)) {
         styleSheet.deleteRule(ii);
@@ -435,6 +447,20 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
+  const makeMessagesRequestedHandler = (event: any) => {
+    return function fireEvent(results: any) {
+      event.eventBus.fire('spiff.messages.returned', {
+        configuration: results,
+      });
+    };
+  };
+  const onMessagesRequested = (event: any) => {
+    HttpService.makeCallToBackend({
+      path: `/message-models/${modifiedProcessModelId}`,
+      successCallback: makeMessagesRequestedHandler(event),
+    });
+  };
+
   useEffect(() => {
     const updateDiagramFiles = (pm: ProcessModel) => {
       setProcessModel(pm);
@@ -473,7 +499,7 @@ export default function ProcessModelEditDiagram() {
 
   const setScriptUnitTestElementWithIndex = (
     scriptIndex: number,
-    element: any = scriptElement
+    element: any = scriptElement,
   ) => {
     const unitTestsModdleElements = getScriptUnitTestElements(element);
     if (unitTestsModdleElements.length > 0) {
@@ -487,7 +513,7 @@ export default function ProcessModelEditDiagram() {
     script: string,
     scriptTypeString: string,
     eventBus: any,
-    modeling: any
+    modeling: any,
   ) => {
     // TODO: modeling is only needed for script unit tests.
     // we should update this to act like updating scripts
@@ -590,14 +616,14 @@ export default function ProcessModelEditDiagram() {
         monacoRef.current
       ) {
         const currentClassName = `${failingScriptLineClassNamePrefix}_${makeid(
-          7
+          7,
         )}`;
 
         // document.documentElement.style.setProperty causes the content property to go away
         // so add the rule dynamically instead of changing a property variable
         document.styleSheets[0].addRule(
           `.${currentClassName}::after`,
-          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`
+          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`,
         );
 
         const lineLength =
@@ -611,11 +637,11 @@ export default function ProcessModelEditDiagram() {
               // Range(lineStart, column, lineEnd, column)
               range: new (monacoRef.current as any).Range(
                 result.line_number,
-                lineLength
+                lineLength,
               ),
               options: { afterContentClassName: currentClassName },
             },
-          ]
+          ],
         );
       }
     }
@@ -628,7 +654,7 @@ export default function ProcessModelEditDiagram() {
       try {
         inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
         expectedJson = JSON.parse(
-          currentScriptUnitTest.expectedOutputJson.value
+          currentScriptUnitTest.expectedOutputJson.value,
         );
       } catch (e) {
         setScriptUnitTestResult({
@@ -662,7 +688,7 @@ export default function ProcessModelEditDiagram() {
         errorObject = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
       } else {
         errorObject = `Error encountered running the script. ${JSON.stringify(
-          scriptUnitTestResult.error
+          scriptUnitTestResult.error,
         )}`;
       }
       let errorStringElement = <span>{errorObject}</span>;
@@ -681,13 +707,13 @@ export default function ProcessModelEditDiagram() {
           outputJson = JSON.stringify(
             JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
             null,
-            '  '
+            '  ',
           );
         }
         const contextJson = JSON.stringify(
           scriptUnitTestResult.context,
           null,
-          '  '
+          '  ',
         );
         errorContextElement = (
           <DiffEditor
@@ -762,12 +788,12 @@ export default function ProcessModelEditDiagram() {
         inputJson = JSON.stringify(
           JSON.parse(currentScriptUnitTest.inputJson.value),
           null,
-          '  '
+          '  ',
         );
         outputJson = JSON.stringify(
           JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
           null,
-          '  '
+          '  ',
         );
       } catch (e) {
         // Attemping to format the json failed -- it's invalid.
@@ -1001,7 +1027,7 @@ export default function ProcessModelEditDiagram() {
   const onLaunchMarkdownEditor = (
     _element: any,
     markdown: string,
-    eventBus: any
+    eventBus: any,
   ) => {
     setMarkdownText(markdown || '');
     setMarkdownEventBus(eventBus);
@@ -1036,10 +1062,60 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
+  const onLaunchMessageEditor = (event: any) => {
+    setMessageEvent(event);
+    setMessageId(event.value.messageId);
+    setElementId(event.value.elementId);
+    setCorrelationProperties(event.value.correlation_properties);
+    handleShowMessageEditor();
+  };
+  const handleMessageEditorClose = () => {
+    setShowMessageEditor(false);
+    onMessagesRequested(messageEvent);
+  };
+
+  const handleMessageEditorSave = (_event: any) => {
+    // setShowMessageEditor(false);
+    messageEvent.eventBus.fire('spiff.message.save');
+  };
+
+  const messageEditor = () => {
+    // do not render this component until we actually want to display it
+    if (!showMessageEditor) {
+      return null;
+    }
+    return (
+      <Modal
+        open={showMessageEditor}
+        modalHeading="Message Editor"
+        modalLabel="Create or edit a message and manage its correlation properties"
+        primaryButtonText="Save"
+        secondaryButtonText="Close (this does not save)"
+        onRequestSubmit={handleMessageEditorSave}
+        onRequestClose={handleMessageEditorClose}
+        size="lg"
+        preventCloseOnClickOutside
+        primaryButtonKind="primary"
+      >
+        <div data-color-mode="light">
+          <MessageEditor
+            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
+              modifiedProcessModelId,
+            )}
+            messageId={messageId}
+            correlationProperties={correlationProperties}
+            messageEvent={messageEvent}
+            elementId={elementId}
+          />
+        </div>
+      </Modal>
+    );
+  };
+
   const onSearchProcessModels = (
     _processId: string,
     eventBus: any,
-    element: any
+    element: any,
   ) => {
     setProcessSearchEventBus(eventBus);
     setProcessSearchElement(element);
@@ -1078,7 +1154,7 @@ export default function ProcessModelEditDiagram() {
 
   const findFileNameForReferenceId = (
     id: string,
-    type: string
+    type: string,
   ): ProcessFile | null => {
     // Given a reference id (like a process_id, or decision_id) finds the file
     // that contains that reference and returns it.
@@ -1098,22 +1174,22 @@ export default function ProcessModelEditDiagram() {
 
   const onLaunchBpmnEditor = (processId: string) => {
     const openProcessModelFileInNewTab = (
-      processReference: ProcessReference
+      processReference: ProcessReference,
     ) => {
       const path = generatePath(
         '/editor/process-models/:process_model_path/files/:file_name',
         {
           process_model_path: modifyProcessIdentifierForPathParam(
-            processReference.relative_location
+            processReference.relative_location,
           ),
           file_name: processReference.file_name,
-        }
+        },
       );
       window.open(path);
     };
 
     const openFileNameForProcessId = (
-      processesReferences: ProcessReference[]
+      processesReferences: ProcessReference[],
     ) => {
       const processRef = processesReferences.find((p) => {
         return p.identifier === processId;
@@ -1141,9 +1217,9 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchJsonSchemaEditor = (
-    element: any,
+    _element: any,
     fileName: string,
-    eventBus: any
+    eventBus: any,
   ) => {
     setFileEventBus(eventBus);
     setJsonScehmaFileName(fileName);
@@ -1188,7 +1264,7 @@ export default function ProcessModelEditDiagram() {
         {
           process_model_id: params.process_model_id || null,
           file_name: file.name,
-        }
+        },
       );
       window.open(path);
     } else {
@@ -1196,7 +1272,7 @@ export default function ProcessModelEditDiagram() {
         '/editor/process-models/:process_model_id/files?file_type=dmn',
         {
           process_model_id: params.process_model_id || null,
-        }
+        },
       );
     }
     window.open(path);
@@ -1232,28 +1308,30 @@ export default function ProcessModelEditDiagram() {
     }
     return (
       <ReactDiagramEditor
+        activeUserElement={<ActiveUsers />}
+        callers={callers}
+        diagramType="bpmn"
+        diagramXML={bpmnXmlForDiagramRendering}
+        disableSaveButton={!diagramHasChanges}
+        fileName={params.file_name}
+        isPrimaryFile={params.file_name === processModel?.primary_file_name}
+        onDataStoresRequested={onDataStoresRequested}
+        onDeleteFile={onDeleteFile}
+        onDmnFilesRequested={onDmnFilesRequested}
+        onElementsChanged={onElementsChanged}
+        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
+        onLaunchBpmnEditor={onLaunchBpmnEditor}
+        onLaunchDmnEditor={onLaunchDmnEditor}
+        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
+        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
+        onLaunchScriptEditor={onLaunchScriptEditor}
+        onLaunchMessageEditor={onLaunchMessageEditor}
+        onMessagesRequested={onMessagesRequested}
+        onSearchProcessModels={onSearchProcessModels}
+        onServiceTasksRequested={onServiceTasksRequested}
+        onSetPrimaryFile={onSetPrimaryFileCallback}
         processModelId={params.process_model_id || ''}
         saveDiagram={saveDiagram}
-        onDeleteFile={onDeleteFile}
-        isPrimaryFile={params.file_name === processModel?.primary_file_name}
-        onSetPrimaryFile={onSetPrimaryFileCallback}
-        diagramXML={bpmnXmlForDiagramRendering}
-        fileName={params.file_name}
-        diagramType="bpmn"
-        onLaunchScriptEditor={onLaunchScriptEditor}
-        onServiceTasksRequested={onServiceTasksRequested}
-        onDataStoresRequested={onDataStoresRequested}
-        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
-        onLaunchBpmnEditor={onLaunchBpmnEditor}
-        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
-        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
-        onLaunchDmnEditor={onLaunchDmnEditor}
-        onDmnFilesRequested={onDmnFilesRequested}
-        onSearchProcessModels={onSearchProcessModels}
-        onElementsChanged={onElementsChanged}
-        callers={callers}
-        activeUserElement={<ActiveUsers />}
-        disableSaveButton={!diagramHasChanges}
       />
     );
   };
@@ -1298,6 +1376,7 @@ export default function ProcessModelEditDiagram() {
         {markdownEditor()}
         {jsonSchemaEditor()}
         {processModelSelector()}
+        {messageEditor()}
       </>
     );
   };
@@ -1327,7 +1406,6 @@ export default function ProcessModelEditDiagram() {
 
         {unsavedChangesMessage()}
         {saveFileMessage()}
-
         {appropriateEditor()}
         <div id="diagram-container" />
       </>

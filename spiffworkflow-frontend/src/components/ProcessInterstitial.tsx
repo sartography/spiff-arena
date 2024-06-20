@@ -68,7 +68,7 @@ export default function ProcessInterstitial({
         onclose() {
           setState('CLOSED');
         },
-      }
+      },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
@@ -83,7 +83,7 @@ export default function ProcessInterstitial({
         HUMAN_TASK_TYPES.includes(myTask.type)
       );
     },
-    [allowRedirect, processInstance]
+    [allowRedirect, processInstance],
   );
 
   const shouldRedirectToProcessInstance = useCallback((): boolean => {
@@ -136,7 +136,7 @@ export default function ProcessInterstitial({
   const inlineMessage = (
     title: string,
     subtitle: string,
-    kind: string = 'info'
+    kind: string = 'info',
   ) => {
     return (
       <div>
@@ -152,13 +152,13 @@ export default function ProcessInterstitial({
 
   const userMessageForProcessInstance = (
     pi: ProcessInstance,
-    myTask: ProcessInstanceTask | null = null
+    myTask: ProcessInstanceTask | null = null,
   ) => {
     if (['terminated', 'suspended'].includes(pi.status)) {
       return inlineMessage(
         `Process ${pi.status}`,
         `This process instance was ${pi.status} by an administrator. Please get in touch with them for more information.`,
-        'warning'
+        'warning',
       );
     }
     if (pi.status === 'error') {
@@ -198,13 +198,13 @@ export default function ProcessInterstitial({
           potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
         }
         message = `This next task is assigned to user(s): ${potentialOwnerArray.join(
-          ', '
+          ', ',
         )}.`;
       }
 
       return inlineMessage(
         '',
-        `${message} There is no action for you to take at this time.`
+        `${message} There is no action for you to take at this time.`,
       );
     }
     if (shouldRedirectToTask(myTask)) {
@@ -217,7 +217,7 @@ export default function ProcessInterstitial({
     ) {
       return inlineMessage(
         '',
-        `The task "${myTask.title}" is ready for you to complete.`
+        `The task "${myTask.title}" is ready for you to complete.`,
       );
     }
     if (myTask.error_message) {

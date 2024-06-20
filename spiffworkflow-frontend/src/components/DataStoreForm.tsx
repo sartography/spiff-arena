@@ -34,7 +34,7 @@ export default function DataStoreForm({
   const [typeInvalid, setTypeInvalid] = useState<boolean>(false);
   const [schemaInvalid, setSchemaInvalid] = useState<boolean>(false);
   const [dataStoreTypes, setDataStoreTypes] = useState<[DataStoreType] | []>(
-    []
+    [],
   );
   const [selectedDataStoreType, setSelectedDataStoreType] =
     useState<DataStoreType | null>(null);
@@ -67,7 +67,7 @@ export default function DataStoreForm({
     const location = dataStoreLocation();
     if (location !== '/') {
       navigate(
-        `/process-groups/${modifyProcessIdentifierForPathParam(location)}`
+        `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
       );
     } else {
       navigate(`/process-groups`);
@@ -173,12 +173,12 @@ export default function DataStoreForm({
   };
 
   const dataStoreTypeDisplayString = (
-    dataStoreType: DataStoreType | null
+    dataStoreType: DataStoreType | null,
   ): string => {
     if (dataStoreType) {
       return `${dataStoreType.name} (${truncateString(
         dataStoreType.description,
-        75
+        75,
       )})`;
     }
     return '';
@@ -215,7 +215,7 @@ export default function DataStoreForm({
           }
           setIdHasBeenUpdatedByUser(true);
         }}
-      />
+      />,
     );
 
     if (mode === 'edit') {
@@ -226,7 +226,7 @@ export default function DataStoreForm({
           readonly
           labelText="Type*"
           value={dataStoreTypeDisplayString(selectedDataStoreType)}
-        />
+        />,
       );
     } else {
       textInputs.push(
@@ -241,7 +241,7 @@ export default function DataStoreForm({
           invalid={typeInvalid}
           placeholder="Choose the data store type"
           selectedItem={selectedDataStoreType}
-        />
+        />,
       );
     }
 
@@ -254,7 +254,7 @@ export default function DataStoreForm({
         labelText="Schema*"
         value={dataStore.schema}
         onChange={(event: any) => onSchemaChanged(event.target.value)}
-      />
+      />,
     );
 
     textInputs.push(
@@ -266,7 +266,7 @@ export default function DataStoreForm({
         onChange={(event: any) =>
           updateDataStore({ description: event.target.value })
         }
-      />
+      />,
     );
 
     return textInputs;

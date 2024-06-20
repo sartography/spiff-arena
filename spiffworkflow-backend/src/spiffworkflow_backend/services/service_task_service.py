@@ -7,6 +7,7 @@ import requests
 import sentry_sdk
 from flask import current_app
 from flask import g
+from security import safe_requests  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
@@ -117,15 +118,20 @@ class ServiceTaskDelegate:
 
     @classmethod
     def catch_error_codes(cls, spiff_task: SpiffTask, error: Any) -> None:
-        top_level_workflow = spiff_task.workflow.top_workflow
+        task_workflow = spiff_task.workflow
+        top_level_workflow = task_workflow.top_workflow
         task_caught_event = False
         for event_definition_class in [ErrorEventDefinition, EscalationEventDefinition]:
             event_definition = event_definition_class(name=error["error_code"], code=error["error_code"])
-            bpmn_event = BpmnEvent(event_definition, payload=error)
-            tasks = top_level_workflow.get_tasks(catches_event=bpmn_event, state=TaskState.NOT_FINISHED_MASK)
+            bpmn_event = BpmnEvent(event_definition, payload=error, target=task_workflow)
+            tasks = task_workflow.get_tasks(catches_event=bpmn_event, state=TaskState.NOT_FINISHED_MASK)
+            if len(tasks) == 0:
+                tasks = top_level_workflow.get_tasks(catches_event=bpmn_event, state=TaskState.NOT_FINISHED_MASK)
+                bpmn_event = BpmnEvent(event_definition, payload=error)
             if len(tasks) > 0:
                 top_level_workflow.catch(bpmn_event)
                 task_caught_event = True
+
         if task_caught_event is False:
             message_from_status_code = cls.get_message_for_status(error["status_code"])
             message = [
@@ -250,7 +256,7 @@ class ServiceTaskService:
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+            response = safe_requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []
@@ -265,7 +271,7 @@ class ServiceTaskService:
     def authentication_list() -> Any:
         """Returns a list of available authentications."""
         try:
-            response = requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+            response = safe_requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
 
             if response.status_code != 200:
                 return []

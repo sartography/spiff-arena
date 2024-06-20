@@ -12,7 +12,7 @@ const defaultMessageClassName = 'failure-string';
 function errorDetailDisplay(
   errorObject: any,
   propertyName: string,
-  title: string
+  title: string,
 ) {
   // Creates a bit of html for displaying a single error property if it exists.
   let value = errorObject[propertyName];
@@ -40,7 +40,7 @@ export const errorForDisplayFromString = (errorMessage: string) => {
 
 export const errorForDisplayFromProcessInstanceErrorDetail = (
   processInstanceEvent: ProcessInstanceLogEntry,
-  processInstanceErrorEventDetail: ProcessInstanceEventErrorDetail
+  processInstanceErrorEventDetail: ProcessInstanceEventErrorDetail,
 ) => {
   const errorForDisplay: ErrorForDisplay = {
     message: processInstanceErrorEventDetail.message,
@@ -56,7 +56,7 @@ export const errorForDisplayFromProcessInstanceErrorDetail = (
 };
 
 export const errorForDisplayFromTestCaseErrorDetails = (
-  testCaseErrorDetails: TestCaseErrorDetails
+  testCaseErrorDetails: TestCaseErrorDetails,
 ) => {
   const errorForDisplay: ErrorForDisplay = {
     message: testCaseErrorDetails.error_messages.join('\n'),
@@ -99,19 +99,19 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   const lineNumber = errorDetailDisplay(
     errorObject,
     'line_number',
-    'Line Number'
+    'Line Number',
   );
   const errorLine = errorDetailDisplay(errorObject, 'error_line', 'Context');
   const taskType = errorDetailDisplay(errorObject, 'task_type', 'Task Type');
   const outputData = errorDetailDisplay(
     errorObject,
     'output_data',
-    'Output Data'
+    'Output Data',
   );
   const expectedData = errorDetailDisplay(
     errorObject,
     'expected_data',
-    'Expected Data'
+    'Expected Data',
   );
   let codeTrace = null;
   if (errorObject.task_trace && errorObject.task_trace.length > 0) {
@@ -153,7 +153,7 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
 
 export function ErrorDisplayStateless(
   errorObject: ErrorForDisplay,
-  onClose?: Function
+  onClose?: Function,
 ) {
   const title = 'Error:';
   const hideCloseButton = !onClose;

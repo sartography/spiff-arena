@@ -14,7 +14,7 @@ import ObjectFieldTemplate from '../carbon_theme/ObjectFieldTemplate';
 export default function ObjectFieldRestrictedGridTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: ObjectFieldTemplateProps<T, S, F>) {
   return ObjectFieldTemplate(props, {
     defaultSm: 4,

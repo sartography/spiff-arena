@@ -19,7 +19,6 @@ import {
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation, Link, LinkProps } from 'react-router-dom';
-// @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
@@ -232,7 +231,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           to={navItemPage}
           isActive={isActivePage(navItemPage)}
           data-qa={`extension-${slugifyString(
-            uxElement.label || uxElement.page
+            uxElement.label || uxElement.page,
           )}`}
         >
           {uxElement.label || uxElement.page}

@@ -28,6 +28,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -112,7 +113,12 @@ def process_model_delete(
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     try:
+        process_model = _get_process_model(process_model_identifier)
         ProcessModelService.process_model_delete(process_model_identifier)
+
+        # can't do this in the ProcessModelService due to circular imports
+        SpecFileService.clear_caches_for_item(process_model_info=process_model)
+        db.session.commit()
     except ProcessModelWithInstancesNotDeletableError as exception:
         raise ApiError(
             error_code="existing_instances",
@@ -196,7 +202,7 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
     # if the user got here then they can read the process model
     available_actions = {"read": {"path": f"/process-models/{modified_process_model_identifier}", "method": "GET"}}
     if GitService.check_for_publish_configs(raise_on_missing=False):
-        available_actions = {"publish": {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}}
+        available_actions["publish"] = {"path": f"/process-model-publish/{modified_process_model_identifier}", "method": "POST"}
     process_model.actions = available_actions
 
     return make_response(jsonify(process_model), 200)
@@ -560,7 +566,9 @@ def _create_or_update_process_model_file(
             status_code=400,
         )
 
-    if file_contents_hash is not None:
+    is_new_file = file_contents_hash is None
+
+    if not is_new_file:
         current_file_contents_bytes = SpecFileService.get_data(process_model, request_file.filename)
         if current_file_contents_bytes and file_contents_hash:
             current_file_contents_hash = sha256(current_file_contents_bytes).hexdigest()
@@ -592,5 +600,8 @@ def _create_or_update_process_model_file(
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
+
+    if is_new_file and file.name.endswith(".bpmn"):
+        DataSetupService.save_all_process_models()
 
     return make_response(jsonify(file), http_status_to_return)

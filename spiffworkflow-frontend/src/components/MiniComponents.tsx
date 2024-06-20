@@ -3,7 +3,7 @@ import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { MessageInstance, ProcessInstance } from '../interfaces';
 
 export function FormatProcessModelDisplayName(
-  instanceObject: ProcessInstance | MessageInstance
+  instanceObject: ProcessInstance | MessageInstance,
 ) {
   const {
     process_model_identifier: processModelIdentifier,
@@ -12,7 +12,7 @@ export function FormatProcessModelDisplayName(
   return (
     <Link
       to={`/process-models/${modifyProcessIdentifierForPathParam(
-        processModelIdentifier
+        processModelIdentifier,
       )}`}
       title={processModelIdentifier}
     >

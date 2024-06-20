@@ -80,7 +80,7 @@ class BackgroundProcessingService:
                 .filter(TaskModel.guid == future_task.guid)
                 .first()
             )
-            if process_instance.allowed_to_run():
+            if process_instance and process_instance.allowed_to_run():
                 queue_future_task_if_appropriate(
                     process_instance, eta_in_seconds=future_task.run_at_in_seconds, task_guid=future_task.guid
                 )

@@ -9,7 +9,6 @@ from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
-from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -166,7 +165,7 @@ class SpecFileService(FileSystemService):
             (ref for ref in references if ref.prop_is_true("is_primary") and ref.prop_is_true("is_executable")), None
         )
 
-        SpecFileService.clear_caches_for_file(file_name, process_model_info)
+        cls.clear_caches_for_item(file_name=file_name, process_model_info=process_model_info)
         all_called_element_ids: set[str] = set()
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
@@ -190,9 +189,9 @@ class SpecFileService(FileSystemService):
 
             all_called_element_ids = all_called_element_ids | set(ref.called_element_ids)
             if update_process_cache_only:
-                SpecFileService.update_process_cache(ref)
+                cls.update_process_cache(ref)
             else:
-                SpecFileService.update_all_caches(ref)
+                cls.update_all_caches(ref)
 
         if user is not None:
             called_element_refs = (
@@ -218,24 +217,24 @@ class SpecFileService(FileSystemService):
         db.session.commit()
 
         # make sure we save the file as the last thing we do to ensure validations have run
-        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
-        SpecFileService.write_file_data_to_system(full_file_path, binary_data)
-        return (SpecFileService.to_file_object(file_name, full_file_path), references)
+        full_file_path = cls.full_file_path(process_model_info, file_name)
+        cls.write_file_data_to_system(full_file_path, binary_data)
+        return (cls.to_file_object(file_name, full_file_path), references)
 
-    @staticmethod
-    def last_modified(process_model: ProcessModelInfo, file_name: str) -> datetime:
-        full_file_path = SpecFileService.full_file_path(process_model, file_name)
+    @classmethod
+    def last_modified(cls, process_model: ProcessModelInfo, file_name: str) -> datetime:
+        full_file_path = cls.full_file_path(process_model, file_name)
         return FileSystemService._last_modified(full_file_path)
 
-    @staticmethod
-    def timestamp(process_model: ProcessModelInfo, file_name: str) -> float:
-        full_file_path = SpecFileService.full_file_path(process_model, file_name)
+    @classmethod
+    def timestamp(cls, process_model: ProcessModelInfo, file_name: str) -> float:
+        full_file_path = cls.full_file_path(process_model, file_name)
         return FileSystemService._timestamp(full_file_path)
 
     @classmethod
     def delete_file(cls, process_model: ProcessModelInfo, file_name: str) -> None:
-        cls.clear_caches_for_file(file_name, process_model)
-        full_file_path = SpecFileService.full_file_path(process_model, file_name)
+        cls.clear_caches_for_item(file_name=file_name, process_model_info=process_model)
+        full_file_path = cls.full_file_path(process_model, file_name)
         os.remove(full_file_path)
 
     @staticmethod
@@ -255,33 +254,35 @@ class SpecFileService(FileSystemService):
     def update_caches_except_process(ref: Reference) -> None:
         SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
-        SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
-    def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
-        """Clear all caches related to a file."""
-        records = (
-            db.session.query(ReferenceCacheModel)
-            .filter(ReferenceCacheModel.file_name == file_name)
-            .filter(ReferenceCacheModel.relative_location == process_model_info.id)
-            .all()
-        )
+    def clear_caches_for_item(
+        file_name: str | None = None, process_model_info: ProcessModelInfo | None = None, process_group_id: str | None = None
+    ) -> None:
+        reference_cache_query = ReferenceCacheModel.basic_query()
 
+        if process_group_id is not None:
+            reference_cache_query = reference_cache_query.filter(
+                ReferenceCacheModel.relative_location.like(f"{process_group_id}/%")  # type: ignore
+            )
+        if file_name is not None:
+            reference_cache_query = reference_cache_query.filter(ReferenceCacheModel.file_name == file_name)
+        if process_model_info is not None:
+            reference_cache_query = reference_cache_query.filter(ReferenceCacheModel.relative_location == process_model_info.id)
+
+        records = reference_cache_query.all()
         reference_cache_ids = []
-
         for record in records:
             reference_cache_ids.append(record.id)
-            db.session.delete(record)
 
         ProcessCallerService.clear_cache_for_process_ids(reference_cache_ids)
 
+        for record in records:
+            db.session.delete(record)
+
     @staticmethod
     def update_process_cache(ref: Reference) -> None:
-        process_id_lookup = (
-            ReferenceCacheModel.basic_query()
-            .filter_by(identifier=ref.identifier, relative_location=ref.relative_location, type=ref.type)
-            .first()
-        )
+        process_id_lookup = ReferenceCacheModel.basic_query().filter_by(identifier=ref.identifier, type=ref.type).first()
         if process_id_lookup is None:
             process_id_lookup = ReferenceCacheModel.from_spec_reference(ref, use_current_cache_generation=True)
             db.session.add(process_id_lookup)
@@ -333,28 +334,3 @@ class SpecFileService(FileSystemService):
                 current_triggerable_processes.remove(message_triggerable_process_model)
         for trigger_pm in current_triggerable_processes:
             db.session.delete(trigger_pm)
-
-    @staticmethod
-    def update_correlation_cache(ref: Reference) -> None:
-        for name in ref.correlations.keys():
-            correlation_property_retrieval_expressions = ref.correlations[name]["retrieval_expressions"]
-
-            for cpre in correlation_property_retrieval_expressions:
-                message_name = ref.messages.get(cpre["messageRef"], None)
-                retrieval_expression = cpre["expression"]
-                process_model_id = ref.relative_location
-
-                existing = CorrelationPropertyCache.query.filter_by(
-                    name=name,
-                    message_name=message_name,
-                    process_model_id=process_model_id,
-                    retrieval_expression=retrieval_expression,
-                ).first()
-                if existing is None:
-                    new_cache = CorrelationPropertyCache(
-                        name=name,
-                        message_name=message_name,
-                        process_model_id=process_model_id,
-                        retrieval_expression=retrieval_expression,
-                    )
-                    db.session.add(new_cache)

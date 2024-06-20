@@ -6,6 +6,7 @@ authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
 license = "LGPL"
 readme = "README.md"
 homepage = "https://github.com/sartography/spiffworkflow-arena"
+package-mode = false
 repository = "https://github.com/sartography/spiffworkflow-arena"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -15,15 +16,10 @@ classifiers = [
 python = ">=3.11,<3.13"
 
 [tool.poetry.dev-dependencies]
-pre-commit = "^3.7.0"
-black = ">=21.10b0"
-ruff = "^0.3.5"
-
-reorder-python-imports = "^3.12.0"
+pre-commit = "^3.7.1"
 pre-commit-hooks = "^4.6.0"
+ruff = "^0.4.9"
 
 [tool.poetry.group.dev.dependencies]
 tomli = "^2.0.1"
-
-[tool.black]
-line-length = 130
+git-debranch = "^0.1.9"

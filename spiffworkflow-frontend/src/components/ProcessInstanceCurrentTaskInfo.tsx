@@ -31,7 +31,7 @@ export default function ProcessInstanceCurrentTaskInfo({
   const inlineMessage = (
     title: string,
     subtitle: string,
-    kind: string = 'info'
+    kind: string = 'info',
   ) => {
     return (
       <div>
@@ -60,13 +60,13 @@ export default function ProcessInstanceCurrentTaskInfo({
           potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
         }
         message = `This next task is assigned to user(s): ${potentialOwnerArray.join(
-          ', '
+          ', ',
         )}.`;
       }
 
       return inlineMessage(
         '',
-        `${message} There is no action for you to take at this time.`
+        `${message} There is no action for you to take at this time.`,
       );
     }
     if (task && task.can_complete && HUMAN_TASK_TYPES.includes(task.type)) {
@@ -87,7 +87,7 @@ export default function ProcessInstanceCurrentTaskInfo({
       return inlineMessage(
         `Process ${processInstance.status}`,
         `This process instance was ${processInstance.status} by an administrator. Please get in touch with them for more information.`,
-        'warning'
+        'warning',
       );
     }
     if (processInstance.status === 'error') {

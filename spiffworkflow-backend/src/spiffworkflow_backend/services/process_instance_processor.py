@@ -1,5 +1,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
+import _strptime  # type: ignore
 import copy
 import decimal
 import json
@@ -19,7 +20,6 @@ from typing import NewType
 from typing import TypedDict
 from uuid import UUID
 
-import _strptime  # type: ignore
 import dateparser
 import pytz
 from flask import current_app
@@ -162,7 +162,33 @@ class MissingProcessInfoError(Exception):
     pass
 
 
-class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
+class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
+        return {}
+
+    def last_result(self) -> dict[str, Any]:
+        return dict(self._last_result.items())
+
+    def clear_state(self) -> None:
+        pass
+
+    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
+        return {}
+
+    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        pass
+
+
+class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
         self._last_result: dict[str, Any] = {}
         self._non_user_defined_keys = {"__annotations__"}
@@ -181,29 +207,8 @@ class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
         self._last_result = context
         return True
 
-    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        return {}
 
-    def last_result(self) -> dict[str, Any]:
-        return dict(self._last_result.items())
-
-    def clear_state(self) -> None:
-        pass
-
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def revise_state_with_task_data(self, task: SpiffTask) -> None:
-        pass
-
-
-class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
 
     def __init__(self, environment_globals: dict[str, Any]):
@@ -263,6 +268,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     def clear_state(self) -> None:
         self.state = {}
 
+    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        return data.pop(key, {})  # type: ignore
+
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
         state = self.user_defined_state()
@@ -290,8 +299,13 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(TaskDataBasedScriptEngineEnvironment):
-    pass
+class CustomScriptEngineEnvironment:
+    @staticmethod
+    def create(environment_globals: dict[str, Any]) -> BaseCustomScriptEngineEnvironment:
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_NON_TASK_DATA_BASED_SCRIPT_ENGINE_ENVIRONMENT") == "true":
+            return NonTaskDataBasedScriptEngineEnvironment(environment_globals)
+
+        return TaskDataBasedScriptEngineEnvironment(environment_globals)
 
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
@@ -334,7 +348,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             default_globals.update(safe_globals)
             default_globals["__builtins__"]["__import__"] = _import
 
-        environment = CustomScriptEngineEnvironment(default_globals)
+        environment = CustomScriptEngineEnvironment.create(default_globals)
         super().__init__(environment=environment)
 
     def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
@@ -564,9 +578,6 @@ class ProcessInstanceProcessor:
         script_engine_to_use.environment.restore_state(bpmn_process_instance)
         bpmn_process_instance.script_engine = script_engine_to_use
 
-    def preserve_script_engine_state(self) -> None:
-        self._script_engine.environment.preserve_state(self.bpmn_process_instance)
-
     @classmethod
     def _update_bpmn_definition_mappings(
         cls,
@@ -579,14 +590,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
-                task_definition.bpmn_identifier
-            ] = task_definition
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
+                task_definition
+            )
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
-                "bpmn_process_definition"
-            ] = bpmn_process_definition
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
+                bpmn_process_definition
+            )
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
@@ -912,7 +923,24 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
+    def extract_metadata(self) -> None:
+        # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
+        # it would make sense to do that if the shell-out-to-git performance cost was not too high.
+        # we also discussed caching this information in new database tables. something like:
+        #   process_model_version
+        #     id
+        #     process_model_identifier
+        #     git_hash
+        #     display_name
+        #     notification_type
+        #   metadata_extraction
+        #     id
+        #     extraction_key
+        #     extraction_path
+        #   metadata_extraction_process_model_version
+        #     process_model_version_id
+        #     metadata_extraction_id
+        process_model_info = ProcessModelService.get_process_model(self.process_instance_model.process_model_identifier)
         metadata_extraction_paths = process_model_info.metadata_extraction_paths
         if metadata_extraction_paths is None:
             return
@@ -1090,12 +1118,7 @@ class ProcessInstanceProcessor:
         human_tasks = HumanTaskModel.query.filter_by(process_instance_id=self.process_instance_model.id, completed=False).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
-        process_model_display_name = ""
-        process_model_info = ProcessModelService.get_process_model(self.process_instance_model.process_model_identifier)
-        if process_model_info is not None:
-            process_model_display_name = process_model_info.display_name
-
-        self.extract_metadata(process_model_info)
+        self.extract_metadata()
 
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
@@ -1131,7 +1154,7 @@ class ProcessInstanceProcessor:
 
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
-                        process_model_display_name=process_model_display_name,
+                        process_model_display_name=self.process_instance_model.process_model_display_name,
                         bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
@@ -1507,10 +1530,18 @@ class ProcessInstanceProcessor:
                 )
             )
 
-    def serialize(self) -> dict:
+    def serialize(self, serialize_script_engine_state: bool = True) -> dict:
         self.check_task_data_size()
-        self.preserve_script_engine_state()
-        return self._serializer.to_dict(self.bpmn_process_instance)  # type: ignore
+
+        if serialize_script_engine_state:
+            self._script_engine.environment.preserve_state(self.bpmn_process_instance)
+
+        result = self._serializer.to_dict(self.bpmn_process_instance)
+
+        if not serialize_script_engine_state and "data" in result:
+            self._script_engine.environment.pop_state(result["data"])
+
+        return result  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
         return self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)  # type: ignore

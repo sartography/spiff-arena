@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { DatePickerInput, DatePicker } from '@carbon/react';
+import { useDebouncedCallback } from 'use-debounce';
 import {
   DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
@@ -42,20 +43,20 @@ export default function DateRangePickerWidget({
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   const onChangeLocal = useCallback(
     (dateRange: Date[]) => {
       let dateRangeString;
       const startDate = DateAndTimeService.convertDateObjectToFormattedString(
-        dateRange[0]
+        dateRange[0],
       );
       if (startDate) {
         const startDateYMD =
           DateAndTimeService.dateStringToYMDFormat(startDate);
         const endDate = DateAndTimeService.convertDateObjectToFormattedString(
-          dateRange[1]
+          dateRange[1],
         );
         dateRangeString = startDateYMD;
         if (endDate) {
@@ -65,7 +66,7 @@ export default function DateRangePickerWidget({
       }
       onChange(dateRangeString);
     },
-    [onChange]
+    [onChange],
   );
 
   let dateValue: (Date | null)[] | null = value;
@@ -85,6 +86,18 @@ export default function DateRangePickerWidget({
     dateValue = [startDate, endDate];
   }
 
+  const addDebouncedOnChangeDate = useDebouncedCallback(
+    (fullObject: React.ChangeEvent<HTMLInputElement>) => {
+      // eslint-disable-next-line no-param-reassign
+      fullObject.target.value =
+        DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
+          fullObject.target.value,
+        );
+    },
+    // delay in ms
+    100,
+  );
+
   return (
     <DatePicker
       className="date-input"
@@ -97,6 +110,7 @@ export default function DateRangePickerWidget({
         id={`${id}-start`}
         placeholder={DATE_FORMAT_FOR_DISPLAY}
         helperText={commonAttributes.helperText}
+        labelText=""
         type="text"
         size="md"
         autocomplete="off"
@@ -105,10 +119,12 @@ export default function DateRangePickerWidget({
         invalidText={commonAttributes.errorMessageForField}
         autoFocus={autofocus}
         pattern={null}
+        onChange={addDebouncedOnChangeDate}
       />
       <DatePickerInput
         id={`${id}-end`}
         placeholder={DATE_FORMAT_FOR_DISPLAY}
+        labelText=""
         type="text"
         size="md"
         autocomplete="off"
@@ -116,6 +132,7 @@ export default function DateRangePickerWidget({
         invalid={commonAttributes.invalid}
         autoFocus={autofocus}
         pattern={null}
+        onChange={addDebouncedOnChangeDate}
       />
     </DatePicker>
   );

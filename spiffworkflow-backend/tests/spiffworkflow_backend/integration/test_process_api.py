@@ -1150,6 +1150,49 @@ class TestProcessApi(BaseTest):
         assert response.json["status"] == "complete"
         assert response.json["process_model_identifier"] == process_model.id
 
+        event_count = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance_id, event_type=ProcessInstanceEventType.process_instance_force_run.value
+        ).count()
+        assert event_count == 0
+
+    def test_process_instance_run_with_force(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        # process_model_id = "runs_without_input/sample"
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="runs_without_input",
+            process_model_id="sample",
+            bpmn_file_name=None,
+            bpmn_file_location="sample",
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run?force_run=true",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert isinstance(response.json["updated_at_in_seconds"], int)
+        assert response.json["updated_at_in_seconds"] > 0
+        assert response.json["status"] == "complete"
+        assert response.json["process_model_identifier"] == process_model.id
+
+        event_count = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance_id, event_type=ProcessInstanceEventType.process_instance_force_run.value
+        ).count()
+        assert event_count == 1
+
     def test_process_instance_run_with_instructions(
         self,
         app: Flask,
@@ -3411,6 +3454,29 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["process_data_value"] == "HEY"
+
+    def test_returns_blank_array_if_process_instance_not_started(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task",
+            process_model_source_directory="manual_task",
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        process_instance_id = response.json["id"]
+
+        response = client.get(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json == []
 
     def _setup_testing_instance(
         self,

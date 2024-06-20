@@ -196,9 +196,7 @@ class TestWorkflowService(BaseTest):
             """,
             "Process_aldvgey",
         )
-        _, delay, _ = WorkflowService.next_start_event_configuration(
-            workflow, example_start_datetime_minus_5_mins_in_utc
-        )  # type: ignore
+        _, delay, _ = WorkflowService.next_start_event_configuration(workflow, example_start_datetime_minus_5_mins_in_utc)  # type: ignore
         assert delay == 300
 
     def test_run_at_delay_is_86700_if_1_day_and_5_mins_before_date_start_timer_event(

@@ -70,7 +70,7 @@ Remember that each pool requires Lane configuration, even if it contains just a 
 | --- | --- | --- |
 | ![participant_sales](images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
 | ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
-
+---
 ### Example: Using Lanes and Pools for Petty Cash Request Process
 This example demonstrates the application of Lanes and pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization. 
 
@@ -84,28 +84,120 @@ The process is structured around different tasks allocated to lane and pools, em
 
 1. **Start Event**: The workflow kicks off with a start event signaling the initiation of a petty cash request.
 
-2. **User Task: Petty Cash Request**: This task uses a form to collect petty cash requests, including the requested amount and the reason for the request.
+1. **User Task: Petty Cash Request**: This task uses a form to collect petty cash requests, including the requested amount and the reason for the request.
 
     ![Lanes and Pools Example](images/lanes_pools_example_2.png)
 
 The process transitions from the Requester Lane to the Cashier Lane within the Cashier Pool for approval.
 
-3. **User Task: Approve Petty Cash**: In this task, cashiers review and approve the petty cash request, recording the approver’s name for accountability.
+1. **User Task: Approve Petty Cash**: In this task, cashiers review and approve the petty cash request, recording the approver’s name for accountability.
 
     ![Lanes and Pools Example](images/lanes_pools_example_3.png)
 
 After approval, the workflow returns to the Requester Lane for final confirmation and display of the approval outcome.
 
-4. **Manual Task: Display Output**:
+1. **Manual Task: Display Output**:
 
 **Display Message**:
 
 ```markdown
 Your petty cash request for {{amount}} has been approved by {{approved_by}}
 ```
+
 This message informs the requester of the approval status, including the approved amount and the name of the approver. After manual task, marks the end of the process.
 
 ![Lanes and Pools Example](images/lanes_pools_example_4.png)
 
-
 This BPMN diagram effectively uses Lanes and pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
+
+
+## Managing Approval Processes for Designated Group Users
+
+One common requirement in workflow management is creating an approval process where any user can initiate a request, but only a designated group can grant approval. A specific challenge arises when the initiator is also a member of the approval group and should not approve their own request. 
+
+Let's consider a typical approval process where:
+
+- Any user can start a request.
+- A specific group ("approvers") can grant approval.
+- The initiator, if part of the approvers, should not approve their own request.
+
+### Solution
+
+Implement a script task within the workflow to dynamically adjust the assignment of approval tasks, ensuring the initiator cannot approve their own request.
+
+Insert a script task before the approval task to dynamically define and adjust the lane owners based on the current process context.
+
+Use process data to identify group members eligible for approval tasks and exclude the initiator from this group.
+
+```python
+# Define the group identifier dynamically based on process data
+group_identifier = "approvers"
+group_members = get_group_members(group_identifier)
+
+# Retrieve the process initiator's username
+initiator = get_process_initiator_user()
+initiator_username = initiator["username"]
+
+# Exclude the initiator from the approvers' list if they are part of it
+if initiator_username in group_members:
+    group_members.remove(initiator_username)
+
+# Assign the modified group list to the lane for task assignment
+lane_owners = {"Approval": group_members}
+```
+
+This solution automatically adjusts the approvers list to exclude the initiator, maintaining the integrity of the approval process.
+
+---
+## Assigning Lane Owners
+
+Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization. 
+
+Lets discuss the methods for assigning lane owners:
+
+### Methods to Assign Lane Owners:
+1. **Using Script Tasks**:
+   - Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic, ensuring that tasks are routed correctly based on current operational needs or specific conditions.
+   - **Example**:
+     ```python
+     # Script task to assign lane owners
+     lane_owners = {
+         "Reviewer": ["user1@example.com", "user2@example.com"]
+     }
+     ```
+   - This script explicitly sets who the lane owners are for the 'Reviewer' lane. The names provided in the dictionary map directly to the users responsible for this lane.
+
+2. **Assigning User Groups**:
+   - In cases where script tasks are not used for direct assignments, lane owners can be specified by utilizing predefined user groups within DB. 
+   - **How to Configure User Groups**:
+     - User groups can be assigned in the system configuration, often in a YAML file, which defines which users belong to specific groups. More information [in admins and permissions section](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#setting-up-admin-in-config-yaml)
+
+     - **Example YAML Configuration**:
+       ```yaml
+       groups:
+         admin:
+           users:
+             - user1@spiffworkflow.org
+             - user2@spiffworkflow.org
+         reviewers:
+           users:
+             - user3@spiffworkflow.org
+             - user4@spiffworkflow.org
+       ```
+   - This configuration shows how different user roles, such as admins and reviewers, are populated with specific users.
+
+### Practical Application in a BPMN Model:
+In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process. For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
+
+- **Process Start**
+  - The process begins and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"
+
+![Lane Owners](images/lane_owners.png)
+
+- **Task Execution**:
+  - As tasks are executed, the workflow engine checks the `lane_owners` dictionary to determine which users are responsible for tasks in specific lanes.
+  - If a lane owner is not set using a script task and no explicit assignment is provided, the engine queries the group name to determine potential task owners from DB.
+
+```{admonition} Note
+⚠ Specifying a user group in the `lane_owners` dictionary in script task does not require it to previously exist in the database. 
+```

@@ -377,19 +377,25 @@ def _process_instance_task_list(
     This is how we know what the state of each task is and how to color things.
     """
     bpmn_process_ids = []
+    bpmn_process = None
     if bpmn_process_guid:
         bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
-        if bpmn_process is None:
-            raise ApiError(
-                error_code="bpmn_process_not_found",
-                message=(
-                    f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance '{process_instance.id}'"
-                ),
-                status_code=400,
-            )
+    elif process_instance.bpmn_process_id is None:
+        # if the process instance does not have a bpmn process then return a blank array.
+        # this should help for issues like timer start events when viewing the corresponding instance.
+        return make_response(jsonify([]), 200)
+    else:
+        bpmn_process = process_instance.bpmn_process
 
-        bpmn_processes = TaskService.bpmn_process_and_descendants([bpmn_process])
-        bpmn_process_ids = [p.id for p in bpmn_processes]
+    if bpmn_process is None:
+        raise ApiError(
+            error_code="bpmn_process_not_found",
+            message=(f"Cannot find a bpmn process with guid '{bpmn_process_guid}' for process instance '{process_instance.id}'"),
+            status_code=400,
+        )
+
+    bpmn_processes = TaskService.bpmn_process_and_descendants([bpmn_process])
+    bpmn_process_ids = [p.id for p in bpmn_processes]
 
     task_model_query = db.session.query(TaskModel).filter(
         TaskModel.process_instance_id == process_instance.id,
@@ -627,9 +633,12 @@ def _get_process_instance(
         name_of_file_with_diagram = spec_reference.file_name
         process_instance.process_model_with_diagram_identifier = process_model_with_diagram.id
     else:
-        process_model_with_diagram = _get_process_model(process_model_identifier)
-        if process_model_with_diagram.primary_file_name:
-            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+        try:
+            process_model_with_diagram = _get_process_model(process_model_identifier)
+            if process_model_with_diagram.primary_file_name:
+                name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+        except Exception as ex:
+            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
 
     if process_model_with_diagram and name_of_file_with_diagram:
         bpmn_xml_file_contents = None
@@ -661,7 +670,8 @@ def _process_instance_run(
 
     processor = None
     try:
-        ProcessInstanceTmpService.add_event_to_process_instance(process_instance, "process_instance_force_run")
+        if force_run is True:
+            ProcessInstanceTmpService.add_event_to_process_instance(process_instance, "process_instance_force_run")
         if not queue_process_instance_if_appropriate(
             process_instance, execution_mode=execution_mode
         ) and not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):

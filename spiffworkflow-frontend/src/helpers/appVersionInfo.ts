@@ -2,7 +2,7 @@ import { ObjectWithStringKeysAndValues } from '../interfaces';
 
 const appVersionInfo = () => {
   const versionInfoFromHtmlMetaTag = document.querySelector(
-    'meta[name="version-info"]'
+    'meta[name="version-info"]',
   );
   let versionInfo: ObjectWithStringKeysAndValues = {};
   if (versionInfoFromHtmlMetaTag) {

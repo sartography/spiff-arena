@@ -80,6 +80,7 @@ const PROCESS_STATUSES = [
 
 // with time: yyyy-MM-dd HH:mm:ss
 let generalDateFormat = 'yyyy-MM-dd';
+// let generalDateFormat = 'dd-MMM-yyyy';
 if (
   'spiffworkflowFrontendJsenv' in window &&
   'DATE_FORMAT' in window.spiffworkflowFrontendJsenv
@@ -98,7 +99,7 @@ const supportedDateFormatTypes = {
   dd: '01',
 };
 const unsupportedFormatTypes = splitDateFormat.filter(
-  (x) => !Object.keys(supportedDateFormatTypes).includes(x)
+  (x) => !Object.keys(supportedDateFormatTypes).includes(x),
 );
 const formattedSupportedDateTypes: string[] = [];
 Object.entries(supportedDateFormatTypes).forEach(([key, value]) => {
@@ -107,8 +108,8 @@ Object.entries(supportedDateFormatTypes).forEach(([key, value]) => {
 if (unsupportedFormatTypes.length > 0) {
   throw new Error(
     `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat} with invalid options: ${unsupportedFormatTypes.join(
-      ', '
-    )}. Valid options are: ${formattedSupportedDateTypes.join(', ')}`
+      ', ',
+    )}. Valid options are: ${formattedSupportedDateTypes.join(', ')}`,
   );
 }
 const carbonDateFormat = generalDateFormat

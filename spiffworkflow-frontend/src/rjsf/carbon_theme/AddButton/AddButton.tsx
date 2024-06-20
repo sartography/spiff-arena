@@ -13,7 +13,7 @@ import { Add } from '@carbon/icons-react';
 export default function AddButton<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >({ className, onClick, disabled, registry }: IconButtonProps<T, S, F>) {
   return (
     <Button

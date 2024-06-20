@@ -1,23 +1,6 @@
 repos:
   - repo: local
     hooks:
-      - id: black
-        name: black
-        entry: black
-        language: system
-        files: ^spiffworkflow-backend/
-        types: [python]
-        require_serial: true
-        exclude: "/migrations/"
-
-        # --preview because otherwise it will not fix long lines if the long lines contain long strings
-        # https://github.com/psf/black/pull/1132
-        # https://github.com/psf/black/pull/1609
-        # --line-length because then we can avoid the fancy line wrapping in more instances and jason, kb, and elizabeth
-        # kind of prefer long lines rather than cutely-formatted sets of lines.
-        # TODO: enable when its safe to update the files
-        args: [--preview, --line-length, "130"]
-
       - id: check-added-large-files
         files: ^spiffworkflow-backend/
         name: Check for added large files
@@ -42,8 +25,19 @@ repos:
         language: system
         types: [text]
         stages: [commit, push, manual]
-      - id: ruff
+      - id: ruff-check
         args: [check, --fix]
+        files: ^spiffworkflow-backend/
+        name: ruff
+        entry: ruff
+        language: system
+        types: [python]
+        require_serial: true
+        # this is also specified in spiffworkflow-backend/pyproject.toml but we run pre-commit
+        # with all-files which ignores that
+        exclude: "/migrations/"
+      - id: ruff-format
+        args: [format]
         files: ^spiffworkflow-backend/
         name: ruff
         entry: ruff
@@ -61,9 +55,3 @@ repos:
         types: [text]
         stages: [commit, push, manual]
         exclude: "/migrations/"
-  # - repo: https://github.com/pre-commit/mirrors-prettier
-  #   rev: v2.4.1
-  #   hooks:
-  #     - id: prettier
-  #       files: ^spiffworkflow-backend/
-  #       exclude_types: [html]

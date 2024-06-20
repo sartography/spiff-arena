@@ -264,14 +264,15 @@ class ProcessInstanceService:
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
             except ProcessInstanceIsAlreadyLockedError:
+                # we will try again later
                 continue
-            except Exception as e:
+            except Exception as exception:
                 db.session.rollback()  # in case the above left the database with a bad transaction
-                error_message = (
+                new_exception = Exception(
                     f"Error running {status_value} task for process_instance {process_instance.id}"
-                    + f"({process_instance.process_model_identifier}). {str(e)}"
+                    + f"({process_instance.process_model_identifier}). {exception.__class__.__name__}: {str(exception)}"
                 )
-                current_app.logger.error(error_message)
+                current_app.logger.exception(new_exception, stack_info=True)
 
     @classmethod
     def run_process_instance_with_processor(
@@ -350,8 +351,8 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
-                            % spiff_task.task_spec.name,
+                            message=f"Spiff Task {spiff_task.task_spec.name} lane user "
+                            "dict must have a key called 'value' with the user's uid in it.",
                             task=spiff_task,
                         )
                 elif isinstance(user, str):
@@ -401,7 +402,7 @@ class ProcessInstanceService:
         def values(collection: dict | list, elem: str | int | None, value: Any) -> FileDataGenerator:
             match (collection, elem, value):
                 case (dict(), None, None):
-                    for k, v in collection.items():  # type: ignore
+                    for k, v in collection.items():
                         yield from values(collection, k, v)
                 case (list(), None, None):
                     for i, v in enumerate(collection):

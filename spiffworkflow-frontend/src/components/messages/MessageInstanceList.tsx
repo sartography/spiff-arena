@@ -4,16 +4,16 @@ import { ErrorOutline } from '@carbon/icons-react';
 // @ts-ignore
 import { Table, Modal, Button } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
-import PaginationForTable from './PaginationForTable';
-import ProcessBreadcrumb from './ProcessBreadcrumb';
+import PaginationForTable from '../PaginationForTable';
+import ProcessBreadcrumb from '../ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
-} from '../helpers';
-import HttpService from '../services/HttpService';
-import { FormatProcessModelDisplayName } from './MiniComponents';
-import { MessageInstance } from '../interfaces';
-import DateAndTimeService from '../services/DateAndTimeService';
+} from '../../helpers';
+import HttpService from '../../services/HttpService';
+import { FormatProcessModelDisplayName } from '../MiniComponents';
+import { MessageInstance } from '../../interfaces';
+import DateAndTimeService from '../../services/DateAndTimeService';
 
 type OwnProps = {
   processInstanceId?: number;
@@ -38,7 +38,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       searchParams,
       undefined,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
     let queryParamString = `per_page=${perPage}&page=${page}`;
     if (processInstanceId) {
@@ -108,7 +108,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <Link
             data-qa="process-instance-show-link"
             to={`/process-instances/${modifyProcessIdentifierForPathParam(
-              row.process_model_identifier
+              row.process_model_identifier,
             )}/${row.process_instance_id}`}
           >
             {row.process_instance_id}
@@ -122,6 +122,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <td>{instanceLink}</td>
           <td>{row.name}</td>
           <td>{row.message_type}</td>
+          <td>{row.counterpart_id}</td>
           <td>
             <Button
               kind="ghost"
@@ -136,7 +137,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <td>{row.status}</td>
           <td>
             {DateAndTimeService.convertSecondsToFormattedDateTime(
-              row.created_at_in_seconds
+              row.created_at_in_seconds,
             )}
           </td>
         </tr>
@@ -151,6 +152,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             <th>Process instance</th>
             <th>Name</th>
             <th>Type</th>
+            <th>Corresponding Message Instance</th>
             <th>Details</th>
             <th>Status</th>
             <th>Created at</th>
@@ -166,7 +168,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       searchParams,
       undefined,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
     let breadcrumbElement = null;
     if (searchParams.get('process_instance_id')) {
@@ -182,7 +184,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             [
               `Process Instance: ${searchParams.get('process_instance_id')}`,
               `/process-instances/${searchParams.get(
-                'process_model_id'
+                'process_model_id',
               )}/${searchParams.get('process_instance_id')}`,
             ],
             ['Messages'],
@@ -197,6 +199,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         <PaginationForTable
           page={page}
           perPage={perPage}
+          perPageOptions={[10, 50, 100, 500, 1000]}
           pagination={pagination}
           tableToDisplay={buildTable()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}

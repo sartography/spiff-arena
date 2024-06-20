@@ -18,7 +18,7 @@ export default function PublicForm() {
   const [taskData, setTaskData] = useState<any>(null);
   const [formButtonsDisabled, setFormButtonsDisabled] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
-    null
+    null,
   );
   const [publicTask, setPublicTask] = useState<PublicTask | null>(null);
   const [currentPageError, setCurrentPageError] =
@@ -41,7 +41,7 @@ export default function PublicForm() {
           setCurrentPageError(error);
         } else {
           setCurrentPageError(
-            errorForDisplayFromString('Error retrieving content.')
+            errorForDisplayFromString('Error retrieving content.'),
           );
         }
         console.error(error);
@@ -154,7 +154,8 @@ export default function PublicForm() {
           <Grid fullWidth condensed className="megacondensed">
             <Column sm={4} md={5} lg={8}>
               <CustomForm
-                id="form-to-submit"
+                id={`form-to-submit-${publicTask.task_guid}`}
+                key={`form-to-submit-${publicTask.task_guid}`}
                 disabled={formButtonsDisabled}
                 formData={taskData}
                 onChange={(obj: any) => {
