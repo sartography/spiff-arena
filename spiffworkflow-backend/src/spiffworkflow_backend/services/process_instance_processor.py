@@ -1698,8 +1698,8 @@ class ProcessInstanceProcessor:
             raise task_exception
 
     def get_data(self) -> dict[str, Any]:
-        # TODO: do this with deepcopy
-        data = {k: v for k, v in self.bpmn_process_instance.data.items() if k != "spiff__python_env_state"}  # type: ignore
+        data = copy.deepcopy(self.bpmn_process_instance.data)
+        self._script_engine.environment.pop_state(data)
         return data
 
     def get_current_data(self) -> dict[str, Any]:
