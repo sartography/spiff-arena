@@ -259,7 +259,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
         keys_to_filter = self.non_user_defined_keys
         if external_context is not None:
             keys_to_filter |= set(external_context.keys())
-        
+
         return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
 
     def last_result(self) -> dict[str, Any]:
@@ -288,7 +288,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
         state_keys = set(self.state.keys())
         task_data_keys = set(task.data.keys())
         state_keys_to_remove = state_keys - task_data_keys
-        
+
         self.state = {k: v for k, v in self.state.items() if k not in state_keys_to_remove}
 
         if hasattr(task.task_spec, "_result_variable"):
