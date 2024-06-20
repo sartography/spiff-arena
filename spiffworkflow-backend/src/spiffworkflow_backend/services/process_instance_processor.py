@@ -1700,7 +1700,7 @@ class ProcessInstanceProcessor:
     def get_data(self) -> dict[str, Any]:
         data = copy.deepcopy(self.bpmn_process_instance.data)
         self._script_engine.environment.pop_state(data)
-        return data
+        return data  # type: ignore
 
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.

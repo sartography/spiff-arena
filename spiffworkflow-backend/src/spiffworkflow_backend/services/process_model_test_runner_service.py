@@ -434,7 +434,7 @@ class ProcessModelTestRunner:
         bpmn_process_instance.script_engine.environment.finalize_result(bpmn_process_instance)
 
         expected_data = test_case_contents["expected_output_json"]
-        output_data = bpmn_process_instance.data #script_engine.environment.user_defined_state()
+        output_data = bpmn_process_instance.data  # script_engine.environment.user_defined_state()
 
         error_message = None
         if bpmn_process_instance.is_completed() is False:
@@ -455,10 +455,6 @@ class ProcessModelTestRunner:
                 "expected_data": expected_data,
                 "output_data": output_data,
             }
-
-            print(expected_data)
-            print("-----")
-            print(output_data)
 
         self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
