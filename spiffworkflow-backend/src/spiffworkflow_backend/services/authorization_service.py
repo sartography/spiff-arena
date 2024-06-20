@@ -80,28 +80,6 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
-AUTHENTICATION_EXCLUSION_LIST = [
-    "spiffworkflow_backend.routes.authentication_controller.authentication_options",
-    "spiffworkflow_backend.routes.authentication_controller.login",
-    "spiffworkflow_backend.routes.authentication_controller.login_api_return",
-    "spiffworkflow_backend.routes.authentication_controller.login_return",
-    "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
-    "spiffworkflow_backend.routes.authentication_controller.logout",
-    "spiffworkflow_backend.routes.authentication_controller.logout_return",
-    "spiffworkflow_backend.routes.debug_controller.test_raise_error",
-    "spiffworkflow_backend.routes.debug_controller.url_info",
-    "spiffworkflow_backend.routes.health_controller.status",
-    "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
-    "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
-    "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
-    "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
-    "spiffworkflow_backend.routes.webhooks_controller.webhook",
-    # swagger api calls
-    "connexion.apis.flask_api.console_ui_home",
-    "connexion.apis.flask_api.console_ui_static_files",
-    "connexion.apis.flask_api.get_json_spec",
-]
-
 # these are api calls that are allowed to generate a public jwt when called
 PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
     "spiffworkflow_backend.routes.public_controller.form_show",
@@ -306,6 +284,33 @@ class AuthorizationService:
         return (function_full_path, module)
 
     @classmethod
+    def authentication_exclusion_list(cls) -> list:
+        authentication_exclusion_list = [
+            "spiffworkflow_backend.routes.authentication_controller.authentication_options",
+            "spiffworkflow_backend.routes.authentication_controller.login",
+            "spiffworkflow_backend.routes.authentication_controller.login_api_return",
+            "spiffworkflow_backend.routes.authentication_controller.login_return",
+            "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
+            "spiffworkflow_backend.routes.authentication_controller.logout",
+            "spiffworkflow_backend.routes.authentication_controller.logout_return",
+            "spiffworkflow_backend.routes.debug_controller.test_raise_error",
+            "spiffworkflow_backend.routes.debug_controller.url_info",
+            "spiffworkflow_backend.routes.health_controller.status",
+            "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
+            "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
+            "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
+            "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
+            "spiffworkflow_backend.routes.webhooks_controller.webhook",
+            # swagger api calls
+            "connexion.apis.flask_api.console_ui_home",
+            "connexion.apis.flask_api.console_ui_static_files",
+            "connexion.apis.flask_api.get_json_spec",
+        ]
+        if not current_app.config["SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS"]:
+            authentication_exclusion_list.append("prometheus_flask_exporter.prometheus_metrics")
+        return authentication_exclusion_list
+
+    @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         if request.method == "OPTIONS":
             return True
@@ -320,7 +325,7 @@ class AuthorizationService:
         api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
         if (
             api_function_full_path
-            and (api_function_full_path in AUTHENTICATION_EXCLUSION_LIST)
+            and (api_function_full_path in cls.authentication_exclusion_list())
             or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
         ):
             return True

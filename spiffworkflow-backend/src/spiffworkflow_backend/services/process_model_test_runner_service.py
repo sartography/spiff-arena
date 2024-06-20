@@ -149,7 +149,7 @@ class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
 
-        environment = CustomScriptEngineEnvironment(default_globals)
+        environment = CustomScriptEngineEnvironment.create(default_globals)
         self.method_overrides = method_overrides
         super().__init__(environment=environment)
 

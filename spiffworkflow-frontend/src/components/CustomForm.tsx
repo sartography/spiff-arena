@@ -19,10 +19,12 @@ enum DateCheckType {
 
 type OwnProps = {
   id: string;
+  key: string;
   formData: any;
   schema: any;
   uiSchema: any;
 
+  className?: string;
   disabled?: boolean;
   onChange?: any;
   onSubmit?: any;
@@ -31,11 +33,14 @@ type OwnProps = {
   restrictedWidth?: boolean;
   submitButtonText?: string;
   reactJsonSchemaForm?: string;
+  hideSubmitButton?: boolean;
 };
 
 export default function CustomForm({
   id,
+  key,
   formData,
+  className,
   schema,
   uiSchema,
   disabled = false,
@@ -46,6 +51,7 @@ export default function CustomForm({
   restrictedWidth = false,
   submitButtonText,
   reactJsonSchemaForm = 'carbon',
+  hideSubmitButton = false,
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -496,7 +502,12 @@ export default function CustomForm({
   let childrenToUse = children;
   if (submitButtonText) {
     childrenToUse = (
-      <Button type="submit" id="submit-button" disabled={disabled}>
+      <Button
+        type="submit"
+        id="submit-button"
+        disabled={disabled}
+        style={{ display: hideSubmitButton ? 'none' : 'unset' }}
+      >
         {submitButtonText}
       </Button>
     );
@@ -504,6 +515,8 @@ export default function CustomForm({
 
   const formProps = {
     id,
+    key,
+    className,
     disabled,
     formData,
     onChange,

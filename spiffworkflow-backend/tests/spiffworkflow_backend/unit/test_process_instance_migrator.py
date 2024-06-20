@@ -111,7 +111,7 @@ class TestProcessInstanceMigrator(BaseTest):
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
-        bpmn_process_dict_version_4 = processor.serialize(preserve_script_engine_state=False)
+        bpmn_process_dict_version_4 = processor.serialize(serialize_script_engine_state=False)
         self.round_last_state_change(bpmn_process_dict_version_4)
         self.round_last_state_change(bpmn_process_dict_version_4_from_spiff)
         assert bpmn_process_dict_version_4 == bpmn_process_dict_version_4_from_spiff
@@ -208,7 +208,7 @@ class TestProcessInstanceMigrator(BaseTest):
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
-        bpmn_process_dict_version_3_after_import = processor.serialize(preserve_script_engine_state=False)
+        bpmn_process_dict_version_3_after_import = processor.serialize(serialize_script_engine_state=False)
         self.round_last_state_change(bpmn_process_dict_before_import)
         self.round_last_state_change(bpmn_process_dict_version_3_after_import)
         assert bpmn_process_dict_version_3_after_import == bpmn_process_dict_before_import

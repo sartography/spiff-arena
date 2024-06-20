@@ -162,7 +162,33 @@ class MissingProcessInfoError(Exception):
     pass
 
 
-class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
+class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
+        return {}
+
+    def last_result(self) -> dict[str, Any]:
+        return dict(self._last_result.items())
+
+    def clear_state(self) -> None:
+        pass
+
+    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
+        return {}
+
+    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        pass
+
+
+class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
         self._last_result: dict[str, Any] = {}
         self._non_user_defined_keys = {"__annotations__"}
@@ -181,29 +207,8 @@ class TaskDataBasedScriptEngineEnvironment(TaskDataEnvironment):  # type: ignore
         self._last_result = context
         return True
 
-    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        return {}
 
-    def last_result(self) -> dict[str, Any]:
-        return dict(self._last_result.items())
-
-    def clear_state(self) -> None:
-        pass
-
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def revise_state_with_task_data(self, task: SpiffTask) -> None:
-        pass
-
-
-class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
 
     def __init__(self, environment_globals: dict[str, Any]):
@@ -263,6 +268,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     def clear_state(self) -> None:
         self.state = {}
 
+    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        return data.pop(key, {})  # type: ignore
+
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
         state = self.user_defined_state()
@@ -288,8 +297,13 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
-    pass
+class CustomScriptEngineEnvironment:
+    @staticmethod
+    def create(environment_globals: dict[str, Any]) -> BaseCustomScriptEngineEnvironment:
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_NON_TASK_DATA_BASED_SCRIPT_ENGINE_ENVIRONMENT") == "true":
+            return NonTaskDataBasedScriptEngineEnvironment(environment_globals)
+
+        return TaskDataBasedScriptEngineEnvironment(environment_globals)
 
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
@@ -332,7 +346,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             default_globals.update(safe_globals)
             default_globals["__builtins__"]["__import__"] = _import
 
-        environment = CustomScriptEngineEnvironment(default_globals)
+        environment = CustomScriptEngineEnvironment.create(default_globals)
         super().__init__(environment=environment)
 
     def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
@@ -1514,18 +1528,18 @@ class ProcessInstanceProcessor:
                 )
             )
 
-    def serialize(self, preserve_script_engine_state: bool = True) -> dict:
+    def serialize(self, serialize_script_engine_state: bool = True) -> dict:
         self.check_task_data_size()
-        if preserve_script_engine_state:
-            self.bpmn_process_instance.script_engine.environment.preserve_state(self.bpmn_process_instance)
-        else:
-            # TODO: move this to a function on the script engine environments
-            # can clear_state del the key?
-            key = NonTaskDataBasedScriptEngineEnvironment.PYTHON_ENVIRONMENT_STATE_KEY
-            if key in self.bpmn_process_instance.data:
-                del self.bpmn_process_instance.data[key]
-            
-        return self._serializer.to_dict(self.bpmn_process_instance)  # type: ignore
+
+        if serialize_script_engine_state:
+            self._script_engine.environment.preserve_state(self.bpmn_process_instance)
+
+        result = self._serializer.to_dict(self.bpmn_process_instance)
+
+        if not serialize_script_engine_state and "data" in result:
+            self._script_engine.environment.pop_state(result["data"])
+
+        return result  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
         return self.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True)  # type: ignore

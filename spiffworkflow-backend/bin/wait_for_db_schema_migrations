@@ -7,12 +7,17 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-current_db_migration_revision=$(poetry run flask db current | awk '{print $1}')
-current_db_migration_head=$(poetry run flask db heads | awk '{print $1}')
-if [[ "$current_db_migration_revision" != "$current_db_migration_head" ]]; then
-  echo "Waiting for db migrations to finish"
-  echo "current revision: ${current_db_migration_head}"
-  echo "head revision: ${current_db_migration_revision}"
-  sleep 2
-  wait_for_db_migrations
-fi
+while true; do
+  current_db_migration_revision=$(poetry run flask db current | awk '{print $1}')
+  current_db_migration_head=$(poetry run flask db heads | awk '{print $1}')
+
+  if [[ "$current_db_migration_revision" == "$current_db_migration_head" ]]; then
+    echo "DB migrations are complete."
+    break
+  else
+    echo "Waiting for db migrations to finish"
+    echo "current revision: ${current_db_migration_head}"
+    echo "head revision: ${current_db_migration_revision}"
+    sleep 2
+  fi
+done

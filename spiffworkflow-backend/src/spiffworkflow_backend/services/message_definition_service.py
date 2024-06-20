@@ -24,14 +24,13 @@ class MessageDefinitionService:
         models: list[MessageCorrelationPropertyModel] = []
 
         for identifier, definition in correlation_property_group.items():
-            retrieval_expressions = definition.get("retrieval_expressions")
+            retrieval_expression = definition.get("retrieval_expression")
 
-            if not retrieval_expressions:
+            if not retrieval_expression:
                 current_app.logger.debug(f"Malformed correlation property: '{identifier}' in file @ '{location}'")
                 continue
 
-            for retrieval_expression in retrieval_expressions:
-                models.append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
+            models.append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
 
         return models
 

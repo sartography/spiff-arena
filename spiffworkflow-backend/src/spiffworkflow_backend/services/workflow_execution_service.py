@@ -473,7 +473,6 @@ class WorkflowExecutionService:
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
-            self.schedule_waiting_timer_events()
             return task_runnability
         except WorkflowTaskException as wte:
             ProcessInstanceTmpService.add_event_to_process_instance(
@@ -494,6 +493,7 @@ class WorkflowExecutionService:
                 self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
                 if save:
                     self.process_instance_saver()
+                    self.schedule_waiting_timer_events()
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:
         # if it is supposed to happen in less than the amount of time we take between polling runs

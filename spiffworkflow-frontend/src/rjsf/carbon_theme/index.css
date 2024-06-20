@@ -31,6 +31,7 @@
 .rjsf .rjsf-field .rjsf-field {
   margin-bottom: 2rem;
 }
+
 /* only the outter rjsf-field gets the margin from the rule above but not its contents like the array-item so mention it explicitly */
 .rjsf .array-item .rjsf-field .rjsf-field {
   margin-bottom: 2rem;
@@ -49,6 +50,7 @@
   padding-bottom: 8px;
   font-size: 14px;
 }
+
 /* position the remove button to align with the file description */
 .rjsf .file-info span div {
   position: relative;
@@ -72,8 +74,10 @@
   padding-top: 1rem;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 0.5rem;
+  /* background: rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem; */
+  background: rgb(109 107 107 / 10%);
+  border-radius: 0.30rem;
 }
 
 .rjsf .array-item legend {
@@ -123,10 +127,12 @@
 .rjsf .array-field-container {
   display: flex;
 }
+
 .rjsf .array-field-contents {
   flex: 8;
   margin-left: calc(3%);
 }
+
 .rjsf .array-field-actions {
   flex: 1;
   display: flex;

@@ -4,12 +4,11 @@ Extensions in SpiffArena provide a mechanism to augment the software with custom
 By leveraging extensions, users can implement functions or features not present in the standard offering.
 This powerful feature ensures adaptability to various business needs, from custom reports to specific user tools.
 
-Here are some of the key aspects of using Extensions:
+At a high level:
 
-- Extensions are implemented within the process model repository.
-- Once an extension is created, it can be made accessible via various UI elements which can be specified in its `extension_uischema.json` file.
-- Access to an extension can be set up via permissions.
+- Extensions are implemented as process models within the process model repository.
 - Configuration for an extension can be found and modified in its `extension_uischema.json` file.
+- Access to an extension can be set up via permissions.
 
 ![Extensions](images/Extensions_dashboard.png)
 
@@ -53,12 +52,12 @@ If your organization has specific needs not catered to by the standard SpiffAren
 
 Here are some of the use cases already implemented by our users:
 
-- Implementing a time tracking system.
-- Creating custom reports tailored to your business metrics.
-- Incorporating arbitrary content into custom pages using markdown.
-- Creating and accessing tailor-made APIs.
-- Rendering the output of these APIs using jinja templates and markdown.
+- Implementing a time tracking system
+- Creating custom reports tailored to your business metrics
+- Incorporating arbitrary content into custom pages using markdown (as in the above example)
+- Creating and accessing tailor-made APIs
+- Rendering the output of these APIs using jinja templates and markdown
 
 Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
-When considering an extension, also consider whether the code would be more properly included in the core source code.
+When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](/dev/connector_proxy.md).
 In cases where an extension is appropriate, by following the instructions in this guide, organizations can expand the system's functionality to meet their unique needs.

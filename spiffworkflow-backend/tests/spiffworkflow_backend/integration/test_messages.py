@@ -126,10 +126,10 @@ class TestMessages(BaseTest):
                 "table_seated": {
                     "correlation_properties": {
                         "table_number": {
-                            "retrieval_expressions": ["table_number"],
+                            "retrieval_expression": "table_number",
                         },
                         "franchise_id": {
-                            "retrieval_expressions": ["franchise_id"],
+                            "retrieval_expression": "franchise_id",
                         },
                     },
                     "schema": {},
@@ -137,10 +137,10 @@ class TestMessages(BaseTest):
                 "order_ready": {
                     "correlation_properties": {
                         "table_number": {
-                            "retrieval_expressions": ["table_number"],
+                            "retrieval_expression": "table_number",
                         },
                         "franchise_id": {
-                            "retrieval_expressions": ["franchise_id"],
+                            "retrieval_expression": "franchise_id",
                         },
                     },
                     "schema": {},

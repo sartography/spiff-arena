@@ -402,7 +402,7 @@ class ProcessInstanceService:
         def values(collection: dict | list, elem: str | int | None, value: Any) -> FileDataGenerator:
             match (collection, elem, value):
                 case (dict(), None, None):
-                    for k, v in collection.items():  # type: ignore
+                    for k, v in collection.items():
                         yield from values(collection, k, v)
                 case (list(), None, None):
                     for i, v in enumerate(collection):
