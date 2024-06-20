@@ -35,10 +35,10 @@ class TestProcessInstanceMigrator(BaseTest):
         client: FlaskClient,
     ) -> None:
         md5checksums = ProcessInstanceMigrator.generate_migration_checksum()
-        assert (
-            md5checksums == SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM
-        ), "Data migrations seem to have changed but checksum has not been updated. "
-        "Please update SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM"
+        assert md5checksums == SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM, (
+            "Data migrations seem to have changed but checksum has not been updated. "
+            "Please update SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM"
+        )
 
         highest_version = 0
         for file in ProcessInstanceMigrator.get_migration_files():
@@ -47,10 +47,10 @@ class TestProcessInstanceMigrator(BaseTest):
                 continue
             if int(current_version) > highest_version:
                 highest_version = int(current_version)
-        assert highest_version == int(
-            SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
-        ), f"Highest migration version file is '{highest_version}' however "
-        f"SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION is {SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION}"
+        assert highest_version == int(SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION), (
+            f"Highest migration version file is '{highest_version}' however "
+            f"SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION is '{SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION}'"
+        )
 
     def test_can_run_all_migrations(
         self,
