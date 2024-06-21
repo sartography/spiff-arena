@@ -9,11 +9,16 @@ const submitInputIntoFormField = (
   cy.get(fieldKey).type(fieldValue);
   // wait a little bit after typing for the debounce to take effect
   cy.wait(100);
+
+  // after a bit of a debounce period, the site automatically saves the data the user has been entering in user task forms.
+  // if that doesn't work, it's not great.
+  // so to test that, we reload the page and make sure the data they entered is not lost.
   if (checkDraftData) {
     cy.wait(1000);
     cy.reload();
     cy.get(fieldKey).should('have.value', fieldValue);
   }
+
   cy.contains('Submit').click();
 };
 
