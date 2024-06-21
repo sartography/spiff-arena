@@ -199,5 +199,5 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
                 "timestamp": "asctime",
             }
         )
-    log_formatter = json_formatter
+        log_formatter = json_formatter
     return log_formatter
