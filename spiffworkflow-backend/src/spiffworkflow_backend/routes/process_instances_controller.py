@@ -48,7 +48,6 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
@@ -701,9 +700,6 @@ def _process_instance_run(
                 task=task,
             ) from e
         raise e
-
-    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
-        MessageService.correlate_all_message_instances()
 
 
 def _process_instance_create(

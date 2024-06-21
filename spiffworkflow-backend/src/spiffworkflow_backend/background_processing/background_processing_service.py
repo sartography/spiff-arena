@@ -50,7 +50,7 @@ class BackgroundProcessingService:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:messages")
-            MessageService.correlate_all_message_instances()
+            MessageService.correlate_all_message_instances(execution_mode="synchronous")
 
     def remove_stale_locks(self) -> None:
         """If something has been locked for a certain amount of time it is probably stale so unlock it."""
