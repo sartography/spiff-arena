@@ -29,6 +29,12 @@ class SpiffCeleryWorkerError(Exception):
 @shared_task(ignore_result=False, time_limit=ten_minutes)
 def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
     proc_index = current_process().index
+
+    message = f"celery_task_process_instance_run: process_instance_id: {process_instance_id}"
+    if task_guid:
+        message += f" task_guid: {task_guid}"
+    current_app.logger.info(message)
+
     ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
