@@ -32,7 +32,6 @@ sentry-sdk = {extras = ['flask'], version = "^2.5"}
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.10.0"
-openai = "^1.34.0"
 
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
@@ -92,7 +91,7 @@ spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 coverage = {extras = ["toml"], version = "^7.5"}
-safety = "^3.2.1"
+safety = "^3.2.3"
 mypy = ">=0.961"
 typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.1.3"}

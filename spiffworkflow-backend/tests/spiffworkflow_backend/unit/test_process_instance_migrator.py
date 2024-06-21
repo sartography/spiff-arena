@@ -5,6 +5,8 @@ import os
 from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
 from spiffworkflow_backend.data_migrations.version_4 import Version4
@@ -25,6 +27,29 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceMigrator(BaseTest):
+    def test_data_migrations_directory_has_not_changed(
+        self,
+        app: Flask,
+        client: FlaskClient,
+    ) -> None:
+        md5checksums = ProcessInstanceMigrator.generate_migration_checksum()
+        assert md5checksums == SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM, (
+            "Data migrations seem to have changed but checksum has not been updated. "
+            "Please update SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM"
+        )
+
+        highest_version = 0
+        for file in ProcessInstanceMigrator.get_migration_files():
+            current_version = os.path.basename(file).replace("version_", "").replace(".py", "").replace("_", ".")
+            if current_version == "1.3":
+                continue
+            if int(current_version) > highest_version:
+                highest_version = int(current_version)
+        assert highest_version == int(SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION), (
+            f"Highest migration version file is '{highest_version}' however "
+            f"SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION is '{SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION}'"
+        )
+
     def test_can_run_all_migrations(
         self,
         app: Flask,

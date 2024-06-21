@@ -46,13 +46,10 @@ export function MessageEditor({
         ...currentMessagesForId.correlation_properties,
       };
       (formData.correlation_properties || []).forEach((formProp: any) => {
-        if (!(formProp.id in newCorrelationProperties)) {
-          newCorrelationProperties[formProp.id] = {
-            retrieval_expression: formProp.retrievalExpression,
-          };
-        }
+        newCorrelationProperties[formProp.id] = {
+          retrieval_expression: formProp.retrievalExpression,
+        };
       });
-
       Object.keys(currentMessagesForId.correlation_properties || []).forEach(
         (propId: string) => {
           const foundProp = (formData.correlation_properties || []).find(
