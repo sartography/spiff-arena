@@ -1,9 +1,19 @@
-const submitInputIntoFormField = (taskName, fieldKey, fieldValue) => {
+const submitInputIntoFormField = (
+  taskName,
+  fieldKey,
+  fieldValue,
+  checkDraftData,
+) => {
   cy.contains(`Task: ${taskName}`, { timeout: 10000 });
   cy.get(fieldKey).clear();
   cy.get(fieldKey).type(fieldValue);
   // wait a little bit after typing for the debounce to take effect
   cy.wait(100);
+  if (checkDraftData) {
+    cy.wait(1000);
+    cy.reload();
+    cy.get(fieldKey).should('have.value', fieldValue);
+  }
   cy.contains('Submit').click();
 };
 
@@ -19,7 +29,7 @@ const checkTaskHasClass = (taskName, className) => {
 const kickOffModelWithForm = () => {
   cy.navigateToProcessModel(
     'Acceptance Tests Group One',
-    'Acceptance Tests Model 2'
+    'Acceptance Tests Model 2',
   );
   cy.runPrimaryBpmnFile(true);
 };
@@ -41,7 +51,7 @@ describe('tasks', () => {
     cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
     cy.runPrimaryBpmnFile(true);
 
-    submitInputIntoFormField('get_form_num_one', '#root_form_num_1', 2);
+    submitInputIntoFormField('get_form_num_one', '#root_form_num_1', 2, true);
     submitInputIntoFormField('get_form_num_two', '#root_form_num_2', 3);
 
     cy.contains('Task: get_form_num_three');
