@@ -12,6 +12,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from security import safe_command
 
 
 class MissingGitConfigsError(Exception):
@@ -188,7 +189,7 @@ class GitService:
             command_to_run = ["git"] + command_to_run
 
         # this is fine since we pass the commands directly
-        result = subprocess.run(command_to_run, check=False, capture_output=True, env=my_env)  # noqa
+        result = safe_command.run(subprocess.run, command_to_run, check=False, capture_output=True, env=my_env)  # noqa
 
         if return_success_state:
             return result.returncode == 0
