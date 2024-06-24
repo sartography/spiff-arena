@@ -18,8 +18,9 @@ acceptance_test_mode="false"
 
 arg_1="${1:-}"
 
-if [[ "$arg_1" == "localopenid" ]]; then
-  use_local_open_id="true"
+use_local_open_id="true"
+if [[ "$arg_1" == "keycloak" ]]; then
+  use_local_open_id="false"
   shift
 fi
 if [[ "$arg_1" == "acceptance" ]]; then

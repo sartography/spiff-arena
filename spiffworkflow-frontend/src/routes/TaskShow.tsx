@@ -161,8 +161,11 @@ export default function TaskShow() {
   };
 
   const sendAutosaveEvent = (eventDetails?: any) => {
+    if (!taskWithTaskData) {
+      return;
+    }
     const elementToDispath: any = document.getElementById(
-      'hidden-form-for-autosave',
+      `hidden-form-for-autosave-${taskWithTaskData.guid}`,
     );
     if (elementToDispath) {
       elementToDispath.dispatchEvent(

@@ -31,7 +31,7 @@ SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "ma
 sentry-sdk = {extras = ['flask'], version = "^2.5"}
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
-typing-extensions = "^4.10.0"
+typing-extensions = "^4.12.2"
 
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
