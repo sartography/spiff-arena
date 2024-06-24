@@ -7,6 +7,7 @@ import { AbilityContext } from './contexts/Can';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './routes/PublicRoutes';
+import './monacoEditorWorker';
 
 const queryClient = new QueryClient();
 

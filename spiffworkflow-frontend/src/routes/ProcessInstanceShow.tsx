@@ -1,5 +1,5 @@
-import { ReactElement, useCallback, useEffect, useState } from 'react';
-import Editor from '@monaco-editor/react';
+import { ReactElement, useCallback, useEffect, useRef, useState } from 'react';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import {
   useParams,
   useNavigate,
@@ -122,6 +122,38 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
+  const monacoEl = useRef(null);
+  const [editor, setEditor] =
+    useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+  useEffect(() => {
+    if (monacoEl.current) {
+      console.log('monacoEl.current', monacoEl.current);
+      setEditor((editor) => {
+        console.log('setting editor');
+        if (editor) {
+          return editor;
+        }
+        console.log('really setting editor');
+
+        return monaco.editor.create(monacoEl.current!, {
+          value: eventPayload,
+          language: 'json',
+          readOnly: !eventTextEditorEnabled,
+          scrollBeyondLastLine: false,
+          minimap: { enabled: false },
+        });
+      });
+    }
+
+    return () => editor?.dispose();
+  }, [monacoEl.current, eventTextEditorEnabled, editor, eventPayload]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.setValue(eventPayload);
+    }
+  }, [eventPayload, editor]);
 
   const [addingPotentialOwners, setAddingPotentialOwners] =
     useState<boolean>(false);
@@ -1248,19 +1280,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         ) : (
           <>
             <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
-            <Editor
-              height={`${heightInEm}rem`}
-              width="auto"
-              defaultLanguage="json"
-              value={taskDataToDisplay}
-              onChange={(value) => {
-                setTaskDataToDisplay(value || '');
-              }}
-              options={{
-                readOnly: editorReadOnly,
-                scrollBeyondLastLine: scrollEnabled,
-                minimap: { enabled: minimapEnabled },
-              }}
+            <p>monaco time</p>
+            <div
+              ref={monacoEl}
+              style={{ height: `${heightInEm}rem`, width: 'auto' }}
             />
           </>
         )}
@@ -1293,14 +1316,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (eventTextEditorEnabled) {
       className = '';
       editor = (
-        <Editor
-          height={300}
-          width="auto"
-          defaultLanguage="json"
-          defaultValue={eventPayload}
-          onChange={(value: any) => setEventPayload(value || '{}')}
-          options={{ readOnly: !eventTextEditorEnabled }}
-        />
+        <div ref={monacoEl} style={{ height: '300px', width: 'auto' }} />
       );
     }
     return (
