@@ -8,7 +8,7 @@ export const useUriListForPermissions = () => {
       authenticationListPath: `/v1.0/authentications`,
       statusPath: `/v1.0/status`,
       messageInstanceListPath: '/v1.0/messages',
-      messageModelListpath: `/v1.0/message-models/${params.process_model_id}`,
+      messageModelListPath: `/v1.0/message-models/${params.process_model_id}`,
       dataStoreListPath: '/v1.0/data-stores',
       extensionListPath: '/v1.0/extensions',
       extensionPath: `/v1.0/extensions/${params.page_identifier}`,

@@ -120,7 +120,7 @@ export default function ProcessModelEditDiagram() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.messageModelListpath]: ['GET'],
+    [targetUris.messageModelListPath]: ['GET'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
@@ -470,9 +470,9 @@ export default function ProcessModelEditDiagram() {
     // access to the read the process model. we also considered automatically giving you access to read message_model_list
     // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
     // where we normally only pork barrel permissions on top of "start" and "all."
-    if (ability.can('GET', targetUris.messageModelListpath)) {
+    if (ability.can('GET', targetUris.messageModelListPath)) {
       HttpService.makeCallToBackend({
-        path: targetUris.messageModelListpath,
+        path: targetUris.messageModelListPath,
         successCallback: makeMessagesRequestedHandler(event),
       });
     }
