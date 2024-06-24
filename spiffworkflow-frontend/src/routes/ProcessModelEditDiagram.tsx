@@ -47,6 +47,7 @@ import {
 import {
   CarbonComboBoxProcessSelection,
   CorrelationProperties,
+  PermissionsToCheck,
   ProcessFile,
   ProcessModel,
   ProcessReference,
@@ -59,6 +60,8 @@ import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import SpiffTooltip from '../components/SpiffTooltip';
 import { MessageEditor } from '../components/messages/MessageEditor';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -114,6 +117,12 @@ export default function ProcessModelEditDiagram() {
   const { scriptAssistEnabled } = useScriptAssistEnabled();
   const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
     useProcessScriptAssistMessage();
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.messageModelListpath]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -455,10 +464,18 @@ export default function ProcessModelEditDiagram() {
     };
   };
   const onMessagesRequested = (event: any) => {
-    HttpService.makeCallToBackend({
-      path: `/message-models/${modifiedProcessModelId}`,
-      successCallback: makeMessagesRequestedHandler(event),
-    });
+    // it is perfectly reasonable to access the edit diagram page in read only mode when you actually don't have access to edit.
+    // this is awkward in terms of functionality like this, where we are fetching the relevant list of messages to show in the
+    // properties panel. since message_model_list is a different permission, you may not have access to it even though you have
+    // access to the read the process model. we also considered automatically giving you access to read message_model_list
+    // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
+    // where we normally only pork barrel permissions on top of "start" and "all."
+    if (ability.can('GET', targetUris.messageModelListpath)) {
+      HttpService.makeCallToBackend({
+        path: targetUris.messageModelListpath,
+        successCallback: makeMessagesRequestedHandler(event),
+      });
+    }
   };
 
   useEffect(() => {
