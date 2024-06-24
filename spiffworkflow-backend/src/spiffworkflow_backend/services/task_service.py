@@ -538,8 +538,8 @@ class TaskService:
         data_dict_to_use = bpmn_process_data_dict
         if bpmn_process_instance is not None:
             data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
-            # TODO: using user_defined_state is likely correct but seems to break when subprocesses are involved
-            # data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.script_engine.environment.user_defined_state())
+            # TODO: using user_defined_state is likely correct but seems to break when data objects are involved
+            data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.script_engine.environment.user_defined_state())
         if data_dict_to_use is None:
             data_dict_to_use = {}
         bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
