@@ -2325,13 +2325,13 @@ rsa = ["oauthlib[signedtoken] (>=2.1.0,<3.0.0)"]
 
 [[package]]
 name = "restrictedpython"
-version = "7.0"
+version = "7.1"
 description = "RestrictedPython is a defined subset of the Python language which allows to provide a program input into a trusted environment."
 optional = false
 python-versions = ">=3.7, <3.13"
 files = [
-    {file = "RestrictedPython-7.0-py3-none-any.whl", hash = "sha256:8bb40a822090bed9c7b814d69345b0796db70cc86715d141efc937862f37c6d2"},
-    {file = "RestrictedPython-7.0.tar.gz", hash = "sha256:53704afbbc350fdc8fb245441367be671c9f8380869201b2e8452e74fce3db14"},
+    {file = "RestrictedPython-7.1-py3-none-any.whl", hash = "sha256:56d0c73e5de1757702053383601b0fcd3fb2e428039ee1df860409ad67b17d2b"},
+    {file = "RestrictedPython-7.1.tar.gz", hash = "sha256:875aeb51c139d78e34cef8605dc65309b449168060dd08551a1fe9edb47cb9a5"},
 ]
 
 [package.extras]
@@ -3356,4 +3356,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "86d1128b11882c9fafa4a248d62b0925114d164c515bbc9b62fabc0041ac021d"
+content-hash = "97b0e23c67bce263e7f5212a065b49fbaaf1ddecd3ad925c381679e91d4135a5"
