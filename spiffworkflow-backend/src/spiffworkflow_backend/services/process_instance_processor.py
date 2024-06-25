@@ -212,7 +212,7 @@ class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, Ta
         self.state = self.user_defined_state(external_context)
         return True
 
-class Tmp_NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
+class Tmp_NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
         self.state: dict[str, Any] = {}
         self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
@@ -224,7 +224,12 @@ class Tmp_NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironm
         context: dict[str, Any],
         external_context: dict[str, Any] | None = None,
     ) -> Any:
-        assert False
+        state = {}
+        state.update(self.globals)
+        state.update(external_context or {})
+        state.update(self.state)
+        state.update(context)
+        return eval(expression, state)  # noqa
 
     def execute(
         self,
