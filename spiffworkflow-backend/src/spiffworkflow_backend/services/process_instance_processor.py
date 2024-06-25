@@ -218,6 +218,14 @@ class Tmp_NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironm
         self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
         super().__init__(environment_globals)
 
+    def evaluate(
+        self,
+        expression: str,
+        context: dict[str, Any],
+        external_context: dict[str, Any] | None = None,
+    ) -> Any:
+        assert False
+
     def execute(
         self,
         script: str,
