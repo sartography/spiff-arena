@@ -31,6 +31,7 @@ import {
 } from '@carbon/icons-react';
 import { gray } from '@carbon/colors';
 
+import { Can } from '@casl/react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
@@ -1372,14 +1373,16 @@ export default function ProcessModelEditDiagram() {
   const unsavedChangesMessage = () => {
     if (diagramHasChanges) {
       return (
-        <Notification
-          title="Unsaved changes."
-          type="error"
-          hideCloseButton
-          data-qa="process-model-file-changed"
-        >
-          Please save to avoid losing your work.
-        </Notification>
+        <Can I="PUT" a={targetUris.processModelFileShowPath} ability={ability}>
+          <Notification
+            title="Unsaved changes."
+            type="error"
+            hideCloseButton
+            data-qa="process-model-file-changed"
+          >
+            Please save to avoid losing your work.
+          </Notification>
+        </Can>
       );
     }
     return null;
