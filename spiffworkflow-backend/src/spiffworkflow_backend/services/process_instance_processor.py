@@ -164,10 +164,14 @@ class MissingProcessInfoError(Exception):
 
 class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
     def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        return {}
+        keys_to_filter = self.non_user_defined_keys
+        if external_context is not None:
+            keys_to_filter |= set(external_context.keys())
+
+        return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
 
     def last_result(self) -> dict[str, Any]:
-        return dict(self._last_result.items())
+        return dict(self.state.items())
 
     def clear_state(self) -> None:
         pass
@@ -190,8 +194,8 @@ class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # t
 
 class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: dict[str, Any]):
-        self._last_result: dict[str, Any] = {}
-        self._non_user_defined_keys = {"__annotations__"}
+        self.state: dict[str, Any] = {}
+        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
         super().__init__(environment_globals)
 
     def execute(
@@ -201,10 +205,10 @@ class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, Ta
         external_context: dict[str, Any] | None = None,
     ) -> bool:
         super().execute(script, context, external_context)
-        for key in self._non_user_defined_keys:
+        for key in self.non_user_defined_keys:
             if key in context:
                 context.pop(key)
-        self._last_result = context
+        self.state = context
         return True
 
 
@@ -288,8 +292,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
         state_keys = set(self.state.keys())
         task_data_keys = set(task.data.keys())
         state_keys_to_remove = state_keys - task_data_keys
+        task_data_keys_to_keep = task_data_keys - state_keys
 
         self.state = {k: v for k, v in self.state.items() if k not in state_keys_to_remove}
+        task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
 
         if hasattr(task.task_spec, "_result_variable"):
             result_variable = task.task_spec._result_variable(task)

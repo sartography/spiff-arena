@@ -954,7 +954,7 @@ class TestProcessInstanceProcessor(BaseTest):
         bpmn_process_dict_after = processor.serialize()
         self.round_last_state_change(bpmn_process_dict_after)
         self.round_last_state_change(bpmn_process_dict_initial)
-
+        
         assert bpmn_process_dict_after == bpmn_process_dict_initial
         final_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
         assert final_completed_task_model.start_in_seconds is not None
