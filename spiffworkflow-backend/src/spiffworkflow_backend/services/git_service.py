@@ -6,7 +6,7 @@ import uuid
 
 from flask import current_app
 from flask import g
-from security import safe_command
+from security import safe_command  # type: ignore
 
 from spiffworkflow_backend.config import ConfigurationError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -188,8 +188,9 @@ class GitService:
                 command_to_run = ["-C", context_directory] + command_to_run
             command_to_run = ["git"] + command_to_run
 
-        # this is fine since we pass the commands directly
-        result = safe_command.run(subprocess.run, command_to_run, check=False, capture_output=True, env=my_env)  # noqa
+        result: subprocess.CompletedProcess[bytes] = safe_command.run(
+            subprocess.run, command_to_run, check=False, capture_output=True, env=my_env
+        )
 
         if return_success_state:
             return result.returncode == 0
