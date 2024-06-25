@@ -1,3 +1,5 @@
+# Conditional Event
+
 A Conditional Event is a type of event that activates based on the evaluation of a condition, typically expressed as a Boolean expression (true or false).
 Conditional Events depend on the state or value of process variables that are part of the process context.
 They continuously evaluate the given condition and act when the condition is met.
@@ -88,11 +90,11 @@ Always revert the condition to its default state to ensure appropriate behavior.
 
 ## Conditional Event Configuration
 
-| 💻 Form | ⌨ Field Input | 📝 Description |
-| --- | --- | --- |
-| ![name_field](images/name_field.png) | **Name:** Request Assistance | A descriptive name given to the element, providing a human-readable label or title. |
-| ![id_field](images/id_field.png) | **ID:** Example - request_assistance | An identifier used to uniquely identify the element within the BPMN model. |
-| ![configure_conditional_event](images/configure_conditional_event.png) | **Conditional Expression:** request_assistance == true | Set the expression that needs to be evaluated to take action. |
+| 💻 Form                                                                | ⌨ Field Input                                         | 📝 Description                                                                      |
+| ---------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| ![name_field](images/name_field.png)                                   | **Name:** Request Assistance                           | A descriptive name given to the element, providing a human-readable label or title. |
+| ![id_field](images/id_field.png)                                       | **ID:** Example - request_assistance                   | An identifier used to uniquely identify the element within the BPMN model.          |
+| ![configure_conditional_event](images/configure_conditional_event.png) | **Conditional Expression:** request_assistance == true | Set the expression that needs to be evaluated to take action.                       |
 
 ```{admonition} Note
 ⚠  When configuring the conditional expression, ensure there's such a variable in your process context.

@@ -1,3 +1,5 @@
+# Gateways
+
 Gateways in BPMN are essential for controlling the flow of a business process.
 They act as decision points where the process flow can diverge into multiple paths or converge back into a single flow.
 Gateways are used to evaluate conditions or rules and determine the appropriate path for the process to follow.
@@ -51,6 +53,7 @@ It serves as a valuable mechanism for synchronizing and consolidating multiple p
 ![exclusive_merge](images/exclusive_merge.png)
 
 Check out this detailed exclusive gateway example:
+
 ```{toctree}
 :maxdepth: 1
 exclusivegatewayexample.md
@@ -121,6 +124,7 @@ When the process flow reaches the parallel join, it evaluates the completion of 
 It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join.
 
 Check out this detailed parallel gateway example:
+
 ```{toctree}
 :maxdepth: 1
 parallelgatewayexample.md
@@ -143,10 +147,10 @@ It's also crucial to understand that conditions aren't required for incoming seq
 
 **Gateway:**
 
-| 💻 Form | ⌨ Field Input | 📝 Description |
-| --- | --- | --- |
-| ![name_field](images/name_field.png) | **Name:** Update Customer Information | A descriptive name given to the element, providing a human-readable label or title. |
-| ![id_field](images/id_field.png) | **ID:** Example - updateCustomerInformation | An identifier used to uniquely identify the element within the BPMN model. |
+| 💻 Form                                                | ⌨ Field Input                                       | 📝 Description                                                                                         |
+| ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| ![name_field](images/name_field.png)                   | **Name:** Update Customer Information                | A descriptive name given to the element, providing a human-readable label or title.                    |
+| ![id_field](images/id_field.png)                       | **ID:** Example - updateCustomerInformation          | An identifier used to uniquely identify the element within the BPMN model.                             |
 | ![documentation_field](images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
 
 **Outgoing Sequence:**
@@ -155,6 +159,6 @@ It's also crucial to understand that conditions aren't required for incoming seq
 ⚠ All expressions, including expressions written on the outgoing sequence, are written in Python.
 ```
 
-| 💻 Form | ⌨ Field Input | 📝 Description |
-| --- | --- | --- |
+| 💻 Form                              | ⌨ Field Input                                 | 📝 Description                                                                        |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------- |
 | ![conditions](images/conditions.png) | **Condition:** payment_method == "credit_card" | Python expression. Note that multiple conditions can be strung together using AND/OR. |

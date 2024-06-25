@@ -2,7 +2,7 @@ An Escalation Event in BPMN symbolizes a situation where an issue or condition w
 This event acts as a mechanism to raise awareness or invoke intervention.
 
 ```{admonition} Note
-⚠  Escalation Events are similar to signals; however, they differ in their application. 
+⚠  Escalation Events are similar to signals; however, they differ in their application.
 An escalation represents a one-to-one relationship, whereas a signal event embodies a one-to-many relationship.
 ```
 
@@ -11,14 +11,14 @@ An escalation represents a one-to-one relationship, whereas a signal event embod
 - Communicate to a subprocess or an upper (parent) process
 - Provide a structured way to handle exceptions, ensuring processes remain fluid despite interruptions
 
-## Start Escalation Event
+# Start Escalation Event
 
 ![start_escalation_event](images/start_escalation_event.png)![non_interrupting_start_escalation_event](images/non_interrupting_start_escalation_event.png)
 
 A Start Escalation Event indicates the beginning of a sub-process, triggered explicitly by an escalation from another process or activity.
 
 ```{admonition} Note
-⚠  Escalation Events are typically used in scenarios where the standard process flow is disrupted, and involvement from other actors becomes essential for resolution. 
+⚠  Escalation Events are typically used in scenarios where the standard process flow is disrupted, and involvement from other actors becomes essential for resolution.
 They are mostly used to communicate from a subprocess to an upper process.
 ```
 
@@ -27,7 +27,7 @@ They are mostly used to communicate from a subprocess to an upper process.
 ![start_escalation_example](images/start_escalation_example_1.png)
 
 **Escalation Start Event (interrupting):**
-In a production environment, if a machine malfunctions frequently or requires calibration, the issue might be escalated to a specialized technical team. 
+In a production environment, if a machine malfunctions frequently or requires calibration, the issue might be escalated to a specialized technical team.
 This team then initiates a comprehensive diagnostic process to identify and fix the root cause.
 
 **Escalation Start Event (non-interrupting):**
@@ -80,7 +80,7 @@ While one path proceeds with the shipment as usual, the other leverages parallel
 The update is facilitated through a non-interrupting boundary event within a subprocess, which ensures the shipment process continues uninterrupted.
 
 ```{admonition} Note
-⚠  The same end result was achieved by three different use cases for the escalation events. 
+⚠  The same end result was achieved by three different use cases for the escalation events.
 The choice of event type should be based on the particular application and context, as this will inform the most appropriate design decision for your process.
 ```
 
@@ -124,7 +124,7 @@ Select the escalation ID and create a unique **escalation code**.
 ![Escalation Order](images/Escalation_Order.png)
 
 ```{admonition} Note
-⚠  The escalation code is essential for matching the throw event with its corresponding catch event. 
+⚠  The escalation code is essential for matching the throw event with its corresponding catch event.
 Example: `OrderExceedsThreshold`.
 ```
 
@@ -137,7 +137,7 @@ For an intermediate catch event, place it at the appropriate point in the proces
 ![Escalation Order](images/Escalation_Order_2.png)
 
 ```{admonition} Note
-⚠  Ensure this matches exactly with the code assigned to the throw event to ensure proper linkage. 
+⚠  Ensure this matches exactly with the code assigned to the throw event to ensure proper linkage.
 Example: `OrderExceedsThreshold`.
 ```
 

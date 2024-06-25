@@ -1,3 +1,5 @@
+# Events
+
 Events are specific occurrences that dictate the flow or outcome of processes.
 They are visually represented by circles.
 Based on their position and function, events are categorized as: Start Events, Intermediate Events, or End Events.
@@ -130,7 +132,6 @@ Catch Events passively wait or listen for messages, signals, or events to be rec
 Throw events are used to "send" or "throw" a particular type of event.
 In BPMN, when we talk about a throw event, we're generally discussing an activity or a situation where a specific signal, message, or error is being generated or sent out.
 It is the trigger, initiating an action.
-
 
 ```{admonition} Note
 ⚠ Boundary Events are always catch events and cannot act as throw events.
