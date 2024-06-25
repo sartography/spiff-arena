@@ -212,47 +212,6 @@ class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, Ta
         self.state = self.user_defined_state(external_context)
         return True
 
-class Tmp_NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):  # type: ignore
-    def __init__(self, environment_globals: dict[str, Any]):
-        self.state: dict[str, Any] = {}
-        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
-        super().__init__(environment_globals)
-
-    def evaluate(
-        self,
-        expression: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> Any:
-        state = {}
-        state.update(self.globals)
-        state.update(external_context or {})
-        state.update(self.state)
-        state.update(context)
-        return eval(expression, state)  # noqa
-
-    def execute(
-        self,
-        script: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> bool:
-        self.state = {}
-        self.state.update(self.globals)
-        self.state.update(external_context or {})
-        self.state.update(context)
-        
-        exec(script, self.state)  # noqa
-
-        self.state = self.user_defined_state(external_context)
-        
-        # the task data needs to be updated with the current state so data references can be resolved properly.
-        # the state will be removed later once the task is completed.
-        context.clear()
-        context.update(self.state)
-
-        return True
-
 
 class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
@@ -341,6 +300,66 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
             result_variable = task.task_spec._result_variable(task)
             if result_variable in task.data:
                 self.state[result_variable] = task.data.pop(result_variable)
+
+class Tmp_NonTaskDataBasedScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):  # type: ignore
+    def __init__(self, environment_globals: dict[str, Any]):
+        self.state: dict[str, Any] = {}
+        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
+        super().__init__(environment_globals)
+
+    def evaluate(
+        self,
+        expression: str,
+        context: dict[str, Any],
+        external_context: dict[str, Any] | None = None,
+    ) -> Any:
+        state = {}
+        state.update(self.globals)
+        state.update(external_context or {})
+        state.update(self.state)
+        state.update(context)
+        return eval(expression, state)  # noqa
+
+    def execute(
+        self,
+        script: str,
+        context: dict[str, Any],
+        external_context: dict[str, Any] | None = None,
+    ) -> bool:
+        if self.state != context:
+            print("======")
+            print(f"===== {self.state}")
+            print(f"===== {context}")
+            print("======")
+            # tmp
+            self.state = {}
+        self.state.update(self.globals)
+        self.state.update(external_context or {})
+        self.state.update(context)
+        
+        exec(script, self.state)  # noqa
+
+        self.state = self.user_defined_state(external_context)
+        
+        # the task data needs to be updated with the current state so data references can be resolved properly.
+        # the state will be removed later once the task is completed.
+        context.clear()
+        context.update(self.state)
+
+        return True
+    
+    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    #def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+    #    pass
+
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        self.state = copy.deepcopy(task.data)
+        #self.state = self.user_defined_state()
 
 
 class CustomScriptEngineEnvironment:
