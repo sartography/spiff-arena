@@ -116,6 +116,12 @@ Since a Parallel Gateway does not dictate the flow based on conditions, it avoid
 **Join:**
 Note that the behavior for a parallel join, also known as a Parallel Gateway merge, is to synchronize and consolidate multiple parallel paths into a single flow. When the process flow reaches the parallel join, it evaluates the completion of all incoming sequence flows from the corresponding parallel split. It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join.
 
+Check out this detailed parallel gateway example:
+```{toctree}
+:maxdepth: 1
+parallelgatewayexample.md
+```
+
 ## Event-Based Gateway
 
 ![event_based_gateway](images/event_based_gateway.png)

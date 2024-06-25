@@ -92,3 +92,44 @@ There are various reasons for terminating a process instance such as the instanc
 | Confirm that the status has changed from ‘suspended’ to 'terminated'
 ![suspend](images/terminated.png) |
 
+## Reset a Process
+> **Step 1: Find the active Process Instance**
+
+> **Step 2: Navigate to the active User Task**
+
+👤 Note that you need Admin rights to complete the following steps.
+
+> **Step 3: Suspend the Process**
+
+Ensure the status has changed from *user_input_required* to *suspended*
+![Reset](images/reset_process2.png)
+> **Step 4: Go to the relevant past activity**
+
+Only a previously completed section highlighted in grey can be chosen.
+
+> **Step 5: Select 'View process instance at the time when this task was active.**
+
+![Reset](images/reset_process3.png)
+
+> **Step 6: Observe the task once highlighted in grey should now be yellow.**
+
+A previously completed section is now active and shown in yellow.
+
+> **Step 7: Select 'Reset Process Here’ icon in the popup window.**
+
+![Reset](images/reset_process5.png)
+
+> **Step 8: "Resume" process instance.**
+The process instance should be resumed by selecting the ‘Resume’ icon next to the Process Instance Id 
+
+![Reset](images/reset_process6.png)
+
+
+> **Step 9: Refresh page**
+
+Wait for Resume action to complete, this may take some time. Refresh the page to ensure it has transitioned to the next activity, replacing the current one.
+
+<aside>
+✅ From this point onward, the remaining part of the process can smoothly proceed.
+
+</aside>
