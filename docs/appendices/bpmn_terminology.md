@@ -79,7 +79,7 @@ This is a Subprocess that shows the process it contains.
 ## Gateway
 
 This is a component that governs the available paths within a process.
-Gateways can merge or diverge paths, or introduce additional paths based on conditions or Events.
+Gateways can merge or diverge paths or introduce additional paths based on conditions or Events.
 There are four types of Gateways: Exclusive, Parallel, Inclusive, and Event-Based.
 
 ## Intermediate Event

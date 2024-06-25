@@ -10,4 +10,5 @@ set -o errtrace -o errexit -o nounset -o pipefail
 while IFS= read -r -d '' file; do
   markdown_to_ventilated_prose.py "$file" "$file"
   ./bin/edit "$file"
+  markdown_to_ventilated_prose.py "$file" "$file"
 done < <(find . -type f -name "*.md" -print0)

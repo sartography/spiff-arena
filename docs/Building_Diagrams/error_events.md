@@ -30,7 +30,7 @@ In an automated supply chain system, an Error Start Event initiates a "Supplier 
 
 ### 2. Error Intermediate Event/Error Boundary Event
 
-![Error intermediate Event](images/error_intermediate_event.png)
+![Error Intermediate Event](images/error_intermediate_event.png)
 
 An Error Boundary Event is attached to an activity, such as a service task, and is designed to catch errors that occur during the execution of that activity, allowing for an immediate transition to an error handling flow.
 
@@ -69,7 +69,7 @@ This event marks the termination of a process path due to an error, signaling th
 In a retail inventory management workflow, an End Error Event within a stock replenishment subprocess indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved.
 This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
 
-## Example 1:  Error Boundary Events in SpiffArena
+## Example 1: Error Boundary Events in SpiffArena
 
 In this example, we're modeling a process in BPMN that involves fetching employee data from an external HR system (BambooHR) and handling potential errors using an Error Boundary Event.
 This process begins with a simple task and moves through a service task designed to interact with the BambooHR API, with specific error handling in place.
@@ -125,7 +125,7 @@ Concurrently, the successful execution path without errors would lead directly t
 
 This BPMN example highlights the utility of Error Boundary Events in ensuring process resilience, especially when integrating external services.
 
-## Example 2:  Error Boundary Events in Subprocess
+## Example 2: Error Boundary Events in Subprocess
 
 In this example, we're outlining a BPMN process that demonstrates how to handle errors within an expanded subprocess and subsequently manage the error through an Error Boundary Event.
 

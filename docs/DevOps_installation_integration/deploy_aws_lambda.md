@@ -14,7 +14,7 @@ Run the following command in the root of [this repository](https://github.com/sa
 make zip
 ```
 
-This will create a zip file containing the [lambda entry point function](https://github.com/sartography/connector-proxy-lambda-demo/blob/main/connector_proxy_lambda_demo/lambda_function.py#L5) and all the dependencies needed to execute the connectors.
+This will create a zip file containing the [Lambda entry point function](https://github.com/sartography/connector-proxy-lambda-demo/blob/main/connector_proxy_lambda_demo/lambda_function.py#L5) and all the dependencies needed to execute the connectors.
 For this example, the libraries [spiffworkflow-proxy](https://github.com/sartography/spiffworkflow-proxy) for discovering connectors and [connector-http](https://github.com/sartography/connector-http), an example connector that provides HTTP get and post requests, are used.
 
 Once `make zip` completes, `connector_proxy_lambda_demo.zip` will be available in the repository root.
@@ -55,7 +55,7 @@ Choose `Upload from` and select `.zip file`.
 
 ![Screenshot from 2023-04-06 16-09-34](https://user-images.githubusercontent.com/100367399/230484774-c0b93e1a-e34d-47b3-813f-03598d5bd631.png)
 
-After a confirmation dialog, you will see that your lambda has been updated:
+After a confirmation dialog, you will see that your Lambda has been updated:
 
 ![Screenshot from 2023-04-06 16-12-05](https://user-images.githubusercontent.com/100367399/230485279-425e71ca-1c7f-4da3-b5e0-2fd2a464d746.png)
 

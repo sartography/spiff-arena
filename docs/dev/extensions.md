@@ -1,5 +1,3 @@
-# Extensions
-
 Extensions in SpiffArena provide a mechanism to augment the software with custom features and functionalities.
 By leveraging extensions, users can implement functions or features not present in the standard offering.
 This powerful feature ensures adaptability to various business needs, from custom reports to specific user tools.
@@ -32,7 +30,10 @@ To create your own custom extension, follow these steps:
 
 ![Extension Process Group](images/Extension1.png)
 
-- Create a process model in this group. You can give it whatever name you want. Then create a file inside the process model called `extension_uischema.json`. This will control how the extension will work.
+- Create a process model in this group.
+You can give it whatever name you want.
+Then create a file inside the process model called `extension_uischema.json`.
+This will control how the extension will work.
 
 ![Extension](images/Extension_UI_schema.png)
 
@@ -44,7 +45,7 @@ Also notice that the extension uischema defines a page ("/support"), and defines
 In this case, that is just a single MarkdownRenderer, which defines how to contact people.
 
 An entirely new application feature with frontend and backend components can be implemented using an extension.
-[This typescript interface file](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-frontend/src/extension_ui_schema_interfaces.ts) codifies the configuration of the extension uischema.
+[This TypeScript interface file](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-frontend/src/extension_ui_schema_interfaces.ts) codifies the configuration of the extension uischema.
 
 ## Use Cases
 
@@ -56,7 +57,7 @@ Here are some of the use cases already implemented by our users:
 - Creating custom reports tailored to your business metrics
 - Incorporating arbitrary content into custom pages using markdown (as in the above example)
 - Creating and accessing tailor-made APIs
-- Rendering the output of these APIs using jinja templates and markdown
+- Rendering the output of these APIs using Jinja templates and markdown
 
 Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
 When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](/dev/connector_proxy.md).

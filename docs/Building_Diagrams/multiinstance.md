@@ -1,4 +1,5 @@
 # Multi-instance Tasks
+
 Multi-instance tasks in BPMN (Business Process Model and Notation) are a powerful tool for modeling processes that require repetitive actions over a collection of items.
 These tasks automate the iteration over a list, array, or collection, executing the specified activity for each element within.
 Multi-instance tasks can be configured to run either in parallel, where all instances are executed simultaneously, or sequentially, where each instance is executed one after the other.
@@ -7,7 +8,7 @@ Multi-instance tasks can be configured to run either in parallel, where all inst
 
 Tasks are executed one after another, ensuring that each task instance begins only after the previous one has completed.
 In the case of a sequential multi-instance activity, the instances are executed one at a time.
-When one instance is completed, a new instance is created for the next element in the inputCollection.
+When one instance is completed, a new instance is created for the next element in the input collection.
 
 ![Multi_instance_Sequential](images/multiinstance_sequential_example.png)
 
@@ -27,11 +28,16 @@ Multi-instance tasks comprise several key properties that define their behavior:
 :width: 230px
 :align: right
 ```
-1. **Input Collection**: Specifies the array or collection over which the task iterates. Each element in the collection serves as input for a task instance.
 
-2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results. Don't use this property when Loop Cardinality is specified.
+1. **Input Collection**: Specifies the array or collection over which the task iterates.
+Each element in the collection serves as input for a task instance.
 
-3. **Loop Cardinality**: Defines the exact number of times the task should iterate. This is used when the number of instances is known ahead of time and is fixed. Don't use this property when Output Collection is specified.
+2. **Output Collection**: Collects the outcomes from all task instances into a single collection, enabling aggregation of results.
+Don't use this property when Loop Cardinality is specified.
+
+3. **Loop Cardinality**: Defines the exact number of times the task should iterate.
+This is used when the number of instances is known ahead of time and is fixed.
+Don't use this property when Output Collection is specified.
 
 4. **Input Element Variable**: Represents each element in the input collection during an iteration, allowing for individual processing.
 
@@ -47,9 +53,10 @@ Specifically, the process manages a list of composers, their names, and genres, 
 
 ### Process Overview:
 
- 1. **Start Event**: Marks the initiation of the process.
+1. **Start Event**: Marks the initiation of the process.
 
- 2. **Script Task - Create Dictionary**: This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre. The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
+2. **Script Task - Create Dictionary**: This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre.
+The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
 
 ![Multi_instance_example](images/multiinstance_example2.png)
 
@@ -63,7 +70,8 @@ Specifically, the process manages a list of composers, their names, and genres, 
      ]
 ```
 
-3. **Multi-Instance Task - Edit Composer**: This task is configured as a multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
+3. **Multi-Instance Task - Edit Composer**: This task is configured as a multi-instance task that iterates over the `composers` array created by the previous script task.
+It allows for the editing of each composer's information within the array.
 
 ![Multi_instance_example](images/multiinstance_ex.png)
 
@@ -100,7 +108,9 @@ This multi-instance example in a BPMN process highlights the capability to dynam
 By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
 
 ```{admonition} Note
-If a data object is to be used within a multi-instance subprocess, ensure that it is created within the subprocess itself. This practice prevents scope and reference issues that can lead to data inconsistencies and errors during the execution of multiple instances. This ensures that each instance of the subprocess has its own unique and correct reference to the data object.
+If a data object is to be used within a multi-instance subprocess, ensure that it is created within the subprocess itself.
+This practice prevents scope and reference issues that can lead to data inconsistencies and errors during the execution of multiple instances.
+This ensures that each instance of the subprocess has its own unique and correct reference to the data object.
 ```
 
 ### Loops
@@ -113,9 +123,11 @@ These loops allow for the execution of a specific task or sequence of tasks repe
 ![Loop Configuration](images/Loop_Settings.png)
 
 1. **Loop Marker**: A visual indicator (a small loop symbol) placed at the bottom center of an activity to denote that the activity is subject to repeated execution.
-2. **Loop Condition**: A Boolean expression evaluated before or after each iteration of the loop. The loop continues as long as this condition evaluates to true.
-3. **Loop Maximum**: An upper limit on the number of iterations a loop can execute, preventing infinite looping and ensuring process termination.
 
+2. **Loop Condition**: A Boolean expression evaluated before or after each iteration of the loop.
+The loop continues as long as this condition evaluates to true.
+
+3. **Loop Maximum**: An upper limit on the number of iterations a loop can execute, preventing infinite looping and ensuring process termination.
 
 ### Implementing a Standard Loop
 
@@ -124,10 +136,12 @@ The next steps are:
 
 1. **Configure the Loop Characteristics**:
    - Add the loop marker to the activity symbol.
-   - Define the loop condition within the activity’s properties. This condition dictates the continuation of the loop.
+   - Define the loop condition within the activity’s properties.
+   This condition dictates the continuation of the loop.
 
-3. **Loop Execution**:
-   - The process engine evaluates the loop condition. If true, the looped activity is executed.
+2. **Loop Execution**:
+   - The process engine evaluates the loop condition.
+   If true, the looped activity is executed.
    - After execution, the loop condition is re-evaluated to decide whether another iteration is required.
 
 ### Example: Incrementing a Counter
@@ -139,12 +153,12 @@ This scenario is effectively managed using a standard loop in BPMN.
 
 ![Loop Example](images/loop_example1.png)
 
-
 1. **Start Event**: Initiates the workflow.
 
 2. **Script Task - Initialize Counter**: Initializes a counter variable, `counter`, to 0 and Script: `counter = 0;`
 
-3. **Script Loop Task - Increment Counter**: Implement the Script Loop Task with a loop marker and configure the loop condition (`counter < 10`) and increment script (`counter = counter + 1;`). The process engine will increment the `counter` by 1 on each iteration.
+3. **Script Loop Task - Increment Counter**: Implement the Script Loop Task with a loop marker and configure the loop condition (`counter < 10`) and increment script (`counter = counter + 1;`).
+The process engine will increment the `counter` by 1 on each iteration.
 
 ![Loop Example](images/loop_example2.png)
 
