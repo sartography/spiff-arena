@@ -590,14 +590,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
-                task_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                task_definition.bpmn_identifier
+            ] = task_definition
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
-                bpmn_process_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                "bpmn_process_definition"
+            ] = bpmn_process_definition
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
@@ -649,9 +649,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -1438,19 +1438,27 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
+        should_schedule_waiting_timer_events: bool = True,
     ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
             with ProcessInstanceQueueService.dequeued(self.process_instance_model):
                 # TODO: ideally we just lock in the execution service, but not sure
                 # about _add_bpmn_process_definitions and if that needs to happen in
                 # the same lock like it does on main
-                return self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+                return self._do_engine_steps(
+                    exit_at,
+                    save,
+                    execution_strategy_name,
+                    execution_strategy,
+                    should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+                )
         else:
             return self._do_engine_steps(
                 exit_at,
                 save=False,
                 execution_strategy_name=execution_strategy_name,
                 execution_strategy=execution_strategy,
+                should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
             )
 
     def _do_engine_steps(
@@ -1459,6 +1467,7 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
+        should_schedule_waiting_timer_events: bool = True,
     ) -> TaskRunnability:
         self._add_bpmn_process_definitions(
             self.serialize(),
@@ -1488,7 +1497,11 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
-        task_runnability = execution_service.run_and_save(exit_at, save)
+        task_runnability = execution_service.run_and_save(
+            exit_at,
+            save,
+            should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+        )
         self.check_all_tasks()
         return task_runnability
 

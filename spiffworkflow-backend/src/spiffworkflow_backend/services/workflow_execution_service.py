@@ -42,6 +42,7 @@ from spiffworkflow_backend.services.process_instance_lock_service import Process
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
+import traceback
 
 
 class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
@@ -451,7 +452,12 @@ class WorkflowExecutionService:
     #   run
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
-    def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
+    def run_and_save(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        should_schedule_waiting_timer_events: bool = True,
+    ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
             with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
@@ -492,13 +498,17 @@ class WorkflowExecutionService:
                 self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
                 if save:
                     self.process_instance_saver()
-                    self.schedule_waiting_timer_events()
+                    if should_schedule_waiting_timer_events:
+                        self.schedule_waiting_timer_events()
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:
         # if it is supposed to happen in less than the amount of time we take between polling runs
         return time_in_seconds - time.time() < int(
             current_app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTION_INTERVAL_IN_SECONDS"]
         )
+
+    def get_backtrace(self) -> str:
+        return "".join(traceback.format_stack())
 
     def schedule_waiting_timer_events(self) -> None:
         # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs
@@ -509,11 +519,17 @@ class WorkflowExecutionService:
                 if "Time" in event.event_type:
                     time_string = event.value
                     run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
-                    FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=run_at_in_seconds)
+                    queued_to_run_at_in_seconds = None
                     if self.is_happening_soon(run_at_in_seconds):
-                        queue_future_task_if_appropriate(
+                        if queue_future_task_if_appropriate(
                             self.process_instance_model, eta_in_seconds=run_at_in_seconds, task_guid=str(spiff_task.id)
-                        )
+                        ):
+                            queued_to_run_at_in_seconds = run_at_in_seconds
+                    FutureTaskModel.insert_or_update(
+                        guid=str(spiff_task.id),
+                        run_at_in_seconds=run_at_in_seconds,
+                        queued_to_run_at_in_seconds=queued_to_run_at_in_seconds,
+                    )
 
     def process_bpmn_messages(self) -> None:
         # FIXE: get_events clears out the events so if we have other events we care about

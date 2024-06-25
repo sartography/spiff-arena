@@ -18,4 +18,4 @@ script_dir="$(
   pwd -P
 )"
 "${script_dir}/wait_for_db_schema_migrations"
-exec poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info
+exec poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker worker --loglevel=info -E

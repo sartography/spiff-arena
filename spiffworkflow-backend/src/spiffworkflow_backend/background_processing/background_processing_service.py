@@ -98,6 +98,7 @@ class BackgroundProcessingService:
                 FutureTaskModel.completed == False,  # noqa: E712
                 FutureTaskModel.archived_for_process_instance_status == False,  # noqa: E712
                 FutureTaskModel.run_at_in_seconds < lookahead,
+                FutureTaskModel.queued_to_run_at_in_seconds != FutureTaskModel.run_at_in_seconds,
             )
         ).all()
         return future_tasks
