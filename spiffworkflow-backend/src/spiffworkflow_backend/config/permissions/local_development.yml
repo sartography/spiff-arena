@@ -1,14 +1,19 @@
 users:
   admin:
     service: local_open_id
-    email: admin@spiffworkflow.org
+    email: admin@example.com
     password: admin
     preferred_username: Admin
   nelson:
     service: local_open_id
-    email: nelson@spiffworkflow.org
+    email: nelson@example.com
     password: nelson
     preferred_username: Nelson
+  dan:
+    service: local_open_id
+    email: dan@example.com
+    password: dan
+    preferred_username: dan
 groups:
   admin:
     users: [admin@spiffworkflow.org, nelson@spiffworkflow.org]

@@ -55,7 +55,6 @@ elif [[ "$use_local_open_id" == "true" ]]; then
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="${backend_base_url}/openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
-  export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
 
 # else  # uncomment to test multiple auths
 #   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="keycloak_internal"
