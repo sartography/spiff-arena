@@ -18,7 +18,8 @@ All of these mechanisms work well in SpiffWorkflow, so the choice will depend on
 Key-Key-Value (KKV) Data Stores extend the traditional key-value model by introducing an additional key layer.
 This structure enables more complex and hierarchical data storage solutions, making them particularly suited for BPMN (Business Process Model and Notation) processes that manage multifaceted data relationships.
 
-- **Structure**: A KKV data store organizes data into two levels of keys before reaching the actual value, e.g., `Genre -> Movie -> Attributes`. This structure is particularly beneficial for categorizing and accessing nested data efficiently.
+- **Structure**: A KKV data store organizes data into two levels of keys before reaching the actual value, e.g., `Genre -> Movie -> Attributes`. 
+This structure is particularly beneficial for categorizing and accessing nested data efficiently.
 
 - **Use Cases**: Ideal for scenarios requiring rich, structured data access within workflows, such as managing inventories, categorizing user profiles, or handling complex hierarchical data like the provided movies example.
 
@@ -40,9 +41,11 @@ Here's how to depict such interactions using a BPMN example focused on movie dat
 
 3. **Script Task: Extract Single Record**
     - Retrieves specific movie details from the "Movies" data store.
-    - The kkv data store places a function pointer in task data when a read arrow is drawn from the data store. This allows just reading data for a top level/secondary key combination without loading all the data. In this case the read would look like `django = movies("Quentin Tarantino", "Django Unchained")`.
+    - The KKV data store places a function pointer in task data when a read arrow is drawn from the data store.
+    This allows just reading data for a top level/secondary key combination without loading all the data. 
+    In this case, the read would look like `django = movies("Quentin Tarantino", "Django Unchained")`.
 
-5. **Script Task: Insert A Single Record**
+4. **Script Task: Insert A Single Record**
     - Adds a new movie entry to the data store under a different key.
     - Demonstrates adding an entry for a Wes Craven movie to the "Movies" data store, showcasing how new data can be structured and inserted.
     - For a KKV, write the movies variable that will be read from task data and should be initialized to a new value that you intend to add or update:
@@ -50,25 +53,26 @@ Here's how to depict such interactions using a BPMN example focused on movie dat
      ```python
     movies = {
     "Wes Craven": {
-        "Swamp Thing: 
-        [ {"name": "Dr. Alec Hollard", "actor": "Ray Wise", "description": "whatever"}]
+        "Swamp Thing": 
+        [ {"name": "Dr. Alec Holland", "actor": "Ray Wise", "description": "whatever"}]
     } }
      ```
 
-6. **End Event**: Marks the completion of the workflow.
-After running the process, You can view the new movies data in data store:
+5. **End Event**: Marks the completion of the workflow.
+After running the process, you can view the new movies data in the data store:
 ![KKV data_store](images/DataStore_KKV_Store.png)
 
 #### Modeling Data Store Interactions
 
-- **Data Store Reference**: Each script task interacts with a "Movies" data store, specified in the task's properties. The data store's KKV nature is indicated, allowing for structured data access and manipulation.
+- **Data Store Reference**: Each script task interacts with a "Movies" data store, specified in the task's properties.
+The data store's KKV nature is indicated, allowing for structured data access and manipulation.
   
-- **Selection of Data Source**: In the properties section of the tasks, the "Movies" data store is selected as the datasource, highlighting how BPMN tasks can be explicitly linked to specific data stores for operations.
+- **Selection of Data Source**: In the properties section of the tasks, the "Movies" data store is selected as the data source, highlighting how BPMN tasks can be explicitly linked to specific data stores for operations.
 
 ### JSON Data Store
 
 In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process.
-A JSON data store is structured file or set of files that uses the JSON format to store data.
+A JSON data store is a structured file or set of files that uses the JSON format to store data.
 
 #### JSON Data Store: Gatorade Flavors
 
@@ -104,7 +108,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
 
 2. **Script Task: Populate Dropdown List**
-    - Convert the Gatorade flavors from the JSON data store into a format suitable for a dropdown list.
+    - Converts the Gatorade flavors from the JSON data store into a format suitable for a dropdown list.
     - **Script**: 
      ```python
      gator_select = []
@@ -117,7 +121,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
     This task creates an array `gator_select` with objects formatted for dropdown list usage from the `gatorade_flavors` array.
 
 3. **User Task: Select A Gatorade**
-    - Use a dropdown list for users to select their Gatorade flavor.
+    - Uses a dropdown list for users to select their Gatorade flavor.
     - **Form Configuration**:
      ```json
      {

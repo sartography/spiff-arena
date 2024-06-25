@@ -45,6 +45,7 @@ system_text = """You are proofreading and you will receive text that is almost e
 - never cut jokes
 - output 1 line per sentence (same as input)
 - Do not put multiple sentences on the same line
+- Do not leave any trailing spaces
 """
 
 system_prompt = SystemMessage(content=system_text)
@@ -55,7 +56,8 @@ if openai_api_key is None:
     with open(keyfile, "r") as f:
         openai_api_key = f.read().strip()
 
-model = "gpt-4"
+# model = "gpt-4"
+model = "gpt-4o"
 # model = "gpt-3.5-turbo"
 
 # If you get timeouts, you might have to increase timeout parameter
