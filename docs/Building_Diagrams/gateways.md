@@ -49,6 +49,12 @@ It serves as a valuable mechanism for synchronizing and consolidating multiple p
 
 ![exclusive_merge](images/exclusive_merge.png)
 
+Check out this detailed exclusive gateway example:
+```{toctree}
+:maxdepth: 1
+exclusivegatewayexample.md
+```
+
 ## Inclusive Gateway
 
 ![inclusive_gateway](images/inclusive_gateway.png)
