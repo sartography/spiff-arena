@@ -46,7 +46,7 @@ export default function Filters({
           iconDescription="Copiar link compartilhável"
           hasIconOnly
           size="md"
-        />
+        />,
       );
     }
     elements.push(
@@ -57,7 +57,7 @@ export default function Filters({
         hasIconOnly
         size="md"
         onClick={toggleShowFilterOptions}
-      />
+      />,
     );
     if (copiedReportLinktoClipboard) {
       elements.push(
@@ -68,7 +68,7 @@ export default function Filters({
           timeout={2000}
           hideCloseButton
           withBottomMargin={false}
-        />
+        />,
       );
     }
     return elements;

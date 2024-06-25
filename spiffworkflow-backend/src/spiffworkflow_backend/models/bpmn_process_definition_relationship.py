@@ -23,8 +23,12 @@ class BpmnProcessDefinitionRelationshipModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     bpmn_process_definition_parent_id: int = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False, index=True  # type: ignore
+        ForeignKey(BpmnProcessDefinitionModel.id),  # type: ignore
+        nullable=False,
+        index=True,
     )
     bpmn_process_definition_child_id: int = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False, index=True  # type: ignore
+        ForeignKey(BpmnProcessDefinitionModel.id),  # type: ignore
+        nullable=False,
+        index=True,
     )

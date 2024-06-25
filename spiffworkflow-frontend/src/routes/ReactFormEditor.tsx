@@ -41,7 +41,7 @@ export default function ReactFormEditor() {
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
-    null
+    null,
   );
   const [processModelFileContents, setProcessModelFileContents] = useState('');
 
@@ -73,7 +73,7 @@ export default function ReactFormEditor() {
   })();
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    `${params.process_model_id}`
+    `${params.process_model_id}`,
   );
 
   useEffect(() => {
@@ -110,7 +110,7 @@ export default function ReactFormEditor() {
       const fileNameWithExtension =
         defaultFileName ?? `${newFileName}.${fileExtension}`;
       navigate(
-        `/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`
+        `/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`,
       );
     }
   };
@@ -139,7 +139,7 @@ export default function ReactFormEditor() {
 
     const file = new File(
       [processModelFileContents],
-      fileNameWithExtension || ''
+      fileNameWithExtension || '',
     );
     const formData = new FormData();
     formData.append('file', file);
@@ -304,7 +304,7 @@ export default function ReactFormEditor() {
               <Button
                 onClick={() =>
                   navigate(
-                    `/editor/process-models/${modifiedProcessModelId}/files/${params.file_name}`
+                    `/editor/process-models/${modifiedProcessModelId}/files/${params.file_name}`,
                   )
                 }
                 variant="danger"

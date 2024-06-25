@@ -231,7 +231,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           to={navItemPage}
           isActive={isActivePage(navItemPage)}
           data-qa={`extension-${slugifyString(
-            uxElement.label || uxElement.page
+            uxElement.label || uxElement.page,
           )}`}
         >
           {uxElement.label || uxElement.page}

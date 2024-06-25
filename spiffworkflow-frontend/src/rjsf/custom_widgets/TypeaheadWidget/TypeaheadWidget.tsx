@@ -42,7 +42,7 @@ export default function TypeaheadWidget({
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   if (itemFormat) {
@@ -75,7 +75,7 @@ export default function TypeaheadWidget({
         });
       }
     },
-    [category]
+    [category],
   );
 
   useEffect(() => {

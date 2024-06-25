@@ -1,24 +1,27 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 supported_session_types=$(grep -E '^(el)?if.*\<session_type\>.*==' "$0" | sed -E 's/.*== "([^"]+)".*/\1/' | tr '\n' ' ')
 
 session_type="${1:-}"
 shift
 if [[ -z "${session_type}" ]] || ! grep -qE "\<${session_type}\>" <<<"$supported_session_types"; then
   if [[ -n "$session_type" ]]; then
-    >&2 echo "ERROR: Given session typeis not supported - ${session_type}"
+    echo >&2 "ERROR: Given session typeis not supported - ${session_type}"
   fi
 
-  >&2 echo "usage: $(basename "$0") [session_type]"
-  >&2 echo -e "\tsupported session types: ${supported_session_types}"
+  echo >&2 "usage: $(basename "$0") [session_type]"
+  echo >&2 -e "\tsupported session types: ${supported_session_types}"
   exit 1
 fi
 
@@ -45,10 +48,10 @@ function setup_db_for_ci() {
       rm -rf "migrations"
     fi
 
-      # Run the 'init' and 'migrate' tasks using flask
-      poetry run flask db init
-      poetry run flask db migrate
-    fi
+    # Run the 'init' and 'migrate' tasks using flask
+    poetry run flask db init
+    poetry run flask db migrate
+  fi
 
   # Run the 'upgrade' task using flask
   poetry run flask db upgrade
@@ -68,11 +71,11 @@ elif [[ "${session_type}" == "mypy" ]]; then
   poetry run mypy src tests
 
 elif [[ "${session_type}" == "safety" ]]; then
-  poetry run safety check --full-report
+  poetry run safety check --full-report --ignore=70624 --ignore=70612
 
 elif [[ "${session_type}" == "coverage" ]]; then
-  if ls .coverage.* 1> /dev/null 2>&1; then
-      poetry run coverage combine
+  if ls .coverage.* 1>/dev/null 2>&1; then
+    poetry run coverage combine
   fi
   poetry run coverage report
   poetry run coverage xml

@@ -1,83 +1,85 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python
 
-function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
-  exit "$2"
-}
-trap 'error_handler ${LINENO} $?' ERR
-set -o errtrace -o errexit -o nounset -o pipefail
+import base64
+import json
+import os
+import re
+import sys
+from typing import Any
 
-# this tests we can get a token from a public client and exchange it with a confidential client
-# so we can see what resources that user has access to
-
-# originally from https://medium.com/keycloak/keycloak-jwt-token-using-curl-post-72c9e791ba8c
-# btw, meta config endpoint: http://localhost:7002/realms/spiffworkflow/.well-known/openid-configuration token exchange described at https://github.com/keycloak/keycloak-documentation/blob/main/securing_apps/topics/token-exchange/token-exchange.adoc
-# some UMA stuff at https://github.com/keycloak/keycloak-documentation/blob/main/authorization_services/topics/service-authorization-obtaining-permission.adoc,
-# though resource_set docs are elsewhere.
-
-# ./bin/get_token # uses ciuser1 ciuser1
-# ./bin/get_token ciadmin1 ciadmin1
-# ./bin/get_token repeat_form_user_1 repeat_form_user_1 # actually has permissions to the resource in this script
-# ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
-
-USERNAME=${1-admin}
-PASSWORD=${2-admin}
-REALM_NAME=${3-spiffworkflow}
-
-if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
-  BACKEND_BASE_URL=http://localhost:7000
-fi
-if [[ -z "${BACKEND_CLIENT_ID:-}" ]]; then
-  export BACKEND_CLIENT_ID=spiffworkflow-backend
-fi
-if [[ -z "${BACKEND_CLIENT_SECRET:-}" ]]; then
-  export BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
-fi
-
-SECURE=false
-
-BACKEND_BASIC_AUTH=$(echo -n "${BACKEND_CLIENT_ID}:${BACKEND_CLIENT_SECRET}" | base64)
-
-if [[ -z "${OPENID_TOKEN_URL:-}" ]]; then
-  if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-    if grep -qE "spiffworkflow.org" <<<"$BACKEND_BASE_URL" ; then
-      env_domain=$(hot_sed -E 's/.*api\.(\w+\.spiffworkflow.org).*/\1/' <<<"${BACKEND_BASE_URL}")
-      KEYCLOAK_BASE_URL="https://keycloak.${env_domain}"
-    elif grep -qE "localhost:7000" <<<"$BACKEND_BASE_URL" ; then
-      KEYCLOAK_BASE_URL="http://localhost:7002"
-    fi
-  fi
-  OPENID_TOKEN_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
-fi
-
->&2 echo "Using OPENID_TOKEN_URL: $OPENID_TOKEN_URL"
->&2 echo "realm: $REALM_NAME"
->&2 echo "client-id: $BACKEND_CLIENT_ID"
->&2 echo "username: $USERNAME"
->&2 echo "password: $PASSWORD"
->&2 echo "secure: $SECURE"
+import requests
 
 
-if [[ $SECURE = 'y' ]]; then
-	INSECURE=
-else
-	INSECURE=--insecure
-fi
+def get_argv(index: int, default: Any = None) -> Any:
+    try:
+        return sys.argv[index]
+    except IndexError:
+        return default
 
 
-### Basic auth test with backend
-result=$(curl -s -X POST "$OPENID_TOKEN_URL" "$INSECURE" \
- -H "Content-Type: application/x-www-form-urlencoded" \
- -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
- -d "username=$USERNAME" \
- -d "password=$PASSWORD" \
- -d 'grant_type=password' \
- -d "client_id=$BACKEND_CLIENT_ID" \
- -d "code=${USERNAME}:for-local-dev" \
-)
-backend_token=$(jq -r '.access_token' <<< "$result")
-if [[ -z "$backend_token" || "$backend_token" == "null" ]]; then
-  >&2 echo "ERROR: Could not get the backend token. Received result: ${result}"
-  exit 1
-fi
-echo "$backend_token"
+username = get_argv(1, "admin")
+password = get_argv(2, "admin")
+realm_name = get_argv(3, "spiffworkflow")
+
+OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
+
+backend_base_url = os.getenv("BACKEND_BASE_URL", "http://localhost:7000")
+backend_client_id = os.getenv("BACKEND_CLIENT_ID", "spiffworkflow-backend")
+backend_client_secret = os.getenv("BACKEND_CLIENT_secret", "JXeQExm0JhQPLumgHtIIqf52bDalHz0q")
+
+openid_token_url = os.getenv("OPENID_TOKEN_URL")
+keycloak_base_url = os.getenv("KEYCLOAK_BASE_URL")
+if openid_token_url is None:
+    if keycloak_base_url is not None:
+        if "spiffworkflow.org" in backend_base_url:
+            pattern = r".*api\.(\w+\.spiffworkflow.org).*"
+            match = re.search(pattern, backend_base_url)
+            if match is None:
+                raise Exception("Could not determine openid url based on backend url")
+            env_domain = match.group(1)
+            keycloak_base_url = "https://keycloak.${env_domain}"
+        elif "localhost:7000" in backend_base_url:
+            keycloak_base_url = "http://localhost:7000"
+        openid_token_url = f"{keycloak_base_url}/realms/{realm_name}/protocol/openid-connect/token"
+    else:
+        openid_token_url = f"{backend_base_url}/openid/token"
+
+
+def get_auth_token_object() -> dict:
+    backend_basic_auth_string = f"{backend_client_id}:{backend_client_secret}"
+    backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
+    backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
+    }
+    data = {
+        "grant_type": "password",
+        "code": username + OPEN_ID_CODE,
+        "username": username,
+        "password": password,
+        "client_id": backend_client_id,
+    }
+
+    if openid_token_url is None:
+        raise Exception("Please specify the OPENID_TOKEN_URL")
+
+    response = requests.post(openid_token_url, data=data, headers=headers, timeout=15)
+    auth_token_object: dict = json.loads(response.text)
+    return auth_token_object
+
+
+# ruff: noqa: T201
+
+for token_identifier, token in get_auth_token_object().items():
+    # if the k is access_token, print just it to stdout
+    print(f"{token_identifier}:", file=sys.stderr)
+    if token_identifier == "access_token":  # noqa: S105
+        # print token with no newline
+        print(token, end="")
+        # flush the buffer to stdout
+        sys.stdout.flush()
+        print("\n", file=sys.stderr)
+    else:
+        # print the rest of the key value pairs to stderr
+        print(f"{token}\n", file=sys.stderr)

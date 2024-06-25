@@ -44,7 +44,7 @@ function CheckboxWidget(props: WidgetProps) {
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   return (

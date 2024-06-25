@@ -93,7 +93,7 @@ export default function ProcessModelTestRun({
       .forEach((testCaseResult: TestCaseResult) => {
         if (testCaseResult.test_case_error_details) {
           const errorForDisplay = errorForDisplayFromTestCaseErrorDetails(
-            testCaseResult.test_case_error_details
+            testCaseResult.test_case_error_details,
           );
           const errorChildren = childrenForErrorObject(errorForDisplay);
           failingRows.push(
@@ -104,7 +104,7 @@ export default function ProcessModelTestRun({
                 <strong>{testCaseResult.test_case_identifier}</strong>
               </p>
               {errorChildren}
-            </>
+            </>,
           );
         }
       });

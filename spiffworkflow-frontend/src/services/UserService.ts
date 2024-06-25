@@ -1,4 +1,4 @@
-import jwt from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
@@ -29,12 +29,12 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
     queryParamString = `${queryParams}`;
   }
   return encodeURIComponent(
-    `${window.location.origin}${window.location.pathname}${queryParamString}`
+    `${window.location.origin}${window.location.pathname}${queryParamString}`,
   );
 };
 
 const checkPathForTaskShowParams = (
-  redirectUrl: string = window.location.pathname
+  redirectUrl: string = window.location.pathname,
 ) => {
   const pathSegments = parseTaskShowUrl(redirectUrl);
   if (pathSegments) {
@@ -61,7 +61,7 @@ const isLoggedIn = () => {
 const isPublicUser = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
     return (idObject as any).public;
   }
   return false;
@@ -69,19 +69,19 @@ const isPublicUser = () => {
 
 const doLogin = (
   authenticationOption?: AuthenticationOption,
-  redirectUrl?: string | null
+  redirectUrl?: string | null,
 ) => {
   const taskShowParams = checkPathForTaskShowParams(redirectUrl || undefined);
   const loginParams = [`redirect_url=${redirectUrl || getCurrentLocation()}`];
   if (taskShowParams) {
     loginParams.push(
-      `process_instance_id=${taskShowParams.process_instance_id}`
+      `process_instance_id=${taskShowParams.process_instance_id}`,
     );
     loginParams.push(`task_guid=${taskShowParams.task_guid}`);
   }
   if (authenticationOption) {
     loginParams.push(
-      `authentication_identifier=${authenticationOption.identifier}`
+      `authentication_identifier=${authenticationOption.identifier}`,
     );
   }
   const url = `${BACKEND_BASE_URL}/login?${loginParams.join('&')}`;
@@ -107,7 +107,7 @@ const doLogout = () => {
 const getUserEmail = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
     return (idObject as any).email;
   }
   return null;
@@ -116,7 +116,7 @@ const getUserEmail = () => {
 const authenticationDisabled = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
     return (idObject as any).authentication_disabled;
   }
   return false;
@@ -133,7 +133,7 @@ const authenticationDisabled = () => {
 const getPreferredUsername = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
 
     if (idToken === undefined || idToken === 'undefined') {
       return null;

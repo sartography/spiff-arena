@@ -76,7 +76,7 @@ import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import UserSearch from '../components/UserSearch';
 import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
-import MessageInstanceList from '../components/MessageInstanceList';
+import MessageInstanceList from '../components/messages/MessageInstanceList';
 import {
   childrenForErrorObject,
   errorForDisplayFromString,
@@ -105,11 +105,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<Task | null>(null);
   const [taskToTimeTravelTo, setTaskToTimeTravelTo] = useState<Task | null>(
-    null
+    null,
   );
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [taskInstancesToDisplay, setTaskInstancesToDisplay] = useState<Task[]>(
-    []
+    [],
   );
   const [showTaskDataLoading, setShowTaskDataLoading] =
     useState<boolean>(false);
@@ -136,9 +136,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
-    `${params.process_model_id}`
+    `${params.process_model_id}`,
   );
+
   const modifiedProcessModelId = params.process_model_id;
+  const processModelId = unModifyProcessIdentifierForPathParam(
+    params.process_model_id ? params.process_model_id : '',
+  );
 
   const { targetUris } = useUriListForPermissions();
   const taskListPath =
@@ -163,17 +167,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
-      `/process-instances?process_model_identifier=${unModifiedProcessModelId}`
+      `/process-instances?process_model_identifier=${unModifiedProcessModelId}`,
     );
   };
 
   const onProcessInstanceForceRun = (
-    processInstanceResult: ProcessInstance
+    processInstanceResult: ProcessInstance,
   ) => {
     if (processInstanceResult.process_model_uses_queued_execution) {
       navigateToInstance({
@@ -209,7 +213,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           return;
         }
         navigate(
-          `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`
+          `/editor/process-models/${modifiedProcessModelId}/files/${primaryFileName}`,
         );
       };
       HttpService.makeCallToBackend({
@@ -255,7 +259,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const processTasksSuccess = (results: Task[]) => {
       if (params.to_task_guid) {
         const matchingTask = results.find(
-          (task: Task) => task.guid === params.to_task_guid
+          (task: Task) => task.guid === params.to_task_guid,
         );
         if (matchingTask) {
           setTaskToTimeTravelTo(matchingTask);
@@ -475,7 +479,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <dt>{lastUpdatedTimeLabel}:</dt>
         <dd>
           {DateAndTimeService.convertSecondsToFormattedDateTime(
-            lastUpdatedTime || 0
+            lastUpdatedTime || 0,
           ) || 'N/A'}
         </dd>
       </dl>
@@ -498,7 +502,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
       getLastMilestoneFromProcessInstance(
         processInstance,
-        processInstance.last_milestone_bpmn_name
+        processInstance.last_milestone_bpmn_name,
       );
 
     return (
@@ -527,7 +531,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <Link
                   data-qa="go-to-current-diagram-process-model"
                   to={`/process-models/${modifyProcessIdentifierForPathParam(
-                    processInstance.process_model_with_diagram_identifier || ''
+                    processInstance.process_model_with_diagram_identifier || '',
                   )}`}
                 >
                   {processInstance.process_model_with_diagram_identifier}
@@ -539,7 +543,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <dt>Iniciado há:</dt>
             <dd>
               {DateAndTimeService.convertSecondsToFormattedDateTime(
-                processInstance.start_in_seconds || 0
+                processInstance.start_in_seconds || 0,
               )}
             </dd>
           </dl>
@@ -568,11 +572,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <dd data-qa={`metadata-value-${processInstanceMetadata.key}`}>
                   {formatMetadataValue(
                     processInstanceMetadata.key,
-                    processInstanceMetadata.value
+                    processInstanceMetadata.value,
                   )}
                 </dd>
               </dl>
-            )
+            ),
           )}
         </Column>
       </Grid>
@@ -744,7 +748,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         bodyComponent = (
           <>
             {childrenForErrorObject(
-              errorForDisplayFromString(processDataToDisplay.process_data_value)
+              errorForDisplayFromString(
+                processDataToDisplay.process_data_value,
+              ),
             )}
           </>
         );
@@ -770,7 +776,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const handleProcessDataShowReponseUnauthorized = (
     dataObjectIdentifer: string,
-    result: any
+    result: any,
   ) => {
     const processData: ProcessData = {
       process_data_identifier: dataObjectIdentifer,
@@ -787,7 +793,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       const categoryExtension = dataObjectRef.extensionElements.values.find(
         (extension: any) => {
           return extension.$type === 'spiffworkflow:category';
-        }
+        },
       );
       if (categoryExtension) {
         category = categoryExtension.$body;
@@ -809,7 +815,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         searchParams.get('bpmn_process_guid')
       ) {
         additionalParams = `?process_identifier=${searchParams.get(
-          'process_identifier'
+          'process_identifier',
         )}&bpmn_process_guid=${searchParams.get('bpmn_process_guid')}`;
       }
     }
@@ -826,7 +832,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const handleClickedDiagramTask = (
     shapeElement: any,
-    bpmnProcessIdentifiers: any
+    bpmnProcessIdentifiers: any,
   ) => {
     if (shapeElement.type === 'bpmn:DataObjectReference') {
       makeProcessDataCallFromShapeElement(shapeElement);
@@ -835,7 +841,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         return (
           task.bpmn_identifier === shapeElement.id &&
           bpmnProcessIdentifiers.includes(
-            task.bpmn_process_definition_identifier
+            task.bpmn_process_definition_identifier,
           )
         );
       });
@@ -885,7 +891,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const createScriptUnitTest = () => {
     if (taskToDisplay) {
       const previousTask: Task | null = getTaskById(
-        getParentTaskFromTask(taskToDisplay)
+        getParentTaskFromTask(taskToDisplay),
       );
       HttpService.makeCallToBackend({
         path: `/process-models/${modifiedProcessModelId}/script-unit-tests`,
@@ -985,7 +991,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       task.task_definition_properties_json.event_definition;
     if (eventDefinition && eventDefinition.event_definitions) {
       return eventDefinition.event_definitions.map((e: EventDefinition) =>
-        handleMessage(e)
+        handleMessage(e),
       );
     }
     if (eventDefinition) {
@@ -1094,7 +1100,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           hasIconOnly
           data-qa="create-script-unit-test-button"
           onClick={createScriptUnitTest}
-        />
+        />,
       );
     }
 
@@ -1122,7 +1128,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           hasIconOnly
           data-qa="edit-task-data-button"
           onClick={() => setEditingTaskData(true)}
-        />
+        />,
       );
     }
     if (canAddPotentialOwners(task)) {
@@ -1136,7 +1142,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           hasIconOnly
           data-qa="add-potential-owners-button"
           onClick={() => setAddingPotentialOwners(true)}
-        />
+        />,
       );
     }
     if (canCompleteTask(task)) {
@@ -1151,7 +1157,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClick={() => completeTask(true)}
         >
           Execute Task
-        </Button>
+        </Button>,
       );
       buttons.push(
         <Button
@@ -1198,7 +1204,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           title={titleText}
           data-qa="reset-process-button"
           onClick={() => resetProcessInstance()}
-        />
+        />,
       );
     }
     return buttons;
@@ -1315,7 +1321,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             onChange={(value: any) => {
               setEventToSend(value.selectedItem);
               setEventTextEditorEnabled(
-                eventsThatNeedPayload.includes(value.selectedItem.typename)
+                eventsThatNeedPayload.includes(value.selectedItem.typename),
               );
             }}
           />
@@ -1386,7 +1392,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <div className="task-instance-modal-row-item">
                   {index + 1} {': '}
                   {DateAndTimeService.convertSecondsToFormattedDateTime(
-                    task.properties_json.last_state_change
+                    task.properties_json.last_state_change,
                   )}{' '}
                   {' - '} {task.state}
                 </div>
@@ -1400,7 +1406,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const createButtonsForMultiTasks = (
     instances: number[],
-    infoType: string
+    infoType: string,
   ) => {
     if (!tasks || !taskToDisplay) {
       return [];
@@ -1438,7 +1444,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           className="task-info-modal-accordion"
         >
           {createButtonSetForTaskInstances()}
-        </AccordionItem>
+        </AccordionItem>,
       );
     }
 
@@ -1455,7 +1461,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             })`}
           >
             {taskInstances}
-          </AccordionItem>
+          </AccordionItem>,
         );
       });
     }
@@ -1465,7 +1471,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ];
       const buttons = createButtonsForMultiTasks(
         loopTaskInstanceIndexes,
-        'mi-loop-iterations'
+        'mi-loop-iterations',
       );
       let text = '';
       if (
@@ -1482,7 +1488,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         >
           <div>{text}</div>
           <div>{buttons}</div>
-        </AccordionItem>
+        </AccordionItem>,
       );
     }
     if (accordionItems.length > 0) {
@@ -1654,17 +1660,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const diagramArea = (processModelId: string) => {
+  const diagramArea = () => {
     if (!processInstance) {
       return null;
+    }
+    if (!tasks && !tasksCallHadError) {
+      return <Loading className="some-class" withOverlay={false} small />;
     }
 
     const detailsComponent = (
       <>
         {childrenForErrorObject(
           errorForDisplayFromString(
-            processInstance.bpmn_xml_file_contents_retrieval_error || ''
-          )
+            processInstance.bpmn_xml_file_contents_retrieval_error || '',
+          ),
         )}
       </>
     );
@@ -1761,28 +1770,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  if (processInstance && (tasks || tasksCallHadError) && permissionsLoaded) {
-    const processModelId = unModifyProcessIdentifierForPathParam(
-      params.process_model_id ? params.process_model_id : ''
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  const getTabs = () => {
+    if (!processInstance) {
+      return null;
+    }
+
+    const canViewLogs = ability.can(
+      'GET',
+      targetUris.processInstanceLogListPath,
     );
+    const canViewMsgs = ability.can('GET', targetUris.messageInstanceListPath);
 
-    // eslint-disable-next-line sonarjs/cognitive-complexity
-    const getTabs = () => {
-      const canViewLogs = ability.can(
-        'GET',
-        targetUris.processInstanceLogListPath
-      );
-      const canViewMsgs = ability.can(
-        'GET',
-        targetUris.messageInstanceListPath
-      );
-
-      const getMessageDisplay = () => {
-        if (canViewMsgs) {
-          return <MessageInstanceList processInstanceId={processInstance.id} />;
-        }
-        return null;
-      };
+    const getMessageDisplay = () => {
+      if (canViewMsgs) {
+        return <MessageInstanceList processInstanceId={processInstance.id} />;
+      }
+      return null;
+    };
 
       return (
         <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
@@ -1830,6 +1835,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     };
 
+  if (processInstance && permissionsLoaded) {
     return (
       <>
         <ProcessBreadcrumb
@@ -1878,5 +1884,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       </>
     );
   }
-  return null;
+
+  return (
+    <Loading
+      description="Active loading indicator"
+      withOverlay={false}
+      style={{ margin: '50px 0 50px 50px' }}
+    />
+  );
 }

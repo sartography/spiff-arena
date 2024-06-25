@@ -63,7 +63,7 @@ Specifically, the process manages a list of composers, their names, and genres, 
      ]
 ```
 
-3. **Multi-Instance Task - Edit Composer**: This task is configured as a parallel multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
+3. **Multi-Instance Task - Edit Composer**: This task is configured as a multi-instance task that iterates over the `composers` array created by the previous script task. It allows for the editing of each composer's information within the array.
 
 ![Multi_instance_example](images/multiinstance_ex.png)
 
@@ -98,6 +98,10 @@ This templating syntax iterates over the `composers` array, displaying each comp
 
 This multi-instance example in a BPMN process highlights the capability to dynamically handle collections of data through scripting and manual tasks.
 By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
+
+```{admonition} Note
+If a data object is to be used within a multi-instance subprocess, ensure that it is created within the subprocess itself. This practice prevents scope and reference issues that can lead to data inconsistencies and errors during the execution of multiple instances. This ensures that each instance of the subprocess has its own unique and correct reference to the data object.
+```
 
 ### Loops
 

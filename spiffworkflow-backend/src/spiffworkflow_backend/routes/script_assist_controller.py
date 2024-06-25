@@ -1,8 +1,8 @@
+import requests
 from flask import current_app
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from openai import OpenAI
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 
@@ -34,28 +34,31 @@ def process_message(body: dict) -> Response:
     no_nonsense_append = (
         "Do not include any text other than the complete python script. "
         "Do not include any lines with comments. "
-        "Reject any request that does not appear to be for a python script."
-        "Do not include the word 'OpenAI' in any responses."
+        "Reject any request that does not appear to be for a python script. "
+        "Do not include the word 'OpenAI' in any responses. "
+        "Do not use print statements, but instead assign results to new variables. "
     )
 
     # Build query, set up OpenAI client, and get response
     query = no_nonsense_prepend + str(body["query"]) + no_nonsense_append
-    client = OpenAI(api_key=openai_api_key)
+    headers = {"Authorization": f"Bearer {openai_api_key}"}
 
-    # TODO: Might be good to move Model and maybe other parameters to config
-    completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": query,
-            }
-        ],
-        model="gpt-3.5-turbo",
-        temperature=1,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-    )
+    payload = {
+        # other reasonable options include gpt-4o (more expensive, better)
+        "model": "gpt-3.5-turbo",
+        "messages": [{"role": "user", "content": query}],
+        # temerature controls the randomness of predictions. A lower temperature (e.g., 0.5) can help produce more deterministic
+        # outputs, which is useful for generating precise code.
+        "temperature": 0.5,
+        "max_tokens": 256,
+        # top_p determines the diversity of the model's outputs. A lower value (e.g., 0.5) focuses the model on producing more
+        # likely tokens, which can be beneficial for generating coherent code snippets.
+        "top_p": 0.5,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+    }
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=30)
+    response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
+    completion = response.json()["choices"][0]["message"]["content"]
 
-    return make_response(jsonify({"result": completion.choices[0].message.content}), 200)
+    return make_response(jsonify({"result": completion}), 200)

@@ -44,6 +44,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -263,14 +264,15 @@ class ProcessInstanceService:
                     process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                 )
             except ProcessInstanceIsAlreadyLockedError:
+                # we will try again later
                 continue
-            except Exception as e:
+            except Exception as exception:
                 db.session.rollback()  # in case the above left the database with a bad transaction
-                error_message = (
+                new_exception = Exception(
                     f"Error running {status_value} task for process_instance {process_instance.id}"
-                    + f"({process_instance.process_model_identifier}). {str(e)}"
+                    + f"({process_instance.process_model_identifier}). {exception.__class__.__name__}: {str(exception)}"
                 )
-                current_app.logger.error(error_message)
+                current_app.logger.exception(new_exception, stack_info=True)
 
     @classmethod
     def run_process_instance_with_processor(
@@ -278,18 +280,14 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
-        additional_processing_identifier: str | None = None,
     ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
         processor = None
         task_runnability = TaskRunnability.unknown_if_ready_tasks
-        with ProcessInstanceQueueService.dequeued(
-            process_instance, additional_processing_identifier=additional_processing_identifier
-        ):
+        with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
             processor = ProcessInstanceProcessor(
                 process_instance,
                 workflow_completed_handler=cls.schedule_next_process_model_cycle,
-                additional_processing_identifier=additional_processing_identifier,
             )
 
         # if status_value is user_input_required (we are processing instances with that status from background processor),
@@ -353,8 +351,8 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
-                            % spiff_task.task_spec.name,
+                            message=f"Spiff Task {spiff_task.task_spec.name} lane user "
+                            "dict must have a key called 'value' with the user's uid in it.",
                             task=spiff_task,
                         )
                 elif isinstance(user, str):
@@ -404,7 +402,7 @@ class ProcessInstanceService:
         def values(collection: dict | list, elem: str | int | None, value: Any) -> FileDataGenerator:
             match (collection, elem, value):
                 case (dict(), None, None):
-                    for k, v in collection.items():  # type: ignore
+                    for k, v in collection.items():
                         yield from values(collection, k, v)
                 case (list(), None, None):
                     for i, v in enumerate(collection):
@@ -482,16 +480,19 @@ class ProcessInstanceService:
         processor.complete_task(spiff_task, human_task, user=user)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
-        if not should_queue_process_instance(processor.process_instance_model, execution_mode):
-            if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
-                with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
-                    execution_strategy_name = None
-                    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                        execution_strategy_name = "greedy"
+        if should_queue_process_instance(processor.process_instance_model, execution_mode):
+            processor.bpmn_process_instance.refresh_waiting_tasks()
+            tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
+            JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
+        elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+                execution_strategy_name = None
+                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                    execution_strategy_name = "greedy"
 
-                    # maybe move this out once we have the interstitial page since this is
-                    # here just so we can get the next human task
-                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                # maybe move this out once we have the interstitial page since this is
+                # here just so we can get the next human task
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(

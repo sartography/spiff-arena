@@ -8,6 +8,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -32,8 +33,14 @@ class JinjaHelpers:
     @classmethod
     def sanitize_for_md(cls, value: str) -> str:
         """Sanitizes given value for markdown."""
-        sanitized_value = re.sub(r"([|])", r"\\\1", value)
-        return sanitized_value
+        # modified from https://github.com/python-telegram-bot/python-telegram-bot/blob/1fdaaac8094c9d76c34c8c8e8c9add16080e75e7/telegram/utils/helpers.py#L149
+        #
+        # > was in this list but was removed because it doesn't seem to cause any
+        # issues and if it is in the list it prints like "&gt;" instead
+        escape_chars = r"_*[]()~`#+-=|{}!"
+        escaped_value = re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", value)
+        escaped_value = escaped_value.replace("\n", "").replace("\r", "")
+        return escaped_value
 
 
 class JinjaService:
@@ -101,3 +108,25 @@ class JinjaService:
                 tb = tb.tb_next
             wfe.add_note("Jinja2 template errors can happen when trying to display task data")
             raise wfe from error
+
+    @classmethod
+    def add_instruction_for_end_user_if_appropriate(
+        cls, spiff_tasks: list[SpiffTask], process_instance_id: int, tasks_that_have_been_seen: set[str]
+    ) -> None:
+        for spiff_task in spiff_tasks:
+            if spiff_task.task_spec.manual:
+                continue
+            if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
+                "instructionsForEndUser", None
+            ):
+                task_guid = str(spiff_task.id)
+                if task_guid in tasks_that_have_been_seen:
+                    continue
+                instruction = JinjaService.render_instructions_for_end_user(spiff_task)
+                if instruction != "":
+                    TaskInstructionsForEndUserModel.insert_or_update_record(
+                        task_guid=str(spiff_task.id),
+                        process_instance_id=process_instance_id,
+                        instruction=instruction,
+                    )
+                    tasks_that_have_been_seen.add(str(spiff_task.id))

@@ -97,7 +97,7 @@ describe('process-models', () => {
     cy.getBySel('process-model-add-file').click();
     cy.getBySel('process-model-add-file').contains('New DMN File').click();
     cy.contains(/^Process Model File$/);
-    cy.get('g[data-element-id=decision_1]').click();
+    cy.get('g[data-element-id^=decision_]').click();
     cy.contains('General').click();
     cy.get('#bio-properties-panel-id').clear();
     cy.get('#bio-properties-panel-id').type(decisionAcceptanceTestId);

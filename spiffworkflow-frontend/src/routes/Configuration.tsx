@@ -30,7 +30,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     [targetUris.secretListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
 
   const configurationExtensionTab = (
     uxElement: UiSchemaUxElement,
-    uxElementIndex: number
+    uxElementIndex: number,
   ) => {
     const navItemPage = `/configuration/extension${uxElement.page}`;
 

@@ -21,7 +21,7 @@ export default function ProcessInstanceFindById() {
       path += 'for-me/';
     }
     path += `${modifyProcessIdentifierForPathParam(
-      processInstance.process_model_identifier
+      processInstance.process_model_identifier,
     )}/${processInstance.id}`;
     navigate(path);
   };

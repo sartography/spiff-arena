@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+while true; do
+  current_db_migration_revision=$(poetry run flask db current | awk '{print $1}')
+  current_db_migration_head=$(poetry run flask db heads | awk '{print $1}')
+
+  if [[ "$current_db_migration_revision" == "$current_db_migration_head" ]]; then
+    echo "DB migrations are complete."
+    break
+  else
+    echo "Waiting for db migrations to finish"
+    echo "current revision: ${current_db_migration_head}"
+    echo "head revision: ${current_db_migration_revision}"
+    sleep 2
+  fi
+done

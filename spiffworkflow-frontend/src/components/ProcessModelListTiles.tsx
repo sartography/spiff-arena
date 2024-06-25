@@ -33,7 +33,7 @@ export default function ProcessModelListTiles({
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function ProcessModelListTiles({
                   title={row.id}
                   data-qa="process-model-show-link"
                   to={`/process-models/${modifyProcessIdentifierForPathParam(
-                    row.id
+                    row.id,
                   )}`}
                 >
                   {row.display_name}

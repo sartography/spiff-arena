@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 from flask import g
@@ -73,7 +72,7 @@ class MessageService:
                     if user is None:
                         user = UserService.find_or_create_system_user()
                     receiving_process_instance = MessageService.start_process_with_message(
-                        message_triggerable_process_model, user
+                        message_triggerable_process_model, user, execution_mode=execution_mode
                     )
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process_instance.id,
@@ -91,8 +90,6 @@ class MessageService:
                 return None
 
             try:
-                # currently only controllers and apscheduler call this
-                cls.raise_if_running_in_celery("correlate_send_message")
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance):
                     # Set the receiving message to running, so it is not altered elswhere ...
                     message_instance_receive.status = "running"
@@ -130,21 +127,24 @@ class MessageService:
             raise exception
 
     @classmethod
-    def correlate_all_message_instances(cls) -> None:
+    def correlate_all_message_instances(
+        cls,
+        execution_mode: str | None = None,
+    ) -> None:
         """Look at ALL the Send and Receive Messages and attempt to find correlations."""
         message_instances_send = MessageInstanceModel.query.filter_by(message_type="send", status="ready").all()
 
         for message_instance_send in message_instances_send:
-            cls.correlate_send_message(message_instance_send)
+            cls.correlate_send_message(message_instance_send, execution_mode=execution_mode)
 
     @classmethod
     def start_process_with_message(
         cls,
         message_triggerable_process_model: MessageTriggerableProcessModel,
         user: UserModel,
+        execution_mode: str | None = None,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
-        cls.raise_if_running_in_celery("start_process_with_message")
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
             user,
@@ -154,7 +154,10 @@ class MessageService:
             cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
             processor_receive.save()
 
-        processor_receive.do_engine_steps(save=True)
+        execution_strategy_name = None
+        if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+            execution_strategy_name = "greedy"
+        processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
         return receiving_process_instance
 
@@ -309,11 +312,3 @@ class MessageService:
                 )
             )
         return receiving_process_instance
-
-    @classmethod
-    def raise_if_running_in_celery(cls, method_name: str) -> None:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") == "true":
-            raise MessageServiceError(
-                f"Calling {method_name} in a celery worker. This is not supported! We may need to add"
-                " additional_processing_identifier to this code path."
-            )

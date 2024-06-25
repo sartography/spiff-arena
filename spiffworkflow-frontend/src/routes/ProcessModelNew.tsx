@@ -36,7 +36,7 @@ export default function ProcessModelNew() {
       <ProcessModelForm
         mode="new"
         processGroupId={unModifyProcessIdentifierForPathParam(
-          params.process_group_id || ''
+          params.process_group_id || '',
         )}
         processModel={processModel}
         setProcessModel={setProcessModel}

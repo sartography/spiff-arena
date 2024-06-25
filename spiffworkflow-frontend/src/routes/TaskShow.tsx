@@ -64,11 +64,11 @@ export default function TaskShow() {
     (myTask: BasicTask) => {
       navigate(
         `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-          myTask.process_model_identifier
-        )}/${myTask.process_instance_id}/interstitial`
+          myTask.process_model_identifier,
+        )}/${myTask.process_instance_id}/interstitial`,
       );
     },
-    [navigate]
+    [navigate],
   );
 
   const processBasicTaskResult = useCallback(
@@ -79,8 +79,8 @@ export default function TaskShow() {
         if (result.process_model_uses_queued_execution) {
           navigate(
             `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-              result.process_model_identifier
-            )}/${result.process_instance_id}/progress`
+              result.process_model_identifier,
+            )}/${result.process_instance_id}/progress`,
           );
         } else {
           navigateToInterstitial(result);
@@ -97,14 +97,14 @@ export default function TaskShow() {
         [
           `Instância do Processo: ${result.process_instance_id}`,
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-            result.process_model_identifier
+            result.process_model_identifier,
           )}/${result.process_instance_id}`,
         ],
         [`Atividade: ${result.name_for_display || result.id}`],
       ];
       setHotCrumbs(hotCrumbList);
     },
-    [navigateToInterstitial, navigate]
+    [navigateToInterstitial, navigate],
   );
 
   useEffect(() => {
@@ -161,8 +161,11 @@ export default function TaskShow() {
   };
 
   const sendAutosaveEvent = (eventDetails?: any) => {
+    if (!taskWithTaskData) {
+      return;
+    }
     const elementToDispath: any = document.getElementById(
-      'hidden-form-for-autosave'
+      `hidden-form-for-autosave-${taskWithTaskData.guid}`,
     );
     if (elementToDispath) {
       elementToDispath.dispatchEvent(
@@ -170,7 +173,7 @@ export default function TaskShow() {
           cancelable: true,
           bubbles: true,
           detail: eventDetails,
-        })
+        }),
       );
     }
   };
@@ -182,7 +185,7 @@ export default function TaskShow() {
       }
     },
     // delay in ms
-    500
+    500,
   );
 
   const processSubmitResult = (result: any) => {
@@ -195,8 +198,8 @@ export default function TaskShow() {
       } else if (result.process_model_uses_queued_execution) {
         navigate(
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-            result.process_model_identifier
-          )}/${result.process_instance_id}/progress`
+            result.process_model_identifier,
+          )}/${result.process_instance_id}/progress`,
         );
       } else {
         navigateToInterstitial(result);
@@ -215,7 +218,7 @@ export default function TaskShow() {
     }
     autoSaveTaskData(
       recursivelyChangeNullAndUndefined(dataToSubmit, null),
-      successCallback
+      successCallback,
     );
   };
 
@@ -478,7 +481,8 @@ export default function TaskShow() {
       <Grid fullWidth condensed className="megacondensed">
         <Column sm={4} md={5} lg={8}>
           <CustomForm
-            id="form-to-submit"
+            id={`form-to-submit-${taskWithTaskData.guid}`}
+            key={`form-to-submit-${taskWithTaskData.guid}`}
             disabled={formButtonsDisabled}
             formData={taskData}
             onChange={(obj: any) => {
@@ -493,7 +497,9 @@ export default function TaskShow() {
             {reactFragmentToHideSubmitButton}
           </CustomForm>
           <CustomForm
-            id="hidden-form-for-autosave"
+            id={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
+            key={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
+            className="hidden-form-for-autosave"
             formData={taskData}
             onSubmit={handleAutosaveFormSubmit}
             schema={jsonSchema}

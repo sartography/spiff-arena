@@ -31,7 +31,7 @@ export default function ProcessInstanceCurrentTaskInfo({
   const inlineMessage = (
     title: string,
     subtitle: string,
-    kind: string = 'info'
+    kind: string = 'info',
   ) => {
     return (
       <div>

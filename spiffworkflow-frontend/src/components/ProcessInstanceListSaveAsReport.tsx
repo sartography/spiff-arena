@@ -25,7 +25,7 @@ export default function ProcessInstanceListSaveAsReport({
   reportMetadata,
 }: OwnProps) {
   const [identifier, setIdentifier] = useState<string>(
-    processInstanceReportSelection?.identifier || ''
+    processInstanceReportSelection?.identifier || '',
   );
   const [showSaveForm, setShowSaveForm] = useState<boolean>(false);
 

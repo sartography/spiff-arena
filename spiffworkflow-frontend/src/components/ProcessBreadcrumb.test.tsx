@@ -21,7 +21,7 @@ test('renders hotCrumbs', () => {
           [`Grupo de Processo: hey`],
         ]}
       />
-    </BrowserRouter>
+    </BrowserRouter>,
   );
   const homeElement = screen.getByText(/Grupos de Processo/);
   expect(homeElement).toBeInTheDocument();

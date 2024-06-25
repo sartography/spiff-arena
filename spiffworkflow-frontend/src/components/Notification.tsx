@@ -4,6 +4,7 @@ import {
   Checkmark,
   Error,
   // @ts-ignore
+  WarningAlt,
 } from '@carbon/icons-react';
 // @ts-ignore
 import { Button } from '@carbon/react';
@@ -33,11 +34,13 @@ export function Notification({
   'data-qa': dataQa,
 }: OwnProps) {
   const [showMessage, setShowMessage] = useState<boolean>(
-    !allowTogglingFullMessage
+    !allowTogglingFullMessage,
   );
   let iconComponent = <Checkmark className="notification-icon" />;
   if (type === 'error') {
     iconComponent = <Error className="notification-icon" />;
+  } else if (type === 'warning') {
+    iconComponent = <WarningAlt className="notification-icon" />;
   }
 
   if (timeout && onClose) {

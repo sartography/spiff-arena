@@ -34,7 +34,7 @@ export default function DataStoreListTable() {
       searchParams,
       10,
       1,
-      'datastore'
+      'datastore',
     );
     const dataStoreType = searchParams.get('type') || '';
     const dataStoreIdentifier = searchParams.get('identifier') || '';
@@ -114,7 +114,7 @@ export default function DataStoreListTable() {
     searchParams,
     10,
     1,
-    'datastore'
+    'datastore',
   );
   return (
     <>

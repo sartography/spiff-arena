@@ -2,6 +2,7 @@ import threading
 import time
 from typing import Any
 
+from billiard import current_process  # type: ignore
 from flask import current_app
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -15,14 +16,27 @@ class ExpectedLockNotFoundError(Exception):
 
 
 class ProcessInstanceLockService:
-    """TODO: comment."""
+    # when we lock process instances, we need to make sure we do not use the same locking identifier
+    # as anything else, or else we will use their lock and be unintentionally stomping on the same
+    # process instance as them. this happened with celery workers. we generated a guid on startup
+    # in backend, but this same guid was used by all concurrent celery workers. to mitigate this,
+    # and make sure they weren't trying to use each others locks, we found out about billiard.current_process(),
+    # which can give us a unique index for each worker even if they are running in the same python process.
+    # if we are not in celery, get_current_process_index will return None, and that is also fine, since
+    # if we are not in celery, there is no concern about multiple things happening at once in a process (other than.
+    # theading, which is accounted for by the thread_id).
+    @classmethod
+    def get_current_process_index(cls) -> Any:
+        process = current_process()
+        index = getattr(process, "index", None)
+        return index
 
     @classmethod
-    def set_thread_local_locking_context(cls, domain: str, additional_processing_identifier: str | None = None) -> None:
+    def set_thread_local_locking_context(cls, domain: str) -> None:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         if not hasattr(tld, "lock_service_context"):
             tld.lock_service_context = {}
-        tld.lock_service_context[additional_processing_identifier] = {
+        tld.lock_service_context[cls.get_current_process_index()] = {
             "domain": domain,
             "uuid": current_app.config["PROCESS_UUID"],
             "thread_id": threading.get_ident(),
@@ -30,40 +44,37 @@ class ProcessInstanceLockService:
         }
 
     @classmethod
-    def get_thread_local_locking_context(cls, additional_processing_identifier: str | None = None) -> dict[str, Any]:
+    def get_thread_local_locking_context(cls) -> dict[str, Any]:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         if not hasattr(tld, "lock_service_context"):
-            cls.set_thread_local_locking_context("web", additional_processing_identifier=additional_processing_identifier)
-        return tld.lock_service_context[additional_processing_identifier]  # type: ignore
+            cls.set_thread_local_locking_context("web")
+        return tld.lock_service_context[cls.get_current_process_index()]  # type: ignore
 
     @classmethod
-    def locked_by(cls, additional_processing_identifier: str | None = None) -> str:
-        ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
-        return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}:{additional_processing_identifier}"
+    def locked_by(cls) -> str:
+        ctx = cls.get_thread_local_locking_context()
+        return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}:{cls.get_current_process_index()}"
 
     @classmethod
-    def lock(
-        cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel, additional_processing_identifier: str | None = None
-    ) -> None:
-        ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
+    def lock(cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel) -> None:
+        ctx = cls.get_thread_local_locking_context()
         ctx["locks"][process_instance_id] = queue_entry.id
 
     @classmethod
-    def unlock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> int:
-        queue_model_id = cls.try_unlock(process_instance_id, additional_processing_identifier=additional_processing_identifier)
+    def unlock(cls, process_instance_id: int) -> int:
+        queue_model_id = cls.try_unlock(process_instance_id)
         if queue_model_id is None:
             raise ExpectedLockNotFoundError(f"Could not find a lock for process instance: {process_instance_id}")
         return queue_model_id
 
     @classmethod
-    def try_unlock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> int | None:
-        ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
+    def try_unlock(cls, process_instance_id: int) -> int | None:
+        ctx = cls.get_thread_local_locking_context()
         return ctx["locks"].pop(process_instance_id, None)  # type: ignore
 
     @classmethod
-    def has_lock(cls, process_instance_id: int, additional_processing_identifier: str | None = None) -> bool:
-        ctx = cls.get_thread_local_locking_context(additional_processing_identifier=additional_processing_identifier)
-        current_app.logger.info(f"THREAD LOCK: {ctx}")
+    def has_lock(cls, process_instance_id: int) -> bool:
+        ctx = cls.get_thread_local_locking_context()
         return process_instance_id in ctx["locks"]
 
     @classmethod

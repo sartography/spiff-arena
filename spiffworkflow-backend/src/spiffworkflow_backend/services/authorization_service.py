@@ -59,6 +59,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/event-error-details", "relevant_permissions": ["read"]},
     {"path": "/logs", "relevant_permissions": ["read"]},
     {"path": "/logs/typeahead-filter-values", "relevant_permissions": ["read"]},
+    {"path": "/message-models", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
@@ -77,28 +78,6 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-model-tests/run", "relevant_permissions": ["create"]},
     {"path": "/task-assign", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
-]
-
-AUTHENTICATION_EXCLUSION_LIST = [
-    "spiffworkflow_backend.routes.authentication_controller.authentication_options",
-    "spiffworkflow_backend.routes.authentication_controller.login",
-    "spiffworkflow_backend.routes.authentication_controller.login_api_return",
-    "spiffworkflow_backend.routes.authentication_controller.login_return",
-    "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
-    "spiffworkflow_backend.routes.authentication_controller.logout",
-    "spiffworkflow_backend.routes.authentication_controller.logout_return",
-    "spiffworkflow_backend.routes.debug_controller.test_raise_error",
-    "spiffworkflow_backend.routes.debug_controller.url_info",
-    "spiffworkflow_backend.routes.health_controller.status",
-    "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
-    "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
-    "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
-    "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
-    "spiffworkflow_backend.routes.webhooks_controller.webhook",
-    # swagger api calls
-    "connexion.apis.flask_api.console_ui_home",
-    "connexion.apis.flask_api.console_ui_static_files",
-    "connexion.apis.flask_api.get_json_spec",
 ]
 
 # these are api calls that are allowed to generate a public jwt when called
@@ -305,6 +284,33 @@ class AuthorizationService:
         return (function_full_path, module)
 
     @classmethod
+    def authentication_exclusion_list(cls) -> list:
+        authentication_exclusion_list = [
+            "spiffworkflow_backend.routes.authentication_controller.authentication_options",
+            "spiffworkflow_backend.routes.authentication_controller.login",
+            "spiffworkflow_backend.routes.authentication_controller.login_api_return",
+            "spiffworkflow_backend.routes.authentication_controller.login_return",
+            "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
+            "spiffworkflow_backend.routes.authentication_controller.logout",
+            "spiffworkflow_backend.routes.authentication_controller.logout_return",
+            "spiffworkflow_backend.routes.debug_controller.test_raise_error",
+            "spiffworkflow_backend.routes.debug_controller.url_info",
+            "spiffworkflow_backend.routes.health_controller.status",
+            "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
+            "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
+            "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
+            "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
+            "spiffworkflow_backend.routes.webhooks_controller.webhook",
+            # swagger api calls
+            "connexion.apis.flask_api.console_ui_home",
+            "connexion.apis.flask_api.console_ui_static_files",
+            "connexion.apis.flask_api.get_json_spec",
+        ]
+        if not current_app.config["SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS"]:
+            authentication_exclusion_list.append("prometheus_flask_exporter.prometheus_metrics")
+        return authentication_exclusion_list
+
+    @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         if request.method == "OPTIONS":
             return True
@@ -319,7 +325,7 @@ class AuthorizationService:
         api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
         if (
             api_function_full_path
-            and (api_function_full_path in AUTHENTICATION_EXCLUSION_LIST)
+            and (api_function_full_path in cls.authentication_exclusion_list())
             or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
         ):
             return True
@@ -367,6 +373,8 @@ class AuthorizationService:
 
         if cls.request_is_excluded_from_permission_check():
             return None
+        if cls.request_is_excluded_from_public_user_permission_check(decoded_token):
+            return None
 
         cls.check_permission_for_request()
 
@@ -379,6 +387,24 @@ class AuthorizationService:
         api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
         if api_function_full_path and (api_function_full_path in authorization_exclusion_list):
             return True
+
+        return False
+
+    @classmethod
+    def request_is_excluded_from_public_user_permission_check(cls, decoded_token: dict | None) -> bool:
+        authorization_exclusion_for_public_user_list = [
+            "spiffworkflow_backend.routes.connector_proxy_controller.typeahead",
+        ]
+        api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
+        if (
+            api_function_full_path
+            and (api_function_full_path in authorization_exclusion_for_public_user_list)
+            and decoded_token
+            and "public" in decoded_token
+            and decoded_token["public"] is True
+        ):
+            return True
+
         return False
 
     @staticmethod

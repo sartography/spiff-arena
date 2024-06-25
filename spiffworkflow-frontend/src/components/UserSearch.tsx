@@ -46,7 +46,7 @@ export default function UserSearch({
       searchForUser(value);
     },
     // delay in ms
-    250
+    250,
   );
   return (
     <ComboBox

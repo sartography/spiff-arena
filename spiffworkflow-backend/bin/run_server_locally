@@ -16,11 +16,11 @@ script_dir="$(
 server_type="${1:-api}"
 
 if [[ "$server_type" == "celery_worker" ]]; then
-  "${script_dir}/start_celery_worker"
+  exec "${script_dir}/start_celery_worker"
 else
   if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" || -n "${SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX:-}" ]]; then
     echo "using ./bin/boot_server_in_docker because we actually load fixture data in wsgi.py, which will not be run with the typical local dev flask server"
-    ./bin/boot_server_in_docker
+    exec "${script_dir}/boot_server_in_docker"
   else
 
     if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
@@ -28,6 +28,6 @@ else
     fi
 
     # this line blocks
-    poetry run flask run -p "$port" --host=0.0.0.0
+    exec poetry run flask run -p "$PORT" --host=0.0.0.0
   fi
 fi

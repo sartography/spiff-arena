@@ -22,18 +22,16 @@ flask-admin = "*"
 flask-bcrypt = "*"
 flask-cors = "*"
 flask-jwt-extended = "^4.4.4"
-flask-mail = "*"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
-sentry-sdk = "^1.10"
+sentry-sdk = {extras = ['flask'], version = "^2.5"}
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
-typing-extensions = "^4.10.0"
-openai = "^1.1.0"
+typing-extensions = "^4.12.2"
 
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
@@ -50,11 +48,15 @@ connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
 PyJWT = "^2.6.0"
-gunicorn = "^21.0.0"
 APScheduler = "*"
 Jinja2 = "^3.1.3"
-RestrictedPython = "^7.0"
+RestrictedPython = "^7.1"
 Flask-SQLAlchemy = "^3"
+
+# 22.0.0 breaks passing in SCRIPT_NAME as a header which breaks status environments
+# https://github.com/benoitc/gunicorn/issues/3200
+# https://github.com/benoitc/gunicorn/issues/2650
+gunicorn = "21.2.0"
 
 # https://github.com/dropbox/sqlalchemy-stubs/pull/251
 # someday get off github
@@ -81,20 +83,20 @@ celery = {extras = ["redis"], version = "^5.3.5"}
 celery-stubs = "^0.1.3"
 jsonschema = "^4.20.0"
 chardet = "^5.2.0"
+security = "^1.2.1"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.1.2"
-coverage = {extras = ["toml"], version = "^7.4"}
-safety = "^3.1.0"
+pytest = "^8.2.2"
+coverage = {extras = ["toml"], version = "^7.5"}
+safety = "^3.2.3"
 mypy = ">=0.961"
 typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.1.3"}
 pre-commit = "^2.20.0"
-black = ">=21.10b0"
-ruff = "^0.1.7"
+ruff = "^0.4.7"
 
 pytest-random-order = "^1.1.0"
 pytest-flask = "^1.2.0"
@@ -110,14 +112,14 @@ bandit = "1.7.8"
 
 # flask-sqlalchemy-stubs = "^0.2"
 pre-commit-hooks = "^4.0.1"
-Pygments = "^2.10.0"
+Pygments = "^2.18.0"
 
 # type hinting stuff
-types-dateparser = "^1.1.4.1"
+types-dateparser = "^1.2.0.20240420"
 types-Werkzeug = "^1.0.9"
 types-PyYAML = "^6.0.12"
 types-Flask = "^1.1.6"
-types-requests = "^2.28.6"
+types-requests = "^2.32.0"
 types-pytz = "^2024.1.0"
 
 [tool.pytest.ini_options]
@@ -185,6 +187,8 @@ explicit_package_bases = false
 #     reportUnusedVariable = false
 #   solution was https://www.reddit.com/r/neovim/comments/11k5but/comment/jbjwwtf in vim settings
 
+
+# for editor support like vim
 [tool.ruff]
 lint.select = [
   # "ANN", # flake8-annotations
@@ -237,10 +241,12 @@ disable = [
     "fixit.rules:CompareSingletonPrimitivesByIs",
 ]
 
-[tool.black]
-line-length = 130
-
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.safety]
+# you can generate a config file for safety, but this doesn't work with safety check.
+# it complains about the config file being in too new a format.
+# you have to use safety scan, which requires a login.
+# so in the meantime, we're ignoring an unfixable issue in ./bin/run_ci_session itself

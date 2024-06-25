@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @ts-ignore
 import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
+
 import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 type OwnProps = {
@@ -32,8 +32,8 @@ export default function ProcessGroupForm({
       updateProcessGroupCache(processGroup);
       navigate(
         `/process-groups/${modifyProcessIdentifierForPathParam(
-          newProcessGroupId
-        )}`
+          newProcessGroupId,
+        )}`,
       );
     }
   };
@@ -62,7 +62,7 @@ export default function ProcessGroupForm({
     let path = '/process-groups';
     if (mode === 'edit') {
       path = `/process-groups/${modifyProcessIdentifierForPathParam(
-        processGroup.id
+        processGroup.id,
       )}`;
     }
     let httpMethod = 'POST';
@@ -72,6 +72,7 @@ export default function ProcessGroupForm({
     const postBody = {
       display_name: processGroup.display_name,
       description: processGroup.description,
+      messages: processGroup.messages,
     };
     if (mode === 'new') {
       if (parentGroupId) {
@@ -140,7 +141,7 @@ export default function ProcessGroupForm({
             }
             setIdHasBeenUpdatedByUser(true);
           }}
-        />
+        />,
       );
     }
 
@@ -153,9 +154,8 @@ export default function ProcessGroupForm({
         onChange={(event: any) =>
           updateProcessGroup({ description: event.target.value })
         }
-      />
+      />,
     );
-
     return textInputs;
   };
 

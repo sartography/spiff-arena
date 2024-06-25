@@ -44,7 +44,7 @@ export default function ProcessInstanceReportEdit() {
       const filterByCsv = reportMetadata.filter_by
         .map(
           (filterByItem: ReportFilterBy) =>
-            `${filterByItem.field_name}=${filterByItem.field_value}`
+            `${filterByItem.field_name}=${filterByItem.field_value}`,
         )
         .join(',');
       setFilterBy(filterByCsv);

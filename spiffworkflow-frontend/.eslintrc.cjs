@@ -4,13 +4,14 @@ module.exports = {
     es2021: true,
   },
   extends: [
-    'plugin:react/recommended',
     'airbnb',
-    'plugin:prettier/recommended',
-    'plugin:sonarjs/recommended',
     'plugin:import/errors',
-    'plugin:import/warnings',
     'plugin:import/typescript',
+    'plugin:import/warnings',
+    'plugin:prettier/recommended',
+    'plugin:react-hooks/recommended',
+    'plugin:react/recommended',
+    'plugin:sonarjs/recommended-legacy',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -20,7 +21,13 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['react', 'sonarjs', '@typescript-eslint', 'unused-imports'],
+  plugins: [
+    '@typescript-eslint',
+    'react',
+    'react-hooks',
+    'sonarjs',
+    'unused-imports',
+  ],
   rules: {
     // according to https://github.com/typescript-eslint/typescript-eslint/issues/2621, You should turn off the eslint core rule and turn on the typescript-eslint rule
     // but not sure which of the above "extends" statements is maybe bringing in eslint core
@@ -29,6 +36,8 @@ module.exports = {
     '@typescript-eslint/no-shadow': ['error'],
     'jest/expect-expect': 'off',
     'react/jsx-no-bind': 'off',
+    // FIXME: turn this back on someday
+    'react/jsx-key': 'off',
     'jsx-a11y/no-autofocus': 'off',
     'jsx-a11y/label-has-associated-control': 'off',
     'no-console': 'off',
@@ -70,4 +79,12 @@ module.exports = {
     ],
     curly: ['error', 'all'],
   },
+  overrides: [
+    {
+      files: ['**/*.test.ts', '**/*.test.tsx'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
 };

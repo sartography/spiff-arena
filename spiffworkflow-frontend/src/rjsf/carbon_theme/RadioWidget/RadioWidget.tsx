@@ -44,7 +44,7 @@ function RadioWidget({
     label,
     schema,
     uiSchema,
-    rawErrors
+    rawErrors,
   );
 
   // pass values in as strings so we can support both boolean and string radio buttons

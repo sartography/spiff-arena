@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:20.8.1-bookworm-slim AS base
+FROM node:22.3.0-bookworm-slim AS base
 
 RUN mkdir /app
 

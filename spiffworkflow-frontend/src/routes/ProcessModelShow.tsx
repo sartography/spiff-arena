@@ -73,11 +73,11 @@ export default function ProcessModelShow() {
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
+    permissionRequestData,
   );
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    `${params.process_model_id}`
+    `${params.process_model_id}`,
   );
 
   let hasTestCaseFiles: boolean = false;
@@ -88,7 +88,7 @@ export default function ProcessModelShow() {
 
   if (processModel) {
     hasTestCaseFiles = !!processModel.files.find(
-      (processModelFile: ProcessFile) => isTestCaseFile(processModelFile)
+      (processModelFile: ProcessFile) => isTestCaseFile(processModelFile),
     );
   }
 
@@ -193,7 +193,7 @@ export default function ProcessModelShow() {
 
   const navigateToProcessModels = (_result: any) => {
     navigate(
-      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`
+      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
     );
   };
 
@@ -229,7 +229,7 @@ export default function ProcessModelShow() {
 
   const renderButtonElements = (
     processModelFile: ProcessFile,
-    isPrimaryBpmnFile: boolean
+    isPrimaryBpmnFile: boolean,
   ) => {
     const elements = [];
 
@@ -258,7 +258,7 @@ export default function ProcessModelShow() {
           data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
           onClick={() => navigateToFileEdit(processModelFile)}
         />
-      </Can>
+      </Can>,
     );
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
@@ -270,7 +270,7 @@ export default function ProcessModelShow() {
           size="lg"
           onClick={() => downloadFile(processModelFile.name)}
         />
-      </Can>
+      </Can>,
     );
 
     if (!isPrimaryBpmnFile) {
@@ -292,7 +292,7 @@ export default function ProcessModelShow() {
             confirmButtonLabel="Delete"
             classNameForModal="modal-within-table-cell"
           />
-        </Can>
+        </Can>,
       );
     }
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
@@ -306,7 +306,7 @@ export default function ProcessModelShow() {
             size="lg"
             onClick={() => onSetPrimaryFile(processModelFile.name)}
           />
-        </Can>
+        </Can>,
       );
     }
     if (isTestCaseFile(processModelFile)) {
@@ -317,7 +317,7 @@ export default function ProcessModelShow() {
             titleText="Run BPMN unit tests defined in this file"
             classNameForModal="modal-within-table-cell"
           />
-        </Can>
+        </Can>,
       );
     }
     return elements;
@@ -540,21 +540,21 @@ export default function ProcessModelShow() {
         onChange={(a: any) => {
           if (a.selectedItem.text === 'New BPMN File') {
             navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`
+              `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
             );
           } else if (a.selectedItem.text === 'Upload File') {
             setShowFileUploadModal(true);
           } else if (a.selectedItem.text === 'New DMN File') {
             navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`
+              `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
             );
           } else if (a.selectedItem.text === 'New JSON File') {
             navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=json`
+              `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
             );
           } else if (a.selectedItem.text === 'New Markdown File') {
             navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=md`
+              `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
             );
           }
         }}

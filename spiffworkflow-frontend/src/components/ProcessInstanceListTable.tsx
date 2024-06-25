@@ -86,7 +86,7 @@ export default function ProcessInstanceListTable({
   const [searchParams] = useSearchParams();
 
   const [processInstances, setProcessInstances] = useState<ProcessInstance[]>(
-    []
+    [],
   );
   const [
     reportMetadataFromProcessInstances,
@@ -131,7 +131,7 @@ export default function ProcessInstanceListTable({
         onProcessInstanceTableListUpdate(result);
       }
     },
-    [onProcessInstanceTableListUpdate]
+    [onProcessInstanceTableListUpdate],
   );
 
   const getProcessInstances = useCallback(
@@ -150,7 +150,7 @@ export default function ProcessInstanceListTable({
         searchParams,
         undefined,
         undefined,
-        paginationQueryParamPrefix
+        paginationQueryParamPrefix,
       );
       if (perPageOptions && !perPageOptions.includes(perPage)) {
         // eslint-disable-next-line prefer-destructuring
@@ -185,12 +185,12 @@ export default function ProcessInstanceListTable({
       searchParams,
       setProcessInstancesFromResult,
       stopRefreshing,
-    ]
+    ],
   );
 
   useEffect(() => {
     const setReportMetadataFromReport = (
-      processInstanceReport: ProcessInstanceReport
+      processInstanceReport: ProcessInstanceReport,
     ) => {
       getProcessInstances(processInstanceReport.report_metadata);
     };
@@ -212,7 +212,7 @@ export default function ProcessInstanceListTable({
       clearRefreshRef.current = refreshAtInterval(
         DateAndTimeService.REFRESH_INTERVAL_SECONDS,
         DateAndTimeService.REFRESH_TIMEOUT_SECONDS,
-        checkForReportAndRun
+        checkForReportAndRun,
       );
       return clearRefreshRef.current;
     }
@@ -234,15 +234,15 @@ export default function ProcessInstanceListTable({
 
   const getProcessModelSpanTag = (
     _processInstance: ProcessInstance,
-    identifier: string
+    identifier: string,
   ) => {
     return <span>{identifier}</span>;
   };
   const navigateToProcessInstance = (processInstance: ProcessInstance) => {
     navigate(
       `${processInstanceShowPathPrefix}/${modifyProcessIdentifierForPathParam(
-        processInstance.process_model_identifier
-      )}/${processInstance.id}`
+        processInstance.process_model_identifier,
+      )}/${processInstance.id}`,
     );
   };
 
@@ -267,7 +267,7 @@ export default function ProcessInstanceListTable({
   };
   const formatProcessInstanceId = (
     processInstance: ProcessInstance,
-    id: number
+    id: number,
   ) => {
     return <span data-qa="paginated-entity-id">{id}</span>;
     // when we get rid of clickable table rows, something like this will be better
@@ -283,23 +283,23 @@ export default function ProcessInstanceListTable({
   };
   const formatProcessModelIdentifier = (
     processInstance: ProcessInstance,
-    identifier: any
+    identifier: any,
   ) => {
     return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatProcessModelDisplayName = (
     processInstance: ProcessInstance,
-    identifier: any
+    identifier: any,
   ) => {
     return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatLastMilestone = (
     processInstance: ProcessInstance,
-    value: any
+    value: any,
   ) => {
     const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
       processInstance,
-      value
+      value,
     );
     return <span title={valueToUse}>{truncatedValue}</span>;
   };
@@ -323,7 +323,7 @@ export default function ProcessInstanceListTable({
   };
   const formattedColumn = (
     processInstance: ProcessInstance,
-    column: ReportColumn
+    column: ReportColumn,
   ) => {
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
@@ -522,7 +522,7 @@ export default function ProcessInstanceListTable({
           );
         }
         const piLink = `${processInstanceShowPathPrefix}/${modifyProcessIdentifierForPathParam(
-          processInstance.process_model_identifier
+          processInstance.process_model_identifier,
         )}/${processInstance.id}`;
         const piShowButtonElement = (
           <Button
@@ -551,7 +551,7 @@ export default function ProcessInstanceListTable({
                 {goButtonElement}
                 {piShowButtonElement}
               </ButtonSet>
-            </TableCell>
+            </TableCell>,
           );
         } else {
           currentRow.push(<td>{piShowButtonElement}</td>);
@@ -627,7 +627,7 @@ export default function ProcessInstanceListTable({
         {tableTitleLine()}
         <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
           {childrenForErrorObject(
-            errorForDisplayFromString(errors.join(' ::: '))
+            errorForDisplayFromString(errors.join(' ::: ')),
           )}
         </Column>
       </Grid>
@@ -641,7 +641,7 @@ export default function ProcessInstanceListTable({
       searchParams,
       undefined,
       undefined,
-      paginationQueryParamPrefix
+      paginationQueryParamPrefix,
     );
     if (perPageOptions && !perPageOptions.includes(perPage)) {
       // eslint-disable-next-line prefer-destructuring

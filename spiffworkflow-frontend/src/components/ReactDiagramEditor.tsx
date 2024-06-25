@@ -6,6 +6,8 @@ import {
   BpmnPropertiesProviderModule,
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
 } from 'bpmn-js-properties-panel';
+// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
+import CliModule from 'bpmn-js-cli';
 
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 import DmnModeler from 'dmn-js/lib/Modeler';
@@ -69,60 +71,64 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 type OwnProps = {
   processModelId: string;
   diagramType: string;
-  tasks?: Task[] | null;
-  saveDiagram?: (..._args: any[]) => any;
-  onDeleteFile?: (..._args: any[]) => any;
-  isPrimaryFile?: boolean;
-  onSetPrimaryFile?: (..._args: any[]) => any;
-  diagramXML?: string | null;
-  fileName?: string;
-  onLaunchScriptEditor?: (..._args: any[]) => any;
-  onLaunchMarkdownEditor?: (..._args: any[]) => any;
-  onLaunchBpmnEditor?: (..._args: any[]) => any;
-  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
-  onLaunchDmnEditor?: (..._args: any[]) => any;
-  onElementClick?: (..._args: any[]) => any;
-  onServiceTasksRequested?: (..._args: any[]) => any;
-  onDataStoresRequested?: (..._args: any[]) => any;
-  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
-  onDmnFilesRequested?: (..._args: any[]) => any;
-  onSearchProcessModels?: (..._args: any[]) => any;
-  onElementsChanged?: (..._args: any[]) => any;
-  url?: string;
-  callers?: ProcessReference[];
   activeUserElement?: React.ReactElement;
+  callers?: ProcessReference[];
+  diagramXML?: string | null;
   disableSaveButton?: boolean;
+  fileName?: string;
+  isPrimaryFile?: boolean;
+  onDataStoresRequested?: (..._args: any[]) => any;
+  onDeleteFile?: (..._args: any[]) => any;
+  onDmnFilesRequested?: (..._args: any[]) => any;
+  onElementClick?: (..._args: any[]) => any;
+  onElementsChanged?: (..._args: any[]) => any;
+  onJsonSchemaFilesRequested?: (..._args: any[]) => any;
+  onLaunchBpmnEditor?: (..._args: any[]) => any;
+  onLaunchDmnEditor?: (..._args: any[]) => any;
+  onLaunchJsonSchemaEditor?: (..._args: any[]) => any;
+  onLaunchMarkdownEditor?: (..._args: any[]) => any;
+  onLaunchScriptEditor?: (..._args: any[]) => any;
+  onLaunchMessageEditor?: (..._args: any[]) => any;
+  onMessagesRequested?: (..._args: any[]) => any;
+  onSearchProcessModels?: (..._args: any[]) => any;
+  onServiceTasksRequested?: (..._args: any[]) => any;
+  onSetPrimaryFile?: (..._args: any[]) => any;
+  saveDiagram?: (..._args: any[]) => any;
+  tasks?: Task[] | null;
+  url?: string;
 };
 
 const FitViewport = 'fit-viewport';
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
-  processModelId,
-  diagramType,
-  tasks,
-  saveDiagram,
-  onDeleteFile,
-  isPrimaryFile,
-  onSetPrimaryFile,
-  diagramXML,
-  fileName,
-  onLaunchScriptEditor,
-  onLaunchMarkdownEditor,
-  onLaunchBpmnEditor,
-  onLaunchJsonSchemaEditor,
-  onLaunchDmnEditor,
-  onElementClick,
-  onServiceTasksRequested,
-  onDataStoresRequested,
-  onJsonSchemaFilesRequested,
-  onDmnFilesRequested,
-  onSearchProcessModels,
-  onElementsChanged,
-  url,
-  callers,
   activeUserElement,
+  callers,
+  diagramType,
+  diagramXML,
   disableSaveButton,
+  fileName,
+  isPrimaryFile,
+  onDataStoresRequested,
+  onDeleteFile,
+  onDmnFilesRequested,
+  onElementClick,
+  onElementsChanged,
+  onJsonSchemaFilesRequested,
+  onLaunchBpmnEditor,
+  onLaunchDmnEditor,
+  onLaunchJsonSchemaEditor,
+  onLaunchMarkdownEditor,
+  onLaunchScriptEditor,
+  onLaunchMessageEditor,
+  onMessagesRequested,
+  onSearchProcessModels,
+  onServiceTasksRequested,
+  onSetPrimaryFile,
+  processModelId,
+  saveDiagram,
+  tasks,
+  url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -165,7 +171,7 @@ export default function ReactDiagramEditor({
         }
       }
     },
-    [diagramModelerState, diagramType]
+    [diagramModelerState, diagramType],
   );
 
   /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
@@ -179,11 +185,11 @@ export default function ReactDiagramEditor({
       const refs = event.references.filter(
         (r: any) =>
           r.property === 'bpmn:loopDataInputRef' ||
-          r.property === 'bpmn:loopDataOutputRef'
+          r.property === 'bpmn:loopDataOutputRef',
       );
       // eslint-disable-next-line no-underscore-dangle
       const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
-        'bpmn:ItemAwareElement'
+        'bpmn:ItemAwareElement',
       );
       refs.forEach((ref: any) => {
         const props = {
@@ -243,7 +249,11 @@ export default function ReactDiagramEditor({
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
           ZoomScrollModule,
+          CliModule,
         ],
+        cli: {
+          bindTo: 'cli',
+        },
         moddleExtensions: {
           spiffworkflow: spiffModdleExtension,
         },
@@ -287,7 +297,7 @@ export default function ReactDiagramEditor({
       element: any,
       script: string,
       scriptType: string,
-      eventBus: any
+      eventBus: any,
     ) {
       if (onLaunchScriptEditor) {
         setPerformingXmlUpdates(true);
@@ -299,7 +309,7 @@ export default function ReactDiagramEditor({
     function handleLaunchMarkdownEditor(
       element: any,
       value: string,
-      eventBus: any
+      eventBus: any,
     ) {
       if (onLaunchMarkdownEditor) {
         setPerformingXmlUpdates(true);
@@ -311,7 +321,7 @@ export default function ReactDiagramEditor({
       if (onElementClick) {
         const canvas = diagramModeler.get('canvas');
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement()
+          canvas.getRootElement(),
         );
         onElementClick(event.element, bpmnProcessIdentifiers);
       }
@@ -404,6 +414,12 @@ export default function ReactDiagramEditor({
       }
     });
 
+    diagramModeler.on('spiff.messages.requested', (event: any) => {
+      if (onMessagesRequested) {
+        onMessagesRequested(event);
+      }
+    });
+
     diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
@@ -413,21 +429,29 @@ export default function ReactDiagramEditor({
         onSearchProcessModels(event.value, event.eventBus, event.element);
       }
     });
+
+    diagramModeler.on('spiff.message.edit', (event: any) => {
+      if (onLaunchMessageEditor) {
+        onLaunchMessageEditor(event);
+      }
+    });
   }, [
     diagramModelerState,
     diagramType,
-    onLaunchScriptEditor,
-    onLaunchMarkdownEditor,
+    onDataStoresRequested,
+    onDmnFilesRequested,
+    onElementClick,
+    onElementsChanged,
+    onJsonSchemaFilesRequested,
     onLaunchBpmnEditor,
     onLaunchDmnEditor,
     onLaunchJsonSchemaEditor,
-    onElementClick,
-    onServiceTasksRequested,
-    onDataStoresRequested,
-    onJsonSchemaFilesRequested,
-    onDmnFilesRequested,
+    onLaunchMarkdownEditor,
+    onLaunchScriptEditor,
+    onLaunchMessageEditor,
+    onMessagesRequested,
     onSearchProcessModels,
-    onElementsChanged,
+    onServiceTasksRequested,
   ]);
 
   useEffect(() => {
@@ -459,13 +483,13 @@ export default function ReactDiagramEditor({
       canvas: any,
       task: Task,
       bpmnIoClassName: string,
-      bpmnProcessIdentifiers: string[]
+      bpmnProcessIdentifiers: string[],
     ) {
       if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
         try {
           if (
             bpmnProcessIdentifiers.includes(
-              task.bpmn_process_definition_identifier
+              task.bpmn_process_definition_identifier,
             )
           ) {
             canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
@@ -504,7 +528,7 @@ export default function ReactDiagramEditor({
       //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
       if (tasks) {
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement()
+          canvas.getRootElement(),
         );
         tasks.forEach((task: Task) => {
           let className = '';
@@ -522,7 +546,7 @@ export default function ReactDiagramEditor({
               canvas,
               task,
               className,
-              bpmnProcessIdentifiers
+              bpmnProcessIdentifiers,
             );
           }
         });
@@ -531,7 +555,7 @@ export default function ReactDiagramEditor({
 
     function displayDiagram(
       diagramModelerToUse: any,
-      diagramXMLToDisplay: any
+      diagramXMLToDisplay: any,
     ) {
       if (alreadyImportedXmlRef.current) {
         return;
@@ -544,14 +568,25 @@ export default function ReactDiagramEditor({
       alreadyImportedXmlRef.current = true;
     }
 
-    function fetchDiagramFromURL(urlToUse: any) {
+    function dmnTextHandler(text: string) {
+      const decisionId = `decision_${makeid(7)}`;
+      const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
+      setDiagramXMLString(newText);
+    }
+
+    function bpmnTextHandler(text: string) {
+      const processId = `Process_${makeid(7)}`;
+      const newText = text.replaceAll('{{PROCESS_ID}}', processId);
+      setDiagramXMLString(newText);
+    }
+
+    function fetchDiagramFromURL(
+      urlToUse: any,
+      textHandler?: (text: string) => void,
+    ) {
       fetch(urlToUse)
         .then((response) => response.text())
-        .then((text) => {
-          const processId = `Process_${makeid(7)}`;
-          const newText = text.replace('{{PROCESS_ID}}', processId);
-          setDiagramXMLString(newText);
-        })
+        .then(textHandler ?? bpmnTextHandler)
         .catch((err) => handleError(err));
     }
 
@@ -587,10 +622,12 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
+      let textHandler;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
+        textHandler = dmnTextHandler;
       }
-      fetchDiagramFromURL(`/${newDiagramFileName}`);
+      fetchDiagramFromURL(`/${newDiagramFileName}`, textHandler);
       return undefined;
     }
 
@@ -666,11 +703,11 @@ export default function ReactDiagramEditor({
       >
         <UnorderedList>
           {callers.map((ref: ProcessReference) => (
-            <li>
+            <li key={`list-${ref.relative_location}`}>
               <Link
                 size="lg"
                 href={`/process-models/${modifyProcessIdentifierForPathParam(
-                  ref.relative_location
+                  ref.relative_location,
                 )}`}
               >
                 {`${ref.display_name}`}
@@ -749,7 +786,7 @@ export default function ReactDiagramEditor({
               <Button
                 onClick={() => {
                   navigate(
-                    `/process-models/${processModelId}/form/${fileName}`
+                    `/process-models/${processModelId}/form/${fileName}`,
                   );
                 }}
               >

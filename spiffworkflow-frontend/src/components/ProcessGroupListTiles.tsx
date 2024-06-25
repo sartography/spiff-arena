@@ -28,7 +28,7 @@ export default function ProcessGroupListTiles({
   const navigate = useNavigate();
 
   const [processGroups, setProcessGroups] = useState<ProcessGroup[] | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function ProcessGroupListTiles({
             className="tile-process-group"
             onClick={() =>
               navigateToProcessGroup(
-                `/process-groups/${modifyProcessIdentifierForPathParam(row.id)}`
+                `/process-groups/${modifyProcessIdentifierForPathParam(row.id)}`,
               )
             }
           >

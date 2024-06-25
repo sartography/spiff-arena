@@ -1,3 +1,4 @@
+import _strptime  # type: ignore
 import decimal
 import glob
 import json
@@ -12,7 +13,6 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Any
 
-import _strptime  # type: ignore
 import dateparser
 import pytz
 from lxml import etree  # type: ignore
@@ -149,7 +149,7 @@ class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
 
-        environment = CustomScriptEngineEnvironment(default_globals)
+        environment = CustomScriptEngineEnvironment.create(default_globals)
         self.method_overrides = method_overrides
         super().__init__(environment=environment)
 

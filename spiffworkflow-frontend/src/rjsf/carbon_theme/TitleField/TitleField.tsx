@@ -15,7 +15,7 @@ const REQUIRED_FIELD_SYMBOL = '*';
 export default function TitleField<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(props: TitleFieldProps<T, S, F>) {
   const { id, title, required } = props;
   return (

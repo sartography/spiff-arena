@@ -1,23 +1,28 @@
 users:
   admin:
     service: local_open_id
-    email: admin@spiffworkflow.org
+    email: admin@example.com
     password: admin
     preferred_username: Admin
   nelson:
     service: local_open_id
-    email: nelson@spiffworkflow.org
+    email: nelson@example.com
     password: nelson
     preferred_username: Nelson
+  dan:
+    service: local_open_id
+    email: dan@example.com
+    password: dan
+    preferred_username: dan
 groups:
   admin:
-    users: [admin@spiffworkflow.org, nelson@spiffworkflow.org]
+    users: [admin@example.com, nelson@example.com]
   group1:
-    users: [jason@sartography.com, kevin@sartography.com]
+    users: [jason@example.com, kevin@example.com]
   group2:
-    users: [dan@sartography.com]
+    users: [dan@example.com]
   group3:
-    users: [jon@sartography.com]
+    users: [jon@example.com]
   spiff_public:
     users: []
 

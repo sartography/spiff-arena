@@ -14,12 +14,12 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import useAPIError from '../hooks/UseApiError';
 
 const storeRecentProcessModelInLocalStorage = (
-  processModelForStorage: ProcessModel
+  processModelForStorage: ProcessModel,
 ) => {
   // All values stored in localStorage are strings.
   // Grab our recentProcessModels string from localStorage.
   const stringFromLocalStorage = window.localStorage.getItem(
-    'recentProcessModels'
+    'recentProcessModels',
   );
 
   // adapted from https://stackoverflow.com/a/59424458/6090676
@@ -41,7 +41,7 @@ const storeRecentProcessModelInLocalStorage = (
 
   // If our parsed/empty array doesn't already have this value in it...
   const matchingItem = array.find(
-    (item) => item.processModelIdentifier === value.processModelIdentifier
+    (item) => item.processModelIdentifier === value.processModelIdentifier,
   );
   if (matchingItem === undefined) {
     // add the value to the beginning of the array
@@ -80,7 +80,7 @@ export default function ProcessInstanceRun({
   const [disableStartButton, setDisableStartButton] = useState<boolean>(false);
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    processModel.id
+    processModel.id,
   );
 
   const processInstanceCreatePath = `/v1.0/process-instances/${modifiedProcessModelId}`;
@@ -98,11 +98,11 @@ export default function ProcessInstanceRun({
     const processInstanceId = processInstance.id;
     if (processInstance.process_model_uses_queued_execution) {
       navigate(
-        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`
+        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`,
       );
     } else {
       navigate(
-        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`
+        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`,
       );
     }
   };
