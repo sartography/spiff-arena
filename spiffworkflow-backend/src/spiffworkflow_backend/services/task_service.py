@@ -792,6 +792,7 @@ class TaskService:
 
     @classmethod
     def _get_python_env_data_dict_from_spiff_task(cls, spiff_task: SpiffTask, serializer: BpmnWorkflowSerializer) -> dict:
+        spiff_task.workflow.script_engine.environment.revise_state_with_task_data(spiff_task)
         user_defined_state = spiff_task.workflow.script_engine.environment.user_defined_state()
         # this helps to convert items like datetime objects to be json serializable
         converted_data: dict = serializer.registry.convert(user_defined_state)

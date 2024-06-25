@@ -348,11 +348,11 @@ class Tmp_NonTaskDataBasedScriptEngineEnvironment(NonTaskDataBasedScriptEngineEn
 
         return True
     
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
+    #def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+    #    pass
 
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
+    #def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+    #    pass
 
     #def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
     #    pass
