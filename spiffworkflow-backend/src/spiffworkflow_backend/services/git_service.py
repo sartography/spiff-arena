@@ -6,13 +6,13 @@ import uuid
 
 from flask import current_app
 from flask import g
+from security import safe_command
 
 from spiffworkflow_backend.config import ConfigurationError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from security import safe_command
 
 
 class MissingGitConfigsError(Exception):
