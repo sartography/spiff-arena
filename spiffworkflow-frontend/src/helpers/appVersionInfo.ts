@@ -4,6 +4,7 @@ const appVersionInfo = () => {
   const versionInfoFromHtmlMetaTag = document.querySelector(
     'meta[name="version-info"]'
   );
+
   let versionInfo: ObjectWithStringKeysAndValues = {};
   if (versionInfoFromHtmlMetaTag) {
     const versionInfoContentString =
@@ -12,6 +13,8 @@ const appVersionInfo = () => {
       versionInfoContentString &&
       versionInfoContentString !== '%VITE_VERSION_INFO%'
     ) {
+    console.log('versionInfoContentString:', versionInfoContentString);
+
       versionInfo = JSON.parse(versionInfoContentString);
     }
   }

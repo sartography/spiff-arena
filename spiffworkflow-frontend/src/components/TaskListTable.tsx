@@ -140,7 +140,7 @@ export default function TaskListTable({
   };
 
   const formSubmissionModal = () => {
-    if (formSubmissionTask) {
+    if (formSubmissionTask) {      
       // TODO: move this and the code from TaskShow to new component to handle instructions and manual tasks
       let formUiSchema;
       let jsonSchema = formSubmissionTask.form_schema;
@@ -164,6 +164,7 @@ export default function TaskListTable({
       } else if (formSubmissionTask.form_ui_schema) {
         formUiSchema = formSubmissionTask.form_ui_schema;
       }
+      
       return (
         <Modal
           open={!!formSubmissionTask}

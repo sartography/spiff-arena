@@ -56,6 +56,9 @@ export default function TypeaheadWidget({
 
   const typeaheadSearch = useCallback(
     (inputText: string) => {
+
+      console.error("Vendo se o Log funciona typeaheadSearch")
+
       const pathForCategory = (text: string) => {
         return `/connector-proxy/typeahead/${category}?prefix=${text}&limit=100`;
       };

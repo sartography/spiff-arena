@@ -251,6 +251,82 @@ export default function TaskShow() {
     });
   };
 
+  // const trocaCategoriaTypeAheadDinamicamente = () => {
+  //   console.info("Inicia trocaCategoriaTypeAheadDinamicamente")
+
+  //   if (taskWithTaskData) {
+  //     if (taskWithTaskData.form_ui_schema) {
+  //       for (const key in taskWithTaskData.form_ui_schema) {
+  //         const element = taskWithTaskData.form_ui_schema[key];
+  //         if (element["ui:widget"] === "typeahead") {
+  //           if (element["ui:options"] && element["ui:options"]["category"]) {
+  //             let categoryValue = element["ui:options"]["category"];
+  
+  //             // Verifica se a categoria contém uma chave dinâmica
+  //             console.info("categoryValue", categoryValue)
+  //             const matches = categoryValue.match(/\{(.+?)\}/);
+  //             console.info("matches", matches)
+
+  //             if (matches) {
+  //               const dynamicKey = matches[1];
+  
+  //               // Verifica se existe uma variável com o mesmo nome em taskWithTaskData.data
+  //               if (taskWithTaskData.data && dynamicKey in taskWithTaskData.data) {
+  //                 const dynamicCategory = taskWithTaskData.data[dynamicKey];
+  //                 element["ui:options"]["category"] = categoryValue.replace(`{${dynamicKey}}`, dynamicCategory);
+  //                 console.log(`Categoria de ${key} alterada para '${element["ui:options"]["category"]}'`);
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // };
+  const trocaCategoriaTypeAheadDinamicamente = (schema: any, data: any) => {
+    const processElement = (element: any) => {
+      if (typeof element === 'object' && element !== null) {
+        for (const key in element) {
+          if (element.hasOwnProperty(key)) {
+            const value = element[key];
+            if (typeof value === 'object' && value !== null) {
+              processElement(value);
+            }
+            if (key === 'ui:widget' && value === 'typeahead') {
+              const options = element['ui:options'];
+              if (options && options['category']) {
+                let categoryValue = options['category'];
+  
+                // Verifica se a categoria contém uma chave dinâmica
+                console.info("categoryValue", categoryValue);
+                const matches = categoryValue.match(/\{(.+?)\}/);
+                console.info("matches", matches);
+  
+                if (matches) {
+                  const dynamicKey = matches[1];
+  
+                  // Verifica se existe uma variável com o mesmo nome em taskWithTaskData.data
+                  if (data && dynamicKey in data) {
+                    const dynamicCategory = data[dynamicKey];
+                    options['category'] = categoryValue.replace(`{${dynamicKey}}`, dynamicCategory);
+                    console.log(`Categoria alterada para '${options['category']}'`);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+  
+    console.info("Inicia trocaCategoriaTypeAheadDinamicamente");
+    if (schema) {
+      processElement(schema);
+    }
+  }
+  
+  
+
   const handleSignalSubmit = (event: EventDefinition) => {
     if (formButtonsDisabled || !taskWithTaskData) {
       return;
@@ -316,6 +392,8 @@ export default function TaskShow() {
       return null;
     }
 
+    console.error("Vendo se o Log funciona TaskShow ")
+
     let formUiSchema;
     let jsonSchema = taskWithTaskData.form_schema;
     let reactFragmentToHideSubmitButton = null;
@@ -338,6 +416,7 @@ export default function TaskShow() {
       };
     } else if (taskWithTaskData.form_ui_schema) {
       formUiSchema = taskWithTaskData.form_ui_schema;
+      trocaCategoriaTypeAheadDinamicamente(taskWithTaskData.form_ui_schema, taskWithTaskData.data);
     }
     if (taskWithTaskData.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {

@@ -59,13 +59,13 @@ class ProcessInstanceReportService:
             "columns": [
                 {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "Processos",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "Hora início", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Hora fim", "accessor": "end_in_seconds", "filterable": False},
-                {"Header": "Último passo", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Start time", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "End time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -93,15 +93,15 @@ class ProcessInstanceReportService:
             "columns": [
                 {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "Processo",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "Tarefa", "accessor": "task_title", "filterable": False},
-                {"Header": "Aguardando por", "accessor": "waiting_for", "filterable": False},
-                {"Header": "Iniciado", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Última atualização", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Último passo", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Task", "accessor": "task_title", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
                 {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
@@ -119,15 +119,15 @@ class ProcessInstanceReportService:
             "columns": [
                 {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "Processo",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "Tarefa", "accessor": "task_title", "filterable": False},
-                {"Header": "Iniciado por", "accessor": "process_initiator_username", "filterable": False},
-                {"Header": "Iniciado", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "Última atualização", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "Último passo", "accessor": "last_milestone_bpmn_name", "filterable": False},
+                {"Header": "Task", "accessor": "task_title", "filterable": False},
+                {"Header": "Started by", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "Last updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
@@ -144,7 +144,7 @@ class ProcessInstanceReportService:
             "columns": [
                 {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "Processo",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
@@ -363,8 +363,8 @@ class ProcessInstanceReportService:
     def system_report_column_options(cls) -> list[ReportMetadataColumn]:
         """Columns that are used with certain system reports."""
         return_value: list[ReportMetadataColumn] = [
-            {"Header": "Tarefa", "accessor": "task_title", "filterable": False},
-            {"Header": "Aguardando por", "accessor": "waiting_for", "filterable": False},
+            {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
+            {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
         ]
         return return_value
 
