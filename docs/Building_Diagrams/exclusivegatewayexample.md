@@ -13,8 +13,7 @@ Exclusive Gateways in BPMN serve as decision points that dictate the flow of a p
 - **Form Configuration**:
      ```json
      {
-       "title": "Dropdown list",
-       "description": "Ensure 'fruits' are added to Task Data before using this component.",
+       "title": "First Name Required",
        "type": "object",
        "required": ["firstName"],
        "properties": {
