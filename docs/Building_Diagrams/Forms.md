@@ -467,4 +467,35 @@ By using this feature, you can effectively implement new buttons for nested form
 
 ### Character counter
 
-To give the user feedback about how
+To give the user feedback about how they are doing in terms of staying within the limits imposed by the field, you can display a character counter.
+
+#### JSON Schema Configuration
+
+To do this, your json schema must contain a string with a maxLength, like this:
+
+```json
+{
+  "title": "String with character counter",
+  "type": "object",
+  "properties": {
+    "my_hot_string": {
+      "type": "string",
+      "maxLength": 100
+    }
+  }
+}
+```
+
+#### UI Schema Configuration
+
+Your UI Schema will need a ui:options specifying counter true, like this:
+
+```json
+{
+  "my_hot_string": {
+    "ui:options": {
+      "counter": true
+    }
+  }
+}
+```
