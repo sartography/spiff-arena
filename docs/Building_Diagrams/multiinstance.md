@@ -105,9 +105,11 @@ If a data object is to be used within a multi-instance subprocess, ensure that i
 
 ### Loops
 
-Standard loops in Business Process Model and Notation (BPMN) are a fundamental mechanism to model repetitive tasks within a workflow. These loops allow for the execution of a specific task or sequence of tasks repeatedly until a predefined condition is met, mirroring traditional loop constructs found in programming languages. 
+Standard loops in Business Process Model and Notation (BPMN) are a fundamental mechanism to model repetitive tasks within a workflow.
+These loops allow for the execution of a specific task or sequence of tasks repeatedly until a predefined condition is met, mirroring traditional loop constructs found in programming languages.
 
 ### Key Concepts
+
 ![Loop Configuration](images/Loop_Settings.png)
 
 1. **Loop Marker**: A visual indicator (a small loop symbol) placed at the bottom center of an activity to denote that the activity is subject to repeated execution.
@@ -117,7 +119,8 @@ Standard loops in Business Process Model and Notation (BPMN) are a fundamental m
 
 ### Implementing a Standard Loop
 
-To model a standard loop in BPMN, determine the activity or sequence of activities that need to be executed repeatedly. The next steps are:
+To model a standard loop in BPMN, determine the activity or sequence of activities that need to be executed repeatedly.
+The next steps are:
 
 1. **Configure the Loop Characteristics**:
    - Add the loop marker to the activity symbol.
@@ -129,7 +132,8 @@ To model a standard loop in BPMN, determine the activity or sequence of activiti
 
 ### Example: Incrementing a Counter
 
-Consider a process designed to increment a counter variable until it reaches a specific value. This scenario is effectively managed using a standard loop in BPMN.
+Consider a process designed to increment a counter variable until it reaches a specific value.
+This scenario is effectively managed using a standard loop in BPMN.
 
 #### Process Overview
 

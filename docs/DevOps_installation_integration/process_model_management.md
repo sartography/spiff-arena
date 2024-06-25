@@ -40,6 +40,7 @@ Editing Process Models locally is another perfectly good option, depending on yo
     * Each webhook call from the git remote will result in a git pull in the backend.
 
 ## Editing Process Models locally
+
 Rather than editing your process models on a shared server, you can choose to make all process model changes locally.
 There are other guides for running SpiffWorkflow on your local computer, so follow the one that you prefer (docker compose or native).
 Then, when your process model repo is configured as you desire, you can run it in a read only mode on your shared environments like dev, staging, and prod.

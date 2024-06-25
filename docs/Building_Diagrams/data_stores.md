@@ -12,9 +12,11 @@ If you have a use case where you need to store data and access it from multiple 
 All of these mechanisms work well in SpiffWorkflow, so the choice will depend on your storage and performance requirements.
 
 ## Types of Data Store
+
 ### KKV Data Store in BPMN
 
-Key-Key-Value (KKV) Data Stores extend the traditional key-value model by introducing an additional key layer. This structure enables more complex and hierarchical data storage solutions, making them particularly suited for BPMN (Business Process Model and Notation) processes that manage multifaceted data relationships.
+Key-Key-Value (KKV) Data Stores extend the traditional key-value model by introducing an additional key layer.
+This structure enables more complex and hierarchical data storage solutions, making them particularly suited for BPMN (Business Process Model and Notation) processes that manage multifaceted data relationships.
 
 - **Structure**: A KKV data store organizes data into two levels of keys before reaching the actual value, e.g., `Genre -> Movie -> Attributes`. This structure is particularly beneficial for categorizing and accessing nested data efficiently.
 
@@ -22,7 +24,7 @@ Key-Key-Value (KKV) Data Stores extend the traditional key-value model by introd
 
 #### BPMN Integration
 
-Integrating KKV data stores within BPMN diagrams involves modeling tasks that interact with the data store for CRUD (Create, Read, Update, Delete) operations. 
+Integrating KKV data stores within BPMN diagrams involves modeling tasks that interact with the data store for CRUD (Create, Read, Update, Delete) operations.
 
 Here's how to depict such interactions using a BPMN example focused on movie data management:
 
@@ -65,7 +67,8 @@ After running the process, You can view the new movies data in data store:
 
 ### JSON Data Store
 
-In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process. A JSON data store is structured file or set of files that uses the JSON format to store data.
+In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process.
+A JSON data store is structured file or set of files that uses the JSON format to store data.
 
 #### JSON Data Store: Gatorade Flavors
 
@@ -149,4 +152,4 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 ![JSON data_store](images/DataStore_JSON_Output.png)
 
-By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data. 
+By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.

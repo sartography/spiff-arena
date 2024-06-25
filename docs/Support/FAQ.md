@@ -379,7 +379,8 @@ can I resolve this?
 
 **Answer:**
 
-Yes, SpiffWorkflow is well-suited for integrating with external systems, including CRM platforms. SpiffWorkflow can interact with these systems through various mechanisms to enhance your workflow capabilities.
+Yes, SpiffWorkflow is well-suited for integrating with external systems, including CRM platforms.
+SpiffWorkflow can interact with these systems through various mechanisms to enhance your workflow capabilities.
 
 **Key Integration Features:**
 
@@ -394,7 +395,8 @@ Yes, SpiffWorkflow is well-suited for integrating with external systems, includi
 
 **Example and Resources**:
 
-For practical implementation, refer to examples and guides available on SpiffWorkflow’s documentation site, such as the [external services integration example](https://spiffdemo.org/process-groups/examples:2-in-depth:2-2-external-services). This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
+For practical implementation, refer to examples and guides available on SpiffWorkflow’s documentation site, such as the [external services integration example](https://spiffdemo.org/process-groups/examples:2-in-depth:2-2-external-services).
+This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
 By adjusting the return value of your script task's `execute` method and understanding the underlying mechanics of task state management in SpiffWorkflow, you can effectively control the flow of your workflow processes.
 
 ### **40: Event Design in SpiffWorkflow**

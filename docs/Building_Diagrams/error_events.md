@@ -101,7 +101,8 @@ Prior to the service task's execution, one potential error ID is defined as `Err
 
 ![Error Event](images/error_event_example5.png)
 
-Attached to the service task, this event catches `Error_1`, setting an alternative path for error handling. The error details are stored in a variable named `err1`.
+Attached to the service task, this event catches `Error_1`, setting an alternative path for error handling.
+The error details are stored in a variable named `err1`.
 
 5. **Manual Tasks for Error Handling and Success Path**:
 

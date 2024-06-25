@@ -9,6 +9,7 @@ There are few options here:
 
 Please pick the one that best fits your needs.
 ## 1. Use the default make task
+
 You can set up a full development environment for SpiffWorkflow like this:
 ```sh
 git clone https://github.com/sartography/spiff-arena.git

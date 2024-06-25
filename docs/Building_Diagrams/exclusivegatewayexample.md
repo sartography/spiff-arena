@@ -1,9 +1,12 @@
 # Exclusive Gateways Example
 
 ## Overview
-Exclusive Gateways in BPMN serve as decision points that dictate the flow of a process based on conditional logic. This example demonstrates the use of an Exclusive Gateway to manage conditional routing following user input from a form.
+
+Exclusive Gateways in BPMN serve as decision points that dictate the flow of a process based on conditional logic.
+This example demonstrates the use of an Exclusive Gateway to manage conditional routing following user input from a form.
 
 ##  Process Steps
+
 ![User Task](images/exclusivegatewayexample.png)
 
 1. **User Task: Show User Form**
@@ -58,6 +61,6 @@ Exclusive Gateways in BPMN serve as decision points that dictate the flow of a p
 
 After manual task, marks the completion of the process through end event.
 
-Therefore, Exclusive Gateways are critical in BPMN for managing decisions within the workflow that require conditional logic based on user input or other process variables. 
+Therefore, Exclusive Gateways are critical in BPMN for managing decisions within the workflow that require conditional logic based on user input or other process variables.
 
-They ensure that the process flow is correctly directed based on specific conditions, preventing incorrect executions and ensuring that the process adapts dynamically to varying inputs. 
+They ensure that the process flow is correctly directed based on specific conditions, preventing incorrect executions and ensuring that the process adapts dynamically to varying inputs.

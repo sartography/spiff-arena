@@ -2,11 +2,12 @@
 
 ## Overview
 
-This example illustrates the use of parallel gateways in BPMN models to manage and synchronize concurrent tasks effectively. 
+This example illustrates the use of parallel gateways in BPMN models to manage and synchronize concurrent tasks effectively.
 
 Parallel gateways are powerful BPMN elements that split a process flow into multiple independent flows, allowing for simultaneous execution of tasks, and later merging these flows to ensure coordination before moving forward.
 
 ### Process Steps
+
 ![Parallel Gateway Example](images/parallel_gateway_ex1.png)
 1. **Parallel Gateway (Split)**: After the start event, the gateway divides the main flow into two separate paths, enabling tasks to be processed in parallel.
 

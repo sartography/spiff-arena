@@ -72,12 +72,14 @@ Remember that each pool requires Lane configuration, even if it contains just a 
 | ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
 ---
 ### Example: Using Lanes and Pools for Petty Cash Request Process
-This example demonstrates the application of Lanes and pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization. 
+
+This example demonstrates the application of Lanes and pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization.
 
 The process is structured around different tasks allocated to lane and pools, emphasizing role-based access and task execution.
 
 
 #### BPMN Diagram
+
 ![Lanes and Pools Example](images/lanes_pools_example_1.png)
 
 **Process Flow:**   
@@ -104,7 +106,8 @@ After approval, the workflow returns to the Requester Lane for final confirmatio
 Your petty cash request for {{amount}} has been approved by {{approved_by}}
 ```
 
-This message informs the requester of the approval status, including the approved amount and the name of the approver. After manual task, marks the end of the process.
+This message informs the requester of the approval status, including the approved amount and the name of the approver.
+After manual task, marks the end of the process.
 
 ![Lanes and Pools Example](images/lanes_pools_example_4.png)
 
@@ -113,7 +116,8 @@ This BPMN diagram effectively uses Lanes and pools to structure a petty cash req
 
 ## Managing Approval Processes for Designated Group Users
 
-One common requirement in workflow management is creating an approval process where any user can initiate a request, but only a designated group can grant approval. A specific challenge arises when the initiator is also a member of the approval group and should not approve their own request. 
+One common requirement in workflow management is creating an approval process where any user can initiate a request, but only a designated group can grant approval.
+A specific challenge arises when the initiator is also a member of the approval group and should not approve their own request.
 
 Let's consider a typical approval process where:
 
@@ -151,11 +155,12 @@ This solution automatically adjusts the approvers list to exclude the initiator,
 ---
 ## Assigning Lane Owners
 
-Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization. 
+Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization.
 
 Lets discuss the methods for assigning lane owners:
 
 ### Methods to Assign Lane Owners:
+
 1. **Using Script Tasks**:
    - Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic, ensuring that tasks are routed correctly based on current operational needs or specific conditions.
    - **Example**:
@@ -187,7 +192,9 @@ Lets discuss the methods for assigning lane owners:
    - This configuration shows how different user roles, such as admins and reviewers, are populated with specific users.
 
 ### Practical Application in a BPMN Model:
-In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process. For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
+
+In a typical BPMN workflow, lane assignments are crucial for managing who performs various tasks within the process.
+For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
 
 - **Process Start**
   - The process begins and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"

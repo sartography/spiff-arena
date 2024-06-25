@@ -1,6 +1,7 @@
 # Technical Overview
 
 ## Components
+
 ```mermaid
 graph TD
 subgraph spiff-arena
