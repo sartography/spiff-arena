@@ -174,7 +174,7 @@ class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # t
         return dict(self.state.items())
 
     def clear_state(self) -> None:
-        pass
+        self.state = {}
 
     def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
         return {}
@@ -209,6 +209,35 @@ class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, Ta
             if key in context:
                 context.pop(key)
         self.state = context
+        self.state = self.user_defined_state(external_context)
+        return True
+
+class Tmp_NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
+    def __init__(self, environment_globals: dict[str, Any]):
+        self.state: dict[str, Any] = {}
+        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
+        super().__init__(environment_globals)
+
+    def execute(
+        self,
+        script: str,
+        context: dict[str, Any],
+        external_context: dict[str, Any] | None = None,
+    ) -> bool:
+        self.state = {}
+        self.state.update(self.globals)
+        self.state.update(external_context or {})
+        self.state.update(context)
+        
+        exec(script, self.state)  # noqa
+
+        self.state = self.user_defined_state(external_context)
+        
+        # the task data needs to be updated with the current state so data references can be resolved properly.
+        # the state will be removed later once the task is completed.
+        context.clear()
+        context.update(self.state)
+
         return True
 
 
@@ -239,6 +268,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
         context: dict[str, Any],
         external_context: dict[str, Any] | None = None,
     ) -> bool:
+        self.state = {}
         self.state.update(self.globals)
         self.state.update(external_context or {})
         self.state.update(context)
@@ -268,9 +298,6 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
 
     def last_result(self) -> dict[str, Any]:
         return dict(self.state.items())
-
-    def clear_state(self) -> None:
-        self.state = {}
 
     def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
@@ -306,6 +333,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
 class CustomScriptEngineEnvironment:
     @staticmethod
     def create(environment_globals: dict[str, Any]) -> BaseCustomScriptEngineEnvironment:
+        return Tmp_NonTaskDataBasedScriptEngineEnvironment(environment_globals)
         if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_NON_TASK_DATA_BASED_SCRIPT_ENGINE_ENVIRONMENT") == "true":
             return NonTaskDataBasedScriptEngineEnvironment(environment_globals)
 
