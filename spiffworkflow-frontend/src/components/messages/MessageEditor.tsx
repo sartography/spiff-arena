@@ -89,6 +89,7 @@ export function MessageEditor({
 
   const updateProcessGroupWithMessages = useCallback(
     (formObject: RJSFFormObject) => {
+      console.log('on submit');
       const { formData } = formObject;
 
       if (!processGroup) {

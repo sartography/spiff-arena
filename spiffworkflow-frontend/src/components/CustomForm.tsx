@@ -1,5 +1,5 @@
 import validator from '@rjsf/validator-ajv8';
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@carbon/react';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -502,6 +502,25 @@ export default function CustomForm({
 
   let childrenToUse = children;
   const submitButtonRef = useRef<HTMLButtonElement | null>(null);
+  
+
+  useEffect(() => {
+    if (bpmnEvent && submitButtonText) {
+      const triggerSaveEvent = (event: any) => {
+        if (submitButtonRef.current) {
+          submitButtonRef.current.click();
+        }
+        event.stopPropagation();
+      };
+
+      bpmnEvent.eventBus.on('spiff.message.save', triggerSaveEvent);
+
+      return () => {
+        bpmnEvent.eventBus.off('spiff.message.save', triggerSaveEvent);
+      };
+    }
+  }, [bpmnEvent, submitButtonText]);
+
   if (submitButtonText) {
     childrenToUse = (
       <Button
@@ -514,16 +533,6 @@ export default function CustomForm({
         {submitButtonText}
       </Button>
     );
-  }
-
-  if(bpmnEvent && hideSubmitButton){
-    const triggerSaveEvent = (_event: any) => {
-      submitButtonRef.current?.click();
-      _event.preventDefault();
-      _event.stopPropagation();
-    };
-
-    bpmnEvent.eventBus.on('spiff.message.save', triggerSaveEvent);
   }
 
   const formProps = {
