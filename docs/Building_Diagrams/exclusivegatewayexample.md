@@ -22,22 +22,6 @@ Exclusive Gateways in BPMN serve as decision points that dictate the flow of a p
            "type": "string",
            "title": "First name",
            "default": "Chuck"
-         },
-         "done": {
-           "type": "boolean",
-           "title": "Done?",
-           "default": false
-         },
-         "delivery_date": {
-           "type": "string",
-           "format": "date",
-           "title": "Preferred Delivery Date",
-           "validationErrorMessage": "Date must be today's date or later"
-         },
-         "favoriteFruit": {
-           "title": "Select your favorite fruit",
-           "type": "string",
-           "enum": ["options_from_task_data_var:fruits"]
          }
        }
      }
