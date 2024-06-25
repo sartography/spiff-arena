@@ -1,3 +1,7 @@
+# Welcome Messages in SpiffWorkflow
+
+## Introduction
+
 The welcome message is the greeting users see when they log into the platform.
 It sets the tone for their experience and can be customized to fit the needs of your organization or specific user groups.
 By customizing the welcome message, **administrators** can tailor the user experience, making it more personalized and relevant to the audience.
@@ -7,7 +11,7 @@ This guide will walk you through the steps to modify this message in SpiffWorkfl
 ## Steps to Update the Welcome Message
 
 1. **Open the Process:**
-Navigate to the onboarding process model within SpiffWorkflow.
+   Navigate to the onboarding process model within SpiffWorkflow.
 
    ![Process Model](images/onboarding_1.png)
 
@@ -16,7 +20,7 @@ Navigate to the onboarding process model within SpiffWorkflow.
    Ensure you're at the path `siteadministration.onboarding`.
    This path is crucial as it's the trigger for the welcome message.
 
-    ![Access Welcome file](images/onboarding_2.png)
+   ![Access Welcome file](images/onboarding_2.png)
 
 3. **Locate the End Event:**
    The end event within this process contains the welcome message.

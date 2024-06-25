@@ -46,6 +46,7 @@ system_text = """You are proofreading and you will receive text that is almost e
 - output 1 line per sentence (same as input)
 - Do not put multiple sentences on the same line
 - Do not leave any trailing spaces
+- Make sure you do not remove the first header in a file that begins with a single #
 """
 
 system_prompt = SystemMessage(content=system_text)
