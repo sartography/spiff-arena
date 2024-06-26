@@ -23,7 +23,6 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
         "result_serializer": "json",
         "accept_content": ["json"],
         "enable_utc": True,
-        "worker_redirects_stdouts": False,
         "worker_redirect_stdouts_level": "DEBUG",
     }
 
