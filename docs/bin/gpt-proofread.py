@@ -3,8 +3,8 @@
 import sys
 import os
 from langchain.prompts import PromptTemplate
-from langchain.chat_models import ChatOpenAI
-from langchain.text_splitter import MarkdownTextSplitter
+from langchain_openai import ChatOpenAI
+from langchain.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.prompts.chat import (
     ChatPromptTemplate,
@@ -66,28 +66,35 @@ llm = ChatOpenAI(openai_api_key=openai_api_key, model=model, request_timeout=240
 
 
 def process_file(input_file):
-
     with open(input_file, "r") as f:
         content = f.read()
 
     # Markdown splitter didn't work so well
     # splitter = MarkdownTextSplitter(chunk_size=1000, chunk_overlap=0)
-
-    # FIXME: actually split
-    # splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=1000, chunk_overlap=0)
-    # docs = splitter.split_text(content)
-    docs = [content]
+    splitter = CharacterTextSplitter(chunk_size=13000, chunk_overlap=0)
+    docs = splitter.split_text(content)
 
     print("Split into {} docs".format(len(docs)))
     chat_prompt = ChatPromptTemplate.from_messages(
         [system_prompt, human_message_prompt]
     )
 
+    os.makedirs("/tmp/proof-edits", exist_ok=True)
+
     with open(input_file, "w") as f:
-        for doc in docs:
-            print(f"doc: {doc}")
-            result = llm(chat_prompt.format_prompt(text=doc).to_messages())
-            print(result.content)
+        for i, doc in enumerate(docs):
+            chunk_file = f"/tmp/proof-edits/chunk_{i}.txt"
+            with open(chunk_file, "w") as chunk_f:
+                chunk_f.write(doc)
+            print(f"Chunk {i} written to {chunk_file}")
+        for i, doc in enumerate(docs):
+            result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
+            f.write(result.content + "\n")
+            edited_chunk_file = f"/tmp/proof-edits/edited_chunk_{i}.txt"
+            with open(edited_chunk_file, "w") as edited_chunk_f:
+                edited_chunk_f.write(result.content)
+            print(f"Edited chunk {i} written to {edited_chunk_file}")
+            result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
             f.write(result.content + "\n")
 
     print(f"Edited file saved as {input_file}")
