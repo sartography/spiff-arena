@@ -83,18 +83,17 @@ def process_file(input_file):
 
     with open(input_file, "w") as f:
         for i, doc in enumerate(docs):
-            chunk_file = f"/tmp/proof-edits/chunk_{i}.txt"
-            with open(chunk_file, "w") as chunk_f:
-                chunk_f.write(doc)
-            print(f"Chunk {i} written to {chunk_file}")
-        for i, doc in enumerate(docs):
             result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
-            f.write(result.content + "\n")
-            edited_chunk_file = f"/tmp/proof-edits/edited_chunk_{i}.txt"
-            with open(edited_chunk_file, "w") as edited_chunk_f:
-                edited_chunk_f.write(result.content)
-            print(f"Edited chunk {i} written to {edited_chunk_file}")
-            result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
+            if os.environ.get("DEBUG") == "true":
+                chunk_file = f"/tmp/proof-edits/chunk_{i}.txt"
+                with open(chunk_file, "w") as chunk_f:
+                    chunk_f.write(doc)
+                print(f"Chunk {i} written to {chunk_file}")
+                f.write(result.content + "\n")
+                edited_chunk_file = f"/tmp/proof-edits/edited_chunk_{i}.txt"
+                with open(edited_chunk_file, "w") as edited_chunk_f:
+                    edited_chunk_f.write(result.content)
+                print(f"Edited chunk {i} written to {edited_chunk_file}")
             f.write(result.content + "\n")
 
     print(f"Edited file saved as {input_file}")
