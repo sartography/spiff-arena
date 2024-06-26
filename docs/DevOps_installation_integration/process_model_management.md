@@ -19,7 +19,7 @@ Editing process models locally is another perfectly good option, depending on yo
 
 ## Bidirectional Syncing with Git
 
-1. Configure the environment to have a single replica for SpiffWorkflow-backend.
+1. Configure the environment to have a single replica for spiffworkflow-backend.
 2. Make your process model repository available to the backend, potentially by:
     * Cloning your repository as the container boots, either via an init container or as part of the startup command.
     * Getting the repo onto a persistent volume that can be mounted into your container
@@ -44,7 +44,7 @@ Editing process models locally is another perfectly good option, depending on yo
 Rather than editing your process models on a shared server, you can choose to make all process model changes locally.
 There are other guides for running SpiffWorkflow on your local computer, so follow the one that you prefer (Docker Compose or native).
 Then, when your process model repo is configured as you desire, you can run it in a read-only mode on your shared environments like dev, staging, and prod.
-To do that, follow step 2 under Bidirectional Syncing with Git, but you also have an additional option of "baking the models in" to your SpiffWorkflow-backend image.
+To do that, follow step 2 under Bidirectional Syncing with Git, but you also have an additional option of "baking the models in" to your spiffworkflow-backend image.
 That is, you could choose to write a Dockerfile like:
 
 ```Dockerfile
