@@ -20,9 +20,9 @@ By leveraging Jinja's syntax and functionality, you can customize your content t
 ## Combining Markdown and Jinja: Unleashing the Power
 
 By utilizing the strengths of Markdown and Jinja, you can create rich, interactive, and data-driven content that goes beyond static text.
-We'll demonstrate using an example on how to leverage Markdown and Jinja together to create captivating content that responds to user input and presents dynamic information.
+We'll demonstrate using an example of how to leverage Markdown and Jinja together to create captivating content that responds to user input and presents dynamic information.
 
-## Basic Example for displaying content
+## Basic Example for Displaying Content
 
 In our SpiffArena dashboard, we have a simple example of how to display content in the basics section.
 Now, let's explore the process workflow of the content display process model and discover various ways to present content in different scenarios.
@@ -79,4 +79,3 @@ The process concludes with an End Event, indicating the end of the workflow.
 The instructions panel of the End Event suggests next steps, such as exploring the diagram in edit mode and completing the "Request a Playground" task.
 
 ![Image](images/end_message.png)
-

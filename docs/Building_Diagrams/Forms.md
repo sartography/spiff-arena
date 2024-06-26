@@ -463,7 +463,7 @@ This structure can be represented in the form's schema as follows:
 
 ![Nested Forms](images/Nested_form_display.png)
 
-By usign this feature, you can effectively implement new buttons for nested forms or repeating sections improving the form's usability for collecting multiple related entries from users.
+By using this feature, you can effectively implement new buttons for nested forms or repeating sections, improving the form's usability for collecting multiple related entries from users.
 
 ### Character counter
 

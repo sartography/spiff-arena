@@ -6,14 +6,16 @@ The permission URL, or target URI, refers to the specific endpoint or resource t
 - **PM:** [process_model_identifier]: Applies to the specified process model.
 - **BASIC:** Allows basic access to complete tasks and use the site.
 - **SUPPORT:** BASIC permissions plus significant administrative permissions.
-- **ELEVATED:** Includes SUPPORT permissions and adds the ability to view and modify secrets. Does not include the ability to view or modify process groups and process models.
+- **ELEVATED:** Includes SUPPORT permissions and adds the ability to view and modify secrets. 
+Does not include the ability to view or modify process groups and process models.
 - **ALL:** Grants access to all API endpoints, without any limitations.
 
 ```{admonition} Note
-An asterisk (*) can be used as a wildcard to give access to everything within a specific category. For example, `/process-models/*`, allows access to all resources related to process models.
+An asterisk (*) can be used as a wildcard to give access to everything within a specific category. 
+For example, `/process-models/*` allows access to all resources related to process models.
 ```
 
-This functionality is implemented in [authorization service.py](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py).
+This functionality is implemented in [authorization_service.py](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py).
 
 (pg)=
 ## PG
@@ -124,4 +126,3 @@ It provides administrator-level permissions, allowing the user to perform any ac
   /users/exists/by-username:
   /users/search:
 ```
-

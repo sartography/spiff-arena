@@ -29,7 +29,9 @@ This ensures that the process can still progress even if none of the explicitly 
 ![exclusive_gateway_default](images/exclusive_gateway_default.png)
 
 **Challenges:**
-Avoiding conflicting conditions is straightforward when evaluating only one variable that can have only one value (see image 1 below). However, with more complex conditions, it's crucial to carefully structure logical expressions ensuring that only one condition can be true at a time. This becomes especially important when dealing with multiple variables or scenarios that could potentially lead to conflicting conditions.
+Avoiding conflicting conditions is straightforward when evaluating only one variable that can have only one value (see image 1 below).
+However, with more complex conditions, it's crucial to carefully structure logical expressions ensuring that only one condition can be true at a time.
+This becomes especially important when dealing with multiple variables or scenarios that could potentially lead to conflicting conditions.
 
 ![exclusive_gateway_examples](images/exclusive_gateway_examples.png)
 
@@ -42,7 +44,8 @@ This can be particularly useful when dealing with scenarios where additional pay
 You won't have to modify the expression whenever new payment gateways are added, only if the underlying logic changes (see image 4 above).
 
 **Join:**
-To join or merge an Exclusive Gateway (see Image 1) is not mandatory; it depends on the specific scenario. When the process encounters the Exclusive Merge, only one of the incoming sequence flows will be activated, indicating which path was completed first or satisfied its specific condition.
+To join or merge an Exclusive Gateway (see Image 1) is not mandatory; it depends on the specific scenario.
+When the process encounters the Exclusive Merge, only one of the incoming sequence flows will be activated, indicating which path was completed first or satisfied its specific condition.
 
 While the Exclusive Merge is commonly used alongside the Exclusive Gateway, it is also compatible with other gateway types in BPMN.
 It serves as a valuable mechanism for synchronizing and consolidating multiple parallel paths, ensuring that only one path is followed based on the given conditions.
@@ -50,6 +53,7 @@ It serves as a valuable mechanism for synchronizing and consolidating multiple p
 ![exclusive_merge](images/exclusive_merge.png)
 
 Check out this detailed exclusive gateway example:
+
 ```{toctree}
 :maxdepth: 1
 exclusivegatewayexample.md
@@ -70,15 +74,16 @@ Each outgoing sequence flow can have a condition associated with it, but even if
 ![inclusive_gateway_mp](images/inclusive_gateway_mp.png)
 
 **Challenges:**
-At least one path should be true for the process to continue. Unlike an Exclusive Gateway, where only one path can be taken based on the conditions, the Inclusive Gateway evaluates all incoming sequence flows and enables all the paths for which the conditions are met.
+At least one path should be true for the process to continue.
+Unlike an Exclusive Gateway, where only one path can be taken based on the conditions, the Inclusive Gateway evaluates all incoming sequence flows and enables all the paths for which the conditions are met.
 
 ![inclusive_gateway_conditions](images/inclusive_gateway_conditions.png)
 
-For example, in a career matching system, individuals can input their skillsets, educational qualifications, and work experience.
-An Inclusive Gateway can be employed to assess the compatibility of the individual's skillsets with various job roles.
+For example, in a career matching system, individuals can input their skill sets, educational qualifications, and work experience.
+An Inclusive Gateway can be employed to assess the compatibility of the individual's skill sets with various job roles.
 The process may diverge into multiple paths, each representing different job categories.
 For example, some candidates may possess strong problem-solving skills but lack coding proficiency, making them suitable for specific departments that require problem-solving expertise.
-On the other hand, other candidates might have a combination of problem-solving and coding skills, making them eligible for multiple departments where these skills are essential, this means the result is not exclusive to one path..
+On the other hand, other candidates might have a combination of problem-solving and coding skills, making them eligible for multiple departments where these skills are essential; this means the result is not exclusive to one path.
 
 **Join:**
 
@@ -105,7 +110,7 @@ Instead, it ensures that all outgoing paths are followed concurrently, regardles
 This means that tasks or activities connected to the outgoing sequence flows will be executed simultaneously and independently from one another.
 
 ```{admonition} Note
-⚠ Note that Default Flow is not possible with Parallel Gateways
+⚠ Note that Default Flow is not possible with Parallel Gateways.
 ```
 
 ![parallel_gateways](images/parallel_gateways.png)
@@ -114,9 +119,12 @@ This means that tasks or activities connected to the outgoing sequence flows wil
 Since a Parallel Gateway does not dictate the flow based on conditions, it avoids conflicts that may arise from complex decision-making logic.
 
 **Join:**
-Note that the behavior for a parallel join, also known as a Parallel Gateway merge, is to synchronize and consolidate multiple parallel paths into a single flow. When the process flow reaches the parallel join, it evaluates the completion of all incoming sequence flows from the corresponding parallel split. It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join.
+Note that the behavior for a parallel join, also known as a Parallel Gateway merge, is to synchronize and consolidate multiple parallel paths into a single flow.
+When the process flow reaches the parallel join, it evaluates the completion of all incoming sequence flows from the corresponding parallel split.
+It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join.
 
 Check out this detailed parallel gateway example:
+
 ```{toctree}
 :maxdepth: 1
 parallelgatewayexample.md
@@ -139,10 +147,10 @@ It's also crucial to understand that conditions aren't required for incoming seq
 
 **Gateway:**
 
-| 💻 Form | ⌨ Field Input | 📝 Description |
-| --- | --- | --- |
-| ![name_field](images/name_field.png) | **Name:** Update Customer Information | A descriptive name given to the element, providing a human-readable label or title. |
-| ![id_field](images/id_field.png) | **ID:** Example - updateCustomerInformation | An identifier used to uniquely identify the element within the BPMN model. |
+| 💻 Form                                                | ⌨ Field Input                                       | 📝 Description                                                                                         |
+| ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| ![name_field](images/name_field.png)                   | **Name:** Update Customer Information                | A descriptive name given to the element, providing a human-readable label or title.                    |
+| ![id_field](images/id_field.png)                       | **ID:** Example - updateCustomerInformation          | An identifier used to uniquely identify the element within the BPMN model.                             |
 | ![documentation_field](images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
 
 **Outgoing Sequence:**
@@ -151,6 +159,6 @@ It's also crucial to understand that conditions aren't required for incoming seq
 ⚠ All expressions, including expressions written on the outgoing sequence, are written in Python.
 ```
 
-| 💻 Form | ⌨ Field Input | 📝 Description |
-| --- | --- | --- |
+| 💻 Form                              | ⌨ Field Input                                 | 📝 Description                                                                        |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------- |
 | ![conditions](images/conditions.png) | **Condition:** payment_method == "credit_card" | Python expression. Note that multiple conditions can be strung together using AND/OR. |

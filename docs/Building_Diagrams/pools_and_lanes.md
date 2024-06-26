@@ -13,7 +13,6 @@ A process can have one or more Pools, each with one or more Lanes.
 - They categorize tasks or activities based on specific roles.
 - They bring structure and organization to complex diagrams that involve multiple roles, departments, or stakeholders.
 
-
 ## Pools
 
 A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool".
@@ -48,7 +47,7 @@ Configuring an "Empty Pool" (collapsed) to represent an external entity such as 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
 | ![participant_sales](images/participant_customer_1.png) | **Participant Name:** Sales, **Participant ID:** sales, | A clear and descriptive name serves as a human-readable label or title for the participant. Additionally, a unique ID is essential to distinguish the participant from other participants. |
-| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or Reference a Data Object to store information for sharing between entities. |
+| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or reference a Data Object to store information for sharing between entities. |
 
 **Expanded Pool configuration:**
 
@@ -57,7 +56,7 @@ Setting up an "Expanded Pool" requires referencing the process, in contrast to t
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
 | ![participant_sales](images/participant_sales_1.png) | **Participant Name:** Sales, **Participant ID:** sales,  **Process ID:** process_order, **Process Name:** Process Order | A clear and descriptive name serves as a human-readable label or title for both the participant and the process. Additionally, a unique ID is essential to distinguish both the participant and the process from others. |
-| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or Reference a Data Object to store information for sharing between entities. |
+| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or reference a Data Object to store information for sharing between entities. |
 
 **Collapsed Pool configuration:**
 
@@ -70,19 +69,19 @@ Remember that each pool requires Lane configuration, even if it contains just a 
 | --- | --- | --- |
 | ![participant_sales](images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
 | ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
+
 ---
 ### Example: Using Lanes and Pools for Petty Cash Request Process
 
-This example demonstrates the application of Lanes and pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization.
+This example demonstrates the application of Lanes and Pools in a BPMN diagram, specifically designed to handle a petty cash request process within an organization.
 
-The process is structured around different tasks allocated to lane and pools, emphasizing role-based access and task execution.
-
+The process is structured around different tasks allocated to Lanes and Pools, emphasizing role-based access and task execution.
 
 #### BPMN Diagram
 
 ![Lanes and Pools Example](images/lanes_pools_example_1.png)
 
-**Process Flow:**   
+**Process Flow:**
 
 1. **Start Event**: The workflow kicks off with a start event signaling the initiation of a petty cash request.
 
@@ -107,12 +106,11 @@ Your petty cash request for {{amount}} has been approved by {{approved_by}}
 ```
 
 This message informs the requester of the approval status, including the approved amount and the name of the approver.
-After manual task, marks the end of the process.
+After the manual task, marks the end of the process.
 
 ![Lanes and Pools Example](images/lanes_pools_example_4.png)
 
-This BPMN diagram effectively uses Lanes and pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
-
+This BPMN diagram effectively uses Lanes and Pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
 
 ## Managing Approval Processes for Designated Group Users
 
@@ -157,7 +155,7 @@ This solution automatically adjusts the approvers list to exclude the initiator,
 
 Assigning lane owners correctly in BPMN workflows is important for ensuring that tasks are routed to the appropriate personnel or departments within an organization.
 
-Lets discuss the methods for assigning lane owners:
+Let's discuss the methods for assigning lane owners:
 
 ### Methods to Assign Lane Owners:
 
@@ -173,9 +171,9 @@ Lets discuss the methods for assigning lane owners:
    - This script explicitly sets who the lane owners are for the 'Reviewer' lane. The names provided in the dictionary map directly to the users responsible for this lane.
 
 2. **Assigning User Groups**:
-   - In cases where script tasks are not used for direct assignments, lane owners can be specified by utilizing predefined user groups within DB. 
+   - In cases where script tasks are not used for direct assignments, lane owners can be specified by utilizing predefined user groups within DB.
    - **How to Configure User Groups**:
-     - User groups can be assigned in the system configuration, often in a YAML file, which defines which users belong to specific groups. More information [in admins and permissions section](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#setting-up-admin-in-config-yaml)
+     - User groups can be assigned in the system configuration, often in a YAML file, which defines which users belong to specific groups. More information is available [in the admins and permissions section](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#setting-up-admin-in-config-yaml).
 
      - **Example YAML Configuration**:
        ```yaml
@@ -197,7 +195,7 @@ In a typical BPMN workflow, lane assignments are crucial for managing who perfor
 For example, a process might involve several departments or roles, each represented by a lane in the workflow model.
 
 - **Process Start**
-  - The process begins and an initial script task sets the lane owners. Below BPMN model effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers"
+  - The process begins and an initial script task sets the lane owners. The BPMN model below effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers".
 
 ![Lane Owners](images/lane_owners.png)
 
@@ -206,5 +204,5 @@ For example, a process might involve several departments or roles, each represen
   - If a lane owner is not set using a script task and no explicit assignment is provided, the engine queries the group name to determine potential task owners from DB.
 
 ```{admonition} Note
-⚠ Specifying a user group in the `lane_owners` dictionary in script task does not require it to previously exist in the database. 
+⚠ Specifying a user group in the `lane_owners` dictionary in a script task does not require it to previously exist in the database.
 ```

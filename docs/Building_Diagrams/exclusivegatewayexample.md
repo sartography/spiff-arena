@@ -5,7 +5,7 @@
 Exclusive Gateways in BPMN serve as decision points that dictate the flow of a process based on conditional logic.
 This example demonstrates the use of an Exclusive Gateway to manage conditional routing following user input from a form.
 
-##  Process Steps
+## Process Steps
 
 ![User Task](images/exclusivegatewayexample.png)
 
@@ -39,7 +39,7 @@ This example demonstrates the use of an Exclusive Gateway to manage conditional 
     ![Sequence Flows](images/exclusivegatewayexample3.png)
     
     **For 'Others' Sequence Flow**:
-    - **Condition Expression**: ``firstName != "Chuck""``
+    - **Condition Expression**: `firstName != "Chuck"`
     - Goes to **Manual Task**: "Hello to Others" displays a greeting to non-Chuck users.
 
     **b**. **Chuck**: Directs to a personalized greeting for users named "Chuck."
@@ -47,19 +47,18 @@ This example demonstrates the use of an Exclusive Gateway to manage conditional 
     ![Sequence Flows](images/exclusivegatewayexample4.png)
     
     **For 'Chuck' Sequence Flow**:
-    - **Condition Expression**: ``firstName=="Chuck"``
+    - **Condition Expression**: `firstName == "Chuck"`
     - Goes to **Manual Task**: "Hi to Chuck" delivers a custom greeting to users named Chuck.
 
-
-3. **Exclusive Gateway Merge**: Merges the paths from Manual tasks: "Hello to Others" and "Hi to Chuck," continuing to the next unified step in the process.
+3. **Exclusive Gateway Merge**: Merges the paths from manual tasks: "Hello to Others" and "Hi to Chuck," continuing to the next unified step in the process.
 
 ![Exclusive Gateway Merge](images/exclusivegatewayexample5.png)
 
-4. **Manual Task: Show End Message**: Concludes the interaction by displaying a closing message. and displays "Thank you for your participation, {{firstName}}."
+4. **Manual Task: Show End Message**: Concludes the interaction by displaying a closing message and displays "Thank you for your participation, {{firstName}}."
 
 ![Exclusive Gateway Merge](images/exclusivegatewayexample6.png)
 
-After manual task, marks the completion of the process through end event.
+After the manual task, marks the completion of the process through the end event.
 
 Therefore, Exclusive Gateways are critical in BPMN for managing decisions within the workflow that require conditional logic based on user input or other process variables.
 
