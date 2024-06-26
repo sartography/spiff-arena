@@ -33,20 +33,20 @@ human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
 # - short and focused
 # - clear over fun
 # - brief over verbose
+# - Do not leave any trailing spaces (handled by another script, though)
+# - Never remove entire sentences (didn't seem necessary, since we said keep everything else exactly the same)
 
 system_text = """You are proofreading and you will receive text that is almost exactly correct, but may contain errors. You should:
 
 - Fix spelling
 - Improve grammar that is obviously wrong
 - Fix awkward language if it is really bad
-- keep everything else exactly the same, including tone and voice
-- don't change markdown syntax, e.g. keep [@reference]
-- Never remove entire sentences
-- never cut jokes
-- output 1 line per sentence (same as input)
-- Do not put multiple sentences on the same line
-- Do not leave any trailing spaces
-- Make sure you do not remove the first header in a file that begins with a single #
+- Keep everything else exactly the same, including tone and voice
+- not change the case of words unless they are obviously wrong
+- Avoid changing markdown syntax, e.g. keep [@reference]
+- Output one line per sentence (same as input)
+- Avoid putting multiple sentences on the same line
+- Make sure you do not remove any headers at the beginning of the text (markdown headers begin with one or more # characters)
 """
 
 system_prompt = SystemMessage(content=system_text)
@@ -120,6 +120,10 @@ def process_file(input_file):
                         edited_result_content
                     ) > 0.95 * len(doc):
                         break
+                else:
+                    raise ValueError(
+                        f"Failed to process chunk {i} of {input_file} after 3 retries."
+                    )
 
             if os.environ.get("DEBUG") == "true":
                 chunk_file = f"/tmp/proof-edits/chunk_{i}.txt"
