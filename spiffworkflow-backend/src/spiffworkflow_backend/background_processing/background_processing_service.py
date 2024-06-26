@@ -2,6 +2,7 @@ import time
 
 import flask
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_future_task_if_appropriate,
@@ -98,7 +99,10 @@ class BackgroundProcessingService:
                 FutureTaskModel.completed == False,  # noqa: E712
                 FutureTaskModel.archived_for_process_instance_status == False,  # noqa: E712
                 FutureTaskModel.run_at_in_seconds < lookahead,
-                FutureTaskModel.queued_to_run_at_in_seconds != FutureTaskModel.run_at_in_seconds,
+                or_(
+                    FutureTaskModel.queued_to_run_at_in_seconds != FutureTaskModel.run_at_in_seconds,
+                    FutureTaskModel.queued_to_run_at_in_seconds == None,  # noqa: E711
+                ),
             )
         ).all()
         return future_tasks
