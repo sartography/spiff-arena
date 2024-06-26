@@ -84,17 +84,35 @@ def process_file(input_file):
     with open(input_file, "w") as f:
         for i, doc in enumerate(docs):
             result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
+            edited_result_content = result.content
+
+            # compare edited_result_content with doc and see if the size is off by more than 5%
+            # if it is, try again, up to 3 times
+            if len(edited_result_content) > 1.05 * len(doc) or len(
+                edited_result_content
+            ) < 0.95 * len(doc):
+                print(f"Chunk {i} size after edit is off by more than 5%")
+                for j in range(3):
+                    print(f"Trying again {j+1}")
+                    result = llm.invoke(
+                        chat_prompt.format_prompt(text=doc).to_messages()
+                    )
+                    edited_result_content = result.content
+                    if len(edited_result_content) < 1.05 * len(doc) and len(
+                        edited_result_content
+                    ) > 0.95 * len(doc):
+                        break
+
             if os.environ.get("DEBUG") == "true":
                 chunk_file = f"/tmp/proof-edits/chunk_{i}.txt"
                 with open(chunk_file, "w") as chunk_f:
                     chunk_f.write(doc)
                 print(f"Chunk {i} written to {chunk_file}")
-                f.write(result.content + "\n")
                 edited_chunk_file = f"/tmp/proof-edits/edited_chunk_{i}.txt"
                 with open(edited_chunk_file, "w") as edited_chunk_f:
-                    edited_chunk_f.write(result.content)
+                    edited_chunk_f.write(edited_result_content)
                 print(f"Edited chunk {i} written to {edited_chunk_file}")
-            f.write(result.content + "\n")
+            f.write(edited_result_content + "\n")
 
     print(f"Edited file saved as {input_file}")
 
