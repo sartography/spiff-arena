@@ -13,5 +13,3 @@ file_to_use="${1:-$file}"
 
 gitc "$file_to_use"
 python bin/gpt-proofread.py "$file_to_use"
-qmd_file="$(echo "$file_to_use" | sed 's/\.md$/.qmd/')"
-mv "$qmd_file" "$file_to_use"

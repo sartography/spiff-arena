@@ -66,7 +66,6 @@ llm = ChatOpenAI(openai_api_key=openai_api_key, model=model, request_timeout=240
 
 
 def process_file(input_file):
-    output_file = os.path.splitext(input_file)[0] + ".qmd"
 
     with open(input_file, "r") as f:
         content = f.read()
@@ -84,14 +83,14 @@ def process_file(input_file):
         [system_prompt, human_message_prompt]
     )
 
-    with open(output_file, "w") as f:
+    with open(input_file, "w") as f:
         for doc in docs:
             print(f"doc: {doc}")
             result = llm(chat_prompt.format_prompt(text=doc).to_messages())
             print(result.content)
             f.write(result.content + "\n")
 
-    print(f"Edited file saved as {output_file}")
+    print(f"Edited file saved as {input_file}")
 
 
 if __name__ == "__main__":
