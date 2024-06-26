@@ -38,7 +38,6 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -280,6 +279,7 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
+        should_schedule_waiting_timer_events: bool = True,
     ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
         processor = None
         task_runnability = TaskRunnability.unknown_if_ready_tasks
@@ -302,6 +302,7 @@ class ProcessInstanceService:
             task_runnability = processor.do_engine_steps(
                 save=True,
                 execution_strategy_name=execution_strategy_name,
+                should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
             )
 
         return (processor, task_runnability)

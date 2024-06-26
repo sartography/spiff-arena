@@ -1,3 +1,4 @@
+import copy
 import time
 from dataclasses import dataclass
 
@@ -19,6 +20,7 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
 
     guid: str = db.Column(ForeignKey(TaskModel.guid, ondelete="CASCADE", name="future_task_task_guid_fk"), primary_key=True)
     run_at_in_seconds: int = db.Column(db.Integer, nullable=False, index=True)
+    queued_to_run_at_in_seconds: int = db.Column(db.Integer, nullable=True, index=True)
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
     archived_for_process_instance_status: bool = db.Column(
         db.Boolean,
@@ -31,20 +33,23 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
     @classmethod
-    def insert_or_update(cls, guid: str, run_at_in_seconds: int) -> None:
-        task_info = [
-            {
-                "guid": guid,
-                "run_at_in_seconds": run_at_in_seconds,
-                "updated_at_in_seconds": round(time.time()),
-            }
-        ]
+    def insert_or_update(cls, guid: str, run_at_in_seconds: int, queued_to_run_at_in_seconds: int | None = None) -> None:
+        task_info: dict[str, int | str | None] = {
+            "guid": guid,
+            "run_at_in_seconds": run_at_in_seconds,
+            "updated_at_in_seconds": round(time.time()),
+        }
+
+        if queued_to_run_at_in_seconds is not None:
+            task_info["queued_to_run_at_in_seconds"] = queued_to_run_at_in_seconds
+
+        new_values = copy.copy(task_info)
+        del new_values["guid"]
+
         on_duplicate_key_stmt = None
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
             insert_stmt = mysql_insert(FutureTaskModel).values(task_info)
-            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-                run_at_in_seconds=insert_stmt.inserted.run_at_in_seconds, updated_at_in_seconds=round(time.time())
-            )
+            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(**new_values)
         else:
             insert_stmt = None
             if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "sqlite":
@@ -53,6 +58,6 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
                 insert_stmt = postgres_insert(FutureTaskModel).values(task_info)
             on_duplicate_key_stmt = insert_stmt.on_conflict_do_update(
                 index_elements=["guid"],
-                set_={"run_at_in_seconds": run_at_in_seconds, "updated_at_in_seconds": round(time.time())},
+                set_=new_values,
             )
         db.session.execute(on_duplicate_key_stmt)
