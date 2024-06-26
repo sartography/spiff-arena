@@ -1,5 +1,5 @@
 import validator from '@rjsf/validator-ajv8';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@carbon/react';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -23,7 +23,6 @@ type OwnProps = {
   formData: any;
   schema: any;
   uiSchema: any;
-
   className?: string;
   disabled?: boolean;
   onChange?: any;
@@ -34,6 +33,7 @@ type OwnProps = {
   submitButtonText?: string;
   reactJsonSchemaForm?: string;
   hideSubmitButton?: boolean;
+  bpmnEvent?: any;
 };
 
 export default function CustomForm({
@@ -52,6 +52,7 @@ export default function CustomForm({
   submitButtonText,
   reactJsonSchemaForm = 'carbon',
   hideSubmitButton = false,
+  bpmnEvent,
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -500,10 +501,31 @@ export default function CustomForm({
   };
 
   let childrenToUse = children;
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (bpmnEvent && submitButtonText) {
+      const triggerSaveEvent = (event: any) => {
+        if (submitButtonRef.current) {
+          submitButtonRef.current.click();
+        }
+        event.stopPropagation();
+      };
+
+      bpmnEvent.eventBus.on('spiff.message.save', triggerSaveEvent);
+
+      return () => {
+        bpmnEvent.eventBus.off('spiff.message.save', triggerSaveEvent);
+      };
+    }
+    return undefined;
+  }, [bpmnEvent, submitButtonText]);
+
   if (submitButtonText) {
     childrenToUse = (
       <Button
         type="submit"
+        ref={submitButtonRef}
         id="submit-button"
         disabled={disabled}
         style={{ display: hideSubmitButton ? 'none' : 'unset' }}

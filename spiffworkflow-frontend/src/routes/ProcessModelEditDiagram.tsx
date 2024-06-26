@@ -1093,7 +1093,6 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleMessageEditorSave = (_event: any) => {
-    // setShowMessageEditor(false);
     messageEvent.eventBus.fire('spiff.message.save');
   };
 
