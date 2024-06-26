@@ -7,8 +7,19 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-while IFS= read -r -d '' file; do
-  markdown_to_ventilated_prose.py "$file" "$file"
-  ./bin/edit "$file"
-  markdown_to_ventilated_prose.py "$file" "$file"
-done < <(find . -type f -name "*.md" -print0)
+# function to update single file
+function update_file() {
+  markdown_to_ventilated_prose.py "$1" "$1"
+  ./bin/edit "$1"
+  markdown_to_ventilated_prose.py "$1" "$1"
+}
+
+# while IFS= read -r -d '' file; do
+#   update_file "$file"
+# done < <(find . -type f -name "*.md" -print0)
+
+echo 'fyi, running test files, not all files'
+# these are long, problematic files, good for testing
+for file in Getting_Started/quick_start.md Support/FAQ.md; do
+  update_file "$file"
+done
