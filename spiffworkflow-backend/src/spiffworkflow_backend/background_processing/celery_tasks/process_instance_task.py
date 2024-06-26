@@ -1,4 +1,3 @@
-import redis
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
