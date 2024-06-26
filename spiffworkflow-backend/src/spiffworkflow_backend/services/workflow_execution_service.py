@@ -358,6 +358,8 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         JinjaService.add_instruction_for_end_user_if_appropriate(tasks, process_instance_model.id, self.tasks_that_have_been_seen)
 
     def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
+        # exit if there are instructionsForEndUser so the instructions can be comitted to the db using the normal save method
+        # for the process instance.
         for spiff_task in tasks:
             if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
                 "instructionsForEndUser", None
@@ -451,7 +453,12 @@ class WorkflowExecutionService:
     #   run
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
-    def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
+    def run_and_save(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        should_schedule_waiting_timer_events: bool = True,
+    ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
             with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
@@ -492,7 +499,8 @@ class WorkflowExecutionService:
                 self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
                 if save:
                     self.process_instance_saver()
-                    self.schedule_waiting_timer_events()
+                    if should_schedule_waiting_timer_events:
+                        self.schedule_waiting_timer_events()
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:
         # if it is supposed to happen in less than the amount of time we take between polling runs
@@ -509,11 +517,17 @@ class WorkflowExecutionService:
                 if "Time" in event.event_type:
                     time_string = event.value
                     run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
-                    FutureTaskModel.insert_or_update(guid=str(spiff_task.id), run_at_in_seconds=run_at_in_seconds)
+                    queued_to_run_at_in_seconds = None
                     if self.is_happening_soon(run_at_in_seconds):
-                        queue_future_task_if_appropriate(
+                        if queue_future_task_if_appropriate(
                             self.process_instance_model, eta_in_seconds=run_at_in_seconds, task_guid=str(spiff_task.id)
-                        )
+                        ):
+                            queued_to_run_at_in_seconds = run_at_in_seconds
+                    FutureTaskModel.insert_or_update(
+                        guid=str(spiff_task.id),
+                        run_at_in_seconds=run_at_in_seconds,
+                        queued_to_run_at_in_seconds=queued_to_run_at_in_seconds,
+                    )
 
     def process_bpmn_messages(self) -> None:
         # FIXE: get_events clears out the events so if we have other events we care about
@@ -588,12 +602,19 @@ class WorkflowExecutionService:
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """A profiled version of the workflow execution service."""
 
-    def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
+    def run_and_save(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        should_schedule_waiting_timer_events: bool = True,
+    ) -> TaskRunnability:
         import cProfile
         from pstats import SortKey
 
         task_runnability = TaskRunnability.unknown_if_ready_tasks
         with cProfile.Profile() as pr:
-            task_runnability = super().run_and_save(exit_at=exit_at, save=save)
+            task_runnability = super().run_and_save(
+                exit_at=exit_at, save=save, should_schedule_waiting_timer_events=should_schedule_waiting_timer_events
+            )
         pr.print_stats(sort=SortKey.CUMULATIVE)
         return task_runnability

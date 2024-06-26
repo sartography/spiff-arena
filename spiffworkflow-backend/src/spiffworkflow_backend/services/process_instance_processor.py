@@ -1438,19 +1438,27 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
+        should_schedule_waiting_timer_events: bool = True,
     ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
             with ProcessInstanceQueueService.dequeued(self.process_instance_model):
                 # TODO: ideally we just lock in the execution service, but not sure
                 # about _add_bpmn_process_definitions and if that needs to happen in
                 # the same lock like it does on main
-                return self._do_engine_steps(exit_at, save, execution_strategy_name, execution_strategy)
+                return self._do_engine_steps(
+                    exit_at,
+                    save,
+                    execution_strategy_name,
+                    execution_strategy,
+                    should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+                )
         else:
             return self._do_engine_steps(
                 exit_at,
                 save=False,
                 execution_strategy_name=execution_strategy_name,
                 execution_strategy=execution_strategy,
+                should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
             )
 
     def _do_engine_steps(
@@ -1459,6 +1467,7 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
+        should_schedule_waiting_timer_events: bool = True,
     ) -> TaskRunnability:
         self._add_bpmn_process_definitions(
             self.serialize(),
@@ -1488,7 +1497,11 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
-        task_runnability = execution_service.run_and_save(exit_at, save)
+        task_runnability = execution_service.run_and_save(
+            exit_at,
+            save,
+            should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+        )
         self.check_all_tasks()
         return task_runnability
 
