@@ -52,7 +52,7 @@ export default function CustomForm({
   submitButtonText,
   reactJsonSchemaForm = 'carbon',
   hideSubmitButton = false,
-  bpmnEvent
+  bpmnEvent,
 }: OwnProps) {
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
@@ -502,7 +502,6 @@ export default function CustomForm({
 
   let childrenToUse = children;
   const submitButtonRef = useRef<HTMLButtonElement | null>(null);
-  
 
   useEffect(() => {
     if (bpmnEvent && submitButtonText) {
@@ -519,6 +518,7 @@ export default function CustomForm({
         bpmnEvent.eventBus.off('spiff.message.save', triggerSaveEvent);
       };
     }
+    return undefined;
   }, [bpmnEvent, submitButtonText]);
 
   if (submitButtonText) {

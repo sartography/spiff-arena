@@ -24,7 +24,6 @@ type OwnProps = {
   messageId: string;
   messageEvent: any;
   correlationProperties: any;
-  handleFormSubmit: (formObject: RJSFFormObject) => void;
 };
 
 export function MessageEditor({
@@ -33,7 +32,6 @@ export function MessageEditor({
   messageEvent,
   correlationProperties,
   elementId,
-  handleFormSubmit
 }: OwnProps) {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [currentFormData, setCurrentFormData] = useState<any>(null);
@@ -223,7 +221,8 @@ export function MessageEditor({
               title: 'Property Name',
               description: '',
               pattern: '^[\\w-]+$',
-              validationErrorMessage: 'The property name should contain no spaces or special characters'
+              validationErrorMessage:
+                'The property name should contain no spaces or special characters',
             },
             retrievalExpression: {
               type: 'string',
@@ -303,7 +302,7 @@ export function MessageEditor({
           uiSchema={uischema}
           formData={currentFormData}
           onSubmit={updateProcessGroupWithMessages}
-          hideSubmitButton={true}
+          hideSubmitButton
           onChange={updateFormData}
           submitButtonText="Save"
           bpmnEvent={messageEvent}
