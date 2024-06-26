@@ -82,6 +82,7 @@ def process_file(input_file):
     os.makedirs("/tmp/proof-edits", exist_ok=True)
 
     with open(input_file, "w") as f:
+        print(f"working on: {input_file}")
         for i, doc in enumerate(docs):
             result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
             edited_result_content = result.content
@@ -91,7 +92,24 @@ def process_file(input_file):
             if len(edited_result_content) > 1.05 * len(doc) or len(
                 edited_result_content
             ) < 0.95 * len(doc):
-                print(f"Chunk {i} size after edit is off by more than 5%")
+                print(f"{input_file}: Chunk {i} size after edit is off by more than 5%")
+                # get basename of input_file and save before and after to tmp for debugging
+                basename_of_input_file = os.path.basename(input_file)
+                before_filename = (
+                    f"/tmp/proof-edits/before_{basename_of_input_file}_{i}.txt"
+                )
+                after_filename = (
+                    f"/tmp/proof-edits/after_{basename_of_input_file}_{i}.txt"
+                )
+                # save files
+                with open(before_filename, "w") as before_f:
+                    before_f.write(doc)
+                with open(after_filename, "w") as after_f:
+                    after_f.write(edited_result_content)
+                print(
+                    f"Before and after files written to {before_filename} and {after_filename} for comparison."
+                )
+
                 for j in range(3):
                     print(f"Trying again {j+1}")
                     result = llm.invoke(
