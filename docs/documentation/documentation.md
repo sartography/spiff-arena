@@ -114,9 +114,7 @@ Now click on the two pieces of paper at the top corner of your screen, and you s
 ### Step 7: Install Python Dependencies
 
 This project requires a few Python dependencies to work correctly.
-
 We are going to set up a Virtual Environment for Python to keep us sane later on.
-
 You can do that by following these steps:
 
 1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command.
