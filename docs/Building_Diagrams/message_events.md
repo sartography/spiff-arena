@@ -13,7 +13,6 @@ They signify the transmission of information between various process components,
 - Visually, they illustrate communication among various participants or across different pools and lanes.
 - They clarify how data or events are shared, fostering collaboration among different business process components.
 
-
 ## Start Message Event
 
 ![start_message_event](images/start_message_event_1.png)
@@ -80,7 +79,7 @@ In the provided example, the final step involves sending the customer an invoice
 Prior to this, the last step for the shipping department was to send a confirmation.
 
 ```{admonition} Note
-⚠ Start Events mark the initiation point of a process. Intermediate Events occur during the course of the process, throwing, capturing and reacting to specific occurrences or messages from external sources or other processes. On the other hand, End Events denote the conclusion of the process, signifying its termination or reaching a final state.
+⚠ Start Events mark the initiation point of a process. Intermediate Events occur during the course of the process, throwing, capturing, and reacting to specific occurrences or messages from external sources or other processes. On the other hand, End Events denote the conclusion of the process, signifying its termination or reaching a final state.
 ```
 
 ## Correlation
@@ -89,7 +88,6 @@ A singular Throw Message Event corresponds exclusively to a single active Catch 
 This correlation is one-to-one, unlike Signal Events that could be sent to multiple active Signal Catch Events.
 It is important to configure the correlation of the Catch and Throw Events.
 
-
 ## Message Event Configuration
 
 Three separate configurations need to be completed.
@@ -97,7 +95,6 @@ Three separate configurations need to be completed.
 - Collaboration
 - Throw Message Event
 - Catch Message Event
-
 
 **Default configuration:**
 
@@ -117,7 +114,7 @@ The identical configuration must be applied to every BPMN diagram if messages ex
 | --- | --- | --- |
 | ![correlation_keys](images/correlation_keys_1.png) | **Correlation Keys:** order | A correlation key is a unique identifier or attribute used to establish a connection or relationship between message events (it can be likened to the shared subject between them). It is possible to have multiple correlation keys for a process.
 | ![correlation_properties](images/correlation_properties_1.png) | **Correlation Properties:** invoice_number | The correlation property is what differentiates each key instance from another, and it's the defining attribute that sets them apart. For instance, if "order" is selected as the correlation key, a property like "invoice_number" could be used to distinguish each order instance from another. Keep in mind that this variable should be incorporated within the context of the process instance.|
-| ![collaboration_messages](images/collaboration_messages_1.png) | **Messages:** order_approval, order_dispatch etc. | Messages are established for each message pair (Throw and Catch Message Events). This setup will be utilized to configure the events, linking the associated occurrences together. |
+| ![collaboration_messages](images/collaboration_messages_1.png) | **Messages:** order_approval, order_dispatch, etc. | Messages are established for each message pair (Throw and Catch Message Events). This setup will be utilized to configure the events, linking the associated occurrences together. |
 
 **Throw Message Event:**
 
@@ -129,7 +126,7 @@ The identical configuration must be applied to every BPMN diagram if messages ex
 
 **Catch Message Event:**
 
-The connected catch event is configured in precisely the same manner as the throw event
+The connected catch event is configured in precisely the same manner as the throw event.
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |

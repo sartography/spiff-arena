@@ -159,7 +159,6 @@ If you find coding more familiar and preferable to constructing DMN tables, you 
 
 ![group_permission](images/group_permission.png)
 
-
 ### Step 5: Start Process
 
 To ensure that User Groups and Permissions take effect, it is necessary to run the process at least once.

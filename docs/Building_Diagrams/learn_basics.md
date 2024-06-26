@@ -24,7 +24,7 @@ There are three main types of events in business process modeling: start events,
 |-----------|-----------|-----------------|
 | Start Event  |![Untitled](images/Start.png)     | Signals the first step of a process.                                                                                |
 | Intermediate Event | ![Untitled](images/Intermediate.png)          | Represents any event that occurs between a start and end event.                                                                                                |
-| End event   | ![Untitled](images/End.png)       | Signals the final step in a process.                                 |
+| End Event   | ![Untitled](images/End.png)       | Signals the final step in a process.                                 |
 
 ### Gateways
 
@@ -34,10 +34,10 @@ There are various types of gateways:
 
 | **Gateway**   | **Symbol**| **Description** |
 |---------------|-----------|-----------------|
-| Exclusive gateway       |![Untitled](images/Exclusive.png)     | Evaluates the state of the business process and, based on the condition, diverges the flow into one or more mutually exclusive paths.                                                                                    |
-| Event-based gateway          | ![Untitled](images/Eventbased.png)          | An event-based gateway is similar to an exclusive gateway in that both involve one path in the flow. However, with an event-based gateway, you evaluate which event has occurred, not which condition has been met.                                                                                                 |
-| Inclusive gateway        | ![Untitled](images/Inclusive.png)        | An inclusive gateway diverges the process flow into one or more flows.                                                                          |
-| Complex gateway | ![Untitled](images/Complex.png) | Complex gateways are used only for the most intricate flows in the business process. They use words instead of symbols and thus require more descriptive text. |
+| Exclusive Gateway       |![Untitled](images/Exclusive.png)     | Evaluates the state of the business process and, based on the condition, diverges the flow into one or more mutually exclusive paths.                                                                                    |
+| Event-based Gateway          | ![Untitled](images/Eventbased.png)          | An event-based gateway is similar to an exclusive gateway in that both involve one path in the flow. However, with an event-based gateway, you evaluate which event has occurred, not which condition has been met.                                                                                                 |
+| Inclusive Gateway        | ![Untitled](images/Inclusive.png)        | An inclusive gateway diverges the process flow into one or more flows.                                                                          |
+| Complex Gateway | ![Untitled](images/Complex.png) | Complex gateways are used only for the most intricate flows in the business process. They use words instead of symbols and thus require more descriptive text. |
 
 ### Tasks
 
@@ -63,9 +63,9 @@ Three different types exist: sequence flows, message flows, and associations.
 
 | **Connecting Objects**   | **Symbol**                                                | **Description**                                                                                                                                                                                    |
 |---------------|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Sequence flow symbol       | ![Untitled](images/BPMN_sequence_flow-80x31.png)       | Connects flow objects in the proper sequential order.                                                                                        |
-| Message flow symbol          |![Untitled](images/BPMN_message_flow-80x30.png)         | Represents messages sent from one process participant to another.                                                                                           |
-| Association symbol       | ![Untitled](images/BPMN_association-80x31.png)     | Illustrates relationships between artifacts and flow objects.                                          |
+| Sequence Flow Symbol       | ![Untitled](images/BPMN_sequence_flow-80x31.png)       | Connects flow objects in the proper sequential order.                                                                                        |
+| Message Flow Symbol          |![Untitled](images/BPMN_message_flow-80x30.png)         | Represents messages sent from one process participant to another.                                                                                           |
+| Association Symbol       | ![Untitled](images/BPMN_association-80x31.png)     | Illustrates relationships between artifacts and flow objects.                                          |
 
 ## Artifacts
 

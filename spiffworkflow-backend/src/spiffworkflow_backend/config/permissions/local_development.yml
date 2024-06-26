@@ -16,13 +16,13 @@ users:
     preferred_username: dan
 groups:
   admin:
-    users: [admin@spiffworkflow.org, nelson@spiffworkflow.org]
+    users: [admin@example.com, nelson@example.com]
   group1:
-    users: [jason@sartography.com, kevin@sartography.com]
+    users: [jason@example.com, kevin@example.com]
   group2:
-    users: [dan@sartography.com]
+    users: [dan@example.com]
   group3:
-    users: [jon@sartography.com]
+    users: [jon@example.com]
   spiff_public:
     users: []
 

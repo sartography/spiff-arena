@@ -5,9 +5,11 @@ They serve distinct purposes and are used in different scenarios.
 
 **Reasons to use Sub-Processes or Call Activities:**
 
-- Consolidate tasks that either have common features or collaboratively form a distinct functionality. For example, a Notification Gateway, which includes script tasks and a service task, works together to construct and send a notification, such as an email.
+- Consolidate tasks that either have common features or collaboratively form a distinct functionality.
+For example, a Notification Gateway, which includes script tasks and a service task, works together to construct and send a notification, such as an email.
 
-- Group tasks where a Boundary Event can be efficiently applied to the entire group. For instance, instead of individually assigning a condition or timer to each task, all tasks can be included within a sub-process or call activity, where the condition or timer inherently applies to all the contained tasks.
+- Group tasks where a Boundary Event can be efficiently applied to the entire group.
+For instance, instead of individually assigning a condition or timer to each task, all tasks can be included within a sub-process or call activity, where the condition or timer inherently applies to all the contained tasks.
 
 ## Call Process
 
@@ -27,13 +29,14 @@ Using a Call Process can help to eliminate redundancy and ensure consistent exec
 
 - **Delegation:** When different individuals or teams are responsible for executing tasks within a process, a call activity can be assigned to the most appropriate person or team.
 
-- **Access Control:** If a specific segment of a process should not be available to every user, converting it into a call process helps establish access control. More information about this can be found in the [Admin and Permission](../DevOps_installation_integration/admin_and_permissions.md) section.
+- **Access Control:** If a specific segment of a process should not be available to every user, converting it into a call process helps establish access control.
+More information about this can be found in the [Admin and Permission](../DevOps_installation_integration/admin_and_permissions.md) section.
 
 ## Sub-Processes
 
 **When to use a Sub-Process:**
 
-- **Consolidate similar functionalities:** When you have a group of tasks that are closely related and work well together, but don't need to be used or replicated elsewhere in other processes.
+- **Consolidate similar functionalities:** When you have a group of tasks that are closely related and work well together but don't need to be used or replicated elsewhere in other processes.
 
 - **Call Activity is not required:** When these tasks don't meet the conditions needed for a call activity, a sub-process can achieve the same goal.
 

@@ -15,7 +15,7 @@ idna==3.7
 imagesize==1.4.1
 Jinja2==3.1.4
 lazy-object-proxy==1.10.0
-livereload==2.6.3
+livereload==2.7.0
 lsprotocol==2023.0.1
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
