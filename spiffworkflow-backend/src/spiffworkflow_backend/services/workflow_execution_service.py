@@ -359,6 +359,8 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         JinjaService.add_instruction_for_end_user_if_appropriate(tasks, process_instance_model.id, self.tasks_that_have_been_seen)
 
     def should_break_before(self, tasks: list[SpiffTask], process_instance_model: ProcessInstanceModel) -> bool:
+        # exit if there are instructionsForEndUser so the instructions can be comitted to the db using the normal save method
+        # for the process instance.
         for spiff_task in tasks:
             if hasattr(spiff_task.task_spec, "extensions") and spiff_task.task_spec.extensions.get(
                 "instructionsForEndUser", None
