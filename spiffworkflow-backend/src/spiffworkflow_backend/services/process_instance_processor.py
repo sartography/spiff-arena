@@ -972,7 +972,11 @@ class ProcessInstanceProcessor:
                     )
                 pim.value = str(data_for_key)[0:255]
                 db.session.add(pim)
-                db.session.commit()
+
+    def update_summary(self) -> None:
+        current_data = self.get_current_data()
+        if "spiff_process_instance_summary" in current_data:
+            self.process_instance_model.summary = current_data["spiff_process_instance_summary"]
 
     @classmethod
     def _store_bpmn_process_definition(
@@ -1119,6 +1123,7 @@ class ProcessInstanceProcessor:
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
         self.extract_metadata()
+        self.update_summary()
 
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks

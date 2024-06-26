@@ -1053,3 +1053,24 @@ class TestProcessInstanceProcessor(BaseTest):
 
         processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"
+
+    def test_can_store_summary(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/script_task_with_instruction",
+            bpmn_file_name="script_task_with_instruction.bpmn",
+            process_model_source_directory="script-task-with-instruction",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        assert process_instance.summary is None
+        processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
+        assert process_instance.summary == "WE SUMMARIZE"
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.summary == "WE SUMMARIZE AGAIN"
