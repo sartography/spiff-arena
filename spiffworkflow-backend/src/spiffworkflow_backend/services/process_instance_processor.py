@@ -976,7 +976,8 @@ class ProcessInstanceProcessor:
     def update_summary(self) -> None:
         current_data = self.get_current_data()
         if "spiff_process_instance_summary" in current_data:
-            self.process_instance_model.summary = current_data["spiff_process_instance_summary"]
+            summary = current_data["spiff_process_instance_summary"]
+            self.process_instance_model.summary = summary[:255]
 
     @classmethod
     def _store_bpmn_process_definition(

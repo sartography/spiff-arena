@@ -1073,4 +1073,6 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
         assert process_instance.summary == "WE SUMMARIZE"
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        assert process_instance.summary == "WE SUMMARIZE AGAIN"
+        assert process_instance.summary is not None
+        # mypy thinks this is unreachable but it is reachable. summary can be str | None
+        assert len(process_instance.summary) == 255  # type: ignore
