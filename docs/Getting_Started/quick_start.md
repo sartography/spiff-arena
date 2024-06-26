@@ -6,7 +6,6 @@
 👇 Throughout this step-by-step guide, we will walk you through key components of SpiffWorkflow, ensuring that you have a clear understanding of how to use the platform effectively.
 ```
 
-
 ## 🚀 Getting Started with SpiffArena
 
 Sartography, the company that shepherds the SpiffWorkflow and SpiffArena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
@@ -25,7 +24,6 @@ To begin your journey with SpiffArena, open your web browser and navigate to the
 On the login screen, you will find the option to log in using Single Sign-On.
 Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.
 
-
 ```{admonition} Note:
 Stay tuned as we expand our sign-on options beyond Gmail.
 More ways to access SpiffArena are coming your way!
@@ -38,10 +36,9 @@ In this section, we will navigate through the platform and provide a generic ove
 ### Step 1: Explore the Home section
 
 Once you are signed in, you can start exploring the home page.
-The home page has three tab sections: **In Progress**, **Completed** and **Start New**.
+The home page has three tab sections: **In Progress**, **Completed**, and **Start New**.
 
 ![Untitled](images/Untitled_2.png)
-
 
 - The "In Progress" section provides an overview of all ongoing process instances, including those initiated by you, those awaiting your action, or those awaiting action from a team you are a member of (Optional).
 - The "Completed" section allows you to view all completed process instances, including those initiated by you, those initiated by other SpiffWorkflow users with tasks completed by you, and, if applicable, those with tasks completed by a group of which you are a member.
@@ -291,7 +288,6 @@ The system will then display all the process instances matching the input detail
 To filter process instances by **process-defined metadata**, follow these steps:
 
 - Search for the specific **process** you want to filter and click on the column option to select metadata options.
-
 ![Untitled](images/Untitled_22.png)
 - The metadata fields will be displayed in the dropdown.
 Select the field you want to display and click on "**Save**" to apply the changes.
@@ -364,7 +360,7 @@ Here are the colors used in BPMN Process:
 ![Colors](images/Purple.png)
 
 ---
-## How to check Milestones and Events
+## How to Check Milestones and Events
 
 ### Milestones
 
@@ -387,7 +383,7 @@ The events tab provides a detailed log of all the tasks and their execution time
 It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
 
 ---
-## How to check messages
+## How to Check Messages
 
 Messages in BPMN allow processes to communicate with each other.
 This communication can take various forms:
@@ -442,7 +438,7 @@ Once the chef confirms the meal's readiness, a message is sent back to the waite
 For a more visual understanding and a step-by-step walkthrough, you can watch Dan Funk's full tutorial [here](https://www.youtube.com/watch?v=Uk7__onZiVk).
 
 ---
-## How to share process instance with Short Links
+## How to Share Process Instances with Short Links
 
 The short link feature provides a convenient way to share process instances with others without the need to copy and paste lengthy URLs.
 This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
@@ -476,7 +472,7 @@ To access and review completed user forms within a specific process model, follo
 This approach ensures you can monitor and review the progress of user forms within any process model while maintaining the confidentiality of inputs made by other users.
 
 ---
-## How to view task instance history
+## How to View Task Instance History
 
 Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow.
 This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
