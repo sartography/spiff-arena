@@ -94,17 +94,34 @@ class TestBackgroundProcessingService(BaseTest):
         ProcessInstanceService.do_waiting(ProcessInstanceStatus.waiting.value)
         assert process_instance.status == ProcessInstanceStatus.waiting.value
 
-    def _load_up_a_future_task_and_return_instance(self) -> ProcessInstanceModel:
+    def test_does_not_queue_future_tasks_if_requested(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
+            mock = mocker.patch("celery.current_app.send_task")
+            self._load_up_a_future_task_and_return_instance(should_schedule_waiting_timer_events=False)
+            assert mock.call_count == 0
+            BackgroundProcessingService.do_process_future_tasks(99999999999999999)
+            assert mock.call_count == 0
+            future_tasks = FutureTaskModel.query.all()
+            assert len(future_tasks) == 0
+
+    def _load_up_a_future_task_and_return_instance(
+        self, should_schedule_waiting_timer_events: bool = True
+    ) -> ProcessInstanceModel:
         process_model = load_test_spec(
             process_model_id="test_group/user-task-with-timer",
             process_model_source_directory="user-task-with-timer",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        processor.do_engine_steps(save=True, should_schedule_waiting_timer_events=should_schedule_waiting_timer_events)
 
         assert process_instance.status == "user_input_required"
 
         future_tasks = FutureTaskModel.query.all()
-        assert len(future_tasks) == 1
+        assert len(future_tasks) == (1 if should_schedule_waiting_timer_events else 0)
         return process_instance
