@@ -1,9 +1,9 @@
 # Redis Celery Broker
 
-SpiffWorkflow can be configured to use celery for efficient processing.
-Redis can be used as both a broker and backend for celery.
+SpiffWorkflow can be configured to use Celery for efficient processing.
+Redis can be used as both a broker and backend for Celery.
 
-If configured in this way, there will be a queue called "celery" and you can inspect it from redis-cli like this:
+If configured in this way, there will be a queue called "celery," and you can inspect it from redis-cli like this:
 
 ```sh
 redis-cli LLEN celery # how many queued entries

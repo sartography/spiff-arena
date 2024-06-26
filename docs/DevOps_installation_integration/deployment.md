@@ -3,10 +3,9 @@
 The minimal deployment is to mimic the docker-compose.yml file at the root of spiff-arena.
 Steps for a more hardened production setup after that baseline include:
 
- 1. setting up a MySQL or PostgreSQL database for Backend persistence (instead of sqlite)
- 2. setting up a Redis/Valkey or RabbitMQ server for a Celery broker.
- 2. separating out the Backend deployment into three deployments, 1) API, 2) Background, and 3) Celery worker.
-
+1. setting up a MySQL or PostgreSQL database for Backend persistence (instead of sqlite)
+2. setting up a Redis/Valkey or RabbitMQ server for a Celery broker.
+3. separating out the Backend deployment into three deployments, 1) API, 2) Background, and 3) Celery worker.
 
 ```mermaid
 graph TD;

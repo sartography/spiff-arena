@@ -203,7 +203,8 @@ By incorporating these validations into SpiffWorkflow forms, you can create inte
 
 #### Scenario Overview
 
-Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines. This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
+Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines.
+This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
 #### JSON Schema Configuration:
 
@@ -423,7 +424,8 @@ This will automatically validate that the max value cannot be less than the min 
 
 ### Adding a New Button for Repeating Sections in Forms
 
-Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
+Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information.
+For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
 
 This structure can be represented in the form's schema as follows:
 
@@ -461,7 +463,7 @@ This structure can be represented in the form's schema as follows:
 
 ![Nested Forms](images/Nested_form_display.png)
 
-By usign this feature, you can effectively implement new buttons for nested forms or repeating sections improving the form's usability for collecting multiple related entries from users.
+By using this feature, you can effectively implement new buttons for nested forms or repeating sections, improving the form's usability for collecting multiple related entries from users.
 
 ### Character counter
 
