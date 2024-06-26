@@ -13,7 +13,7 @@ An escalation represents a one-to-one relationship, whereas a signal event embod
 - Communicate to a subprocess or an upper (parent) process
 - Provide a structured way to handle exceptions, ensuring processes remain fluid despite interruptions
 
-# Start Escalation Event
+## Start Escalation Event
 
 ![start_escalation_event](images/start_escalation_event.png)![non_interrupting_start_escalation_event](images/non_interrupting_start_escalation_event.png)
 
