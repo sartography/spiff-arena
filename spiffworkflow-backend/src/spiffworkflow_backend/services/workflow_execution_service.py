@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import time
-import traceback
 from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
@@ -508,9 +507,6 @@ class WorkflowExecutionService:
         return time_in_seconds - time.time() < int(
             current_app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTION_INTERVAL_IN_SECONDS"]
         )
-
-    def get_backtrace(self) -> str:
-        return "".join(traceback.format_stack())
 
     def schedule_waiting_timer_events(self) -> None:
         # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs
