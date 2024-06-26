@@ -152,6 +152,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "process_model_identifier": self.process_model_identifier,
             "start_in_seconds": self.start_in_seconds,
             "status": self.status,
+            "summary": self.summary,
             "task_updated_at_in_seconds": self.task_updated_at_in_seconds,
             "updated_at_in_seconds": self.updated_at_in_seconds,
         }
