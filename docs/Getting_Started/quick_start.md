@@ -19,6 +19,7 @@ Users can interact with pre-built models, make modifications, and visualize proc
 :width: 230px
 :align: right
 ```
+
 To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (currently spiffdemo.org).
 
 On the login screen, you will find the option to log in using Single Sign-On.
@@ -48,7 +49,8 @@ The home page has three tab sections: **In Progress**, **Completed**, and **Star
 :class: info
 💡 **Process:** A process is a sequence of tasks that must be completed to achieve a specific goal.
 
-**Instance:** An instance, on the other hand, represents a specific occurrence of a process. Each instance has its own set of data and state that is updated as the instance progresses through the workflow.
+**Instance:** An instance, on the other hand, represents a specific occurrence of a process.
+Each instance has its own set of data and state that is updated as the instance progresses through the workflow.
 ```
 
 If you are a member of a team, you may also have one or more instances with tasks waiting for [team name] lists as well.
@@ -60,7 +62,7 @@ If you are a member of a team, you may also have one or more instances with task
 The process section provides a comprehensive view of the process ecosystem by showcasing process groups and process models.
 
 ```{admonition} Process Groups
-A **process group** is a way of grouping a bunch of **process models** and a **process model** contains all the files necessary to execute a specific process.
+A **process group** is a way of grouping a bunch of **process models**, and a **process model** contains all the files necessary to execute a specific process.
 ```
 
 ![Untitled](images/Untitled_4.png)
@@ -158,7 +160,7 @@ Here's how you can view the steps of the process you just started.
 
 ### Step 1: Navigate to the “Home” or “Process Instance” section
 
-There are 2 ways of finding your process instances.
+There are two ways of finding your process instances.
 
 Option 1: Once you're signed in, navigate to the home section.
 Here you will find a list of all the process instances you've initiated.
@@ -286,7 +288,6 @@ The system will then display all the process instances matching the input detail
 ![Untitled](images/Untitled_21.png)
 
 To filter process instances by **process-defined metadata**, follow these steps:
-
 - Search for the specific **process** you want to filter and click on the column option to select metadata options.
 ![Untitled](images/Untitled_22.png)
 - The metadata fields will be displayed in the dropdown.

@@ -7,7 +7,8 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-file="Building_Diagrams/data_stores.md"
+# example input
+# file="Building_Diagrams/data_stores.md"
 
 file_to_use="${1:-$file}"
 
