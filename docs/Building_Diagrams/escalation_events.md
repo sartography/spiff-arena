@@ -1,3 +1,5 @@
+# Escalation Event
+
 An Escalation Event in BPMN symbolizes a situation where an issue or condition within a process requires attention at a higher level or a different domain.
 This event acts as a mechanism to raise awareness or invoke intervention.
 
