@@ -1,10 +1,8 @@
+import redis
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_future_task_if_appropriate,
-)
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
@@ -18,11 +16,6 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
-from celery.utils.log import get_task_logger
-import redis
-
-
-celery_task_logger = get_task_logger(__name__)
 
 ten_minutes = 60 * 10
 
@@ -43,7 +36,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
     message = f"celery_task_process_instance_run: process_instance_id: {process_instance_id} celery_task_id: {self.request.id}"
     if task_guid:
         message += f" task_guid: {task_guid}"
-    celery_task_logger.info(message)
+    current_app.logger.info(message)
 
     ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
@@ -62,7 +55,8 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
             ProcessInstanceService.run_process_instance_with_processor(
                 process_instance, execution_strategy_name="run_current_ready_tasks", should_schedule_waiting_timer_events=False
             )
-            # we need to save instructions to the db so the frontend progress page can view them, and this is the only way to do it
+            # we need to save instructions to the db so the frontend progress page can view them,
+            # and this is the only way to do it
             _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
@@ -87,7 +81,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
             queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
         return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
     except ProcessInstanceIsAlreadyLockedError as exception:
-        celery_task_logger.info(
+        current_app.logger.info(
             f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
             f" {str(exception)}"
         )
@@ -98,7 +92,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
             f"Error running process_instance {process_instance.id} "
             + f"({process_instance.process_model_identifier}) and task_guid {task_guid}. {str(exception)}"
         )
-        celery_task_logger.error(error_message)
+        current_app.logger.error(error_message)
         db.session.add(process_instance)
         db.session.commit()
         raise SpiffCeleryWorkerError(error_message) from exception

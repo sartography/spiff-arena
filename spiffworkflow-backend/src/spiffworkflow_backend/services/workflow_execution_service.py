@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import time
+import traceback
 from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
@@ -42,7 +43,6 @@ from spiffworkflow_backend.services.process_instance_lock_service import Process
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
-import traceback
 
 
 class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
@@ -604,12 +604,19 @@ class WorkflowExecutionService:
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """A profiled version of the workflow execution service."""
 
-    def run_and_save(self, exit_at: None = None, save: bool = False) -> TaskRunnability:
+    def run_and_save(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        should_schedule_waiting_timer_events: bool = True,
+    ) -> TaskRunnability:
         import cProfile
         from pstats import SortKey
 
         task_runnability = TaskRunnability.unknown_if_ready_tasks
         with cProfile.Profile() as pr:
-            task_runnability = super().run_and_save(exit_at=exit_at, save=save)
+            task_runnability = super().run_and_save(
+                exit_at=exit_at, save=save, should_schedule_waiting_timer_events=should_schedule_waiting_timer_events
+            )
         pr.print_stats(sort=SortKey.CUMULATIVE)
         return task_runnability

@@ -46,7 +46,9 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
             insert_stmt = mysql_insert(FutureTaskModel).values(task_info)
             on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-                run_at_in_seconds=insert_stmt.inserted.run_at_in_seconds, updated_at_in_seconds=round(time.time())
+                run_at_in_seconds=insert_stmt.inserted.run_at_in_seconds,
+                updated_at_in_seconds=round(time.time()),
+                queued_to_run_at_in_seconds=insert_stmt.inserted.queued_to_run_at_in_seconds,
             )
         else:
             insert_stmt = None
@@ -56,6 +58,10 @@ class FutureTaskModel(SpiffworkflowBaseDBModel):
                 insert_stmt = postgres_insert(FutureTaskModel).values(task_info)
             on_duplicate_key_stmt = insert_stmt.on_conflict_do_update(
                 index_elements=["guid"],
-                set_={"run_at_in_seconds": run_at_in_seconds, "updated_at_in_seconds": round(time.time())},
+                set_={
+                    "run_at_in_seconds": run_at_in_seconds,
+                    "updated_at_in_seconds": round(time.time()),
+                    "queued_to_run_at_in_seconds": queued_to_run_at_in_seconds,
+                },
             )
         db.session.execute(on_duplicate_key_stmt)
