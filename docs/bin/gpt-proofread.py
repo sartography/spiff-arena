@@ -5,7 +5,6 @@ import os
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.text_splitter import CharacterTextSplitter
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
