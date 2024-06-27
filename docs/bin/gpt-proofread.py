@@ -81,7 +81,8 @@ def process_file(input_file):
 
     os.makedirs("/tmp/proof-edits", exist_ok=True)
 
-    with open(input_file, "w") as f:
+    temp_output_file = "/tmp/proof-edits/edited_output.md"
+    with open(temp_output_file, "w") as f:
         print(f"working on: {input_file}")
         for i, doc in enumerate(docs):
             result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
@@ -136,6 +137,7 @@ def process_file(input_file):
                 print(f"Edited chunk {i} written to {edited_chunk_file}")
             f.write(edited_result_content + "\n")
 
+    os.replace(temp_output_file, input_file)
     print(f"Edited file saved as {input_file}")
 
 
