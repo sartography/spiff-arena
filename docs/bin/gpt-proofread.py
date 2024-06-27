@@ -65,78 +65,39 @@ model = "gpt-4o"
 llm = ChatOpenAI(openai_api_key=openai_api_key, model=model, request_timeout=240)
 
 
-def process_file(input_file):
-    with open(input_file, "r") as f:
-        content = f.read()
+def read_file(file_path):
+    with open(file_path, "r") as f:
+        return f.read()
 
-    # Markdown splitter didn't work so well
-    # splitter = MarkdownTextSplitter(chunk_size=1000, chunk_overlap=0)
-    splitter = CharacterTextSplitter(chunk_size=13000, chunk_overlap=0)
-    docs = splitter.split_text(content)
+def split_content(content, chunk_size=13000):
+    splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0)
+    return splitter.split_text(content)
 
-    print("Split into {} docs".format(len(docs)))
-    chat_prompt = ChatPromptTemplate.from_messages(
-        [system_prompt, human_message_prompt]
-    )
+def process_chunk(doc, chat_prompt, retries=3):
+    for attempt in range(retries):
+        result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
+        edited_result_content = result.content
+        if 0.95 * len(doc) <= len(edited_result_content) <= 1.05 * len(doc):
+            return edited_result_content
+        print(f"Retry {attempt + 1} for chunk due to size mismatch.")
+    raise ValueError("Failed to process chunk after retries.")
 
-    os.makedirs("/tmp/proof-edits", exist_ok=True)
-
-    temp_output_file = "/tmp/proof-edits/edited_output.md"
-    with open(temp_output_file, "w") as f:
-        print(f"working on: {input_file}")
+def write_to_temp_file(temp_file_path, docs, chat_prompt):
+    with open(temp_file_path, "w") as f:
         for i, doc in enumerate(docs):
-            result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
-            edited_result_content = result.content
-
-            # compare edited_result_content with doc and see if the size is off by more than 5%
-            # if it is, try again, up to 3 times
-            if len(edited_result_content) > 1.05 * len(doc) or len(
-                edited_result_content
-            ) < 0.95 * len(doc):
-                print(f"{input_file}: Chunk {i} size after edit is off by more than 5%")
-                # get basename of input_file and save before and after to tmp for debugging
-                basename_of_input_file = os.path.basename(input_file)
-                before_filename = (
-                    f"/tmp/proof-edits/before_{basename_of_input_file}_{i}.txt"
-                )
-                after_filename = (
-                    f"/tmp/proof-edits/after_{basename_of_input_file}_{i}.txt"
-                )
-                # save files
-                with open(before_filename, "w") as before_f:
-                    before_f.write(doc)
-                with open(after_filename, "w") as after_f:
-                    after_f.write(edited_result_content)
-                print(
-                    f"Before and after files written to {before_filename} and {after_filename} for comparison."
-                )
-
-                for j in range(3):
-                    print(f"Trying again {j+1}")
-                    result = llm.invoke(
-                        chat_prompt.format_prompt(text=doc).to_messages()
-                    )
-                    edited_result_content = result.content
-                    if len(edited_result_content) < 1.05 * len(doc) and len(
-                        edited_result_content
-                    ) > 0.95 * len(doc):
-                        break
-                else:
-                    raise ValueError(
-                        f"Failed to process chunk {i} of {input_file} after 3 retries."
-                    )
-
-            if os.environ.get("DEBUG") == "true":
-                chunk_file = f"/tmp/proof-edits/chunk_{i}.txt"
-                with open(chunk_file, "w") as chunk_f:
-                    chunk_f.write(doc)
-                print(f"Chunk {i} written to {chunk_file}")
-                edited_chunk_file = f"/tmp/proof-edits/edited_chunk_{i}.txt"
-                with open(edited_chunk_file, "w") as edited_chunk_f:
-                    edited_chunk_f.write(edited_result_content)
-                print(f"Edited chunk {i} written to {edited_chunk_file}")
+            edited_result_content = process_chunk(doc, chat_prompt)
             f.write(edited_result_content + "\n")
 
+def process_file(input_file):
+    content = read_file(input_file)
+    docs = split_content(content)
+    print(f"Split into {len(docs)} docs")
+
+    chat_prompt = ChatPromptTemplate.from_messages([system_prompt, human_message_prompt])
+    os.makedirs("/tmp/proof-edits", exist_ok=True)
+    temp_output_file = "/tmp/proof-edits/edited_output.md"
+
+    write_to_temp_file(temp_output_file, docs, chat_prompt)
     os.replace(temp_output_file, input_file)
     print(f"Edited file saved as {input_file}")
 
