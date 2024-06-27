@@ -23,6 +23,8 @@ while IFS= read -r -d '' file; do
   update_file "$file"
 done < <(find . -type f -name "*.md" -print0)
 
+# update_file "Support/Welcome_Messages.md"
+
 # these are long, problematic files, good for testing.
 # not sure why documentation.md likes to get lots of extra newlines added.
 # echo 'fyi, running test files, not all files'

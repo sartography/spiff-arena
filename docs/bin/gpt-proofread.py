@@ -85,18 +85,23 @@ def process_chunk(doc, chat_prompt, retries=3, chunk_index=0):
     raise ValueError("Failed to process chunk after retries.")
 
 
-def write_to_temp_file(temp_file_path, docs, chat_prompt):
-    os.makedirs("/tmp/proof-edits", exist_ok=True)
-    with open(temp_file_path, "w") as f:
-        for i, doc in enumerate(docs):
-            edited_result_content = process_chunk(doc, chat_prompt, chunk_index=i)
-            f.write(edited_result_content + "\n")
+def get_edited_content(docs, chat_prompt):
+    edited_content = ""
+    for i, doc in enumerate(docs):
+        edited_result_content = process_chunk(doc, chat_prompt, chunk_index=i)
+        edited_content += edited_result_content + "\n"
+    return edited_content
 
 
 def analyze_diff(diff_file_path):
     diff_content = read_file(diff_file_path)
     analysis_prompt = f"""
-You are an expert technical editor. Please analyze the following diff and ensure it looks like a successful copy edit of a markdown file. Provide feedback if there are any issues or if it looks good, just reply with the single word: good
+You are an expert technical editor.
+Please analyze the following diff and ensure it looks like a successful copy edit of a markdown file.
+It is not a successful edit if three or more lines in a row have been removed without replacement.
+Edits or reformats are potentially good, but simply removing or adding a bunch of content is bad.
+Provide feedback if there are any issues.
+If it looks good, just reply with the single word: good
 
 Diff:
 {diff_content}
@@ -114,16 +119,20 @@ def process_file(input_file):
         [system_prompt, human_message_prompt]
     )
     os.makedirs("/tmp/proof-edits", exist_ok=True)
-    temp_output_file = "/tmp/proof-edits/edited_output.md"
 
     # Save the original content for diff generation
     original_content = content
 
-    write_to_temp_file(temp_output_file, docs, chat_prompt)
+    edited_content = get_edited_content(docs, chat_prompt)
+    temp_output_file = "/tmp/proof-edits/edited_output.md"
 
-    # Read the edited content
-    with open(temp_output_file, "r") as f:
-        edited_content = f.read()
+    overall_result = None
+    if edited_content == original_content:
+        print(f"{input_file}: No edits made.")
+        return "no_edits"
+
+    with open(temp_output_file, "w") as f:
+        f.write(edited_content)
 
     # Generate and save the diff for the whole file
     diff = difflib.unified_diff(
@@ -137,9 +146,13 @@ def process_file(input_file):
 
     if analysis_result.lower().strip() == "good":
         os.replace(temp_output_file, input_file)
-        print(f"Edited file saved as {input_file}")
+        print(f"{input_file}: edited!")
+        return "edited"
     else:
-        print(f"The diff looked suspect. Diff analysis result: {analysis_result}")
+        print(
+            f"{input_file}: The diff looked suspect. Diff analysis result: {analysis_result}"
+        )
+        return "suspect_diff"
 
 
 if __name__ == "__main__":
@@ -147,4 +160,6 @@ if __name__ == "__main__":
         print("Usage: python script.py input_file")
     else:
         input_file = sys.argv[1]
-        process_file(input_file)
+        overall_result = process_file(input_file)
+        with open("/tmp/proof-edits/proofread_results.txt", "a") as f:
+            f.write(f"{input_file}: {overall_result}\n")
