@@ -101,7 +101,7 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
+from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy, ProfiledWorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
 from spiffworkflow_backend.services.workflow_execution_service import SkipOneExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
@@ -590,14 +590,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
-                task_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                task_definition.bpmn_identifier
+            ] = task_definition
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
-                bpmn_process_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                "bpmn_process_definition"
+            ] = bpmn_process_definition
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
@@ -649,9 +649,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -1497,6 +1497,7 @@ class ProcessInstanceProcessor:
             execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
 
         execution_service = WorkflowExecutionService(
+            # execution_service = ProfiledWorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
             execution_strategy,

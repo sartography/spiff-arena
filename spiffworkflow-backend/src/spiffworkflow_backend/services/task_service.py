@@ -190,14 +190,19 @@ class TaskService:
     ) -> TaskModel:
         new_bpmn_process = None
         if str(spiff_task.id) in self.task_models:
+            # 543
+            # print("WE USE CACHE")
             task_model = self.task_models[str(spiff_task.id)]
         else:
+            # 312
+            # print("WE NO CACHE")
             (
                 new_bpmn_process,
                 task_model,
             ) = self.find_or_create_task_model_from_spiff_task(
                 spiff_task,
             )
+        return task_model
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
         bpmn_process = (
@@ -314,11 +319,12 @@ class TaskService:
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
         task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+        # return (None, TaskModel())
         bpmn_process = None
         if task_model is None:
-            bpmn_process = self.task_bpmn_process(
-                spiff_task,
-            )
+            # 312
+            # print("NO TASK MODEL")
+            bpmn_process = self.task_bpmn_process(spiff_task)
             task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
                 spiff_task.task_spec.name
             ]
