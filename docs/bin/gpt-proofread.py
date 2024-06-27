@@ -2,6 +2,7 @@
 # and then modified for our use case.
 import sys
 import os
+import difflib
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.text_splitter import CharacterTextSplitter
@@ -72,19 +73,21 @@ def split_content(content, chunk_size=13000):
     splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0)
     return splitter.split_text(content)
 
-def process_chunk(doc, chat_prompt, retries=3):
+def process_chunk(doc, chat_prompt, retries=3, chunk_index=0):
     for attempt in range(retries):
         result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
         edited_result_content = result.content
         if 0.95 * len(doc) <= len(edited_result_content) <= 1.05 * len(doc):
+
             return edited_result_content
         print(f"Retry {attempt + 1} for chunk due to size mismatch.")
     raise ValueError("Failed to process chunk after retries.")
 
 def write_to_temp_file(temp_file_path, docs, chat_prompt):
+    os.makedirs("/tmp/proof-edits", exist_ok=True)
     with open(temp_file_path, "w") as f:
         for i, doc in enumerate(docs):
-            edited_result_content = process_chunk(doc, chat_prompt)
+            edited_result_content = process_chunk(doc, chat_prompt, chunk_index=i)
             f.write(edited_result_content + "\n")
 
 def process_file(input_file):
@@ -96,7 +99,19 @@ def process_file(input_file):
     os.makedirs("/tmp/proof-edits", exist_ok=True)
     temp_output_file = "/tmp/proof-edits/edited_output.md"
 
+    # Save the original content for diff generation
+    original_content = content
+
     write_to_temp_file(temp_output_file, docs, chat_prompt)
+
+    # Read the edited content
+    with open(temp_output_file, "r") as f:
+        edited_content = f.read()
+
+    # Generate and save the diff for the whole file
+    diff = difflib.unified_diff(original_content.splitlines(), edited_content.splitlines(), lineterm='')
+    with open("/tmp/proof-edits/diff_file.diff", "w") as diff_file:
+        diff_file.write('\n'.join(diff))
     os.replace(temp_output_file, input_file)
     print(f"Edited file saved as {input_file}")
 
