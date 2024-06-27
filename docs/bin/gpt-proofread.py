@@ -69,19 +69,21 @@ def read_file(file_path):
     with open(file_path, "r") as f:
         return f.read()
 
+
 def split_content(content, chunk_size=13000):
     splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0)
     return splitter.split_text(content)
+
 
 def process_chunk(doc, chat_prompt, retries=3, chunk_index=0):
     for attempt in range(retries):
         result = llm.invoke(chat_prompt.format_prompt(text=doc).to_messages())
         edited_result_content = result.content
         if 0.95 * len(doc) <= len(edited_result_content) <= 1.05 * len(doc):
-
             return edited_result_content
         print(f"Retry {attempt + 1} for chunk due to size mismatch.")
     raise ValueError("Failed to process chunk after retries.")
+
 
 def write_to_temp_file(temp_file_path, docs, chat_prompt):
     os.makedirs("/tmp/proof-edits", exist_ok=True)
@@ -90,12 +92,27 @@ def write_to_temp_file(temp_file_path, docs, chat_prompt):
             edited_result_content = process_chunk(doc, chat_prompt, chunk_index=i)
             f.write(edited_result_content + "\n")
 
+
+def analyze_diff(diff_file_path):
+    diff_content = read_file(diff_file_path)
+    analysis_prompt = f"""
+You are an expert technical editor. Please analyze the following diff and ensure it looks like a successful copy edit of a markdown file. Provide feedback if there are any issues or if it looks good, just reply with the single word: good
+
+Diff:
+{diff_content}
+"""
+    result = llm.invoke([HumanMessage(content=analysis_prompt)])
+    return result.content
+
+
 def process_file(input_file):
     content = read_file(input_file)
     docs = split_content(content)
     print(f"Split into {len(docs)} docs")
 
-    chat_prompt = ChatPromptTemplate.from_messages([system_prompt, human_message_prompt])
+    chat_prompt = ChatPromptTemplate.from_messages(
+        [system_prompt, human_message_prompt]
+    )
     os.makedirs("/tmp/proof-edits", exist_ok=True)
     temp_output_file = "/tmp/proof-edits/edited_output.md"
 
@@ -109,11 +126,20 @@ def process_file(input_file):
         edited_content = f.read()
 
     # Generate and save the diff for the whole file
-    diff = difflib.unified_diff(original_content.splitlines(), edited_content.splitlines(), lineterm='')
+    diff = difflib.unified_diff(
+        original_content.splitlines(), edited_content.splitlines(), lineterm=""
+    )
     with open("/tmp/proof-edits/diff_file.diff", "w") as diff_file:
-        diff_file.write('\n'.join(diff))
-    os.replace(temp_output_file, input_file)
-    print(f"Edited file saved as {input_file}")
+        diff_file.write("\n".join(diff))
+
+    # Analyze the diff
+    analysis_result = analyze_diff("/tmp/proof-edits/diff_file.diff")
+
+    if analysis_result.lower().strip() == "good":
+        os.replace(temp_output_file, input_file)
+        print(f"Edited file saved as {input_file}")
+    else:
+        print(f"The diff looked suspect. Diff analysis result: {analysis_result}")
 
 
 if __name__ == "__main__":

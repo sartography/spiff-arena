@@ -2,7 +2,7 @@
 
 This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/).
 
-Please set aside a couple of hours to work through this, as getting this setup correctly once is 10,000 times better than having problems every day for the rest of your life.
+Please set aside a couple of hours to work through this, as getting this set up correctly once is 10,000 times better than having problems every day for the rest of your life.
 
 ## Our Methodology
 
