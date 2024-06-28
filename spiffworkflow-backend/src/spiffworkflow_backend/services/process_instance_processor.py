@@ -64,6 +64,7 @@ from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
+from spiffworkflow_backend.models import process_instance
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
@@ -812,7 +813,7 @@ class ProcessInstanceProcessor:
                     bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
                     single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess, task_model_mapping=task_model_mapping)
                     spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess.guid] = single_bpmn_process_dict
-                    bpmn_subprocess_mapping[bpmn_subprocess.guid] = bpmn_process
+                    bpmn_subprocess_mapping[bpmn_subprocess.guid] = bpmn_subprocess
 
                 tasks = TaskModel.query.filter(
                     TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
@@ -1294,6 +1295,12 @@ class ProcessInstanceProcessor:
         )
         deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
         spiff_tasks = processor.bpmn_process_instance.get_tasks()
+
+        for dt in deleted_tasks:
+            if str(dt.id) in processor.task_model_mapping:
+                del(processor.task_model_mapping[str(dt.id)])
+            if str(dt.id) in processor.bpmn_subprocess_mapping:
+                del(processor.bpmn_subprocess_mapping[str(dt.id)])
 
         task_service = TaskService(
             process_instance=processor.process_instance_model,
