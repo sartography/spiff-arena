@@ -123,6 +123,8 @@ class TaskService:
         self.bpmn_subprocess_id_mapping: dict[int, BpmnProcessModel] = {}
         for _, bs in self.bpmn_subprocess_mapping.items():
             self.bpmn_subprocess_id_mapping[bs.id] = bs
+        if self.process_instance.bpmn_process_id is not None:
+            self.bpmn_subprocess_id_mapping[self.process_instance.bpmn_process_id] = self.process_instance.bpmn_process
 
         # this updates the definition ids for both tasks and bpmn_processes when they are updated
         # in case definitions were changed for the same instances.
@@ -451,7 +453,7 @@ class TaskService:
             )
             if bpmn_process.guid is not None:
                 self.bpmn_subprocess_mapping[bpmn_process.guid] = bpmn_process
-        self.bpmn_subprocess_id_mapping[bpmn_process.id] = bpmn_process
+            self.bpmn_subprocess_id_mapping[bpmn_process.id] = bpmn_process
 
         return bpmn_process
 
