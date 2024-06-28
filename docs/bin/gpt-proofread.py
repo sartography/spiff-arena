@@ -37,9 +37,11 @@ human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
 # - Do not leave any trailing spaces (handled by another script, though)
 # - Never remove entire sentences (didn't seem necessary, since we said keep everything else exactly the same)
 
-system_text = """You are proofreading and you will receive text that is almost exactly correct, but may contain errors. You should:
+system_text = """You are proofreading a markdown document and you will receive text that is almost exactly correct, but may contain errors. You should:
 
 - Fix spelling
+- Not edit URLs
+- Never touch a a link like [Image label](images/Manual_instructions_panel.png)
 - Improve grammar that is obviously wrong
 - Fix awkward language if it is really bad
 - Keep everything else exactly the same, including tone and voice
@@ -48,9 +50,13 @@ system_text = """You are proofreading and you will receive text that is almost e
 - Output one line per sentence (same as input)
 - Avoid putting multiple sentences on the same line
 - Make sure you do not remove any headers at the beginning of the text (markdown headers begin with one or more # characters)
+
+The markdown document follows. The output document's first line should probably match that of the input document, even if it is a markdown header.
 """
 
 system_prompt = SystemMessage(content=system_text)
+
+EDIT_DIR = "/tmp/edits"
 
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 if openai_api_key is None:
@@ -99,6 +105,7 @@ def analyze_diff(diff_file_path):
     analysis_prompt = f"""
 You are an expert technical editor.
 Please analyze the following diff and ensure it looks like a successful copy edit of a markdown file.
+Editing URLs is not allowed; never touch a a link like [Image label](images/Manual_instructions_panel.png)
 It is not a successful edit if line one has been removed (editing is fine; removing is not).
 It is not a successful edit if three or more lines in a row have been removed without replacement.
 Edits or reformats are potentially good, but simply removing or adding a bunch of content is bad.
@@ -120,13 +127,13 @@ def process_file(input_file):
     chat_prompt = ChatPromptTemplate.from_messages(
         [system_prompt, human_message_prompt]
     )
-    os.makedirs("/tmp/proof-edits", exist_ok=True)
+    os.makedirs(EDIT_DIR, exist_ok=True)
 
     # Save the original content for diff generation
     original_content = content
 
     edited_content = get_edited_content(docs, chat_prompt)
-    temp_output_file = "/tmp/proof-edits/edited_output.md"
+    temp_output_file = f"{EDIT_DIR}/edited_output.md"
 
     overall_result = None
     if edited_content == original_content:
@@ -138,7 +145,7 @@ def process_file(input_file):
 
     # Generate and save the diff for the whole file based on the basename of the input file
     input_basename = os.path.basename(input_file)
-    diff_file_path = f"/tmp/proof-edits/{input_basename}.diff"
+    diff_file_path = f"{EDIT_DIR}/{input_basename}.diff"
     diff = difflib.unified_diff(
         original_content.splitlines(), edited_content.splitlines(), lineterm=""
     )
@@ -165,5 +172,5 @@ if __name__ == "__main__":
     else:
         input_file = sys.argv[1]
         overall_result = process_file(input_file)
-        with open("/tmp/proof-edits/proofread_results.txt", "a") as f:
+        with open(f"{EDIT_DIR}/proofread_results.txt", "a") as f:
             f.write(f"{input_file}: {overall_result}\n")
