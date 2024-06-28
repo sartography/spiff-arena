@@ -3,6 +3,7 @@
 import sys
 import os
 import difflib
+import os.path
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.text_splitter import CharacterTextSplitter
@@ -98,6 +99,7 @@ def analyze_diff(diff_file_path):
     analysis_prompt = f"""
 You are an expert technical editor.
 Please analyze the following diff and ensure it looks like a successful copy edit of a markdown file.
+It is not a successful edit if line one has been removed (editing is fine; removing is not).
 It is not a successful edit if three or more lines in a row have been removed without replacement.
 Edits or reformats are potentially good, but simply removing or adding a bunch of content is bad.
 Provide feedback if there are any issues.
@@ -134,15 +136,17 @@ def process_file(input_file):
     with open(temp_output_file, "w") as f:
         f.write(edited_content)
 
-    # Generate and save the diff for the whole file
+    # Generate and save the diff for the whole file based on the basename of the input file
+    input_basename = os.path.basename(input_file)
+    diff_file_path = f"/tmp/proof-edits/{input_basename}.diff"
     diff = difflib.unified_diff(
         original_content.splitlines(), edited_content.splitlines(), lineterm=""
     )
-    with open("/tmp/proof-edits/diff_file.diff", "w") as diff_file:
+    with open(diff_file_path, "w") as diff_file:
         diff_file.write("\n".join(diff))
 
     # Analyze the diff
-    analysis_result = analyze_diff("/tmp/proof-edits/diff_file.diff")
+    analysis_result = analyze_diff(diff_file_path)
 
     if analysis_result.lower().strip() == "good":
         os.replace(temp_output_file, input_file)
