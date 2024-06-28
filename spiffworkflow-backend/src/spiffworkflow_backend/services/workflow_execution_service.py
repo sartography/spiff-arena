@@ -118,11 +118,13 @@ class ExecutionStrategy:
         app: flask.app.Flask,
         user: Any | None,
         process_model_identifier: str,
+        process_instance_id: int,
     ) -> SpiffTask:
         with app.app_context():
             tld = current_app.config.get("THREAD_LOCAL_DATA")
             if tld:
                 tld.process_model_identifier = process_model_identifier
+                tld.process_instance_id = process_instance_id
 
             g.user = user
 
@@ -211,6 +213,7 @@ class ExecutionStrategy:
                         current_app._get_current_object(),
                         user,
                         process_instance.process_model_identifier,
+                        process_instance.id,
                     )
                 )
             for future in concurrent.futures.as_completed(futures):
@@ -229,6 +232,7 @@ class ExecutionStrategy:
                 current_app._get_current_object(),
                 user,
                 process_instance.process_model_identifier,
+                process_instance.id,
             )
             self.delegate.did_complete_task(spiff_task)
 
