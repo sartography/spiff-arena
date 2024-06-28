@@ -48,7 +48,7 @@ export default function DataStoreEdit() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <h1>Edit Data Store</h1>
+      <h1>Editar Data Store</h1>
       <DataStoreForm
         mode="edit"
         dataStore={dataStore}

@@ -31,7 +31,7 @@ export default function DataStoreNew() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <h1>Add Data Store</h1>
+      <h1>Adicionar Data Store</h1>
       <DataStoreForm
         mode="new"
         dataStore={dataStore}

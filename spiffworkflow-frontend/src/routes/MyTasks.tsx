@@ -170,7 +170,7 @@ export default function MyTasks() {
     );
     return (
       <>
-        <h1>Tasks waiting for me</h1>
+        <h1>Tarefas aguardando por mim.</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
@@ -189,7 +189,7 @@ export default function MyTasks() {
 
   if (pagination) {
     if (tasksWaitingForMe === null && relevantProcessModelSection === null) {
-      return <p>No tasks are waiting for you.</p>;
+      return <p>Não há tarefas aguardando por você.</p>;
     }
     return (
       <>

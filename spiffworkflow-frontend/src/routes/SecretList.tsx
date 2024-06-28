@@ -115,7 +115,7 @@ export default function SecretList() {
         />
       );
     } else {
-      displayText = <p>No Secrets to Display</p>;
+      displayText = <p>Não há Secrets no Display</p>;
     }
     return displayText;
   };

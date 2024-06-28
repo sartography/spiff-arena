@@ -191,7 +191,7 @@ export default function ReactFormEditor() {
         onRequestSubmit={handleFileNameSave}
         onRequestClose={handleFileNameCancel}
       >
-        <label>File Name:</label>
+        <label>Nome do Arquivo:</label>
         <span>
           <input
             name="file_name"

@@ -81,7 +81,7 @@ export default function Extension({
         if (value === undefined) {
           isValid = false;
           addError({
-            message: `Could not find a value for ${k} in form data.`,
+            message: `Não foi encontrado o valor ${k} de nos dados do formulário.`,
           });
         }
         return value;
@@ -406,7 +406,7 @@ export default function Extension({
       } else {
         componentsToDisplay.push(
           <>
-            <h2 className="with-top-margin">Result:</h2>
+            <h2 className="with-top-margin">Resultado:</h2>
             <Editor
               className="with-top-margin"
               height="30rem"
