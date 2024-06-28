@@ -111,7 +111,7 @@ export default function PublicForm() {
         <>
           {ErrorDisplayStateless(currentPageError)}
           <p>
-            Go to{' '}
+            Ir para{' '}
             <a href="/" data-qa="public-home-link">
               Home
             </a>
@@ -175,7 +175,7 @@ export default function PublicForm() {
     const style = { margin: '50px 0 50px 50px' };
     return (
       <Loading
-        description="Active loading indicator"
+        description="Indicador de carregamento ativo"
         withOverlay={false}
         style={style}
       />

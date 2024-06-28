@@ -28,10 +28,10 @@ export default function AuthenticationConfiguration() {
 
   return (
     <>
-      <Button onClick={() => saveAuthConfig()}>Save</Button>
+      <Button onClick={() => saveAuthConfig()}>Salvar</Button>
       <br />
       <br />
-      <h2>Local Configuration</h2>
+      <h2>Configuração Local</h2>
       <br />
       <Editor
         height={600}
