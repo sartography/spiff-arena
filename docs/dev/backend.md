@@ -49,7 +49,7 @@ When serializing models to JSON:
 
 - Avoid json.dumps when you are creating JSON. Use jsonify (a Flask thing) instead.
 - Avoid Marshmallow when possible and instead use @dataclass on your model.
-- If you need to represent your object in a very custom way (the default dataclass columns are not working out), write a method called serialize on your model (this is used by the default serializer).
+- If you need to represent your object in a very custom way (the default dataclass columns are not working out), write a method called `serialized` on your model (this is used by the default serializer).
 
 ## Exceptions
 
