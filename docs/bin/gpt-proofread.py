@@ -41,7 +41,7 @@ system_text = """You are proofreading a markdown document and you will receive t
 
 - Fix spelling
 - Not edit URLs
-- Never touch a a link like [Image label](images/Manual_instructions_panel.png)
+- Never touch a markdown link; these might look like: [Image label](images/Manual_instructions_panel.png)
 - Improve grammar that is obviously wrong
 - Fix awkward language if it is really bad
 - Keep everything else exactly the same, including tone and voice
@@ -105,7 +105,7 @@ def analyze_diff(diff_file_path):
     analysis_prompt = f"""
 You are an expert technical editor.
 Please analyze the following diff and ensure it looks like a successful copy edit of a markdown file.
-Editing URLs is not allowed; never touch a a link like [Image label](images/Manual_instructions_panel.png)
+Editing URLs is not allowed; never touch a link like [Image label](images/Manual_instructions_panel.png)
 It is not a successful edit if line one has been removed (editing is fine; removing is not).
 It is not a successful edit if three or more lines in a row have been removed without replacement.
 Edits or reformats are potentially good, but simply removing or adding a bunch of content is bad.
