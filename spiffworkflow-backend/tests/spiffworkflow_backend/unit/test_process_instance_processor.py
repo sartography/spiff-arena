@@ -1,4 +1,3 @@
-import time
 from uuid import UUID
 
 import pytest
@@ -1093,10 +1092,10 @@ class TestProcessInstanceProcessor(BaseTest):
         )
 
         processor = ProcessInstanceProcessor(process_instance)
-        start_time = time.time()
+        # start_time = time.time()
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        end_time = time.time()
-        duration = end_time - start_time
+        # end_time = time.time()
+        # duration = end_time - start_time
         # assert processor.process_instance_model.end_in_seconds is not None
         # duration = processor.process_instance_model.end_in_seconds - processor.process_instance_model.created_at_in_seconds
-        print(f"➡️ ➡️ ➡️  duration: {duration}")
+        # print(f"➡️ ➡️ ➡️  duration: {duration}")
