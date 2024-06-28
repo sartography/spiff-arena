@@ -328,6 +328,9 @@ class TaskService:
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
         task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+        print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
+        task_model: TaskModel | None = self.task_model_mapping.get(spiff_task_guid)
+        print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -340,6 +343,7 @@ class TaskService:
                 process_instance_id=self.process_instance.id,
                 task_definition_id=task_definition.id,
             )
+            self.task_model_mapping[task_model.guid] = task_model
 
         return (bpmn_process, task_model)
 
@@ -485,7 +489,10 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = TaskModel.query.filter_by(guid=task_id).first()
+            # TaskModel.query.filter_by(guid=task_id).first()
+            # task_model = TaskModel.query.filter_by(guid=task_id).first()
+            # print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
+            task_model = self.task_model_mapping.get(task_id)
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
@@ -493,6 +500,7 @@ class TaskService:
                     spiff_task,
                     self.bpmn_definition_to_task_definitions_mappings,
                 )
+                self.task_model_mapping[task_model.guid] = task_model
             self.update_task_model(task_model, spiff_task)
             self.task_models[task_model.guid] = task_model
 
@@ -506,6 +514,7 @@ class TaskService:
         """Update given spiff tasks in the database and remove deleted tasks."""
         # Remove all the deleted/pruned tasks from the database.
         deleted_task_guids = [str(t.id) for t in deleted_spiff_tasks]
+        # limited scope: will ignore caching
         tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
 
         human_task_guids_to_clear = deleted_task_guids
@@ -632,6 +641,7 @@ class TaskService:
         task_models: list[TaskModel] = []
         bpmn_processes: list[BpmnProcessModel] = [bpmn_process]
         if bpmn_process.guid is not None:
+            # limited scope: will ignore caching
             parent_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
             task_models.append(parent_task_model)
             if not stop_on_first_call_activity or parent_task_model.task_definition.typename != "CallActivity":
@@ -649,6 +659,7 @@ class TaskService:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
         bpmn_process_identifiers: list[str] = []
         if bpmn_process.guid:
+            # limited scope: will ignore caching
             task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
             if task_model is None:
                 raise TaskNotFoundError(f"Cannot find the corresponding task for the bpmn process with guid {bpmn_process.guid}.")
@@ -718,6 +729,7 @@ class TaskService:
 
     @classmethod
     def get_ready_signals_with_button_labels(cls, process_instance_id: int, associated_task_guid: str) -> list[dict]:
+        # limited scope: will ignore caching
         waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(state="WAITING", process_instance_id=process_instance_id).all()
         result = []
         for task_model in waiting_tasks:
