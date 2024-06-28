@@ -126,7 +126,9 @@ A previously completed section is now active and shown in yellow.
 ![Reset](images/reset_process5.png)
 
 > **Step 8: "Resume" process instance.
-**  The process instance should be resumed by selecting the ‘Resume’ icon next to the Process Instance Id.
+**
+
+The process instance should be resumed by selecting the ‘Resume’ icon next to the Process Instance Id.
 
 ![Reset](images/reset_process6.png)
 
