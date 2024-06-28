@@ -427,6 +427,7 @@ class TaskService:
                     subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
                         # direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(guid=str(subprocess_guid)).first()
+                        # print(f"➡️ ➡️ ➡️  self.bpmn_subprocess_mapping: {self.bpmn_subprocess_mapping}")
                         direct_bpmn_process_parent = self.bpmn_subprocess_mapping.get(str(subprocess_guid))
                         if direct_bpmn_process_parent is None:
                             raise BpmnProcessNotFoundError(
@@ -457,12 +458,15 @@ class TaskService:
         db.session.add(bpmn_process)
 
         if bpmn_process_is_new:
+            # print("WE IS NEW?")
+            # print(f"➡️ ➡️ ➡️  bpmn_process: {bpmn_process}")
             self.add_tasks_to_bpmn_process(
                 tasks=tasks,
                 spiff_workflow=spiff_workflow,
                 bpmn_process=bpmn_process,
             )
             if bpmn_process.guid is not None:
+                # print(f"➡️ ➡️ ➡️  bpmn_process: {bpmn_process}")
                 self.bpmn_subprocess_mapping[bpmn_process.guid] = bpmn_process
             self.bpmn_subprocess_id_mapping[bpmn_process.id] = bpmn_process
 
