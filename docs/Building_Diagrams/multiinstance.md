@@ -16,7 +16,7 @@ When one instance is completed, a new instance is created for the next element i
 
 All instances of the task are launched simultaneously, allowing for concurrent processing of the collection elements.
 In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated.
-The instances are executed concurrently and independently from each other.
+The instances are executed concurrently and independently of each other.
 
 ![Multi_instance_parallel](images/multiinstance_parallel_example.png)
 

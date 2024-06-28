@@ -32,7 +32,7 @@ More ways to access SpiffArena are coming your way!
 
 ## How to Navigate through SpiffArena
 
-In this section, we will navigate through the platform and provide a generic overview of each section step-by-step, allowing you to understand and engage with the platform more effectively.
+In this section, we will navigate through the platform and provide a general overview of each section step-by-step, allowing you to understand and engage with the platform more effectively.
 
 ### Step 1: Explore the Home section
 
@@ -265,7 +265,7 @@ Within the "Process Instances" section, you'll see a list of all the instances f
 
 ![Untitled](images/Untitled_19.png)
 
-If you are on a homepage, you can navigate to the table you wish to filter.
+If you are on a home page, you can navigate to the table you wish to filter.
 Look for the black funnel icon in the top right-hand corner above the table and click on the icon.
 By clicking on the filter icon, you'll be taken to a full-screen process view.
 
@@ -286,7 +286,6 @@ Once you have entered all the relevant filter details, click on the "**Apply**" 
 The system will then display all the process instances matching the input details.
 
 ![Untitled](images/Untitled_21.png)
-
 To filter process instances by **process-defined metadata**, follow these steps:
 - Search for the specific **process** you want to filter and click on the column option to select metadata options.
 ![Untitled](images/Untitled_22.png)

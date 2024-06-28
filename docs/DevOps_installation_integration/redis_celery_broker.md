@@ -34,7 +34,7 @@ If you want to get the results of this job after the worker processes it, you wo
 redis-cli get celery-task-meta-9622ff55-9f23-4a94-b4a0-4e0a615a8d14
 ```
 
-As such, if you wanted to get ALL of the results, you could use a hilarious command like:
+As such, if you wanted to get ALL of the results, you could use a command like:
 
 ```sh
 echo 'keys celery-task-meta-\*' | redis-cli | sed 's/^/get /' | redis-cli

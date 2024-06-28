@@ -27,7 +27,7 @@ This is the visual platform where business processes are represented and mapped 
 
 ## Call Activity
 
-This refers to the act of a parent or higher-level process invoking a pre-defined or reusable child process, which is represented in another process diagram.
+This refers to the act of a parent or higher-level process invoking a predefined or reusable child process, which is represented in another process diagram.
 This invocation allows for the utilization of the child process multiple times, enhancing reusability within the overall model.
 
 ## Collapsed Subprocess
