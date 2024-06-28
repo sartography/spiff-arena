@@ -211,7 +211,9 @@ class TaskService:
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
         # bpmn_process = (
-        #     new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
+        #     new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(
+        #       id=task_model.bpmn_process_id
+        #     ).first()
         # )
         bpmn_process = new_bpmn_process or task_model.bpmn_process or self.bpmn_subprocess_id_mapping[task_model.bpmn_process_id]
 
