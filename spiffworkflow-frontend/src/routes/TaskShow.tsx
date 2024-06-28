@@ -254,38 +254,6 @@ export default function TaskShow() {
     });
   };
 
-  // const trocaCategoriaTypeAheadDinamicamente = () => {
-  //   console.info("Inicia trocaCategoriaTypeAheadDinamicamente")
-
-  //   if (taskWithTaskData) {
-  //     if (taskWithTaskData.form_ui_schema) {
-  //       for (const key in taskWithTaskData.form_ui_schema) {
-  //         const element = taskWithTaskData.form_ui_schema[key];
-  //         if (element["ui:widget"] === "typeahead") {
-  //           if (element["ui:options"] && element["ui:options"]["category"]) {
-  //             let categoryValue = element["ui:options"]["category"];
-  
-  //             // Verifica se a categoria contém uma chave dinâmica
-  //             console.info("categoryValue", categoryValue)
-  //             const matches = categoryValue.match(/\{(.+?)\}/);
-  //             console.info("matches", matches)
-
-  //             if (matches) {
-  //               const dynamicKey = matches[1];
-  
-  //               // Verifica se existe uma variável com o mesmo nome em taskWithTaskData.data
-  //               if (taskWithTaskData.data && dynamicKey in taskWithTaskData.data) {
-  //                 const dynamicCategory = taskWithTaskData.data[dynamicKey];
-  //                 element["ui:options"]["category"] = categoryValue.replace(`{${dynamicKey}}`, dynamicCategory);
-  //                 console.log(`Categoria de ${key} alterada para '${element["ui:options"]["category"]}'`);
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // };
   const trocaCategoriaTypeAheadDinamicamente = (schema: any, data: any) => {
     const processElement = (element: any) => {
       if (typeof element === 'object' && element !== null) {
