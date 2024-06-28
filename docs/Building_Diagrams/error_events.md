@@ -15,7 +15,7 @@ It is a specialized event used to initiate error handling workflows dynamically.
 
 **Reason to Use**:
 - **Modular Error Handling**: Separates error handling logic into dedicated subprocesses, improving process organization and maintainability.
-- **Reusability**: Allows for the reuse of error handling subprocesses across multiple parent processes.
+- **Reusability**: Allows for the reuse of error-handling subprocesses across multiple parent processes.
 - **Focused Recovery Strategies**: Enables the development of targeted recovery strategies for specific errors, enhancing error resolution effectiveness.
 
 **Example**:
@@ -88,7 +88,8 @@ The process kicks off with an action that requires fetching specific employee de
 
    - **Configuration**: This task is configured to make an HTTP GET request to the BambooHR API to retrieve employee information.
      - **Operator ID**: `http/getrequestV2`, indicating the operation type and version.
-     - **Parameters**: The URL is set to `https://api.bamboohr.com/api/gateway.php/statusresearchdemo/v1/employees/113`, with headers accepting JSON, and parameters requesting the first and last names of the employee. Authentication is provided via basic auth, with a specified API key (`BAMBOOHR_API_KEY`) and password.
+     - **Parameters**: The URL is set to `https://api.bamboohr.com/api/gateway.php/statusresearchdemo/v1/employees/113`, with headers accepting JSON, and parameters requesting the first and last names of the employee.
+       Authentication is provided via basic auth, with a specified API key (`BAMBOOHR_API_KEY`) and password.
      - **Attempts**: Configured to retry the operation twice in case of failure.
 
 3. **Error Handling Setup**:

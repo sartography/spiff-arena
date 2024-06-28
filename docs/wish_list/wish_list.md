@@ -5,16 +5,17 @@ The following is a list of enhancements we wish to complete in the near (or even
 ## Performance / System Improvements
 
 ### Benchmarking / Performance Testing
+
 Automated tests that ensure our performance remains consistent as we add features and functionality.
 
 ### Support Multiple Connector Proxies
 
 Service Tasks have been a huge win; there are multiple reasons why supporting more than one Connector Proxy would be beneficial:
 
-1. Connect to several separately hosted services
-2. Support multiple services written in multiple languages
-3. Allow some connectors to be local (HTTP GET/POST) vs. remote (Xero/Coin Gecko)
-4. Could support non-HTTP based connectors (Git interactions could be a workflow)
+1. Connect to several separately hosted services.
+2. Support multiple services written in multiple languages.
+3. Allow some connectors to be local (HTTP GET/POST) vs. remote (Xero/Coin Gecko).
+4. Could support non-HTTP-based connectors (Git interactions could be a workflow).
 
 ### Interstitial Performance
 
@@ -31,9 +32,9 @@ There are a number of useful BPMN components that we do not currently support.
 We should evaluate these and determine which ones we should support and how we should support them.
 We should consider creating a list of unsupported items.
 
-* Compensation Events (valuable, but difficult)
-* Conditional events
-* Event Sub-Processes are not currently supported (low-hanging fruit, easy to add)
+* Compensation Events (valuable but difficult).
+* Conditional events.
+* Event Sub-Processes are not currently supported (low-hanging fruit, easy to add).
 
 ### Decentralized / Distributed Deployments
 
@@ -49,6 +50,7 @@ This is not as far-fetched or difficult as it may initially seem.
 While Python is notoriously bad at parallel execution (the lovely GIL), we have already taken the most critical steps to ensuring it is possible:
 1. A team has demonstrated parallel execution using the core SpiffWorkflow library.
 2. We can keep a configurable number of "background" SpiffArena processes running that can pick up waiting tasks.
+
 Given these things are already in place, we just need to lock processes at the task or branch level so that ready tasks on parallel branches can be picked up by different background processes at the same time.
 
 ### BPMN Definitions at Save Time vs. Run Time
@@ -59,6 +61,7 @@ This will also allow us to do some early and deep validation as well.
 ## End User Experience
 
 ### UI Overview
+
 We could really use a good UI/UX review of the site and take a stab at cleaning up the whole site to follow some consistent design patterns and resolve potential issues.
 
 ### Customizable Home Page (Non-Status Specific)

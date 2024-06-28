@@ -34,7 +34,7 @@ This guide will walk you through the steps to modify this message in SpiffWorkfl
 
    ![Launching Editor](images/onboarding_4.png)
 
-   After making your desired modifications, save the changes to update the welcome message.
+After making your desired modifications, save the changes to update the welcome message.
 
 Once you've updated the welcome message, it will be displayed prominently on the home page after users log in.
 The message will be positioned in a way that it's one of the first things users see, ensuring they receive the intended greeting every time they access the platform.

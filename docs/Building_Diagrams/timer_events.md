@@ -119,12 +119,13 @@ Just remember to have a mechanism in place to eventually break out of the loop a
 
 ## Timer Event Configuration
 
-| 💻 Form | ⌨ Field Input | 📝 Description |
-| --- | --- | --- |
-| ![name_field](images/name_field.png) | **Name:** Cancel Order | A descriptive name given to the element, providing a human-readable label or title. |
-| ![id_field](images/id_field.png) | **ID:** Example - cancel_order | An identifier used to uniquely identify the element within the BPMN model. |
+| 💻 Form                                | ⌨ Field Input                      | 📝 Description                                                                              |
+| -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| ![name_field](images/name_field.png)   | **Name:** Cancel Order              | A descriptive name given to the element, providing a human-readable label or title.         |
+| ![id_field](images/id_field.png)       | **ID:** Example - cancel_order      | An identifier used to uniquely identify the element within the BPMN model.                  |
 | ![timer_field](images/timer_field.png) | **Type:** Duration **Value:** PT48H | Choose the type of trigger you want to set: Specific Date/Time, Duration, or Cycle Trigger. |
 
 ```{admonition} Timer Delay
 💡 Note: Timer events, especially those set for short durations, may face delays of 20-30 seconds, varying with the number of active instances.
 Despite significant improvements, our ongoing efforts aim to further reduce these delays.
+```
