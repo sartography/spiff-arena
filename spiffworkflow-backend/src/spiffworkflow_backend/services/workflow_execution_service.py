@@ -193,7 +193,10 @@ class ExecutionStrategy:
         self.delegate.add_object_to_db_session(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        return [t for t in bpmn_process_instance.get_tasks(state=TaskState.READY) if not t.task_spec.manual]
+        return [t for t in bpmn_process_instance.get_tasks(
+            #first_task=self.delegate.last_completed_spiff_task,
+            state=TaskState.READY
+        ) if not t.task_spec.manual]
 
     def _run_engine_steps_with_threads(
         self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
@@ -311,7 +314,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
         # but it didn't quite work in all cases, so we deleted it. you can find it in commit
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
-        for waiting_spiff_task in bpmn_process_instance.get_tasks(
+        for waiting_spiff_task in bpmn_process_instance.get_tasks(#first_task=self.last_completed_spiff_task, 
             state=TaskState.WAITING
             | TaskState.CANCELLED
             | TaskState.READY
@@ -615,6 +618,7 @@ class ProfiledWorkflowExecutionService(WorkflowExecutionService):
         import cProfile
         from pstats import SortKey
 
+        should_schedule_waiting_timer_events = False
         task_runnability = TaskRunnability.unknown_if_ready_tasks
         with cProfile.Profile() as pr:
             task_runnability = super().run_and_save(

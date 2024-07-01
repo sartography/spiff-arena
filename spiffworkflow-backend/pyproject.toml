@@ -25,9 +25,10 @@ flask-jwt-extended = "^4.4.4"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+# SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
+SpiffWorkflow = {develop = true, path = "/spiffworkflow/" }
 sentry-sdk = {extras = ['flask'], version = "^2.5"}
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.3"
