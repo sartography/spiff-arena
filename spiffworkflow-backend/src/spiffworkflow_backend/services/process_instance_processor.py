@@ -553,6 +553,12 @@ class ProcessInstanceProcessor:
             task_service.update_task_model_with_spiff_task(
                 spiff_task, store_process_instance_events=store_process_instance_events, start_and_end_times=start_and_end_times
             )
+        # new_tm = TaskModel.query.filter(TaskModel.guid.in_(task_model_mapping.keys())).all()
+        # for tm in new_tm:
+        #     task_model_mapping[tm.guid] = tm
+        # new_bp = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(bpmn_subprocess_mapping.keys())).all()
+        # for bp in new_bp:
+        #     bpmn_subprocess_mapping[bp.guid] = bp
         task_service.save_objects_to_database()
         db.session.commit()
 

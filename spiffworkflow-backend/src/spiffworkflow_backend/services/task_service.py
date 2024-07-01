@@ -142,8 +142,13 @@ class TaskService:
         self.run_started_at: float | None = run_started_at
 
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
+        # ProcessInstanceModel.query.first()
         db.session.bulk_save_objects(self.bpmn_processes.values())
-        db.session.bulk_save_objects(self.task_models.values())
+        # bp = BpmnProcessModel.query.all()
+        # print(f"➡️ ➡️ ➡️  bp: {bp}")
+        # first_item = list(self.bpmn_processes.values())[0]
+        # print(f"➡️ ➡️ ➡️  self.bpmn_processes.values()[0]: {first_item}")
+        # db.session.bulk_save_objects(self.task_models.values())
         # db.session.bulk_save_objects(self.task_model_mapping_existing.values())
         # db.session.bulk_save_objects(self.task_model_mapping_new.values())
 
@@ -152,24 +157,23 @@ class TaskService:
         #     db.session.merge(tm)
         # for tm in self.task_models.values():
         #     db.session.refresh(tm)
-        # new_tm = [tm.__dict__ for tm in self.task_model_mapping_new.values()]
-        # # existing_tm = [tm.__dict__ for tm in self.task_model_mapping_existing.values()]
-        # existing_tm = [
-        #     {k: v for k, v in tm.__dict__.items() if k != "_sa_instance_state"}
-        #     for tm in self.task_model_mapping_existing.values()
-        # ]
-        # existing_tm = {k: v for k, v in self.task_model_mapping_existing.values.__dict__.items() if k != "_sa_instance_state"}
+        new_tm = [tm.__dict__ for tm in self.task_model_mapping_new.values()]
+        print(f"➡️ ➡️ ➡️  new_tm: {new_tm}")
+        existing_tm = [
+            {k: v for k, v in tm.__dict__.items() if k != "_sa_instance_state"}
+            for tm in self.task_model_mapping_existing.values()
+        ]
         # print(f"➡️ ➡️ ➡️  self.task_model_mapping_new: {self.task_model_mapping_new}")
         # print(f"➡️ ➡️ ➡️  new_tm: {new_tm}")
-        # if new_tm:
-        #     db.session.execute(db.insert(TaskModel), new_tm)
-        # if existing_tm:
-        #     # for t in existing_tm:
-        #     #     if "_sa_instance_state" not in t:
-        #     #         print(f"➡️ ➡️ ➡️  t: {t}")
-        #     # print(f"➡️ ➡️ ➡️  existing_tm: {existing_tm[0]}")
-        #     # print(f"➡️ ➡️ ➡️  existing_tm: {existing_tm}")
-        #     db.session.execute(db.update(TaskModel), existing_tm)
+        if new_tm:
+            db.session.execute(db.insert(TaskModel), new_tm)
+        if existing_tm:
+            # for t in existing_tm:
+            #     if "_sa_instance_state" not in t:
+            #         print(f"➡️ ➡️ ➡️  t: {t}")
+            # print(f"➡️ ➡️ ➡️  existing_tm: {existing_tm[0]}")
+            # print(f"➡️ ➡️ ➡️  existing_tm: {existing_tm}")
+            db.session.execute(db.update(TaskModel), existing_tm)
         self.task_model_mapping_existing.update(self.task_model_mapping_new)
         self.task_model_mapping_new = {}
         # new_tm = TaskModel.query.filter(TaskModel.guid.in_(self.task_models.keys())).all()
@@ -251,7 +255,7 @@ class TaskService:
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
-        print(f"➡️ ➡️ ➡️  task_model: {task_model}")
+        # print(f"➡️ ➡️ ➡️  task_model: {task_model}")
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -368,10 +372,11 @@ class TaskService:
             task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
                 spiff_task.task_spec.name
             ]
-            print(f"➡️ ➡️ ➡️  bpmn_process.id2: {bpmn_process.id}")
+            # print(f"➡️ ➡️ ➡️  bpmn_process.id2: {bpmn_process.id}")
             task_model = TaskModel(
                 guid=spiff_task_guid,
-                bpmn_process_id=bpmn_process.id,
+                # bpmn_process_id=bpmn_process.id,
+                bpmn_process=bpmn_process,
                 process_instance_id=self.process_instance.id,
                 task_definition_id=task_definition.id,
             )
@@ -531,7 +536,9 @@ class TaskService:
             # TaskModel.query.filter_by(guid=task_id).first()
             # task_model = TaskModel.query.filter_by(guid=task_id).first()
             # print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
+            # print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
             task_model = self.get_cached_task_model(task_id)
+            print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
@@ -542,7 +549,7 @@ class TaskService:
                 self.task_model_mapping_new[task_model.guid] = task_model
                 # print(f"➡️ ➡️ ➡️  task_model.guid2: {task_model.guid}")
             elif task_id not in self.task_model_mapping_new:
-                print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
+                # print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
                 self.task_model_mapping_existing[task_model.guid] = task_model
             self.update_task_model(task_model, spiff_task)
             self.task_models[task_model.guid] = task_model
@@ -864,7 +871,8 @@ class TaskService:
         print(f"➡️ ➡️ ➡️  bpmn_process.id: {bpmn_process.id}")
         task_model = TaskModel(
             guid=str(spiff_task.id),
-            bpmn_process_id=bpmn_process.id,
+            # bpmn_process_id=bpmn_process.id,
+            bpmn_process=bpmn_process,
             process_instance_id=process_instance.id,
             task_definition_id=task_definition.id,
         )
