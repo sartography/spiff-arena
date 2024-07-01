@@ -13,7 +13,7 @@ class Version4(DataMigrationBase):
         return "4"
 
     @classmethod
-    def run(cls, process_instance: ProcessInstanceModel) -> None:
+    def run(cls, process_instance: ProcessInstanceModel, should_raise_on_error: bool = False) -> None:
         try:
             processor = ProcessInstanceProcessor(
                 process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
@@ -28,6 +28,8 @@ class Version4(DataMigrationBase):
             )
 
         except Exception as ex:
+            if cls.should_raise_on_error():
+                raise ex
             current_app.logger.warning(f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}")
 
     @classmethod

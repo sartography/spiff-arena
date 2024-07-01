@@ -463,6 +463,12 @@ class ProcessInstanceProcessor:
         bpmn_process_spec = None
         self.full_bpmn_process_dict: dict = {}
 
+        # mappings of tasks and bpmn subprocesses to the model objects so we can avoid unnecessary queries in the TaskService.
+        # only subprocesses should be necessary since the top-level process is on the process-instance and sqlalchemy
+        # should help us cache it in memeory. it also does not have a guid which is why just avoid caching it in this system.
+        self.task_model_mapping: dict[str, TaskModel] = {}
+        self.bpmn_subprocess_mapping: dict[str, BpmnProcessModel] = {}
+
         # this caches the bpmn_process_definition_identifier and task_identifier back to the bpmn_process_id
         # in the database. This is to cut down on database queries while adding new tasks to the database.
         # Structure:
@@ -491,12 +497,14 @@ class ProcessInstanceProcessor:
                 self.bpmn_process_instance,
                 self.full_bpmn_process_dict,
                 self.bpmn_definition_to_task_definitions_mappings,
-            ) = self.__get_bpmn_process_instance(
+            ) = self.__class__.__get_bpmn_process_instance(
                 process_instance_model,
-                bpmn_process_spec,
+                spec=bpmn_process_spec,
                 subprocesses=subprocesses,
                 include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
                 include_completed_subprocesses=include_completed_subprocesses,
+                task_model_mapping=self.task_model_mapping,
+                bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
             )
             self.set_script_engine(self.bpmn_process_instance, self._script_engine)
 
@@ -523,16 +531,18 @@ class ProcessInstanceProcessor:
             process_instance_model=process_instance_model,
             force_update=True,
         )
+        bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
+        task_model_mapping, bpmn_subprocess_mapping = cls.get_db_mappings_from_bpmn_process_dict(bpmn_process_dict)
+
         task_service = TaskService(
             process_instance=process_instance_model,
             serializer=cls._serializer,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
             force_update_definitions=True,
+            task_model_mapping=task_model_mapping,
+            bpmn_subprocess_mapping=bpmn_subprocess_mapping,
         )
 
-        process_copy = copy.deepcopy(bpmn_process_dict)
-        bpmn_process_instance = cls._serializer.from_dict(process_copy)
-        bpmn_process_instance.script_engine = cls._default_script_engine
         for spiff_task in bpmn_process_instance.get_tasks():
             start_and_end_times: StartAndEndTimes | None = None
             if spiff_task.has_state(TaskState.COMPLETED | TaskState.ERROR):
@@ -545,6 +555,29 @@ class ProcessInstanceProcessor:
             )
         task_service.save_objects_to_database()
         db.session.commit()
+
+    @classmethod
+    def initialize_bpmn_process_instance(cls, bpmn_process_dict: dict) -> BpmnWorkflow:
+        process_copy = copy.deepcopy(bpmn_process_dict)
+        bpmn_process_instance = cls._serializer.from_dict(process_copy)
+        bpmn_process_instance.script_engine = cls._default_script_engine
+        return bpmn_process_instance
+
+    @classmethod
+    def get_db_mappings_from_bpmn_process_dict(
+        cls, bpmn_process_dict: dict
+    ) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
+        task_guids = set(bpmn_process_dict["tasks"].keys())
+        bpmn_process_guids = set()
+        for subproc_guid, subproc_dict in bpmn_process_dict["subprocesses"].items():
+            new_set = set(subproc_dict["tasks"].keys())
+            task_guids.union(new_set)
+            bpmn_process_guids.add(subproc_guid)
+        task_models = TaskModel.query.filter(TaskModel.guid.in_(task_guids)).all()  # type: ignore
+        bpmn_process_models = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(bpmn_process_guids)).all()  # type: ignore
+        task_model_mapping = {t.guid: t for t in task_models}
+        bpmn_subprocess_mapping = {b.guid: b for b in bpmn_process_models}
+        return (task_model_mapping, bpmn_subprocess_mapping)
 
     @classmethod
     def get_process_model_and_subprocesses(
@@ -673,6 +706,7 @@ class ProcessInstanceProcessor:
     def _get_bpmn_process_dict(
         cls,
         bpmn_process: BpmnProcessModel,
+        task_model_mapping: dict[str, TaskModel],
         get_tasks: bool = False,
         include_task_data_for_completed_tasks: bool = False,
     ) -> dict:
@@ -682,7 +716,10 @@ class ProcessInstanceProcessor:
         if get_tasks:
             tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
             cls._get_tasks_dict(
-                tasks, bpmn_process_dict, include_task_data_for_completed_tasks=include_task_data_for_completed_tasks
+                tasks,
+                bpmn_process_dict,
+                include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                task_model_mapping=task_model_mapping,
             )
         return bpmn_process_dict
 
@@ -691,6 +728,7 @@ class ProcessInstanceProcessor:
         cls,
         tasks: list[TaskModel],
         spiff_bpmn_process_dict: dict,
+        task_model_mapping: dict[str, TaskModel],
         bpmn_subprocess_id_to_guid_mappings: dict | None = None,
         include_task_data_for_completed_tasks: bool = False,
     ) -> None:
@@ -739,12 +777,15 @@ class ProcessInstanceProcessor:
             if task.guid in task_guids_to_add:
                 task_data = json_data_mappings[task.json_data_hash]
             tasks_dict[task.guid]["data"] = task_data
+            task_model_mapping[task.guid] = task
 
     @classmethod
     def _get_full_bpmn_process_dict(
         cls,
         process_instance_model: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
+        task_model_mapping: dict[str, TaskModel],
+        bpmn_subprocess_mapping: dict[str, BpmnProcessModel],
         include_task_data_for_completed_tasks: bool = False,
         include_completed_subprocesses: bool = False,
     ) -> dict:
@@ -772,7 +813,10 @@ class ProcessInstanceProcessor:
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(
-                    bpmn_process, get_tasks=True, include_task_data_for_completed_tasks=include_task_data_for_completed_tasks
+                    bpmn_process,
+                    get_tasks=True,
+                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                    task_model_mapping=task_model_mapping,
                 )
                 spiff_bpmn_process_dict.update(single_bpmn_process_dict)
 
@@ -791,8 +835,9 @@ class ProcessInstanceProcessor:
                         current_app.logger.info(f"Deferring subprocess spec: '{subprocess_identifier}'")
                         continue
                     bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
-                    single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
+                    single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess, task_model_mapping=task_model_mapping)
                     spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess.guid] = single_bpmn_process_dict
+                    bpmn_subprocess_mapping[bpmn_subprocess.guid] = bpmn_subprocess
 
                 tasks = TaskModel.query.filter(
                     TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
@@ -800,8 +845,9 @@ class ProcessInstanceProcessor:
                 cls._get_tasks_dict(
                     tasks,
                     spiff_bpmn_process_dict,
-                    bpmn_subprocess_id_to_guid_mappings,
+                    bpmn_subprocess_id_to_guid_mappings=bpmn_subprocess_id_to_guid_mappings,
                     include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                    task_model_mapping=task_model_mapping,
                 )
 
         return spiff_bpmn_process_dict
@@ -833,6 +879,8 @@ class ProcessInstanceProcessor:
     @staticmethod
     def __get_bpmn_process_instance(
         process_instance_model: ProcessInstanceModel,
+        task_model_mapping: dict[str, TaskModel],
+        bpmn_subprocess_mapping: dict[str, BpmnProcessModel],
         spec: BpmnProcessSpec | None = None,
         subprocesses: IdToBpmnProcessSpecMapping | None = None,
         include_task_data_for_completed_tasks: bool = False,
@@ -852,6 +900,8 @@ class ProcessInstanceProcessor:
                     bpmn_definition_to_task_definitions_mappings,
                     include_completed_subprocesses=include_completed_subprocesses,
                     include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                    task_model_mapping=task_model_mapping,
+                    bpmn_subprocess_mapping=bpmn_subprocess_mapping,
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
@@ -1244,6 +1294,8 @@ class ProcessInstanceProcessor:
             process_instance=self.process_instance_model,
             serializer=self._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+            task_model_mapping=self.task_model_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
         ProcessInstanceTmpService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
@@ -1267,10 +1319,18 @@ class ProcessInstanceProcessor:
         deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
         spiff_tasks = processor.bpmn_process_instance.get_tasks()
 
+        for dt in deleted_tasks:
+            if str(dt.id) in processor.task_model_mapping:
+                del processor.task_model_mapping[str(dt.id)]
+            if str(dt.id) in processor.bpmn_subprocess_mapping:
+                del processor.bpmn_subprocess_mapping[str(dt.id)]
+
         task_service = TaskService(
             process_instance=processor.process_instance_model,
             serializer=processor._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
+            task_model_mapping=processor.task_model_mapping,
+            bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
 
@@ -1485,6 +1545,8 @@ class ProcessInstanceProcessor:
             serializer=self._serializer,
             process_instance=self.process_instance_model,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+            task_model_mapping=self.task_model_mapping,
         )
 
         if execution_strategy is None:
@@ -1508,6 +1570,7 @@ class ProcessInstanceProcessor:
             save,
             should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
         )
+        self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         self.check_all_tasks()
         return task_runnability
 
@@ -1684,6 +1747,8 @@ class ProcessInstanceProcessor:
             serializer=self._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             run_started_at=run_started_at,
+            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+            task_model_mapping=self.task_model_mapping,
         )
         task_service.update_task_model(task_model, spiff_task)
         JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
@@ -1799,6 +1864,8 @@ class ProcessInstanceProcessor:
             process_instance=self.process_instance_model,
             serializer=self._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+            task_model_mapping=self.task_model_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
 

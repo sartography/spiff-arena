@@ -29,12 +29,14 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -249,6 +251,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         process_instance: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
         secondary_engine_step_delegate: EngineStepDelegate | None = None,
+        task_model_mapping: dict[str, TaskModel] | None = None,
+        bpmn_subprocess_mapping: dict[str, BpmnProcessModel] | None = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
@@ -266,6 +270,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             serializer=self.serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             run_started_at=time.time(),
+            task_model_mapping=task_model_mapping,
+            bpmn_subprocess_mapping=bpmn_subprocess_mapping,
         )
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
@@ -333,6 +339,9 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.after_engine_steps(bpmn_process_instance)
+
+    def get_guid_to_db_object_mappings(self) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
+        return (self.task_service.task_model_mapping, self.task_service.bpmn_subprocess_mapping)
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""

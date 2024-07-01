@@ -306,19 +306,25 @@ class BaseTest:
         process_model: ProcessModelInfo,
         status: str | None = "not_started",
         user: UserModel | None = None,
+        save_start_and_end_times: bool = True,
     ) -> ProcessInstanceModel:
         if user is None:
             user = self.find_or_create_user()
 
         current_time = round(time.time())
+        start_in_seconds = None
+        end_in_seconds = None
+        if save_start_and_end_times:
+            start_in_seconds = current_time - (3600 * 1)
+            end_in_seconds = current_time - (3600 * 1 - 20)
         process_instance = ProcessInstanceModel(
             status=status,
             process_initiator=user,
             process_model_identifier=process_model.id,
             process_model_display_name=process_model.display_name,
             updated_at_in_seconds=round(time.time()),
-            start_in_seconds=current_time - (3600 * 1),
-            end_in_seconds=current_time - (3600 * 1 - 20),
+            start_in_seconds=start_in_seconds,
+            end_in_seconds=end_in_seconds,
         )
         db.session.add(process_instance)
         db.session.commit()
