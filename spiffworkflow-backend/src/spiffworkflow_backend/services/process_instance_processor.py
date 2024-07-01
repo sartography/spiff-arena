@@ -1506,6 +1506,7 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
         should_schedule_waiting_timer_events: bool = True,
+        should_refresh_db_objects: bool = True,
     ) -> TaskRunnability:
         if self.process_instance_model.persistence_level != "none":
             with ProcessInstanceQueueService.dequeued(self.process_instance_model):
@@ -1518,6 +1519,7 @@ class ProcessInstanceProcessor:
                     execution_strategy_name,
                     execution_strategy,
                     should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+                    should_refresh_db_objects=should_refresh_db_objects,
                 )
         else:
             return self._do_engine_steps(
@@ -1526,6 +1528,7 @@ class ProcessInstanceProcessor:
                 execution_strategy_name=execution_strategy_name,
                 execution_strategy=execution_strategy,
                 should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+                should_refresh_db_objects=should_refresh_db_objects,
             )
 
     def _do_engine_steps(
@@ -1535,6 +1538,7 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
         should_schedule_waiting_timer_events: bool = True,
+        should_refresh_db_objects: bool = True,
     ) -> TaskRunnability:
         self._add_bpmn_process_definitions(
             self.serialize(),
@@ -1577,7 +1581,19 @@ class ProcessInstanceProcessor:
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         self.check_all_tasks()
+
+        # if should_refresh_db_objects:
+        #     self.refresh_db_objects()
+
         return task_runnability
+
+    def refresh_db_objects(self) -> None:
+        new_tm = TaskModel.query.filter(TaskModel.guid.in_(self.task_model_mapping.keys())).all()
+        for tm in new_tm:
+            self.task_model_mapping[tm.guid] = tm
+        new_bp = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(self.bpmn_subprocess_mapping.keys())).all()
+        for bp in new_bp:
+            self.bpmn_subprocess_mapping[bp.guid] = bp
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:

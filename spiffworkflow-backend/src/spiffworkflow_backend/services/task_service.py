@@ -117,7 +117,10 @@ class TaskService:
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
-        self.task_model_mapping = task_model_mapping or {}
+
+        print(f"➡️ ➡️ ➡️  task_model_mapping: {task_model_mapping}")
+        self.task_model_mapping_existing = task_model_mapping or {}
+        self.task_model_mapping_new: dict[str, TaskModel] = {}
         self.bpmn_subprocess_mapping = bpmn_subprocess_mapping or {}
 
         self.bpmn_subprocess_id_mapping: dict[int, BpmnProcessModel] = {}
@@ -141,17 +144,42 @@ class TaskService:
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
         db.session.bulk_save_objects(self.bpmn_processes.values())
         db.session.bulk_save_objects(self.task_models.values())
+        # db.session.bulk_save_objects(self.task_model_mapping_existing.values())
+        # db.session.bulk_save_objects(self.task_model_mapping_new.values())
+
+        # print(f"➡️ ➡️ ➡️  self.task_models.keys(): {self.task_models.keys()}")
+        # for tm in self.task_models.values():
+        #     db.session.merge(tm)
+        # for tm in self.task_models.values():
+        #     db.session.refresh(tm)
+        # new_tm = [tm.__dict__ for tm in self.task_model_mapping_new.values()]
+        # # existing_tm = [tm.__dict__ for tm in self.task_model_mapping_existing.values()]
+        # existing_tm = [
+        #     {k: v for k, v in tm.__dict__.items() if k != "_sa_instance_state"}
+        #     for tm in self.task_model_mapping_existing.values()
+        # ]
+        # existing_tm = {k: v for k, v in self.task_model_mapping_existing.values.__dict__.items() if k != "_sa_instance_state"}
+        # print(f"➡️ ➡️ ➡️  self.task_model_mapping_new: {self.task_model_mapping_new}")
+        # print(f"➡️ ➡️ ➡️  new_tm: {new_tm}")
+        # if new_tm:
+        #     db.session.execute(db.insert(TaskModel), new_tm)
+        # if existing_tm:
+        #     # for t in existing_tm:
+        #     #     if "_sa_instance_state" not in t:
+        #     #         print(f"➡️ ➡️ ➡️  t: {t}")
+        #     # print(f"➡️ ➡️ ➡️  existing_tm: {existing_tm[0]}")
+        #     # print(f"➡️ ➡️ ➡️  existing_tm: {existing_tm}")
+        #     db.session.execute(db.update(TaskModel), existing_tm)
+        self.task_model_mapping_existing.update(self.task_model_mapping_new)
+        self.task_model_mapping_new = {}
+        # new_tm = TaskModel.query.filter(TaskModel.guid.in_(self.task_models.keys())).all()
+        # for tm in new_tm:
+        #     self.task_model_mapping[tm.guid] = tm
+        # for tm in self.task_models.values():
+        #     db.session.refresh(tm)
         if save_process_instance_events:
             db.session.bulk_save_objects(self.process_instance_events.values())
         JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
-
-    def process_parents_and_children_and_save_to_database(
-        self,
-        spiff_task: SpiffTask,
-    ) -> None:
-        self.process_spiff_task_children(spiff_task)
-        self.process_spiff_task_parent_subprocess_tasks(spiff_task)
-        self.save_objects_to_database()
 
     def process_spiff_task_children(
         self,
@@ -160,6 +188,8 @@ class TaskService:
         for child_spiff_task in spiff_task.children:
             if child_spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
+                # self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_model_mapping_new)
+                # self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_model_mapping_existing)
                 continue
             self.update_task_model_with_spiff_task(
                 spiff_task=child_spiff_task,
@@ -199,9 +229,9 @@ class TaskService:
         store_process_instance_events: bool = True,
     ) -> TaskModel:
         new_bpmn_process = None
-        if str(spiff_task.id) in self.task_models:
-            task_model = self.task_models[str(spiff_task.id)]
-        else:
+        task_model = self.task_models.get(str(spiff_task.id))
+        # task_model = self.get_cached_task_model(str(spiff_task.id))
+        if task_model is None:
             (
                 new_bpmn_process,
                 task_model,
@@ -221,6 +251,7 @@ class TaskService:
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
         if bpmn_process_json_data is not None:
             self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+        print(f"➡️ ➡️ ➡️  task_model: {task_model}")
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -327,23 +358,27 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
-        print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
-        task_model: TaskModel | None = self.task_model_mapping.get(spiff_task_guid)
-        print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
+        # task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+        # print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
+        task_model: TaskModel | None = self.get_cached_task_model(spiff_task_guid)
+        # print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
             task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
                 spiff_task.task_spec.name
             ]
+            print(f"➡️ ➡️ ➡️  bpmn_process.id2: {bpmn_process.id}")
             task_model = TaskModel(
                 guid=spiff_task_guid,
                 bpmn_process_id=bpmn_process.id,
                 process_instance_id=self.process_instance.id,
                 task_definition_id=task_definition.id,
             )
-            self.task_model_mapping[task_model.guid] = task_model
+            self.task_model_mapping_new[task_model.guid] = task_model
+        elif spiff_task_guid not in self.task_model_mapping_new:
+            # print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
+            self.task_model_mapping_existing[task_model.guid] = task_model
 
         return (bpmn_process, task_model)
 
@@ -476,6 +511,9 @@ class TaskService:
 
         return bpmn_process
 
+    def get_cached_task_model(self, guid: str) -> TaskModel | None:
+        return self.task_model_mapping_existing.get(guid) or self.task_model_mapping_new.get(guid)
+
     def add_tasks_to_bpmn_process(
         self,
         tasks: dict,
@@ -487,12 +525,13 @@ class TaskService:
             # that means we need to remove them from their parents' lists of children as well.
             spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
-                self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
+                self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_model_mapping_new)
+                self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_model_mapping_existing)
                 continue
             # TaskModel.query.filter_by(guid=task_id).first()
             # task_model = TaskModel.query.filter_by(guid=task_id).first()
             # print(f"➡️ ➡️ ➡️  task_model1: {task_model}")
-            task_model = self.task_model_mapping.get(task_id)
+            task_model = self.get_cached_task_model(task_id)
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
@@ -500,7 +539,11 @@ class TaskService:
                     spiff_task,
                     self.bpmn_definition_to_task_definitions_mappings,
                 )
-                self.task_model_mapping[task_model.guid] = task_model
+                self.task_model_mapping_new[task_model.guid] = task_model
+                # print(f"➡️ ➡️ ➡️  task_model.guid2: {task_model.guid}")
+            elif task_id not in self.task_model_mapping_new:
+                print(f"➡️ ➡️ ➡️  task_model2: {task_model}")
+                self.task_model_mapping_existing[task_model.guid] = task_model
             self.update_task_model(task_model, spiff_task)
             self.task_models[task_model.guid] = task_model
 
@@ -818,6 +861,7 @@ class TaskService:
         bpmn_definition_to_task_definitions_mappings: dict,
     ) -> TaskModel:
         task_definition = bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][spiff_task.task_spec.name]
+        print(f"➡️ ➡️ ➡️  bpmn_process.id: {bpmn_process.id}")
         task_model = TaskModel(
             guid=str(spiff_task.id),
             bpmn_process_id=bpmn_process.id,

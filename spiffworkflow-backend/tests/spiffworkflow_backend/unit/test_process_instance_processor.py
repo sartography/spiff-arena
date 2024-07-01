@@ -449,10 +449,12 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
+        print("DO ENGIN")
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
         processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        print("DO MANUAL")
         processor.manual_complete_task(str(human_task_one.task_id), execute=True, user=process_instance.process_initiator)
         processor.save()
         processor = ProcessInstanceProcessor(process_instance)
@@ -463,6 +465,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert gateway_task is not None
         assert gateway_task.state == TaskState.READY
 
+        print("NOW THE SECOND")
         gateway_task = processor.bpmn_process_instance.get_tasks(state=TaskState.READY)[0]
         processor.manual_complete_task(str(gateway_task.id), execute=True, user=process_instance.process_initiator)
         processor.save()
