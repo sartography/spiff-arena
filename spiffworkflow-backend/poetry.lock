@@ -922,13 +922,13 @@ asymmetric-crypto = ["cryptography (>=3.3.1)"]
 
 [[package]]
 name = "flask-marshmallow"
-version = "1.2.0"
+version = "1.2.1"
 description = "Flask + marshmallow for beautiful APIs"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "flask_marshmallow-1.2.0-py3-none-any.whl", hash = "sha256:ddd2a7c8db5e00a8d56c8ca5f651efae1de7d76b7d821b56ccc2caf09135ad12"},
-    {file = "flask_marshmallow-1.2.0.tar.gz", hash = "sha256:d0f79eb9743f0c530a3d9e848503e1f2228e6b35a819c91e913af02e68421805"},
+    {file = "flask_marshmallow-1.2.1-py3-none-any.whl", hash = "sha256:10b5048ecfaa26f7c8d0aed7d81083164450e6be8e81c04b3d4a586b3f7b6678"},
+    {file = "flask_marshmallow-1.2.1.tar.gz", hash = "sha256:00ee96399ed664963afff3b5d6ee518640b0f91dbc2aace2b5abcf32f40ef23a"},
 ]
 
 [package.dependencies]
