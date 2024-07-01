@@ -905,7 +905,6 @@ class ProcessInstanceProcessor:
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
-                # with open("dict.json", 'w') as f: f.write(json.dumps(process_copy, indent=2))
                 bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
                 bpmn_process_instance.get_tasks()
             except Exception as err:
