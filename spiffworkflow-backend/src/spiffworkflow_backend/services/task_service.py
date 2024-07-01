@@ -210,11 +210,6 @@ class TaskService:
             )
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
-        # bpmn_process = (
-        #     new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(
-        #       id=task_model.bpmn_process_id
-        #     ).first()
-        # )
         bpmn_process = new_bpmn_process or task_model.bpmn_process or self.bpmn_subprocess_id_mapping[task_model.bpmn_process_id]
 
         self.update_task_model(task_model, spiff_task)
@@ -277,7 +272,6 @@ class TaskService:
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
         if spiff_workflow.parent_task_id and bpmn_process.direct_parent_process_id:
-            # direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
             direct_parent_bpmn_process = self.bpmn_subprocess_id_mapping[bpmn_process.direct_parent_process_id]
             self.update_bpmn_process(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
 
@@ -361,7 +355,6 @@ class TaskService:
                 )
         else:
             bpmn_process = None
-            # bpmn_process = BpmnProcessModel.query.filter_by(guid=subprocess_guid).first()
             if subprocess_guid is not None:
                 bpmn_process = self.bpmn_subprocess_mapping.get(subprocess_guid)
             if bpmn_process is None:
@@ -398,9 +391,6 @@ class TaskService:
 
         bpmn_process = None
         if top_level_process is not None and bpmn_process_guid is not None:
-            # bpmn_process = BpmnProcessModel.query.filter_by(
-            #     top_level_process_id=top_level_process.id, guid=bpmn_process_guid
-            # ).first()
             bpmn_process = self.bpmn_subprocess_mapping.get(bpmn_process_guid)
         elif self.process_instance.bpmn_process_id is not None:
             bpmn_process = self.process_instance.bpmn_process
@@ -426,8 +416,6 @@ class TaskService:
                 for subprocess_guid in list(subprocesses):
                     subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
-                        # direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(guid=str(subprocess_guid)).first()
-                        # print(f"➡️ ➡️ ➡️  self.bpmn_subprocess_mapping: {self.bpmn_subprocess_mapping}")
                         direct_bpmn_process_parent = self.bpmn_subprocess_mapping.get(str(subprocess_guid))
                         if direct_bpmn_process_parent is None:
                             raise BpmnProcessNotFoundError(
@@ -458,15 +446,12 @@ class TaskService:
         db.session.add(bpmn_process)
 
         if bpmn_process_is_new:
-            # print("WE IS NEW?")
-            # print(f"➡️ ➡️ ➡️  bpmn_process: {bpmn_process}")
             self.add_tasks_to_bpmn_process(
                 tasks=tasks,
                 spiff_workflow=spiff_workflow,
                 bpmn_process=bpmn_process,
             )
             if bpmn_process.guid is not None:
-                # print(f"➡️ ➡️ ➡️  bpmn_process: {bpmn_process}")
                 self.bpmn_subprocess_mapping[bpmn_process.guid] = bpmn_process
             self.bpmn_subprocess_id_mapping[bpmn_process.id] = bpmn_process
 
@@ -522,7 +507,6 @@ class TaskService:
         for task in human_tasks_to_clear + tasks_to_clear:
             db.session.delete(task)
 
-        # this method is used in limited scope so this query is fine
         bpmn_processes_to_delete = (
             BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(deleted_task_guids))  # type: ignore
             .order_by(BpmnProcessModel.id.desc())  # type: ignore
@@ -587,7 +571,6 @@ class TaskService:
     @classmethod
     def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
         bpmn_process_ids = [p.id for p in bpmn_processes]
-        # this method is used in limited scope so this query is fine
         direct_children = BpmnProcessModel.query.filter(
             BpmnProcessModel.direct_parent_process_id.in_(bpmn_process_ids)  # type: ignore
         ).all()

@@ -1560,7 +1560,6 @@ class ProcessInstanceProcessor:
             execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
 
         execution_service = WorkflowExecutionService(
-            # execution_service = ProfiledWorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
             execution_strategy,
