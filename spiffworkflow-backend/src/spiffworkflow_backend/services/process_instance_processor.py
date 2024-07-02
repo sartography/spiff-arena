@@ -1569,6 +1569,7 @@ class ProcessInstanceProcessor:
             exit_at,
             save,
             should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+            # profile=True,
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         self.check_all_tasks()
