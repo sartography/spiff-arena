@@ -107,7 +107,6 @@ from spiffworkflow_backend.services.workflow_execution_service import SkipOneExe
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
-from spiffworkflow_backend.services.workflow_execution_service import ProfiledWorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.specs.start_event import StartEvent
 
@@ -1559,7 +1558,6 @@ class ProcessInstanceProcessor:
                 )
             execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
 
-        #execution_service = ProfiledWorkflowExecutionService(
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,

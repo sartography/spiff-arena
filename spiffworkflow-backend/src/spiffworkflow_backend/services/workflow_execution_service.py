@@ -22,6 +22,7 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from SpiffWorkflow.util.task import TaskFilter  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_future_task_if_appropriate,
@@ -195,10 +196,19 @@ class ExecutionStrategy:
         self.delegate.add_object_to_db_session(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        return [t for t in bpmn_process_instance.get_tasks(
-            #first_task=self.delegate.last_completed_spiff_task,
-            state=TaskState.READY
-        ) if not t.task_spec.manual]
+        task_filter = TaskFilter(state=TaskState.READY, manual=False)
+        
+        steps = [t for t in bpmn_process_instance.get_tasks(
+            first_task=self.delegate.last_completed_spiff_task,
+            task_filter=task_filter,
+        )]
+
+        if not steps:
+            steps = [t for t in bpmn_process_instance.get_tasks(
+                task_filter=task_filter,
+            )]
+
+        return steps
 
     def _run_engine_steps_with_threads(
         self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
@@ -295,8 +305,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
-
-            self.last_completed_spiff_task = spiff_task
+            
         if (
             spiff_task.task_spec.__class__.__name__ in ["StartEvent", "EndEvent", "IntermediateThrowEvent"]
             and spiff_task.task_spec.bpmn_name is not None
@@ -309,6 +318,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             elif spiff_task.task_spec.__class__.__name__ == "StartEvent":
                 self.process_instance.last_milestone_bpmn_name = "Started"
         self.process_instance.task_updated_at_in_seconds = round(time.time())
+        self.last_completed_spiff_task = spiff_task
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -320,7 +330,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # ANOTHER NOTE: at one point we attempted to be smarter about what tasks we considered for persistence,
         # but it didn't quite work in all cases, so we deleted it. you can find it in commit
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
-        for waiting_spiff_task in bpmn_process_instance.get_tasks(#first_task=self.last_completed_spiff_task, 
+        for waiting_spiff_task in bpmn_process_instance.get_tasks(
+            first_task=self.last_completed_spiff_task, 
             state=TaskState.WAITING
             | TaskState.CANCELLED
             | TaskState.READY
@@ -348,7 +359,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""
-        return self.process_instance.persistence_level != "none"
+        return False #self.process_instance.persistence_level != "none"
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
@@ -470,6 +481,29 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        should_schedule_waiting_timer_events: bool = True,
+        profile: bool = False,
+    ) -> TaskRunnability:
+        if profile:
+            import cProfile
+            from pstats import SortKey
+
+            task_runnability = TaskRunnability.unknown_if_ready_tasks
+            with cProfile.Profile() as pr:
+                task_runnability = self._run_and_save(
+                    exit_at, save, should_schedule_waiting_timer_events
+                )
+            pr.print_stats(sort=SortKey.CUMULATIVE)
+            return task_runnability
+            
+            return self._run_and_save(exit_at, save, should_schedule_waiting_timer_events)
+
+        return self._run_and_save(exit_at, save, should_schedule_waiting_timer_events)
+        
+    def _run_and_save(
         self,
         exit_at: None = None,
         save: bool = False,
