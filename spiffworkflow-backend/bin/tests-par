@@ -18,4 +18,4 @@ if ! poetry run python -c "import xdist" &>/dev/null; then
   exit 1
 fi
 
-SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite poet test -n auto -x --random-order
+SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite poet test -n auto -x --random-order "$@"

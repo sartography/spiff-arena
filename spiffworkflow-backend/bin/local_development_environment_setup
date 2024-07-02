@@ -45,7 +45,8 @@ fi
 if [[ "$acceptance_test_mode" == "true" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
-elif [[ "$use_local_open_id" == "true" ]]; then
+fi
+if [[ "$use_local_open_id" == "true" ]]; then
   backend_base_url="${SPIFFWORKFLOW_BACKEND_URL:-}"
   if [[ -z "$backend_base_url" ]]; then
     backend_base_url="http://localhost:$PORT"

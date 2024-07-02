@@ -111,10 +111,20 @@ class TaskService:
         bpmn_definition_to_task_definitions_mappings: dict,
         run_started_at: float | None = None,
         force_update_definitions: bool = False,
+        task_model_mapping: dict[str, TaskModel] | None = None,
+        bpmn_subprocess_mapping: dict[str, BpmnProcessModel] | None = None,
     ) -> None:
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
+        self.task_model_mapping = task_model_mapping or {}
+        self.bpmn_subprocess_mapping = bpmn_subprocess_mapping or {}
+
+        self.bpmn_subprocess_id_mapping: dict[int, BpmnProcessModel] = {}
+        for _, bs in self.bpmn_subprocess_mapping.items():
+            self.bpmn_subprocess_id_mapping[bs.id] = bs
+        if self.process_instance.bpmn_process_id is not None:
+            self.bpmn_subprocess_id_mapping[self.process_instance.bpmn_process_id] = self.process_instance.bpmn_process
 
         # this updates the definition ids for both tasks and bpmn_processes when they are updated
         # in case definitions were changed for the same instances.
@@ -200,9 +210,7 @@ class TaskService:
             )
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
-        bpmn_process = (
-            new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
-        )
+        bpmn_process = new_bpmn_process or task_model.bpmn_process or self.bpmn_subprocess_id_mapping[task_model.bpmn_process_id]
 
         self.update_task_model(task_model, spiff_task)
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
@@ -263,8 +271,8 @@ class TaskService:
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
-        if spiff_workflow.parent_task_id:
-            direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
+        if spiff_workflow.parent_task_id and bpmn_process.direct_parent_process_id:
+            direct_parent_bpmn_process = self.bpmn_subprocess_id_mapping[bpmn_process.direct_parent_process_id]
             self.update_bpmn_process(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
 
         if self.force_update_definitions is True:
@@ -316,9 +324,7 @@ class TaskService:
         task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
-            bpmn_process = self.task_bpmn_process(
-                spiff_task,
-            )
+            bpmn_process = self.task_bpmn_process(spiff_task)
             task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
                 spiff_task.task_spec.name
             ]
@@ -335,9 +341,9 @@ class TaskService:
         self,
         spiff_task: SpiffTask,
     ) -> BpmnProcessModel:
-        subprocess_guid, subprocess = self.__class__._task_subprocess(spiff_task)
+        subprocess_guid, spiff_subprocess = self.__class__._task_subprocess(spiff_task)
         bpmn_process: BpmnProcessModel | None = None
-        if subprocess is None:
+        if spiff_subprocess is None:
             bpmn_process = self.process_instance.bpmn_process
             # This is the top level workflow, which has no guid
             # check for bpmn_process_id because mypy doesn't realize bpmn_process can be None
@@ -348,11 +354,13 @@ class TaskService:
                     spiff_workflow=spiff_workflow,
                 )
         else:
-            bpmn_process = BpmnProcessModel.query.filter_by(guid=subprocess_guid).first()
+            bpmn_process = None
+            if subprocess_guid is not None:
+                bpmn_process = self.bpmn_subprocess_mapping.get(subprocess_guid)
             if bpmn_process is None:
                 spiff_workflow = spiff_task.workflow
                 bpmn_process = self.add_bpmn_process(
-                    bpmn_process_dict=self.serializer.to_dict(subprocess),
+                    bpmn_process_dict=self.serializer.to_dict(spiff_subprocess),
                     top_level_process=self.process_instance.bpmn_process,
                     bpmn_process_guid=subprocess_guid,
                     spiff_workflow=spiff_workflow,
@@ -382,10 +390,8 @@ class TaskService:
             bpmn_process_dict.pop("subprocess_specs")
 
         bpmn_process = None
-        if top_level_process is not None:
-            bpmn_process = BpmnProcessModel.query.filter_by(
-                top_level_process_id=top_level_process.id, guid=bpmn_process_guid
-            ).first()
+        if top_level_process is not None and bpmn_process_guid is not None:
+            bpmn_process = self.bpmn_subprocess_mapping.get(bpmn_process_guid)
         elif self.process_instance.bpmn_process_id is not None:
             bpmn_process = self.process_instance.bpmn_process
 
@@ -401,7 +407,7 @@ class TaskService:
 
             if top_level_process is not None:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
-                direct_bpmn_process_parent = top_level_process
+                direct_bpmn_process_parent: BpmnProcessModel | None = top_level_process
 
                 # BpmnWorkflows do not know their own guid so we have to cycle through subprocesses to find the guid that matches
                 # calling list(subprocesses) to make a copy of the keys so we can change subprocesses while iterating
@@ -410,7 +416,7 @@ class TaskService:
                 for subprocess_guid in list(subprocesses):
                     subprocess = subprocesses[subprocess_guid]
                     if subprocess == spiff_workflow.parent_workflow:
-                        direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(guid=str(subprocess_guid)).first()
+                        direct_bpmn_process_parent = self.bpmn_subprocess_mapping.get(str(subprocess_guid))
                         if direct_bpmn_process_parent is None:
                             raise BpmnProcessNotFoundError(
                                 f"Could not find bpmn process with guid: {str(subprocess_guid)} "
@@ -445,6 +451,10 @@ class TaskService:
                 spiff_workflow=spiff_workflow,
                 bpmn_process=bpmn_process,
             )
+            if bpmn_process.guid is not None:
+                self.bpmn_subprocess_mapping[bpmn_process.guid] = bpmn_process
+            self.bpmn_subprocess_id_mapping[bpmn_process.id] = bpmn_process
+
         return bpmn_process
 
     def add_tasks_to_bpmn_process(

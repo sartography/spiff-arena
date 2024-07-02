@@ -15,13 +15,14 @@ A process can have one or more Pools, each with one or more Lanes.
 
 ## Pools
 
-A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool".
+A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool."
 You can choose the desired configuration 🔧 from the element's options after dragging it onto your diagram.
 
 ![pools_and_lanes](images/pools_and_lanes_1.png)
 
 Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable.
-They serve to illustrate the engagement of certain entities without detailing their internal processes, for example, we don't know a customer's specific process but it matters when we interact with them to complete our process.
+They serve to illustrate the engagement of certain entities without detailing their internal processes.
+For example, we don't know a customer's specific process, but it matters when we interact with them to complete our process.
 
 Conversely, Expanded Pools are employed when the processes are known and hold relevance within the diagram's context.
 
@@ -42,7 +43,7 @@ However, if a process doesn't logically fit within the same Pool, like those for
 
 **Collapsed (Empty) Pool configuration:**
 
-Configuring an "Empty Pool" (collapsed) to represent an external entity such as a customer.
+Configuring an "Empty Pool" (collapsed) to represent an external entity, such as a customer.
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |

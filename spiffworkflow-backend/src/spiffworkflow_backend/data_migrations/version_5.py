@@ -35,4 +35,6 @@ class Version5(DataMigrationBase):
                 task.properties_json = new_properties_json
                 db.session.add(task)
         except Exception as ex:
+            if cls.should_raise_on_error():
+                raise ex
             current_app.logger.warning(f"Failed to migrate process_instance '{process_instance.id}'. The error was {str(ex)}")

@@ -8,7 +8,8 @@ This documentation outlines the process of creating and managing sensitive data 
 ### Process Breakdown
 
 #### 1. Identifying Sensitive Data
-- Determine what constitutes sensitive data within your workflow. This could include personal information, financial details, or confidential business information.
+- Determine what constitutes sensitive data within your workflow.
+This could include personal information, financial details, or confidential business information.
 
 #### 2. Data Object Creation and Script Task Integration
 

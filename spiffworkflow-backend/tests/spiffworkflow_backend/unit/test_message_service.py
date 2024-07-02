@@ -89,6 +89,11 @@ class TestMessageService(BaseTest):
         )
         assert message_receiver_process.status == "complete"
 
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 4
+        for message_instance in message_instances:
+            assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
+
     def test_can_send_message_to_multiple_process_models(
         self,
         app: Flask,

@@ -1,23 +1,23 @@
 # Path-based Routing
 
-If you are using frontend, frontend and backend need to share cookies.
-Backend, in particular, sets a cookie, and frontend needs to read it.
-As such, you cannot run frontend and backend on different subdomains, like this:
+If you are using the frontend, the frontend and backend need to share cookies.
+The backend, in particular, sets a cookie, and the frontend needs to read it.
+As such, you cannot run the frontend and backend on different subdomains, like this:
 
 - frontend.example.com
 - backend.example.com
 
 Instead, we often run them like this:
 
-- example.com for frontend
-- api.example.com for backend
+- example.com for the frontend
+- api.example.com for the backend
 
 This works since the backend can set a cookie for the entire domain, and the frontend can read it.
 
 Another alternative that works well is to run them on the same host but with different paths, like this:
 
-- spiff.example.com for frontend
-- spiff.example.com/api for backend
+- spiff.example.com for the frontend
+- spiff.example.com/api for the backend
 
 To accomplish this path-based routing scenario, set environment variables like this in the frontend:
 

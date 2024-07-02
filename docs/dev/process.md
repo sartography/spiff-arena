@@ -34,7 +34,7 @@ flowchart LR
 ## Security
 
 We have security checks in place for both the backend and the frontend.
-These include the security lib in the backend, and Snyk in the frontend and backend.
+These include the security library in the backend, and Snyk in the frontend and backend.
 Two independent security reviews have been performed on the codebase, and mitigations have been implemented to the satisfaction of the reviewers.
 
 ## Contributing

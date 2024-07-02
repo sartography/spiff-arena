@@ -61,6 +61,7 @@ In that case, Python won't recognize MySQLdb as a module, so after the above ins
 import pymysql
 pymysql.install_as_MySQLdb()
 ```
+
 ### 5. Access Hosted Version of Spiff
 
 If you prefer not to install anything locally:

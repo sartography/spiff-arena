@@ -42,7 +42,7 @@ The process begins with a Start Event, signaling the start of the workflow.
 It is followed by a Manual Task called "Introduction" that displays a welcome message or instructions for the users.
 The content to be displayed is specified in the task's properties panel.
 
-![Image](images/Manu_instructions_panel.png)
+![Image](images/Manual_instructions_panel.png)
 
 2. **User Task with Form**
 
@@ -69,7 +69,7 @@ A Manual Task will display content based on the collected data and script-genera
 The instructions panel of the Manual Task provides the content to be displayed, which includes the form data entered by the user.
 It also offers an optional Chuck Norris joke based on user preference and a table of silly color names generated using Jinja templating.
 
-![Image](images/Manual_instructionss.png)
+![Image](images/Manual_instructions_side_by_side.png)
 
 5. **End Event**
 

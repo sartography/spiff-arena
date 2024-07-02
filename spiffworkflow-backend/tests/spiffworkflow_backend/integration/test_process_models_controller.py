@@ -133,6 +133,7 @@ class TestProcessModelsController(BaseTest):
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps(connector_response)
             processor.do_engine_steps(save=True)
+
         self.complete_next_manual_task(processor, execution_mode="synchronous")
         self.complete_next_manual_task(processor, execution_mode="synchronous", data={"firstName": "Chuck"})
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()

@@ -29,9 +29,9 @@ Services are allowed to use models, but models are not allowed to use services.
 Services cannot use controllers.
 Keeping calls flowing in a single direction makes things easier to understand and avoids circular imports.
 
-- We have a general notion that services should not call other services (or at least it must be calls in a single direction. If you call serviceB with serviceA, then serviceB cannot call serviceA)
+- We have a general notion that services should not call other services (or at least it must be calls in a single direction. If you call serviceB with serviceA, then serviceB cannot call serviceA).
 - Services should get called by routes.
-- We have a general notion that services can call models, but models should not call services (again, to avoid circular dependencies)
+- We have a general notion that services can call models, but models should not call services (again, to avoid circular dependencies).
 
 ### Models
 
@@ -49,7 +49,7 @@ When serializing models to JSON:
 
 - Avoid json.dumps when you are creating JSON. Use jsonify (a Flask thing) instead.
 - Avoid Marshmallow when possible and instead use @dataclass on your model.
-- If you need to represent your object in a very custom way (the default dataclass columns are not working out), write a method called serialized on your model (this is used by the default serializer).
+- If you need to represent your object in a very custom way (the default dataclass columns are not working out), write a method called `serialized` on your model (this is used by the default serializer).
 
 ## Exceptions
 

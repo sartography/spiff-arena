@@ -29,7 +29,7 @@ Editing process models locally is another perfectly good option, depending on yo
     SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE=true
     SPIFFWORKFLOW_BACKEND_GIT_USERNAME=automation-user
     SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL=automation-user@example.com
-    SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH=sandbox # this branch will get pushes with your commits
+    SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH=sandbox # this branch will get pushed with your commits
     SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH=/path/to/your/private/key
     SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY="alternate way of providing the key as a multiline string"
     ```
@@ -58,7 +58,7 @@ This can be particularly helpful if you have long-lived process instances.
 
 ## Process Model Promotion Strategy
 
-Probably the best way of promoting models is to do work on a specific branch, and then merge that branch into the next branch (maybe staging if you are actively changing dev).
+Probably the best way of promoting models is to do work on a specific branch and then merge that branch into the next branch (maybe staging if you are actively changing dev).
 It is also possible to promote models piecemeal.
 This is activated via `SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH`, which is for a specific use case where you want to publish specific process models from the source branch to a target Git branch, rather than promoting the entire Git branch.
 A publish function appears in the UI when `SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH` is set.

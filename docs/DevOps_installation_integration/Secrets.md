@@ -24,7 +24,7 @@ Secrets are only used in service tasks.
 
 ### Adding a New Secret
 
-1. **Navigate to the Configuration Section**: Go to the configuration section from the top panel and click on "Add a secret". Ensure you have admin access to SpiffArena.
+1. **Navigate to the Configuration Section**: Go to the configuration section from the top panel and click on "Add a secret." Ensure you have admin access to SpiffArena.
 ![Configuration Section](images/Secrets_step_1.png)
 
 2. **Add New Secret**: Create a new secret by entering a key and its corresponding value. Once saved, the value will be encrypted.

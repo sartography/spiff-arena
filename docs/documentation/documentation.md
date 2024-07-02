@@ -2,7 +2,7 @@
 
 This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/).
 
-Please set aside a couple of hours to work through this, as getting this setup correctly once is 10,000 times better than having problems every day for the rest of your life.
+Please set aside a couple of hours to work through this, as getting this set up correctly once is 10,000 times better than having problems every day for the rest of your life.
 
 ## Our Methodology
 
@@ -55,7 +55,7 @@ Our project is managed by a version control system called Git.
 You can use Git to submit changes to the documentation, in the same way we use to submit changes to our code.
 It is available on GitHub as the [spiff-arena project](https://github.com/sartography/spiff-arena).
 GitHub also manages versions of the code and handles running tests.
-Readthedocs observes changes in git and manages an automated process that triggers our documentation to be built and deployed.
+Readthedocs observes changes in Git and manages an automated process that triggers our documentation to be built and deployed.
 It will take a bit to get comfortable with Git, but when you do, you will come to love it (or maybe hate it, but with a lot of respect).
 
 ## Setup
@@ -65,7 +65,7 @@ But you will find that most of it just works - and that once you get into a regu
 
 ### Step 1: Pre-Requisites
 
-Ensure you have been granted write access to our git repository.
+Ensure you have been granted write access to our Git repository.
 Make sure you have an account on GitHub and then contact `dan@sartography.com` and ask him to add you as a contributor.
 
 ### Step 2: Install VSCode
@@ -106,10 +106,10 @@ Now click on the two pieces of paper at the top corner of your screen, and you s
 
 - Inside VSCode, go to File -> Preferences -> Extensions
 - Search for "myst"
-- click the "install" button.
+- Click the "install" button.
 - Repeat, this time installing the "Python" extension for VSCode (from Microsoft)
 
-![Myst Extension](./images/myst.png "Search or MyST in extensions")
+![Myst Extension](./images/myst.png "Search for MyST in extensions")
 
 ### Step 7: Install Python Dependencies
 

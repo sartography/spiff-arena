@@ -57,6 +57,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
         viewonly=True,
         secondary="human_task_user",
         overlaps="human_task_user,users",
+        order_by="HumanTaskUserModel.id",
     )
 
     @classmethod

@@ -22,7 +22,11 @@ class Version2(DataMigrationBase):
 
             spiff_tasks = processor.bpmn_process_instance.get_tasks(updated_ts=initial_time)
             task_service = TaskService(
-                process_instance, processor._serializer, processor.bpmn_definition_to_task_definitions_mappings
+                process_instance,
+                processor._serializer,
+                processor.bpmn_definition_to_task_definitions_mappings,
+                task_model_mapping=processor.task_model_mapping,
+                bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
             )
 
             # implicit begin db transaction

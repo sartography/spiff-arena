@@ -3,6 +3,7 @@
 While existing connectors like connector-http are very flexible, you may choose to build a connector for a specific use case.
 
 To get an idea of what you are in for, take a look at existing connectors:
+
 * [connector-http](https://github.com/sartography/connector-http/blob/main/src/connector_http/commands/get_request_v2.py)
 * [connector-smtp](https://github.com/sartography/connector-smtp/blob/main/src/connector_smtp/commands/send_email.py)
 

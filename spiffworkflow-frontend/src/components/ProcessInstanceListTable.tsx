@@ -348,6 +348,7 @@ export default function ProcessInstanceListTable({
 
     if (columnAccessor === 'status') {
       return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <td
           onClick={() => navigateToProcessInstance(processInstance)}
           onKeyDown={() => navigateToProcessInstance(processInstance)}
