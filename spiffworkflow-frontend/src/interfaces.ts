@@ -503,9 +503,10 @@ export interface TaskInstructionForEndUser {
 }
 
 export interface ProcessInstanceProgressResponse {
-  error_message?: string;
+  error_details?: ProcessInstanceEventErrorDetail;
   instructions: TaskInstructionForEndUser[];
   process_instance?: ProcessInstance;
+  process_instance_event?: ProcessInstanceLogEntry;
   task?: ProcessInstanceTask;
 }
 

@@ -34,7 +34,9 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
 
     # use task guid so we can bulk insert without worrying about whether or not the task has an id yet
-    task_guid: str | None = db.Column(db.String(36), nullable=True, index=True)
+    task_guid: str | None = db.Column(
+        ForeignKey("task.guid", name="process_instance_event_task_guid_fk"), nullable=True, index=True
+    )
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
     event_type: str = db.Column(db.String(50), nullable=False, index=True)
@@ -43,6 +45,7 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
 
     error_details = relationship("ProcessInstanceErrorDetailModel", back_populates="process_instance_event", cascade="delete")  # type: ignore
+    task = relationship("TaskModel")  # type: ignore
 
     @validates("event_type")
     def validate_event_type(self, key: str, value: Any) -> Any:

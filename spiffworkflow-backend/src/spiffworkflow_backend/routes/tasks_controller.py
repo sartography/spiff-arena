@@ -449,7 +449,7 @@ def task_submit(
 def process_instance_progress(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-    response: dict[str, Task | ProcessInstanceModel | list] = {}
+    response: dict[str, Task | ProcessInstanceModel | list | dict[str, str]] = {}
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id, include_actions=True)
 
     principal = _find_principal_or_raise()
@@ -465,7 +465,7 @@ def process_instance_progress(
 
         # look for the most recent error event for this instance
         if process_instance.status in [ProcessInstanceStatus.error.value, ProcessInstanceStatus.suspended.value]:
-            pi_event = (
+            pi_error_details = (
                 ProcessInstanceErrorDetailModel.query.join(
                     ProcessInstanceEventModel,
                     ProcessInstanceErrorDetailModel.process_instance_event_id == ProcessInstanceEventModel.id,
@@ -482,7 +482,13 @@ def process_instance_progress(
                 .order_by(ProcessInstanceEventModel.timestamp.desc())  # type: ignore
                 .first()
             )
-            response["error_message"] = pi_event.message
+            response["error_details"] = pi_error_details
+
+            task_model = pi_error_details.process_instance_event.task
+            response["process_instance_event"] = {
+                "task_definition_identifier": task_model.task_definition.bpmn_identifier,
+                "task_definition_name": task_model.task_definition.bpmn_name,
+            }
 
     user_instructions = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
     response["instructions"] = user_instructions

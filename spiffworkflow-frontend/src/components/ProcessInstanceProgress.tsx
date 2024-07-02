@@ -14,7 +14,7 @@ import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import {
   ErrorDisplayStateless,
-  errorForDisplayFromString,
+  errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
 
 type OwnProps = {
@@ -63,8 +63,11 @@ export default function ProcessInstanceProgress({
       if (result.task && shouldRedirectToTask(result.task)) {
         // if task you can complete, go there
         navigate(`/tasks/${result.task.process_instance_id}/${result.task.id}`);
-      } else if (result.error_message) {
-        const error = errorForDisplayFromString(result.error_message);
+      } else if (result.error_details && result.process_instance_event) {
+        const error = errorForDisplayFromProcessInstanceErrorDetail(
+          result.process_instance_event,
+          result.error_details,
+        );
         stopRefreshing(error);
       } else if (result.process_instance) {
         // there is nothing super exciting happening right now. go to process instance.
