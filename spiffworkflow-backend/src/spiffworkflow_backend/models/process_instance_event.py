@@ -19,6 +19,7 @@ class ProcessInstanceEventType(SpiffEnum):
     process_instance_resumed = "process_instance_resumed"
     process_instance_rewound_to_task = "process_instance_rewound_to_task"
     process_instance_suspended = "process_instance_suspended"
+    process_instance_suspended_for_error = "process_instance_suspended_for_error"
     process_instance_terminated = "process_instance_terminated"
     task_cancelled = "task_cancelled"
     task_completed = "task_completed"

@@ -5,6 +5,8 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import Proc
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -57,8 +59,9 @@ class ErrorHandlingService:
 
         db.session.commit()
 
-    @staticmethod
+    @classmethod
     def _handle_system_notification(
+        cls,
         error: Exception,
         process_instance: ProcessInstanceModel,
         exception_notification_addresses: list,
@@ -94,7 +97,11 @@ class ErrorHandlingService:
         db.session.commit()
         MessageService.correlate_send_message(message_instance)
 
-    @staticmethod
-    def _set_instance_status(process_instance: ProcessInstanceModel, status: str) -> None:
+    @classmethod
+    def _set_instance_status(cls, process_instance: ProcessInstanceModel, status: str) -> None:
         process_instance.status = status
         db.session.add(process_instance)
+        if status == ProcessInstanceStatus.suspended.value:
+            ProcessInstanceTmpService.add_event_to_process_instance(
+                process_instance, ProcessInstanceEventType.process_instance_suspended_for_error.value, add_to_db_session=True
+            )

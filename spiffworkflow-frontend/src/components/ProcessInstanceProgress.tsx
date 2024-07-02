@@ -12,7 +12,10 @@ import { HUMAN_TASK_TYPES, refreshAtInterval } from '../helpers';
 import HttpService from '../services/HttpService';
 import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
-import { ErrorDisplayStateless } from './ErrorDisplay';
+import {
+  ErrorDisplayStateless,
+  errorForDisplayFromString,
+} from './ErrorDisplay';
 
 type OwnProps = {
   processInstanceId: number;
@@ -60,6 +63,9 @@ export default function ProcessInstanceProgress({
       if (result.task && shouldRedirectToTask(result.task)) {
         // if task you can complete, go there
         navigate(`/tasks/${result.task.process_instance_id}/${result.task.id}`);
+      } else if (result.error_message) {
+        const error = errorForDisplayFromString(result.error_message);
+        stopRefreshing(error);
       } else if (result.process_instance) {
         // there is nothing super exciting happening right now. go to process instance.
         if (
