@@ -359,7 +359,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""
-        return False #self.process_instance.persistence_level != "none"
+        return self.process_instance.persistence_level != "none"
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
