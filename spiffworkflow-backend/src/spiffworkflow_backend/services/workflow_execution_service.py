@@ -331,7 +331,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # but it didn't quite work in all cases, so we deleted it. you can find it in commit
         # 1ead87b4b496525df8cc0e27836c3e987d593dc0 if you are curious.
         for waiting_spiff_task in bpmn_process_instance.get_tasks(
-            first_task=self.last_completed_spiff_task, 
             state=TaskState.WAITING
             | TaskState.CANCELLED
             | TaskState.READY
