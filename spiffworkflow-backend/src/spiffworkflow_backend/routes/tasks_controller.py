@@ -482,13 +482,13 @@ def process_instance_progress(
                 .order_by(ProcessInstanceEventModel.timestamp.desc())  # type: ignore
                 .first()
             )
-            response["error_details"] = pi_error_details
-
-            task_model = pi_error_details.process_instance_event.task
-            response["process_instance_event"] = {
-                "task_definition_identifier": task_model.task_definition.bpmn_identifier,
-                "task_definition_name": task_model.task_definition.bpmn_name,
-            }
+            if pi_error_details is not None:
+                response["error_details"] = pi_error_details
+                task_model = pi_error_details.process_instance_event.task
+                response["process_instance_event"] = {
+                    "task_definition_identifier": task_model.task_definition.bpmn_identifier,
+                    "task_definition_name": task_model.task_definition.bpmn_name,
+                }
 
     user_instructions = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
     response["instructions"] = user_instructions
