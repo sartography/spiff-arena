@@ -1,5 +1,6 @@
 from typing import Any
 
+from flask import current_app
 from flask import g
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
@@ -138,6 +139,9 @@ class MessageService:
         message_instances_send = MessageInstanceModel.query.filter_by(message_type="send", status="ready").all()
 
         for message_instance_send in message_instances_send:
+            current_app.logger.info(
+                f"Processor waiting send messages: Processing {message_instance_send.id} - {message_instance_send.name}"
+            )
             cls.correlate_send_message(message_instance_send, execution_mode=execution_mode)
 
     @classmethod
