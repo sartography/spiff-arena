@@ -17,11 +17,11 @@ Service Tasks have been a huge win; there are multiple reasons why supporting mo
 3. Allow some connectors to be local (HTTP GET/POST) vs. remote (Xero/Coin Gecko).
 4. Could support non-HTTP-based connectors (Git interactions could be a workflow).
 
-### Interstitial Performance
+### Interstitial Performance ✔️
 
 Push all processing to the background so the interstitial is just querying, not running (new item).
 
-### Authentication Keys
+### Authentication Keys ✔️
 
 Provide the ability to access API endpoints using an access key or an authentication process that is specifically designed for API calls.
 (We currently rely on grabbing the JSON token to do this, which is not a real solution.)
@@ -32,9 +32,9 @@ There are a number of useful BPMN components that we do not currently support.
 We should evaluate these and determine which ones we should support and how we should support them.
 We should consider creating a list of unsupported items.
 
-* Compensation Events (valuable but difficult).
-* Conditional events.
-* Event Sub-Processes are not currently supported (low-hanging fruit, easy to add).
+- Compensation Events (valuable but difficult).
+- Conditional events.
+- Event Sub-Processes are not currently supported (low-hanging fruit, easy to add).
 
 ### Decentralized / Distributed Deployments
 
@@ -48,6 +48,7 @@ Such a system could support highly transparent and auditable processes that coul
 We should support the parallel execution of tasks within a single process whenever possible.
 This is not as far-fetched or difficult as it may initially seem.
 While Python is notoriously bad at parallel execution (the lovely GIL), we have already taken the most critical steps to ensuring it is possible:
+
 1. A team has demonstrated parallel execution using the core SpiffWorkflow library.
 2. We can keep a configurable number of "background" SpiffArena processes running that can pick up waiting tasks.
 
@@ -64,7 +65,7 @@ This will also allow us to do some early and deep validation as well.
 
 We could really use a good UI/UX review of the site and take a stab at cleaning up the whole site to follow some consistent design patterns and resolve potential issues.
 
-### Customizable Home Page (Non-Status Specific)
+### Customizable Home Page (Non-Status Specific) ✔️
 
 Allow a way to define custom landing pages that create different experiences for different organizations/needs.
 
@@ -97,12 +98,13 @@ I would love to have a day or two just to research this area and see if there is
 ### Modeler Checker
 
 At runtime, or when you save, it would be great if we could execute a:
-* Validation Report - what is wrong with the model? Is it valid BPMN? Are there intrinsic errors?
-* Linting Report - Does the model follow common naming conventions, styles, are there deadlocks, etc.? Many of these tools already exist; we just need to integrate them!
+
+- Validation Report - what is wrong with the model? Is it valid BPMN? Are there intrinsic errors?
+- Linting Report - Does the model follow common naming conventions, styles, are there deadlocks, etc.? Many of these tools already exist; we just need to integrate them!
 
 ### Plugins and Extensions
 
-* Track down our previous research and add here. Color picker, etc.
+- Track down our previous research and add here. Color picker, etc.
 
 ### Automated Testing ✔️
 
@@ -120,7 +122,7 @@ Allow us to define a markdown file for a process group or process model, which w
 
 ### Adding a Unit Test from Within the Script Editor Would Be Nice
 
-### Form Builder
+### Form Builder ✔️
 
 1. Let's invest in a much better Form Builder experience so that it is trivial to build new forms or modify existing simple forms. We don't want to implement everything here, but a simple builder would be very useful.
 2. RJSF says it supports markdown in the headers, but it doesn't work for us.
@@ -140,3 +142,8 @@ We have in the past considered changing the way lots of expressions worked such 
 The [status quo is confusing](https://github.com/sartography/spiff-arena/issues/1075), but Elizabeth pointed out that requiring string parsing in order to decide how to evaluate something is not necessarily better.
 If the BPMN editor was aware of the variables that existed within the workflow, defined by the JSON schemas of forms, messages, and service calls, or the variables that come out of script tasks, then we could immediately notify people of the issue while they are authoring the diagram rather than having to wait for a possible runtime error.
 We could also change the error message on evaluation errors to include a reminder that quotes are needed around strings.
+
+### Editable tables in User Tasks
+
+Right now you can present data in a tabular format at the top of a human task via instructions, but you cannot provide a table where the data is editable.
+This is something that Volker called out as a desirable feature.
