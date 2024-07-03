@@ -41,7 +41,7 @@
     "cookie": "^0.6.0",
     "date-fns": "^3.6.0",
     "diagram-js": "^11.9.1",
-    "dmn-js": "^16.0.0",
+    "dmn-js": "^16.5.0",
     "dmn-js-properties-panel": "^3.0.0",
     "dmn-js-shared": "^16.4.0",
     "jwt-decode": "^4.0.0",
