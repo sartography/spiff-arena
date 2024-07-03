@@ -147,3 +147,7 @@ We could also change the error message on evaluation errors to include a reminde
 
 Right now you can present data in a tabular format at the top of a human task via instructions, but you cannot provide a table where the data is editable.
 This is something that Volker called out as a desirable feature.
+
+### Provide a way for a process model to be available in the modeling environment but not the runtime environment
+
+This is available via "start" permissions, but Volker was wondering if there should potentially be another more accessible way to allow this type of function.
