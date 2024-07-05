@@ -129,7 +129,7 @@ function FilesInfo<
   const { MuiRemoveButton } = getTemplate<any, any, any>(
     'ButtonTemplates',
     registry,
-    options,
+    options as UIOptionsType<any, any, any>,
   );
 
   return (
