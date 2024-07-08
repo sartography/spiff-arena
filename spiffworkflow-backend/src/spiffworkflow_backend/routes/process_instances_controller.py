@@ -1,4 +1,4 @@
-from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationError, ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 
 # black and ruff are in competition with each other in import formatting so ignore ruff
@@ -569,6 +569,10 @@ def process_instance_migrate(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    if process_instance.status != "suspended":
+        raise ProcessInstanceMigrationError(
+            f"The process instance needs to be suspended to migrate it. It is currently: {process_instance.status}"
+        )
     ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=g.user)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
