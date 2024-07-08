@@ -8,6 +8,7 @@ import flask.wrappers
 import sentry_sdk
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
+from werkzeug.exceptions import MethodNotAllowed
 from werkzeug.exceptions import NotFound
 
 
@@ -59,6 +60,8 @@ def configure_sentry(app: flask.app.Flask) -> None:
             _exc_type, exc_value, _tb = hint["exc_info"]
             # NotFound is mostly from web crawlers
             if isinstance(exc_value, NotFound):
+                return None
+            if isinstance(exc_value, MethodNotAllowed):
                 return None
         return event
 
