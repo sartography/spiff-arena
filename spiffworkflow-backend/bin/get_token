@@ -30,7 +30,7 @@ backend_client_secret = os.getenv("BACKEND_CLIENT_secret", "JXeQExm0JhQPLumgHtII
 openid_token_url = os.getenv("OPENID_TOKEN_URL")
 keycloak_base_url = os.getenv("KEYCLOAK_BASE_URL")
 if openid_token_url is None:
-    if keycloak_base_url is None:
+    if keycloak_base_url is not None:
         if "spiffworkflow.org" in backend_base_url:
             pattern = r".*api\.(\w+\.spiffworkflow.org).*"
             match = re.search(pattern, backend_base_url)
@@ -39,8 +39,10 @@ if openid_token_url is None:
             env_domain = match.group(1)
             keycloak_base_url = "https://keycloak.${env_domain}"
         elif "localhost:7000" in backend_base_url:
-            keycloak_base_url = "http://localhost:7002"
-    openid_token_url = f"{keycloak_base_url}/realms/{realm_name}/protocol/openid-connect/token"
+            keycloak_base_url = "http://localhost:7000"
+        openid_token_url = f"{keycloak_base_url}/realms/{realm_name}/protocol/openid-connect/token"
+    else:
+        openid_token_url = f"{backend_base_url}/openid/token"
 
 
 def get_auth_token_object() -> dict:

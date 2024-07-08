@@ -75,7 +75,6 @@ class ProcessInstanceLockService:
     @classmethod
     def has_lock(cls, process_instance_id: int) -> bool:
         ctx = cls.get_thread_local_locking_context()
-        current_app.logger.info(f"THREAD LOCK: {ctx}")
         return process_instance_id in ctx["locks"]
 
     @classmethod

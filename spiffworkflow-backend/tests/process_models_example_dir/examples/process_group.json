@@ -1,0 +1,35 @@
+{
+  "admin": false,
+  "description": "These examples are provided to help you understand how SpiffWorkflow functions.",
+  "display_name": "Examples",
+  "display_order": 40,
+  "parent_groups": null,
+
+  "messages": {
+    "table_seated": {
+      "correlation_properties": {
+        "table_number": {
+          "retrieval_expression": "table_number"
+        },
+        "franchise_id": {
+          "retrieval_expression": "franchise_id"
+        }
+      },
+      "schema": {}
+    },
+    "order_ready": {
+      "correlation_properties": {
+        "table_number": {
+          "retrieval_expression": "table_number"
+        },
+        "franchise_id": {
+          "retrieval_expression": "franchise_id"
+        }
+      },
+      "schema": {}
+    },
+    "end_of_day_receipts": {
+      "schema": {}
+    }
+  }
+}

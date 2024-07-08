@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 
-if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-  export KEYCLOAK_BASE_URL=http://localhost:7002
-fi
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
   export BACKEND_BASE_URL=http://localhost:7000
 fi
@@ -21,7 +21,7 @@ username="${2:-admin}"
 password="${3:-admin}"
 realm_name="${4:-spiffworkflow}"
 if [[ -z "${message_identifier}" ]]; then
-  >&2 echo "usage: $(basename "$0") [message_identifier] [username: OPTONAL] [password: OPTONAL] [realm_name: OPTONAL]"
+  echo >&2 "usage: $(basename "$0") [message_identifier] [username: OPTONAL] [password: OPTONAL] [realm_name: OPTONAL]"
   exit 1
 fi
 
@@ -29,7 +29,7 @@ function check_result_for_error() {
   local result="$1"
   error_code=$(jq '.error_code' <<<"$result")
   if [[ -n "$error_code" && "$error_code" != "null" ]]; then
-    >&2 echo "ERROR: Failed to run process instance. Received error: $result"
+    echo >&2 "ERROR: Failed to run process instance. Received error: $result"
     exit 1
   fi
 }

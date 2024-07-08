@@ -31,6 +31,7 @@ import {
 } from '@carbon/icons-react';
 import { gray } from '@carbon/colors';
 
+import { Can } from '@casl/react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
@@ -39,12 +40,15 @@ import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
+  getGroupFromModifiedModelId,
   makeid,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
+  CorrelationProperties,
+  PermissionsToCheck,
   ProcessFile,
   ProcessModel,
   ProcessReference,
@@ -56,6 +60,9 @@ import { useFocusedTabStatus } from '../hooks/useFocusedTabStatus';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import SpiffTooltip from '../components/SpiffTooltip';
+import { MessageEditor } from '../components/messages/MessageEditor';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -79,6 +86,11 @@ export default function ProcessModelEditDiagram() {
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [showMessageEditor, setShowMessageEditor] = useState(false);
+  const [messageId, setMessageId] = useState<string>('');
+  const [elementId, setElementId] = useState<string>('');
+  const [correlationProperties, setCorrelationProperties] =
+    useState<CorrelationProperties | null>(null);
   const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
@@ -88,7 +100,11 @@ export default function ProcessModelEditDiagram() {
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
 
+  const [messageEvent, setMessageEvent] = useState<any>(null);
+
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
+
+  const handleShowMessageEditor = () => setShowMessageEditor(true);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -102,6 +118,12 @@ export default function ProcessModelEditDiagram() {
   const { scriptAssistEnabled } = useScriptAssistEnabled();
   const { setScriptAssistQuery, scriptAssistLoading, scriptAssistResult } =
     useProcessScriptAssistMessage();
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.messageModelListPath]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -432,6 +454,28 @@ export default function ProcessModelEditDiagram() {
       event.eventBus.fire('spiff.dmn_files.returned', { options });
     } else {
       console.error('There is no process model.');
+    }
+  };
+
+  const makeMessagesRequestedHandler = (event: any) => {
+    return function fireEvent(results: any) {
+      event.eventBus.fire('spiff.messages.returned', {
+        configuration: results,
+      });
+    };
+  };
+  const onMessagesRequested = (event: any) => {
+    // it is perfectly reasonable to access the edit diagram page in read only mode when you actually don't have access to edit.
+    // this is awkward in terms of functionality like this, where we are fetching the relevant list of messages to show in the
+    // properties panel. since message_model_list is a different permission, you may not have access to it even though you have
+    // access to the read the process model. we also considered automatically giving you access to read message_model_list
+    // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
+    // where we normally only pork barrel permissions on top of "start" and "all."
+    if (ability.can('GET', targetUris.messageModelListPath)) {
+      HttpService.makeCallToBackend({
+        path: targetUris.messageModelListPath,
+        successCallback: makeMessagesRequestedHandler(event),
+      });
     }
   };
 
@@ -1036,6 +1080,55 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
+  const onLaunchMessageEditor = (event: any) => {
+    setMessageEvent(event);
+    setMessageId(event.value.messageId);
+    setElementId(event.value.elementId);
+    setCorrelationProperties(event.value.correlation_properties);
+    handleShowMessageEditor();
+  };
+  const handleMessageEditorClose = () => {
+    setShowMessageEditor(false);
+    onMessagesRequested(messageEvent);
+  };
+
+  const handleMessageEditorSave = (_event: any) => {
+    messageEvent.eventBus.fire('spiff.message.save');
+  };
+
+  const messageEditor = () => {
+    // do not render this component until we actually want to display it
+    if (!showMessageEditor) {
+      return null;
+    }
+    return (
+      <Modal
+        open={showMessageEditor}
+        modalHeading="Message Editor"
+        modalLabel="Create or edit a message and manage its correlation properties"
+        primaryButtonText="Save"
+        secondaryButtonText="Close (this does not save)"
+        onRequestSubmit={handleMessageEditorSave}
+        onRequestClose={handleMessageEditorClose}
+        size="lg"
+        preventCloseOnClickOutside
+        primaryButtonKind="primary"
+      >
+        <div data-color-mode="light">
+          <MessageEditor
+            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
+              modifiedProcessModelId,
+            )}
+            messageId={messageId}
+            correlationProperties={correlationProperties}
+            messageEvent={messageEvent}
+            elementId={elementId}
+          />
+        </div>
+      </Modal>
+    );
+  };
+
   const onSearchProcessModels = (
     _processId: string,
     eventBus: any,
@@ -1141,7 +1234,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchJsonSchemaEditor = (
-    element: any,
+    _element: any,
     fileName: string,
     eventBus: any,
   ) => {
@@ -1232,28 +1325,30 @@ export default function ProcessModelEditDiagram() {
     }
     return (
       <ReactDiagramEditor
+        activeUserElement={<ActiveUsers />}
+        callers={callers}
+        diagramType="bpmn"
+        diagramXML={bpmnXmlForDiagramRendering}
+        disableSaveButton={!diagramHasChanges}
+        fileName={params.file_name}
+        isPrimaryFile={params.file_name === processModel?.primary_file_name}
+        onDataStoresRequested={onDataStoresRequested}
+        onDeleteFile={onDeleteFile}
+        onDmnFilesRequested={onDmnFilesRequested}
+        onElementsChanged={onElementsChanged}
+        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
+        onLaunchBpmnEditor={onLaunchBpmnEditor}
+        onLaunchDmnEditor={onLaunchDmnEditor}
+        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
+        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
+        onLaunchScriptEditor={onLaunchScriptEditor}
+        onLaunchMessageEditor={onLaunchMessageEditor}
+        onMessagesRequested={onMessagesRequested}
+        onSearchProcessModels={onSearchProcessModels}
+        onServiceTasksRequested={onServiceTasksRequested}
+        onSetPrimaryFile={onSetPrimaryFileCallback}
         processModelId={params.process_model_id || ''}
         saveDiagram={saveDiagram}
-        onDeleteFile={onDeleteFile}
-        isPrimaryFile={params.file_name === processModel?.primary_file_name}
-        onSetPrimaryFile={onSetPrimaryFileCallback}
-        diagramXML={bpmnXmlForDiagramRendering}
-        fileName={params.file_name}
-        diagramType="bpmn"
-        onLaunchScriptEditor={onLaunchScriptEditor}
-        onServiceTasksRequested={onServiceTasksRequested}
-        onDataStoresRequested={onDataStoresRequested}
-        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
-        onLaunchBpmnEditor={onLaunchBpmnEditor}
-        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
-        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
-        onLaunchDmnEditor={onLaunchDmnEditor}
-        onDmnFilesRequested={onDmnFilesRequested}
-        onSearchProcessModels={onSearchProcessModels}
-        onElementsChanged={onElementsChanged}
-        callers={callers}
-        activeUserElement={<ActiveUsers />}
-        disableSaveButton={!diagramHasChanges}
       />
     );
   };
@@ -1277,14 +1372,16 @@ export default function ProcessModelEditDiagram() {
   const unsavedChangesMessage = () => {
     if (diagramHasChanges) {
       return (
-        <Notification
-          title="Unsaved changes."
-          type="error"
-          hideCloseButton
-          data-qa="process-model-file-changed"
-        >
-          Please save to avoid losing your work.
-        </Notification>
+        <Can I="PUT" a={targetUris.processModelFileShowPath} ability={ability}>
+          <Notification
+            title="Unsaved changes."
+            type="error"
+            hideCloseButton
+            data-qa="process-model-file-changed"
+          >
+            Please save to avoid losing your work.
+          </Notification>
+        </Can>
       );
     }
     return null;
@@ -1298,6 +1395,7 @@ export default function ProcessModelEditDiagram() {
         {markdownEditor()}
         {jsonSchemaEditor()}
         {processModelSelector()}
+        {messageEditor()}
       </>
     );
   };
@@ -1327,7 +1425,6 @@ export default function ProcessModelEditDiagram() {
 
         {unsavedChangesMessage()}
         {saveFileMessage()}
-
         {appropriateEditor()}
         <div id="diagram-container" />
       </>

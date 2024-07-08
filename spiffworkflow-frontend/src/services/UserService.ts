@@ -1,4 +1,4 @@
-import jwt from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
@@ -61,7 +61,7 @@ const isLoggedIn = () => {
 const isPublicUser = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
     return (idObject as any).public;
   }
   return false;
@@ -107,7 +107,7 @@ const doLogout = () => {
 const getUserEmail = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
     return (idObject as any).email;
   }
   return null;
@@ -116,7 +116,7 @@ const getUserEmail = () => {
 const authenticationDisabled = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
     return (idObject as any).authentication_disabled;
   }
   return false;
@@ -133,7 +133,7 @@ const authenticationDisabled = () => {
 const getPreferredUsername = () => {
   const idToken = getIdToken();
   if (idToken) {
-    const idObject = jwt(idToken);
+    const idObject = jwtDecode(idToken);
 
     if (idToken === undefined || idToken === 'undefined') {
       return null;

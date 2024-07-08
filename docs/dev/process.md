@@ -1,13 +1,13 @@
 # Process
 
-## Ticket management
+## Ticket Management
 
-We use github projects to manage our work.
-You can find our board [here](https://github.com/orgs/sartography/projects/3) and issues can be filed [here](https://github.com/sartography/spiff-arena/issues).
+We use GitHub projects to manage our work.
+You can find our board [here](https://github.com/orgs/sartography/projects/3), and issues can be filed [here](https://github.com/sartography/spiff-arena/issues).
 
 ## CI
 
-We use Github Actions for CI.
+We use GitHub Actions for CI.
 The workflows are defined in the `.github/workflows` directory.
 The main things that happen, not necessarily in this order, are represented in this chart:
 
@@ -30,17 +30,20 @@ flowchart LR
     backend_tests --> frontend_tests
     frontend_tests --> docker_images
 ```
+
 ## Security
 
 We have security checks in place for both the backend and the frontend.
-These include the security lib in backend, and snyk in frontend and backend.
-Two independent security reviews have been performed on the codebase and mitigations have been implemented to the satisfaction of the reviewers.
+These include the security library in the backend, and Snyk in the frontend and backend.
+Two independent security reviews have been performed on the codebase, and mitigations have been implemented to the satisfaction of the reviewers.
 
 ## Contributing
 
-It would be great to have you contributing to the project.
+This is the last page in the Technical Documentation section, where we keep content mainly intended for developers.
+And that seems like as good a place as any to mention that it would be great to have you contributing to the project!
 There is a [Contributing doc](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst) that you can follow.
 You can find other like-minded people in our [Discord](https://discord.gg/F6Kb7HNK7B).
+Thank you!
 
 ```mermaid
 graph LR

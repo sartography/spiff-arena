@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import shutil
 import time
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -305,19 +306,25 @@ class BaseTest:
         process_model: ProcessModelInfo,
         status: str | None = "not_started",
         user: UserModel | None = None,
+        save_start_and_end_times: bool = True,
     ) -> ProcessInstanceModel:
         if user is None:
             user = self.find_or_create_user()
 
         current_time = round(time.time())
+        start_in_seconds = None
+        end_in_seconds = None
+        if save_start_and_end_times:
+            start_in_seconds = current_time - (3600 * 1)
+            end_in_seconds = current_time - (3600 * 1 - 20)
         process_instance = ProcessInstanceModel(
             status=status,
             process_initiator=user,
             process_model_identifier=process_model.id,
             process_model_display_name=process_model.display_name,
             updated_at_in_seconds=round(time.time()),
-            start_in_seconds=current_time - (3600 * 1),
-            end_in_seconds=current_time - (3600 * 1 - 20),
+            start_in_seconds=start_in_seconds,
+            end_in_seconds=end_in_seconds,
         )
         db.session.add(process_instance)
         db.session.commit()
@@ -577,6 +584,12 @@ class BaseTest:
             yield
         finally:
             app.config[config_identifier] = initial_value
+
+    @staticmethod
+    def copy_example_process_models() -> None:
+        source = os.path.abspath(os.path.join(FileSystemService.root_path(), "..", "..", "..", "process_models_example_dir"))
+        destination = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        shutil.copytree(source, destination)
 
     def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
         """Round last state change to the nearest 4 significant digits.

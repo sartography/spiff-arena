@@ -1,5 +1,5 @@
 import validator from '@rjsf/validator-ajv8';
-import { ReactNode } from 'react';
+import { ComponentType, ReactNode, useEffect, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@carbon/react';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -19,10 +19,11 @@ enum DateCheckType {
 
 type OwnProps = {
   id: string;
+  key: string;
   formData: any;
   schema: any;
   uiSchema: any;
-
+  className?: string;
   disabled?: boolean;
   onChange?: any;
   onSubmit?: any;
@@ -31,11 +32,24 @@ type OwnProps = {
   restrictedWidth?: boolean;
   submitButtonText?: string;
   reactJsonSchemaForm?: string;
+  hideSubmitButton?: boolean;
+  bpmnEvent?: any;
 };
+
+const withProps = <P extends object>(
+  Component: ComponentType<P>,
+  customProps: Partial<P>,
+) =>
+  function CustomComponent(props: P) {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <Component {...props} {...customProps} />;
+  };
 
 export default function CustomForm({
   id,
+  key,
   formData,
+  className,
   schema,
   uiSchema,
   disabled = false,
@@ -46,19 +60,9 @@ export default function CustomForm({
   restrictedWidth = false,
   submitButtonText,
   reactJsonSchemaForm = 'carbon',
+  hideSubmitButton = false,
+  bpmnEvent,
 }: OwnProps) {
-  // set in uiSchema using the "ui:widget" key for a property
-  const rjsfWidgets = {
-    'date-range': DateRangePickerWidget,
-    markdown: MarkDownFieldWidget,
-    typeahead: TypeaheadWidget,
-  };
-
-  // set in uiSchema using the "ui:field" key for a property
-  const rjsfFields: RegistryFieldsType = {
-    'numeric-range': NumericRangeField,
-  };
-
   let reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
     if (uiSchema['ui:theme'] === 'carbon') {
@@ -72,6 +76,22 @@ export default function CustomForm({
       reactJsonSchemaFormTheme = 'mui';
     }
   }
+
+  const customTypeaheadWidget = withProps(TypeaheadWidget, {
+    reactJsonSchemaFormTheme,
+  });
+
+  // set in uiSchema using the "ui:widget" key for a property
+  const rjsfWidgets = {
+    'date-range': DateRangePickerWidget,
+    markdown: MarkDownFieldWidget,
+    typeahead: customTypeaheadWidget,
+  };
+
+  // set in uiSchema using the "ui:field" key for a property
+  const rjsfFields: RegistryFieldsType = {
+    'numeric-range': NumericRangeField,
+  };
 
   const rjsfTemplates: any = {};
   if (restrictedWidth && reactJsonSchemaFormTheme === 'carbon') {
@@ -264,6 +284,22 @@ export default function CustomForm({
     }
   };
 
+  const checkJsonField = (
+    formDataToCheck: any,
+    propertyKey: string,
+    errors: any,
+    _jsonSchema: any,
+    _uiSchemaPassedIn?: any,
+  ) => {
+    if (propertyKey in formDataToCheck) {
+      try {
+        JSON.parse(formDataToCheck[propertyKey]);
+      } catch (e) {
+        errors[propertyKey].addError(`has invalid JSON: ${e}`);
+      }
+    }
+  };
+
   const checkNumericRange = (
     formDataToCheck: any,
     propertyKey: string,
@@ -407,6 +443,19 @@ export default function CustomForm({
             currentUiSchema,
           );
         }
+        if (
+          currentUiSchema &&
+          'ui:options' in currentUiSchema &&
+          currentUiSchema['ui:options'].validateJson === true
+        ) {
+          checkJsonField(
+            formDataToCheck,
+            propertyKey,
+            errors,
+            jsonSchemaToUse,
+            currentUiSchema,
+          );
+        }
 
         if (
           currentUiSchema &&
@@ -465,9 +514,35 @@ export default function CustomForm({
   };
 
   let childrenToUse = children;
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (bpmnEvent && submitButtonText) {
+      const triggerSaveEvent = (event: any) => {
+        if (submitButtonRef.current) {
+          submitButtonRef.current.click();
+        }
+        event.stopPropagation();
+      };
+
+      bpmnEvent.eventBus.on('spiff.message.save', triggerSaveEvent);
+
+      return () => {
+        bpmnEvent.eventBus.off('spiff.message.save', triggerSaveEvent);
+      };
+    }
+    return undefined;
+  }, [bpmnEvent, submitButtonText]);
+
   if (submitButtonText) {
     childrenToUse = (
-      <Button type="submit" id="submit-button" disabled={disabled}>
+      <Button
+        type="submit"
+        ref={submitButtonRef}
+        id="submit-button"
+        disabled={disabled}
+        style={{ display: hideSubmitButton ? 'none' : 'unset' }}
+      >
         {submitButtonText}
       </Button>
     );
@@ -475,6 +550,8 @@ export default function CustomForm({
 
   const formProps = {
     id,
+    key,
+    className,
     disabled,
     formData,
     onChange,

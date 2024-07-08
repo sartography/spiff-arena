@@ -19,6 +19,9 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -38,7 +41,6 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -260,9 +262,10 @@ class ProcessInstanceService:
         for process_instance in records:
             current_app.logger.info(f"Processor {status_value}: Processing process_instance {process_instance.id}")
             try:
-                cls.run_process_instance_with_processor(
-                    process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
-                )
+                if not queue_process_instance_if_appropriate(process_instance):
+                    cls.run_process_instance_with_processor(
+                        process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
+                    )
             except ProcessInstanceIsAlreadyLockedError:
                 # we will try again later
                 continue
@@ -280,6 +283,7 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
+        should_schedule_waiting_timer_events: bool = True,
     ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
         processor = None
         task_runnability = TaskRunnability.unknown_if_ready_tasks
@@ -302,6 +306,7 @@ class ProcessInstanceService:
             task_runnability = processor.do_engine_steps(
                 save=True,
                 execution_strategy_name=execution_strategy_name,
+                should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
             )
 
         return (processor, task_runnability)
@@ -402,7 +407,7 @@ class ProcessInstanceService:
         def values(collection: dict | list, elem: str | int | None, value: Any) -> FileDataGenerator:
             match (collection, elem, value):
                 case (dict(), None, None):
-                    for k, v in collection.items():  # type: ignore
+                    for k, v in collection.items():
                         yield from values(collection, k, v)
                 case (list(), None, None):
                     for i, v in enumerate(collection):

@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import sys
 from typing import Any
@@ -83,28 +84,37 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(message_dict, default=str)
 
 
-def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
+def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery: bool = False) -> None:
+    # In a celery worker it runs this code twice: once for the flask app and once again for the celery worker.
+    # The flask app adds a bunch of handlers that the celery worker's root.manager.loggerDict does not return
+    # however the handlers are still there with the wrong log level so this avoids running the logging
+    # code completely when flask runs it so the celery worker will run it only once.
+    if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") and not force_run_with_celery:
+        return
+
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
-    log_level = getattr(primary_logger, upper_log_level_string)
-    spiff_log_level = getattr(primary_logger, upper_log_level_string)
-
+    log_level = logging.getLevelName(upper_log_level_string)
     log_formatter = get_log_formatter(app)
-
     app.logger.debug("Printing log to create app logger")
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
         spiff_logger_filehandler = primary_logger.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
-        spiff_logger_filehandler.setLevel(spiff_log_level)
+        spiff_logger_filehandler.setLevel(log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 
     # these loggers have been deemed too verbose to be useful
-    obscure_loggers_to_exclude_from_main_logging = ["connexion", "flask_cors.extension", "flask_cors.core", "sqlalchemy"]
+    obscure_loggers_to_exclude_from_main_logging = [
+        "connexion",
+        "flask_cors.core",
+        "flask_cors.extension",
+        "sqlalchemy",
+    ]
 
     # if you actually want one of these excluded loggers, there is a config option to turn it on
     loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE", [])
@@ -135,14 +145,14 @@ def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
     for name in primary_logger.root.manager.loggerDict:
         # use a regex so spiffworkflow_backend isn't filtered out
         if not re.match(r"^spiff\b", name):
-            sub_logger = primary_logger.getLogger(name)
-            sub_logger.setLevel(log_level)
+            logger_for_name = logging.getLogger(name)
+            log_level_to_use = log_level
             if spiff_logger_filehandler:
-                sub_logger.handlers = []
-                sub_logger.propagate = False
-                sub_logger.addHandler(spiff_logger_filehandler)
+                logger_for_name.handlers = []
+                logger_for_name.propagate = False
+                logger_for_name.addHandler(spiff_logger_filehandler)
             else:
-                if len(sub_logger.handlers) < 1:
+                if len(logger_for_name.handlers) < 1:
                     exclude_logger_name_from_logging = False
                     for logger_to_exclude in obscure_loggers_to_exclude_from_main_logging:
                         if name.startswith(logger_to_exclude):
@@ -150,7 +160,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
 
                     # it's very verbose so set all obscure loggers to ERROR if not in DEBUG
                     if exclude_logger_name_from_logging or upper_log_level_string != "DEBUG":
-                        sub_logger.setLevel("ERROR")
+                        log_level_to_use = "ERROR"
 
                     # only need to set the log level here if it is not already excluded from main logging
                     if not exclude_logger_name_from_logging and upper_log_level_string == "DEBUG":
@@ -159,13 +169,16 @@ def setup_logger_for_app(app: Flask, primary_logger: Any) -> None:
                             if name.startswith(logger_to_exclude_from_debug):
                                 exclude_logger_name_from_debug = True
                         if exclude_logger_name_from_debug:
-                            sub_logger.setLevel("INFO")
+                            log_level_to_use = "INFO"
 
-                    sub_logger.addHandler(primary_logger.StreamHandler(sys.stdout))
+                    logger_for_name.addHandler(logging.StreamHandler(sys.stdout))
 
-                for the_handler in sub_logger.handlers:
+                for the_handler in logger_for_name.handlers:
                     the_handler.setFormatter(log_formatter)
-                    the_handler.setLevel(log_level)
+                    level_number = logging.getLevelName(log_level_to_use)
+                    the_handler.setLevel(level_number)
+            level_number = logging.getLevelName(log_level_to_use)
+            logger_for_name.setLevel(level_number)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:

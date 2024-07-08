@@ -25,6 +25,7 @@ SPIFFWORKFLOW_BACKEND_ENV ?= local_development
 BACKEND_SQLITE_FILE ?= src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
 NODE_MODULES_DIR ?= spiffworkflow-frontend/node_modules
 JUST ?=
+ARGS ?=
 
 YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
@@ -88,10 +89,10 @@ be-sqlite:
 	$(IN_BACKEND) sqlite3 $(BACKEND_SQLITE_FILE)
 
 be-tests: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest tests/spiffworkflow_backend/$(JUST)
+	$(IN_BACKEND) poetry run pytest $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
 be-tests-par: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest -n auto -x --random-order tests/spiffworkflow_backend/$(JUST)
+	$(IN_BACKEND) poetry run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix

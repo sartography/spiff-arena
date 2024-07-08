@@ -1053,3 +1053,52 @@ class TestProcessInstanceProcessor(BaseTest):
 
         processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"
+
+    def test_can_store_summary(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/script_task_with_instruction",
+            bpmn_file_name="script_task_with_instruction.bpmn",
+            process_model_source_directory="script-task-with-instruction",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
+        assert process_instance.summary is None
+        processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
+        assert process_instance.summary == "WE SUMMARIZE"
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.summary is not None
+        # mypy thinks this is unreachable but it is reachable. summary can be str | None
+        assert len(process_instance.summary) == 255  # type: ignore
+
+    # # To test processing times with multiinstance subprocesses
+    # def test_large_multiinstance(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    # ) -> None:
+    #     import time
+    #
+    #     process_model = load_test_spec(
+    #         process_model_id="test_group/multiinstance_with_subprocess_and_large_dataset",
+    #         process_model_source_directory="multiinstance_with_subprocess_and_large_dataset",
+    #     )
+    #     process_instance = self.create_process_instance_from_process_model(
+    #         process_model=process_model, save_start_and_end_times=False
+    #     )
+    #
+    #     processor = ProcessInstanceProcessor(process_instance)
+    #     start_time = time.time()
+    #     processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+    #     end_time = time.time()
+    #     duration = end_time - start_time
+    #     assert processor.process_instance_model.end_in_seconds is not None
+    #     duration = processor.process_instance_model.end_in_seconds - processor.process_instance_model.created_at_in_seconds
+    #     print(f"➡️ ➡️ ➡️  duration: {duration}")

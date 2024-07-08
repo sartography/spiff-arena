@@ -212,26 +212,46 @@ export interface ProcessInstance {
   process_model_uses_queued_execution?: boolean;
 }
 
-export interface MessageCorrelationProperties {
-  [key: string]: string;
+export interface CorrelationProperty {
+  retrieval_expression: string;
 }
 
-export interface MessageCorrelations {
-  [key: string]: MessageCorrelationProperties;
+export interface CorrelationProperties {
+  [key: string]: CorrelationProperty;
+}
+
+export interface MessageDefinition {
+  correlation_properties: CorrelationProperties;
+  schema: any;
+}
+
+export interface Messages {
+  [key: string]: MessageDefinition;
+}
+
+type ReferenceCacheType = 'decision' | 'process' | 'data_store' | 'message';
+
+export interface ReferenceCache {
+  identifier: string;
+  display_name: string;
+  relative_location: string;
+  type: ReferenceCacheType;
+  file_name: string;
+  properties: any;
 }
 
 export interface MessageInstance {
-  id: number;
-  process_model_identifier: string;
-  process_model_display_name: string;
-  process_instance_id: number;
-  name: string;
-  message_type: string;
-  failure_cause: string;
-  status: string;
-  created_at_in_seconds: number;
-  message_correlations?: MessageCorrelations;
   correlation_keys: any;
+  counterpart_id: number;
+  created_at_in_seconds: number;
+  failure_cause: string;
+  id: number;
+  message_type: string;
+  name: string;
+  process_instance_id: number;
+  process_model_display_name: string;
+  process_model_identifier: string;
+  status: string;
 }
 
 export interface ReportFilter {
@@ -299,6 +319,7 @@ export interface ProcessGroup {
   process_models?: ProcessModel[];
   process_groups?: ProcessGroup[];
   parent_groups?: ProcessGroupLite[];
+  messages?: Messages;
 }
 
 export interface HotCrumbItemObject {
@@ -522,4 +543,8 @@ export interface PublicTask {
   task_guid: string;
   process_instance_id: number;
   confirmation_message_markdown: string;
+}
+
+export interface RJSFFormObject {
+  formData: any;
 }

@@ -161,8 +161,11 @@ export default function TaskShow() {
   };
 
   const sendAutosaveEvent = (eventDetails?: any) => {
+    if (!taskWithTaskData) {
+      return;
+    }
     const elementToDispath: any = document.getElementById(
-      'hidden-form-for-autosave',
+      `hidden-form-for-autosave-${taskWithTaskData.guid}`,
     );
     if (elementToDispath) {
       elementToDispath.dispatchEvent(
@@ -399,7 +402,8 @@ export default function TaskShow() {
       <Grid fullWidth condensed className="megacondensed">
         <Column sm={4} md={5} lg={8}>
           <CustomForm
-            id="form-to-submit"
+            id={`form-to-submit-${taskWithTaskData.guid}`}
+            key={`form-to-submit-${taskWithTaskData.guid}`}
             disabled={formButtonsDisabled}
             formData={taskData}
             onChange={(obj: any) => {
@@ -414,7 +418,9 @@ export default function TaskShow() {
             {reactFragmentToHideSubmitButton}
           </CustomForm>
           <CustomForm
-            id="hidden-form-for-autosave"
+            id={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
+            key={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
+            className="hidden-form-for-autosave"
             formData={taskData}
             onSubmit={handleAutosaveFormSubmit}
             schema={jsonSchema}

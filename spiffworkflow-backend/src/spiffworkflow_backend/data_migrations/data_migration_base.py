@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 from typing import Any
 
+from flask import current_app
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
@@ -33,3 +34,7 @@ class DataMigrationBase(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         raise NotImplementedError("method must be implemented on subclass: run")
+
+    @classmethod
+    def should_raise_on_error(cls) -> bool:
+        return current_app.config.get("ENV_IDENTIFIER") in ["unit_testing", "local_development"]

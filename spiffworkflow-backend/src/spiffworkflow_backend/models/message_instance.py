@@ -125,10 +125,10 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
             except Exception as e:
                 # the failure of a payload evaluation may not mean that matches for these
                 # message instances can't happen with other messages.  So don't error up.
-                # fixme:  Perhaps log some sort of error.
                 current_app.logger.warning(
-                    "Error evaluating correlation key when comparing send and receive messages."
-                    + f"Expression {correlation_key.retrieval_expression} failed with the error "
+                    "Error evaluating correlation key when comparing send and receive messages. "
+                    + f"Mesage name: '{self.name}'. Receive mesage id: '{self.id}'. "
+                    + f"Expression {correlation_key.retrieval_expression} failed with the error: "
                     + str(e)
                 )
                 return False

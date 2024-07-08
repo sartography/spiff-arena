@@ -2,6 +2,7 @@ import time
 
 import flask
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_future_task_if_appropriate,
@@ -50,7 +51,7 @@ class BackgroundProcessingService:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:messages")
-            MessageService.correlate_all_message_instances()
+            MessageService.correlate_all_message_instances(execution_mode="synchronous")
 
     def remove_stale_locks(self) -> None:
         """If something has been locked for a certain amount of time it is probably stale so unlock it."""
@@ -80,7 +81,7 @@ class BackgroundProcessingService:
                 .filter(TaskModel.guid == future_task.guid)
                 .first()
             )
-            if process_instance.allowed_to_run():
+            if process_instance and process_instance.allowed_to_run():
                 queue_future_task_if_appropriate(
                     process_instance, eta_in_seconds=future_task.run_at_in_seconds, task_guid=future_task.guid
                 )
@@ -98,6 +99,10 @@ class BackgroundProcessingService:
                 FutureTaskModel.completed == False,  # noqa: E712
                 FutureTaskModel.archived_for_process_instance_status == False,  # noqa: E712
                 FutureTaskModel.run_at_in_seconds < lookahead,
+                or_(
+                    FutureTaskModel.queued_to_run_at_in_seconds != FutureTaskModel.run_at_in_seconds,
+                    FutureTaskModel.queued_to_run_at_in_seconds == None,  # noqa: E711
+                ),
             )
         ).all()
         return future_tasks

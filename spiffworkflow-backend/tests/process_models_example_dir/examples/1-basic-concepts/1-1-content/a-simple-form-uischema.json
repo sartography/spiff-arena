@@ -1,0 +1,13 @@
+{
+  "is_joke": {
+    "ui:widget": "radio",
+    "ui:options": {
+      "inline": true
+    }
+  },
+  "ui:order": [
+    "first_name",
+    "is_joke",
+    "color"
+  ]
+}

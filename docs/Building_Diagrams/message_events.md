@@ -4,7 +4,7 @@ A Message Event acts as a channel for the exchange of information between differ
 While it might be tempting to associate "message events" with emails, their scope extends beyond digital correspondence.
 They signify the transmission of information between various process components, whether within the same process or across different processes.
 
- ![message_relationship](images/relationship_message.png)
+![message_relationship](images/relationship_message.png)
 
 **Reasons to Use a Message Event:**
 
@@ -12,7 +12,6 @@ They signify the transmission of information between various process components,
 - They initiate specific actions by sending or receiving an event within the process flow.
 - Visually, they illustrate communication among various participants or across different pools and lanes.
 - They clarify how data or events are shared, fostering collaboration among different business process components.
-
 
 ## Start Message Event
 
@@ -80,7 +79,7 @@ In the provided example, the final step involves sending the customer an invoice
 Prior to this, the last step for the shipping department was to send a confirmation.
 
 ```{admonition} Note
-⚠ Start Events mark the initiation point of a process. Intermediate Events occur during the course of the process, throwing, capturing and reacting to specific occurrences or messages from external sources or other processes. On the other hand, End Events denote the conclusion of the process, signifying its termination or reaching a final state.
+⚠ Start Events mark the initiation point of a process. Intermediate Events occur during the course of the process, throwing, capturing, and reacting to specific occurrences or messages from external sources or other processes. On the other hand, End Events denote the conclusion of the process, signifying its termination or reaching a final state.
 ```
 
 ## Correlation
@@ -88,7 +87,6 @@ Prior to this, the last step for the shipping department was to send a confirmat
 A singular Throw Message Event corresponds exclusively to a single active Catch Message Event.
 This correlation is one-to-one, unlike Signal Events that could be sent to multiple active Signal Catch Events.
 It is important to configure the correlation of the Catch and Throw Events.
-
 
 ## Message Event Configuration
 
@@ -98,13 +96,12 @@ Three separate configurations need to be completed.
 - Throw Message Event
 - Catch Message Event
 
-
 **Default configuration:**
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | ------------------------------------------------------------- | --- | --- |
 | ![name_field](images/name_field.png) | **Name:** Place Order | A descriptive name given to the element, providing a human-readable label or title. |
-| ![id_field](images/id_field.png) | **ID:** Example - send_invoice | An identifier used to uniquely identify the element within the BPMN model.|
+| ![id_field](images/id_field.png) | **ID:** Example - send_invoice | An identifier used to uniquely identify the element within the BPMN model. |
 | ![documentation_field](images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
 
 **Collaboration:**
@@ -115,24 +112,24 @@ The identical configuration must be applied to every BPMN diagram if messages ex
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![correlation_keys](images/correlation_keys_1.png) | **Correlation Keys:** order | A correlation key is a unique identifier or attribute used to establish a connection or relationship between message events (it can be likened to the shared subject between them). It is possible to have multiple correlation keys for a process.
-| ![correlation_properties](images/correlation_properties_1.png) | **Correlation Properties:** invoice_number | The correlation property is what differentiates each key instance from another, and it's the defining attribute that sets them apart. For instance, if "order" is selected as the correlation key, a property like "invoice_number" could be used to distinguish each order instance from another. Keep in mind that this variable should be incorporated within the context of the process instance.|
-| ![collaboration_messages](images/collaboration_messages_1.png) | **Messages:** order_approval, order_dispatch etc. | Messages are established for each message pair (Throw and Catch Message Events). This setup will be utilized to configure the events, linking the associated occurrences together. |
+| ![correlation_keys](images/correlation_keys_1.png) | **Correlation Keys:** order | A correlation key is a unique identifier or attribute used to establish a connection or relationship between message events (it can be likened to the shared subject between them). It is possible to have multiple correlation keys for a process. |
+| ![correlation_properties](images/correlation_properties_1.png) | **Correlation Properties:** invoice_number | The correlation property is what differentiates each key instance from another, and it's the defining attribute that sets them apart. For instance, if "order" is selected as the correlation key, a property like "invoice_number" could be used to distinguish each order instance from another. Keep in mind that this variable should be incorporated within the context of the process instance. |
+| ![collaboration_messages](images/collaboration_messages_1.png) | **Messages:** order_approval, order_dispatch, etc. | Messages are established for each message pair (Throw and Catch Message Events). This setup will be utilized to configure the events, linking the associated occurrences together. |
 
 **Throw Message Event:**
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![conditions](images/message_1.png) | **Message:** order_approval | This input isn't an open-text field; instead, it provides a dropdown list populated by the Messages configured in the preceding Collaboration section.|
+| ![conditions](images/message_1.png) | **Message:** order_approval | This input isn't an open-text field; instead, it provides a dropdown list populated by the Messages configured in the preceding Collaboration section. |
 | ![conditions](images/payload_msg.png) | **Payload:** order_amount | The Payload can include a variable, holding unique information specific to the instance, or in this scenario, the order. |
 | ![conditions](images/event_correlation_msg.png) | **Correlation:** invoice_number | Select the correlation that can identify the distinct property distinguishing one process instance from another. |
 
 **Catch Message Event:**
 
-The connected catch event is configured in precisely the same manner as the throw event
+The connected catch event is configured in precisely the same manner as the throw event.
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![conditions](images/message_1.png) | **Message:** order_approval | This input isn't an open-text field; instead, it consists of a dropdown list populated by the Messages configured in the preceding Collaboration section.|
+| ![conditions](images/message_1.png) | **Message:** order_approval | This input isn't an open-text field; instead, it consists of a dropdown list populated by the Messages configured in the preceding Collaboration section. |
 | ![conditions](images/payload_msg.png) | **Variable Name:** order_amount | The Variable Name can include a variable, holding unique information specific to the instance, or in this scenario, the order. |
 | ![conditions](images/event_correlation_msg.png) | **Correlation:** invoice_number | Select the correlation that can identify the distinct property distinguishing one process instance from another. |

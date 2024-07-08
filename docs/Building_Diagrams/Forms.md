@@ -203,7 +203,8 @@ By incorporating these validations into SpiffWorkflow forms, you can create inte
 
 #### Scenario Overview
 
-Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines. This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
+Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines.
+This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
 #### JSON Schema Configuration:
 
@@ -289,7 +290,6 @@ Here's how to use it:
 ```
 
 ![Styling_Form](images/styling_forms.png)
-
 #### Key Points:
 
 - **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
@@ -298,11 +298,11 @@ Here's how to use it:
 
 #### Example Illustrated:
 
-In this case, we are saying that we want the firstName and lastName in the same row, since they are both in the first element of the ui:layout array.
-We are saying that the firstName should take up 4 columns when a large display is used.
-The lastName also takes up 4 columns, so the two of them together fill up the whole row, which has 8 columns available for large displays.
-Medium displays have 5 columns available and small displays have 4.
-If you just specify a uiSchema like this, it will figure out the column widths for you:
+In this case, we are saying that we want the `firstName` and `lastName` in the same row, since they are both in the first element of the `ui:layout` array.
+We are saying that the `firstName` should take up 4 columns when a large display is used.
+The `lastName` also takes up 4 columns, so the two of them together fill up the whole row, which has 8 columns available for large displays.
+Medium displays have 5 columns available, and small displays have 4.
+If you just specify a `uiSchema` like this, it will figure out the column widths for you:
 
     {
       "ui:layout": [
@@ -371,7 +371,7 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 "ui:widget": "markdown"
 ```
 
-![rsjf markdown](images/rsjf_markdown.png)
+![rjsf markdown](images/rsjf_markdown.png)
 
 ### Numeric Range Field
 
@@ -423,7 +423,8 @@ This will automatically validate that the max value cannot be less than the min 
 
 ### Adding a New Button for Repeating Sections in Forms
 
-Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information. For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
+Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information.
+For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
 
 This structure can be represented in the form's schema as follows:
 
@@ -461,7 +462,7 @@ This structure can be represented in the form's schema as follows:
 
 ![Nested Forms](images/Nested_form_display.png)
 
-By usign this feature, you can effectively implement new buttons for nested forms or repeating sections improving the form's usability for collecting multiple related entries from users.
+By using this feature, you can effectively implement new buttons for nested forms or repeating sections, improving the form's usability for collecting multiple related entries from users.
 
 ### Character counter
 
@@ -469,7 +470,7 @@ To give the user feedback about how they are doing in terms of staying within th
 
 #### JSON Schema Configuration
 
-To do this, your json schema must contain a string with a maxLength, like this:
+To do this, your JSON schema must contain a string with a `maxLength`, like this:
 
 ```json
 {
@@ -486,7 +487,7 @@ To do this, your json schema must contain a string with a maxLength, like this:
 
 #### UI Schema Configuration
 
-Your UI Schema will need a ui:options specifying counter true, like this:
+Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
 
 ```json
 {

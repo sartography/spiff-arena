@@ -27,7 +27,7 @@ This is the visual platform where business processes are represented and mapped 
 
 ## Call Activity
 
-This refers to the act of a parent or higher-level process invoking a pre-defined or reusable child process, which is represented in another process diagram.
+This refers to the act of a parent or higher-level process invoking a predefined or reusable child process, which is represented in another process diagram.
 This invocation allows for the utilization of the child process multiple times, enhancing reusability within the overall model.
 
 ## Collapsed Subprocess
@@ -79,12 +79,12 @@ This is a Subprocess that shows the process it contains.
 ## Gateway
 
 This is a component that governs the available paths within a process.
-Gateways can merge or diverge paths, or introduce additional paths based on conditions or Events.
+Gateways can merge or diverge paths or introduce additional paths based on conditions or Events.
 There are four types of Gateways: Exclusive, Parallel, Inclusive, and Event-Based.
 
 ## Intermediate Event
 
-This is an event that occurs within the middle of a process, neither at the start nor the end.
+This is an event that occurs in the middle of a process, neither at the start nor the end.
 It can be connected to other tasks through connectors or placed on the border of a task.
 It evaluates conditions and circumstances, triggering events and enabling the initiation of alternative paths within the process.
 
@@ -99,7 +99,7 @@ These are subdivisions within a Pool that are utilized to assign activities to s
 ## Merge
 
 This is the process in which two or more parallel Sequence Flow paths converge into a single path, achieved either through multiple incoming Sequence Flows or by utilizing an Exclusive Gateway.
-This merging of paths is also commonly referred to as an "OR-Join".
+This merging of paths is also commonly referred to as an "OR-Join."
 
 ## Message
 
