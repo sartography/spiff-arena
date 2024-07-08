@@ -194,41 +194,12 @@ class ProcessInstanceService:
             db.session.commit()
 
             bpmn_process_dict = processor.serialize()
-            bpmn_definition_to_task_definitions_mappings: dict = {}
-            ProcessInstanceProcessor._add_bpmn_process_definitions(
+            ProcessInstanceProcessor.persist_bpmn_process_dict(
                 bpmn_process_dict,
-                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+                bpmn_definition_to_task_definitions_mappings={},
                 process_instance_model=process_instance,
-                force_update=True,
+                bpmn_process_instance=processor.bpmn_process_instance,
             )
-
-            # TODO: move similar code from persist_bpmn_process_dict to own method and use that
-            task_model_mapping, bpmn_subprocess_mapping = ProcessInstanceProcessor.get_db_mappings_from_bpmn_process_dict(
-                bpmn_process_dict
-            )
-            task_service = TaskService(
-                process_instance=process_instance,
-                serializer=ProcessInstanceProcessor._serializer,
-                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-                force_update_definitions=True,
-                task_model_mapping=task_model_mapping,
-                bpmn_subprocess_mapping=bpmn_subprocess_mapping,
-            )
-
-            for spiff_task in processor.bpmn_process_instance.get_tasks():
-                start_and_end_times: StartAndEndTimes | None = None
-                if spiff_task.has_state(TaskState.COMPLETED | TaskState.ERROR):
-                    start_and_end_times = {
-                        "start_in_seconds": spiff_task.last_state_change,
-                        "end_in_seconds": spiff_task.last_state_change,
-                    }
-                task_service.update_task_model_with_spiff_task(
-                    spiff_task,
-                    store_process_instance_events=False,
-                    start_and_end_times=start_and_end_times,
-                )
-            task_service.save_objects_to_database()
-            db.session.commit()
 
     @classmethod
     def create_process_instance_from_process_model_identifier(

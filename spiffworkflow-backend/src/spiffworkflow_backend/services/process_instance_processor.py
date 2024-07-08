@@ -532,6 +532,7 @@ class ProcessInstanceProcessor:
         bpmn_definition_to_task_definitions_mappings: dict,
         process_instance_model: ProcessInstanceModel,
         store_process_instance_events: bool = True,
+        bpmn_process_instance: BpmnWorkflow | None = None,
     ) -> None:
         cls._add_bpmn_process_definitions(
             bpmn_process_dict,
@@ -539,7 +540,10 @@ class ProcessInstanceProcessor:
             process_instance_model=process_instance_model,
             force_update=True,
         )
-        bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
+
+        if bpmn_process_instance is None:
+            bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
+
         task_model_mapping, bpmn_subprocess_mapping = cls.get_db_mappings_from_bpmn_process_dict(bpmn_process_dict)
 
         task_service = TaskService(
