@@ -1,8 +1,3 @@
-from logging import warn
-from uuid import UUID
-from spiffworkflow_backend.services.task_service import StartAndEndTimes
-from spiffworkflow_backend.services.task_service import TaskService
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 import base64
 import hashlib
 import time
@@ -12,6 +7,7 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 from urllib.parse import unquote
+from uuid import UUID
 
 import sentry_sdk
 from flask import current_app
@@ -20,16 +16,13 @@ from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
+from SpiffWorkflow.bpmn.util.diff import diff_workflow
+from SpiffWorkflow.bpmn.util.diff import filter_tasks
+from SpiffWorkflow.bpmn.util.diff import migrate_workflow
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
-from SpiffWorkflow.bpmn.util.diff import (
-    diff_dependencies,
-    diff_workflow,
-    filter_tasks,
-    migrate_workflow,
-    WorkflowDiff,
-)
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
@@ -39,6 +32,7 @@ from spiffworkflow_backend.data_migrations.process_instance_migrator import Proc
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
@@ -53,6 +47,7 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -147,7 +142,7 @@ class ProcessInstanceService:
         return (process_instance_model, start_configuration)
 
     @classmethod
-    def migrate_process(
+    def migrate_process_instance_to_newest_model_version(
         cls, process_instance: ProcessInstanceModel, user: UserModel, preserve_old_process_instance: bool = False
     ) -> None:
         # TODO: support other git revisions
@@ -167,7 +162,10 @@ class ProcessInstanceService:
             processor._serializer.registry, processor.bpmn_process_instance, target_bpmn_process_spec, target_subprocesses
         )
         if not cls._can_migrate(wf_diff, sp_diffs):
-            raise Exception("Workflow is not safe to migrate!")
+            raise ProcessInstanceMigrationNotSafeError(
+                f"It is not safe to migrate process instance {process_instance.id} to "
+                f"new version of '{process_instance.process_model_identifier}'"
+            )
 
         migrate_workflow(wf_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():

@@ -100,6 +100,38 @@ class BaseTest:
 
         return process_model
 
+    def create_and_run_process_instance(
+        self,
+        client: FlaskClient,
+        user: UserModel,
+        process_group_id: str | None = "test_group",
+        process_model_id: str | None = "random_fact",
+        bpmn_file_name: str | None = None,
+        bpmn_file_location: str | None = None,
+    ) -> tuple[ProcessModelInfo, int]:
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        headers = self.logged_in_headers(user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+
+        return (process_model, int(process_instance_id))
+
     def create_process_group(
         self,
         process_group_id: str,

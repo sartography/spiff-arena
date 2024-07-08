@@ -18,7 +18,8 @@ from hashlib import sha256
 from typing import Any
 from typing import NewType
 from typing import TypedDict
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import dateparser
 import pytz
@@ -44,14 +45,6 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
-from SpiffWorkflow.bpmn.util.diff import (
-    diff_dependencies,
-    diff_workflow,
-    filter_tasks,
-    migrate_workflow,
-    WorkflowDiff,
-)
-
 
 # fix for StandardLoopTask
 from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
@@ -635,14 +628,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
-                task_definition.bpmn_identifier
-            ] = task_definition
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
+                task_definition
+            )
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
-                "bpmn_process_definition"
-            ] = bpmn_process_definition
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
+                bpmn_process_definition
+            )
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
@@ -694,9 +687,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[
-                bpmn_subprocess_definition.id
-            ] = bpmn_subprocess_definition.bpmn_identifier
+            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
+                bpmn_subprocess_definition.bpmn_identifier
+            )
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore

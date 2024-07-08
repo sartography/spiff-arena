@@ -1,6 +1,4 @@
 import os
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
-import json
 from uuid import UUID
 
 import pytest
@@ -25,6 +23,7 @@ from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInst
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -1166,7 +1165,7 @@ class TestProcessInstanceProcessor(BaseTest):
         )
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        ProcessInstanceService.migrate_process(process_instance, user=initiator_user)
+        ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=initiator_user)
 
         for initial_task in initial_tasks:
             new_task = processor.bpmn_process_instance.get_task_from_id(initial_task.id)

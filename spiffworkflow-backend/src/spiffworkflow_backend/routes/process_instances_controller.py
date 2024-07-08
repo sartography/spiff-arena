@@ -546,6 +546,15 @@ def process_instance_reset(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
+def process_instance_migrate(
+    process_instance_id: int,
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=g.user)
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
 def process_instance_find_by_id(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
