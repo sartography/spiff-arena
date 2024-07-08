@@ -1,3 +1,4 @@
+from logging import warn
 from uuid import UUID
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
@@ -159,19 +160,14 @@ class ProcessInstanceService:
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
+        # tasks that were in the old workflow
         wf_diff, sp_diffs = diff_workflow(
             processor._serializer.registry, processor.bpmn_process_instance, target_bpmn_process_spec, target_subprocesses
         )
         if not cls._can_migrate(wf_diff, sp_diffs):
             raise Exception("Workflow is not safe to migrate!")
-
-        print(f"➡️ ➡️ ➡️  wf_diff: {wf_diff}")
-        print(f"➡️ ➡️ ➡️  sp_diffs: {sp_diffs}")
-        print(f"➡️ ➡️ ➡️  wf_diff.alignment: {wf_diff.alignment}")
-        import pdb
-
-        pdb.set_trace()
 
         migrate_workflow(wf_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
@@ -198,6 +194,13 @@ class ProcessInstanceService:
             db.session.commit()
 
             bpmn_process_dict = processor.serialize()
+            bpmn_definition_to_task_definitions_mappings: dict = {}
+            ProcessInstanceProcessor._add_bpmn_process_definitions(
+                bpmn_process_dict,
+                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+                process_instance_model=process_instance,
+                force_update=True,
+            )
 
             # TODO: move similar code from persist_bpmn_process_dict to own method and use that
             task_model_mapping, bpmn_subprocess_mapping = ProcessInstanceProcessor.get_db_mappings_from_bpmn_process_dict(
@@ -206,7 +209,7 @@ class ProcessInstanceService:
             task_service = TaskService(
                 process_instance=process_instance,
                 serializer=ProcessInstanceProcessor._serializer,
-                bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
+                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                 force_update_definitions=True,
                 task_model_mapping=task_model_mapping,
                 bpmn_subprocess_mapping=bpmn_subprocess_mapping,
