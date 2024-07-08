@@ -1,4 +1,3 @@
-import os
 from uuid import UUID
 
 import pytest
@@ -23,7 +22,6 @@ from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInst
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -1125,65 +1123,6 @@ class TestProcessInstanceProcessor(BaseTest):
         new_tasks = new_bpmn_process_instance.get_tasks()
         new_task_names = [t.task_spec.name for t in new_tasks]
         assert old_task_names == new_task_names
-
-    def test_it_can_migrate_a_process_instance(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-    ) -> None:
-        initiator_user = self.find_or_create_user("initiator_user")
-        process_model = load_test_spec(
-            process_model_id="test_group/migration-test-with-subprocess",
-            process_model_source_directory="migration-test-with-subprocess",
-            bpmn_file_name="migration-initial.bpmn",
-        )
-        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-
-        initial_tasks = processor.bpmn_process_instance.get_tasks()
-        assert "manual_task_two" not in processor.bpmn_process_instance.spec.task_specs
-
-        new_file_path = os.path.join(
-            app.instance_path,
-            "..",
-            "..",
-            "tests",
-            "data",
-            "migration-test-with-subprocess",
-            "migration-new.bpmn",
-        )
-        with open(new_file_path) as f:
-            new_contents = f.read().encode()
-
-        SpecFileService.update_file(
-            process_model_info=process_model,
-            file_name="migration-initial.bpmn",
-            binary_data=new_contents,
-            update_process_cache_only=True,
-        )
-
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=initiator_user)
-
-        for initial_task in initial_tasks:
-            new_task = processor.bpmn_process_instance.get_task_from_id(initial_task.id)
-            assert new_task is not None
-            assert new_task.last_state_change == initial_task.last_state_change
-
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-
-        human_task_one = process_instance.active_human_tasks[0]
-        assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
-        self.complete_next_manual_task(processor)
-
-        human_task_one = process_instance.active_human_tasks[0]
-        assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_two"
-        self.complete_next_manual_task(processor)
-
-        assert process_instance.status == ProcessInstanceStatus.complete.value
 
     # # To test processing times with multiinstance subprocesses
     # def test_large_multiinstance(

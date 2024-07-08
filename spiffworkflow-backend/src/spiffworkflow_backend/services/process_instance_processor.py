@@ -37,6 +37,7 @@ from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # ty
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
+from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
@@ -415,6 +416,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
 
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
+SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
 
 
 class ProcessInstanceProcessor:
