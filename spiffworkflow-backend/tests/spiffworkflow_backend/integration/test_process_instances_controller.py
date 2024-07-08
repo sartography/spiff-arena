@@ -96,6 +96,7 @@ class TestProcessInstancesController(BaseTest):
             update_process_cache_only=True,
         )
 
+        processor.suspend()
         response = client.post(
             f"/v1.0/process-instance-migrate/{self.modify_process_identifier_for_path_param(process_instance.process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
