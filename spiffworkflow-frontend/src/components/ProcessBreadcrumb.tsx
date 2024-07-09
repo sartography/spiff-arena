@@ -65,7 +65,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
     if (hotCrumbs) {
       hotCrumbs.forEach(explodeCrumbItemObject);
     }
-  }, [setProcessEntity, hotCrumbs]);
+  }, [hotCrumbs]);
 
   const checkPermissions = (crumb: HotCrumbItemObject) => {
     if (!crumb.checkPermission) {

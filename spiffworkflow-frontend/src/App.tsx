@@ -7,6 +7,7 @@ import { AbilityContext } from './contexts/Can';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './routes/PublicRoutes';
+import SpiffUIV2 from './routes/SpiffUIV2';
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,10 @@ export default function App() {
     return [
       { path: 'public/*', element: <PublicRoutes /> },
       {
+        path: 'newui/*',
+        element: <SpiffUIV2 />,
+      },
+      {
         path: '*',
         element: <ContainerForExtensions />,
       },
@@ -24,7 +29,7 @@ export default function App() {
 
   /**
    * Note that QueryClientProvider and ReactQueryDevTools
-   * are React Qery, now branded under the Tanstack packages.
+   * are React Query, now branded under the Tanstack packages.
    * https://tanstack.com/query/latest
    */
   const layout = () => {
