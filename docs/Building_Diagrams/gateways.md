@@ -98,6 +98,11 @@ They can be used independently, depending on the specific scenario and process r
 In some cases, only the Inclusive Gateway might be used to split the flow into multiple paths based on different conditions without necessarily requiring a merge later in the process.
 Similarly, the Inclusive Gateway merge can be used without an Inclusive Gateway to consolidate parallel paths from other types of gateways, or even from different parts of the process.
 
+```{toctree}
+:maxdepth: 1
+inclusivegatewayexample.md
+```
+
 ## Parallel Gateway
 
 ![parallel_gateway](images/parallel_gateway.png)
