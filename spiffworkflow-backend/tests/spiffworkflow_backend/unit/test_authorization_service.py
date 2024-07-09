@@ -109,6 +109,10 @@ class TestAuthorizationService(BaseTest):
                 ("/process-groups/some-process-group:some-process-model:*", "read"),
                 ("/process-groups/some-process-group:some-process-model:*", "update"),
                 (
+                    "/process-instance-migrate/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
                     "/process-instance-suspend/some-process-group:some-process-model:*",
                     "create",
                 ),
@@ -192,6 +196,10 @@ class TestAuthorizationService(BaseTest):
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
                 ("/message-models/some-process-group:some-process-model/*", "read"),
                 ("/process-data/some-process-group:some-process-model/*", "read"),
+                (
+                    "/process-instance-migrate/some-process-group:some-process-model/*",
+                    "create",
+                ),
                 (
                     "/process-instance-suspend/some-process-group:some-process-model/*",
                     "create",
@@ -530,6 +538,7 @@ class TestAuthorizationService(BaseTest):
                 ("/messages/*", "create"),
                 ("/process-data-file-download/*", "read"),
                 ("/process-data/*", "read"),
+                ("/process-instance-migrate/*", "create"),
                 ("/process-instance-reset/*", "create"),
                 ("/process-instance-resume/*", "create"),
                 ("/process-instance-suspend/*", "create"),

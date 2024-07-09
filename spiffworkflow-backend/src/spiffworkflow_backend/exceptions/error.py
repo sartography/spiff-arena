@@ -6,7 +6,12 @@ class RefreshTokenStorageError(Exception):
     pass
 
 
-# These could be either 'id' OR 'access' tokens and we can't always know which
+class ProcessInstanceMigrationNotSafeError(Exception):
+    pass
+
+
+class ProcessInstanceMigrationError(Exception):
+    pass
 
 
 class TokenExpiredError(Exception):

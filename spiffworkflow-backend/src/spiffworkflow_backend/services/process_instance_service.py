@@ -7,14 +7,20 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 from urllib.parse import unquote
+from uuid import UUID
 
 import sentry_sdk
 from flask import current_app
 from flask import g
+from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
+from SpiffWorkflow.bpmn.util.diff import diff_workflow
+from SpiffWorkflow.bpmn.util.diff import filter_tasks
+from SpiffWorkflow.bpmn.util.diff import migrate_workflow
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -27,6 +33,7 @@ from spiffworkflow_backend.data_migrations.process_instance_migrator import Proc
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
@@ -41,6 +48,7 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -48,7 +56,9 @@ from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_instance_processor import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_processor import SubprocessUuidToWorkflowDiffMapping
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -133,6 +143,82 @@ class ProcessInstanceService:
         run_at_in_seconds = round(time.time()) + delay_in_seconds
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
         return (process_instance_model, start_configuration)
+
+    @classmethod
+    def check_process_instance_can_be_migrated(
+        cls, process_instance: ProcessInstanceModel
+    ) -> tuple[
+        ProcessInstanceProcessor, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
+    ]:
+        (target_bpmn_process_spec, target_subprocess_specs) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
+            process_instance.process_model_identifier,
+        )
+        processor = ProcessInstanceProcessor(
+            process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+        )
+
+        # tasks that were in the old workflow and are in the new one as well
+        top_level_bpmn_process_diff, subprocesses_diffs = diff_workflow(
+            processor._serializer.registry, processor.bpmn_process_instance, target_bpmn_process_spec, target_subprocess_specs
+        )
+        if not cls.can_migrate(top_level_bpmn_process_diff, subprocesses_diffs):
+            raise ProcessInstanceMigrationNotSafeError(
+                f"It is not safe to migrate process instance {process_instance.id} to "
+                f"new version of '{process_instance.process_model_identifier}'"
+            )
+        return (
+            processor,
+            target_bpmn_process_spec,
+            target_subprocess_specs,
+            top_level_bpmn_process_diff,
+            subprocesses_diffs,
+        )
+
+    @classmethod
+    def migrate_process_instance_to_newest_model_version(
+        cls, process_instance: ProcessInstanceModel, user: UserModel, preserve_old_process_instance: bool = False
+    ) -> None:
+        (
+            processor,
+            target_bpmn_process_spec,
+            target_subprocess_specs,
+            top_level_bpmn_process_diff,
+            subprocesses_diffs,
+        ) = cls.check_process_instance_can_be_migrated(process_instance)
+        ProcessInstanceTmpService.add_event_to_process_instance(
+            process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value
+        )
+        migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
+        for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
+            migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
+        processor.bpmn_process_instance.subprocess_specs = target_subprocess_specs
+
+        if preserve_old_process_instance:
+            # TODO: write tests for this code path - no one has a requirement for it yet
+            bpmn_process_dict = processor.serialize()
+            ProcessInstanceProcessor.update_guids_on_tasks(bpmn_process_dict)
+            new_process_instance, _ = cls.create_process_instance_from_process_model_identifier(
+                process_instance.process_model_identifier, user
+            )
+            ProcessInstanceProcessor.persist_bpmn_process_dict(
+                bpmn_process_dict, bpmn_definition_to_task_definitions_mappings={}, process_instance_model=new_process_instance
+            )
+        else:
+            future_tasks = TaskModel.query.filter(
+                TaskModel.process_instance_id == process_instance.id,
+                TaskModel.state.in_(["FUTURE", "MAYBE", "LIKELY"]),  # type: ignore
+            ).all()
+            for ft in future_tasks:
+                db.session.delete(ft)
+            db.session.commit()
+
+            bpmn_process_dict = processor.serialize()
+            ProcessInstanceProcessor.persist_bpmn_process_dict(
+                bpmn_process_dict,
+                bpmn_definition_to_task_definitions_mappings={},
+                process_instance_model=process_instance,
+                bpmn_process_instance=processor.bpmn_process_instance,
+            )
 
     @classmethod
     def create_process_instance_from_process_model_identifier(
@@ -642,3 +728,15 @@ class ProcessInstanceService:
                     ) from e
             raise e
         return processor
+
+    @classmethod
+    def can_migrate(cls, top_level_bpmn_process_diff: WorkflowDiff, subprocesses_diffs: dict[UUID, WorkflowDiff]) -> bool:
+        def safe(result: WorkflowDiff) -> bool:
+            mask = TaskState.COMPLETED | TaskState.STARTED
+            tasks = result.changed + result.removed
+            return len(filter_tasks(tasks, state=mask)) == 0
+
+        for diff in subprocesses_diffs.values():
+            if diff is None or not safe(diff):
+                return False
+        return safe(top_level_bpmn_process_diff)

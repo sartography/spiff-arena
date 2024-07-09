@@ -70,6 +70,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     },
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/process-instance-migrate", "relevant_permissions": ["create"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
@@ -637,7 +638,7 @@ class AuthorizationService:
     def set_support_permissions(cls) -> list[PermissionToAssign]:
         """Just like elevated permissions minus access to secrets."""
         permissions_to_assign = cls.set_basic_permissions()
-        for process_instance_action in ["resume", "terminate", "suspend", "reset"]:
+        for process_instance_action in ["migrate", "resume", "terminate", "suspend", "reset"]:
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=f"/process-instance-{process_instance_action}/*")
             )

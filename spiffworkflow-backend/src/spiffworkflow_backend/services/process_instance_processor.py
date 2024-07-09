@@ -19,6 +19,7 @@ from typing import Any
 from typing import NewType
 from typing import TypedDict
 from uuid import UUID
+from uuid import uuid4
 
 import dateparser
 import pytz
@@ -36,6 +37,7 @@ from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # ty
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
+from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
@@ -414,6 +416,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
 
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
+SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
 
 
 class ProcessInstanceProcessor:
@@ -470,7 +473,7 @@ class ProcessInstanceProcessor:
         self.bpmn_subprocess_mapping: dict[str, BpmnProcessModel] = {}
 
         # this caches the bpmn_process_definition_identifier and task_identifier back to the bpmn_process_id
-        # in the database. This is to cut down on database queries while adding new tasks to the database.
+        # intthe database. This is to cut down on database queries while adding new tasks to the database.
         # Structure:
         #   { "[[BPMN_PROCESS_DEFINITION_IDENTIFIER]]": {
         #       "[[TASK_IDENTIFIER]]": [[TASK_DEFINITION]],
@@ -524,6 +527,7 @@ class ProcessInstanceProcessor:
         bpmn_definition_to_task_definitions_mappings: dict,
         process_instance_model: ProcessInstanceModel,
         store_process_instance_events: bool = True,
+        bpmn_process_instance: BpmnWorkflow | None = None,
     ) -> None:
         cls._add_bpmn_process_definitions(
             bpmn_process_dict,
@@ -531,7 +535,10 @@ class ProcessInstanceProcessor:
             process_instance_model=process_instance_model,
             force_update=True,
         )
-        bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
+
+        if bpmn_process_instance is None:
+            bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
+
         task_model_mapping, bpmn_subprocess_mapping = cls.get_db_mappings_from_bpmn_process_dict(bpmn_process_dict)
 
         task_service = TaskService(
@@ -1337,6 +1344,42 @@ class ProcessInstanceProcessor:
         # Save the process
         processor.save()
         processor.suspend()
+
+    @classmethod
+    def update_guids_on_tasks(cls, bpmn_process_instance_dict: dict) -> None:
+        # old -> new
+        guid_map = {}
+
+        def get_guid_map(proc_dict: dict) -> None:
+            for guid in proc_dict["tasks"].keys():
+                guid_map[guid] = str(uuid4())
+
+        def update_guids(proc_dict: dict) -> None:
+            new_tasks = {}
+            for task_guid, task_dict in proc_dict["tasks"].items():
+                new_guid = guid_map[task_guid]
+                new_tasks[new_guid] = task_dict
+                if task_dict["parent"] is not None:
+                    new_tasks[new_guid]["parent"] = guid_map[task_dict["parent"]]
+                new_children_guids = [guid_map[cg] for cg in task_dict["children"]]
+                new_tasks[new_guid]["children"] = new_children_guids
+                new_tasks[new_guid]["id"] = guid_map[task_dict["id"]]
+            proc_dict["tasks"] = new_tasks
+            proc_dict["root"] = guid_map[proc_dict["root"]]
+            proc_dict["last_task"] = guid_map[proc_dict["last_task"]]
+
+        get_guid_map(bpmn_process_instance_dict)
+        for subproc_dict in bpmn_process_instance_dict["subprocesses"].values():
+            get_guid_map(subproc_dict)
+
+        update_guids(bpmn_process_instance_dict)
+        new_subprocesses = {}
+        for subproc_guid, subproc_dict in bpmn_process_instance_dict["subprocesses"].items():
+            new_guid = guid_map[subproc_guid]
+            new_subprocesses[new_guid] = subproc_dict
+            new_subprocesses[new_guid]["parent_task_id"] = guid_map[subproc_dict["parent_task_id"]]
+            update_guids(new_subprocesses[new_guid])
+        bpmn_process_instance_dict["subprocesses"] = new_subprocesses
 
     @staticmethod
     def get_parser() -> MyCustomParser:

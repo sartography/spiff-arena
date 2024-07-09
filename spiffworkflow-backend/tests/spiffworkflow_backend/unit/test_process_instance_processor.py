@@ -1077,6 +1077,53 @@ class TestProcessInstanceProcessor(BaseTest):
         # mypy thinks this is unreachable but it is reachable. summary can be str | None
         assert len(process_instance.summary) == 255  # type: ignore
 
+    def test_it_can_update_guids_in_bpmn_process_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/loopback_to_subprocess",
+            process_model_source_directory="loopback_to_subprocess",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 1
+        human_task_one = process_instance.active_human_tasks[0]
+
+        spiff_task = processor.get_task_by_guid(human_task_one.task_id)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_one)
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 2
+        human_task_two = process_instance.active_human_tasks[0]
+        spiff_task = processor.get_task_by_guid(human_task_two.task_id)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_two)
+        old_tasks = processor.bpmn_process_instance.get_tasks()
+        old_task_names = [t.task_spec.name for t in old_tasks]
+
+        bpmn_process_dict = processor.serialize()
+        task_one_guid = sorted(bpmn_process_dict["tasks"].keys())[0]
+        subprocess_one_guid = sorted(bpmn_process_dict["subprocesses"].keys())[0]
+        ProcessInstanceProcessor.update_guids_on_tasks(bpmn_process_dict)
+        task_two_guid = sorted(bpmn_process_dict["tasks"].keys())[0]
+        subprocess_two_guid = sorted(bpmn_process_dict["subprocesses"].keys())[0]
+
+        assert task_one_guid != task_two_guid
+        assert subprocess_one_guid != subprocess_two_guid
+
+        new_bpmn_process_instance = ProcessInstanceProcessor.initialize_bpmn_process_instance(bpmn_process_dict)
+        new_tasks = new_bpmn_process_instance.get_tasks()
+        new_task_names = [t.task_spec.name for t in new_tasks]
+        assert old_task_names == new_task_names
+
     # # To test processing times with multiinstance subprocesses
     # def test_large_multiinstance(
     #     self,
