@@ -341,6 +341,7 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
           <Header aria-label="IBM Platform Name" className="cds--g100">
             <HeaderName as={Link} to="/" prefix="" data-qa="spiffworkflow-logo">
               <Box sx={logoStyle}>
+                {/* @ts-expect-error TS(2322) FIXME */}
                 <Logo style={{ ...logoStyle }} />
               </Box>
             </HeaderName>
