@@ -394,7 +394,11 @@ export default function StartProcess() {
               <AccordionDetails>
                 <Box sx={gridProps}>
                   {groups.map((group: Record<string, any>) => (
-                    <ProcessGroupCard group={group} stream={clickStream} />
+                    <ProcessGroupCard
+                      key={group.id}
+                      group={group}
+                      stream={clickStream}
+                    />
                   ))}
                 </Box>
               </AccordionDetails>
