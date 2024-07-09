@@ -36,6 +36,7 @@ from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -146,13 +147,31 @@ class ProcessInstanceService:
 
     @classmethod
     def check_process_instance_can_be_migrated(
-        cls, process_instance: ProcessInstanceModel
+        cls,
+        process_instance: ProcessInstanceModel,
+        target_bpmn_process_hash: str | None = None,
     ) -> tuple[
         ProcessInstanceProcessor, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
-        (target_bpmn_process_spec, target_subprocess_specs) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
-            process_instance.process_model_identifier,
-        )
+        if target_bpmn_process_hash is None:
+            (target_bpmn_process_spec, target_subprocess_specs) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
+                process_instance.process_model_identifier,
+            )
+        else:
+            bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
+                full_process_model_hash=target_bpmn_process_hash
+            ).first()
+            full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
+                bpmn_definition_to_task_definitions_mappings={},
+                spiff_serializer_version=process_instance.spiff_serializer_version,
+                bpmn_process_definition=bpmn_process_definition,
+                bpmn_process_definition_id=bpmn_process_definition.id,
+                task_model_mapping={},
+                bpmn_subprocess_mapping={},
+            )
+            bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(full_bpmn_process_dict)
+            target_bpmn_process_spec = bpmn_process_instance.spec
+            target_subprocess_specs = bpmn_process_instance.subprocess_specs
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
