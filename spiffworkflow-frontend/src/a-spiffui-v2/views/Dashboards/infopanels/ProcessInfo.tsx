@@ -196,8 +196,9 @@ export default function ProcessInfo({
         </AccordionDetails>
       </Accordion>
       <Tabs value={selectedTab} variant="fullWidth">
-        {tabData.map((tab) => (
+        {tabData.map((tab, index) => (
           <Tab
+            key={index}
             label={tab.label}
             value={tab.value}
             onClick={() => handleTabChange(tab)}
