@@ -1,4 +1,4 @@
-import { Stack, Typography, useTheme } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import SpiffIcon from '../assets/icons/spiff-icon-cyan.svg';
 
 /**

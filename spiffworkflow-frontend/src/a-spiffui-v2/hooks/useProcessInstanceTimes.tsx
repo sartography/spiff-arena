@@ -44,20 +44,20 @@ export default function useProcessInstanceTimes() {
       const durations = times.map((t: Record<string, any>) => t.duration);
       const median = Math.ceil(
         durations.reduce((a: number, b: number) => a + b, 0) /
-          (durations.length || 1)
+          (durations.length || 1),
       );
 
       summary[key] = {
         displayName: times[0].displayName,
         total: Math.ceil(times.length),
         completed: times.filter(
-          (t: Record<string, any>) => t.status === 'complete'
+          (t: Record<string, any>) => t.status === 'complete',
         ).length,
         errors: times.filter((t: Record<string, any>) => t.status === 'error')
           .length,
         open: times.filter(
           (t: Record<string, any>) =>
-            !(t.status === 'complete' || t.status === 'error')
+            !(t.status === 'complete' || t.status === 'error'),
         ).length,
         duration: durations.reduce((a: number, b: number) => a + b, 0),
         median,
@@ -68,19 +68,19 @@ export default function useProcessInstanceTimes() {
     const totalCount = processInstances.length;
     const completeCount = Object.keys(summary).reduce(
       (acc, key) => acc + summary[key].completed,
-      0
+      0,
     );
     const errorCount = Object.keys(summary).reduce(
       (acc, key) => acc + summary[key].errors,
-      0
+      0,
     );
     const openCount = Object.keys(summary).reduce(
       (acc, key) => acc + summary[key].open,
-      0
+      0,
     );
     const totalTime = Object.keys(summary).reduce(
       (acc, key) => acc + summary[key].duration,
-      0
+      0,
     );
 
     const finalResults = {

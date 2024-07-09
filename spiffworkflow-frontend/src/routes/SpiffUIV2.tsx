@@ -15,7 +15,7 @@ import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
  */
 export default function SpiffUIV2() {
   const [globalTheme, setGlobalTheme] = useState(
-    createTheme(createSpiffTheme('light'))
+    createTheme(createSpiffTheme('light')),
   );
   const navigate = useNavigate();
   const isDark = globalTheme.palette.mode === 'dark';
@@ -52,9 +52,9 @@ export default function SpiffUIV2() {
       setGlobalTheme(
         createTheme(
           createSpiffTheme(
-            globalTheme.palette.mode === 'light' ? 'dark' : 'light'
-          )
-        )
+            globalTheme.palette.mode === 'light' ? 'dark' : 'light',
+          ),
+        ),
       );
     } else if (data?.path) {
       navigate(data.path);

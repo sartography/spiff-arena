@@ -90,7 +90,7 @@ describe('process-instances', () => {
     cy.login();
     cy.navigateToProcessModel(
       'Acceptance Tests Group One',
-      'Acceptance Tests Model 1'
+      'Acceptance Tests Model 1',
     );
   });
   afterEach(() => {
@@ -213,7 +213,7 @@ describe('process-instances', () => {
         clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
         cy.get('div[aria-label="Clear all selected items"]:first').click();
         cy.get('div[aria-label="Clear all selected items"]').should(
-          'not.exist'
+          'not.exist',
         );
         clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
       }

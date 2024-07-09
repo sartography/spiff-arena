@@ -25,7 +25,7 @@ import CollapseButton from '../../components/CollapseButton';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 
 /**
- * Top level layout and control container for this view, 
+ * Top level layout and control container for this view,
  * feeds various streams, data and callbacks to children.
  */
 export default function StartProcess() {
@@ -80,7 +80,7 @@ export default function StartProcess() {
       // recursively find the parent group.
       const findParent = (
         searchGroups: Record<string, any>[],
-        id: string
+        id: string,
       ): Record<string, any> | undefined => {
         return searchGroups.find((group) => {
           if (group.id === id) {
@@ -189,7 +189,7 @@ export default function StartProcess() {
   /** Recursively flatten the entire hierarchy of process groups and models */
   const flattenAllItems = (
     items: Record<string, any>[],
-    flat: Record<string, any>[]
+    flat: Record<string, any>[],
   ) => {
     items.forEach((item) => {
       flat.push(item);

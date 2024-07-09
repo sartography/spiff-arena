@@ -49,7 +49,7 @@ export default function ProcessInfo({
       label: `Tasks (${
         pi.id
           ? pi.tasks.filter(
-              (row: Record<string, any>) => row.process_instance_id === pi.id
+              (row: Record<string, any>) => row.process_instance_id === pi.id,
             ).length
           : '-'
       })`,
@@ -86,7 +86,7 @@ export default function ProcessInfo({
             (instance[field] || '')
               .toString()
               .toLowerCase()
-              .includes(filter.toLowerCase())
+              .includes(filter.toLowerCase()),
           );
         })
       : [];
@@ -105,7 +105,7 @@ export default function ProcessInfo({
   useEffect(() => {
     if (pi?.id) {
       const rows = [...pi.tasks].filter(
-        (row) => row.process_instance_id === pi.id
+        (row) => row.process_instance_id === pi.id,
       );
       setTaskColumns(columns);
       setTaskRows(rows);

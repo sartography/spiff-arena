@@ -55,7 +55,7 @@ export default function MenuItem({
   useEffect(() => {
     if (!subMenuItem && stream) {
       subMenuItem = stream.subscribe((item) =>
-        setToggled(item.text === data.text)
+        setToggled(item.text === data.text),
       );
     }
   }, [stream]);

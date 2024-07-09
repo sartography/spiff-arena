@@ -27,7 +27,7 @@ export default function DashboardCharts({
       totalDurations[key] = {
         duration: times.summary[key].times.reduce(
           (acc: number, curr: Record<string, any>) => acc + curr.duration,
-          0
+          0,
         ),
         displayName: times.summary[key].displayName,
       };
@@ -186,7 +186,7 @@ export default function DashboardCharts({
                         id: i,
                         label: durations[d].displayName,
                         value: durations[d].duration,
-                      })
+                      }),
                     ),
                   },
                 ]}
@@ -211,7 +211,7 @@ export default function DashboardCharts({
             </Stack>
             <SparkLineChart
               data={Object.keys(durations).map(
-                (d: string) => durations[d].duration
+                (d: string) => durations[d].duration,
               )}
               curve="natural"
               area

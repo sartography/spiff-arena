@@ -11,7 +11,7 @@ export default function useProcessInstance() {
   // TODO: ProcessInstance type didn't seem right
   // Find out and remove "any"
   const [processInstance, setProcessInstance] = useState<Record<string, any>>(
-    {}
+    {},
   );
   const [processInstanceId, setProcessInstanceId] = useState(0);
   const [loading, setLoading] = useState(false);

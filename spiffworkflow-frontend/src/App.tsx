@@ -8,8 +8,6 @@ import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './routes/PublicRoutes';
 import SpiffUIV2 from './routes/SpiffUIV2';
-import Dashboards from './a-spiffui-v2/views/Dashboards/Dashboards';
-import StartProcess from './a-spiffui-v2/views/StartProcess/StartProcess';
 
 const queryClient = new QueryClient();
 

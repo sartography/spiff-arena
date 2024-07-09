@@ -43,7 +43,7 @@ export default function TaskCard({ task }: { task: Record<string, any> }) {
       </Stack>
       <Stack direction="row" spacing={2} sx={{ color: 'text.secondary' }}>
         <Typography variant="caption">{`Start: ${formatSecondsForDisplay(
-          task.row.start_in_seconds
+          task.row.start_in_seconds,
         )}`}</Typography>
         <Typography variant="caption">
           {`End: ${formatSecondsForDisplay(task.row.end_in_seconds) || '...'}`}

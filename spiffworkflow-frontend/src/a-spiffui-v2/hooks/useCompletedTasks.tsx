@@ -13,7 +13,7 @@ export default function useCompletedTasks({
   processInfo: Record<string, any>;
 }) {
   const [completedTasks, setCompletedTasks] = useState<Record<string, any>[]>(
-    []
+    [],
   );
 
   const [loading, setLoading] = useState(false);

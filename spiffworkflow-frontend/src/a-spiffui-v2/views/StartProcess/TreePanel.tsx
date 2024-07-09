@@ -30,7 +30,7 @@ export default forwardRef(function TreePanel(
     callback?: (data: Record<string, any>) => void;
     stream?: Subject<Record<string, any>>;
   },
-  ref: any // can literally be anything that wants to clear the tree
+  ref: any, // can literally be anything that wants to clear the tree
 ) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});

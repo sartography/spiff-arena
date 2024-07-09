@@ -52,7 +52,7 @@ export default function MyProcesses({
             (instance[field] || '')
               .toString()
               .toLowerCase()
-              .includes(filter.toLowerCase())
+              .includes(filter.toLowerCase()),
           );
         })
       : mappedRows || [];
@@ -64,7 +64,7 @@ export default function MyProcesses({
     const sorted = [...filtered].sort(
       (a: Record<string, any>, b: Record<string, any>) => {
         return b.taskCount - a.taskCount;
-      }
+      },
     );
     setFilteredRows(sorted);
   }, [filter]);
@@ -73,7 +73,7 @@ export default function MyProcesses({
   const addTaskCounts = (rows: GridRowsProp[]) => {
     return rows.map((row: Record<string, any>) => {
       const tasks = taskCollection?.results?.filter(
-        (task: Record<string, any>) => task.process_instance_id === row.id
+        (task: Record<string, any>) => task.process_instance_id === row.id,
       );
       return { ...row, tasks };
     });
@@ -90,7 +90,7 @@ export default function MyProcesses({
           renderCell: (params: Record<string, any>) => (
             <CellRenderer header={column.Header} data={params} />
           ),
-        })
+        }),
       );
 
       /**
@@ -113,7 +113,7 @@ export default function MyProcesses({
       const rows = addTaskCounts(pis.results);
       setMappedRows(rows);
       setFilteredRows(
-        [...rows].sort((a, b) => b.tasks.length - a.tasks.length)
+        [...rows].sort((a, b) => b.tasks.length - a.tasks.length),
       );
     }
   }, [pis]);
