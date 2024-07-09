@@ -7,6 +7,7 @@ import ProcessInstanceReportEdit from './ProcessInstanceReportEdit';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
 import ProcessInstanceProgressPage from './ProcessInstanceProgressPage';
+import ProcessInstanceMigratePage from './ProcessInstanceMigratePage';
 
 export default function ProcessInstanceRoutes() {
   return (
@@ -37,6 +38,10 @@ export default function ProcessInstanceRoutes() {
       <Route
         path=":process_model_id/:process_instance_id/progress"
         element={<ProcessInstanceProgressPage variant="all" />}
+      />
+      <Route
+        path=":process_model_id/:process_instance_id/migrate"
+        element={<ProcessInstanceMigratePage />}
       />
       <Route
         path=":process_model_id/:process_instance_id"

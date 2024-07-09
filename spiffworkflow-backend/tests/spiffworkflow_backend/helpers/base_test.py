@@ -339,6 +339,7 @@ class BaseTest:
         status: str | None = "not_started",
         user: UserModel | None = None,
         save_start_and_end_times: bool = True,
+        bpmn_version_control_identifier: str | None = None,
     ) -> ProcessInstanceModel:
         if user is None:
             user = self.find_or_create_user()
@@ -357,6 +358,7 @@ class BaseTest:
             updated_at_in_seconds=round(time.time()),
             start_in_seconds=start_in_seconds,
             end_in_seconds=end_in_seconds,
+            bpmn_version_control_identifier=bpmn_version_control_identifier,
         )
         db.session.add(process_instance)
         db.session.commit()

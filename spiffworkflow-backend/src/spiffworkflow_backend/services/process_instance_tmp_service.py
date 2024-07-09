@@ -2,12 +2,17 @@ import time
 import traceback
 
 from flask import g
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+from flask_migrate import migrate  # type: ignore
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_migration_detail import (
+    ProcessInstanceMigrationDetailDict,
+    ProcessInstanceMigrationDetailModel,
+)
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 
 
@@ -28,6 +33,7 @@ class ProcessInstanceTmpService:
         exception: Exception | None = None,
         timestamp: float | None = None,
         add_to_db_session: bool | None = True,
+        migration_details: ProcessInstanceMigrationDetailDict | None = None,
     ) -> tuple[ProcessInstanceEventModel, ProcessInstanceErrorDetailModel | None]:
         if user_id is None and hasattr(g, "user") and g.user:
             user_id = g.user.id
@@ -76,7 +82,24 @@ class ProcessInstanceTmpService:
 
             if add_to_db_session:
                 db.session.add(process_instance_error_detail)
+
+        if migration_details is not None:
+            cls.add_process_instance_migration_detail(process_instance_event, migration_details)
         return (process_instance_event, process_instance_error_detail)
+
+    @classmethod
+    def add_process_instance_migration_detail(
+        cls, process_instance_event: ProcessInstanceEventModel, migration_details: ProcessInstanceMigrationDetailDict
+    ) -> ProcessInstanceMigrationDetailModel:
+        pi_detail = ProcessInstanceMigrationDetailModel(
+            process_instance_event=process_instance_event,
+            initial_git_revision=migration_details["initial_git_revision"],
+            target_git_revision=migration_details["target_git_revision"],
+            initial_bpmn_process_hash=migration_details["initial_bpmn_process_hash"],
+            target_bpmn_process_hash=migration_details["target_bpmn_process_hash"],
+        )
+        db.session.add(pi_detail)
+        return pi_detail
 
     @staticmethod
     def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:

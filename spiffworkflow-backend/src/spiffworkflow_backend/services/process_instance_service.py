@@ -176,8 +176,14 @@ class ProcessInstanceService:
 
     @classmethod
     def migrate_process_instance_to_newest_model_version(
-        cls, process_instance: ProcessInstanceModel, user: UserModel, preserve_old_process_instance: bool = False
+        cls,
+        process_instance: ProcessInstanceModel,
+        user: UserModel,
+        preserve_old_process_instance: bool = False,
+        target_bpmn_process_hash: str | None = None,
     ) -> None:
+        initial_git_revision = process_instance.bpmn_version_control_identifier
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (
             processor,
             target_bpmn_process_spec,
@@ -185,9 +191,6 @@ class ProcessInstanceService:
             top_level_bpmn_process_diff,
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance)
-        ProcessInstanceTmpService.add_event_to_process_instance(
-            process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value
-        )
         migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
             migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
@@ -219,6 +222,27 @@ class ProcessInstanceService:
                 process_instance_model=process_instance,
                 bpmn_process_instance=processor.bpmn_process_instance,
             )
+            try:
+                current_git_revision = GitService.get_current_revision()
+            except GitCommandError:
+                current_git_revision = None
+            process_instance.bpmn_version_control_identifier = current_git_revision
+            db.session.add(process_instance)
+
+        target_git_revision = process_instance.bpmn_version_control_identifier
+        if target_bpmn_process_hash is None:
+            target_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
+        ProcessInstanceTmpService.add_event_to_process_instance(
+            process_instance,
+            ProcessInstanceEventType.process_instance_migrated.value,
+            migration_details={
+                "initial_git_revision": initial_git_revision,
+                "initial_bpmn_process_hash": initial_bpmn_process_hash or "",
+                "target_git_revision": target_git_revision,
+                "target_bpmn_process_hash": target_bpmn_process_hash or "",
+            },
+        )
+        db.session.commit()
 
     @classmethod
     def create_process_instance_from_process_model_identifier(

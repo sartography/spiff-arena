@@ -1,3 +1,5 @@
+from spiffworkflow_backend.services.git_service import GitService
+from pytest_mock.plugin import MockerFixture
 import base64
 import hashlib
 import os
@@ -11,6 +13,7 @@ from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel, ProcessInstanceEventType
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -157,6 +160,7 @@ class TestProcessInstanceService(BaseTest):
     def test_it_can_migrate_a_process_instance(
         self,
         app: Flask,
+        mocker: MockerFixture,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -165,9 +169,16 @@ class TestProcessInstanceService(BaseTest):
             process_model_source_directory="migration-test-with-subprocess",
             bpmn_file_name="migration-initial.bpmn",
         )
-        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        mock_get_current_revision = mocker.patch.object(GitService, "get_current_revision")
+
+        # Set the return value for the first call
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
+        )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
+        assert initial_bpmn_process_hash is not None
 
         initial_tasks = processor.bpmn_process_instance.get_tasks()
         assert "manual_task_two" not in processor.bpmn_process_instance.spec.task_specs
@@ -192,6 +203,7 @@ class TestProcessInstanceService(BaseTest):
         )
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        mock_get_current_revision.return_value = "rev2"
         ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=initiator_user)
 
         for initial_task in initial_tasks:
@@ -211,6 +223,23 @@ class TestProcessInstanceService(BaseTest):
         self.complete_next_manual_task(processor)
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
+
+        target_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
+        assert target_bpmn_process_hash is not None
+        assert initial_bpmn_process_hash != target_bpmn_process_hash
+
+        pi_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id, event_type=ProcessInstanceEventType.process_instance_migrated.value
+        ).all()
+        assert len(pi_events) == 1
+        process_instance_event = pi_events[0]
+        assert len(process_instance_event.migration_details) == 1
+        pi_migration_details = process_instance_event.migration_details[0]
+
+        assert pi_migration_details.initial_bpmn_process_hash == initial_bpmn_process_hash
+        assert pi_migration_details.target_bpmn_process_hash == target_bpmn_process_hash
+        assert pi_migration_details.initial_git_revision == "rev1"
+        assert pi_migration_details.target_git_revision == "rev2"
 
     def test_it_can_check_if_a_process_instance_can_be_migrated(
         self,

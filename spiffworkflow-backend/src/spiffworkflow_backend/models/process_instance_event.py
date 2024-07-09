@@ -43,6 +43,9 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
 
     error_details = relationship("ProcessInstanceErrorDetailModel", back_populates="process_instance_event", cascade="delete")  # type: ignore
+    migration_details = relationship(
+        "ProcessInstanceMigrationDetailModel", back_populates="process_instance_event", cascade="delete"
+    )  # type: ignore
 
     @validates("event_type")
     def validate_event_type(self, key: str, value: Any) -> Any:
